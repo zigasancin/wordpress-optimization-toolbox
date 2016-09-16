@@ -1,0 +1,354 @@
+# Copyright (C) 2016 Aaron Holbrook, Taylor Lovett, Matt Gross, 10up
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: ElasticPress 2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/elasticpress\n"
+"POT-Creation-Date: 2016-06-01 16:31:42+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2016-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"X-Generator: grunt-wp-i18n 0.5.4\n"
+
+#: bin/wp-cli.php:55
+msgid "Adding mapping for site %d..."
+msgstr ""
+
+#: bin/wp-cli.php:65 bin/wp-cli.php:83
+msgid "Mapping sent"
+msgstr ""
+
+#: bin/wp-cli.php:67 bin/wp-cli.php:85
+msgid "Mapping failed"
+msgstr ""
+
+#: bin/wp-cli.php:73
+msgid "Adding mapping..."
+msgstr ""
+
+#: bin/wp-cli.php:113
+msgid "Deleting index for site %d..."
+msgstr ""
+
+#: bin/wp-cli.php:118 bin/wp-cli.php:131
+msgid "Index deleted"
+msgstr ""
+
+#: bin/wp-cli.php:120
+msgid "Delete index failed"
+msgstr ""
+
+#: bin/wp-cli.php:126
+msgid "Deleting index..."
+msgstr ""
+
+#: bin/wp-cli.php:133
+msgid "Index delete failed"
+msgstr ""
+
+#: bin/wp-cli.php:151 bin/wp-cli.php:269
+msgid "Recreating network alias..."
+msgstr ""
+
+#: bin/wp-cli.php:158 bin/wp-cli.php:293
+msgid "Done!"
+msgstr ""
+
+#: bin/wp-cli.php:160
+msgid "An error occurred"
+msgstr ""
+
+#: bin/wp-cli.php:249
+msgid "Indexing posts network-wide..."
+msgstr ""
+
+#: bin/wp-cli.php:260 bin/wp-cli.php:281
+msgid "Number of posts indexed on site %d: %d"
+msgstr ""
+
+#: bin/wp-cli.php:263 bin/wp-cli.php:284
+msgid "Number of post index errors on site %d: %d"
+msgstr ""
+
+#: bin/wp-cli.php:273
+msgid "Total number of posts indexed: %d"
+msgstr ""
+
+#: bin/wp-cli.php:277
+msgid "Indexing posts..."
+msgstr ""
+
+#: bin/wp-cli.php:288
+msgid "Total time elapsed: "
+msgstr ""
+
+#: bin/wp-cli.php:550
+msgid ""
+"The following posts failed to index:\r\n"
+"\r\n"
+msgstr ""
+
+#: bin/wp-cli.php:754 classes/class-ep-config.php:186
+msgid "EP_HOST is not defined! Check wp-config.php"
+msgstr ""
+
+#: bin/wp-cli.php:758 classes/class-ep-config.php:190
+msgid "Unable to reach Elasticsearch Server! Check that service is running."
+msgstr ""
+
+#: classes/class-ep-api.php:1860
+msgid ""
+"Invalid response from ElasticPress server. Please contact your "
+"administrator."
+msgstr ""
+
+#: classes/class-ep-api.php:1873
+msgid ""
+"Site not indexed. <p>Please run: <code>wp elasticpress index --setup "
+"--network-wide</code> using WP-CLI. Or use the index button on the left of "
+"this screen.</p>"
+msgstr ""
+
+#: classes/class-ep-api.php:1877
+msgid ""
+"Site not indexed. <p>Please run: <code>wp elasticpress index --setup</code> "
+"using WP-CLI. Or use the index button on the left of this screen.</p>"
+msgstr ""
+
+#: classes/class-ep-api.php:1915 classes/class-ep-api.php:1974
+#: classes/class-ep-api.php:2014 classes/class-ep-api.php:2065
+msgid "Elasticsearch Host is not available."
+msgstr ""
+
+#: classes/class-ep-config.php:65 classes/class-ep-config.php:90
+msgid "No running host available."
+msgstr ""
+
+#: classes/class-ep-index-gui.php:131
+msgid ""
+"Mappings could not be completed. If the error persists contact your system "
+"administrator"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:144
+msgid ""
+"Indexing could not be completed. If the error persists contact your system "
+"administrator"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:185 classes/class-ep-index-gui.php:325
+#: classes/class-ep-index-gui.php:359 classes/class-ep-index-gui.php:391
+#: classes/class-ep-settings.php:167
+msgid "Security error!"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:404
+msgid "Search Stats"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:407
+msgid "Total Queries:"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:410
+msgid "Query Time:"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:413
+msgid "Total Fetches:"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:416
+msgid "Fetch Time:"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:421
+msgid "Index Stats"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:424
+msgid "Index Total:"
+msgstr ""
+
+#: classes/class-ep-index-gui.php:427
+msgid "Index Time:"
+msgstr ""
+
+#: classes/class-ep-index-status.php:62
+msgid "Index Status"
+msgstr ""
+
+#: classes/class-ep-index-worker.php:414
+msgid ": ElasticPress Index Errors"
+msgstr ""
+
+#: classes/class-ep-settings.php:112 classes/class-ep-settings.php:138
+msgid "items indexed"
+msgstr ""
+
+#: classes/class-ep-settings.php:115
+msgid "items indexed in "
+msgstr ""
+
+#: classes/class-ep-settings.php:132 includes/settings/index.php:31
+msgid "Running Index..."
+msgstr ""
+
+#: classes/class-ep-settings.php:133 includes/settings/index.php:26
+msgid "Run Index"
+msgstr ""
+
+#: classes/class-ep-settings.php:134 includes/settings/index.php:29
+msgid "Indexing is Paused"
+msgstr ""
+
+#: classes/class-ep-settings.php:135 includes/settings/index.php:36
+msgid "Resume Indexing"
+msgstr ""
+
+#: classes/class-ep-settings.php:136 includes/settings/index.php:36
+msgid "Pause Indexing"
+msgstr ""
+
+#: classes/class-ep-settings.php:140
+msgid " site(s)"
+msgstr ""
+
+#: classes/class-ep-settings.php:144
+msgid ""
+"A failure has occured. Please try the indexing operation again and if the "
+"error persists contact your website administrator."
+msgstr ""
+
+#: classes/class-ep-settings.php:145
+msgid "Index complete <a href=\"\">Refresh the stats</a>"
+msgstr ""
+
+#: classes/class-ep-settings.php:193
+msgid "Elasticsearch Host:"
+msgstr ""
+
+#: classes/class-ep-settings.php:202
+msgid "Use Elasticsearch:"
+msgstr ""
+
+#: classes/class-ep-settings.php:433
+msgid "Elasticsearch Integration Options"
+msgstr ""
+
+#: classes/class-ep-wp-date-query.php:488
+#. translators: Date query invalid date message: 1: invalid value, 2: type of
+#. value, 3: minimum valid value, 4: maximum valid value
+msgid "Invalid value %1$s for %2$s. Expected value should be between %3$s and %4$s."
+msgstr ""
+
+#: classes/class-ep-wp-date-query.php:518
+#. translators: 1: year, 2: month, 3: day of month
+msgid ""
+"The following values do not describe a valid date: year %1$s, month %2$s, "
+"day %3$s."
+msgstr ""
+
+#: classes/class-ep-wp-date-query.php:535
+#. translators: 1: month, 2: day of month
+msgid "The following values do not describe a valid date: month %1$s, day %2$s."
+msgstr ""
+
+#: includes/settings/index.php:22
+msgid ""
+"Do not deactivate Elasticsearch integration (this will not delete current "
+"index, mappings and posts before reindexing)"
+msgstr ""
+
+#: includes/settings/index.php:45
+msgid "Restart Index"
+msgstr ""
+
+#: includes/settings/index.php:49
+msgid "A proper host must be set before running an index."
+msgstr ""
+
+#: includes/settings/status.php:27
+msgid "Elasticsearch Host"
+msgstr ""
+
+#: includes/settings/status.php:32
+msgid ""
+"Current host is set but cannot be contacted. Please contact the server "
+"administrator."
+msgstr ""
+
+#: includes/settings/status.php:36
+msgid ""
+"A host has not been set or is set but cannot be contacted. You must set a "
+"proper host to continue."
+msgstr ""
+
+#: includes/settings/status.php:47
+msgid "Plugin Status"
+msgstr ""
+
+#: includes/settings/status.php:50
+msgid "Connected to Elasticsearch."
+msgstr ""
+
+#: includes/settings/status.php:55
+msgid "ElasticPress can override WP search."
+msgstr ""
+
+#: includes/settings/status.php:60
+msgid ""
+"WordPress is currently using default search. To activate ElasticPress, "
+"check “Use Elasticsearch” in the form on the left and click “Save Changes\"."
+msgstr ""
+
+#: includes/settings/status.php:70
+msgid "Site Stats"
+msgstr ""
+
+#: includes/settings/status.php:73
+msgid "Select a site:"
+msgstr ""
+
+#: includes/settings/status.php:74
+msgid "Select"
+msgstr ""
+
+#: includes/settings/status.php:109
+msgid "Cluster Stats"
+msgstr ""
+
+#: includes/settings/status.php:119
+msgid "Disk Usage:"
+msgstr ""
+
+#: includes/settings/status.php:123
+msgid "Disk Space Available:"
+msgstr ""
+
+#: includes/settings/status.php:126
+msgid "Total Disk Space:"
+msgstr ""
+
+#: includes/settings/status.php:139
+msgid "ERROR:"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "ElasticPress"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid "Integrate WordPress search with Elasticsearch"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Aaron Holbrook, Taylor Lovett, Matt Gross, 10up"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://10up.com"
+msgstr ""
