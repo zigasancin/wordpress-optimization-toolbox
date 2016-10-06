@@ -197,16 +197,6 @@ function ewww_image_optimizer_image_scan( $dir ) {
 				continue;
 			}
 			if ( ! ewww_image_optimizer_quick_mimetype( $path ) ) {
-/*			$pathextension = strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
-			switch ( $pathextension ) {
-				case 'jpg':
-				case 'jpeg':
-				case 'jpe':
-				case 'png':
-				case 'gif':
-				case 'pdf':
-					break;
-				default:*/
 				continue;
 			}
 			if ( isset( $optimized_list[$path] ) ) {
@@ -331,22 +321,27 @@ function ewww_image_optimizer_aux_images_script( $hook ) {
 					AND wpposts.post_type = 'attachment'
 				"
 			);
-			foreach ( $slides as $slide ) {
-				$backup_sizes = get_post_meta( $slide, '_wp_attachment_backup_sizes', true );
-				$type = get_post_meta( $slide, 'ml-slider_type', true );
-				$type = $type ? $type : 'image'; // backwards compatibility, fall back to 'image'
-				if ( $type === 'image' ) {
-					foreach ( $backup_sizes as $backup_size => $meta ) {
-						if ( preg_match( '/resized-/', $backup_size ) ) {
-							$path = $meta['path'];
-							$image_size = ewww_image_optimizer_filesize( $path );
-							if ( ! $image_size ) {
-								continue;
-							}
-							$already_optimized = ewww_image_optimizer_find_already_optimized( $path );
-							$mimetype = ewww_image_optimizer_mimetype( $path, 'i' );
-							if ( preg_match( '/^image\/(jpeg|png|gif)/', $mimetype ) && empty( $already_optimized ) ) {
-								$slide_paths[] = $path;
+			if ( ewww_image_optimizer_iterable( $slides ) ) {
+				foreach ( $slides as $slide ) {
+					$type = get_post_meta( $slide, 'ml-slider_type', true );
+					$type = $type ? $type : 'image'; // backwards compatibility, fall back to 'image'
+					if ( $type != 'image' ) {
+						continue;
+					}
+					$backup_sizes = get_post_meta( $slide, '_wp_attachment_backup_sizes', true );
+					if ( ewww_image_optimizer_iterable( $backup_sizes ) ) {
+						foreach ( $backup_sizes as $backup_size => $meta ) {
+							if ( preg_match( '/resized-/', $backup_size ) ) {
+								$path = $meta['path'];
+								$image_size = ewww_image_optimizer_filesize( $path );
+								if ( ! $image_size ) {
+									continue;
+								}
+								$already_optimized = ewww_image_optimizer_find_already_optimized( $path );
+								$mimetype = ewww_image_optimizer_mimetype( $path, 'i' );
+								if ( preg_match( '/^image\/(jpeg|png|gif)/', $mimetype ) && empty( $already_optimized ) ) {
+									$slide_paths[] = $path;
+								}
 							}
 						}
 					}
@@ -356,8 +351,10 @@ function ewww_image_optimizer_aux_images_script( $hook ) {
 		}
 		// collect a list of images in auxiliary folders provided by user
 		if ( $aux_paths = ewww_image_optimizer_get_option( 'ewww_image_optimizer_aux_paths' ) ) {
-			foreach ( $aux_paths as $aux_path ) {
-				$attachments = array_merge( $attachments, ewww_image_optimizer_image_scan( $aux_path ) );
+			if ( ewww_image_optimizer_iterable( $aux_paths ) ) {
+				foreach ( $aux_paths as $aux_path ) {
+					$attachments = array_merge( $attachments, ewww_image_optimizer_image_scan( $aux_path ) );
+				}
 			}
 		}
 		// scan images in two most recent media library folders if the option is enabled, and this is a scheduled optimization
@@ -379,7 +376,7 @@ function ewww_image_optimizer_aux_images_script( $hook ) {
 
 		}
 		// store the filenames we retrieved in the 'bulk_attachments' option so we can keep track of our progress in the database
-		update_option( 'ewww_image_optimizer_aux_attachments', $attachments );
+		update_option( 'ewww_image_optimizer_aux_attachments', $attachments, false );
 		ewwwio_debug_message( 'found ' . count( $attachments ) . ' images to optimize while scanning' );
 	}
 	ewww_image_optimizer_debug_log();
@@ -441,7 +438,7 @@ function ewww_image_optimizer_aux_images_cleanup( $auto = false ) {
 	update_option( 'ewww_image_optimizer_aux_last', array( time(), $stored_last[1] ) );
 	// all done, so we can update the bulk options with empty values
 	update_option( 'ewww_image_optimizer_aux_resume', '' );
-	update_option( 'ewww_image_optimizer_aux_attachments', '' );
+	update_option( 'ewww_image_optimizer_aux_attachments', '', false );
 	if ( ! $auto ) {
 		// and let the user know we are done
 		echo '<p><b>' . esc_html__( 'Finished', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . '</b></p>';

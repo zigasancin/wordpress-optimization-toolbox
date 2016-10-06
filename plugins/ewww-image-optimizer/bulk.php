@@ -183,7 +183,7 @@ function ewww_image_optimizer_count_optimized( $gallery, $return_ids = false ) {
 						$ids[] = $attachment[1];
 					}
 					// resized versions, so we can continue
-					if ( isset( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
+					if ( isset( $meta['sizes'] ) && ewww_image_optimizer_iterable( $meta['sizes'] ) ) {
 						foreach( $meta['sizes'] as $size => $data ) {
 							if ( ! empty( $disabled_sizes[ $size ] ) ) {
 								continue;
@@ -244,11 +244,13 @@ function ewww_image_optimizer_count_optimized( $gallery, $return_ids = false ) {
 					if ( empty( $meta['ewww_image_optimizer'] ) ) {
 							$unoptimized_full++;
 					}
-					foreach ( $sizes as $size ) {
-						if ( $size !== 'full' ) {
-							$resize_count++;
-							if ( empty( $meta[ $size ]['ewww_image_optimizer'] ) ) {
-								$unoptimized_re++;
+					if ( ewww_image_optimizer_iterable( $sizes ) ) {
+						foreach ( $sizes as $size ) {
+							if ( $size !== 'full' ) {
+								$resize_count++;
+								if ( empty( $meta[ $size ]['ewww_image_optimizer'] ) ) {
+									$unoptimized_re++;
+								}
 							}
 						}
 					}
@@ -385,7 +387,7 @@ function ewww_image_optimizer_bulk_script( $hook ) {
 		$attachments = $wpdb->get_col( "SELECT ID FROM $wpdb->posts WHERE (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE '%%image%%' OR post_mime_type LIKE '%%pdf%%') ORDER BY ID DESC" );
         }
 	// store the attachment IDs we retrieved in the 'bulk_attachments' option so we can keep track of our progress in the database
-	update_option( 'ewww_image_optimizer_bulk_attachments', $attachments );
+	update_option( 'ewww_image_optimizer_bulk_attachments', $attachments, false );
 	wp_enqueue_script( 'ewwwbulkscript', plugins_url( '/includes/eio.js', __FILE__ ), array( 'jquery', 'jquery-ui-slider', 'jquery-ui-progressbar', 'postbox', 'dashboard' ) );
 	// number of images in the ewwwio_table (previously optimized images)
 	$image_count = ewww_image_optimizer_aux_images_table_count();
@@ -534,7 +536,7 @@ function ewww_image_optimizer_bulk_loop() {
 		$output['results'] .= sprintf( esc_html__( 'Full size – %s', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . "<br>", esc_html( $meta['ewww_image_optimizer'] ) );
 	}
 	// check to see if there are resized version of the image
-	if ( isset( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
+	if ( isset( $meta['sizes'] ) && ewww_image_optimizer_iterable( $meta['sizes'] ) ) {
 		// cycle through each resize
 		foreach ( $meta['sizes'] as $size ) {
 			if ( ! empty( $size['ewww_image_optimizer'] ) ) {
@@ -547,14 +549,14 @@ function ewww_image_optimizer_bulk_loop() {
 	$elapsed = microtime( true ) - $started;
 	// output how much time has elapsed since we started
 	$output['results'] .= sprintf( esc_html__( 'Elapsed: %.3f seconds', EWWW_IMAGE_OPTIMIZER_DOMAIN) . "</p>", $elapsed );
-	global $ewww_attachment;
+/*	global $ewww_attachment; // Because we do this up the chain a bit in the resize_from_meta function
 	$ewww_attachment['id'] = $attachment;
 	$ewww_attachment['meta'] = $meta;
-	add_filter( 'w3tc_cdn_update_attachment_metadata', 'ewww_image_optimizer_w3tc_update_files' );
+	add_filter( 'w3tc_cdn_update_attachment_metadata', 'ewww_image_optimizer_w3tc_update_files' );*/
 	// update the metadata for the current attachment
 	wp_update_attachment_metadata( $attachment, $meta );
 	// store the updated list of attachment IDs back in the 'bulk_attachments' option
-	update_option( 'ewww_image_optimizer_bulk_attachments', $attachments );
+	update_option( 'ewww_image_optimizer_bulk_attachments', $attachments, false );
 	if ( ewww_image_optimizer_get_option ( 'ewww_image_optimizer_debug' ) ) {
 		global $ewww_debug;
 		$output['results'] .= '<div style="background-color:#ffff99;">' . $ewww_debug . '</div>';
@@ -582,19 +584,19 @@ function ewww_image_optimizer_bulk_cleanup() {
 	$permissions = apply_filters( 'ewww_image_optimizer_bulk_permissions', '' );
 	if ( ! wp_verify_nonce( $_REQUEST['ewww_wpnonce'], 'ewww-image-optimizer-bulk' ) || ! current_user_can( $permissions ) ) {
 		wp_die( esc_html__( 'Access token has expired, please reload the page.', EWWW_IMAGE_OPTIMIZER_DOMAIN ) );
-	} 
+	}
 	// all done, so we can update the bulk options with empty values
-	update_option('ewww_image_optimizer_bulk_resume', '');
-	update_option('ewww_image_optimizer_bulk_attachments', '');
+	update_option( 'ewww_image_optimizer_bulk_resume', '' );
+	update_option( 'ewww_image_optimizer_bulk_attachments', '', false );
 	// and let the user know we are done
-	echo '<p><b>' . esc_html__('Finished', EWWW_IMAGE_OPTIMIZER_DOMAIN) . '</b> - <a href="upload.php">' . esc_html__('Return to Media Library', EWWW_IMAGE_OPTIMIZER_DOMAIN) . '</a></p>';
+	echo '<p><b>' . esc_html__( 'Finished', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . '</b> - <a href="upload.php">' . esc_html__( 'Return to Media Library', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . '</a></p>';
 	ewwwio_memory( __FUNCTION__ );
 	die();
 }
-add_action('admin_enqueue_scripts', 'ewww_image_optimizer_bulk_script');
-add_action('wp_ajax_bulk_init', 'ewww_image_optimizer_bulk_initialize');
-add_action('wp_ajax_bulk_filename', 'ewww_image_optimizer_bulk_filename');
-add_action('wp_ajax_bulk_loop', 'ewww_image_optimizer_bulk_loop');
-add_action('wp_ajax_bulk_cleanup', 'ewww_image_optimizer_bulk_cleanup');
-add_action('wp_ajax_bulk_quota_update', 'ewww_image_optimizer_bulk_quota_update');
+add_action( 'admin_enqueue_scripts', 'ewww_image_optimizer_bulk_script' );
+add_action( 'wp_ajax_bulk_init', 'ewww_image_optimizer_bulk_initialize' );
+add_action( 'wp_ajax_bulk_filename', 'ewww_image_optimizer_bulk_filename' );
+add_action( 'wp_ajax_bulk_loop', 'ewww_image_optimizer_bulk_loop' );
+add_action( 'wp_ajax_bulk_cleanup', 'ewww_image_optimizer_bulk_cleanup' );
+add_action( 'wp_ajax_bulk_quota_update', 'ewww_image_optimizer_bulk_quota_update' );
 ?>

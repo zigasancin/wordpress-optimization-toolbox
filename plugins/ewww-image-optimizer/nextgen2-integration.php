@@ -91,27 +91,29 @@ class ewwwngg {
 		// get an array of sizes available for the $image
 		$sizes = $storage->get_image_sizes();
 		// run the optimizer on the image for each $size
-		foreach ( $sizes as $size ) {
-			if ( $size === 'full' ) {
-				$full_size = true;
-			} else {
-				$full_size = false;
-			} 
-			// get the absolute path
-			$file_path = $storage->get_image_abspath($image, $size);
-			ewwwio_debug_message( "optimizing (nextgen): $file_path" );
-			// optimize the image and grab the results
-			$res = ewww_image_optimizer($file_path, 2, false, false, $full_size);
-			ewwwio_debug_message( "results {$res[1]}" );
-			// only if we're dealing with the full-size original
-			if ($size === 'full') {
-				// update the metadata for the optimized image
-				$image->meta_data['ewww_image_optimizer'] = $res[1];
-			} else {
-				$image->meta_data[$size]['ewww_image_optimizer'] = $res[1];
+		if ( ewww_image_optimizer_iterable( $sizes ) ) {
+			foreach ( $sizes as $size ) {
+				if ( $size === 'full' ) {
+					$full_size = true;
+				} else {
+					$full_size = false;
+				} 
+				// get the absolute path
+				$file_path = $storage->get_image_abspath($image, $size);
+				ewwwio_debug_message( "optimizing (nextgen): $file_path" );
+				// optimize the image and grab the results
+				$res = ewww_image_optimizer($file_path, 2, false, false, $full_size);
+				ewwwio_debug_message( "results {$res[1]}" );
+				// only if we're dealing with the full-size original
+				if ($size === 'full') {
+					// update the metadata for the optimized image
+					$image->meta_data['ewww_image_optimizer'] = $res[1];
+				} else {
+					$image->meta_data[$size]['ewww_image_optimizer'] = $res[1];
+				}
+				nggdb::update_image_meta($image_id, $image->meta_data);
+				ewwwio_debug_message( 'storing results for full size image' );
 			}
-			nggdb::update_image_meta($image_id, $image->meta_data);
-			ewwwio_debug_message( 'storing results for full size image' );
 		}
 		return $image;
 	}
@@ -453,7 +455,7 @@ class ewwwngg {
 			$images = $wpdb->get_col( "SELECT pid FROM $wpdb->nggpictures ORDER BY sortorder ASC" );
 		}
 		// store the image IDs to process in the db
-		update_option( 'ewww_image_optimizer_bulk_ngg_attachments', $images );
+		update_option( 'ewww_image_optimizer_bulk_ngg_attachments', $images, false );
 		// add the EWWW IO script
 		wp_enqueue_script( 'ewwwbulkscript', plugins_url( '/includes/eio.js', __FILE__ ), array( 'jquery', 'jquery-ui-progressbar', 'jquery-ui-slider', 'postbox', 'dashboard' ) );
 		//replacing the built-in nextgen styling rules for progressbar, partially because the bulk optimize page doesn't work without them
@@ -567,22 +569,24 @@ class ewwwngg {
 		// get an array of sizes available for the $image
 		$sizes = $storage->get_image_sizes();
 		// run the optimizer on the image for each $size
-		foreach ( $sizes as $size ) {
-			if ( $size === 'full' ) {
-				$output['results'] .= sprintf( esc_html__( 'Full size - %s', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . "<br>", esc_html( $image->meta_data['ewww_image_optimizer'] ) );
-			} elseif ( $size === 'thumbnail' ) {
-				// output the results of the thumb optimization
-				$output['results'] .= sprintf( esc_html__( 'Thumbnail - %s', EWWW_IMAGE_OPTIMIZER_DOMAIN) . "<br>", esc_html( $image->meta_data[ $size ]['ewww_image_optimizer'] ) );
-			} else {
-				// output savings for any other sizes, if they ever exist...
-				$output['results'] .= ucfirst( $size ) . " - " . esc_html( $image->meta_data[ $size ]['ewww_image_optimizer'] ) . "<br>";
+		if ( ewww_image_optimizer_iterable( $sizes ) ) {
+			foreach ( $sizes as $size ) {
+				if ( $size === 'full' ) {
+					$output['results'] .= sprintf( esc_html__( 'Full size - %s', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . "<br>", esc_html( $image->meta_data['ewww_image_optimizer'] ) );
+				} elseif ( $size === 'thumbnail' ) {
+					// output the results of the thumb optimization
+					$output['results'] .= sprintf( esc_html__( 'Thumbnail - %s', EWWW_IMAGE_OPTIMIZER_DOMAIN) . "<br>", esc_html( $image->meta_data[ $size ]['ewww_image_optimizer'] ) );
+				} else {
+					// output savings for any other sizes, if they ever exist...
+					$output['results'] .= ucfirst( $size ) . " - " . esc_html( $image->meta_data[ $size ]['ewww_image_optimizer'] ) . "<br>";
+				}
 			}
 		}
 		// outupt how much time we spent
 		$elapsed = microtime( true ) - $started;
 		$output['results'] .= sprintf( esc_html__( 'Elapsed: %.3f seconds', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . "</p>", $elapsed );
 		// store the list back in the db
-		update_option('ewww_image_optimizer_bulk_ngg_attachments', $attachments);
+		update_option('ewww_image_optimizer_bulk_ngg_attachments', $attachments, false);
 		if ( ! empty( $attachments ) ) {
 			$next_attachment = array_shift( $attachments );
 			$next_file = $this->ewww_ngg_bulk_filename( $next_attachment );
@@ -605,7 +609,7 @@ class ewwwngg {
                 }
 		// reset all the bulk options in the db
 		update_option('ewww_image_optimizer_bulk_ngg_resume', '');
-		update_option('ewww_image_optimizer_bulk_ngg_attachments', '');
+		update_option('ewww_image_optimizer_bulk_ngg_attachments', '', false);
 		// and let the user know we are done
 		echo '<p><b>' . esc_html__( 'Finished Optimization!', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . '</b></p>';
 		die();

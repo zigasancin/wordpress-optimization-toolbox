@@ -385,7 +385,7 @@ class ewwwngg {
 		}
 		
 		// store the image IDs to process in the db
-		update_option('ewww_image_optimizer_bulk_ngg_attachments', $images);
+		update_option('ewww_image_optimizer_bulk_ngg_attachments', $images, false);
 		// add the EWWW IO script
 		wp_enqueue_script( 'ewwwbulkscript', plugins_url( '/includes/eio.js', __FILE__ ), array( 'jquery', 'jquery-ui-progressbar', 'jquery-ui-slider', 'postbox', 'dashboard' ) );
 		// replacing the built-in nextgen styling rules for progressbar
@@ -495,7 +495,7 @@ class ewwwngg {
 		$elapsed = microtime( true ) - $started;
 		$output['results'] .= sprintf( esc_html__( 'Elapsed: %.3f seconds', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . "</p>", $elapsed);
 		//store the list back in the db
-		update_option( 'ewww_image_optimizer_bulk_ngg_attachments', $attachments );
+		update_option( 'ewww_image_optimizer_bulk_ngg_attachments', $attachments, false );
 		if ( ! empty( $attachments ) ) {
                         $next_attachment = array_shift( $attachments );
                         $next_file = $this->ewww_ngg_bulk_filename( $next_attachment );
@@ -518,7 +518,7 @@ class ewwwngg {
                 }
 		// reset all the bulk options in the db
 		update_option('ewww_image_optimizer_bulk_ngg_resume', '');
-		update_option('ewww_image_optimizer_bulk_ngg_attachments', '');
+		update_option('ewww_image_optimizer_bulk_ngg_attachments', '', false);
 		// and let the user know we are done
 		echo '<p><b>' . esc_html__('Finished Optimization!', EWWW_IMAGE_OPTIMIZER_DOMAIN) . '</b></p>';
 		die();
