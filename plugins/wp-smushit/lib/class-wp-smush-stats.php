@@ -60,10 +60,9 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 			}
 
 			$query = array(
-				'fields'         => 'ids',
+				'fields'         => array( 'ids', 'post_mime_type' ) ,
 				'post_type'      => 'attachment',
 				'post_status'    => 'inherit',
-				'post_mime_type' => $wpsmushit_admin->mime_types,
 				'order'          => 'ASC',
 				'posts_per_page' => - 1,
 				'meta_key'       => 'wp-smpro-smush-data',
@@ -76,12 +75,15 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 			$results = new WP_Query( $query );
 
 			if ( ! is_wp_error( $results ) && $results->post_count > 0 ) {
+
+				$posts = $wpsmushit_admin->filter_by_mime( $results->posts );
+
 				if ( ! $return_ids ) {
 					//return Post Count
-					return $results->post_count;
+					return count( $posts );
 				} else {
 					//Return post ids
-					return $results->posts;
+					return $posts;
 				}
 			} else {
 				return false;
@@ -168,8 +170,9 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 		 *
 		 */
 		function media_super_smush_count( $return_ids = false ) {
+
 			global $wpsmushit_admin;
-			$lossy_update = false;
+
 			//Check if we have updated the stats for existing images, One time
 			if ( ! $lossy_updated = get_option( WP_SMUSH_PREFIX . 'lossy-updated' ) ) {
 
@@ -181,15 +184,15 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 					}
 				}
 			}
+
 			//Get all the attachments with wp-smush-lossy
 			$limit         = $wpsmushit_admin->query_limit();
 			$get_posts     = true;
 			$super_smushed = array();
-			$args          = array(
-				'fields'                 => 'ids',
+			$args = array(
+				'fields'                 => array( 'ids', 'post_mime_type' ),
 				'post_type'              => 'attachment',
 				'post_status'            => 'any',
-				'post_mime_type'         => $wpsmushit_admin->mime_types,
 				'orderby'                => 'ID',
 				'order'                  => 'DESC',
 				'posts_per_page'         => $limit,
@@ -212,8 +215,9 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 				$query = new WP_Query( $args );
 
 				if ( ! empty( $query->post_count ) && sizeof( $query->posts ) > 0 ) {
+					$posts = $wpsmushit_admin->filter_by_mime( $query->posts );
 					//Merge the results
-					$super_smushed = array_merge( $super_smushed, $query->posts );
+					$super_smushed = array_merge( $super_smushed, $posts );
 
 					//Update the offset
 					$args['offset'] += $limit;
@@ -419,10 +423,9 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 			$get_posts      = true;
 			$resized_images = array();
 			$args           = array(
-				'fields'                 => 'ids',
+				'fields'                 => array( 'ids', 'post_mime_type' ),
 				'post_type'              => 'attachment',
 				'post_status'            => 'inherit',
-				'post_mime_type'         => $wpsmushit_admin->mime_types,
 				'orderby'                => 'ID',
 				'order'                  => 'DESC',
 				'posts_per_page'         => $limit,
@@ -440,8 +443,11 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 				$query = new WP_Query( $args );
 
 				if ( ! empty( $query->post_count ) && sizeof( $query->posts ) > 0 ) {
+
+					$posts = $wpsmushit_admin->filter_by_mime( $query->posts );
+
 					//Merge the results
-					$resized_images = array_merge( $resized_images, $query->posts );
+					$resized_images = array_merge( $resized_images, $posts );
 
 					//Update the offset
 					$args['offset'] += $limit;
@@ -472,10 +478,9 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 			$get_posts        = true;
 			$converted_images = array();
 			$args             = array(
-				'fields'                 => 'ids',
+				'fields'                 => array( 'ids', 'post_mime_type' ),
 				'post_type'              => 'attachment',
 				'post_status'            => 'inherit',
-				'post_mime_type'         => $wpsmushit_admin->mime_types,
 				'orderby'                => 'ID',
 				'order'                  => 'DESC',
 				'posts_per_page'         => $limit,
@@ -493,8 +498,12 @@ if ( ! class_exists( 'WpSmushStats' ) ) {
 				$query = new WP_Query( $args );
 
 				if ( ! empty( $query->post_count ) && sizeof( $query->posts ) > 0 ) {
+
+					//Filter Posts by mime types
+					$posts = $wpsmushit_admin->filter_by_mime( $query->posts );
+
 					//Merge the results
-					$converted_images = array_merge( $converted_images, $query->posts );
+					$converted_images = array_merge( $converted_images, $posts );
 
 					//Update the offset
 					$args['offset'] += $limit;

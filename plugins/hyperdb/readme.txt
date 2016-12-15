@@ -2,8 +2,8 @@
 Contributors: matt, andy, ryan, mdawaffe, vnsavage, automattic
 Tags: mysql, scaling, performance, availability, WordPress.com
 Requires at least: 2.3
-Tested up to: 4.3
-Stable tag: 1.1
+Tested up to: 4.6.1
+Stable tag: 1.2
 
 HyperDB is an advanced database class that supports replication, failover, load balancing, and partitioning.
 

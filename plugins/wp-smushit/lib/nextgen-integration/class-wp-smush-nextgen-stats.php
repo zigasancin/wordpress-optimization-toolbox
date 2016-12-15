@@ -177,7 +177,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 		 * @return bool|null|string|void
 		 */
 		function show_stats( $pid, $wp_smush_data = false, $image_type = '', $text_only = false, $echo = true ) {
-			global $WpSmush, $wpsmushnextgenadmin;
+			global $WpSmush, $wpsmushnextgenadmin, $wpsmush_settings;
 			if ( empty( $wp_smush_data ) ) {
 				return false;
 			}
@@ -267,7 +267,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 
 			//Check if Lossy enabled
 			$opt_lossy     = WP_SMUSH_PREFIX . 'lossy';
-			$opt_lossy_val = get_option( $opt_lossy, false );
+			$opt_lossy_val = $wpsmush_settings->get_setting( $opt_lossy, false );
 
 			//Check if premium user, compression was lossless, and lossy compression is enabled
 			if ( !$show_resmush && $this->is_pro_user && ! $is_lossy && $opt_lossy_val && ! empty( $image_type ) && $image_type != 'image/gif' ) {

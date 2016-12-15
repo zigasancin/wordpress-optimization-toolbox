@@ -4,7 +4,7 @@ Plugin Name: WP Smush
 Plugin URI: http://wordpress.org/extend/plugins/wp-smushit/
 Description: Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
 Author: WPMU DEV
-Version: 2.4.5
+Version: 2.5.2
 Author URI: http://premium.wpmudev.org/
 Textdomain: wp-smushit
 */
@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Constants
  */
 $prefix  = 'WP_SMUSH_';
-$version = '2.4.5';
+$version = '2.5.2';
 
 //Deactivate the .org version, if pro version is active
 add_action( 'admin_init', 'deactivate_smush_org' );
@@ -65,7 +65,9 @@ $smush_constants = array(
 	'MAX_BYTES'         => 1000000,
 	'PREMIUM_MAX_BYTES' => 32000000,
 	'PREFIX'            => 'wp-smush-',
-	'TIMEOUT'           => $timeout
+	'TIMEOUT'           => $timeout,
+	//If Set to false, WP Smush switch backs to the Old Sync Optimisation
+	'ASYNC'             => true
 );
 
 foreach ( $smush_constants as $const_name => $constant_val ) {
@@ -180,7 +182,8 @@ if ( is_admin() ) {
 			'id'      => 912164,
 			'name'    => 'WP Smush Pro',
 			'screens' => array(
-				'upload'
+				'upload',
+				'media_page_wp-smush-bulk'
 			)
 		);
 	}
@@ -215,11 +218,11 @@ if ( ! function_exists( 'smush_activated' ) ) {
 			$results = $wpdb->get_var( $wpdb->prepare( $query, 'wp-smpro-smush-data' ) );
 
 			if ( $results ) {
-				update_option( 'wp-smush-install-type', 'existing' );
+				update_site_option( 'wp-smush-install-type', 'existing' );
 			} else {
 				//Check for existing settings
 				if ( false !== get_site_option( WP_SMUSH_PREFIX . 'auto' ) || false !== get_option( WP_SMUSH_PREFIX . 'auto' ) ) {
-					update_option( 'wp-smush-install-type', 'existing' );
+					update_site_option( 'wp-smush-install-type', 'existing' );
 				}
 			}
 

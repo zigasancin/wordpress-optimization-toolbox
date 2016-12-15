@@ -28,8 +28,11 @@ if ( ! class_exists( 'WpSmushBackup' ) ) {
 		}
 
 		function initialize() {
+
+			global $wpsmush_settings;
+
 			//Whether backup is enabled or not
-			$this->backup_enabled = get_option( WP_SMUSH_PREFIX . 'backup' );
+			$this->backup_enabled = $wpsmush_settings->get_setting( WP_SMUSH_PREFIX . 'backup' );
 		}
 
 		function create_backup( $file_path = '', $backup_path = '' ) {

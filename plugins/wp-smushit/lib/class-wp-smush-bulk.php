@@ -35,10 +35,9 @@ if ( ! class_exists( 'WpSmushitBulk' ) ) {
 				$get_posts       = true;
 				$unsmushed_posts = array();
 				$args            = array(
-					'fields'                 => 'ids',
+					'fields'                 => array( 'ids', 'post_mime_type' ),
 					'post_type'              => 'attachment',
 					'post_status'            => 'any',
-					'post_mime_type'         => $wpsmushit_admin->mime_types,
 					'orderby'                => 'ID',
 					'order'                  => 'DESC',
 					'posts_per_page'         => $limit,
@@ -62,8 +61,12 @@ if ( ! class_exists( 'WpSmushitBulk' ) ) {
 					$query = new WP_Query( $args );
 
 					if ( ! empty( $query->post_count ) && sizeof( $query->posts ) > 0 ) {
+
+						//Get a filtered list of post ids
+						$posts = $wpsmushit_admin->filter_by_mime( $query->posts );
+
 						//Merge the results
-						$unsmushed_posts = array_merge( $unsmushed_posts, $query->posts );
+						$unsmushed_posts = array_merge( $unsmushed_posts, $posts );
 
 						//Update the offset
 						$args['offset'] += $limit;

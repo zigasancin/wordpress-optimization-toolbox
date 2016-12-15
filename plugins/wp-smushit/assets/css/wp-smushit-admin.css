@@ -68,18 +68,6 @@ Smush button transformation
     margin-top: 18px;
 }
 
-.wpmud .dev-box.wp-smush-install-thanks-box {
-    margin-bottom: 20px;
-    padding-bottom: 0;
-}
-
-#wp-smush-install-thanks .row {
-    background-image: url(../images/install-welcome.png);
-    background-repeat: no-repeat;
-    background-position: 30px bottom;
-    min-height: 206px;
-}
-
 /** Settings Page **/
 
 .wp-smush-setting-row {
@@ -701,6 +689,7 @@ table.wp-smush-stats-holder tr td:first-child {
 
 .wpmud .wp-smush-welcome-content h4 {
     font-size: 30px;
+    line-height: 1.4;
     text-align: left;
 }
 
@@ -756,7 +745,9 @@ table.wp-smush-stats-holder tr td:first-child {
     padding: 20px 40px;
 }
 
-.wp-smush-resmush-message, .wp-smush-settings-updated {
+.wp-smush-resmush-message,
+.wp-smush-settings-updated,
+.wp-smush-re-check-message {
     border: none;
     margin-bottom: 25px;
     padding: 18px 50px;
@@ -769,11 +760,15 @@ table.wp-smush-stats-holder tr td:first-child {
     text-decoration: underline;
 }
 
-.wp-smush-resmush-message .dev-icon, .wp-smush-settings-updated .dev-icon {
+.wp-smush-resmush-message .dev-icon,
+.wp-smush-settings-updated .dev-icon,
+.wp-smush-re-check-message .dev-icon {
     font-size: 16px;
 }
 
-.wp-smush-resmush-message .dev-icon-cross, .wp-smush-settings-updated .dev-icon-cross {
+.wp-smush-resmush-message .dev-icon-cross,
+.wp-smush-settings-updated .dev-icon-cross,
+.wp-smush-re-check-message .dev-icon-cross {
     cursor: pointer;
     float: right;
 }
@@ -1124,127 +1119,6 @@ small.smush-setting-description {
     font-weight: bold;
 }
 
-@media screen and (max-width: 1024px) and ( min-width: 800px ) {
-    .wpmud .wrap .dev-box:not(.wp-smush-pro-adv) {
-        padding: 20px;
-    }
-
-    .wpmud .dev-box.wp-smush-pro-adv .box-title, .wpmud .wp-smush-pro-adv .box-content {
-        padding: 0 20px;
-    }
-
-    /** Stats Section **/
-    .wpmud .smush-stats-wrapper {
-        font-size: 12px;
-    }
-
-    .smush-stats-wrapper h3 {
-        padding: 6px 0;
-    }
-
-    .smush-stats-wrapper .smush-container-subheading {
-        margin-top: 20px;
-    }
-
-    .wpmud .wp-smush-stats, .wp-smush-stats-wrap {
-        font-size: 20px;
-    }
-
-    /** Sub Heading **/
-    .wpmud .smush-container-subheading {
-        font-size: 12px;
-    }
-}
-
-/** Media Queries for resolution between 782px - 1024px **/
-@media screen and (max-width: 1024px) {
-    /** Configure screen **/
-    .wpmud .row .wp-smush-lady.col-third {
-        display: none;
-    }
-
-    /** Media Library Stats **/
-    .wp-list-table .smushit .wp-smush-stats-holder tr th {
-        display: inline-block;
-        width: 50%;
-        box-sizing: border-box;
-    }
-
-    .wp-list-table .smushit .wp-smush-stats-holder tr td:first-child {
-        border-right: none;
-        box-sizing: border-box;
-        display: inline-block !important;
-        width: 50% !important;
-    }
-
-    .wp-list-table .smushit .wp-smush-stats-holder tr td:last-child {
-        box-sizing: border-box;
-        display: inline-block !important;
-        float: none;
-        overflow: visible;
-        width: 50% !important;
-    }
-
-    .wpmud .wp-smush-promo-content, .wpmud .wp-smush-promo-content-smaller {
-        max-width: none;
-    }
-}
-
-/** Media Queries for resolution below 782px **/
-@media only screen and (max-width: 800px) {
-    .wpmud .wp-smushit-container-wrap .col-half.wp-smushit-container-left, .wpmud .wp-smushit-container-wrap .col-half.wp-smushit-container-right {
-        padding: 0;
-        width: 100%;
-    }
-
-    .wpmud .wp-smush-welcome-content {
-        margin: 0 30px 0px 160px;
-    }
-
-    .dev-box.bulk-smush-wrapper.wp-smush-container {
-        padding: 20px 10px;
-    }
-
-    .wpmud .wp-smush-super-smush-content {
-        font-size: 11px;
-        margin-left: 160px;
-        /*padding: 15px 20px;*/
-    }
-}
-
-@media screen and (max-width: 750px) {
-    .wpmud .dev-box#wp-smush-share-widget {
-        background-position: 30px 45px;
-    }
-}
-
-@media screen and (max-width: 650px) {
-    .wpmud .dev-box#wp-smush-share-widget {
-        background-image: none;
-    }
-
-    .wpmud #wp-smush-share-widget .box-content {
-        margin-left: 0;
-        padding: 20px;
-    }
-
-    .wpmud .button.wp-smush-share-button,
-    .wpmud a + .button.wp-smush-share-button {
-        margin-bottom: 10px;
-        margin-left: 0;
-        text-align: center;
-        width: 100%;
-    }
-
-    .wpmud .button.wp-smush-share-button .dev-icon {
-        float: left;
-    }
-
-    .wpmud #wp-smush-whatsapp-share {
-        display: inline-block;
-    }
-}
-
 /** For Media Gallery and Other WordPress pages **/
 /** No Caps for the tooltips **/
 .wp-admin.wpmud [tooltip]:after {
@@ -1589,4 +1463,154 @@ small.smush-setting-description {
 
 .wpmud #wpfooter {
     display: none;
+}
+
+/** Media Queries **/
+@media screen and (max-width: 1024px) and ( min-width: 800px ) {
+    .wpmud .wrap .dev-box:not(.wp-smush-pro-adv) {
+        padding: 20px;
+    }
+
+    .wpmud .dev-box.wp-smush-pro-adv .box-title, .wpmud .wp-smush-pro-adv .box-content {
+        padding: 0 20px;
+    }
+
+    /** Stats Section **/
+    .wpmud .smush-stats-wrapper {
+        font-size: 12px;
+    }
+
+    .smush-stats-wrapper h3 {
+        padding: 6px 0;
+    }
+
+    .smush-stats-wrapper .smush-container-subheading {
+        margin-top: 20px;
+    }
+
+    .wpmud .wp-smush-stats, .wp-smush-stats-wrap {
+        font-size: 20px;
+    }
+
+    /** Sub Heading **/
+    .wpmud .smush-container-subheading {
+        font-size: 12px;
+    }
+}
+
+/** Media Queries for resolution between 782px - 1024px **/
+@media screen and (max-width: 1024px) {
+    /** Configure screen **/
+    .wpmud .row .wp-smush-lady.col-third {
+        display: none;
+    }
+
+    /** Media Library Stats **/
+    .wp-list-table .smushit .wp-smush-stats-holder tr th {
+        display: inline-block;
+        width: 50%;
+        box-sizing: border-box;
+    }
+
+    .wp-list-table .smushit .wp-smush-stats-holder tr td:first-child {
+        border-right: none;
+        box-sizing: border-box;
+        display: inline-block !important;
+        width: 50% !important;
+    }
+
+    .wp-list-table .smushit .wp-smush-stats-holder tr td:last-child {
+        box-sizing: border-box;
+        display: inline-block !important;
+        float: none;
+        overflow: visible;
+        width: 50% !important;
+    }
+
+    .wpmud .wp-smush-promo-content, .wpmud .wp-smush-promo-content-smaller {
+        max-width: none;
+    }
+}
+
+@media only screen and (min-width: 800px) and ( max-width: 1100px ) {
+    .wp-smush-super-smush-promo {
+        background-size: 120px;
+    }
+
+    .wp-smush-super-smush-promo .wp-smush-super-smush-content {
+        font-size: 10px;
+        margin-left: 45%;
+        padding: 10px 20px;
+        width: 55%;
+    }
+}
+
+@media only screen and (min-width: 1100px) and ( max-width: 1200px ) {
+    .wp-smush-super-smush-promo .wp-smush-super-smush-content {
+        margin-left: 170px;
+        padding: 10px 20px;
+    }
+}
+
+/** Media Queries for resolution below 782px **/
+@media only screen and (max-width: 800px) {
+    .wpmud .wp-smushit-container-wrap .col-half.wp-smushit-container-left, .wpmud .wp-smushit-container-wrap .col-half.wp-smushit-container-right {
+        padding: 0;
+        width: 100%;
+    }
+
+    .wpmud .wp-smush-welcome-content {
+        margin: 0 30px 0px 160px;
+    }
+
+    .dev-box.bulk-smush-wrapper.wp-smush-container {
+        padding: 20px 10px;
+    }
+
+    .wpmud .wp-smush-super-smush-content {
+        margin-left: 160px;
+    }
+}
+
+@media screen and (max-width: 750px) {
+    .wpmud .dev-box#wp-smush-share-widget {
+        background-position: 30px 45px;
+    }
+}
+
+@media screen and (max-width: 650px) {
+    .wpmud .dev-box#wp-smush-share-widget {
+        background-image: none;
+    }
+
+    .wpmud #wp-smush-share-widget .box-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .wpmud .button.wp-smush-share-button,
+    .wpmud a + .button.wp-smush-share-button {
+        margin-bottom: 10px;
+        margin-left: 0;
+        text-align: center;
+        width: 100%;
+    }
+
+    .wpmud .button.wp-smush-share-button .dev-icon {
+        float: left;
+    }
+
+    .wpmud #wp-smush-whatsapp-share {
+        display: inline-block;
+    }
+}
+@media screen and (max-width: 600px) {
+    .wpmud .wp-smush-welcome.wp-smush-container {
+        background-position: 43% bottom;
+        padding-bottom: 148px;
+    }
+    .wpmud .wp-smush-welcome-content {
+        margin: 0 30px 0px 0;
+        max-width: 100%;
+    }
 }

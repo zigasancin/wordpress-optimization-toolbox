@@ -869,6 +869,9 @@
 .wpmud [tooltip].tooltip-s.tooltip-right:after {
 	margin-left: -130px;
 }
+.wpmud [tooltip].tooltip-s.tooltip-left:after {
+	margin-left: -30px;
+}
 .wpmud [tooltip].tooltip-l.tooltip-right:after {
 	margin-left: -260px;
 }
