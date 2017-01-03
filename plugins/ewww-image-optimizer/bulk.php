@@ -33,6 +33,7 @@ function ewww_image_optimizer_bulk_preview() {
 			<p id="ewww-loading" class="ewww-bulk-info" style="display:none"><?php esc_html_e( 'Importing', EWWW_IMAGE_OPTIMIZER_DOMAIN ); ?>&nbsp;<img src='<?php echo $loading_image; ?>' /></p>
 		</div>
 		<div id="ewww-bulk-progressbar"></div>
+		<div id="ewww-bulk-timer" style="float:right;"></div>
 		<div id="ewww-bulk-counter"></div>
 		<form id="ewww-bulk-stop" style="display:none;" method="post" action="">
 			<br /><input type="submit" class="button-secondary action" value="<?php esc_attr_e( 'Stop Optimizing', EWWW_IMAGE_OPTIMIZER_DOMAIN ); ?>" />
@@ -135,7 +136,9 @@ function ewww_image_optimizer_count_optimized( $gallery, $return_ids = false ) {
 				ewwwio_debug_message( 'we have received attachment ids via $_REQUEST' );
 				// retrieve the attachment IDs that were pre-loaded in the database
 				if ( 'scanning' == $resume ) {
-					$attachment_ids = array_merge( get_option( 'ewww_image_optimizer_scanning_attachments' ), get_option( 'ewww_image_optimizer_bulk_attachments' ) );
+					$finished = (array) get_option( 'ewww_image_optimizer_bulk_attachments' );
+					$remaining = (array) get_option( 'ewww_image_optimizer_scanning_attachments' );
+					$attachment_ids = array_merge( $finished, $remaining );
 				} elseif ( $resume ) {
 					// this shouldn't ever happen, but doesn't hurt to account for the use case, just in case something changes in the future
 					$attachment_ids = get_option( 'ewww_image_optimizer_bulk_attachments' );
@@ -380,6 +383,7 @@ function ewww_image_optimizer_bulk_script( $hook ) {
 			/* translators: used for Bulk Optimize progress bar, like so: Optimized 32/346 */
 			'optimized' => esc_html__( 'Optimized', EWWW_IMAGE_OPTIMIZER_DOMAIN ),
 			'last_image_header' => esc_html( 'Last Image Optimized', EWWW_IMAGE_OPTIMIZER_DOMAIN ),
+			'time_remaining' => esc_html( 'remaining', EWWW_IMAGE_OPTIMIZER_DOMAIN ),
 		)
 	);
 	// load the stylesheet for the jquery progressbar
@@ -524,6 +528,7 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 //	ewwwio_memory( 'scanning an attachment for images' );
 			clearstatcache();
 			$pending = false;
+			$remote_file = false;
 			if ( empty( $attachment_meta[ $selected_id ]['meta'] ) ) {
 				ewwwio_debug_message( "empty meta for $selected_id" );
 				$meta = array();
@@ -572,13 +577,21 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 			if ( class_exists( 'Amazon_S3_And_CloudFront' ) && strpos( $file_path, 's3' ) === 0 ) {
 				ewww_image_optimizer_check_table_as3cf( $meta, $selected_id, $file_path );
 			}
-			if ( ! is_file( $file_path ) && ( class_exists( 'WindowsAzureStorageUtil' ) || class_exists( 'Amazon_S3_And_CloudFront' ) ) ) {
+			if ( ( strpos( $file_path, 's3' ) === 0 || ! is_file( $file_path ) ) && ( class_exists( 'WindowsAzureStorageUtil' ) || class_exists( 'Amazon_S3_And_CloudFront' ) ) ) {
 				// construct a $file_path and proceed IF a supported CDN plugin is installed
+				ewwwio_debug_message( 'Azure or S3 detected and no local file found' );
 				$file_path = get_attached_file( $selected_id );
+				if ( strpos( $file_path, 's3' ) === 0 ) {
+					$file_path = get_attached_file( $selected_id, true );
+				}
+				ewwwio_debug_message( "remote file possible: $file_path" );
 				if ( ! $file_path ) {
+					ewwwio_debug_message( 'no file found on remote storage, bailing' );
 					continue;
 				}
+				$remote_file = true;
 			} elseif ( ! $file_path ) {
+					ewwwio_debug_message( "no file path for $selected_id" );
 				continue;
 			}
 			$attachment_images['full'] = $file_path;
@@ -639,16 +652,31 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 						}
 					}
 					$resize_path = $base_dir . $data['file'];
-					if ( is_file( $resize_path ) && 'application/pdf' == $mime && $size == 'full' ) {
+					if ( ( $remote_file || is_file( $resize_path ) ) && 'application/pdf' == $mime && $size == 'full' ) {
 						$attachment_images[ 'pdf-' . $size ] = $resize_path;
-					} elseif ( is_file( $resize_path ) ) {
+					} elseif ( $remote_file || is_file( $resize_path ) ) {
 						$attachment_images[ $size ] = $resize_path;
+					/*} elseif ( $remote_file && 'application/pdf' == $mime && $size == 'full' ) {
+						$attachment_images[ 'pdf-' . $size ] = $resize_path;
+					} elseif ( $remote_file ) {
+						$attachment_images[ $size ] = $resize_path;*/
 					}
+	// TODO: migrate these changes to the resize_from_meta function
 					// optimize retina images, if they exist
-					if ( function_exists( 'wr2x_get_retina' ) && $retina_path = wr2x_get_retina( $resize_path ) && is_file( $retina_path ) ) {
+					if ( function_exists( 'wr2x_get_retina' ) ) {
+						$retina_path = wr2x_get_retina( $resize_path );
+					} else {
+						$retina_path = false;
+					}
+					if ( $retina_path && is_file( $retina_path ) ) {
+						ewwwio_debug_message( "found retina via wr2x_get_retina $retina_path" );
 						$attachment_images[ $size . '-retina' ] = $retina_path;
-					} elseif ( $retina_path = ewww_image_optimizer_hidpi_optimize( $resize_path, true ) ) {
-						$attachment_images[ $size . '-retina' ] = $retina_path;
+					} else {
+						$retina_path = ewww_image_optimizer_hidpi_optimize( $resize_path, true );
+						if ( $retina_path ) {
+							ewwwio_debug_message( "found retina via hidpi_opt $retina_path" );
+							$attachment_images[ $size . '-retina' ] = $retina_path;
+						}
 					}
 					// store info on the sizes we've processed, so we can check the list for duplicate sizes
 					$processed[ $size ]['width'] = $data['width'];
@@ -683,14 +711,25 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 			// check if the files are 'prev opt', pending, or brand new, and then queue the file
 			foreach ( $attachment_images as $size => $file_path ) {
 //	ewwwio_memory( 'checking an image we found' );
-				$file_path = realpath( $file_path );
-				if ( isset( $optimized_list[ $file_path ] ) ) {
+				ewwwio_debug_message( "here is a path $file_path" );
+				if ( ! $remote_file && strpos( $file_path, 's3' ) !== 0 ) {
+					$file_path = realpath( $file_path );
+				}
+				if ( empty( $file_path ) ) {
+					continue;
+				}
+				ewwwio_debug_message( "here is a path $file_path" );
+				if ( isset( $optimized_list[ $file_path ] ) && ( ! $remote_file || ! empty( $_REQUEST['ewww_force'] ) ) ) {
 					if ( ! empty( $optimized_list[ $file_path ]['pending'] ) ) {
 						$pending = true;
 						ewwwio_debug_message( "pending record for $file_path" );
 						continue;
 					}
-					$image_size = filesize( $file_path );
+					if ( $remote_file ) {
+						$image_size = $optimized_list[ $file_path ]['image_size'];
+					} else {
+						$image_size = filesize( $file_path );
+					}
 					if ( $optimized_list[ $file_path ]['image_size'] == $image_size && empty( $_REQUEST['ewww_force'] ) ) {
 						ewwwio_debug_message( "match found for $file_path" );
 						continue;
@@ -715,12 +754,22 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 				} else {
 					$pending = true;
 					ewwwio_debug_message( "queuing $file_path" );
-					$image_size = filesize( $file_path );
-					$images[] = "('" . esc_sql( utf8_encode( $file_path ) ) . "','media',$image_size,$selected_id,'$size',1)";
+					if ( $remote_file ) {
+						$image_size = 0;
+					} else {
+						$image_size = filesize( $file_path );
+					}
+					if ( seems_utf8( $file_path ) ) {
+						$utf8_file_path = $file_path;
+					} else {
+						$utf8_file_path = utf8_encode( $file_path );
+					}
+					$images[] = "('" . esc_sql( $utf8_file_path ) . "','media',$image_size,$selected_id,'$size',1)";
 					$image_count++;
 				}
 				if ( $image_count > 1000 || count( $reset_images ) > 1000 ) {
 					ewwwio_debug_message( 'making a dump run' );
+					ewww_image_optimizer_debug_log();
 	//ewwwio_memory( 'dumping images to db' );
 					// let's dump what we have so far to the db
 					$image_count = 0;
@@ -751,6 +800,7 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 		$queued_ids = array();
 	//ewwwio_memory( 'finished a while loop (selected_ids)' );
 	} // endwhile
+	ewww_image_optimizer_debug_log();
 	if ( ! empty( $images ) ) {
 		$insert_query = "INSERT INTO $wpdb->ewwwio_images (path,gallery,orig_size,attachment_id,resize,pending) VALUES " . implode( ',', $images );
 		$wpdb->query( $insert_query );
@@ -829,6 +879,7 @@ function ewww_image_optimizer_bulk_initialize() {
 	} else {
 		$output['results'] = "<p>" . esc_html__( 'Optimizing', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . "&nbsp;<img src='$loading_image' /></p>";
 	}
+	$output['start_time'] = time();
 	ewwwio_memory( __FUNCTION__ );
 	die( json_encode( $output ) );
 }
@@ -876,12 +927,13 @@ function ewww_image_optimizer_bulk_loop( $hook, $delay = 0 ) {
 		$output['completed']++;
 		$meta = false;
 		// see if the image needs fetching from a CDN
-		if ( $image->resize === 'full' && ! is_file( $image->file ) ) {
+		if ( ! is_file( $image->file ) ) {
 			$meta = wp_get_attachment_metadata( $image->attachment_id );
 			$file_path = ewww_image_optimizer_remote_fetch( $image->attachment_id, $meta );
-			if ( $file_path && $image->file != $file_path ) {
+			unset( $meta );
+		/*	if ( $image->resize === 'full' && $file_path && $image->file != $file_path ) {
 				$image->file = $file_path;
-			} elseif ( ! $file_path ) {
+			} else*/if ( ! $file_path ) {
 				ewwwio_debug_message( 'could not retrieve path' );
 				if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					WP_CLI::line( __( 'Could not find image', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . ' ' . $image->file );
@@ -898,7 +950,7 @@ function ewww_image_optimizer_bulk_loop( $hook, $delay = 0 ) {
 			if ( ! $meta || ! is_array( $meta ) ) {
 				$meta = wp_get_attachment_metadata( $image->attachment_id );
 			}
-			$new_dimensions = ewww_image_optimizer_resize_upload( $file_path );
+			$new_dimensions = ewww_image_optimizer_resize_upload( $image->file );
 			if ( is_array( $new_dimensions ) ) {
 				$meta['width'] = $new_dimensions[0];
 				$meta['height'] = $new_dimensions[1];
@@ -1004,6 +1056,7 @@ function ewww_image_optimizer_bulk_loop( $hook, $delay = 0 ) {
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		return true;
 	}
+	$output['current_time'] = time();
 	die( json_encode( $output ) );
 }
 
