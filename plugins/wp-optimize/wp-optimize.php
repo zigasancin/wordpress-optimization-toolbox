@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: http://updraftplus.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.0.1
+Version: 2.1.0
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -13,7 +13,7 @@ License: GPLv2 or later
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-define('WPO_VERSION', '2.0.1');
+define('WPO_VERSION', '2.1.0');
 define('WPO_PLUGIN_URL', plugin_dir_url( __FILE__ ));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path( __FILE__ ));
 
@@ -24,6 +24,7 @@ class WP_Optimize {
 	protected static $_instance = null;
 	protected static $_optimizer_instance = null;
 	protected static $_options_instance = null;
+	protected static $_notices_instance = null;
 
 	public function __construct() {
 
@@ -36,9 +37,12 @@ class WP_Optimize {
 		add_filter("plugin_action_links_$plugin", array($this, 'plugin_settings_link'));
 		add_action('admin_init', array($this, 'admin_init'));
 		add_action('admin_menu', array($this, 'admin_menu'));
-		add_action('admin_head', array($this, 'admin_head'));
 		add_action('wpo_cron_event2', array($this, 'cron_action'));
 		add_filter('cron_schedules', array($this, 'cron_schedules'));
+		
+		add_action('wp_ajax_wp_optimize_ajax', array($this, 'wp_optimize_ajax_handler'));
+		
+		include_once(WPO_PLUGIN_MAIN_PATH.'/includes/updraftcentral.php');
 		
 	}
 	
@@ -65,8 +69,38 @@ class WP_Optimize {
 		return self::$_options_instance;
 	}
 	
+	public static function get_notices() {
+		if (empty(self::$_notices_instance)) {
+			if (!class_exists('WP_Optimize_Notices')) require_once(WPO_PLUGIN_MAIN_PATH.'/includes/wp-optimize-notices.php');
+			self::$_notices_instance = new WP_Optimize_Notices();
+		}
+		return self::$_notices_instance;
+	}
+	
 	public function admin_init() {
+
+		global $pagenow;
+
 		$this->register_template_directories();
+
+		if (($pagenow == 'index.php' && current_user_can('update_plugins')) || ($pagenow == 'index.php' && defined('WP_OPTIMIZE_FORCE_DASHNOTICE') && WP_OPTIMIZE_FORCE_DASHNOTICE)) {
+
+			$options = $this->get_options();
+
+			$dismissed_until = $options->get_option('dismiss_dash_notice_until', 0);
+
+			$installed = @filemtime(WPO_PLUGIN_MAIN_PATH . '/index.html');
+			$installed_for = time() - $installed;
+
+			if (($installed && time() > $dismissed_until && $installed_for > 28*86400 && !defined('WP_OPTIMIZE_NOADS_B')) || (defined('WP_OPTIMIZE_FORCE_DASHNOTICE') && WP_OPTIMIZE_FORCE_DASHNOTICE)) {
+				
+				add_action('all_admin_notices', array($this, 'show_admin_notice_upgradead') );
+			}
+		}
+	}
+
+	public function show_admin_notice_upgradead() {
+		$this->include_template('notices/thanks-for-using-main-dash.php');
 	}
 	
 	public function plugins_loaded() {
@@ -76,6 +110,75 @@ class WP_Optimize {
 	public function capability_required() {
 		return apply_filters('wp_optimize_capability_required', 'manage_options');
 	}
+
+	public function wp_optimize_ajax_handler() {
+
+		$nonce = empty($_POST['nonce']) ? '' : $_POST['nonce'];
+
+		if (!wp_verify_nonce($nonce, 'wp-optimize-ajax-nonce') || empty($_POST['subaction'])) die('Security check');
+		
+		$subaction = $_POST['subaction'];
+		$data = isset($_POST['data']) ? $_POST['data'] : null;
+
+		if (!current_user_can($this->capability_required())) die('Security check');
+
+		$optimizer = $this->get_optimizer();
+		$options = $this->get_options();
+
+		$results = array();
+		
+		// Some commands that are available via AJAX only
+		if ('dismiss_dash_notice_until' == $subaction) {
+		
+			$options->update_option('dismiss_dash_notice_until', time() + 366*86400);
+			
+		} elseif ('dismiss_page_notice_until' == $subaction) {
+		
+			$options->update_option('dismiss_page_notice_until', time() + 84*86400);
+			
+		} else {
+		
+			// Other commands, available for any remote method
+			
+			if (!class_exists('WP_Optimize_Commands')) require_once(WPO_PLUGIN_MAIN_PATH.'includes/class-commands.php');
+			
+			$commands = new WP_Optimize_Commands();
+			
+			if (!method_exists($commands, $subaction)) {
+			
+				error_log("WP-Optimize: ajax_handler: no such command ($command)");
+				die('No such command');
+				
+			} else {
+			
+				$results = call_user_func(array($commands, $subaction), $data);
+				
+				if (is_wp_error($results)) {
+					$results = array(
+						'result' => false,
+						'error_code' => $results->get_error_code(),
+						'error_message' => $results->get_error_message(),
+						'error_data' => $results->get_error_data(),
+					);
+				}
+			
+			}
+			
+		}
+		
+		echo json_encode($results);
+		
+		die;
+	}
+
+	public function get_tabs() {
+		return apply_filters('wp_optimize_admin_page_tabs', array(
+			'optimize' => 'WP-Optimize',
+			'tables' => __('Table information', 'wp-optimize'),
+			'settings' => __('Settings', 'wp-optimize'),
+			'may_also' => __('Plugin family', 'wp-optimize'),
+		));
+	}
 	
 	public function wp_optimize_menu() {
 
@@ -84,78 +187,100 @@ class WP_Optimize {
 		if (!current_user_can($capability_required)) { echo "Permission denied."; return; }
 	
 		$enqueue_version = (defined('WP_DEBUG') && WP_DEBUG) ? WPO_VERSION.'.'.time() : WPO_VERSION;
+		$min_or_not = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '.min';
+		
+		wp_register_script('updraft-queue-js', WPO_PLUGIN_URL.'js/queue'.$min_or_not.'.js', array(), $enqueue_version);
 
-		wp_enqueue_script('wp-optimize-admin', WPO_PLUGIN_URL.'js/admin.js', array('jquery'), $enqueue_version);
-	
+		wp_enqueue_script('wp-optimize-admin-js', WPO_PLUGIN_URL.'js/wpadmin'.$min_or_not.'.js', array('jquery', 'updraft-queue-js'), $enqueue_version);
+
+		wp_enqueue_style('wp-optimize-admin-css', WPO_PLUGIN_URL.'css/admin'.$min_or_not.'.css', array(), $enqueue_version);
+		
 		$options = $this->get_options();
+		
+		$tabs = $this->get_tabs();
+		
+		$default_tab = apply_filters('wp_optimize_admin_default_tab', 'optimize');
 
-		$active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'wp_optimize_optimize';  
-		if ('wp_optimize_tables' != $active_tab && 'wp_optimize_settings' != $active_tab && 'wp_optimize_may_also' != $active_tab) $active_tab = 'wp_optimize_optimize';
+		$active_tab = isset($_GET['tab']) ? substr($_GET['tab'], 12) : $default_tab;
 
-		if ('wp_optimize_optimize' == $active_tab && !empty($_REQUEST['_wpnonce']) && wp_verify_nonce($_REQUEST['_wpnonce'], 'wpo_optimization')) $options->save_posted_options();
-		
-		$this->include_template('admin-page-header.php', false, array('active_tab' => $active_tab));
+		if (!in_array($active_tab, array_keys($tabs))) $active_tab = $default_tab;
 
-		echo '<div class="wrap wp-optimize-wrap">';
+		$nonce_passed = (!empty($_REQUEST['_wpnonce']) && wp_verify_nonce($_REQUEST['_wpnonce'], 'wpo_optimization')) ? true : false;
+		
+		if ('optimize' == $active_tab && $nonce_passed && isset($_POST['wp-optimize'])) $options->save_sent_manual_run_optimization_options($_POST, true);
 
-		// TODO: Make the page more interactive by printing all the tabs, and switching using JavaScript instead of using page re-loads
-		if ('wp_optimize_tables' == $active_tab) {
-		
-			// There's no way to trigger this, AFAICT. If we add it, it should have a nonce to protect it.
-			$optimize_db = false;//isset($_POST["optimize-db"]);
-		
-			$this->include_template('tables.php', false, array('optimize_db' => $optimize_db));
-			
-		} elseif ('wp_optimize_settings' == $active_tab) {
-		
-			$output = $options->save_posted_settings();
-			
-			foreach ($output as $item) {
-				echo '<div class="updated fade"><strong>'.$item.'</strong></div>';
-			}
-		
-			$this->include_template('admin-settings.php');
-			
-		} elseif ('wp_optimize_may_also' == $active_tab) {
-		
-			$this->include_template('may-also-like.php');
-			
-		} else {
-		
-			$nonce_passed = (!empty($_REQUEST['_wpnonce']) && wp_verify_nonce($_REQUEST['_wpnonce'], 'wpo_optimization')) ? true : false;
-		
-			// Default tab: wp_optimize_optimize
-			
-			$optimizer = $this->get_optimizer();
-			
-			$optimization_results = $nonce_passed ? $optimizer->do_optimizations($_POST) : false;
+		echo '<div id="wp-optimize-wrap" class="wrap">';
 
-			if (!empty($optimization_results)) {
+		$this->include_template('admin-page-header.php', false, array('active_tab' => $active_tab, 'tabs' => $tabs));
+
+		$optimize_db = ($nonce_passed && isset($_POST["optimize-db"])) ? true : false;
+		
+		$optimizer = $this->get_optimizer();
+		
+		foreach ($tabs as $tab_id => $tab_description) {
+		
+			echo '<div class="wp-optimize-nav-tab-contents" id="wp-optimize-nav-tab-contents-'.$tab_id.'" '.(($tab_id == $active_tab) ? '' : 'style="display:none;"').'>';
+		
+			do_action('wp_optimize_admin_tab_render_begin', $active_tab);
+		
+			switch ($tab_id) {
 			
-				echo '<div id="message" class="updated"><strong>';
-			
-				foreach ($optimization_results as $optimization_result) {
+				case 'optimize':
 				
-					if (!empty($optimization_result->output)) {
-					
-						foreach ($optimization_result->output as $line) {
-							echo $line."<br>";
+					$optimization_results = $nonce_passed ? $optimizer->do_optimizations($_POST) : false;
+
+					if (!empty($optimization_results)) {
+						echo '<div id="message" class="updated"><strong>';
+						foreach ($optimization_results as $optimization_result) {
+							if (!empty($optimization_result->output)) {
+								foreach ($optimization_result->output as $line) { echo $line."<br>"; }
+							}
 						}
+						echo '</strong></div>';
+					}
 					
+					$this->include_template('optimize-table.php', false, array('optimize_db' => $optimize_db));
+				
+					break;
+					
+				case 'tables':
+
+					$this->include_template('tables.php', false, array('optimize_db' => $optimize_db));
+
+					break;
+					
+				case 'settings':
+				
+					if ('POST' == $_SERVER['REQUEST_METHOD']) {
+
+						// Nonce check
+						check_admin_referer('wpo_settings');
+					
+						$output = $options->save_settings($_POST);
+						
+						foreach ($output['messages'] as $item) {
+							echo '<div class="updated fade"><strong>'.$item.'</strong></div>';
+						}
+						
+						foreach ($output['errors'] as $item) {
+							echo '<div class="error fade"><strong>'.$item.'</strong></div>';
+						}
+
 					}
 				
-				}
-				
-				echo '</strong></div>';
-			
+					$this->include_template('admin-settings.php');
+					break;
+					
+				case 'may_also':
+					$this->include_template('may-also-like.php');
+					break;
 			}
-
-			$optimize_db = ($nonce_passed && isset($_POST["optimize-db"]));
 			
-			$this->include_template('optimize-table.php', false, array('optimize_db' => $optimize_db));
-			
+			echo '</div>';
 		}
-
+		
+		do_action('wp_optimize_admin_tab_render_end', $active_tab);
+		
 		echo '</div>';
 
 	}
@@ -163,13 +288,27 @@ class WP_Optimize {
 	public function wpo_admin_bar() {
 		global $wp_admin_bar;
 
-		// Add a link called at the top admin bar
-		$wp_admin_bar->add_node(array(
-			'id'    => 'wp-optimize',
-			'title' => 'WP-Optimize',
-			'href'  => menu_page_url( 'WP-Optimize', false ),
-		));
+		if (defined('WPOPTIMIZE_ADMINBAR_DISABLE') && WPOPTIMIZE_ADMINBAR_DISABLE) return;
 
+		// Add a link called at the top admin bar
+		$args = array(
+			'id' => 'wp-optimize-node',
+			'title' => apply_filters('wpoptimize_admin_node_title', 'WP-Optimize')
+		);
+		$wp_admin_bar->add_node($args);
+		
+		$tabs = $this->get_tabs();
+		
+		foreach ($tabs as $tab_id => $tab_title) {
+			$args = array(
+				'id' => 'wpoptimize_admin_node_'.$tab_id,
+				'title' => ('optimize' == $tab_id) ? __('Optimize', 'wp-optimize') : $tab_title,
+				'parent' => 'wp-optimize-node',
+				'href' => menu_page_url('WP-Optimize', false). '&tab=wp_optimize_'.$tab_id,
+			);
+			$wp_admin_bar->add_node($args);
+		}
+		
 	}
 
 	// Add settings link on plugin page
@@ -238,21 +377,18 @@ class WP_Optimize {
 	}
 
 
-	public function admin_head() {
-		$style_url = plugins_url( '/css/wpo_admin.css', __FILE__ ) ;
-		echo "<link rel='stylesheet' type='text/css' href='".$style_url."' />\n";
-	}
-	
 	public function admin_menu() {
 	
 		$capability_required = $this->capability_required();
 	
 		if (!current_user_can($capability_required)) return;
 
+		$icon_svg = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgdmlld0JveD0iMCAwIDE2IDE2IgogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmc0MzE2IgogICBoZWlnaHQ9IjE2IgogICB3aWR0aD0iMTYiPgogIDxkZWZzCiAgICAgaWQ9ImRlZnM0MzE4IiAvPgogIDxtZXRhZGF0YQogICAgIGlkPSJtZXRhZGF0YTQzMjEiPgogICAgPHJkZjpSREY+CiAgICAgIDxjYzpXb3JrCiAgICAgICAgIHJkZjphYm91dD0iIj4KICAgICAgICA8ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD4KICAgICAgICA8ZGM6dHlwZQogICAgICAgICAgIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiIC8+CiAgICAgICAgPGRjOnRpdGxlPjwvZGM6dGl0bGU+CiAgICAgIDwvY2M6V29yaz4KICAgIDwvcmRmOlJERj4KICA8L21ldGFkYXRhPgogIDxnCiAgICAgaWQ9ImxheWVyMSI+CiAgICA8cGF0aAogICAgICAgc3R5bGU9ImZpbGw6I2EwYTVhYTtmaWxsLW9wYWNpdHk6MSIKICAgICAgIGlkPSJwYXRoNTciCiAgICAgICBkPSJtIDEwLjc2ODgwOSw2Ljc2MTYwNTEgMCwwIGMgLTAuMDE2ODgsLTAuMDE2ODc4IC0wLjAyNTMxLC0wLjA0MjE4MSAtMC4wMzM3NCwtMC4wNjc0OTkgLTAuMDA4NCwtMC4wMDgzOSAtMC4wMDg0LC0wLjAxNjg3OCAtMC4wMTY4OCwtMC4wMzM3NDMgQyA5Ljk5MjYxMTIsNS4xOTIzMzY2IDguMjIwODU1Nyw0LjU4NDg3ODEgNi43NDQzOTEyLDUuMjkzNTc5NyA1LjY3MjkwMDUsNS44MDgyMzI4IDUuMDU3MDA0Myw2Ljg4ODE2MTMgNS4wNjU0NDIsOC4wMDE4MzY1IDQuNDU3OTgyMiw3LjMxMDAwNzYgMy42OTg2NTg0LDYuNzk1MzU0NSAyLjg1NDk2NDIsNi40OTE2MjUzIDMuMjY4Mzc0Myw1LjA2NTc4MzEgNC4yNTU0OTYsMy44MTcxMTY2IDUuNjg5Nzc0NiwzLjEyNTI4NzggOC4zNjQyODMyLDEuODM0NDM2OCAxMS41NzAzMTksMi45Mzk2NzQ0IDEyLjg4NjQ4MSw1LjU4ODg3MjYgMTMuNDUxNzU1LDYuNzI3ODU5NiAxNC42NDk4MDEsNy4zNTIxOTIxIDE1Ljg0Nzg0Niw3LjIzNDA3NSAxNS43NjM0ODIsNi4zMzk3NiAxNS41MTg4MDUsNS40MzcwMDg2IDE1LjEwNTM5Niw0LjU3NjQ0MDQgMTMuMjE1NTIxLDAuNjg3MDEzNCA4LjUzMzAyMjYsLTAuOTQxMzE2MjcgNC42NDM1OTQzLDAuOTQwMTIxNzkgMi4zMjM0MzcsMi4wNjIyMzM0IDAuODA0Nzg4MTQsNC4xNzk5MDQ0IDAuMzU3NjMxMzIsNi41MzM4MDk4IDIuNDE2MjQzOCw2LjQyNDEyOSA0LjQzMjY3MTcsNy41MDQwNTc0IDUuNDM2NjY2Miw5LjQzNjExNjcgbCAwLjAwODM5LDAgYyAwLjc1OTMxOTIsMS4zNzUyMjAzIDIuNDcyMDE3OCwxLjk0MDQ5NTMgMy45MDYyOTYsMS4yNDg2NjczIDEuMDQ2MTc5OCwtMC41MDYyMTggMS42NTM2NDA4LC0xLjUzNTUyMzggMS42Nzg5NTA4LC0yLjYxNTQ1MTIgMC41ODIxNDgsMC43MDg3MDE4IDEuMzMzMDM1LDEuMjQ4NjY2OCAyLjE1OTg1NiwxLjU3NzcwNjQgLTAuNDM4NzIxLDEuMzU4MzQ3OCAtMS40MDA1MzMsMi41NDc5NTQ4IC0yLjc5MjYyNywzLjIxNDQ3ODggLTIuNTkwMTM4NywxLjI0ODY1OCAtNS42NzgwNTc0LDAuMjUzMTA0IC03LjA2MTcxNTEsLTIuMjI3MzU3IGwgMCwwIEMgMi43NjIxMDQ4LDkuNDUyOTg5NCAxLjUxMzQzODMsOC44MjAyMTkxIDAuMjgxNjQ1OTIsOC45NzIwODQ0IDAuMzgyODg3NjUsOS43OTg5MDQ2IDAuNjE5MTIzMzEsMTAuNjE3Mjg3IDAuOTk4Nzg1MiwxMS40MDE5MjIgYyAxLjg4MTQzNjgsMy44OTc4NjQgNi41NjM5MzcsNS41MjYxOTggMTAuNDYxODAwOCwzLjY0NDc2IDIuMjQ0MjI2LC0xLjA4ODM2OSAzLjczNzU2MiwtMy4xMDQ3OTYgNC4yMzUzNDIsLTUuMzc0MzMyMyAtMS45OTk1NTQsMC4wNDIxODEgLTMuOTQ4NDg2LC0xLjAyOTMwNjMgLTQuOTI3MTcsLTIuOTEwNzQzMyB6IgogICAgICAgY2xhc3M9InN0MTciIC8+CiAgPC9nPgo8L3N2Zz4K';
+
 		if (function_exists('add_meta_box')) {
-			add_menu_page("WP-Optimize", "WP-Optimize", $capability_required, "WP-Optimize", array($this,"wp_optimize_menu"), plugin_dir_url( __FILE__ ).'images/icon/wpo.png');
+			add_menu_page("WP-Optimize", "WP-Optimize", $capability_required, "WP-Optimize", array($this,"wp_optimize_menu"), $icon_svg);
 		} else {
-			add_submenu_page("index.php", "WP-Optimize", "WP-Optimize", $capability_required, "WP-Optimize", array($this,"wp_optimize_menu"), plugin_dir_url( __FILE__ ).'images/icon/wpo.png');
+			add_submenu_page("index.php", "WP-Optimize", "WP-Optimize", $capability_required, "WP-Optimize", array($this,"wp_optimize_menu"), $icon_svg);
 		}
 		
 		$options = $this->get_options();
@@ -313,6 +449,7 @@ class WP_Optimize {
 			$wp_optimize = $this;
 			$optimizer = $this->get_optimizer();
 			$options = $this->get_options();
+			$wp_optimize_notices = $this->get_notices();
 			include $template_file;
 		}
 

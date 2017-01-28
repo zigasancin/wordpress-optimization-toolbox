@@ -38,32 +38,27 @@ class WP_Optimize_Options {
 
 		return apply_filters(
 			'wp_optimize_option_keys',
-			array('weekly-schedule', 'schedule', 'retention-enabled', 'retention-period', 'last-optimized', 'enable-admin-menu', 'schedule-type', 'total-cleaned', 'current-cleaned', 'email-address', 'email', 'auto', 'settings')
+			array('weekly-schedule', 'schedule', 'retention-enabled', 'retention-period', 'last-optimized', 'enable-admin-menu', 'schedule-type', 'total-cleaned', 'current-cleaned', 'email-address', 'email', 'auto', 'settings', 'dismiss_page_notice_until', 'dismiss_dash_notice_until')
 		);
 	}
 	
 	// This particular option has its own functions abstracted to make it easier to change the format in future, and to allow callers to always assume the latest format (because get_main_settings() will convert, if needed)
-	private function save_main_settings($settings) {
+	private function save_manual_run_optimizations_settings($settings) {
 		$settings['last_saved_in'] = WPO_VERSION;
-		$this->update_option('settings', $settings);
+		return $this->update_option('settings', $settings);
 	}
 	
 	public function get_main_settings() {
 		return $this->get_option('settings');
 	}
 	
-	public function save_posted_settings() {
-	
-		if ('POST' != $_SERVER['REQUEST_METHOD']) return array();
-
-		// Nonce check
-		check_admin_referer('wpo_settings');
+	public function save_settings($settings) {
 
 		$optimizer = WP_Optimize()->get_optimizer();
 	
-		$output = array();
+		$output = array('messages' => array(), 'errors' => array());
 	
-		if (isset($_POST["enable-schedule"])) {
+		if (!empty($settings["enable-schedule"])) {
 		
 			$this->update_option('schedule', 'true');
 			
@@ -75,8 +70,8 @@ class WP_Optimize_Options {
 
 			}*/
 			
-			if (isset($_POST["schedule_type"])) {
-				$schedule_type = (string)$_POST['schedule_type'];
+			if (isset($settings["schedule_type"])) {
+				$schedule_type = (string)$settings['schedule_type'];
 				$this->update_option('schedule-type', $schedule_type);
 			} else {
 				$this->update_option('schedule-type', 'wpo_weekly');
@@ -89,35 +84,35 @@ class WP_Optimize_Options {
 			$this->update_option('schedule-type', 'wpo_weekly');
 			wpo_cron_deactivate();
 		}
-		if (isset($_POST["enable-retention"])) {
-			$retention_period = (int)$_POST['retention-period'];
+		if (!empty($settings["enable-retention"])) {
+			$retention_period = (int)$settings['retention-period'];
 			$this->update_option('retention-enabled', 'true');
 			$this->update_option('retention-period', $retention_period);
 		} else {
 			$this->update_option('retention-enabled', 'false');
 		}
 
-		if (isset($_POST['enable-admin-bar'])) {
+		if (!empty($settings['enable-admin-bar'])) {
 			$this->update_option('enable-admin-menu', 'true');
 		} else {
 			$this->update_option('enable-admin-menu', 'false');
 		}
 		
-		if (isset($_POST["enable-email"])) {
+		if (!empty($settings["enable-email"])) {
 	//		$this->update_option('enable-email', 'true');
 		} else {
 			//$this->update_option('enable-email', 'false');
 		}
 		
-		if (isset($_POST["enable-email-address"])) {
-			//$this->update_option('enable-email-address', wp_unslash( $_POST["enable-email-address"] ) );
+		if (!empty($settings["enable-email-address"])) {
+			//$this->update_option('enable-email-address', wp_unslash( $settings["enable-email-address"] ) );
 		} else {
 			//$this->update_option('enable-email-address', get_bloginfo ( 'admin_email' ) );
 		}
 
-		if (isset($_POST['wp-optimize-settings'])) {
+		if (!empty($settings["schedule_type"])) {
 		
-			$new_options = isset($_POST['wp-optimize-auto']) ? $_POST['wp-optimize-auto'] : array();
+			$new_options = isset($settings['wp-optimize-auto']) ? $settings['wp-optimize-auto'] : array();
 			
 			if (!is_array($new_options)) $new_options = array();
 			
@@ -139,57 +134,27 @@ class WP_Optimize_Options {
 
 		}
 
-		if (isset($_POST['wp-optimize-disable-enable-trackbacks'])) {
-
-			if (0 == $_POST['wp-optimize-disable-enable-trackbacks']) {
-				$optimizer->enable_linkbacks('trackbacks', false);
-				$output[] = __('Trackbacks disabled on all current and previously published posts', 'wp-optimize');
-				
-			}
-
-			if (1 == $_POST['wp-optimize-disable-enable-trackbacks']) {
-				$optimizer->enable_linkbacks('trackbacks');
-				$output[] = __('Trackbacks enabled on all current and previously published posts', 'wp-optimize');
-			}
-		}
-
-		if( isset($_POST['wp-optimize-disable-enable-comments']) ) {
-
-			if (0 == $_POST['wp-optimize-disable-enable-comments']) {
-				$optimizer->enable_linkbacks('comments', false);
-				$output[] = __('Comments disabled on all current and previously published posts', 'wp-optimize');
-			}
-
-			if (1 == $_POST['wp-optimize-disable-enable-comments']) {
-				$optimizer->enable_linkbacks('comments');
-				$output[] = __('Comments enabled on all current and previously published posts', 'wp-optimize');
-			}
-		}
-
-		$output[] = __('Settings updated', 'wp-optimize');
+		$output['messages'][] = __('Settings updated.', 'wp-optimize');
 		
 		return $output;
 	
 	}
 	
-	public function save_posted_options() {
+	// The $use_dom_id parameter is legacy, for when saving options not with AJAX (in which case the dom ID comes via the $_POST array)
+	public function save_sent_manual_run_optimization_options($sent_options, $use_dom_id = false) {
 	
-		if (!isset($_POST['wp-optimize'])) return;
-
 		$optimizations = WP_Optimize()->get_optimizer()->get_optimizations();
 		$user_options = array();
-		
-		foreach ($optimizations as $optimization) {
+		foreach ($optimizations as $optimization_id => $optimization) {
 			// In current code, not all options can be saved.
 			///: revisions, drafts, spams, unapproved, optimize
 			if (empty($optimization->available_for_saving)) continue;
 			$setting_id = $optimization->get_setting_id();
-			$dom_id = $optimization->get_dom_id();
+			$id_in_sent = $use_dom_id ? $optimization->get_dom_id() : $optimization_id;
 			// 'true' / 'false' are indeed strings here; this is the historical state. It may be possible to change later using our abstraction interface.
-			$user_options[$setting_id] = isset($_POST[$dom_id]) ? 'true' : 'false';
+			$user_options[$setting_id] = isset($sent_options[$id_in_sent]) ? 'true' : 'false';
 		}
-		
-		$this->save_main_settings($user_options);
+		return $this->save_manual_run_optimizations_settings($user_options);
 		
 	}
 	
@@ -300,7 +265,7 @@ class WP_Optimize_Options {
 			
 			}
 
-			$this->save_main_settings($new_settings);
+			$this->save_manual_run_optimizations_settings($new_settings);
 		}
 
 	}

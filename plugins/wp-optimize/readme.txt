@@ -4,7 +4,7 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 4.7
-Stable tag: 2.0.1
+Stable tag: 2.1.0
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,21 @@ Please check your database for corrupted tables. That can happen, usually your w
 5. Mobile View Bottom (Actual screen from Galaxy Note 3)
 
 == Changelog ==
+
+= 2.1.0 - 28/Dec/2016 =
+
+* FOCUS: This release concentrates upon the user-interface, and in particular upon improving the clarity of each part, and making optimizations, saves and other actions possible without page reloads.
+* FEATURE: Any optimisation can now be run individually with a single button press
+* TWEAK: All optimisations run via the dashboard page are now run via AJAX (no page refresh)
+* TWEAK: Settings saving now takes place via AJAX (no page refresh)
+* TWEAK: Navigation between different tabs now takes place without a page refresh
+* TWEAK: The "trackback/comments" actions section now operates via AJAX (no page refresh needed)
+* TWEAK: "Refresh" button in the "Status" widget now refreshes via AJAX (no page refresh needed)
+* TWEAK: When saving settings or running an optimization, the "Status" widget now automatically refreshes
+* TWEAK: Make the admin bar menu into a drop-down, making it quicker to access individual tabs
+* TWEAK: Call set_time_limit to reduce the chances of PHP self-terminating via reaching max_execution_time
+* TWEAK: Introduce dashboard notice infrastructure
+* TWEAK: The lines showing information on how many spam/trashed posts and comments existed were incomplete
 
 = 2.0.1 - 12/Dec/2016 =
 
@@ -316,4 +331,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.0.1: Re-factor of the plugin's internals, laying a foundation for planned future advances.
+* 2.1.0: Makeover of the plugin's user-interface, providing greater ease of use, and eliminating the need for page reloads

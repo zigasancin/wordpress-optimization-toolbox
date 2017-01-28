@@ -5,8 +5,8 @@
 
 	echo '<h1>WP-Optimize '.WPO_VERSION.'</h1>';
 
-	echo '<em>'.__('Running on:', 'wp-optimize').' PHP '.PHP_VERSION.', '.__('MySQL', 'wp-optimize').' '.$sqlversion.' - '.htmlspecialchars(PHP_OS).'</em><br>';
-	
+	$wp_optimize_notices->do_notice();
+
 	function wp_optimize_header_link($url, $text) {
 	
 		if (false !== strpos($url, '//updraftplus.com')) $url = apply_filters('wpoptimize_updraftplus_com_link', $url);
@@ -39,14 +39,15 @@
 		
 </p>
 
-<h2 class="nav-tab-wrapper">
+<h2 id="wp-optimize-nav-tab-wrapper" class="nav-tab-wrapper">
 
-		<a href="<?php echo esc_attr($options->admin_page_url()); ?>&amp;tab=wp_optimize_optimize" class="nav-tab <?php if ($active_tab == 'wp_optimize_optimize') echo 'nav-tab-active'; ?>">WP-Optimize</span></a>
+		<?php foreach ($tabs as $tab_id => $tab_title) { ?>
 
-		<a href="<?php echo esc_attr($options->admin_page_url()); ?>&amp;tab=wp_optimize_tables" class="nav-tab <?php if ($active_tab == 'wp_optimize_tables') echo 'nav-tab-active'; ?>"><?php _e('Table information', 'wp-optimize') ?></a>
-
-		<a href="<?php echo esc_attr($options->admin_page_url()); ?>&amp;tab=wp_optimize_settings" class="nav-tab <?php if ($active_tab == 'wp_optimize_settings') echo 'nav-tab-active'; ?>"><?php _e('Settings', 'wp-optimize') ?></a>
-
-		<a href="<?php echo esc_attr($options->admin_page_url()); ?>&amp;tab=wp_optimize_may_also" class="nav-tab <?php if ($active_tab == 'wp_optimize_may_also') echo 'nav-tab-active'; ?>"><?php _e('Plugin family', 'wp-optimize') ?></a>
+			<a id="wp-optimize-nav-tab-<?php echo $tab_id;?>" href="<?php esc_attr_e($options->admin_page_url()); ?>&amp;tab=wp_optimize_<?php echo $tab_id; ?>" class="nav-tab <?php if ($active_tab == $tab_id) echo 'nav-tab-active'; ?>"><?php echo $tab_title;?></span></a>
+		
+		<?php } ?>
 
 </h2>
+<script type="text/javascript">
+	var wp_optimize_ajax_nonce='<?php echo wp_create_nonce('wp-optimize-ajax-nonce');?>';
+</script>

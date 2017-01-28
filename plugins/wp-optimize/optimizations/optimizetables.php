@@ -13,6 +13,7 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 
 	public $setting_default = true;
 
+	public $changes_table_data = true;
 	public $ui_sort_order = 500;
 	public $run_sort_order = 100000;
 
@@ -75,7 +76,7 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 
 			$wp_optimize->log('Total Gain .... '.strval($total_gain));
 			
-			$this->register_output(sprintf(_x('%s Database Optimized!', '%s is the Database Name', 'wp-optimize'), "'".htmlspecialchars(DB_NAME)."'"));
+			$this->register_output(sprintf(_x('%s database optimized!', '%s is the database name', 'wp-optimize'), "'".htmlspecialchars(DB_NAME)."'"));
 			
 		}
 		

@@ -19,6 +19,8 @@ abstract class WP_Optimization {
 	
 	protected $ui_sort_order;
 	protected $run_sort_order = 1000;
+	// This property indicates whether running this optimization is likely to change the overall table optimization state. We set this to 'true' on optimizations that run SQL OPTIMIZE commands. It is only used for the UI. Strictly, of course, any optimization that deletes something can cause increased fragmentation; so; in that sense, it would be true for every optimization; but since we are just using it to keep the UI reasonably fresh, and since there is a manual "refresh" button, we set it only on some optimisations.
+	protected $changes_table_data;
 	
 	protected $optimizer;
 	protected $options;
@@ -101,11 +103,20 @@ abstract class WP_Optimization {
 		return empty($this->auto_id) ? $this->id : $this->auto_id;
 	}
 	
+	public function get_changes_table_data() {
+		return empty($this->changes_table_data) ? false : true;
+	}
+	
+	public function get_run_sort_order() {
+		return empty($this->run_sort_order) ? 0 : $this->run_sort_order;
+	}
+	
 	// Only used if $available_for_auto is true, in which case this function should be over-ridden
 	public function get_auto_option_description() {
 		return 'Error: missing automatic option description ('.$this->id.')';
 	}
 	
+	// What is returned must be at least convertible to an array
 	public function get_results() {
 	
 		// As yet, we have no need for a dedicated object type for our results
@@ -118,7 +129,7 @@ abstract class WP_Optimization {
 		return apply_filters('wp_optimize_optimization_results', $results, $this->id, $this);
 	}
 	
-	public function output_settings_html() {
+	public function get_settings_html() {
 
 		$wpo_user_selection = $this->options->get_main_settings();
 		$setting_id = $this->get_setting_id();
@@ -127,35 +138,22 @@ abstract class WP_Optimization {
 		// N.B. Some of the optimizations used to have an onclick call to fCheck(). But that function was commented out, so did nothing.
 
 		$settings_label = $this->settings_label();
-		
+
 		$setting_activated = (empty($wpo_user_selection[$setting_id]) || 'false' == $wpo_user_selection[$setting_id]) ? false : true;
 		
-		if (!empty($settings_label)) {
-
-			?>
-			<div class="wp-optimize-settings wp-optimize-settings-<?php echo $dom_id;?>">
-			
-				<input name="<?php echo $dom_id;?>" id="<?php echo $dom_id;?>" type="checkbox" value="true" <?php if ($setting_activated) echo 'checked="checked"';?>>
-
-				<label for="<?php echo $dom_id;?>"><?php echo $settings_label; ?></label>
-
-				<br>
-				
-				<div class="wp-optimize-settings-optimization-info"><?php
-					$results = $this->get_optimization_info()->output;
-					$subsequent_one = false;
-					foreach ($results as $key => $line) {
-						if ($subsequent_one) { echo '<br>'; } else { $subsequent_one = true; }
-						echo $line;
-					}
-				?></div>
-				
-			</div>
-			<?php
-		} else {
+		$settings_html = array(
+			'dom_id' => $dom_id,
+			'activated' => $setting_activated,
+			'settings_label' => $settings_label,
+			'info' => $this->get_optimization_info()->output,
+		);
+		
+		if (empty($settings_label)) {
 			// error_log, as this is a defect
 			error_log("Optimization with setting ID ".$setting_id." lacks a settings label (method: settings_label())");
 		}
+		
+		return $settings_html;
 	}
 	
 }

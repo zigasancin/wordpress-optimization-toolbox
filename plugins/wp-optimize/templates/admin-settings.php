@@ -4,11 +4,11 @@
 
 	<form action="#" method="post" enctype="multipart/form-data" name="settings_form" id="settings_form">
 
-	<input type="hidden" name="action" value="save_redirect" />
+	<input type="hidden" name="action" value="save_redirect">
 
-	<?php wp_nonce_field( 'wpo_settings' ); ?>
+	<?php wp_nonce_field( 'wpo_optimization' ); ?>
 
-	<div class="wpo_col wpo_span_1_of_3">
+	<div class="wpo_col wpo_span_2_of_3">
 		<div class="postbox">
 			<div class="inside">
 				<h3><?php _e('General settings', 'wp-optimize'); ?></h3>
@@ -33,42 +33,9 @@
 					<br>
 					<small><?php _e('This option will put an WP-Optimize link on the top admin bar (default is off). Requires a second page refresh after saving the settings.', 'wp-optimize');?></small>
 				</p>
-					<h3><?php _e('Trackback/comments actions', 'wp-optimize'); ?></h3>
-				<p>
-					<?php _e('Disable/enable trackbacks', 'wp-optimize'); ?>
-					<br>
-					<select id="wp-optimize-disable-enable-trackbacks" name="wp-optimize-disable-enable-trackbacks">
-						<option value="-1"><?php _e('SELECT', 'wp-optimize'); ?></option>
-						<option value="0"><?php _e('Disable', 'wp-optimize'); ?></option>
-						<option value="1"><?php _e('Enable', 'wp-optimize'); ?></option>
-					</select>
-					<br><br>
-					<small><?php _e('This will disable/enable Trackbacks on all your current and previously published posts', 'wp-optimize');?></small>
-				</p>
-				<p>
-					<?php _e('Disable/enable comments', 'wp-optimize'); ?>
-					<br>
-					<select id="wp-optimize-disable-enable-comments" name="wp-optimize-disable-enable-comments">
-						<option value="-1"><?php _e('SELECT', 'wp-optimize'); ?></option>
-						<option value="0"><?php _e('Disable', 'wp-optimize'); ?></option>
-						<option value="1"><?php _e('Enable', 'wp-optimize'); ?></option>
-					</select>
-					<br><br>
-					<small><?php _e('This will disable/enable Comments on all your current and previously published posts', 'wp-optimize');?></small>
-				</p>
-
-				<p>
-					<input class="button-primary" type="submit" name="wp-optimize-settings1" value="<?php esc_attr_e('Save settings', 'wp-optimize'); ?>" />
-				</p>
-			</div>
-		</div>
-	</div>
-
-	<?php $wpo_auto_options = $options->get_option('auto'); ?>
-	
-	<div class="wpo_col wpo_span_1_of_3">
-		<div class="postbox">
-			<div class="inside">
+				
+				<hr>
+				
 				<h3><?php _e('Auto clean-up settings', 'wp-optimize'); ?></h3>
 
 				<p>
@@ -104,18 +71,13 @@
 							?>
 
 						</select>
-						<br><br>
-						<small><?php _e('Automatic cleanup will perform the following:', 'wp-optimize');
-						echo '<br>';
-						_e('Remove revisions, auto drafts, posts/comments in trash, transient options. After that it will optimize the db.', 'wp-optimize');?></small>
 
 					</p>
 					
 					<?php
-					// TODO: No ordering is currently applied. The previous ordering:
-					// revisions, drafts(=autodraft), spams(=spam), unapproved, (red)transient, [commented out: postmeta, tags], optimizedb
-
-					// TODO: postmeta ("Remove orphaned post meta") and tags ("Remove unused tags") were present in the HTML previously, but commented out. Should ask Ruhani about that.
+						$wpo_auto_options = $options->get_option('auto');
+						
+						// TODO: postmeta ("Remove orphaned post meta") and tags ("Remove unused tags") were present in the HTML previously, but commented out. Should ask Ruhani about that.
 						$optimizations = $optimizer->sort_optimizations($optimizer->get_optimizations());
 						
 						foreach ($optimizations as $id => $optimization) {
@@ -152,12 +114,56 @@
 					
 				</div>
 				
-				<input class="button-primary" type="submit" name="wp-optimize-settings" value="<?php esc_attr_e('Save auto clean-up settings', 'wp-optimize'); ?>" />
+				<hr>
+
+				<div id="wp-optimize-settings-save-results"></div>
+				
+				<input id="wp-optimize-settings-save" class="button button-primary" type="submit" name="wp-optimize-settings" value="<?php esc_attr_e('Save settings', 'wp-optimize'); ?>" />
+				
+				<img id="save_spinner" class="wpo_spinner" src="<?php echo esc_attr(admin_url('images/spinner.gif'));?>" alt="...">
+				
+				<span id="save_done" class="dashicons dashicons-yes display-none"></span>
 				
 			</div>
-			
 		</div>
 	</div>
 
 	</form>
+	<div class="wpo_col wpo_span_1_of_3">
+		<div class="postbox">
+			<div class="inside">
+				<h3><?php _e('Trackback/comments actions', 'wp-optimize'); ?></h3>
+				
+				<div id="actions-results-area"></div>
+				
+				<p>
+					<h4><?php _e('Trackbacks', 'wp-optimize'); ?></h4>
+					
+					<p>
+						<small><?php _e('Use these buttons to enable or disable any future trackbacks on all your previously published posts.', 'wp-optimize');?></small>
+					</p>
+					
+					<button class="button-primary" type="button" id="wp-optimize-disable-enable-trackbacks-enable" name="wp-optimize-disable-enable-trackbacks-enable"><?php _e('Enable', 'wp-optimize'); ?></button>
+					
+					<button class="button-primary" type="button" id="wp-optimize-disable-enable-trackbacks-disable" name="wp-optimize-disable-enable-trackbacks-disable"><?php _e('Disable', 'wp-optimize'); ?></button>
+					
+					<img id="trackbacks_spinner" class="wpo_spinner" src="<?php esc_attr_e(admin_url('images/spinner.gif'));?>" alt="...">
+					
+				</p>
+				<p>
+					<h4><?php _e('Comments', 'wp-optimize'); ?></h4>
+					
+					<p><small><?php _e('Use these buttons to enable or disable any future comments on all your previously published posts.', 'wp-optimize');?></small></p>
+
+					<button class="button-primary" type="button" id="wp-optimize-disable-enable-comments-enable" name="wp-optimize-disable-enable-comments-enable"><?php _e('Enable', 'wp-optimize'); ?></button>
+
+					<button class="button-primary" type="button" id="wp-optimize-disable-enable-comments-disable" name="wp-optimize-disable-enable-comments-disable"><?php _e('Disable', 'wp-optimize'); ?></button>
+					
+					<img id="comments_spinner" class="wpo_spinner" src="<?php esc_attr_e(admin_url('images/spinner.gif'));?>" alt="...">
+					
+				</p>
+			</div>
+		</div>		
+	</div>
 </div>
+

@@ -44,24 +44,38 @@ class WP_Optimization_autodraft extends WP_Optimization {
 	}
 	
 	public function get_info() {
-		
-		$sql = "SELECT COUNT(*) FROM `".$this->wpdb->posts."` WHERE post_status = 'auto-draft'";
 
+		$sql = "SELECT COUNT(*) FROM `".$this->wpdb->posts."` WHERE post_status = 'auto-draft'";
 		if ($this->retention_enabled == 'true') {
 			$sql .= ' and post_modified < NOW() - INTERVAL ' .  $this->retention_period . ' WEEK';
 		}
-
 		$sql .= ';';
 
 		$autodraft = $this->wpdb->get_var($sql);
 
-		if(!$autodraft == 0 || !$autodraft == NULL){
+		if (0 != $autodraft && null != $autodraft) {
 			$message = sprintf(_n('%d auto draft post in your database', '%d auto draft posts in your database', $autodraft, 'wp-optimize'), number_format_i18n($autodraft));
 		} else {
 			$message =__('No auto draft posts found', 'wp-optimize');
 		}
 		
 		$this->register_output($message);
+
+		$sql2 = "SELECT COUNT(*) FROM `".$this->wpdb->posts."` WHERE post_status = 'trash'";
+		if ($this->retention_enabled == 'true') {
+			$sql2 .= ' and post_modified < NOW() - INTERVAL ' .  $this->retention_period . ' WEEK';
+		}
+		$sql2 .= ';';
+
+		$trash = $this->wpdb->get_var($sql2);
+
+		if (0 != $trash && null != $trash) {
+			$message2 = sprintf(_n('%d trashed post in your database', '%d trashed posts in your database', $trash, 'wp-optimize'), number_format_i18n($trash));
+		} else {
+			$message2 =__('No trashed posts found', 'wp-optimize');
+		}
+
+		$this->register_output($message2);
 	}
 	
 	public function settings_label() {

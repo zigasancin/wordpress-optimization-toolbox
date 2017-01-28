@@ -88,7 +88,7 @@ class WP_Optimizer {
 	
 	// This method returns an object for a specific optimization
 	// This will return a WP_Error if the requested optimization is not found
-	private function get_optimization($which_optimization) {
+	public function get_optimization($which_optimization) {
 	
 		$optimization_class = apply_filters('wp_optimize_optimization_class', 'WP_Optimization_'.$which_optimization);
 		
@@ -160,7 +160,11 @@ class WP_Optimizer {
 	
 		$results = array();
 		
+		if (empty($optimization_options)) return $results;
+	
 		$optimizations = $this->sort_optimizations($this->get_optimizations(), 'run_sort_order');
+		
+		$time_limit = (defined('WP_OPTIMIZE_SET_TIME_LIMIT') && WP_OPTIMIZE_SET_TIME_LIMIT>15) ? WP_OPTIMIZE_SET_TIME_LIMIT : 1800;
 		
 		foreach ($optimizations as $optimization_id => $optimization) {
 
@@ -169,6 +173,9 @@ class WP_Optimizer {
 			if (isset($optimization_options[$option_id])) {
 			
 				if ('auto' == $which_option && empty($optimization->available_for_auto)) continue;
+			
+				// Try to reduce the chances of PHP self-terminating via reaching max_execution_time
+				@set_time_limit($time_limit);
 			
 				$results[$optimization_id] = $this->do_optimization($optimization_id);
 				
@@ -320,6 +327,36 @@ class WP_Optimizer {
 		$options->update_option('current-cleaned', $current);
 
 		return $total_now;
+	}
+	
+	
+	public function trackback_comment_actions($options) {
+	
+		$output = array();
+	
+		if(isset($options['comments'])) {
+
+			if (!$options['comments']) {
+				$this->enable_linkbacks('comments', false);
+				$output[] = __('Comments have now been disabled on all current and previously published posts.', 'wp-optimize');
+			} else {
+				$this->enable_linkbacks('comments');
+				$output[] = __('Comments have now been enabled on all current and previously published posts.', 'wp-optimize');
+			}
+		}
+		
+		if (isset($options['trackbacks'])) {
+			if (!$options['trackbacks']) {
+				$this->enable_linkbacks('trackbacks', false);
+				$output[] = __('Trackbacks have now been disabled on all current and previously published posts.', 'wp-optimize');
+				
+			} else {
+				$this->enable_linkbacks('trackbacks');
+				$output[] = __('Trackbacks have now been enabled on all current and previously published posts.', 'wp-optimize');
+			}
+		}
+		
+		return array('output' => $output);
 	}
 	
 }

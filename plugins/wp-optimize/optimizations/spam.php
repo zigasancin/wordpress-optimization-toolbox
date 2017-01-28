@@ -43,7 +43,6 @@ class WP_Optimization_spam extends WP_Optimization {
 	public function get_info() {
 		
 		$sql = "SELECT COUNT(*) FROM `".$this->wpdb->comments."` WHERE comment_approved = 'spam'";
-
 		if ($this->retention_enabled == 'true') {
 			$sql .= ' and comment_date < NOW() - INTERVAL ' . $this->retention_period . ' WEEK';
 		}
@@ -51,18 +50,35 @@ class WP_Optimization_spam extends WP_Optimization {
 
 		$comments = $this->wpdb->get_var($sql);
 
-		if(!$comments == NULL || !$comments == 0){
-			$message = sprintf(_n('%d spam comment found', '%d spam comments found', $comments, 'wp-optimize'), number_format_i18n($comments)).' | <a href="edit-comments.php?comment_status=spam">'.' '.__('Review', 'wp-optimize').'</a>';
+		if (null != $comments && 0 != $comments) {
+			$message = sprintf(_n('%d spam comment found', '%d spam comments found', $comments, 'wp-optimize'), number_format_i18n($comments)).' | <a id="wp-optimize-edit-comments-spam" href="'.admin_url('edit-comments.php?comment_status=spam').'">'.' '.__('Review', 'wp-optimize').'</a>';
 		} else {
 			$message = __('No spam comments found', 'wp-optimize');
 		}
 		
 		$this->register_output($message);
+		
+		$sql2 = "SELECT COUNT(*) FROM `".$this->wpdb->comments."` WHERE comment_approved = 'trash'";
+		if ($this->retention_enabled == 'true') {
+			$sql2 .= ' and comment_date < NOW() - INTERVAL ' . $this->retention_period . ' WEEK';
+		}
+		$sql2 .= ';';
+
+		$comments = $this->wpdb->get_var($sql2);
+
+		if (null != $comments && 0 != $comments) {
+			$message2 = sprintf(_n('%d trashed comment found', '%d trashed comments found', $comments, 'wp-optimize'), number_format_i18n($comments)).' | <a id="wp-optimize-edit-comments-trash" href="'.admin_url('edit-comments.php?comment_status=trash').'">'.' '.__('Review', 'wp-optimize').'</a>';
+		} else {
+			$message2 = __('No trashed comments found', 'wp-optimize');
+		}
+		
+		$this->register_output($message2);
+		
 	}
 	
 	public function settings_label() {
 	
-		if ($this->retention_enabled == 'true' ) {
+		if ($this->retention_enabled == 'true') {
 			return sprintf(__('Remove spam comments which are older than %d weeks', 'wp-optimize'), $this->retention_period);
 		} else {
 			return __('Remove spam comments and comments in trash', 'wp-optimize');
