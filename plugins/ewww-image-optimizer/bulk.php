@@ -523,6 +523,7 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 	);
 	ewwwio_debug_message( "scanning for media attachments" );
 	update_option( 'ewww_image_optimizer_bulk_resume', 'scanning' );
+	set_transient( 'ewww_image_optimizer_no_scheduled_optimization', true, 30  * MINUTE_IN_SECONDS );
 
 	// retrieve the time when the scan starts
 	$started = microtime( true );
@@ -979,7 +980,7 @@ function ewww_image_optimizer_bulk_initialize() {
 		$attachments = unserialize( $attachments );
 	}
 	if ( ! is_array( $attachments ) ) {
-		die( json_encode( array( 'error' => esc_html__( 'Error retrieving list of images', EWWW_IMAGE_OPTIMIZER_DOMAIN ) ) ) );
+		die( json_encode( array( 'error' => esc_html__( 'Error retrieving list of images', EWWW_IMAGE_OPTIMIZER_DOMAIN ), 'data' => print_r( $attachments, true ) ) ) );
 	}
 	$attachment = (int) array_shift( $attachments );
 	ewwwio_debug_message( "first image: $attachment" );
@@ -1014,6 +1015,8 @@ function ewww_image_optimizer_bulk_loop( $hook, $delay = 0 ) {
 	session_write_close();
 	// retrieve the time when the optimizer starts
 	$started = microtime( true );
+	// prevent the scheduled optimizer from firing during a bulk optimization
+	set_transient( 'ewww_image_optimizer_no_scheduled_optimization', true, 5  * MINUTE_IN_SECONDS );
 	// find out if our nonce is on it's last leg/tick
 	if ( ! empty( $_REQUEST['ewww_wpnonce'] ) ) {
 		$tick = wp_verify_nonce( $_REQUEST['ewww_wpnonce'], 'ewww-image-optimizer-bulk' );

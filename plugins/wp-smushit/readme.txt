@@ -1,20 +1,20 @@
-=== WP Smush Image Optimizer ===
-Plugin Name: WP Smush Image Optimizer
-Version: 2.5.2
+=== Smush Image Compression and Optimization ===
+Plugin Name: Smush Image Compression and Optimization
+Version: 2.5.3
 Author: WPMU DEV
 Author URI: http://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
-Tags: image, optimize, lossless, lossy, photo, picture, seo, compression, optimization, JPG, PNG, Smush, Smush.it, Yahoo,
+Tags: image, optimize, compress, performance, lossless, lossy, photo, pictures, optimize JPG, compress PNG, Smush WordPress Compression, Smush.it
 Requires at least: 3.5
-Tested up to: 4.6.1
-Stable tag: 2.5.2
+Tested up to: 4.7.1
+Stable tag: 2.5.3
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
-Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
+Compress and optimize image files, improve performance and boost your SEO rank using Smush WordPress image compression and optimization.
 
 == Description ==
 
-<strong>Resize and optimize all of your images</strong> with the <strong>incredibly powerful</strong> and <strong>100% free image smusher</strong>, brought to you by the superteam at WPMU DEV!
+<strong>Resize, optimize and compress all of your images</strong> with the <strong>incredibly powerful</strong> and <strong>100% free WordPress image smusher</strong>, brought to you by the superteam at WPMU DEV!
 
 <strong>Now with image resizing!</strong> Set a max width and height and large images will scale down as they are being compressed.
 
@@ -126,6 +126,18 @@ Yahoo's Smush.it API is gone forever. So WPMU DEV built our own free API that is
 
 
 == Changelog ==
+
+= 2.5.3 =
+
+* Fixed:
+    * Show a Smush progress message in Grid view for Auto Smush
+      ( A lot of people reported it as Auto Smush not working, which works in background though )
+    * Translation domain was incorrect for few strings
+    * Translation: Load translation domain in main plugin file
+    * Include image size `medium_large` in smush list
+    * Error: Cannot use string offset as an array
+    * Error in PNG to JPG conversion ( Pro Feature ), added check for mime_content_type function
+    * Pro Status not recognised
 
 = 2.5.2 =
 

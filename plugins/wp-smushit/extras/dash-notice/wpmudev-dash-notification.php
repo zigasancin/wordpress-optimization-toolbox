@@ -1,10 +1,11 @@
 <?php
 /////////////////////////////////////////////////////////////////////////
 /* -------- WPMU DEV Dashboard Notice - Aaron Edwards (Incsub) ------- */
+/* This provides notices of available updates for our premium products */
 if ( ! class_exists( 'WPMUDEV_Dashboard_Notice4' ) ) {
 	class WPMUDEV_Dashboard_Notice4 {
 
-		var $version = '4.1';
+		var $version = '4.2';
 		var $screen_id = false;
 		var $product_name = false;
 		var $product_update = false;
@@ -55,7 +56,11 @@ if ( ! class_exists( 'WPMUDEV_Dashboard_Notice4' ) ) {
 				if ( isset( $filter_array['function'] ) && is_array( $filter_array['function'] ) ) {
 					// Test if object is a class, class and method is equal to param !
 					if ( is_object( $filter_array['function'][0] ) && get_class( $filter_array['function'][0] ) && get_class( $filter_array['function'][0] ) == $class_name && $filter_array['function'][1] == $method_name ) {
-						unset( $wp_filter[ $hook_name ][ $priority ][ $unique_id ] );
+						if ( class_exists( 'WP_Hook' ) ) { //introduced in WP 4.7 https://make.wordpress.org/core/2016/09/08/wp_hook-next-generation-actions-and-filters/
+							unset( $wp_filter[ $hook_name ]->callbacks[ $priority ][ $unique_id ] );
+						} else {
+							unset( $wp_filter[ $hook_name ][ $priority ][ $unique_id ] );
+						}
 						return true;
 					}
 				}

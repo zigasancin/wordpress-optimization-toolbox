@@ -137,7 +137,7 @@ if ( ! class_exists( 'WP_Async_Task' ) ) {
 
 				//@todo: We've set sslverify to false
 				$request_args = array(
-					'timeout'   => 0.01,
+					'timeout'   => 10,
 					'blocking'  => false,
 					'sslverify' => false,
 					'body'      => $this->_body_data,

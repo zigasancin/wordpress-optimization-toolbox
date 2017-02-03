@@ -1110,6 +1110,22 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 		 * @return string
 		 */
 		function smush_status( $id ) {
+			global $WpSmush;
+
+			//Show Temporary Status, For Async Optimisation, No Good workaround
+			if ( ! empty( $_POST['action'] ) && 'upload-attachment' == $_POST['action'] && $WpSmush->is_auto_smush_enabled() ) {
+				// the status
+				$status_txt = __( 'Smushing in progress..', 'wp-smushit' );
+
+				// we need to show the smush button
+				$show_button = false;
+
+				// the button text
+				$button_txt = __( 'Smush Now!', 'wp-smushit' );
+
+				return $this->column_html( $id, $status_txt, $button_txt, $show_button, true, false, true );
+			}
+			//Else Return the normal status
 			$response = trim( $this->set_status( $id, false ) );
 
 			return $response;
@@ -1400,7 +1416,7 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 					$should_resmush = false;
 
 					//For NextGen we get the metadata in the attachment data itself
-					if ( ! empty( $attachment['wp_smush'] ) ) {
+					if ( is_array( $attachment ) && ! empty( $attachment['wp_smush'] ) ) {
 						$smush_data = $attachment['wp_smush'];
 					} else {
 						//Check the current settings, and smush data for the image
@@ -1408,7 +1424,7 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 					}
 
 					//If the image is already smushed
-					if ( ! empty( $smush_data['stats'] ) ) {
+					if ( is_array( $smush_data ) && ! empty( $smush_data['stats'] ) ) {
 
 						//If we need to optmise losslessly, add to resmush list
 						$smush_lossy = $WpSmush->lossy_enabled && ! $smush_data['stats']['lossy'];
@@ -1966,7 +1982,7 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 				}
 			}
 			//Medium Large
-			if ( empty( $sizes['medium_large'] ) ) {
+			if ( !isset( $sizes['medium_large'] ) || empty( $sizes['medium_large'] ) ) {
 				$width  = intval( get_option( 'medium_large_size_w' ) );
 				$height = intval( get_option( 'medium_large_size_h' ) );
 

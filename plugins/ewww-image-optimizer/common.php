@@ -17,14 +17,13 @@
 // TODO: add an override for network admins to allow site admins to configure their own sites
 // TODO: see if there is a way to make the bulk time elapsed obey locale settings for decimal vs. comma
 // TODO: check for Pantheon platform, and use relative path matching somehow: if ( in_array( $_ENV['PANTHEON_ENVIRONMENT'], Array('test', 'live') ) ) and include the CONSTANT in the path when storing in db
-// TODO: clear the 'exceeded' transient when the settings page is loaded and the license has been renewed
-// TODO: if the attachments list can't  be loaded for some reason (when an error would normally be thrown), see if we can manually retrieve it and do something there
+// TODO: need to make the scheduler so it can resume without having to re-run the queue population, and then we can probably also flush the queue when scheduled opt starts, but later it would be nice to implement the bulk_loop as the aux_loop so that it could handle media properly
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '323.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '324.0' );
 
 // initialize a couple globals
 $ewww_debug = '';
@@ -937,45 +936,58 @@ function ewww_image_optimizer_install_table() {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	global $wpdb;
 	$wpdb->ewwwio_images = $wpdb->prefix . "ewwwio_images";
+
+	// get the current wpdb charset and collation
+	$db_collation = $wpdb->get_charset_collate();
+
 	//see if the path column exists, and what collation it uses to determine the column index size
 	if ( $wpdb->get_var( "SHOW TABLES LIKE '$wpdb->ewwwio_images'" ) == $wpdb->ewwwio_images ) {
 		ewwwio_debug_message( 'upgrading table and checking collation for path, table exists' );
-		//$current_collate = $wpdb->get_results( "SHOW FULL COLUMNS FROM $wpdb->ewwwio_images", ARRAY_A );
 		$wpdb->query( "UPDATE $wpdb->ewwwio_images SET updated = '1971-01-01 00:00:00' WHERE updated < '1001-01-01 00:00:01'" );
-		$current_collate = $wpdb->get_col_charset( $wpdb->ewwwio_images, 'path' );
-		if ( ! empty( $current_collate ) && $current_collate !== 'utf8mb4' ) {
-			ewwwio_debug_message( "current column collation: $current_collate" );
-			if ( strpos( $current_collate, 'utf8' ) === false ) {
+		$column_collate = $wpdb->get_col_charset( $wpdb->ewwwio_images, 'path' );
+		if ( ! empty( $column_collate ) && $column_collate !== 'utf8mb4' ) {
+			$path_index_size = 255;
+			ewwwio_debug_message( "current column collation: $column_collate" );
+			if ( strpos( $column_collate, 'utf8' ) === false ) {
 				ewwwio_debug_message( 'converting path column to utf8' );
 				$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images CHANGE path path BLOB" );
-		                if ( $wpdb->has_cap( 'utf8mb4_520' ) ) {
+		                if ( $wpdb->has_cap( 'utf8mb4_520' && strpos( $db_collation, 'utf8mb4' ) ) ) {
 					ewwwio_debug_message( 'using mb4 version 5.20' );
 					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images DROP INDEX path_image_size" );
 					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images CONVERT TO CHARACTER SET utf8mb4, CHANGE path path TEXT" );
-				} elseif ( $wpdb->has_cap( 'utf8mb4' ) ) {
+					unset( $path_index_size );
+				} elseif ( $wpdb->has_cap( 'utf8mb4' ) && strpos( $db_collation, 'utf8mb4' ) ) {
 					ewwwio_debug_message( 'using mb4 version 4' );
 					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images DROP INDEX path_image_size" );
-//					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images ADD INDEX" );
 					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images CONVERT TO CHARACTER SET utf8mb4, CHANGE path path TEXT" );
+					unset( $path_index_size );
 				} else {
 					ewwwio_debug_message( 'using plain old utf8' );
 					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images CONVERT TO CHARACTER SET utf8, CHANGE path path TEXT" );
 				}
 
+			} elseif ( strpos( $column_collate, 'utf8mb4' ) === false && strpos( $db_collation, 'utf8mb4' ) ) {
+		                if ( $wpdb->has_cap( 'utf8mb4_520' ) ) {
+					ewwwio_debug_message( 'using mb4 version 5.20' );
+					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images DROP INDEX path_image_size" );
+					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images CONVERT TO CHARACTER SET utf8mb4, CHANGE path path TEXT" );
+					unset( $path_index_size );
+				} elseif ( $wpdb->has_cap( 'utf8mb4' ) ) {
+					ewwwio_debug_message( 'using mb4 version 4' );
+					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images DROP INDEX path_image_size" );
+					$wpdb->query( "ALTER TABLE $wpdb->ewwwio_images CONVERT TO CHARACTER SET utf8mb4, CHANGE path path TEXT" );
+					unset( $path_index_size );
+				}
 			}
-			$path_index_size = 191;
 		}
 	}
 
-	// get the current wpdb charset and collation
-	$charset_collate = $wpdb->get_charset_collate();
-
 	// if the path column doesn't yet exist, and the default collation is utf8mb4, then we need to lower the column index size
-//	if ( empty( $path_index_size ) && strpos( $charset_collate, 'utf8mb4' ) ) {
+	if ( empty( $path_index_size ) && strpos( $db_collation, 'utf8mb4' ) ) {
 		$path_index_size = 191;
-//	} else {
-//		$path_index_size = 255;
-//	}
+	} else {
+		$path_index_size = 255;
+	}
 	ewwwio_debug_message( "path index size: $path_index_size" );
 
 	// create a table with 4 columns: an id, the file path, the md5sum, and the optimization results
@@ -997,7 +1009,7 @@ function ewww_image_optimizer_install_table() {
 		UNIQUE KEY id (id),
 		KEY path_image_size (path($path_index_size),image_size),
 		KEY attachment_info (gallery(3),attachment_id)
-	) $charset_collate;";
+	) $db_collation;";
 	
 	// include the upgrade library to initialize a table
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -1317,33 +1329,13 @@ function ewww_image_optimizer_upload_info() {
 }
 
 // runs scheduled optimization of various auxiliary images
-/*function ewww_image_optimizer_auto() {
-	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
-	global $ewww_defer;
-	$ewww_defer = false;
-	require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'bulk.php' );
-	require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'aux-optimize.php' );
-	global $ewwwio_image_background;
-	if ( ! class_exists( 'WP_Background_Process' ) ) {
-		require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'background.php' );
-	}
-	if ( ! is_object( $ewwwio_image_background ) ) {
-		$ewwwio_image_background = new EWWWIO_Image_Background_Process();
-	}
-	$ewwwio_image_background->cancel_process();
-	ewww_image_optimizer_debug_log();
-	return;
-	if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_auto' ) == TRUE ) {
-		ewwwio_debug_message( 'running scheduled optimization' );
-		ewww_image_optimizer_aux_images_script( 'ewww-image-optimizer-auto' );
-	}
-	ewww_image_optimizer_debug_log();
-	ewwwio_memory( __FUNCTION__ );
-	return;
-}*/
-// runs scheduled optimization of various auxiliary images
 function ewww_image_optimizer_auto() {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+	if ( get_transient( 'ewww_image_optimizer_no_scheduled_optimization' ) ) {
+		ewwwio_debug_message( 'detected bulk operation in progress, bailing' );
+		ewww_image_optimizer_debug_log();
+		return;
+	}
 	global $ewww_defer;
 	$ewww_defer = false;
 	require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'bulk.php' );
@@ -2665,14 +2657,14 @@ function ewww_image_optimizer_check_table( $file, $orig_size ) {
 		ewwwio_debug_message( "already optimized: {$image['path']} - $already_optimized" );
 		ewwwio_memory( __FUNCTION__ );
 		// make sure the image isn't pending
-		if ( $already_optimized['pending'] ) {
+		if ( $image['pending'] ) {
 			global $wpdb;
 			$wpdb->update( $wpdb->ewwwio_images,
 				array(
 					'pending' => 0
 				),
 				array(
-					'id' => $already_optimized['id'],
+					'id' => $image['id'],
 				)
 			);
 		}
@@ -5122,6 +5114,7 @@ function ewww_image_optimizer_options () {
 			$collapsible = true;
 			if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
 				$output[] = '<p><b>' . esc_html__( 'Cloud optimization API Key', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . ":</b> ";
+				ewww_image_optimizer_set_option( 'ewww_image_optimizer_cloud_exceeded', 0 );
 				$verify_cloud = ewww_image_optimizer_cloud_verify(); 
 				if ( preg_match( '/great/', $verify_cloud ) ) {
 					$output[] = '<span style="color: green">' . esc_html__( 'Verified,', EWWW_IMAGE_OPTIMIZER_DOMAIN ) . ' </span>' . ewww_image_optimizer_cloud_quota();

@@ -1052,14 +1052,14 @@
 /* ****************************************************************************
  * 12. ELEMENT: BUTTONS
  */
-.wpmud button:focus,
+.wpmud button:not(.wph-button):not(#collapse-button):focus,
 .wpmud .button:focus {
 	outline-color: transparent;
 	outline-style: none;
 	border: 0;
 	box-shadow: none;
 }
-.wpmud button,
+.wpmud button:not(.wph-button):not(#collapse-button),
 .wpmud .button {
 	font: 500 15px/20px 'Roboto';
 	background: #00ACCA;
@@ -1078,16 +1078,16 @@
 	transition: color 0.3s, opacity 0.3s;
 	text-shadow: none;
 }
-.wpmud button + button,
-.wpmud .button + button,
-.wpmud button + .button,
+.wpmud button:not(.wph-button):not(#collapse-button) + button:not(.wph-button):not(#collapse-button),
+.wpmud .button + button:not(.wph-button):not(#collapse-button),
+.wpmud button:not(.wph-button):not(#collapse-button) + .button,
 .wpmud .button + .button,
-.wpmud a + button,
+.wpmud a + button:not(.wph-button):not(#collapse-button),
 .wpmud a + .button {
 	margin-left: 10px;
 }
-.wpmud button:hover:not(:focus):not(:active),
-.wpmud .button:hover:not(:focus):not(:active) {
+.wpmud button:hover:not(:focus):not(:active):not(.wph-button):not(#collapse-button):not([tooltip]),
+.wpmud .button:hover:not(:focus):not(:active):not(.wph-button):not(#collapse-button):not([tooltip]) {
 	background-color: #0093B1;
 	color: #FFF;
 	box-shadow: none;

@@ -255,7 +255,20 @@ if ( ! class_exists( 'WpSmushPngtoJpg' ) ) {
 			//Update File path, Attached File, GUID
 			$meta = empty( $meta ) ? wp_get_attachment_metadata( $id ) : $meta;
 
-			$mime = mime_content_type( $n_file_path );
+			//Get the File mime
+			if ( class_exists( 'finfo' ) ) {
+				$finfo = new finfo( FILEINFO_MIME_TYPE );
+			} else {
+				$finfo = false;
+			}
+
+			if ( $finfo ) {
+				$mime = file_exists( $n_file_path ) ? $finfo->file( $n_file_path ) : '';
+			} elseif ( function_exists( 'mime_content_type' ) ) {
+				$mime = mime_content_type( $n_file_path );
+			} else {
+				$mime = false;
+			}
 
 			//Update File Path, Attached file, Mime Type for Image
 			if ( 'full' == $size_k ) {

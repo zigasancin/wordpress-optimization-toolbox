@@ -1,9 +1,9 @@
 === Autoptimize ===
 Contributors: futtta, turl, optimizingmatters
-Tags: css, html, javascript, js, optimize, speed, cache, aggregate, minimize, minification, performance, pagespeed
+Tags: minify, css, html, javascript, js, optimize, speed, cache, aggregate, minification, performance, pagespeed
 Donate link: http://blog.futtta.be/2013/10/21/do-not-donate-to-me/
 Requires at least: 4.0
-Tested up to: 4.6
+Tested up to: 4.7
 Stable tag: 2.1.0
 
 Autoptimize speeds up your website and helps you save bandwidth by aggregating and minimizing JS, CSS and HTML.
@@ -20,7 +20,7 @@ If you consider performance important, you really should use one of the many cac
 
 Just install from your WordPress "Plugins > Add New" screen and all will be well. Manual installation is very straightforward as well:
 
-1. Upload the zip file and unzip it in the `/wp-content/plugins/` directory
+1. Upload the zip file and unzip it in the `/wp-content/plugins/` directory.
 1. Activate the plugin through the 'Plugins' menu in WordPress
 1. Go to `Settings > Autoptimize` and enable the options you want. Generally this means "Optimize HTML/ CSS/ JavaScript".
 

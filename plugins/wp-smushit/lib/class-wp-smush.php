@@ -116,9 +116,6 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			//Enqueue Scripts, And Initialize variables
 			add_action( 'admin_init', array( $this, 'admin_init' ) );
 
-			//Load Translation files
-			add_action( 'plugins_loaded', array( $this, 'i18n' ), 12 );
-
 			//Load NextGen Gallery, if hooked too late or early, auto smush doesn't works, also Load after settings have been saved on init action
 			add_action( 'plugins_loaded', array( $this, 'load_nextgen' ), 90 );
 
@@ -137,11 +134,6 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			//Handle the Async optimisation
 			add_action( 'wp_async_wp_save_image_editor_file', array( $this, 'wp_smush_handle_editor_async' ), '', 2 );
 
-		}
-
-		function i18n() {
-			$path = path_join( dirname( plugin_basename( __FILE__ ) ), 'languages' );
-			load_plugin_textdomain( 'wp-smushit', false, $path );
 		}
 
 		/**
@@ -187,20 +179,17 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		 * @returns array
 		 */
 		function do_smushit( $file_path = '' ) {
-			global $wpsmushit_admin;
 			$errors   = new WP_Error();
 			$dir_name = dirname( $file_path );
+
+			//Check if file exists and the directory is writable
 			if ( empty( $file_path ) ) {
 				$errors->add( "empty_path", __( "File path is empty", 'wp-smushit' ) );
-			}
-
-			// check that the file exists
-			if ( ! file_exists( $file_path ) || ! is_file( $file_path ) ) {
+			} elseif ( ! file_exists( $file_path ) || ! is_file( $file_path ) ) {
+				// check that the file exists
 				$errors->add( "file_not_found", sprintf( __( "Could not find %s", 'wp-smushit' ), $file_path ) );
-			}
-
-			// check that the file is writable
-			if ( ! is_writable( $dir_name ) ) {
+			} elseif ( ! is_writable( $dir_name ) ) {
+				// check that the file is writable
 				$errors->add( "not_writable", sprintf( __( "%s is not writable", 'wp-smushit' ), $dir_name ) );
 			}
 
@@ -212,10 +201,8 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			//Check if file exists
 			if ( $file_size == 0 ) {
 				$errors->add( "image_not_found", '<p>' . sprintf( __( 'Skipped (%s), image not found. Attachment: %s', 'wp-smushit' ), size_format( $file_size, 1 ), basename( $file_path ) ) . '</p>' );
-			}
-
-			//Check size limit
-			if ( $file_size > $max_size ) {
+			} elseif ( $file_size > $max_size ) {
+				//Check size limit
 				$errors->add( "size_limit", '<p>' . sprintf( __( 'Skipped (%s), size limit exceeded. Attachment: %s', 'wp-smushit' ), size_format( $file_size, 1 ), basename( $file_path ) ) . '</p>' );
 			}
 
@@ -232,9 +219,8 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 			if ( ! $response['success'] ) {
 				$errors->add( "false_response", $response['message'] );
-			}
-			//If there is no data
-			if ( empty( $response['data'] ) ) {
+			} else if ( empty( $response['data'] ) ) {
+				//If there is no data
 				$errors->add( "no_data", __( 'Unknown API error', 'wp-smushit' ) );
 			}
 
@@ -685,6 +671,8 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				'timeout'    => WP_SMUSH_TIMEOUT,
 				'user-agent' => WP_SMUSH_UA,
 			);
+			//Temporary Increase the limit
+			@ini_set('memory_limit','256M');
 			$result  = wp_remote_post( $api_url, $args );
 
 			//Close file connection
@@ -890,7 +878,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				$api_auth[ $api_key ] = array( 'validity' => $valid, 'timestamp' => $timestamp );
 
 				//Update API validity
-//				update_site_option( 'wp_smush_api_auth', $api_auth );
+				update_site_option( 'wp_smush_api_auth', $api_auth );
 
 			}
 
@@ -1611,7 +1599,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 			$ajax_nonce = wp_create_nonce( "wp-smush-restore-" . $image_id );
 
-			return sprintf( '<a href="#" tooltip="%s" data-id="%d" data-nonce="%s" class="%s">%s</a>', esc_html__( "Restore original image.", "wp-smushit" ), $image_id, $ajax_nonce, $class, esc_html__( "Restore image", "wp-smush" ) );
+			return sprintf( '<a href="#" tooltip="%s" data-id="%d" data-nonce="%s" class="%s">%s</a>', esc_html__( "Restore original image.", "wp-smushit" ), $image_id, $ajax_nonce, $class, esc_html__( "Restore image", "wp-smushit" ) );
 		}
 
 		/**
@@ -1659,7 +1647,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 			$ajax_nonce = wp_create_nonce( "wp-smush-resmush-" . $image_id );
 
-			return sprintf( '<a href="#" tooltip="%s" data-id="%d" data-nonce="%s" class="%s">%s</a>', esc_html__( "Smush image including original file.", "wp-smushit" ), $image_id, $ajax_nonce, $class, esc_html__( "Resmush image", "wp-smush" ) );
+			return sprintf( '<a href="#" tooltip="%s" data-id="%d" data-nonce="%s" class="%s">%s</a>', esc_html__( "Smush image including original file.", "wp-smushit" ), $image_id, $ajax_nonce, $class, esc_html__( "Resmush image", "wp-smushit" ) );
 		}
 
 		/**
