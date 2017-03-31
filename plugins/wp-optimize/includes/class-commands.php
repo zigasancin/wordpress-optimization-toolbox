@@ -38,7 +38,7 @@ class WP_Optimize_Commands {
 	public function save_manual_run_optimization_options($sent_options) {
 		return $this->options->save_sent_manual_run_optimization_options($sent_options);
 	}
-	
+
 	public function get_status_box_contents() {
 		return WP_Optimize()->include_template('status-box-contents.php', true, array('optimize_db' => false));
 	}
@@ -58,12 +58,26 @@ class WP_Optimize_Commands {
 			'status_box_contents' => $this->get_status_box_contents(),
 			'optimizations_table' => $this->get_optimizations_table(),
 		);
+	}
 
+	/**
+	 * This sends the selected tick value over to the save function 
+	 * within class-wp-optimize-options.php
+	 * @param  Array 	$data an array of data that includes true or false for click option
+	 * @return Array 	returns an message array
+	 */
+	public function save_auto_backup_option($data) {
+		return array('save_auto_backup_option' => $this->options->save_auto_backup_option($data));
 	}
 	
-	public function do_optimization($data) {
+	/**
+	 * Perform the requested optimization
+	 *
+	 * @param array $params - Should have keys 'optimization_id' and 'data'
+	 */
+	public function do_optimization($params) {
 		
-		if (!isset($data['optimization_id'])) {
+		if (!isset($params['optimization_id'])) {
 		
 			$results = array(
 				'result' => false,
@@ -74,10 +88,11 @@ class WP_Optimize_Commands {
 			);
 		
 		} else {
-	
-			$optimization_id = $data['optimization_id'];
-	
-			$optimization = $this->optimizer->get_optimization($optimization_id);
+
+			$optimization_id = $params['optimization_id'];
+			$data = isset($params['data']) ? $params['data'] : array();
+			
+			$optimization = $this->optimizer->get_optimization($optimization_id, $data);
 	
 			$result = is_a($optimization, 'WP_Optimization') ? $optimization->do_optimization() : null;
 			

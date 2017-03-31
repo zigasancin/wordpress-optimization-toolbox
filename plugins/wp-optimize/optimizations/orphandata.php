@@ -7,13 +7,14 @@ class WP_Optimization_orphandata extends WP_Optimization {
 	public $ui_sort_order = 10000;
 
 	public function optimize() {
-	
+
 		$clean = "DELETE FROM `".$this->wpdb->term_relationships."` WHERE term_taxonomy_id=1 AND object_id NOT IN (SELECT id FROM `".$this->wpdb->posts."`);";
 
 		$orphandata = $this->query($clean);
 
 		$message = sprintf(_n('%d orphaned meta data deleted', '%d orphaned meta data deleted', $orphandata, 'wp-optimize'), number_format_i18n($orphandata));
 
+        $this->logger->info($message);
 		$this->register_output($message);
 
 	}

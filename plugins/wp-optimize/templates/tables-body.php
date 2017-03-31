@@ -14,6 +14,8 @@
 	$data_usage = 0;
 	$index_usage = 0;
 	$overhead_usage = 0;
+	$non_inno_db_tables = 0;
+	$inno_db_tables = 0;
 	
 	$tablesstatus = $optimizer->get_tables();
 	
@@ -28,34 +30,33 @@
 		echo '<td>'.number_format_i18n($tablestatus->Rows).'</td>'."\n";
 		echo '<td>'.$wp_optimize->format_size($tablestatus->Data_length).'</td>'."\n";
 		echo '<td>'.$wp_optimize->format_size($tablestatus->Index_length).'</td>'."\n";;
-		echo '<td>'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";;
-		//echo '<td>'.$wp_optimize->format_size($tablestatus->Data_free).'</td>'."\n";
 
 		if ($tablestatus->Engine != 'InnoDB') {
+			echo '<td data-optimizable="1">'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";
 
 			echo '<td>';
-			
-			$font_colour = $optimize_db ? (($tablestatus->Data_free>0) ? 'blue' : 'green') : (($tablestatus->Data_free>0) ? 'red' : 'green');
-			
+			$font_colour = $optimize_db ? (($tablestatus->Data_free>0) ? '#0000FF' : '#004600') : (($tablestatus->Data_free>0) ? '#9B0000' : '#004600');
 			echo '<span style="color:'.$font_colour.';">';
 			echo $wp_optimize->format_size($tablestatus->Data_free);
 			echo '</span>';
-			
 			echo '</td>'."\n";
+
+			$overhead_usage += $tablestatus->Data_free;
+			$total_gain += $tablestatus->Data_free;
+			$non_inno_db_tables++;
 		} else {
+			echo '<td data-optimizable="0">'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";
 			echo '<td>';
-			echo '<span style="color:blue;">-</span>';
+			echo '<span style="color:#0000FF;">-</span>';
 			echo '</td>'."\n";
+
+			$inno_db_tables++;
 		}
 
 		$row_usage += $tablestatus->Rows;
 		$data_usage += $tablestatus->Data_length;
 		$index_usage +=  $tablestatus->Index_length;
 
-		if ($tablestatus->Engine != 'InnoDB') {
-			$overhead_usage += $tablestatus->Data_free;
-			$total_gain += $tablestatus->Data_free;
-		}
 		echo '</tr>'."\n";
 	}
 
@@ -68,7 +69,7 @@
 	echo '<th>'.'-'.'</th>'."\n";
 	echo '<th>';
 
-	$font_colour = $optimize_db ? (($overhead_usage>0) ? 'blue' : 'green') : (($overhead_usage>0) ? 'red' : 'green');
+	$font_colour = $optimize_db ? (($overhead_usage>0) ? '#0000FF' : '#004600') : (($overhead_usage>0) ? '#9B0000' : '#004600');
 	
 	echo '<span style="color:'.$font_colour.'">'.$wp_optimize->format_size($overhead_usage).'</span>';
 	

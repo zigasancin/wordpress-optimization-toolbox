@@ -10,6 +10,8 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 
 	private $initialized = false;
 
+	protected $self_affiliate_id = 216;
+
 	protected $notices_content = array();
 
 	public static function instance() {

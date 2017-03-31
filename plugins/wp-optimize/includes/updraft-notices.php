@@ -137,6 +137,10 @@ abstract class Updraft_Notices_1_0 {
 		return false;
 	}
 
+	public function get_affiliate_id() {
+		return $this->self_affiliate_id;
+	}
+
 	abstract protected function check_notice_dismissed($dismiss_time);
 
 }

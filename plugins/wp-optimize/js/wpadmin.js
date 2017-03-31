@@ -1,5 +1,64 @@
-jQuery(document).ready(function($) {
+/**
+ * Send an action via admin-ajax.php
+ * 
+ * @param {string} action - the action to send
+ * @param * data - data to send
+ * @param Callback [callback] - will be called with the results
+ * @param {boolean} [json_parse=true] - JSON parse the results
+ */
+var wp_optimize_send_command_admin_ajax = function(action, data, callback, json_parse) {
 	
+	json_parse = ('undefined' === typeof json_parse) ? true : json_parse;
+	
+	var ajax_data = {
+		action: 'wp_optimize_ajax',
+		subaction: action,
+		nonce: wp_optimize_ajax_nonce,
+		data: data
+	};
+	
+	jQuery.post(ajaxurl, ajax_data, function(response) {
+		
+		if (json_parse) {
+			try {
+				var resp = JSON.parse(response);
+			} catch (e) {
+				console.log(e);
+				console.log(response);
+				alert(wpoptimize.error_unexpected_response);
+				return;
+			}
+			if ('undefined' !== typeof callback) callback(resp);
+		} else {
+			if ('undefined' !== typeof callback) callback(response);
+		}
+		
+	});
+	
+}
+
+jQuery(document).ready(function($) {
+	WP_Optimize = WP_Optimize(wp_optimize_send_command_admin_ajax);
+});
+
+/**
+ * Function for sending communications
+ * 
+ * @callable sendcommandCallable
+ * @param {string} action - the action to send
+ * @param * data - data to send
+ * @param Callback [callback] - will be called with the results
+ * @param {boolean} [json_parse=true] - JSON parse the results
+ */
+
+/**
+ * Main WP_Optimize
+ * 
+ * @param {sendcommandCallable} send_command - function for sending remote communications via
+ */
+var WP_Optimize = function(send_command) {
+	
+	var $ = jQuery;
 	var debug_level = 0;
 	var queue = new Updraft_Queue();
 	
@@ -20,45 +79,6 @@ jQuery(document).ready(function($) {
 	enable_or_disable_schedule_options();
 	
 	$('#enable-schedule').change(function() { enable_or_disable_schedule_options(); });
-	
-	/**
-	 * Send an action over AJAX
-	 * 
-	 * @param {string} action - the action to send
-	 * @param * data - data to send
-	 * @param Callback [callback] - will be called with the results
-	 * @param {boolean} [json_parse=true] - JSON parse the results
-	 */
-	function send_command(action, data, callback, json_parse) {
-		
-		json_parse = ('undefined' === typeof json_parse) ? true : json_parse;
-		
-		var ajax_data = {
-			action: 'wp_optimize_ajax',
-			subaction: action,
-			nonce: wp_optimize_ajax_nonce,
-			data: data
-		};
-
-		jQuery.post(ajaxurl, ajax_data, function(response) {
-			
-			if (json_parse) {
-				try {
-					var resp = JSON.parse(response);
-				} catch (e) {
-					console.log(e);
-					console.log(response);
-					// TODO: Tell the user that it didn't work out
-					return;
-				}
-				if ('undefined' !== typeof callback) callback(resp);
-			} else {
-				if ('undefined' !== typeof callback) callback(response);
-			}
-			
-		});
-		
-	}
 	
 	/**
 	 * Temporarily show a dashboard notice, and then remove it. The HTML will be prepended to the .wrap.wp-optimize-wrap element.
@@ -179,6 +199,14 @@ jQuery(document).ready(function($) {
 		}
 		
 		var id = queue.peek();
+
+		//check to see if an object has been returned
+		if (typeof id == 'object') {
+			data = id;
+			id = id.optimization_id;
+		} else {
+			data = {};
+		}
 		
 		if ('undefined' === typeof id) {
 			if (debug_level > 0) console.log("WP-Optimize: process_queue(): queue is apparently empty - exiting");
@@ -190,12 +218,12 @@ jQuery(document).ready(function($) {
 			   
 		queue.dequeue();
 		
-		send_command('do_optimization', { optimization_id: id }, function(response) {
-			console.log(response);
+		send_command('do_optimization', { optimization_id: id, data: data }, function(response) {
+
 			$('#optimization_spinner_'+id).hide();
 			$('#optimization_checkbox_'+id).show();
 			$('.optimization_button_'+id).prop('disabled', false);
-			
+
 			if (response) {
 				var total_output = '';
 				for (var i = 0, len = response.errors.length; i < len; i++) {
@@ -217,10 +245,22 @@ jQuery(document).ready(function($) {
 				if (response.hasOwnProperty('total_size')) {
 					$('#optimize_current_db_size').html(response.total_size);
 				}
+
+				//Status check if optimizing tables
+				if (id == 'optimizetables' && data.optimization_table) {
+					if(queue.is_empty()){
+						$('#optimization_spinner_'+id).hide();
+						$('#optimization_checkbox_'+id).show();
+						$('.optimization_button_'+id).prop('disabled', false);
+						$('#optimization_info_'+id).html(wpoptimize.optimization_complete);
+					} else {
+						$('#optimization_checkbox_'+id).hide();
+						$('#optimization_spinner_'+id).show();
+						$('.optimization_button_'+id).prop('disabled', true);
+					}
+				}
 			}
-			
 			setTimeout(function() { queue.unlock(); process_queue(); }, 10);
-			
 		});
 	}
 	
@@ -240,10 +280,38 @@ jQuery(document).ready(function($) {
 
 		$('#optimization_info_'+id).html('...');
 		
-		queue.enqueue(id);
-		
-		process_queue();
+		//check if it is DB optimize
+		if ('optimizetables' == id) {
+			var optimization_tables = $('#wpoptimize_table_list #the-list tr');
 
+			//check if there are any tables to be optimized
+			$(optimization_tables).each(function(index) {
+				//get information from each td
+				var $table_information = $(this).find('td');
+
+				//get table type information
+				table_type = $table_information.eq(5).text();
+				table = $table_information.eq(1).text();
+				optimizable = $table_information.eq(5).data('optimizable');
+
+				//make sure the table isnt blank
+				if ('' != table){
+					//check if table is InnboDB as we do not want to optimize it
+					if ('1' == optimizable){
+						var data = {
+							optimization_id: id,
+							optimization_table: $table_information.eq(1).text(),
+							optimization_table_type: table_type,
+						};
+						queue.enqueue(data);
+					}
+				}
+			});
+		} else {
+			//for all other options
+			queue.enqueue(id);
+		}
+		process_queue();
 	}
 	
 	$('#wp-optimize-nav-tab-contents-optimize').on('click', 'button.wp-optimize-settings-optimization-run-button', function() {
@@ -256,11 +324,40 @@ jQuery(document).ready(function($) {
 	});
 	
 	$('#wp-optimize-nav-tab-contents-optimize').on('click', '#wp-optimize', function(e) {
-		
 		e.preventDefault();
+
+		var auto_backup = false;
 		
+		if ($('#enable-auto-backup').is(":checked")) {
+			auto_backup = true;
+		}
+
+		//save the click option
+		send_command('save_auto_backup_option', {'auto_backup': auto_backup});
+ 	
+ 		//only run the backup if tick box is checked 
+		if (auto_backup == true && typeof updraft_backupnow_inpage_go === 'function') {
+			updraft_backupnow_inpage_go(function () { 
+				//close the backup dialogue
+				$('#updraft-backupnow-inpage-modal').dialog('close');
+
+				//run optimizations
+				run_optimization();
+			}, '', 'autobackup', null, 1, 0, 0);
+		} else {
+			//run optimizations
+			run_optimization();
+		}
+	});
+
+	/**
+	 * Running the optimizations for the selected options
+	 * @return {[type]} optimizations
+	 */
+	function run_optimization() {
+
 		$optimizations = $('#optimizations_list .optimization_checkbox:checked');
-		
+
 		$optimizations.sort(function(a, b) {
 			// convert to IDs
 			a = $(a).closest('.wp-optimize-settings').data('optimization_run_sort_order');
@@ -273,7 +370,7 @@ jQuery(document).ready(function($) {
 				return 0;
 			}
 		});
-		
+
 		var optimization_options = {};
 
 		$optimizations.each(function(index) {
@@ -288,8 +385,7 @@ jQuery(document).ready(function($) {
 		});
 
 		send_command('save_manual_run_optimization_options', optimization_options);
-		
-	});
+	}
 	
 	$('#wp_optimize_table_list_refresh').click(function() {
 		
@@ -332,6 +428,11 @@ jQuery(document).ready(function($) {
 			if (resp && resp.hasOwnProperty('optimizations_table')) {
 				$('#optimizations_list').replaceWith(resp.optimizations_table);
 			}
+
+			//need to refresh the page if enable-admin-menu tick state has changed
+			if (resp.save_results.refresh) {
+				location.reload();
+			}
 		});
 		
 	});
@@ -343,4 +444,4 @@ jQuery(document).ready(function($) {
 			$('#wp_optimize_status_box').css('opacity', '1').find('.inside').html(resp);
 		});
 	});
-});
+};

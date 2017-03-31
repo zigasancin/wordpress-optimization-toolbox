@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: http://updraftplus.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.1.0
+Version: 2.1.1
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -13,7 +13,10 @@ License: GPLv2 or later
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-define('WPO_VERSION', '2.1.0');
+// Check to make sure if WP_Optimize is already call and returns
+if (!class_exists('WP_Optimize')):
+
+define('WPO_VERSION', '2.1.1');
 define('WPO_PLUGIN_URL', plugin_dir_url( __FILE__ ));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path( __FILE__ ));
 
@@ -25,23 +28,28 @@ class WP_Optimize {
 	protected static $_optimizer_instance = null;
 	protected static $_options_instance = null;
 	protected static $_notices_instance = null;
+	protected static $_logger_instance = null;
 
 	public function __construct() {
+
+		//Checks if premium is installed along with plugins needed.
+		add_action('plugins_loaded', array($this, 'plugins_loaded'), 1);
 
 		register_activation_hook(__FILE__, 'wpo_activation_actions');
 		register_deactivation_hook(__FILE__, 'wpo_deactivation_actions');
 
-		add_action('plugins_loaded', array($this, 'plugins_loaded'));
-
-		$plugin = plugin_basename(__FILE__);
-		add_filter("plugin_action_links_$plugin", array($this, 'plugin_settings_link'));
 		add_action('admin_init', array($this, 'admin_init'));
 		add_action('admin_menu', array($this, 'admin_menu'));
+
+		add_filter("plugin_action_links_".plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
 		add_action('wpo_cron_event2', array($this, 'cron_action'));
 		add_filter('cron_schedules', array($this, 'cron_schedules'));
 		
 		add_action('wp_ajax_wp_optimize_ajax', array($this, 'wp_optimize_ajax_handler'));
-		
+
+        // initialize loggers
+        add_action('plugins_loaded', array($this, 'setup_loggers'));
+
 		include_once(WPO_PLUGIN_MAIN_PATH.'/includes/updraftcentral.php');
 		
 	}
@@ -76,7 +84,106 @@ class WP_Optimize {
 		}
 		return self::$_notices_instance;
 	}
+
+    /**
+     * Return instance of Updraft_Logger
+     * @return null|Updraft_Logger
+     */
+    public static function get_logger() {
+        if (empty(self::$_logger_instance)) {
+            require_once(WPO_PLUGIN_MAIN_PATH.'/includes/class-updraft-logger.php');
+            self::$_logger_instance = new Updraft_Logger();
+        }
+        return self::$_logger_instance;
+    }
+
+	/**
+		* Checks if it is the premium version and loads it. It also ensures if there are any free versions installed
+		* to disable them and show an appriprite error if trying to enable
+		*/
+	public function plugins_loaded() {
+		// Check if premium file exists
+		if (file_exists(WPO_PLUGIN_MAIN_PATH.'/premium.php')) {
+			// Check if class already loaded
+			if (!class_exists('WP_Optimize_Premium')) {
+				// Require WP-Optimize premium file
+				require_once(WPO_PLUGIN_MAIN_PATH.'/premium.php');
+			}
+		}
+
+		//Check if premium is installed
+		$check_premium = $this->is_installed('WP-Optimize Premium');
+		// If premium installed, deactivate free version
+		if ($check_premium['installed']) {
+			//Get activation details on base / free install
+			$get_base_install = $this->is_installed('WP-Optimize');
+			//Only deactivate if it is active
+			if ($get_base_install['active']) {
+				//only remove if premium isnt active
+				if (!$check_premium['active']) {
+					//Removes the admin menu items on the left WP bar
+					remove_action('admin_menu', array($this, 'admin_menu'));
+					//Removes options displayed on the plugins menu
+					remove_filter("plugin_action_links_".plugin_basename($get_base_install['name']), array($this, 'plugin_settings_link'));
+				}
+				//Deactivates base / free version
+				deactivate_plugins(plugin_basename($get_base_install['name']));
+				//Returns the notice letting the user know it cannot be active if premium is installed
+				return add_action('admin_notices', array($this, 'show_admin_notice_premium'));
+			}
+		}
+		//Loads the langues file
+		load_plugin_textdomain('wp-optimize', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+	}
 	
+	/**
+		* This function will allow a check to be done if a specific 
+		* plugin is installed.
+		* @param  String  $name Specify "Plugin Name" to retuns details about it
+		* @return Array         Returns an array of details such as if installed, the name of the plugin and if it is active
+		*/
+	public function is_installed($name) {
+		// Includes the WP Plugin file
+		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+
+		//Gets all plugins available
+		$get_plugins = get_plugins();
+
+		//Gets all active plugins
+		$active_plugins = get_option('active_plugins');
+
+		$is_installed['installed'] = false;
+		$is_installed['active'] = false;
+
+		//loops around each plugin available 
+		foreach ($get_plugins as $key => $value) {
+			//if the plugin name matches that of the specified name, it will gather details
+			if ($value['Name'] == $name) {
+				$is_installed['installed'] = true;
+				$is_installed['name'] = $key;
+				$is_installed['version'] = $value['Version'];
+				//Check if the plugin is active
+				if (in_array($key, $active_plugins)) {
+					$is_installed['active'] = true;
+				}
+				break;
+			}
+		}
+		return $is_installed;
+	}
+
+	/**
+		* This is a notice to show users that premium is installed
+		* @return echo error message
+		*/
+	function show_admin_notice_premium() {
+		if( true == true ) {
+		echo '<div id="my-custom-warning" class="error fade"><p>WP-Optimze cannot be run when WP-Optimize Premium is installed.</p></div>';
+		if (isset($_GET['activate']))
+			unset($_GET['activate']);
+		}
+	}
+
 	public function admin_init() {
 
 		global $pagenow;
@@ -102,10 +209,6 @@ class WP_Optimize {
 	public function show_admin_notice_upgradead() {
 		$this->include_template('notices/thanks-for-using-main-dash.php');
 	}
-	
-	public function plugins_loaded() {
-		load_plugin_textdomain('wp-optimize', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-	}
 
 	public function capability_required() {
 		return apply_filters('wp_optimize_capability_required', 'manage_options');
@@ -122,6 +225,7 @@ class WP_Optimize {
 
 		if (!current_user_can($this->capability_required())) die('Security check');
 
+        $wp_optimize = $this;
 		$optimizer = $this->get_optimizer();
 		$options = $this->get_options();
 
@@ -139,7 +243,6 @@ class WP_Optimize {
 		} else {
 		
 			// Other commands, available for any remote method
-			
 			if (!class_exists('WP_Optimize_Commands')) require_once(WPO_PLUGIN_MAIN_PATH.'includes/class-commands.php');
 			
 			$commands = new WP_Optimize_Commands();
@@ -194,6 +297,11 @@ class WP_Optimize {
 		wp_enqueue_script('wp-optimize-admin-js', WPO_PLUGIN_URL.'js/wpadmin'.$min_or_not.'.js', array('jquery', 'updraft-queue-js'), $enqueue_version);
 
 		wp_enqueue_style('wp-optimize-admin-css', WPO_PLUGIN_URL.'css/admin'.$min_or_not.'.css', array(), $enqueue_version);
+		
+		wp_localize_script('wp-optimize-admin-js', 'wpoptimize', array(
+			'error_unexpected_response' => __('An unexpected response was received.', 'wp-optimize'),
+			'optimization_complete' => __('Optimization complete', 'wp-optimize'),
+		));
 		
 		$options = $this->get_options();
 		
@@ -324,7 +432,6 @@ class WP_Optimize {
 		return $links;
 	}
 
-	// TODO: Need to find out why the schedule time is not refreshing
 	public function cron_activate() {
 		$gmtoffset = (int) (3600 * ((double) get_option('gmt_offset')));
 
@@ -367,7 +474,7 @@ class WP_Optimize {
 	}
 
 
-	// scheduler public functions to update schedulers
+	// Scheduler public functions to update schedulers
 	public function cron_schedules( $schedules ) {
 		$schedules['wpo_daily'] = array('interval' => 86400, 'display' => 'Once Daily');
 		$schedules['wpo_weekly'] = array('interval' => 86400*7, 'display' => 'Once Weekly');
@@ -457,7 +564,7 @@ class WP_Optimize {
 
 		if ($return_instead_of_echo) return ob_get_clean();
 	}
-	
+
 	private function register_template_directories() {
 
 		$template_directories = array();
@@ -474,13 +581,13 @@ class WP_Optimize {
 			closedir($dh);
 		}
 
-		// This is the optimal hook for most extensions to hook into
+		// Optimal hook for most extensions to hook into
 		$this->template_directories = apply_filters('wp_optimize_template_directories', $template_directories);
 
 	}
 	
-	// TODO: Not currently used; investigate.
-	// TODO: The description does not match the actual function
+	// Not currently used; needs looking at.
+	// N.B. The description does not match the actual function
 	/**
 	* send_email($sendto, $msg)
 	* @return success
@@ -490,7 +597,7 @@ class WP_Optimize {
 	public function send_email($date, $cleanedup){
 	//
 		ob_start();
-		// #TODO this need to work on - currently not using the parameter values
+		// this need to work on - currently not using the parameter values
 		$myTime = current_time( "timestamp", 0 );
 		$myDate = gmdate(get_option('date_format') . ' ' . get_option('time_format'), $myTime );
 
@@ -498,9 +605,9 @@ class WP_Optimize {
 
 		$sendto = $options->get_option('email-address');
 		if (!$sendto) $sendto = get_bloginfo ( 'admin_email' );
-				
+
 		//$thiscleanup = $wp_optimize->format_size($cleanedup);
-			
+
 		$subject = get_bloginfo ( 'name' ).": ".__("Automatic Operation Completed","wp-optimize")." ".$myDate;
 
 		$msg  = __("Scheduled optimization was executed at","wp-optimize")." ".$myDate."\r\n"."\r\n";
@@ -514,7 +621,7 @@ class WP_Optimize {
 
 		ob_end_flush();
 	}
-	
+
 	/*
 	* function log()
 	*
@@ -522,10 +629,8 @@ class WP_Optimize {
 	*
 	* @return none
 	*/
-	public function log($message) {
-		if (defined('WP_DEBUG') && WP_DEBUG) {
-			error_log($message);
-		}
+	public function log($message, $context = array()) {
+        $this->get_logger()->debug($message, $context);
 	}
 	
 	/**
@@ -568,20 +673,106 @@ class WP_Optimize {
 			
 			$optimizations = $optimizer->get_optimizations();
 			
-			// TODO: The output of the optimizations is not saved/used/logged
+			// Currently the output of the optimizations is not saved/used/logged
 			$results = $optimizer->do_optimizations($this_options, 'auto');
 			
 		}
 		
 	}
-	
+
+	/*
+		This will customize a URL with a correct Affiliate link
+		This function can be update to suit any URL as longs as the URL is passed
+		*/
+	public function wp_optimize_url($url, $text, $html=null, $class=null) {
+
+		//check if the URL is UpdraftPlus
+		if (false !== strpos($url, '//updraftplus.com')){
+
+			//Set URL with Affiliate ID
+			$url = $url.'?afref='.$this->get_notices()->get_affiliate_id();
+
+			//apply filters
+			$url = apply_filters('wpoptimize_updraftplus_com_link', $url);
+		} 
+		//return URL - check if there is HTMl such as Images
+		if(!empty($html)){
+			echo '<a '.$class.' href="'.esc_attr($url).'">'.$html.'</a>';
+		}else{
+			echo '<a '.$class.' href="'.esc_attr($url).'">'.htmlspecialchars($text).'</a>';
+		}
+	}
+
+    /**
+     * Setup WPO logger(s)
+     */
+    public function setup_loggers() {
+
+        $logger = $this->get_logger();
+        $loggers = $this->wpo_loggers();
+
+        if (!empty($loggers)) {
+            foreach($loggers as $_logger) {
+                $logger->add_logger( $_logger );
+            }
+        }
+
+    }
+
+    /**
+     * Returns list of WPO loggers instances
+     *
+     * apply filter wp_optimize_loggers
+     *
+     * @return array|mixed|void
+     */
+    public function wpo_loggers() {
+
+        $loggers = array();
+
+        $loggers_classes = array(
+            'Updraft_PHP_Logger' => WPO_PLUGIN_MAIN_PATH . 'includes/class-updraft-php-logger.php',
+            'Updraft_Simple_History_Logger' => WPO_PLUGIN_MAIN_PATH . 'includes/class-updraft-simple-history-logger.php'
+        );
+
+        $loggers_classes = apply_filters('wp_optimize_loggers_classes', $loggers_classes);
+
+        if (!empty($loggers_classes)) {
+            foreach ($loggers_classes as $logger_class => $logger_file) {
+
+                if (!class_exists($logger_class)) {
+                    if (is_file($logger_file)) {
+                        require_once($logger_file);
+                    }
+                }
+
+                if (class_exists($logger_class)) {
+                    $loggers[] = new $logger_class();
+                }
+            }
+        }
+
+        $loggers = apply_filters('wp_optimize_loggers', $loggers);
+
+        if (empty($loggers)) return array();
+
+        $logger_options = $this->get_options()->get_option('logging');
+        
+        if (empty($logger_options)) $logger_options = array();
+
+        foreach($loggers as $logger) {
+            $logger_class_name = get_class($logger);
+            $logger_id = strtolower($logger_class_name);
+            if (!array_key_exists($logger_id, $logger_options) || $logger_options[$logger_id] != 'true') {
+                $logger->disable();
+            }
+        }
+
+        return $loggers;
+    }
+    
 }
 
-function WP_Optimize() {
-	return WP_Optimize::instance();
-}
-
-$GLOBALS['wp_optimize'] = WP_Optimize();
 
 // plugin activation actions
 function wpo_activation_actions() {
@@ -598,3 +789,11 @@ function wpo_cron_deactivate() {
 	WP_Optimize()->log('running wpo_cron_deactivate()');
 	wp_clear_scheduled_hook('wpo_cron_event2');
 }
+
+function WP_Optimize() {
+	return WP_Optimize::instance();
+}
+
+endif;
+
+$GLOBALS['wp_optimize'] = WP_Optimize();

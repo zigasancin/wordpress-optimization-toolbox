@@ -8,7 +8,7 @@ if ( ! class_exists( 'WPSmushNextGenBulk' ) ) {
 
 		function smush_bulk() {
 
-			global $wpsmushnextgenstats, $wpsmush_stats, $wpsmushit_admin, $wpsmushnextgenadmin, $WpSmush;
+			global $wpsmushnextgenstats, $wpsmush_db, $wpsmushit_admin, $wpsmushnextgenadmin, $WpSmush;
 
 			$stats = array();
 
@@ -43,7 +43,7 @@ if ( ! class_exists( 'WPSmushNextGenBulk' ) ) {
 			if ( $WpSmush->lossy_enabled ) {
 				//Most of the time the stats would be update and the function won't need to go thorugh all the
 				//images to get the count, but in case it has to, we provide the SMushed attachment list
-				$stats['super_smushed'] = $wpsmush_stats->super_smushed_count('nextgen', $wpsmushnextgenstats->get_ngg_images('smushed' ) );
+				$stats['super_smushed'] = $wpsmush_db->super_smushed_count('nextgen', $wpsmushnextgenstats->get_ngg_images('smushed' ) );
 			}
 			if( empty( $wpsmushnextgenadmin->resmush_ids ) ) {
 				$wpsmushnextgenadmin->resmush_ids = get_option( 'wp-smush-nextgen-resmush-list' );

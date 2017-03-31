@@ -9,13 +9,14 @@ class WP_Optimization_commentmeta extends WP_Optimization {
 	// TODO: The first query here (but not the second) used to be run on a cron run. This needs reviewing when we review the whole cron-run set of options.
 
 	public function optimize() {
-	
+
 		$clean = "DELETE FROM `".$this->wpdb->commentmeta."` WHERE comment_id NOT IN (SELECT comment_id FROM `".$this->wpdb->comments."`);";
 
 		$commentstrash_meta = $this->query($clean);
 
 		$message = sprintf(_n('%d unused comment metadata item removed', '%d unused comment metadata items removed', $commentstrash_meta, 'wp-optimize'), number_format_i18n($commentstrash_meta));
 
+        $this->logger->info($message);
 		$this->register_output($message);
 
 		// TODO:  still need to test now cleaning up comments meta tables - removing akismet related settings
@@ -25,7 +26,8 @@ class WP_Optimization_commentmeta extends WP_Optimization {
 
 		$message = sprintf(_n('%d unused akismet comment metadata item removed', '%d unused akismet comment metadata items removed', $commentstrash_meta2, 'wp-optimize'), number_format_i18n($commentstrash_meta2));
 
-		$this->register_output($message);
+        $this->logger->info($message);
+        $this->register_output($message);
 	}
 	
 	public function get_info() {

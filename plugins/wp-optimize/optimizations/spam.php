@@ -15,8 +15,8 @@ class WP_Optimization_spam extends WP_Optimization {
 	protected $auto_id = 'spams';
 
 	public function optimize() {
-	
-		$clean = "DELETE FROM `".$this->wpdb->comments."` WHERE comment_approved = 'spam'";
+
+        $clean = "DELETE FROM `".$this->wpdb->comments."` WHERE comment_approved = 'spam'";
 				
 		if ($this->retention_enabled == 'true') {
 			$clean .= ' and comment_date < NOW() - INTERVAL ' . $this->retention_period . ' WEEK';
@@ -26,9 +26,12 @@ class WP_Optimization_spam extends WP_Optimization {
 
 		$comments = $this->query($clean);
 
-		$this->register_output(sprintf(_n('%d spam comment deleted', '%d spam comments deleted', $comments, 'wp-optimize'), number_format_i18n($comments)));
+        $info_message = sprintf(_n('%d spam comment deleted', '%d spam comments deleted', $comments, 'wp-optimize'), number_format_i18n($comments));
 
-		// TODO:  query trashed comments and cleanup metadata
+        $this->logger->info($info_message);
+		$this->register_output($info_message);
+
+		// Possible enhancement: query trashed comments and cleanup metadata
 		$clean = "DELETE FROM `".$this->wpdb->comments."` WHERE comment_approved = 'trash'";
 				
 		if ($this->retention_enabled == 'true') {
@@ -37,7 +40,10 @@ class WP_Optimization_spam extends WP_Optimization {
 		$clean .= ';';
 		$commentstrash = $this->query($clean);
 
-		$this->register_output(sprintf(_n('%d comment removed from Trash', '%d comments removed from Trash', $commentstrash, 'wp-optimize'), number_format_i18n($commentstrash)));
+        $info_message = sprintf(_n('%d comment removed from Trash', '%d comments removed from Trash', $commentstrash, 'wp-optimize'), number_format_i18n($commentstrash));
+
+        $this->logger->info($info_message);
+		$this->register_output($info_message);
 	}
 	
 	public function get_info() {
@@ -79,13 +85,13 @@ class WP_Optimization_spam extends WP_Optimization {
 	public function settings_label() {
 	
 		if ($this->retention_enabled == 'true') {
-			return sprintf(__('Remove spam comments which are older than %d weeks', 'wp-optimize'), $this->retention_period);
+			return sprintf(__('Remove spam and trashed comments which are older than %d weeks', 'wp-optimize'), $this->retention_period);
 		} else {
-			return __('Remove spam comments and comments in trash', 'wp-optimize');
+			return __('Remove spam and trashed comments', 'wp-optimize');
 		}
 	}
 
 	public function get_auto_option_description() {
-		return __('Remove spam comments', 'wp-optimize');
+		return __('Remove spam and trashed comments', 'wp-optimize');
 	}
 }

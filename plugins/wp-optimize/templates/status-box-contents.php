@@ -21,7 +21,7 @@ echo '<p>';
 $lastopt = $options->get_option('last-optimized', 'Never');
 if ($lastopt !== 'Never') {
 	echo __('Last automatic optimization was at', 'wp-optimize').': ';
-	echo '<span style="font-color: green; font-weight:bold;">';
+	echo '<span style="font-color: #004600; font-weight:bold;">';
 	echo htmlspecialchars($lastopt);
 	echo '</span>';
 } else {
@@ -32,7 +32,7 @@ if ($lastopt !== 'Never') {
 
 <?php
 if ($options->get_option('schedule', 'false') == 'true') {
-	echo '<strong><span style="font-color: green">';
+	echo '<strong><span style="font-color: #004600">';
 	_e('Scheduled cleaning enabled', 'wp-optimize');
 	echo ', </span></strong>';
 	if (wp_next_scheduled('wpo_cron_event2')) {
@@ -43,7 +43,7 @@ if ($options->get_option('schedule', 'false') == 'true') {
 		$date = new DateTime("@$timestamp");
 		_e('Next schedule:', 'wp-optimize');
 		echo ' ';
-		echo '<span style="font-color: green">';
+		echo '<span style="font-color: #004600">';
 		echo gmdate(get_option('date_format') . ' ' . get_option('time_format'), $timestamp );
 		echo '</span>';
 		echo ' - <a id="wp_optimize_status_box_refresh" href="'.esc_attr($admin_page_url).'">'.__('Refresh', 'wp-optimize').'</a>';
@@ -57,7 +57,7 @@ if ($options->get_option('schedule', 'false') == 'true') {
 echo '<br>';
 
 if ($retention_enabled == 'true') {
-	echo '<strong><span style="font-color: blue;">';
+	echo '<strong><span style="font-color: #0000FF;">';
 	printf(__('Keeping last %s weeks data', 'wp-optimize'), $retention_period) ;
 	echo '</span></strong>';
 } else {
@@ -76,11 +76,11 @@ if ($retention_enabled == 'true') {
 	
 	if ($optimize_db) {
 		_e('You have saved:', 'wp-optimize');
-		echo ' <span style="font-color: blue;">'.$total_gain.'</span>';
+		echo ' <span style="font-color: #0000FF;">'.$total_gain.'</span>';
 	} else {
 		if ($total_gain > 0) {
 			_e('You can save around:', 'wp-optimize');
-			echo ' <span style="font-color: red;">'.$total_gain.'</span> ';
+			echo ' <span style="font-color: #9B0000;">'.$total_gain.'</span> ';
 		}
 	}
 	?>
@@ -93,7 +93,7 @@ if ($retention_enabled == 'true') {
 
 	if ($total_cleaned_num  > 0) {
 		echo '<h5>'.__('Total clean up overall:','wp-optimize').' ';
-		echo '<span style="font-color: green">';
+		echo '<span style="font-color: #004600">';
 		echo $wp_optimize->format_size($total_cleaned);
 		echo '</span></h5>';
 	}

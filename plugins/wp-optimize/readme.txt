@@ -4,7 +4,7 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 4.7
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ WP-Optimize is an effective tool for automatically cleaning your WordPress datab
 * Carries out automatic weekly (or otherwise) clean-ups
 * Retains a set number of weeks' data during clean-ups
 * Performs optimizations without the need for running manual queries
+* Automatically trigger a pre-optimize backup via UpdraftPlus (https://updraftplus.com)
 * Show database statistics and potential savings
 * Mobile friendly and easy-to-use
 * Translated into several languages
@@ -118,13 +119,21 @@ Please check your database for corrupted tables. That can happen, usually your w
 
 == Screenshots ==
 
-1. Optimizer Screen
-2. Settings Screen
+1. The main optimizer Screen
+2. UpdraftPlus running a backup before an optimization proceeds
 3. Table Report
-4. Mobile View Top (Actual screen from Galaxy Note 3)
-5. Mobile View Bottom (Actual screen from Galaxy Note 3)
+4. Settings
 
 == Changelog ==
+
+= 2.1.1 - 28/Feb/2017 =
+
+* FEATURE: Added the ability to take a automatic backup with UpdraftPlus (https://updraftplus.com) before an optimization
+* FEATURE: When optimizing from the dashboard, tables are now optimized one by one, to reduce the scope for timeouts
+* FIX: Removal of sitemeta items from main site on multisite install was not proceeding
+* TWEAK: Adding premium bootstrapping to WP-Optimize for adding premium features in the future
+* TWEAK: A few wording tweaks, plus automatically refresh the page if the 'admin bar menu' option is changed
+* TWEAK: Introduce internal logging API
 
 = 2.1.0 - 28/Dec/2016 =
 
@@ -331,4 +340,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.1.0: Makeover of the plugin's user-interface, providing greater ease of use, and eliminating the need for page reloads
+* 2.1.1: Integrate easy pre-optimize backups with UpdraftPlus; reduce scope for optimization timeouts; other small tweaks and fixes

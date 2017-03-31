@@ -51,6 +51,25 @@ class WP_Optimize_Options {
 	public function get_main_settings() {
 		return $this->get_option('settings');
 	}
+
+	/**
+	 * This saves the tick box options for enabling auto backup
+	 * @param  Array 	$settings array of information with the state of the tick box selected
+	 * @return Array 	Message array for being completed
+	 */
+	public function save_auto_backup_option($settings) {
+		if (isset($settings['auto_backup']) && $settings['auto_backup'] == 'true') {
+			$this->update_option('enable-auto-backup', 'true');
+		} else {
+			$this->update_option('enable-auto-backup', 'false');
+		}
+
+		$output = array('messages' => array());
+		
+		$output['messages'][] = __('Auto backup option updated.', 'wp-optimize');
+		
+		return $output;
+	}
 	
 	public function save_settings($settings) {
 
@@ -92,12 +111,27 @@ class WP_Optimize_Options {
 			$this->update_option('retention-enabled', 'false');
 		}
 
+		//Get saved admin menu value before check
+		$saved_admin_bar = $this->get_option('enable-admin-menu', 'false');
+
+		//set refresh of default false so it doesnt refresh after save
+		$output['refresh'] = false;
+
 		if (!empty($settings['enable-admin-bar'])) {
 			$this->update_option('enable-admin-menu', 'true');
 		} else {
 			$this->update_option('enable-admin-menu', 'false');
 		}
+
+		// make sure inbound input is a string
+		$updated_admin_bar = $settings['enable-admin-bar'] ? 'true' : 'false';
 		
+		//check if the value is refreshed 
+		if ($saved_admin_bar != $updated_admin_bar) {
+			//set refresh to true as the values have changed
+			$output['refresh'] = true;
+		}
+
 		if (!empty($settings["enable-email"])) {
 	//		$this->update_option('enable-email', 'true');
 		} else {
@@ -133,6 +167,14 @@ class WP_Optimize_Options {
 			$this->update_option('auto', $new_auto_options);
 
 		}
+
+        /** Save logging options */
+
+        $new_logging_options = isset($settings['wp-optimize-logging']) ? $settings['wp-optimize-logging'] : array();
+
+        if (!is_array($new_logging_options)) $new_logging_options = array();
+
+        $this->update_option('logging', $new_logging_options);
 
 		$output['messages'][] = __('Settings updated.', 'wp-optimize');
 		

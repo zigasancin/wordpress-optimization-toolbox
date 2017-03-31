@@ -12,7 +12,7 @@ class WP_Optimization_revisions extends WP_Optimization {
 	public $available_for_saving = true;
 
 	public function optimize() {
-	
+
 		$clean = "DELETE FROM `".$this->wpdb->posts."` WHERE post_type = 'revision'";
 				
 		if ($this->retention_enabled == 'true') {
@@ -25,6 +25,7 @@ class WP_Optimization_revisions extends WP_Optimization {
 
 		$message = sprintf(_n('%d post revision deleted', '%d post revisions deleted', $revisions, 'wp-optimize'), number_format_i18n($revisions));
 
+        $this->logger->info($message);
 		$this->register_output($message);
 	}
 	

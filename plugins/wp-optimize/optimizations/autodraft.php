@@ -16,7 +16,7 @@ class WP_Optimization_autodraft extends WP_Optimization {
 	protected $auto_id = 'drafts';
 
 	public function optimize() {
-	
+
 		$clean = "DELETE FROM `".$this->wpdb->posts."` WHERE post_status = 'auto-draft'";
 				
 		if ($this->retention_enabled == 'true') {
@@ -29,7 +29,6 @@ class WP_Optimization_autodraft extends WP_Optimization {
 
 		$this->register_output(sprintf(_n('%d auto draft deleted', '%d auto drafts deleted', $autodraft, 'wp-optimize'), number_format_i18n($autodraft)));
 
-		// TODO:  query trashed posts and cleanup metadata
 		$clean = "DELETE FROM `".$this->wpdb->posts."` WHERE post_status = 'trash'";
 
 		if ($this->retention_enabled == 'true') {
@@ -40,7 +39,10 @@ class WP_Optimization_autodraft extends WP_Optimization {
 
 		$posttrash = $this->query($clean);
 
-		$this->register_output(sprintf(_n('%d item removed from Trash', '%d items removed from Trash', $posttrash, 'wp-optimize'), number_format_i18n($posttrash)));
+        $info_message = sprintf(_n('%d item removed from Trash', '%d items removed from Trash', $posttrash, 'wp-optimize'), number_format_i18n($posttrash));
+
+        $this->logger->info($info_message);
+		$this->register_output($info_message);
 	}
 	
 	public function get_info() {
@@ -81,15 +83,15 @@ class WP_Optimization_autodraft extends WP_Optimization {
 	public function settings_label() {
 	
 		if ($this->retention_enabled == 'true') {
-			return sprintf(__('Clean auto draft posts which are older than %d weeks', 'wp-optimize'), $this->retention_period);
+			return sprintf(__('Clean auto draft and trashed posts which are older than %d weeks', 'wp-optimize'), $this->retention_period);
 		} else {
-			return __('Clean all auto draft posts and posts in trash', 'wp-optimize');
+			return __('Clean all auto-drafts and trashed posts', 'wp-optimize');
 		}
 	
 	}
 
 	public function get_auto_option_description() {
-		return __('Remove auto drafts', 'wp-optimize');
+		return __('Remove auto-drafts and trashed posts', 'wp-optimize');
 	}
 
 }

@@ -35,25 +35,31 @@
 	?>
 
 	<h3><?php _e('Optimization results:', 'wp-optimize'); ?></h3>
-	<p style="color: #0000ff;"><?php
+	<p style="color: #0000ff;" id="optimization_table_total_gain"><?php
 
 	if ($total_gain > 0) {
-		echo __('Total space saved:', 'wp-optimize').$wp_optimize->format_size($total_gain);
+		echo __('Total space saved:', 'wp-optimize').' <span>'.$wp_optimize->format_size($total_gain).'</span> ';
 		$optimizer->update_total_cleaned(strval($total_gain));
 	}
-	
-	echo '</p>';
-	
 } else { ?>
 
 	<?php if ($total_gain != 0) { ?>
 
 		<h3><?php if ($total_gain > 0) _e('Optimization Possibility:', 'wp-optimize'); ?></h3>
-		<p style="color: #ff0000;">
+		<p style="color: #ff0000;" id="optimization_table_total_gain">
 		<?php if ($total_gain > 0) {
-			echo __('Total space that can be saved:', 'wp-optimize').' '.$wp_optimize->format_size($total_gain).' ';
+			echo __('Total space that can be saved:', 'wp-optimize').' <span>'.$wp_optimize->format_size($total_gain).'</span> ';
 		}
-		echo '</p>';
-		
+	} else {
+		?> <p id="optimization_table_total_gain"> <?php
+		echo __('Total space:', 'wp-optimize').' <span>'.$wp_optimize->format_size($total_gain).'</span> ';
 	}
 }
+echo '<br>';
+
+?> <span id="optimization_table_inno_db"><?php
+	echo __('Total InnoDB tables:', 'wp-optimize').' <span>'.$inno_db_tables.'</span> ';
+?> </span><br>
+<span id="optimization_table_non_inno_db"> <?php
+	echo __('Total non-InnoDB tables:', 'wp-optimize').' <span>'.$non_inno_db_tables.'</span> ';
+?> </span></p>

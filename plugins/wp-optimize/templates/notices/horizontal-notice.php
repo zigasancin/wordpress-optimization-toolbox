@@ -25,26 +25,23 @@
 
 					if (isset($discount_code)) echo ' <b>' . $discount_code . '</b>';
 
-// 					if (isset($text2)) {
-// 						echo '</p><p>' . $text2 . '</p><p>';
-// 					}
-					
 					if (!empty($button_link) && !empty($button_meta)) {
-				?>
-				<a class="updraft_notice_link" href="<?php esc_attr_e($button_link);?>"><?php 
+
+						//Check which Message is going to be used
 						if ($button_meta == 'updraftcentral') {
-							_e('Get UpdraftCentral', 'wp-optimize');
+							$button_text = __('Get UpdraftCentral', 'wp-optimize');
 						} elseif ($button_meta == 'review') {
-							_e('Review WP-Optimize', 'wp-optimize');
+							$button_text = __('Review WP-Optimize', 'wp-optimize');
 						} elseif ($button_meta == 'updraftplus') {
-							_e('Get UpdraftPlus', 'wp-optimize');
+							$button_text = __('Get UpdraftPlus', 'wp-optimize');
 						} elseif ($button_meta == 'signup') {
-							_e('Sign up', 'wp-optimize');
+							$button_text = __('Sign up', 'wp-optimize');
 						} elseif ($button_meta == 'go_there') {
-							_e('Go there', 'wp-optimize');
+							$button_text = __('Go there', 'wp-optimize');
 						}
-					?></a>
-				<?php } ?>
+						$wp_optimize->wp_optimize_url($button_link, $button_text, null, 'class="updraft_notice_link"');
+					} 
+				?>
 			</p>
 		</div>
 	</div>

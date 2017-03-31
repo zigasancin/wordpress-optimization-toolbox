@@ -2,8 +2,6 @@
 
 if (!defined('WPO_VERSION')) die('No direct access allowed');
 
-// TODO:  need to use proper query
-
 class WP_Optimization_postmeta extends WP_Optimization {
 
 	public $ui_sort_order = 8000;
@@ -12,13 +10,14 @@ class WP_Optimization_postmeta extends WP_Optimization {
 	public $auto_default = false;
 
 	public function optimize() {
-	
+
 		$clean = "DELETE pm FROM `".$this->wpdb->postmeta."` pm LEFT JOIN `".$this->wpdb->posts."` wp ON wp.ID = pm.post_id WHERE wp.ID IS NULL;";
 
 		$postmeta = $this->query($clean);
 
 		$message = sprintf(_n('%d orphaned postmeta deleted', '%d orphaned postmeta deleted', $postmeta, 'wp-optimize'), number_format_i18n($postmeta));
 
+        $this->logger->info($message);
 		$this->register_output($message);
 	}
 	

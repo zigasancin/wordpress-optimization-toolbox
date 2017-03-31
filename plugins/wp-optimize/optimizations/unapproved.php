@@ -24,7 +24,10 @@ class WP_Optimization_unapproved extends WP_Optimization {
 
 		$comments = $this->query($clean);
 
-		$this->register_output(sprintf(_n('%d unapproved comment deleted', '%d unapproved comments deleted', $comments, 'wp-optimize'), number_format_i18n($comments)));
+        $info_message = sprintf(_n('%d unapproved comment deleted', '%d unapproved comments deleted', $comments, 'wp-optimize'), number_format_i18n($comments));
+
+        $this->logger->info($info_message);
+		$this->register_output($info_message);
 	}
 	
 	public function get_info() {

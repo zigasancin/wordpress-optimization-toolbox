@@ -5,37 +5,28 @@
 
 	echo '<h1>WP-Optimize '.WPO_VERSION.'</h1>';
 
+	//This is to display the notices
 	$wp_optimize_notices->do_notice();
-
-	function wp_optimize_header_link($url, $text) {
-	
-		if (false !== strpos($url, '//updraftplus.com')) $url = apply_filters('wpoptimize_updraftplus_com_link', $url);
-	
-		echo '<a href="'.esc_attr($url).'">'.htmlspecialchars($text).'</a>';
-		
-	}
 
 ?>
 <p>
-		<?php wp_optimize_header_link('https://updraftplus.com/wp-optimize/', __('Home', 'wp-optimize'));?> |
+		<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/wp-optimize/', __('Home', 'wp-optimize'));?> |
 
-		<?php wp_optimize_header_link('https://updraftplus.com/', 'UpdraftPlus.Com');?> |
+		<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/', __('updraftplus.com', 'wp-optimize'));?> |
 		
-		<?php wp_optimize_header_link('https://updraftplus.com/news/', __('News', 'wp-optimize'));?> |
+		<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/news/', __('News', 'wp-optimize'));?> |
 
-		<?php wp_optimize_header_link('https://twitter.com/updraftplus', __('Twitter', 'wp-optimize'));?> |
+		<?php $wp_optimize->wp_optimize_url('https://twitter.com/updraftplus', __('Twitter', 'wp-optimize'));?> |
 
-		<?php wp_optimize_header_link('https://wordpress.org/support/plugin/wp-optimize/', __('Support', 'wp-optimize'));?> |
+		<?php $wp_optimize->wp_optimize_url('https://wordpress.org/support/plugin/wp-optimize/', __('Support', 'wp-optimize'));?> |
 
-		<?php wp_optimize_header_link('https://updraftplus.com/newsletter-signup', __('Newsletter sign-up', 'wp-optimize'));?> |
+		<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/newsletter-signup', __('Newsletter sign-up', 'wp-optimize'));?> |
 
-		<?php wp_optimize_header_link('https://david.dw-perspective.org.uk', __("Lead developer", 'wp-optimize'));?> |
+		<?php $wp_optimize->wp_optimize_url('https://david.dw-perspective.org.uk', __("Lead developer", 'wp-optimize'));?> |
 		
-		<?php wp_optimize_header_link('https://source.updraftplus.com/team-updraft/wp-optimize/', 'Gitlab');?> |
-		
-		<?php wp_optimize_header_link('https://wordpress.org/plugins/wp-optimize/faq/', __("FAQs", 'wp-optimize'));?> |
+		<?php $wp_optimize->wp_optimize_url('https://wordpress.org/plugins/wp-optimize/faq/', __("FAQs", 'wp-optimize'));?> |
 
-		<?php wp_optimize_header_link('https://www.simbahosting.co.uk/s3/shop/', __("More plugins", 'wp-optimize'));?>
+		<?php $wp_optimize->wp_optimize_url('https://www.simbahosting.co.uk/s3/shop/', __("More plugins", 'wp-optimize'));?>
 		
 </p>
 

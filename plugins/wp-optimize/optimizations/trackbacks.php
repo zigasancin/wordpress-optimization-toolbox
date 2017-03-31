@@ -12,7 +12,10 @@ class WP_Optimization_trackbacks extends WP_Optimization {
 
 		$comments = $this->query($clean);
 
-		$this->register_output(sprintf(_n('%d trackback deleted', '%d trackbacks deleted', $comments, 'wp-optimize'), number_format_i18n($comments)));
+        $info_message = sprintf(_n('%d trackback deleted', '%d trackbacks deleted', $comments, 'wp-optimize'), number_format_i18n($comments));
+
+        $this->logger->info($info_message);
+		$this->register_output( $info_message );
 	}
 	
 	public function get_info() {

@@ -13,6 +13,9 @@
 			<div class="inside">
 				<h3><?php _e('General settings', 'wp-optimize'); ?></h3>
 				<p>
+					<?php _e('Whether manually or on a schedule, these settings apply whenever a relevant optimization is run.', 'wp-optimize');?>
+				</p>
+				<p>
 					<input name="enable-retention" id="enable-retention" type="checkbox" value ="true" <?php echo $options->get_option('retention-enabled') == 'true' ? 'checked="checked"':''; ?> />
 					<?php
 
@@ -77,7 +80,6 @@
 					<?php
 						$wpo_auto_options = $options->get_option('auto');
 						
-						// TODO: postmeta ("Remove orphaned post meta") and tags ("Remove unused tags") were present in the HTML previously, but commented out. Should ask Ruhani about that.
 						$optimizations = $optimizer->sort_optimizations($optimizer->get_optimizations());
 						
 						foreach ($optimizations as $id => $optimization) {
@@ -113,8 +115,35 @@
 					</p> -->
 					
 				</div>
-				
-				<hr>
+
+                <h3><?php _e('Logging settings', 'wp-optimize'); ?></h3>
+
+                <p></p>
+
+                <div id="wp-optimize-logging-options">
+                    <?php
+                    $wpo_logging_options = $options->get_option('logging');
+
+                    $loggers = $wp_optimize->get_logger()->get_loggers();
+
+                    foreach ($loggers as $logger) {
+
+                        $logger_id = strtolower(get_class($logger));
+
+                        $logger_dom_id = 'wp-optimize-auto-'.$logger_id;
+
+                        $setting_activated = (empty($wpo_logging_options[$logger_id]) || 'false' == $wpo_logging_options[$logger_id]) ? false : true;
+
+                        ?><p>
+                        <input name="wp-optimize-logging[<?php echo $logger_id;?>]" id="<?php echo $logger_dom_id;?>" type="checkbox" value="true" <?php if ($setting_activated) echo 'checked="checked"'; ?>> <label for="<?php echo $logger_dom_id;?>"><?php echo $logger->get_description(); ?></label>
+                        </p>
+                    <?php
+
+                    }
+                    ?>
+                </div>
+
+                <hr>
 
 				<div id="wp-optimize-settings-save-results"></div>
 				

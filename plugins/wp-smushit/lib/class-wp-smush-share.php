@@ -14,17 +14,16 @@ if ( ! class_exists( 'WpSmushShare' ) ) {
 		function __construct() {}
 
 		function share_widget() {
-			global $wpsmushit_admin, $wpsmush_stats;
-			$savings     = $wpsmushit_admin->global_stats_from_ids();
-			$image_count = $wpsmush_stats->smushed_count();
+			global $wpsmushit_admin;
+			$savings     = $wpsmushit_admin->stats;
+			$image_count = $wpsmushit_admin->smushed_count;
 
 			//If there is any saving, greater than 1Mb, show stats
 			if ( empty( $savings ) || empty( $savings['bytes'] ) || $savings['bytes'] <= 1048576 || $image_count <= 1 || ! is_super_admin() ) {
 				return false;
 			}
 			$message   = sprintf( esc_html__( "%s, you've smushed %d images and saved %s in total. Help your friends save bandwidth easily, and help me in my quest to Smush the internet!", "wp-smushit" ), $wpsmushit_admin->get_user_name(), $image_count, $savings['human'] );
-			$share_msg = sprintf( esc_html__( 'I saved %s on my site with WP Smush ( %s ) - wanna make your website smaller and faster?', "wp-smushit" ) , $savings['human'], urlencode( "https://wordpress.org/plugins/wp-smushit/" ) );
-			$url       = urlencode( "http://wordpress.org/plugins/wp-smushit/" ); ?>
+			$share_msg = sprintf( esc_html__( 'I saved %s on my site with WP Smush ( %s ) - wanna make your website smaller and faster?', "wp-smushit" ) , $savings['human'], urlencode( "https://wordpress.org/plugins/wp-smushit/" ) ); ?>
 			<section class="dev-box" id="wp-smush-share-widget">
 			<div class="box-content roboto-medium">
 				<p class="wp-smush-share-message"><?php echo $message; ?></p>

@@ -6,20 +6,20 @@
 			<img class="addons" alt="WP_Optimize" src="<?php echo WPO_PLUGIN_URL.'images/logo/wpo_logo_small.png'; ?>">
 			<h3>WP-Optimize is now part of the UpdraftPlus family!</h3>
 
-			<p>Since version 2.0, WP-Optimize has been owned, developed, supported by <a href="https://updraftplus.com">UpdraftPlus</a>, the world's most installed WordPress backup/restore plugin.</p>
+			<p>Since version 2.0, WP-Optimize has been owned, developed, supported by <?php $wp_optimize->wp_optimize_url('https://updraftplus.com/', 'UpdraftPlus');?>, the world's most installed WordPress backup/restore plugin.</p>
 
 			<p>Releases 2.0 and 2.1 since then have brought no major changes or features on the outside (apart from a few bug fixes). What they have brought, is a complete re-factorization of the plugin on the inside. The code structure has now been completely renovated to make future development quicker, and to enable a future remote-control facility for users with multiple sites (through <a href="https://updraftcentral.com">UpdraftCentral)</a>. With version 2.1, all dashboard operations now take place without the need for page refreshes, and the user interface has been modified in several ways for better ease of understanding and use.</p>
 			
-			<p>We are quite excited to have reached this stage which lays a solid foundation for lots of future improvements. Watch this space and sign up to the <a href="https://updraftplus.com/newsletter-signup">UpdraftPlus newsletter</a> for updates!</p>
+			<p>We are quite excited to have reached this stage which lays a solid foundation for lots of future improvements. Watch this space and sign up to the <?php $wp_optimize->wp_optimize_url('https://updraftplus.com/newsletter-signup', __('UpdraftPlus newsletter', 'wp-optimize'));?> for updates!</p>
 			
-			<p>Find out more about the acquisition <a href="https://updraftplus.com/updraftplus-confirms-acquired-wp-optimize">here</a>.</p>
+			<p>Find out more about the acquisition <?php $wp_optimize->wp_optimize_url('https://updraftplus.com/updraftplus-confirms-acquired-wp-optimize', __('here', 'wp-optimize'));?>.</p>
 		</div>
 	</div>
 </div>
 <div class="wpo_col wpo_half_width">
 	<div class="postbox">
 		<div class="inside">
-			<a href="https://updraftplus.com"><img class="addons" name="UpdraftPlus" src="<?php echo WPO_PLUGIN_URL.'images/logo/udp_logo_small.png'; ?>"></a>
+			<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/', null, '<img class="addons" name="UpdraftPlus" src="'. WPO_PLUGIN_URL.'images/logo/udp_logo_small.png' .'">');?>
 			<h3>Why do you need a backup plugin?</h3>
 			<p>Websites crash, get hacked; hosting companies make mistakes or go bust; plugin and theme authors release code with unwanted errors in; site editors make mistakes too. With a backup, you can be back up and running again in minutes. Without - everything is gone.</p>
 			
@@ -39,7 +39,9 @@
 					<p>The ability to <strong>restore your website</strong> for you from your backups. Unfortunately, most WordPress backup plugins force you to learn about how to restore by hand!</p>
 				</li>
 			</ol>
-			<p><a href="https://wordpress.org/plugins/updraftplus/">UpdraftPlus</a> is the most trusted and installed backup plugin because it does all of this and more reliably, for free. There is also a premium version which can do <a href="https://updraftplus.com">a lot more</a>.</p>
+			<p>
+				<?php $wp_optimize->wp_optimize_url('https://wordpress.org/plugins/updraftplus/', __('UpdraftPlus', 'wp-optimize'));?> is the most trusted and installed backup plugin because it does all of this and more reliably, for free. There is also a premium version which can do <?php $wp_optimize->wp_optimize_url('https://updraftplus.com/', __('a lot more', 'wp-optimize'));?>.
+			</p>
 		</div>
 	</div>
 </div>

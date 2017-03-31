@@ -71,7 +71,12 @@ class WP_Optimizer {
 	
 	}
 	
-	// This method returns an array of available optimisations. Each array key is an optimization ID, and the value is an object, as returned by get_optimization()
+	/**
+	 * This method returns an array of available optimisations. 
+	 * Each array key is an optimization ID, and the value is an object, 
+	 * as returned by get_optimization()
+	 * @return [array] array of optimizations
+	 */
 	public function get_optimizations() {
 	
 		$optimizations = $this->get_optimizations_list();
@@ -86,10 +91,14 @@ class WP_Optimizer {
 	
 	}
 	
-	// This method returns an object for a specific optimization
-	// This will return a WP_Error if the requested optimization is not found
-	public function get_optimization($which_optimization) {
-	
+	/**
+	 * This method returns an object for a specific optimization. 
+	 * @param  string $which_optimization an optimization ID
+	 * @param  array $data an array of anny options $data
+	 * @return array|WP_Error Will return the optimization, or a WP_Error object if it was not found
+	 */
+	public function get_optimization($which_optimization, $data = array()) {
+
 		$optimization_class = apply_filters('wp_optimize_optimization_class', 'WP_Optimization_'.$which_optimization);
 		
 		if (!class_exists('WP_Optimization')) require_once(WPO_PLUGIN_MAIN_PATH.'/includes/class-wp-optimization.php');
@@ -108,17 +117,19 @@ class WP_Optimizer {
 			}
 		}
 		
-		$optimization = new $optimization_class($which_optimization);
+		$optimization = new $optimization_class($data);
 		
 		return $optimization;
 	
 	}
 	
-	// The method to call to perform an optimization.
-	// $which_optimization can be either a (string)id, or a WP_Optimization object
-	// Returns a result object
+	/**
+	 * The method to call to perform an optimization.
+	 * @param  string|object $which_optimization an optimization ID, or a WP_Optimization object
+	 * @return [array]       array of results from the optimization
+	 */
 	public function do_optimization($which_optimization) {
-	
+
 		$optimization = (is_object($which_optimization) && is_a($which_optimization, 'WP_Optimization')) ? $which_optimization : $this->get_optimization($which_optimization);
 		
 		if (is_wp_error($optimization)) return $optimization;
@@ -138,8 +149,12 @@ class WP_Optimizer {
 		return $results;
 	}
 	
-	// The method to call to get information about an optimization. As with do_optimization, it is somewhat modelled after the template interface
-	// $which_optimization can either be an ID (string), or a class (from get_optimization())
+	/**
+	 * The method to call to get information about an optimization.
+	 * As with do_optimization, it is somewhat modelled after the template interface
+	 * @param  string|object $which_optimization an optimization ID, or a WP_Optimization object
+	 * @return array       returns the optimization information
+	 */
 	public function get_optimization_info($which_optimization) {
 	
 		$optimization = (is_object($which_optimization) && is_a($which_optimization, 'WP_Optimization')) ? $which_optimization : $this->get_optimization($which_optimization);
@@ -152,7 +167,6 @@ class WP_Optimizer {
 		
 		return $optimization->get_results();
 	}
-	
 	
 	// $optimization_options: whether to do an optimization depends on what keys are set (legacy - can be changed hopefully)
 	// Returns an array of result objects
@@ -176,8 +190,7 @@ class WP_Optimizer {
 			
 				// Try to reduce the chances of PHP self-terminating via reaching max_execution_time
 				@set_time_limit($time_limit);
-			
-				$results[$optimization_id] = $this->do_optimization($optimization_id);
+				$results[$optimization_id] = $this->do_optimization($optimization);
 				
 			}
 			
@@ -230,6 +243,36 @@ class WP_Optimizer {
 		}
 		
 		return apply_filters('wp_optimize_get_tables', $table_status);
+	}
+
+	/**
+	 * This function grabs a list of tables
+	 * and information regarding each table and returns
+	 * the results to optimizations-table.php and optimizationstable.php
+	 * @return [array] an array of data such as table list, innodb info and data free
+	 */
+	public function get_table_information() {
+		//get table information
+		$tablesstatus = $this->get_tables();
+
+		//set defaults
+		$table_information = array();
+		$table_information['total_gain'] = 0;
+		$table_information['inno_db_tables'] = 0;
+		$table_information['non_inno_db_tables'] = 0;
+		$table_information['table_list'] = '';
+
+		//make a list of tables to optimize
+		foreach($tablesstatus as $each_table) {
+			if ($each_table->Engine != 'InnoDB') {
+				$table_information['total_gain'] += $each_table->Data_free;
+				$table_information['table_list'] .= $each_table->Name.'|';
+				$table_information['non_inno_db_tables']++;
+			} else {
+				$table_information['inno_db_tables']++;
+			}
+		}
+		return $table_information;
 	}
 	
 	/*
@@ -286,7 +329,6 @@ class WP_Optimizer {
 		
 		$tablesstatus = $this->get_tables();
 
-		$wp_optimize->log('Checking DB size .... ');
 		foreach ($tablesstatus as  $tablestatus) {
 			$row_usage += $tablestatus->Rows;
 			$data_usage += $tablestatus->Data_length;

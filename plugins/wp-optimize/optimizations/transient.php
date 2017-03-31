@@ -9,7 +9,7 @@ class WP_Optimization_transient extends WP_Optimization {
 	public $ui_sort_order = 5000;
 
 	public function optimize() {
-	
+
 		$clean = "
 			DELETE
 				a, b
@@ -60,6 +60,7 @@ class WP_Optimization_transient extends WP_Optimization {
 			$final_message = $message . ', '.sprintf(_n('%d site-wide transient option deleted', '%d site-widetransient options deleted', $sitemeta_table_transients_deleted, 'wp-optimize'), number_format_i18n($sitemeta_table_transients_deleted));
 		}
 
+        $this->logger->info($final_message);
 		$this->register_output($final_message);
 	}
 	
@@ -105,7 +106,7 @@ class WP_Optimization_transient extends WP_Optimization {
 				AND b.meta_value < UNIX_TIMESTAMP()
 			";
 
-			$sitemeta_table_transients = $this->wpdb->get_var($options_table_sql);
+			$sitemeta_table_transients = $this->wpdb->get_var($sitemeta_table_sql);
 		} else {
 			$sitemeta_table_transients = 0;
 		}

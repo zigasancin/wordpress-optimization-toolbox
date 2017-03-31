@@ -491,7 +491,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 		 * Outputs the Smush stats for the site
 		 */
 		function smush_stats_container() {
-			global $WpSmush, $wpsmushnextgenstats, $wpsmushit_admin, $wpsmush_stats;
+			global $WpSmush, $wpsmushnextgenstats, $wpsmushit_admin, $wpsmush_db;
 
 			//If we have resmush list, smushed_count = totalcount - resmush count, else smushed_count
 			$smushed_count = ( $resmush_count = count( $this->resmush_ids ) ) > 0 ? ( $this->total_count - ( $resmush_count + $this->remaining_count ) ) : $this->smushed_count;
@@ -555,7 +555,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 					<span class="float-r wp-smush-stats">
 						<?php
 						if ( $WpSmush->lossy_enabled ) {
-							$count = $wpsmush_stats->super_smushed_count( 'nextgen', $wpsmushnextgenstats->get_ngg_images( 'smushed' ) );
+							$count = $wpsmush_db->super_smushed_count( 'nextgen', $wpsmushnextgenstats->get_ngg_images( 'smushed' ) );
 							echo '<span class="smushed-count">' . $count . '</span>/' . $this->total_count;
 						} else {
 							printf( esc_html__( "%sDISABLED%s", "wp-smushit" ), '<span class="wp-smush-lossy-disabled">', '</span>' );

@@ -7,12 +7,15 @@ class WP_Optimization_pingbacks extends WP_Optimization {
 	public $ui_sort_order = 6000;
 
 	public function optimize() {
-	
+
 		$clean = "DELETE FROM `".$this->wpdb->comments."` WHERE comment_type = 'pingback';";
 			
 		$comments = $this->query($clean);
 
-		$this->register_output(sprintf(_n('%d pingback deleted', '%d pingbacks deleted', $comments, 'wp-optimize'), number_format_i18n($comments)));
+        $info_message = sprintf(_n('%d pingback deleted', '%d pingbacks deleted', $comments, 'wp-optimize'), number_format_i18n($comments));
+        $this->logger->info($info_message);
+		$this->register_output($info_message);
+
 	}
 	
 	public function get_info() {

@@ -7,11 +7,9 @@ if (!defined('WPO_VERSION')) die('No direct access allowed');
 abstract class WP_Optimization {
 
 	// Ideally, these would all be the same. But, historically, some are not; hence, three separate IDs.
-	// TODO: Make them all the same (will involve some options re-writing)
 	public $id;
 	
 	protected $setting_id;
-	// TODO: I suspect that dom_id can be changed + then removed fairly easily. Even if it is used for saving options (haven't checked), that can be re-written at save time.
 	protected $dom_id;
 	protected $auto_id;
 	
@@ -24,6 +22,8 @@ abstract class WP_Optimization {
 	
 	protected $optimizer;
 	protected $options;
+    protected $logger;
+	protected $data;
 	
 	public $retention_enabled;
 	public $retention_period;
@@ -49,20 +49,33 @@ abstract class WP_Optimization {
 	
 	abstract public function settings_label();
 	
-	public function __construct() {
+	public function __construct($data) {
 		$class_name = get_class($this);
 		// Remove the prefixed WP_Optimization_
 		$this->id = substr($class_name, 16);
+		$this->data = $data;
 		$this->optimizer = WP_Optimize()->get_optimizer();
 		$this->options = WP_Optimize()->get_options();
+		$this->logger = WP_Optimize()->get_logger();
 		global $wpdb;
 		$this->wpdb = $wpdb;
 	}
 
+	/**
+	 * This triggers the do_optimization function
+	 * within class-wp-optimizer.php to kick off the optimizations.
+	 * It also passed the data array from the wpadmin.js.
+	 * @return [array] array of results that includes sql_commands, output and meta
+	 */
 	public function do_optimization() {
 		return $this->optimizer->do_optimization($this);
 	}
 	
+	/**
+	 * This gathers the optimization information to be displayed
+	 * before triggering any optimizations
+	 * @return [array] Returns an array of optimization information
+	 */
 	public function get_optimization_info() {
 		return $this->optimizer->get_optimization_info($this);
 	}

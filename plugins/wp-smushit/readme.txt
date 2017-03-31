@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 2.5.3
+Version: 2.6.1
 Author: WPMU DEV
 Author URI: http://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
-Tags: image, optimize, compress, performance, lossless, lossy, photo, pictures, optimize JPG, compress PNG, Smush WordPress Compression, Smush.it
+Tags: image, resize, optimize, compress, performance, lossless, lossy, photo, pictures, optimize JPG, compress PNG, Smush WordPress Compression, Smush.it
 Requires at least: 3.5
-Tested up to: 4.7.1
-Stable tag: 2.5.3
+Tested up to: 4.7.2
+Stable tag: 2.6.1
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
 Compress and optimize image files, improve performance and boost your SEO rank using Smush WordPress image compression and optimization.
@@ -28,6 +28,10 @@ WP Smush meticulously scans every image you upload – or have already added to 
 
 <a href="https://garage.godaddy.com/wordpress-plugin-partner-program/directory/?cvosrc=advocacy.evangelism.WP3" rel="nofollow"><img src="https://garage.godaddy.com/wp-content/uploads/badges/godaddy-plugin-partner-program-badge.svg" title="GoDaddy Plugin Program Partner" alt="GoDaddy Plugin Program Partner"/></a>
 
+= Compress any Image in any Directory =
+
+In addition to smushing your media uploads, you may want to compress the images stored in other folders. Smush now lets you compress any image in any directory so that you can optimize all the images on your site – including NextGEN images and the images in EVERY WordPress plugin and theme package!
+
 ★★★★★ <br>
 “I had no idea that my page load time was being dragged down by the images. The plugin nearly halved the time it took.” - <a href="http://profiles.wordpress.org/karlcw">karlcw</a>
 
@@ -47,6 +51,7 @@ The faster your site loads, the more Google, Bing, Yahoo and other search engine
   <li>Optimize your images using advanced lossless compression techniques.</li>
   <li>Set maximum width and height and large images will automatically scale before being added to your media library</li>
   <li>Process JPEG, GIF and PNG image files.</li>
+  <li>Optimize any image in any directory.</li>
   <li>Asynchronously auto-smush your attachments for super fast compression on upload.</li>
   <li>Manually smush your attachments individually in the media library, or in bulk 50 attachments at a time.</li>
   <li>Smush all standard web-sized images 1MB or smaller. </li>
@@ -58,7 +63,7 @@ The faster your site loads, the more Google, Bing, Yahoo and other search engine
 Install WP Smush now and find out why it's the most popular image optimization plugin for WordPress available today with over 2.7 million downloads.
 </blockquote>
 
-<h4>If you like WP Smush, you'll love <a href="https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme">WP Smush Pro</a></h4>
+= If you like WP Smush, you'll love <a href="https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme">WP Smush Pro</a> =
 
 WP Smush Pro gives you everything you'll find in WP Smush and more:
 <ul>
@@ -126,6 +131,31 @@ Yahoo's Smush.it API is gone forever. So WPMU DEV built our own free API that is
 
 
 == Changelog ==
+
+= 2.6.1 =
+
+* Fixed:
+    * PHP 5.2 compatibility
+    * DB error: Use a smaller value for Path Index size ( Prefix Indexes )
+    * Updated translation function name
+    * UI/UX fixes for directory smush
+    * Improved optimisation process for directory smush
+    * Updated uninstall.php
+    * Skip sites directory from Directory Smush in a Multisite
+
+= 2.6 =
+
+* Fixed:
+    * PHP 7 warning ( https://goo.gl/GKEMim ), @props: @alexis-mag
+    * Async Smush conflict with other plugins
+
+* Changes:
+    * Moved notice JS/CSS in footer
+    * Bulk Smush page optimisation
+    * Increased timeout for Async request - Fixes Async smush not working for some hosting services
+
+* Added:
+    * Directory Smush
 
 = 2.5.3 =
 

@@ -4,7 +4,7 @@ Plugin Name: WP Smush
 Plugin URI: http://wordpress.org/extend/plugins/wp-smushit/
 Description: Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
 Author: WPMU DEV
-Version: 2.5.3
+Version: 2.6.1
 Author URI: http://premium.wpmudev.org/
 Text Domain: wp-smushit
 */
@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Constants
  */
 $prefix  = 'WP_SMUSH_';
-$version = '2.5.3';
+$version = '2.6.1';
 
 //Deactivate the .org version, if pro version is active
 add_action( 'admin_init', 'deactivate_smush_org' );
@@ -88,9 +88,9 @@ require_once WP_SMUSH_DIR . 'lib/class-wp-smush.php';
  */
 if ( ! function_exists( 'wp_smush_rating_message' ) ) {
 	function wp_smush_rating_message( $message ) {
-		global $wpsmushit_admin, $wpsmush_stats;
+		global $wpsmushit_admin, $wpsmush_db;
 		$savings     = $wpsmushit_admin->global_stats_from_ids();
-		$image_count = $wpsmush_stats->total_count();
+		$image_count = $wpsmush_db->total_count();
 		$show_stats  = false;
 
 		//If there is any saving, greater than 1Mb, show stats
@@ -124,7 +124,7 @@ if ( ! function_exists( 'wp_smush_email_message' ) ) {
 		return $message;
 	}
 }
-if( !function_exists('get_plugin_dir') ) {
+if ( ! function_exists( 'get_plugin_dir' ) ) {
 	/**
 	 * Returns the dir path for the plugin
 	 *
@@ -273,10 +273,12 @@ if ( ! function_exists( 'smush_sanitize_hex_color_no_hash' ) ) {
 	}
 }
 //Load Translation files
-add_action( 'plugins_loaded', 'i18n' );
-function i18n() {
-	$path = path_join( dirname( plugin_basename( __FILE__ ) ), 'languages/' );
-	load_plugin_textdomain( 'wp-smushit', false, $path );
+add_action( 'plugins_loaded', 'smush_i18n' );
+if( !function_exists('smush_i18n')) {
+	function smush_i18n() {
+		$path = path_join( dirname( plugin_basename( __FILE__ ) ), 'languages/' );
+		load_plugin_textdomain( 'wp-smushit', false, $path );
+	}
 }
 
 register_activation_hook( __FILE__, 'smush_activated' );

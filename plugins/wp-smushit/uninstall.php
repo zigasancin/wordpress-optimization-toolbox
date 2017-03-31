@@ -37,7 +37,9 @@ $smushit_keys = array(
 	'hide_update_info',
 	'install-type',
 	'lossy-updated',
-	'version'
+	'version',
+	'networkwide',
+	'dir_path'
 );
 
 //Cache Keys
@@ -79,6 +81,9 @@ if ( ! is_multisite() ) {
 	}
 
 }
+
+//Delete Directory Smush stats
+delete_option( 'dir_smush_stats' );
 
 //Delete Post meta
 $meta_type  = 'post';
@@ -127,6 +132,9 @@ if ( is_multisite() ) {
 	delete_metadata( $meta_type, null, 'wp-smush-original_file', '', $delete_all );
 	delete_metadata( $meta_type, null, 'wp-smush-pngjpg_savings', '', $delete_all );
 }
+//Delete Directory smush table
+global $wpdb;
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}smush_dir_images" );
+
 //@todo: Add procedure to delete backup files
 //@todo: Update NextGen Metadata to remove Smush stats on plugin deletion
-?>
