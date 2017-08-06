@@ -59,7 +59,7 @@ class autoptimizeCache {
             file_put_contents($this->cachedir.$this->filename,$code, LOCK_EX);
             if (apply_filters('autoptimize_filter_cache_create_static_gzip', false)) {
                 // Create an additional cached gzip file
-                file_put_contents($this->cachedir.$this->filename.'.gzip',gzencode($code,9,FORCE_GZIP), LOCK_EX);
+                file_put_contents($this->cachedir.$this->filename.'.gz', gzencode($code,9,FORCE_GZIP), LOCK_EX);
             }
         }
     }
@@ -103,6 +103,13 @@ class autoptimizeCache {
         // try to purge caching plugins cache-files?
         include_once(AUTOPTIMIZE_PLUGIN_DIR.'classlesses/autoptimizePageCacheFlush.php');
         add_action("autoptimize_action_cachepurged","autoptimize_flush_pagecache",10,0);
+
+        // warm cache (part of speedupper)?
+        if ( apply_filters('autoptimize_filter_speedupper', true) ) {
+            $warmCacheUrl = site_url()."/?ao_speedup_cachebuster=".rand(1,100000);
+            $warmCache = @wp_remote_get($warmCacheUrl);
+            unset($warmCache);
+        }
 
         return true;
     }
@@ -179,15 +186,14 @@ class autoptimizeCache {
             if (is_file($htaccess_tmpl)) { 
                 $htAccessContent=file_get_contents($htaccess_tmpl);
             } else if (is_multisite() || AUTOPTIMIZE_CACHE_NOGZIP == false) {
-                $htAccessContent='<IfModule mod_headers.c>
-        Header set Vary "Accept-Encoding"
-        Header set Cache-Control "max-age=10672000, must-revalidate"
-</IfModule>
-<IfModule mod_expires.c>
+                $htAccessContent='<IfModule mod_expires.c>
         ExpiresActive On
         ExpiresByType text/css A30672000
         ExpiresByType text/javascript A30672000
         ExpiresByType application/javascript A30672000
+</IfModule>
+<IfModule mod_headers.c>
+    Header append Cache-Control "public, immutable"
 </IfModule>
 <IfModule mod_deflate.c>
         <FilesMatch "\.(js|css)$">
@@ -206,15 +212,14 @@ class autoptimizeCache {
     </Files>
 </IfModule>';
             } else {
-                $htAccessContent='<IfModule mod_headers.c>
-        Header set Vary "Accept-Encoding"
-        Header set Cache-Control "max-age=10672000, must-revalidate"
-</IfModule>
-<IfModule mod_expires.c>
+                $htAccessContent='<IfModule mod_expires.c>
         ExpiresActive On
         ExpiresByType text/css A30672000
         ExpiresByType text/javascript A30672000
         ExpiresByType application/javascript A30672000
+</IfModule>
+<IfModule mod_headers.c>
+    Header append Cache-Control "public, immutable"
 </IfModule>
 <IfModule mod_deflate.c>
     <FilesMatch "\.(js|css)$">

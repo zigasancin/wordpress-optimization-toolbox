@@ -70,6 +70,14 @@ class autoptimizeConfig {
     content: "\f108 \f140";
 }
 
+/* animate "show adv" button */
+#ao_show_adv { animation: watchmenow 3s linear 5s 10; }
+#ao_show_adv:hover { animation: none; }
+@keyframes watchmenow {
+  0% { box-shadow: unset; }
+  100% { box-shadow: 0px 0px 20px yellow; }
+}
+
 /* form */
 .itemDetail {
     background: #fff;
@@ -151,7 +159,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 <div class="wrap">
 
 <?php if (version_compare(PHP_VERSION, '5.3.0') < 0) { ?>
-<div class="notice-error notice"><?php _e('<p><strong>You are using a very old version of PHP</strong> (5.2.x or older) which has <a href="http://blog.futtta.be/2016/03/15/why-would-you-still-be-on-php-5-2/" target="_blank">serious security and performance issues</a>. Please ask your hoster to provide you with an upgrade path to 5.6 or 7.0</p>','autoptimize'); ?></div>
+<div class="notice-error notice"><?php echo '<p>' . sprintf( __('<strong>You are using a very old version of PHP</strong> (5.2.x or older) which has <a href=%s>serious security and performance issues</a>. Support for PHP 5.5 and below will be removed in one of the next AO released, please ask your hoster to provide you with an upgrade path to 7.x.','autoptimize'), '"http://blog.futtta.be/2016/03/15/why-would-you-still-be-on-php-5-2/" target="_blank"') . '</p>'; ?></div>
 <?php } ?>
 
 <div id="autoptimize_main">
@@ -210,11 +218,11 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 <tr valign="top" class="<?php echo $hiddenClass;?>js_sub ao_adv">
 <th scope="row"><?php _e('Force JavaScript in &lt;head&gt;?','autoptimize'); ?></th>
 <td><label class="cb_label"><input type="checkbox" name="autoptimize_js_forcehead" <?php echo get_option('autoptimize_js_forcehead')?'checked="checked" ':''; ?>/>
-<?php _e('Load JavaScript early, reducing the chance of JS-errors but making it render blocking. You can disable this if you\'re not aggregating inline JS and you want JS to be deferred.','autoptimize'); ?></label></td>
+<?php _e('Load JavaScript early, this can potentially fix some JS-errors, but makes the JS render blocking.','autoptimize'); ?></label></td>
 </tr>
 <?php if (get_option('autoptimize_js_justhead')) { ?>
 <tr valign="top" class="<?php echo $hiddenClass;?>js_sub ao_adv">
-<th scope="row"><?php _e('Look for scripts only in &lt;head&gt;?','autoptimize');  _e(' <i>(deprecated)</i>','autoptimize'); ?></th>
+<th scope="row"><?php _e('Look for scripts only in &lt;head&gt;?','autoptimize'); echo ' <i>'. __('(deprecated)','autoptimize') . '</i>'; ?></th>
 <td><label class="cb_label"><input type="checkbox" name="autoptimize_js_justhead" <?php echo get_option('autoptimize_js_justhead')?'checked="checked" ':''; ?>/>
 <?php _e('Mostly useful in combination with previous option when using jQuery-based templates, but might help keeping cache size under control.','autoptimize'); ?></label></td>
 </tr>
@@ -222,7 +230,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 <tr valign="top" class="<?php echo $hiddenClass;?>js_sub ao_adv">
 <th scope="row"><?php _e('Also aggregate inline JS?','autoptimize'); ?></th>
 <td><label class="cb_label"><input type="checkbox" name="autoptimize_js_include_inline" <?php echo get_option('autoptimize_js_include_inline')?'checked="checked" ':''; ?>/>
-<?php _e('Check this option for Autoptimize to also aggregate JS in the HTML. If this option is not enabled, you might have to "force JavaScript in head".','autoptimize'); ?></label></td>
+<?php _e('Let Autoptimize also extract JS from the HTML. <strong>Warning</strong>: this can make Autoptimize\'s cache size grow quickly, so only enable this if you know what you\'re doing.','autoptimize'); ?></label></td>
 </tr>
 <tr valign="top" class="<?php echo $hiddenClass;?>js_sub ao_adv">
 <th scope="row"><?php _e('Exclude scripts from Autoptimize:','autoptimize'); ?></th>
@@ -256,7 +264,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 </tr>
 <?php if (get_option('autoptimize_css_justhead')) { ?>
 <tr valign="top" class="<?php echo $hiddenClass;?>css_sub ao_adv">
-<th scope="row"><?php _e('Look for styles only in &lt;head&gt;?','autoptimize'); _e(' <i>(deprecated)</i>','autoptimize'); ?></th>
+<th scope="row"><?php _e('Look for styles only in &lt;head&gt;?','autoptimize'); echo ' <i>'. __('(deprecated)','autoptimize') . '</i>'; ?></th>
 <td><label class="cb_label"><input type="checkbox" name="autoptimize_css_justhead" <?php echo get_option('autoptimize_css_justhead')?'checked="checked" ':''; ?>/>
 <?php _e('Don\'t autoptimize CSS outside the head-section. If the cache gets big, you might want to enable this.','autoptimize'); ?></label></td>
 </tr>
@@ -294,7 +302,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 <tr valign="top">
 <th scope="row"><?php _e('CDN Base URL','autoptimize'); ?></th>
 <td><label><input id="cdn_url" type="text" name="autoptimize_cdn_url" pattern="^(https?:)?\/\/([\da-z\.-]+)\.([\da-z\.]{2,6})([\/\w \.-]*)*(:\d{2,5})?\/?$" style="width:100%" value="<?php echo esc_url(get_option('autoptimize_cdn_url',''),array("http","https")); ?>" /><br />
-<?php _e('Enter your CDN root URL to enable CDN for Autoptimized files. The URL can be http, https or protocol-relative (e.g. <code>//cdn.example.com/</code>).','autoptimize'); ?></label></td>
+<?php _e('Enter your CDN root URL to enable CDN for Autoptimized files. The URL can be http, https or protocol-relative (e.g. <code>//cdn.example.com/</code>). This is not needed for Cloudflare.','autoptimize'); ?></label></td>
 </tr>
 </table>
 </li>
@@ -315,14 +323,39 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 <td><?php
     $AOstatArr=autoptimizeCache::stats(); 
     $AOcacheSize=round($AOstatArr[1]/1024);
-    echo $AOstatArr[0].__(' files, totalling ','autoptimize').$AOcacheSize.__(' Kbytes (calculated at ','autoptimize').date("H:i e", $AOstatArr[2]).')';
+    printf( __( '%1$s files, totalling %2$s Kbytes (calculated at %3$s)', 'autoptimize'), $AOstatArr[0], $AOcacheSize, date("H:i e", $AOstatArr[2]) );
 ?></td>
 </tr>
-<tr valign="top" class="<?php echo $hiddenClass;?>ao_adv">
-<th scope="row"><?php _e('Save aggregated script/css as static files?','autoptimize'); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_cache_nogzip" <?php echo get_option('autoptimize_cache_nogzip','1')?'checked="checked" ':''; ?>/>
-<?php _e('By default files saved are static css/js, uncheck this option if your webserver doesn\'t properly handle the compression and expiry.','autoptimize'); ?></label></td>
-</tr>
+</table>
+</li>
+
+<li class="<?php echo $hiddenClass;?>itemDetail ao_adv">
+<h2 class="itemTitle"><?php _e('Misc Options','autoptimize'); ?></h2>
+<table class="form-table"> 
+	<tr valign="top" class="<?php echo $hiddenClass;?>ao_adv">
+		<th scope="row"><?php _e('Save aggregated script/css as static files?','autoptimize'); ?></th>
+		<td><label class="cb_label"><input type="checkbox" name="autoptimize_cache_nogzip" <?php echo get_option('autoptimize_cache_nogzip','1')?'checked="checked" ':''; ?>/>
+			<?php _e('By default files saved are static css/js, uncheck this option if your webserver doesn\'t properly handle the compression and expiry.','autoptimize'); ?></label>
+		</td>
+	</tr>
+	<tr valign="top" class="<?php echo $hiddenClass;?>ao_adv">
+		<th scope="row"><?php _e('Also optimize for logged in users?','autoptimize'); ?></th>
+		<td><label class="cb_label"><input type="checkbox" name="autoptimize_optimize_logged" <?php echo get_option('autoptimize_optimize_logged','1')?'checked="checked" ':''; ?>/>
+			<?php _e('By default Autoptimize is also active for logged on users, uncheck not to optimize when logged in e.g. to use a pagebuilder.','autoptimize'); ?></label>
+		</td>
+	</tr>
+	<?php
+		if ( function_exists("is_checkout") || function_exists("is_cart") || function_exists("edd_is_checkout") || function_exists("wpsc_is_cart") || function_exists("wpsc_is_checkout") ) {
+			?>
+				<tr valign="top" class="<?php echo $hiddenClass;?>ao_adv">
+					<th scope="row"><?php _e('Also optimize shop cart/ checkout?','autoptimize'); ?></th>
+					<td><label class="cb_label"><input type="checkbox" name="autoptimize_optimize_checkout" <?php echo get_option('autoptimize_optimize_checkout','1')?'checked="checked" ':''; ?>/>
+						<?php _e('By default Autoptimize is also active on your shop\'s cart/ checkout, uncheck not to optimize those.','autoptimize'); ?></label>
+					</td>
+				</tr>
+			<?php
+		}
+	?>
 </table>
 </li>
 
@@ -355,7 +388,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
             echo $AO_banner;
         }
         ?>
-        <li><?php _e("Need help? <a href='https://wordpress.org/plugins/autoptimize/faq/'>Check out the FAQ</a> or post your question on <a href='http://wordpress.org/support/plugin/autoptimize'>the support-forum</a>.","autoptimize"); ?></li>
+        <li><?php _e("Need help? <a href='https://wordpress.org/plugins/autoptimize/faq/'>Check out the FAQ here</a>.","autoptimize"); ?></li>
         <li><?php _e("Happy with Autoptimize?","autoptimize"); ?><br /><a href="<?php echo network_admin_url(); ?>plugin-install.php?tab=search&type=author&s=optimizingmatters"><?php _e("Try my other plugins!","autoptimize"); ?></a></li>
         </ul>
     </div>
@@ -380,7 +413,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
             </div>
         </div>
     </div>
-    <div style="float:right;margin:50px 15px;"><a href="http://blog.futtta.be/2013/10/21/do-not-donate-to-me/" target="_blank"><img width="100px" height="85px" src="<?php echo plugins_url().'/'.plugin_basename(dirname(__FILE__)).'/external/do_not_donate_smallest.png'; ?>" title="<?php _e("Do not donate for this plugin!"); ?>"></a></div>
+    <div style="float:right;margin:50px 15px;"><a href="http://blog.futtta.be/2013/10/21/do-not-donate-to-me/" target="_blank"><img width="100px" height="85px" src="<?php echo plugins_url().'/'.plugin_basename(dirname(__FILE__)).'/external/do_not_donate_smallest.png'; ?>" title="<?php _e("Do not donate for this plugin!","autoptimize"); ?>"></a></div>
 </div>
 
 <script type="text/javascript">
@@ -556,6 +589,8 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
         register_setting('autoptimize','autoptimize_cache_clean');
         register_setting('autoptimize','autoptimize_cache_nogzip');
         register_setting('autoptimize','autoptimize_show_adv');
+        register_setting('autoptimize','autoptimize_optimize_logged');
+        register_setting('autoptimize','autoptimize_optimize_checkout');
     }
 
     public function setmeta($links,$file=null) {
@@ -603,7 +638,9 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
                 'autoptimize_css_nogooglefont' => 0,
                 'autoptimize_cdn_url' => "",
                 'autoptimize_cache_nogzip' => 1,
-                'autoptimize_show_adv' => 0
+                'autoptimize_show_adv' => 0,
+                'autoptimize_optimize_logged' => 1,
+                'autoptimize_optimize_checkout' => 1
                 );
 
             //Override with user settings

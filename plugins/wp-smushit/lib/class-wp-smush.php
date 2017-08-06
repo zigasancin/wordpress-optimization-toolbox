@@ -1,4 +1,8 @@
 <?php
+
+//Helper Class
+require_once WP_SMUSH_DIR . "lib/class-wp-smush-helper.php";
+
 //Settings Class
 require_once WP_SMUSH_DIR . "lib/class-wp-smush-settings.php";
 
@@ -22,6 +26,7 @@ require_once WP_SMUSH_DIR . 'lib/class-wp-smush-backup.php';
 
 //Include Smush Async class
 require_once WP_SMUSH_DIR . 'lib/class-wp-smush-async.php';
+
 
 if ( ! class_exists( 'WpSmush' ) ) {
 
@@ -116,8 +121,8 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			//Enqueue Scripts, And Initialize variables
 			add_action( 'admin_init', array( $this, 'admin_init' ) );
 
-			//Load NextGen Gallery, if hooked too late or early, auto smush doesn't works, also Load after settings have been saved on init action
-			add_action( 'plugins_loaded', array( $this, 'load_nextgen' ), 90 );
+			//Load NextGen Gallery, S3, if hooked too late or early, auto smush doesn't works, also Load after settings have been saved on init action
+			add_action( 'plugins_loaded', array( $this, 'load_modules' ), 90 );
 
 			//Send Smush Stats for pro members
 			add_filter( 'wpmudev_api_project_extra_data-912164', array( $this, 'send_smush_stats' ) );
@@ -179,12 +184,10 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		/**
 		 * Process an image with Smush.
 		 *
-		 * Returns an array of the $file $results.
+		 * @param string $file_path Absolute path to the image
 		 *
-		 * @param   string $file Full absolute path to the image file
-		 * @param   string $file_url Optional full URL to the image file
+		 * @return array|bool
 		 *
-		 * @returns array
 		 */
 		function do_smushit( $file_path = '' ) {
 			$errors   = new WP_Error();
@@ -247,10 +250,6 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			//Add the file as tmp
 			file_put_contents( $tempfile, $response['data']->image );
 
-			//Take Backup
-			global $wpsmush_backup;
-			$wpsmush_backup->create_backup( $file_path );
-
 			//replace the file
 			$success = @rename( $tempfile, $file_path );
 
@@ -271,7 +270,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				$stat  = stat( dirname( $file_path ) );
 				$perms = $stat['mode'] & 0000666; //same permissions as parent folder, strip off the executable bits
 			}
-			@ chmod( $file_path, $perms );
+			@chmod( $file_path, $perms );
 
 			return $response;
 		}
@@ -324,7 +323,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		 */
 		function resize_from_meta_data( $meta, $ID = null ) {
 
-			global $wpsmush_settings;
+			global $wpsmush_settings, $wpsmush_helper, $wpsmushit_admin;
 
 			//Flag to check, if original size image should be smushed or not
 			$original   = $wpsmush_settings->get_setting( WP_SMUSH_PREFIX . 'original', false );
@@ -352,7 +351,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			$this->media_type    = "wp";
 
 			//File path and URL for original image
-			$attachment_file_path = get_attached_file( $ID );
+			$attachment_file_path = $wpsmush_helper->get_attached_file( $ID );
 
 			// If images has other registered size, smush them first
 			if ( ! empty( $meta['sizes'] ) ) {
@@ -373,7 +372,6 @@ if ( ! class_exists( 'WpSmush' ) ) {
 					$finfo = false;
 				}
 
-				global $wpsmushit_admin;
 				foreach ( $meta['sizes'] as $size_key => $size_data ) {
 
 					//Check if registered size is supposed to be Smushed or not
@@ -385,8 +383,13 @@ if ( ! class_exists( 'WpSmush' ) ) {
 					// path. So just get the dirname and replace the filename.
 					$attachment_file_path_size = path_join( dirname( $attachment_file_path ), $size_data['file'] );
 
+					/**
+					 * Allows S3 to hook over here and check if the given file path exists else download the file
+					 */
+					do_action('smush_file_exists', $attachment_file_path_size, $ID, $size_data );
+
 					if ( $finfo ) {
-						$ext = file_exists( $attachment_file_path_size ) ? $finfo->file( $attachment_file_path_size ) : '';
+						$ext = is_file( $attachment_file_path_size ) ? $finfo->file( $attachment_file_path_size ) : '';
 					} elseif ( function_exists( 'mime_content_type' ) ) {
 						$ext = mime_content_type( $attachment_file_path_size );
 					} else {
@@ -566,13 +569,21 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		 */
 		function smush_image( $meta, $ID = null ) {
 
-			//Check if Async is Enabled, Do not run
-			if ( defined( 'WP_SMUSH_ASYNC' ) && WP_SMUSH_ASYNC ) {
+			// Our async task runs when action is upload-attachment and post_id found. So do not run on these conditions.
+			if ( ( ( ! empty( $_POST['action'] ) && 'upload-attachment' == $_POST['action'] ) || isset( $_POST['post_id'] ) )
+			     // And, check if Async is enabled.
+			     && defined( 'WP_SMUSH_ASYNC' ) && WP_SMUSH_ASYNC
+			) {
 				return $meta;
 			}
 
 			//Return directly if not a image
 			if ( ! wp_attachment_is_image( $ID ) ) {
+				return $meta;
+			}
+
+			//Check if we're restoring the image Or already smushing the image
+			if ( get_transient( "wp-smush-restore-$ID" ) || get_transient( "smush-in-progress-$ID" ) || get_transient( "wp-smush-restore-$ID" ) ) {
 				return $meta;
 			}
 
@@ -590,15 +601,15 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				return false;
 			}
 
-			//If the smushing transient is already set, return the status
-			if ( get_transient( 'smush-in-progress-' . $ID ) ) {
-				return $meta;
-			}
-
 			//Set a transient to avoid multiple request
-			set_transient( 'smush-in-progress-' . $ID, true, 5 * MINUTE_IN_SECONDS );
+			set_transient( 'smush-in-progress-' . $ID, true, WP_SMUSH_TIMEOUT );
 
 			global $wpsmush_resize, $wpsmush_pngjpg, $wpsmush_settings;
+
+			// While uploading from Mobile App or other sources, admin_init action may not fire.
+			// So we need to manually initialize those.
+			$this->initialise();
+			$wpsmush_resize->initialize( true );
 
 			//Check if auto is enabled
 			$auto_smush = $this->is_auto_smush_enabled();
@@ -746,7 +757,6 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			return $data;
 		}
 
-
 		/**
 		 * Print column header for Smush results in the media library using
 		 * the `manage_media_columns` hook.
@@ -762,7 +772,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		 * Taken from http://www.php.net/manual/en/function.filesize.php#91477
 		 */
 		function format_bytes( $bytes, $precision = 1 ) {
-			$units = array( 'B', 'KB', 'MB', 'GB', 'TB' );
+			$units = array( 'B', 'KiB', 'MiB', 'GiB', 'TiB' );
 			$bytes = max( $bytes, 0 );
 			$pow   = floor( ( $bytes ? log( $bytes ) : 0 ) / log( 1024 ) );
 			$pow   = min( $pow, count( $units ) - 1 );
@@ -811,7 +821,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				$last_checked = $api_auth[ $api_key ]['timestamp'];
 				$valid        = $api_auth[ $api_key ]['validity'];
 
-				$diff = $last_checked - current_time( 'timestamp' );
+				$diff = current_time( 'timestamp' ) - $last_checked;
 
 				//Difference in hours
 				$diff_h = $diff / 3600;
@@ -935,6 +945,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		 * @return string|void
 		 */
 		function set_status( $id, $echo = true, $text_only = false, $wrapper = true ) {
+			global $wpsmush_s3_compat;
 			$status_txt  = $button_txt = $stats = '';
 			$show_button = $show_resmush = false;
 
@@ -946,6 +957,8 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 			$combined_stats = $this->combine_conversion_stats( $combined_stats, $conversion_savings );
 
+			//Remove Smush s3 hook, as it downloads the file again
+			remove_filter('as3cf_get_attached_file', array( $wpsmush_s3_compat, 'smush_download_file'), 11, 4 );
 			$attachment_data = wp_get_attachment_metadata( $id );
 
 			// if the image is smushed
@@ -1274,6 +1287,11 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				return;
 			}
 
+			//Do not smush if auto smush is turned off
+			if ( ! $this->is_auto_smush_enabled() ) {
+				return;
+			}
+
 			/**
 			 * Allows to skip a image from smushing
 			 *
@@ -1459,35 +1477,63 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		}
 
 		/**
+		 * Load Plugin Modules
+		 *
+		 */
+		function load_modules() {
+			$this->load_nextgen();
+			//Load S3
+			if( has_action('aws_init') ) {
+				add_action( 'aws_init', array( $this, 'load_s3' ), 120 );
+			}
+		}
+		/**
 		 * Check if NextGen is active or not
 		 * Include and instantiate classes
 		 */
 		function load_nextgen() {
-			if ( ! class_exists( 'C_NextGEN_Bootstrap' ) || ! $this->validate_install() ) {
+
+			if ( ! class_exists( 'C_NextGEN_Bootstrap' ) ) {
 				return;
 			}
-
 			global $wpsmush_settings;
 
 			//Check if integration is Enabled or not
 			//Smush NextGen key
 			$opt_nextgen     = WP_SMUSH_PREFIX . 'nextgen';
 			$opt_nextgen_val = $wpsmush_settings->get_setting( $opt_nextgen, false );
-			if ( ! $opt_nextgen_val ) {
-				return;
-			}
 
 			require_once( WP_SMUSH_DIR . '/lib/class-wp-smush-nextgen.php' );
+			// Do not continue if integration not enabled or not a pro user.
+			if ( ! $opt_nextgen_val || ! $this->validate_install() ) {
+				return;
+			}
 			require_once( WP_SMUSH_DIR . '/lib/nextgen-integration/class-wp-smush-nextgen-admin.php' );
 			require_once( WP_SMUSH_DIR . '/lib/nextgen-integration/class-wp-smush-nextgen-stats.php' );
 			require_once( WP_SMUSH_DIR . '/lib/nextgen-integration/class-wp-smush-nextgen-bulk.php' );
 
 			global $wpsmushnextgen, $wpsmushnextgenadmin, $wpsmushnextgenstats;
 			//Initialize Nextgen support
-			$wpsmushnextgen      = new WpSmushNextGen();
+			if( !is_object( $wpsmushnextgen ) ) {
+				$wpsmushnextgen = new WpSmushNextGen();
+			}
 			$wpsmushnextgenstats = new WpSmushNextGenStats();
 			$wpsmushnextgenadmin = new WpSmushNextGenAdmin();
 			new WPSmushNextGenBulk();
+		}
+
+		/**
+		 * Load S3 module if the respective plugin is active
+		 */
+		function load_s3() {
+
+			//If we don't have free or pro verison for WP S3 Offload, return
+			if ( ! class_exists( 'Amazon_S3_And_CloudFront' ) && ! class_exists( 'Amazon_S3_And_CloudFront_Pro' ) ) {
+				return;
+			}
+
+			//Include Smush Async class
+			require_once WP_SMUSH_DIR . 'lib/class-wp-smush-s3.php';
 		}
 
 		/**
@@ -1553,35 +1599,47 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 			//Get the image path for all sizes
 			$file = get_attached_file( $image_id );
+			$uf_file = get_attached_file( $image_id, true );
 
-			//Check backup for Full size
-			$backup = $wpsmushit_admin->get_image_backup_path( $file );
+			//Get stored backup path, if any
+			$backup_sizes = get_post_meta( $image_id, '_wp_attachment_backup_sizes', true );
 
-			//Check for backup of full image
-			if ( file_exists( $backup ) ) {
+			//Check if we've a backup path
+			if( !empty( $backup_sizes ) && ( !empty( $backup_sizes['smush-full']) || !empty( $backup_sizes['smush_png_path']) ) ) {
+				//Check for PNG backup
+				$backup = !empty( $backup_sizes['smush_png_path'] ) ? $backup_sizes['smush_png_path'] : '';
+
+				//Check for original full size image backup
+				$backup = empty( $backup ) && !empty( $backup_sizes['smush-full'] ) ? $backup_sizes['smush-full'] : $backup;
+
+				$backup = !empty( $backup['file'] ) ? $backup['file'] : '';
+			}
+
+			//If we still don't have a backup path, use traditional method to get it
+			if( empty( $backup ) ) {
+				//Check backup for Full size
+				$backup = $wpsmushit_admin->get_image_backup_path( $file );
+			}else{
+				//Get the full path for file backup
+				$backup = str_replace( wp_basename( $file ), wp_basename( $backup ), $file );
+			}
+
+			$file_exists = apply_filters( 'smush_backup_exists', file_exists( $backup ), $image_id, $backup );
+
+			if( $file_exists ) {
 				return true;
 			}
 
 			//Additional Backup Check for JPEGs converted from PNG
 			$pngjpg_savings = get_post_meta( $image_id, WP_SMUSH_PREFIX . 'pngjpg_savings', true );
 			if ( ! empty( $pngjpg_savings ) ) {
+
 				//Get the original File path and check if it exists
 				$backup = get_post_meta( $image_id, WP_SMUSH_PREFIX . 'original_file', true );
 				$backup = $this->original_file( $backup );
 
-				if ( ! empty( $backup ) && file_exists( $backup ) ) {
+				if ( ! empty( $backup ) && is_file( $backup ) ) {
 					return true;
-				}
-			}
-
-			if ( ! empty( $attachment_data['sizes'] ) ) {
-				//Check for backup of image sizes
-				foreach ( $attachment_data['sizes'] as $image_size ) {
-					$size_path        = path_join( dirname( $file ), $image_size['file'] );
-					$size_backup_path = $wpsmushit_admin->get_image_backup_path( $size_path );
-					if ( file_exists( $size_backup_path ) ) {
-						return true;
-					}
 				}
 			}
 
@@ -1683,10 +1741,11 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 		/**
 		 * Deletes all the backup files when an attachment is deleted
-		 * Update Resmush List
+		 * Update resmush List
 		 * Update Super Smush image count
 		 *
 		 * @param $image_id
+		 *
 		 */
 		function delete_images( $image_id ) {
 			global $wpsmush_db;
@@ -1709,7 +1768,6 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			}
 
 			/** Delete Backups  **/
-
 			//Check if we have any smush data for image
 			$this->delete_backup_files( $image_id );
 		}
@@ -1722,7 +1780,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		function send_smush_stats() {
 			global $wpsmushit_admin;
 
-			$stats = $wpsmushit_admin->global_stats_from_ids();
+			$stats = $wpsmushit_admin->global_stats();
 
 			return $stats;
 
@@ -1788,7 +1846,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		/**
 		 * Checks the current settings and returns the value whether to enable or not the resmush option
 		 *
-		 * @param $show_resmush
+		 * @param $id
 		 * @param $wp_smush_data
 		 *
 		 * @return bool
@@ -2115,7 +2173,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		function wp_smush_handle_async( $id ) {
 
 			//If we don't have image id, or the smush is already in progress for the image, return
-			if ( empty( $id ) || get_transient( 'smush-in-progress-' . $id ) ) {
+			if ( empty( $id ) || get_transient( 'smush-in-progress-' . $id ) || get_transient( "wp-smush-restore-$id" )  ) {
 				return;
 			}
 
@@ -2151,7 +2209,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		function wp_smush_handle_editor_async( $id, $post_data ) {
 
 			//If we don't have image id, or the smush is already in progress for the image, return
-			if ( empty( $id ) || get_transient( 'smush-in-progress-' . $id ) ) {
+			if ( empty( $id ) || get_transient( "smush-in-progress-$id" ) || get_transient( "wp-smush-restore-$id" ) ) {
 				return;
 			}
 
@@ -2183,7 +2241,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			$res = $this->do_smushit( $post_data['filepath'] );
 
 			//Exit if smushing wasn't successful
-			if ( empty( $res['success'] ) || ! $res['success'] ) {
+			if ( is_wp_error( $res) || empty( $res['success'] ) || ! $res['success'] ) {
 				return;
 			}
 

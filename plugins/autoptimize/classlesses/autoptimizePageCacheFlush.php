@@ -2,6 +2,8 @@
 // flush as many page cache plugin's caches as possible
 // hyper cache and gator cache hook into AO, so we don't need to :-)
 
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
 function autoptimize_flush_pagecache() {
     if(function_exists('wp_cache_clear_cache')) {
         if (is_multisite()) {
@@ -37,6 +39,8 @@ function autoptimize_flush_pagecache() {
         if ( method_exists( "WpeCommon", "purge_varnish_cache" ) ) {
             WpeCommon::purge_varnish_cache();   
         }
+    } else if ( function_exists('sg_cachepress_purge_cache') ) {
+        sg_cachepress_purge_cache();
     } else if(file_exists(WP_CONTENT_DIR.'/wp-cache-config.php') && function_exists('prune_super_cache')){
         // fallback for WP-Super-Cache
         global $cache_path;

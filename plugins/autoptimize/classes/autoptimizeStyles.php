@@ -2,11 +2,13 @@
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 class autoptimizeStyles extends autoptimizeBase {
+
+    const ASSETS_REGEX = '/url\s*\(\s*(?!["\']?data:)(?![\'|\"]?[\#|\%|])([^)]+)\s*\)([^;},\s]*)/i';
+
     private $css = array();
     private $csscode = array();
     private $url = array();
     private $restofcontent = '';
-    private $mhtml = '';
     private $datauris = false;
     private $hashmap = array();
     private $alreadyminified = false;
@@ -24,7 +26,7 @@ class autoptimizeStyles extends autoptimizeBase {
         $noptimizeCSS = apply_filters( 'autoptimize_filter_css_noptimize', false, $this->content );
         if ($noptimizeCSS) return false;
 
-        $whitelistCSS = apply_filters( 'autoptimize_filter_css_whitelist', '' );
+        $whitelistCSS = apply_filters( 'autoptimize_filter_css_whitelist', '', $this->content );
         if (!empty($whitelistCSS)) {
             $this->whitelist = array_filter(array_map('trim',explode(",",$whitelistCSS)));
         }
@@ -58,27 +60,30 @@ class autoptimizeStyles extends autoptimizeBase {
         
         // what CSS shouldn't be autoptimized
         $excludeCSS = $options['css_exclude'];
-        $excludeCSS = apply_filters( 'autoptimize_filter_css_exclude', $excludeCSS );
+        $excludeCSS = apply_filters( 'autoptimize_filter_css_exclude', $excludeCSS, $this->content );
         if ($excludeCSS!=="") {
             $this->dontmove = array_filter(array_map('trim',explode(",",$excludeCSS)));
         } else {
-            $this->dontmove = "";
+            $this->dontmove = array();
         }
+        
+        // forcefully exclude CSS with data-noptimize attrib
+        $this->dontmove[]="data-noptimize";
 
         // should we defer css?
         // value: true/ false
         $this->defer = $options['defer'];
-        $this->defer = apply_filters( 'autoptimize_filter_css_defer', $this->defer );
+        $this->defer = apply_filters( 'autoptimize_filter_css_defer', $this->defer, $this->content );
 
         // should we inline while deferring?
         // value: inlined CSS
         $this->defer_inline = $options['defer_inline'];
-        $this->defer_inline = apply_filters( 'autoptimize_filter_css_defer_inline', $this->defer_inline );
+        $this->defer_inline = apply_filters( 'autoptimize_filter_css_defer_inline', $this->defer_inline, $this->content );
 
         // should we inline?
         // value: true/ false
         $this->inline = $options['inline'];
-        $this->inline = apply_filters( 'autoptimize_filter_css_inline', $this->inline );
+        $this->inline = apply_filters( 'autoptimize_filter_css_inline', $this->inline, $this->content );
         
         // get cdn url
         $this->cdn_url = $options['cdn_url'];
@@ -95,7 +100,7 @@ class autoptimizeStyles extends autoptimizeBase {
                 '#<(?:no)?script.*?<\/(?:no)?script>#is',
                 create_function(
                     '$matches',
-                    'return "%%SCRIPT%%".base64_encode($matches[0])."%%SCRIPT%%";'
+                    'return "%%SCRIPT".AUTOPTIMIZE_HASH."%%".base64_encode($matches[0])."%%SCRIPT%%";'
                 ),
                 $this->content
             );
@@ -130,7 +135,8 @@ class autoptimizeStyles extends autoptimizeBase {
                 
                     if(preg_match('#<link.*href=("|\')(.*)("|\')#Usmi',$tag,$source)) {
                         // <link>
-                        $url = current(explode('?',$source[2],2));
+                        $explUrl = explode('?',$source[2],2);
+                        $url = $explUrl[0];
                         $path = $this->getpath($url);
                         
                         if($path!==false && preg_match('#\.css$#',$path)) {
@@ -158,7 +164,33 @@ class autoptimizeStyles extends autoptimizeBase {
                     
                     // Remove the original style tag
                     $this->content = str_replace($tag,'',$this->content);
-                }
+                } else {
+					// excluded CSS, minify if getpath 
+					if (preg_match('#<link.*href=("|\')(.*)("|\')#Usmi',$tag,$source)) {
+						$explUrl = explode('?',$source[2],2);
+                        $url = $explUrl[0];
+                        $path = $this->getpath($url);
+ 					
+						if ($path && apply_filters('autoptimize_filter_css_minify_excluded',false)) {
+							$_CachedMinifiedUrl = $this->minify_single($path);
+
+							if (!empty($_CachedMinifiedUrl)) {
+								// replace orig URL with URL to cache
+								$newTag = str_replace($url, $_CachedMinifiedUrl, $tag);
+							} else {
+								$newTag = $tag;
+							}
+							
+							// remove querystring from URL
+							if ( !empty($explUrl[1]) ) {
+								$newTag = str_replace("?".$explUrl[1],"",$newTag);
+							}
+
+							// and replace
+							$this->content = str_replace($tag,$newTag,$this->content);
+						}
+					}					
+				}
             }
             return true;
         }
@@ -183,14 +215,16 @@ class autoptimizeStyles extends autoptimizeBase {
                 //<link>
                 if($css !== false && file_exists($css) && is_readable($css)) {
                     $cssPath = $css;
-                    $css = $this->fixurls($cssPath,file_get_contents($cssPath));
+                    $cssContents = file_get_contents($cssPath);
+                    $cssHash = md5($cssContents);
+                    $css = $this->fixurls($cssPath,$cssContents);
                     $css = preg_replace('/\x{EF}\x{BB}\x{BF}/','',$css);
                     $tmpstyle = apply_filters( 'autoptimize_css_individual_style', $css, $cssPath );
                     if (has_filter('autoptimize_css_individual_style') && !empty($tmpstyle)) {
                         $css=$tmpstyle;
                         $this->alreadyminified=true;
                     } else if ($this->can_inject_late($cssPath,$css)) {
-                        $css="%%INJECTLATER%%".base64_encode($cssPath)."|".md5($css)."%%INJECTLATER%%";
+                        $css="/*!%%INJECTLATER%%".base64_encode($cssPath)."|".$cssHash."%%INJECTLATER%%*/";
                     }
                 } else {
                     // Couldn't read CSS. Maybe getpath isn't working?
@@ -233,7 +267,8 @@ class autoptimizeStyles extends autoptimizeBase {
             $external_imports = "";
 
             // remove comments to avoid importing commented-out imports
-            $thiscss_nocomments=preg_replace('#/\*.*\*/#Um','',$thiscss);
+            $thiscss_nocomments = preg_replace('#/\*.*\*/#Us','',$thiscss);
+
             while(preg_match_all('#@import.*(?:;|$)#Um',$thiscss_nocomments,$matches)) {
                 foreach($matches[0] as $import)    {
                     if ($this->isremovable($import,$this->cssremovables)) {
@@ -251,7 +286,7 @@ class autoptimizeStyles extends autoptimizeBase {
                                 $code=$tmpstyle;
                                 $this->alreadyminified=true;
                             } else if ($this->can_inject_late($path,$code)) {
-                                $code="%%INJECTLATER%%".base64_encode($path)."|".md5($code)."%%INJECTLATER%%";
+                                $code="/*!%%INJECTLATER".AUTOPTIMIZE_HASH."%%".base64_encode($path)."|".md5($code)."%%INJECTLATER%%*/";
                             }
                             
                             if(!empty($code)) {
@@ -277,7 +312,7 @@ class autoptimizeStyles extends autoptimizeBase {
                 $thiscss = preg_replace('#/\*FILESTART2\*/#','/*FILESTART*/',$thiscss);
                 
                 // and update $thiscss_nocomments before going into next iteration in while loop
-                $thiscss_nocomments=preg_replace('#/\*.*\*/#Um','',$thiscss);
+                $thiscss_nocomments=preg_replace('#/\*.*\*/#Us','',$thiscss);
             }
             unset($thiscss_nocomments);
             
@@ -289,7 +324,6 @@ class autoptimizeStyles extends autoptimizeBase {
         unset($thiscss);
         
         // $this->csscode has all the uncompressed code now. 
-        $mhtmlcount = 0;
         foreach($this->csscode as &$code) {
             // Check for already-minified code
             $hash = md5($code);
@@ -303,10 +337,10 @@ class autoptimizeStyles extends autoptimizeBase {
 
             // Do the imaging!
             $imgreplace = array();
-            preg_match_all('#(background[^;{}]*url\((?!\s?"?\'?\s?data)(.*)\)[^;}]*)(?:;|$|})#Usm',$code,$matches);
-            
-            if(($this->datauris == true) && (function_exists('base64_encode')) && (is_array($matches)))    {
-                foreach($matches[2] as $count => $quotedurl) {
+            preg_match_all( self::ASSETS_REGEX, $code, $matches );
+
+            if ( ($this->datauris == true) && (function_exists('base64_encode')) && (is_array($matches)) ) {
+                foreach($matches[1] as $count => $quotedurl) {
                     $iurl = trim($quotedurl," \t\n\r\0\x0B\"'");
 
                     // if querystring, remove it from url
@@ -370,49 +404,23 @@ class autoptimizeStyles extends autoptimizeBase {
                         unset($icheck);
 
                         // Add it to the list for replacement
-                        $imgreplace[$matches[1][$count]] = str_replace($quotedurl,$headAndData,$matches[1][$count]).";\n*".str_replace($quotedurl,'mhtml:%%MHTML%%!'.$mhtmlcount,$matches[1][$count]).";\n_".$matches[1][$count].';';
-                        
-                        // Store image on the mhtml document
-                        $this->mhtml .= "--_\r\nContent-Location:{$mhtmlcount}\r\nContent-Transfer-Encoding:base64\r\n\r\n{$base64data}\r\n";
-                        $mhtmlcount++;
+                        $imgreplace[$matches[0][$count]] = str_replace($quotedurl,$headAndData,$matches[0][$count]);
                     } else {
                         // just cdn the URL if applicable
                         if (!empty($this->cdn_url)) {
-                            $url = trim($quotedurl," \t\n\r\0\x0B\"'");
-                            $cdn_url=$this->url_replace_cdn($url);
-                            $imgreplace[$matches[1][$count]] = str_replace($quotedurl,$cdn_url,$matches[1][$count]);
-                        }
+                            $imgreplace[$matches[0][$count]] = str_replace($quotedurl,$this->maybe_cdn_urls($quotedurl),$matches[0][$count]);
+						}
                     }
                 }
             } else if ((is_array($matches)) && (!empty($this->cdn_url))) {
-                // change background image urls to cdn-url
-                foreach($matches[2] as $count => $quotedurl) {
-                    $url = trim($quotedurl," \t\n\r\0\x0B\"'");
-                    $cdn_url=$this->url_replace_cdn($url);
-                    $imgreplace[$matches[1][$count]] = str_replace($quotedurl,$cdn_url,$matches[1][$count]);
+                // change urls to cdn-url
+                foreach($matches[1] as $count => $quotedurl) {
+                    $imgreplace[$matches[0][$count]] = str_replace($quotedurl,$this->maybe_cdn_urls($quotedurl),$matches[0][$count]);
                 }
             }
             
             if(!empty($imgreplace)) {
                 $code = str_replace(array_keys($imgreplace),array_values($imgreplace),$code);
-            }
-            
-            // CDN the fonts!
-            if ( (!empty($this->cdn_url)) && (apply_filters('autoptimize_filter_css_fonts_cdn',false)) && (version_compare(PHP_VERSION, '5.3.0') >= 0) ) {
-                $fontreplace = array();
-                include_once(AUTOPTIMIZE_PLUGIN_DIR.'classlesses/autoptimizeFontRegex.php');
-                
-                preg_match_all($fonturl_regex,$code,$matches);
-                if (is_array($matches)) {
-                    foreach($matches[8] as $count => $quotedurl) {
-                        $url = trim($quotedurl," \t\n\r\0\x0B\"'");
-                        $cdn_url=$this->url_replace_cdn($url);
-                        $fontreplace[$matches[8][$count]] = str_replace($quotedurl,$cdn_url,$matches[8][$count]);
-                    }
-                    if(!empty($fontreplace)) {
-                        $code = str_replace(array_keys($fontreplace),array_values($fontreplace),$code);
-                    }
-                }
             }
             
             // Minify
@@ -435,7 +443,7 @@ class autoptimizeStyles extends autoptimizeBase {
             
             $code = $this->inject_minified($code);
             
-            $tmp_code = apply_filters( 'autoptimize_css_after_minify',$code );
+            $tmp_code = apply_filters( 'autoptimize_css_after_minify', $code );
             if (!empty($tmp_code)) {
                 $code = $tmp_code;
                 unset($tmp_code);
@@ -449,26 +457,9 @@ class autoptimizeStyles extends autoptimizeBase {
     
     //Caches the CSS in uncompressed, deflated and gzipped form.
     public function cache() {
-        if($this->datauris) {
-            // MHTML Preparation
-            $this->mhtml = "/*\r\nContent-Type: multipart/related; boundary=\"_\"\r\n\r\n".$this->mhtml."*/\r\n";
-            $md5 = md5($this->mhtml);
-            $cache = new autoptimizeCache($md5,'txt');
-            if(!$cache->check()) {
-                // Cache our images for IE
-                $cache->cache($this->mhtml,'text/plain');
-            }
-            $mhtml = AUTOPTIMIZE_CACHE_URL.$cache->getname();
-        }
-        
         // CSS cache
         foreach($this->csscode as $media => $code) {
             $md5 = $this->hashmap[md5($code)];
-
-            if($this->datauris)    {
-                // Images for ie! Get the right url
-                $code = str_replace('%%MHTML%%',$mhtml,$code);
-            }
                 
             $cache = new autoptimizeCache($md5,'css');
             if(!$cache->check()) {
@@ -490,7 +481,7 @@ class autoptimizeStyles extends autoptimizeBase {
         // restore (no)script
         if ( strpos( $this->content, '%%SCRIPT%%' ) !== false ) { 
             $this->content = preg_replace_callback(
-                '#%%SCRIPT%%(.*?)%%SCRIPT%%#is',
+                '#%%SCRIPT'.AUTOPTIMIZE_HASH.'%%(.*?)%%SCRIPT%%#is',
                 create_function(
                     '$matches',
                     'return base64_decode($matches[1]);'
@@ -510,7 +501,7 @@ class autoptimizeStyles extends autoptimizeBase {
         
         // Inject the new stylesheets
         $replaceTag = array("<title","before");
-        $replaceTag = apply_filters( 'autoptimize_filter_css_replacetag', $replaceTag );
+        $replaceTag = apply_filters( 'autoptimize_filter_css_replacetag', $replaceTag, $this->content );
 
         if ($this->inline == true) {
             foreach($this->csscode as $media => $code) {
@@ -518,12 +509,12 @@ class autoptimizeStyles extends autoptimizeBase {
             }
         } else {
             if ($this->defer == true) {
-                $deferredCssBlock = "<script data-cfasync='false'>function lCss(url,media) {var d=document;var l=d.createElement('link');l.rel='stylesheet';l.type='text/css';l.href=url;l.media=media;aoin=d.getElementById('aonoscrcss');aoin.parentNode.insertBefore(l,aoin.nextSibling);}function deferredCSS() {";
+                $preloadCssBlock = "";
                 $noScriptCssBlock = "<noscript id=\"aonoscrcss\">";
                 $defer_inline_code=$this->defer_inline;
                 if(!empty($defer_inline_code)){
-                    if ( apply_filters( 'autoptimize_filter_css_critcss_minify',true ) ) {
-                        $iCssHash=md5($defer_inline_code);
+                    if ( apply_filters( 'autoptimize_filter_css_critcss_minify', true ) ) {
+                        $iCssHash = md5($defer_inline_code);
                         $iCssCache = new autoptimizeCache($iCssHash,'css');
                         if($iCssCache->check()) { 
                             // we have the optimized inline CSS in cache
@@ -552,7 +543,7 @@ class autoptimizeStyles extends autoptimizeBase {
                 
                 //Add the stylesheet either deferred (import at bottom) or normal links in head
                 if($this->defer == true) {
-                    $deferredCssBlock .= "lCss('".$url."','".$media."');";
+                    $preloadCssBlock .= '<link rel="preload" as="style" media="'.$media.'" href="'.$url.'" onload="this.rel=\'stylesheet\'" />';
                     $noScriptCssBlock .= '<link type="text/css" media="'.$media.'" href="'.$url.'" rel="stylesheet" />';
                 } else {
                     if (strlen($this->csscode[$media]) > $this->cssinlinesize) {
@@ -564,10 +555,13 @@ class autoptimizeStyles extends autoptimizeBase {
             }
             
             if($this->defer == true) {
-                $deferredCssBlock .= "}if(window.addEventListener){window.addEventListener('DOMContentLoaded',deferredCSS,false);}else{window.onload = deferredCSS;}</script>";
+                $preloadPolyfill = '<script data-cfasync=\'false\'>/*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+!function(a){"use strict";var b=function(b,c,d){function e(a){return h.body?a():void setTimeout(function(){e(a)})}function f(){i.addEventListener&&i.removeEventListener("load",f),i.media=d||"all"}var g,h=a.document,i=h.createElement("link");if(c)g=c;else{var j=(h.body||h.getElementsByTagName("head")[0]).childNodes;g=j[j.length-1]}var k=h.styleSheets;i.rel="stylesheet",i.href=b,i.media="only x",e(function(){g.parentNode.insertBefore(i,c?g:g.nextSibling)});var l=function(a){for(var b=i.href,c=k.length;c--;)if(k[c].href===b)return a();setTimeout(function(){l(a)})};return i.addEventListener&&i.addEventListener("load",f),i.onloadcssdefined=l,l(f),i};"undefined"!=typeof exports?exports.loadCSS=b:a.loadCSS=b}("undefined"!=typeof global?global:this);
+/*! loadCSS rel=preload polyfill. [c]2017 Filament Group, Inc. MIT License */
+!function(a){if(a.loadCSS){var b=loadCSS.relpreload={};if(b.support=function(){try{return a.document.createElement("link").relList.supports("preload")}catch(b){return!1}},b.poly=function(){for(var b=a.document.getElementsByTagName("link"),c=0;c<b.length;c++){var d=b[c];"preload"===d.rel&&"style"===d.getAttribute("as")&&(a.loadCSS(d.href,d,d.getAttribute("media")),d.rel=null)}},!b.support()){b.poly();var c=a.setInterval(b.poly,300);a.addEventListener&&a.addEventListener("load",function(){b.poly(),a.clearInterval(c)}),a.attachEvent&&a.attachEvent("onload",function(){a.clearInterval(c)})}}}(this);</script>';
                 $noScriptCssBlock .= "</noscript>";
-                $this->inject_in_html($noScriptCssBlock,$replaceTag);
-                $this->inject_in_html($deferredCssBlock,array('</body>','before'));
+                $this->inject_in_html($preloadCssBlock.$noScriptCssBlock,$replaceTag);
+                $this->inject_in_html($preloadPolyfill,array('</body>','before'));
             }
         }
 
@@ -575,50 +569,74 @@ class autoptimizeStyles extends autoptimizeBase {
         return $this->content;
     }
     
-    static function fixurls($file,$code) {
-        $file = str_replace(WP_ROOT_DIR,'/',$file);
-        $dir = dirname($file); //Like /wp-content
+    static function fixurls($file, $code) {
+        // Switch all imports to the url() syntax
+        $code = preg_replace( '#@import ("|\')(.+?)\.css.*("|\')#', '@import url("${2}.css")', $code );
 
-        // quick fix for import-troubles in e.g. arras theme
-        $code=preg_replace('#@import ("|\')(.+?)\.css("|\')#','@import url("${2}.css")',$code);
+        if ( preg_match_all( self::ASSETS_REGEX, $code, $matches ) ) {
+            $file = str_replace( WP_ROOT_DIR, '/', $file );
+            $dir = dirname( $file ); // Like /themes/expound/css
 
-        if(preg_match_all('#url\((?!data)(?!\#)(?!"\#)(.*)\)#Usi',$code,$matches)) {
+            // $dir should not contain backslashes, since it's used to replace
+            // urls, but it can contain them when running on Windows because
+            // fixurls() is sometimes called with `ABSPATH . 'index.php'`
+            $dir = str_replace( '\\', '/', $dir );
+            unset( $file ); // not used below at all
+
             $replace = array();
-            foreach($matches[1] as $k => $url) {
+            foreach ( $matches[1] as $k => $url ) {
                 // Remove quotes
-                $url = trim($url," \t\n\r\0\x0B\"'");
-                $noQurl = trim($url,"\"'");
-                if ($url!==$noQurl) {
-                    $removedQuotes=true;
+                $url    = trim( $url," \t\n\r\0\x0B\"'" );
+                $noQurl = trim( $url, "\"'" );
+                if ( $url !== $noQurl ) {
+                    $removedQuotes = true;
                 } else {
-                    $removedQuotes=false;
+                    $removedQuotes = false;
                 }
-                $url=$noQurl;
-                if(substr($url,0,1)=='/' || preg_match('#^(https?://|ftp://|data:)#i',$url)) {
-                    //URL is absolute
+
+                if ( '' === $noQurl ) {
+                    continue;
+                }
+
+                $url = $noQurl;
+                if ( '/' === $url{0} || preg_match( '#^(https?://|ftp://|data:)#i', $url ) ) {
+                    // URL is protocol-relative, host-relative or something we don't touch
                     continue;
                 } else {
-                    // relative URL
-                    $newurl = preg_replace('/https?:/','',str_replace(" ","%20",AUTOPTIMIZE_WP_ROOT_URL.str_replace('//','/',$dir.'/'.$url)));
+                    // Relative URL
+                    $newurl = preg_replace( '/https?:/', '', str_replace( ' ', '%20', AUTOPTIMIZE_WP_ROOT_URL . str_replace( '//', '/', $dir . '/' . $url ) ) );
 
-                    $hash = md5($url);
-                    $code = str_replace($matches[0][$k],$hash,$code);
+                    // Hash the url + whatever was behind potentially for replacement
+                    // We must do this, or different css classes referencing the same bg image (but
+                    // different parts of it, say, in sprites and such) loose their stuff...
+                    $hash = md5( $url . $matches[2][$k] );
+                    $code = str_replace( $matches[0][$k], $hash, $code );
 
-                    if (!empty($removedQuotes)) {
-                        $replace[$hash] = 'url(\''.$newurl.'\')';
+                    if ( $removedQuotes ) {
+                        $replace[$hash] = "url('" . $newurl . "')" . $matches[2][$k];
                     } else {
-                        $replace[$hash] = 'url('.$newurl.')';
+                        $replace[$hash] = 'url(' . $newurl . ')' . $matches[2][$k];
                     }
                 }
-            }    
-            //Do the replacing here to avoid breaking URLs
-            $code = str_replace(array_keys($replace),array_values($replace),$code);
-        }    
+            }
+
+            if ( ! empty( $replace ) ) {
+                // Sort the replacements array by key length in desc order (so that the longest strings are replaced first)
+                $keys = array_map( 'strlen', array_keys( $replace ) );
+                array_multisort( $keys, SORT_DESC, $replace );
+
+                // Replace URLs found within $code
+                $code = str_replace( array_keys( $replace ), array_values( $replace ), $code );
+            }
+        }
+
         return $code;
     }
     
     private function ismovable($tag) {
-        if (!empty($this->whitelist)) {
+		if ( apply_filters('autoptimize_filter_css_dontaggregate', false) ) {
+			return false;
+        } else if (!empty($this->whitelist)) {
             foreach ($this->whitelist as $match) {
                 if(strpos($tag,$match)!==false) {
                     return true;
@@ -642,10 +660,14 @@ class autoptimizeStyles extends autoptimizeBase {
     }
     
     private function can_inject_late($cssPath,$css) {
-        if ((strpos($cssPath,"min.css")===false) || ($this->inject_min_late!==true)) {
-            // late-inject turned off or file not minified based on filename
+		$consider_minified_array = apply_filters('autoptimize_filter_css_consider_minified', false, $cssPath);
+        if ( $this->inject_min_late !== true ) {
+            // late-inject turned off
             return false;
-        } else if (strpos($css,"@import")!==false) {
+        } else if ( (strpos($cssPath,"min.css") === false) && ( str_replace($consider_minified_array, '', $cssPath) === $cssPath ) ) {
+			// file not minified based on filename & filter
+			return false;
+        } else if ( strpos($css,"@import") !== false ) {
             // can't late-inject files with imports as those need to be aggregated 
             return false;
         } else if ( (strpos($css,"@font-face")!==false ) && ( apply_filters("autoptimize_filter_css_fonts_cdn",false)===true) && (!empty($this->cdn_url)) ) {
@@ -658,5 +680,19 @@ class autoptimizeStyles extends autoptimizeBase {
             // phew, all is safe, we can late-inject
             return true;
         }
+    }
+    
+    private function maybe_cdn_urls($inUrl) {
+        $url = trim($inUrl," \t\n\r\0\x0B\"'");
+        $urlPath = parse_url($url,PHP_URL_PATH);
+
+        // exclude fonts from CDN except if filter returns true
+        if ( !preg_match('#\.(woff2?|eot|ttf|otf)$#i',$urlPath) || apply_filters('autoptimize_filter_css_fonts_cdn',false) ) {
+            $cdn_url = $this->url_replace_cdn($url);
+        } else {
+            $cdn_url = $url;
+        }
+                
+        return $cdn_url;
     }
 }

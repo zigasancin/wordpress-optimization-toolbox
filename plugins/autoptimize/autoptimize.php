@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: Autoptimize
-Plugin URI: http://blog.futtta.be/autoptimize
+Plugin URI: http://autoptimize.com/
 Description: Optimizes your website, concatenating the CSS and JavaScript code, and compressing it.
-Version: 2.1.0
+Version: 2.2.2
 Author: Frank Goossens (futtta)
 Author URI: http://blog.futtta.be/
 Domain Path: localization/
@@ -54,7 +54,7 @@ $conf = autoptimizeConfig::instance();
 /* Check if we're updating, in which case we might need to do stuff and flush the cache
 to avoid old versions of aggregated files lingering around */
 
-$autoptimize_version="2.1.0";
+$autoptimize_version="2.2.0";
 $autoptimize_db_version=get_option('autoptimize_version','none');
 
 if ($autoptimize_db_version !== $autoptimize_version) {
@@ -78,17 +78,17 @@ add_action( 'init', 'autoptimize_load_plugin_textdomain' );
 function autoptimize_uninstall(){
     autoptimizeCache::clearall();
 
-    $delete_options=array("autoptimize_cache_clean", "autoptimize_cache_nogzip", "autoptimize_css", "autoptimize_css_datauris", "autoptimize_css_justhead", "autoptimize_css_defer", "autoptimize_css_defer_inline", "autoptimize_css_inline", "autoptimize_css_exclude", "autoptimize_html", "autoptimize_html_keepcomments", "autoptimize_js", "autoptimize_js_exclude", "autoptimize_js_forcehead", "autoptimize_js_justhead", "autoptimize_js_trycatch", "autoptimize_version", "autoptimize_show_adv", "autoptimize_cdn_url", "autoptimize_cachesize_notice","autoptimize_css_include_inline","autoptimize_js_include_inline","autoptimize_css_nogooglefont");
+    $delete_options=array("autoptimize_cache_clean", "autoptimize_cache_nogzip", "autoptimize_css", "autoptimize_css_datauris", "autoptimize_css_justhead", "autoptimize_css_defer", "autoptimize_css_defer_inline", "autoptimize_css_inline", "autoptimize_css_exclude", "autoptimize_html", "autoptimize_html_keepcomments", "autoptimize_js", "autoptimize_js_exclude", "autoptimize_js_forcehead", "autoptimize_js_justhead", "autoptimize_js_trycatch", "autoptimize_version", "autoptimize_show_adv", "autoptimize_cdn_url", "autoptimize_cachesize_notice","autoptimize_css_include_inline","autoptimize_js_include_inline","autoptimize_css_nogooglefont","autoptimize_optimize_logged","autoptimize_optimize_checkout");
 
     if ( !is_multisite() ) {
-        foreach ($delete_options as $del_opt) {    delete_option( $del_opt ); }
+        foreach ($delete_options as $del_opt) { delete_option( $del_opt ); }
     } else {
         global $wpdb;
         $blog_ids = $wpdb->get_col( "SELECT blog_id FROM $wpdb->blogs" );
         $original_blog_id = get_current_blog_id();
         foreach ( $blog_ids as $blog_id ) {
             switch_to_blog( $blog_id );
-            foreach ($delete_options as $del_opt) {    delete_option( $del_opt ); }
+            foreach ($delete_options as $del_opt) { delete_option( $del_opt ); }
         }
         switch_to_blog( $original_blog_id );
     }
@@ -112,7 +112,7 @@ function autoptimize_update_config_notice() {
 
 function autoptimize_cache_unavailable_notice() {
     echo '<div class="error"><p>';
-    _e('Autoptimize cannot write to the cache directory (default: /wp-content/cache/autoptimize), please fix to enable CSS/ JS optimization!', 'autoptimize' );
+    printf( __( 'Autoptimize cannot write to the cache directory (%s), please fix to enable CSS/ JS optimization!', 'autoptimize' ), AUTOPTIMIZE_CACHE_DIR );
     echo '</p></div>';
 }
 
@@ -121,8 +121,8 @@ function autoptimize_start_buffering() {
     $ao_noptimize = false;
 
     // noptimize in qs to get non-optimized page for debugging
-    if (array_key_exists("ao_noptimize",$_GET)) {
-        if ( ($_GET["ao_noptimize"]==="1") && (apply_filters('autoptimize_filter_honor_qs_noptimize',true)) ) {
+    if (array_key_exists("ao_noptimize",$_GET) || array_key_exists("ao_noptirocket",$_GET)) {
+        if ( ( ($_GET["ao_noptimize"]==="1") || ($_GET["ao_noptirocket"]==="1") ) && (apply_filters('autoptimize_filter_honor_qs_noptimize',true)) ) {
             $ao_noptimize = true;
         }
     }
@@ -132,10 +132,31 @@ function autoptimize_start_buffering() {
         $ao_noptimize = true;
     }
 
+	// if setting says not to optimize logged in user and user is logged in
+	if ( get_option('autoptimize_optimize_logged','on') !== 'on' && is_user_logged_in() && current_user_can('edit_posts') ) {
+		$ao_noptimize = true;
+	}
+
+	// if setting says not to optimize cart/ checkout
+	if ( get_option('autoptimize_optimize_checkout','on') !== 'on' ) {
+		// checking for woocommerce, easy digital downloads and wp ecommerce
+		foreach ( array("is_checkout","is_cart","edd_is_checkout","wpsc_is_cart","wpsc_is_checkout") as $shopCond ) {
+			if ( function_exists($shopCond) && $shopCond() ) {
+				$ao_noptimize = true;
+				break;
+			}
+		}
+	}
+
     // filter you can use to block autoptimization on your own terms
     $ao_noptimize = (bool) apply_filters( 'autoptimize_filter_noptimize', $ao_noptimize );
 
     if (!is_feed() && !$ao_noptimize && !is_admin() && ( !function_exists('is_customize_preview') || !is_customize_preview() ) ) {
+        // load speedupper conditionally (true by default?)
+        if ( apply_filters('autoptimize_filter_speedupper', true) ) {
+            include(AUTOPTIMIZE_PLUGIN_DIR.'classlesses/autoptimizeSpeedupper.php');
+        }
+
         // Config element
         $conf = autoptimizeConfig::instance();
 
@@ -192,7 +213,6 @@ function autoptimize_start_buffering() {
                 ob_end_clean();
             }
         }
-                
         // Now, start the real thing!
         ob_start('autoptimize_end_buffering');
     }
@@ -201,7 +221,7 @@ function autoptimize_start_buffering() {
 // Action on end, this is where the magic happens
 function autoptimize_end_buffering($content) {
     if ( ((stripos($content,"<html") === false) && (stripos($content,"<!DOCTYPE html") === false)) || preg_match('/<html[^>]*(?:amp|⚡)/',$content) === 1 || stripos($content,"<xsl:stylesheet") !== false ) { return $content; }
-    
+
     // load URL constants as late as possible to allow domain mapper to kick in
     if (function_exists("domain_mapping_siteurl")) {
         define('AUTOPTIMIZE_WP_SITE_URL',domain_mapping_siteurl(get_current_blog_id()));
@@ -218,6 +238,7 @@ function autoptimize_end_buffering($content) {
         define('AUTOPTIMIZE_CACHE_URL',AUTOPTIMIZE_WP_CONTENT_URL.AUTOPTIMIZE_CACHE_CHILD_DIR);
     }
     define('AUTOPTIMIZE_WP_ROOT_URL',str_replace(AUTOPTIMIZE_WP_CONTENT_NAME,'',AUTOPTIMIZE_WP_CONTENT_URL));
+    define('AUTOPTIMIZE_HASH',wp_hash(AUTOPTIMIZE_CACHE_DIR));
 
     // Config element
     $conf = autoptimizeConfig::instance();
@@ -281,14 +302,19 @@ if ( autoptimizeCache::cacheavail() ) {
         if (defined('AUTOPTIMIZE_INIT_EARLIER')) {
             add_action('init','autoptimize_start_buffering',-1);
         } else {
-            add_action('template_redirect','autoptimize_start_buffering',2);
+            if (!defined('AUTOPTIMIZE_HOOK_INTO')) { define('AUTOPTIMIZE_HOOK_INTO', 'template_redirect'); }
+            add_action(constant("AUTOPTIMIZE_HOOK_INTO"),'autoptimize_start_buffering',2);
         }
     }
 } else {
     add_action('admin_notices', 'autoptimize_cache_unavailable_notice');
 }
 
-register_uninstall_hook(__FILE__, "autoptimize_uninstall");
+function autoptimize_activate() {
+    register_uninstall_hook( __FILE__, 'autoptimize_uninstall' );
+}
+register_activation_hook( __FILE__, 'autoptimize_activate' );
+
 include_once('classlesses/autoptimizeCacheChecker.php');
 
 // Do not pollute other plugins
