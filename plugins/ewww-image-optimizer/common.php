@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '360.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '361.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
@@ -6565,7 +6565,7 @@ function ewww_image_optimizer_bulk_action_handler() {
  */
 function ewww_image_optimizer_get_option( $option_name ) {
 	$constant_name = strtoupper( $option_name );
-	if ( defined( $constant_name ) && ( is_int( constant( $constant_name ) || is_bool( constant( $constant_name ) ) ) ) ) {
+	if ( defined( $constant_name ) && ( is_int( constant( $constant_name ) ) || is_bool( constant( $constant_name ) ) ) ) {
 		return constant( $constant_name );
 	}
 	if ( ! function_exists( 'is_plugin_active_for_network' ) && is_multisite() ) {
