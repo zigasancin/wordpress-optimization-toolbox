@@ -37,19 +37,27 @@ jQuery(function () {
         jQuery.post(ajaxurl, param);
     }
 
-    //Store the preference in db
-    jQuery('.wp-smush-update-info').on('click', '.notice-dismiss', function (e) {
-        e.preventDefault();
-        var $el = jQuery(this);
-        $el.fadeTo( 100, 0, function() {
-            $el.slideUp( 100, function() {
-                $el.remove();
-            });
-        });
+    // Store the preference in db.
+    function send_dismiss_request( action ) {
         var param = {
-            action: 'dismiss_update_info'
+            action: action
         };
         jQuery.post(ajaxurl, param);
+    }
+
+    // Dismiss the update notice.
+    jQuery('.wp-smush-update-info').on('click', '.notice-dismiss', function (e) {
+        e.preventDefault();
+        el_notice = jQuery(this);
+        remove_notice();
+        send_dismiss_request( 'dismiss_update_info' );
+    });
+
+    // Dismiss S3 support alert.
+    jQuery('div.wp-smush-s3support-alert').on('click', '.dev-icon-cross', function (e) {
+        el_notice = jQuery(this);
+        remove_notice();
+        send_dismiss_request( 'dismiss_s3support_alert' );
     });
 
 });

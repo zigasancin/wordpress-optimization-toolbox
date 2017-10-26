@@ -266,8 +266,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 			}
 
 			//Check if Lossy enabled
-			$opt_lossy     = WP_SMUSH_PREFIX . 'lossy';
-			$opt_lossy_val = $wpsmush_settings->get_setting( $opt_lossy, false );
+			$opt_lossy_val = $wpsmush_settings->settings['lossy'];
 
 			//Check if premium user, compression was lossless, and lossy compression is enabled
 			if ( !$show_resmush && $this->is_pro_user && ! $is_lossy && $opt_lossy_val && ! empty( $image_type ) && $image_type != 'image/gif' ) {
@@ -369,7 +368,13 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 		 * @return bool|mixed|void
 		 */
 		function get_smush_stats() {
-			global $WpSmush;
+
+			$smushed_stats = array(
+				'savings_bytes'   => 0,
+				'size_before'     => 0,
+				'size_after'      => 0,
+				'savings_percent' => 0
+			);
 
 			//Clear up the stats
 			if( 0 == $this->total_count() ) {
@@ -378,30 +383,32 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 			}
 
 			// Check for the  wp_smush_images_smushed in the 'nextgen' group.
-			$smushed_stats = wp_cache_get( 'wp_smush_stats_nextgen', 'nextgen' );
+			$stats = wp_cache_get( 'wp_smush_stats_nextgen', 'nextgen' );
 
 			// If nothing is found, build the object.
-			if ( false === $smushed_stats ) {
+			if ( false === $stats ) {
 				// Check for the  wp_smush_images in the 'nextgen' group.
-				$smushed_stats = get_option( 'wp_smush_stats_nextgen', array() );
+				$stats = get_option( 'wp_smush_stats_nextgen', array() );
 
-				if ( ! is_wp_error( $smushed_stats ) ) {
+				if ( ! is_wp_error( $stats ) ) {
 					// In this case we don't need a timed cache expiration.
-					wp_cache_set( 'wp_smush_stats_nextgen', $smushed_stats, 'nextgen' );
+					wp_cache_set( 'wp_smush_stats_nextgen', $stats, 'nextgen' );
 				}
 			}
-			if ( empty( $smushed_stats['bytes'] ) || $smushed_stats['bytes'] < 0 ) {
-				$smushed_stats['bytes'] = 0;
+			if ( empty( $stats['bytes'] ) || $stats['bytes'] < 0 ) {
+				$stats['bytes'] = 0;
 			}
 
-			if ( ! empty( $smushed_stats['size_before'] ) && $smushed_stats['size_before'] > 0 ) {
-				$smushed_stats['percent'] = ( $smushed_stats['bytes'] / $smushed_stats['size_before'] ) * 100;
+			if ( ! empty( $stats['size_before'] ) && $stats['size_before'] > 0 ) {
+				$stats['percent'] = ( $stats['bytes'] / $stats['size_before'] ) * 100;
 			}
 
 			//Round off precentage
-			$smushed_stats['percent'] = ! empty( $smushed_stats['percent'] ) ? round( $smushed_stats['percent'], 1 ) : 0;
+			$stats['percent'] = ! empty( $stats['percent'] ) ? round( $stats['percent'], 1 ) : 0;
 
-			$smushed_stats['human'] = size_format( $smushed_stats['bytes'], 1 );
+			$stats['human'] = size_format( $stats['bytes'], 1 );
+
+			$smushed_stats = array_merge( $smushed_stats, $stats );
 
 			return $smushed_stats;
 		}

@@ -62,13 +62,13 @@
 }
 
 .smush-notice-message {
-    width: 100%;
+    color: #23282D;
+    font-size: 13px;
+    font-weight: normal;
+    line-height: 20px;
     padding: 10px 20px;
-    color: #444;
-}
-
-.smush-notice-message strong {
-    color: #000;
+    -webkit-font-smoothing: antialiased;
+    width: 100%;
 }
 
 .smush-notice-cta {
@@ -99,7 +99,8 @@
     background: transparent;
     border: 0;
     cursor: pointer;
-    color: #BBB;
+    color: #C5C5C5;
+    -webkit-font-smoothing: antialiased;
 }
 
 .smush-notice-dismiss:hover {

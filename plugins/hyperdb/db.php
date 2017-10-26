@@ -1,7 +1,15 @@
 <?php
 
-// HyperDB
-// This file should be installed at ABSPATH/wp-content/db.php
+/*
+Plugin Name: HyperDB
+Plugin URI: https://wordpress.org/plugins/hyperdb/
+Description: An advanced database class that supports replication, failover, load balancing, and partitioning.
+Author: Automattic
+License: GPLv2 or later
+Version: 1.4
+*/
+
+/** This file should be installed at ABSPATH/wp-content/db.php **/
 
 /** Load the wpdb class while preventing instantiation **/
 $wpdb = true;
@@ -181,6 +189,11 @@ class hyperdb extends wpdb {
 	var $dbhname_heartbeats = array();
 
 	/**
+	 * Counter for how many queries have failed during the life of the $wpdb object
+	 */
+	var $num_failed_queries = 0;
+
+	/**
 	 * Gets ready to make database connections
 	 * @param array db class vars
 	 */
@@ -263,8 +276,8 @@ class hyperdb extends wpdb {
 		// allow (select...) union [...] style queries. Use the first queries table name.
 		$q = ltrim($q, "\t (");
 		// Strip everything between parentheses except nested
-		// selects and use only 1000 chars of the query
-		$q = preg_replace( '/\((?!\s*select)[^(]*?\)/is', '()', substr( $q, 0, 1000 ) );
+		// selects and use only 1500 chars of the query
+		$q = preg_replace( '/\((?!\s*select)[^(]*?\)/is', '()', substr( $q, 0, 1500 ) );
 
 		// Refer to the previous query
 		// wpdb doesn't implement last_table, so we run it first.
@@ -382,7 +395,7 @@ class hyperdb extends wpdb {
 			$dataset = 'global';
 
 		if ( ! $dataset )
-			return $this->bail("Unable to determine which dataset to query. ($this->table)");
+			return $this->log_and_bail("Unable to determine dataset (for table: $this->table)");
 		else
 			$this->dataset = $dataset;
 
@@ -396,12 +409,12 @@ class hyperdb extends wpdb {
 				|| !defined('DB_USER')
 				|| !defined('DB_PASSWORD')
 				|| !defined('DB_NAME') )
-				return $this->bail("We were unable to query because there was no database defined.");
+				return $this->log_and_bail("We were unable to query because there was no database defined");
 			$this->dbh = $this->ex_mysql_connect( DB_HOST, DB_USER, DB_PASSWORD, $this->persistent );
 			if ( ! $this->is_mysql_connection( $this->dbh ) )
-				return $this->bail("We were unable to connect to the database. (DB_HOST)");
+				return $this->log_and_bail("We were unable to connect to the database. (DB_HOST)");
 			if ( ! $this->ex_mysql_select_db( DB_NAME, $this->dbh ) )
-				return $this->bail("We were unable to select the database.");
+				return $this->log_and_bail("We were unable to select the database");
 			if ( ! empty( $this->charset ) ) {
 				$collation_query = "SET NAMES '$this->charset'";
 				if ( !empty( $this->collate ) )
@@ -501,7 +514,7 @@ class hyperdb extends wpdb {
 		}
 
 		if ( empty($this->hyper_servers[$dataset][$operation]) )
-			return $this->bail("No databases available with $this->table ($dataset)");
+			return $this->log_and_bail("No databases available with $this->table ($dataset)");
 
 		// Put the groups in order by priority
 		ksort($this->hyper_servers[$dataset][$operation]);
@@ -517,7 +530,7 @@ class hyperdb extends wpdb {
 			}
 
 			if ( !$tries_remaining = count( $servers ) )
-				return $this->bail("No database servers were found to match the query. ($this->table, $dataset)");
+				return $this->log_and_bail("No database servers were found to match the query ($this->table, $dataset)");
 
 			if ( !isset( $unique_servers ) )
 				$unique_servers = $tries_remaining;
@@ -803,6 +816,8 @@ class hyperdb extends wpdb {
 
 			if ( ! $this->is_mysql_connection( $this->dbh ) ) {
 				$this->check_current_query = true;
+				$this->last_error = 'Database connection failed';
+				$this->num_failed_queries++;
 				return false;
 			}
 
@@ -815,6 +830,8 @@ class hyperdb extends wpdb {
 				$stripped_query = $this->strip_invalid_text_from_query( $query );
 				if ( $stripped_query !== $query ) {
 					$this->insert_id = 0;
+					$this->last_error = 'Invalid query';
+					$this->num_failed_queries++;
 					return false;
 				}
 			}
@@ -856,10 +873,14 @@ class hyperdb extends wpdb {
 			$this->dbhname_heartbeats[$this->dbhname]['last_used'] = microtime( true );
 
 			if ( $this->save_queries ) {
-				if ( is_callable($this->save_query_callback) )
-					$this->queries[] = call_user_func_array( $this->save_query_callback, array( $query_for_log, $elapsed, $this->save_backtrace ? debug_backtrace( false ) : null, &$this ) );
-				else
+				if ( is_callable($this->save_query_callback) ) {
+					$saved_query = call_user_func_array( $this->save_query_callback, array( $query_for_log, $elapsed, $this->save_backtrace ? debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ) : null, &$this ) );
+					if ( $saved_query !== null ) {
+						$this->queries[] = $saved_query;
+					}
+				} else {
 					$this->queries[] = array( $query_for_log, $elapsed, $this->get_caller() );
+				}
 			}
 		}
 
@@ -868,6 +889,7 @@ class hyperdb extends wpdb {
 			$this->last_errno = $this->ex_mysql_errno( $this->dbh );
 			$this->dbhname_heartbeats[$this->dbhname]['last_errno'] = $this->last_errno;
 			$this->print_error($this->last_error);
+			$this->num_failed_queries++;
 			return false;
 		}
 
@@ -880,6 +902,9 @@ class hyperdb extends wpdb {
 			}
 			// Return number of rows affected
 			$return_val = $this->rows_affected;
+		} else if ( is_bool( $this->result ) ) {
+			$return_val = $this->result;
+			$this->result = null;
 		} else {
 			$i = 0;
 			$this->col_info = array();
@@ -983,6 +1008,10 @@ class hyperdb extends wpdb {
 		if ( !is_callable('debug_backtrace') )
 			return '';
 
+		$hyper_callbacks = array();
+		foreach ( $this->hyper_callbacks as $group_name => $group_callbacks )
+			$hyper_callbacks = array_merge( $hyper_callbacks, $group_callbacks );
+
 		$bt = debug_backtrace( false );
 		$caller = '';
 
@@ -998,6 +1027,9 @@ class hyperdb extends wpdb {
 			elseif ( strtolower($trace['function']) == 'do_action' )
 				continue;
 
+			if ( in_array( strtolower($trace['function']), $hyper_callbacks ) )
+				continue;
+
 			if ( isset($trace['class']) )
 				$caller = $trace['class'] . '::' . $trace['function'];
 			else
@@ -1005,6 +1037,15 @@ class hyperdb extends wpdb {
 			break;
 		}
 		return $caller;
+	}
+
+	function log_and_bail( $msg ) {
+		$logged = $this->run_callbacks( 'log_and_bail', $msg );
+
+		if ( ! $logged )
+			error_log( "WordPress database error $msg for query {$this->last_query} made by " .  $this->get_caller() );
+
+		return $this->bail( $msg );
 	}
 
 	/**

@@ -39,7 +39,7 @@ if ( ! class_exists( 'WpSmushBackup' ) ) {
 			global $wpsmush_settings;
 
 			//Whether backup is enabled or not
-			$this->backup_enabled = $wpsmush_settings->get_setting( WP_SMUSH_PREFIX . 'backup' );
+			$this->backup_enabled = isset( $wpsmush_settings->settings['backup'] ) ? $wpsmush_settings->settings['backup'] : 0;
 		}
 
 		/**

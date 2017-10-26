@@ -21,7 +21,6 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 		var $remaining_count = 0;
 		var $super_smushed = 0;
 		var $bulk_page_handle;
-		var $bulk_ui = '';
 
 		//Stores all lossless smushed ids
 		public $resmush_ids = array();
@@ -46,10 +45,11 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			//Update Stats, if a NextGen image is deleted
 			add_action( 'ngg_delete_picture', array( $this, 'update_nextgen_stats' ) );
 
+			//Update Stats, Lists -  if a NextGen Gallery is deleted
+//			add_action( 'ngg_delete_gallery', array( $this, 'update_stats' ) );
+
 			//Update the Super Smush count, after the smushing
 			add_action( 'wp_smush_image_optimised_nextgen', array( $this, 'update_lists' ), '', 2 );
-
-			$this->bulk_ui = new WpSmushBulkUi();
 
 		}
 
@@ -337,60 +337,12 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 		}
 
 		/**
-		 * Returns Bulk smush button id and other details, as per if bulk request is already sent or not
-		 *
-		 * @return array
-		 */
-
-		private function button_state( $resmush ) {
-			$button = array(
-				'cancel' => false,
-			);
-
-			$button['text'] = __( 'Bulk Smush Now', 'wp-smushit' );
-
-			//If not resmush and All the images are already smushed
-			if ( ! $resmush && $this->smushed_count === $this->total_count ) {
-				$button['text']     = __( 'All Done!', 'wp-smushit' );
-				$button['class']    = 'wp-smush-finished disabled wp-smush-finished';
-				$button['disabled'] = 'disabled';
-			} elseif ( $resmush ) {
-				$button['class'] = 'wp-smush-button wp-smush-resmush wp-smush-nextgen-bulk';
-			} else {
-				$button['class'] = 'wp-smush-button wp-smush-nextgen-bulk';
-			}
-
-			return $button;
-		}
-
-		/**
-		 * Display the bulk smushing button
-		 *
-		 * @param bool $resmush
-		 * @param bool $return Whether to echo the button content or echo it
-		 *
-		 * @return string If return is set to true, return the button content,
-		 * else echo it
-		 *
-		 */
-		function setup_button( $resmush = false, $return = false ) {
-			$button   = $this->button_state( $resmush );
-			$disabled = ! empty( $button['disabled'] ) ? ' disabled="disabled"' : '';
-			$content  = '<button class="button button-primary ' . $button['class'] . '" name="smush-all-nextgen" ' . $disabled . '>
-				<span>' . $button['text'] . '</span>
-			</button>';
-			if ( $return ) {
-				return $content;
-			}
-			echo $content;
-		}
-
-		/**
 		 *
 		 */
 		function bulk_smush_ui() {
+		    global $wpsmush_bulkui;
 			//Page Header
-			$this->bulk_ui->smush_page_header(); ?>
+			$wpsmush_bulkui->smush_page_header(); ?>
 			<!-- Bulk Smush Progress Bar -->
 				<div class="wp-smushit-container-left col-half float-l"><?php
 					//Bulk Smush Container
@@ -404,14 +356,14 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 					$this->smush_stats_container(); ?>
 				</div><!-- End Of Smushit Container right -->
 			</div><?php
-			$this->bulk_ui->smush_page_footer();
+			$wpsmush_bulkui->smush_page_footer();
 		}
 
 		/**
 		 * Outputs the Content for Bulk Smush Div
 		 */
 		function bulk_smush_content() {
-			global $wpsmushit_admin, $WpSmush;
+			global $wpsmushit_admin, $WpSmush, $wpsmush_bulkui;
 
 			//If all the images are smushed
 			$all_done = ( $this->smushed_count == $this->total_count ) && 0 == count( $this->resmush_ids );
@@ -426,7 +378,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			$count += $this->remaining_count;
 
 			//Get the counts
-			echo $this->bulk_ui->bulk_resmush_content( $count, $show );
+			echo $wpsmush_bulkui->bulk_resmush_content( $count, $show );
 
 			/** End Of Re-Smush Notice */
 
@@ -449,20 +401,17 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 				<div class="wp-smush-bulk-wrapper <?php echo $all_done ? ' hidden' : ''; ?>"><?php
 				//If all the images in media library are smushed
 				//Button Text
-				$button_content = esc_html__( "BULK SMUSH NOW", "wp-smushit" );
+				$button_content = esc_html__( "BULK SMUSH", "wp-smushit" );
 				// DO not show the remaining notice if we have resmush ids
 				?>
 				<div class="wp-smush-notice wp-smush-remaining  <?php echo count( $this->resmush_ids ) > 0 ? ' hidden' : ''; ?>">
-					<i class="dev-icon">
-						<img src="<?php echo WP_SMUSH_URL . 'assets/images/icon-gzip.svg'; ?>" width="14px">
-					</i>
+                    <i class="wdv-icon wdv-icon-fw wdv-icon-exclamation-sign"></i>
 					<span class="wp-smush-notice-text">
 						<?php printf( _n( "%s, you have %s%s%d%s attachment%s that needs smushing!", "%s, you have %s%s%d%s attachments%s that need smushing!", $this->remaining_count, "wp-smushit" ), $wpsmushit_admin->get_user_name(), '<strong>', '<span class="wp-smush-remaining-count">', $this->remaining_count, '</span>', '</strong>' ); ?>
 					</span>
 				</div>
-				<hr class="wp-smush-sep">
 				<button type="button"
-				        class="wp-smush-button wp-smush-nextgen-bulk"><?php echo $button_content; ?></button><?php
+				        class="wp-smush-button wp-smush-nextgen-bulk float-r"><?php echo $button_content; ?></button><?php
 
 				//Enable Super Smush
 				if ( ! $WpSmush->lossy_enabled ) {
@@ -476,7 +425,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 					<p class="wp-smush-enable-lossy"><?php printf( esc_html__( "Enable Super-smush in the %sSettings%s area to get even more savings with almost no noticeable quality loss.", "wp-smushit" ), '<a href="' . $url .'" target="_blank">', "</a>"); ?></p><?php
 				} ?>
 				</div><?php
-				$this->bulk_ui->progress_bar( $this );
+				$wpsmush_bulkui->progress_bar( $this );
 			}
 		}
 
@@ -485,7 +434,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 		 */
 		function bulk_smush_container() {
 
-			global $WpSmush;
+			global $WpSmush, $wpsmush_bulkui;
 
 			//Subheading Content
 			$smush_individual_msg = sprintf( esc_html__( "Smush individual images via your %sManage Galleries%s section", "wp-smushit" ), '<a href="' . esc_url( admin_url() . 'admin.php?page=nggallery-manage-gallery' ) . '" title="' . esc_html__( 'Manage Galleries', 'wp-smushit' ) . '">', '</a>' );
@@ -493,7 +442,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			$class = $WpSmush->validate_install() ? 'bulk-smush-wrapper wp-smush-pro-install' : 'bulk-smush-wrapper';
 
 			//Container Header
-			$this->bulk_ui->container_header( $class, 'wp-smush-bulk-wrap-box', esc_html__( "BULK SMUSH", "wp-smushit" ), $smush_individual_msg ); ?>
+			$wpsmush_bulkui->container_header( $class, 'wp-smush-bulk-wrap-box', esc_html__( "BULK SMUSH", "wp-smushit" ), $smush_individual_msg ); ?>
 
 			<div class="box-container"><?php
 				$this->bulk_smush_content(); ?>
@@ -505,47 +454,30 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 		 * Outputs the Smush stats for the site
 		 */
 		function smush_stats_container() {
-			global $WpSmush, $wpsmushnextgenstats, $wpsmushit_admin, $wpsmush_db;
+			global $WpSmush, $wpsmushnextgenstats, $wpsmush_bulkui, $wpsmush_db;
 
 			//If we have resmush list, smushed_count = totalcount - resmush count, else smushed_count
 			$smushed_count = ( $resmush_count = count( $this->resmush_ids ) ) > 0 ? ( $this->total_count - ( $resmush_count + $this->remaining_count ) ) : $this->smushed_count;
 
 			$button = '<span class="spinner"></span><button tooltip="' . esc_html__( "Lets you check if any images can be further optimized. Useful after changing settings.", "wp-smushit" ) . '" data-type="nextgen" class="wp-smush-title button button-grey button-small wp-smush-scan">' . esc_html__( "RE-CHECK IMAGES", "wp-smushit" ) . '</button>';
-			$this->bulk_ui->container_header( 'smush-stats-wrapper', 'wp-smush-stats-box', esc_html__( "STATS", "wp-smushit" ), $button );
-			$dasharray = 125.663706144;
-			$dash_offset = $this->total_count > 0 ? $dasharray - ( $dasharray * ( $smushed_count / $this->total_count ) ) : $dasharray; ?>
+			$wpsmush_bulkui->container_header( 'smush-stats-wrapper', 'wp-smush-stats-box', esc_html__( "STATS", "wp-smushit" ), $button );?>
 
 			<div class="box-content">
 			<div class="row smush-total-savings smush-total-reduction-percent">
 
 				<div class="wp-smush-current-progress">
-					<div class="wp-smushed-progress">
-						<div class="wp-smush-score inside">
-							<div class="tooltip-box">
-								<div class="wp-smush-optimisation-progress">
-									<div class="wp-smush-progress-circle">
-										<svg class="wp-smush-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50">
-											<circle class="wp-smush-svg-circle" r="20" cx="25" cy="25" fill="transparent" stroke-dasharray="0" stroke-dashoffset="0"></circle>
-											<!-- Stroke Dasharray is 2 PI r -->
-											<circle class="wp-smush-svg-circle wp-smush-svg-circle-progress" r="20" cx="25" cy="25" fill="transparent" stroke-dasharray="<?php echo $dasharray; ?>" style="stroke-dashoffset: <?php echo $dash_offset; ?>px;"></circle>
-										</svg>
-									</div>
-								</div>
-							</div><!-- end tooltip-box -->
-						</div>
-					</div>
 
 					<div class="wp-smush-count-total">
 						<div class="wp-smush-smush-stats-wrapper">
 							<span class="wp-smush-total-optimised"><?php echo $this->image_count; ?></span>
 						</div>
-						<span class="total-stats-label"><strong><?php esc_html_e( "IMAGES SMUSHED", "wp-smushit" ); ?></strong></span>
+						<span class="total-stats-label"><?php esc_html_e( "Images smushed", "wp-smushit" ); ?></span>
 					</div>
 				</div>
 			</div>
 			<hr />
 			<div class="row wp-smush-savings">
-				<span class="float-l wp-smush-stats-label"><strong><?php esc_html_e("TOTAL SAVINGS", "wp-smushit");?></strong></span>
+				<span class="float-l wp-smush-stats-label"><?php esc_html_e("Total savings", "wp-smushit");?></span>
 				<span class="float-r wp-smush-stats">
 				    <span class="wp-smush-stats-percent"><?php echo $this->stats['percent'] > 0 ? number_format_i18n( $this->stats['percent'], 1, '.', '' ) : 0; ?></span>%
 					<span class="wp-smush-stats-sep">/</span>
@@ -561,7 +493,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 				<hr>
 				<div class="row super-smush-attachments">
 					<span class="float-l wp-smush-stats-label">
-						<strong><?php esc_html_e( "IMAGES SUPER-SMUSHED", "wp-smushit" ); ?></strong>
+						<strong><?php esc_html_e( "Super-smushed images", "wp-smushit" ); ?></strong>
 					</span>
 					<span class="float-r wp-smush-stats">
 						<?php
@@ -667,7 +599,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			//Set the counts
 			$this->total_count     = $wpsmushnextgenstats->total_count();
 			$this->image_count     = $this->get_image_count( $smushed_images );
-			$this->smushed_count   = count( $smushed_images );
+			$this->smushed_count   = $smushed_images && is_array( $smushed_images ) ? count( $smushed_images ) : $smushed_images;
 			$this->remaining_count = $wpsmushnextgenstats->get_ngg_images( 'unsmushed', true );
 		}
 
@@ -739,6 +671,18 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			$metadata['wp_smush'] = $smush_stats;
 			return $metadata;
 
+		}
+
+		function update_stats( $id = '' ) {
+			if ( empty( $id ) ) {
+				return;
+			}
+			//Get the list of images for Gallery
+			if ( class_exists( 'C_Image_Mapper' ) ) {
+				$image_mapper = C_Image_Mapper::get_instance();
+				$images       = $image_mapper->find_all_for_gallery( $id );
+			}
+			exit;
 		}
 
 	}//End of Class

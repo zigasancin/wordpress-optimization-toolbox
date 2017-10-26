@@ -14,13 +14,14 @@ if ( ! class_exists( 'WpSmushShare' ) ) {
 		function __construct() {}
 
 		function share_widget() {
-			global $wpsmushit_admin;
+			global $WpSmush, $wpsmushit_admin;
 			$savings     = $wpsmushit_admin->stats;
 
 			//If there is any saving, greater than 1Mb, show stats
 			if ( empty( $savings ) || empty( $savings['bytes'] ) || $savings['bytes'] <= 1048576 || $savings['total_images'] <= 1 || ! is_super_admin() ) {
 				return false;
 			}
+
 			$message   = sprintf( esc_html__( "%s, you've smushed %s%d%s images and saved %s%s%s in total. Help your friends save bandwidth easily, and help me in my quest to Smush the internet!", "wp-smushit" ), $wpsmushit_admin->get_user_name(), '<span class="smush-share-image-count">', $savings['total_images'], '</span>', '<span class="smush-share-savings">', $savings['human'], '</span>' );
 			$share_msg = sprintf( esc_html__( 'I saved %s%s%s on my site with WP Smush ( %s ) - wanna make your website light and faster?', "wp-smushit" ) , '<span class="smush-share-savings">', $savings['human'], '</span>', urlencode( "https://wordpress.org/plugins/wp-smushit/" ) ); ?>
 			<section class="dev-box" id="wp-smush-share-widget">

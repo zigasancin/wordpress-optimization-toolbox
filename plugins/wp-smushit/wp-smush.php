@@ -4,7 +4,7 @@ Plugin Name: WP Smush
 Plugin URI: http://wordpress.org/extend/plugins/wp-smushit/
 Description: Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
 Author: WPMU DEV
-Version: 2.7.4.1
+Version: 2.7.6
 Author URI: http://premium.wpmudev.org/
 Text Domain: wp-smushit
 */
@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Constants
  */
 $prefix  = 'WP_SMUSH_';
-$version = '2.7.4.1';
+$version = '2.7.6';
 
 //Deactivate the .org version, if pro version is active
 add_action( 'admin_init', 'deactivate_smush_org' );
@@ -216,10 +216,14 @@ if ( ! function_exists( 'smush_deactivated' ) ) {
 }
 
 if ( ! function_exists( 'smush_activated' ) ) {
-//Check if a existing install or new
+	/**
+	 * Check if a existing install or new
+	 */
 	function smush_activated() {
+		global $wpsmush_settings;
 
 		$version = get_site_option( WP_SMUSH_PREFIX . 'version' );
+		$settings = !empty( $wpsmush_settings->settings ) ? $wpsmush_settings->settings : $wpsmush_settings->init_settings();
 
 		//If the version is not saved or if the version is not same as the current version,
 		if ( ! $version || WP_SMUSH_VERSION != $version ) {
@@ -232,7 +236,7 @@ if ( ! function_exists( 'smush_activated' ) ) {
 				update_site_option( 'wp-smush-install-type', 'existing' );
 			} else {
 				//Check for existing settings
-				if ( false !== get_site_option( WP_SMUSH_PREFIX . 'auto' ) || false !== get_option( WP_SMUSH_PREFIX . 'auto' ) ) {
+				if ( false !== $settings['auto'] ) {
 					update_site_option( 'wp-smush-install-type', 'existing' );
 				}
 			}

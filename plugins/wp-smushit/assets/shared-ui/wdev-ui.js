@@ -419,7 +419,7 @@ WDP.prepareOverlay = function() {
 		WDP.overlay.box = jQuery('<div class="box"></div>');
 		WDP.overlay.box_title = jQuery('<div class="title"><h3></h3></div>');
 		WDP.overlay.box_content = jQuery('<div class="content"></div>');
-		WDP.overlay.close = jQuery('<div class="close" aria-label="Close">&times;</div>');
+		WDP.overlay.close = jQuery('<div aria-hidden="true" class="close">&times;</div><button class="wpdui-sr-only"><span class="wpdui-sr-only">Close</span></button>');
 
 		WDP.overlay.back.appendTo(WDP.overlay.wrapper);
 		WDP.overlay.scroll.appendTo(WDP.overlay.wrapper);
@@ -640,7 +640,7 @@ WDP.wpmuSelect = function(el) {
 		jq.hide();
 
 		wrap = jq.parent();
-		handle = jQuery("<span class='dropdown-handle'><i class='wdv-icon wdv-icon-reorder'></i></span>").prependTo(wrap);
+		handle = jQuery("<span class='dropdown-handle'><i aria-hidden='true' class='wdv-icon wdv-icon-reorder'></i></span>").prependTo(wrap);
 		list = jQuery("<div class='select-list-container'></div>").appendTo(wrap);
 		value = jQuery("<div class='list-value'>&nbsp;</div>").appendTo(list);
 		items = jQuery("<ul class='list-results'></ul>").appendTo(list);
@@ -815,7 +815,7 @@ WDP.wpmuSearchfield = function(el) {
 
 		jq.wrap('<div class="input-box">');
 		inpbox = jq.parent();
-		inpbox.append('<i class="search-icon dev-icon dev-icon-search"></i>');
+		inpbox.append('<i aria-hidden="true" class="search-icon dev-icon dev-icon-search"></i><button class="wpdui-sr-only search-icon"><span class="wpdui-sr-only">Search</span></button>');
 
 		curitem = jQuery('<div class="current-item"></div>');
 		curitem.appendTo(inpbox);
@@ -890,10 +890,10 @@ WDP.wpmuSearchfield = function(el) {
 				item = items[i];
 
 			if (! item.label) { continue; }
-			li.html('<span class="item-label">' + item.label + '</span>');
+			li.html('<span aria-hidden="true" class="item-label">' + item.label + '</span><a class="wpdui-sr-only item-label"><span class="wpdui-sr-only">' + item.label + '</span></a>');
 
 			if (item.thumb) {
-				li.prepend('<span class="thumb" style="background-image:url(' + item.thumb + ')">');
+				li.prepend('<span aria-hidden="true" class="thumb" style="background-image:url(' + item.thumb + ')">');
 			}
 			if (item.id) {
 				li.attr('data-id', item.id);
@@ -1109,19 +1109,19 @@ WDP.showMessage = function(action) {
 
 		jQuery("body").append(
 			'<div class="update-notice ok" id="wdp-success" style="display:none">' +
-			'<span class="the-msg-icon check-animation"></span>' +
+			'<span aria-hidden="true" class="the-msg-icon check-animation"></span>' +
 			'<p><span class="default-text">' + WDP.lang.default_msg_ok + '</span>' +
 			'<span class="extra-text" style="display:none"></span></p>' +
-			'<span class="close" aria-label="Close">&times;</span>' +
+			'<span aria-hidden="true" class="close">&times;</span><button class="wpdui-sr-only"><span class="wpdui-sr-only">Close</span></button>' +
 			'</div>'
 		)
 
 		jQuery("body").append(
 			'<div class="update-notice err" id="wdp-error" style="display:none">' +
-			'<i class="the-msg-icon wdv-icon wdv-icon-warning-sign"></i>' +
+			'<i aria-hidden="true" class="the-msg-icon wdv-icon wdv-icon-warning-sign"></i>' +
 			'<p><span class="default-text">' + WDP.lang.default_msg_err + '</span>' +
 			'<span class="extra-text" style="display:none"></span></p>' +
-			'<span class="close" aria-label="Close">&times;</span>' +
+			'<span aria-hidden="true" class="close">&times;</span><button class="wpdui-sr-only"><span class="wpdui-sr-only">Close</span></button>' +
 			'</div>'
 		);
 

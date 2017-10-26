@@ -17,7 +17,12 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		/**
 		 * @var array Contains the total Stats, for displaying it on bulk page
 		 */
-		var $stats = array();
+		var $stats = array(
+			'savings_bytes'   => 0,
+			'size_before'     => 0,
+			'size_after'      => 0,
+			'savings_percent' => 0
+		);
 
 		var $is_nextgen_active = false;
 
@@ -64,6 +69,7 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		function register( $settings ) {
 			$settings['nextgen'] = array(
 				'label' => esc_html__( 'Enable NextGen Gallery integration', 'wp-smushit' ),
+                'short_label' => esc_html__( 'NextGen Gallery', 'wp-smushit' ),
 				'desc'  => esc_html__( 'Allow smushing images directly through NextGen Gallery settings.', 'wp-smushit' )
 			);
 
