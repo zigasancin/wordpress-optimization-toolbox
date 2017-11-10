@@ -1,3 +1,18 @@
+= 4.0.2 =
+* fixed: WooCommerce images still not working with Alt WebP in all cases
+* fixed: ob_clean() breaks AJAX actions when there is no buffer to clean
+* fixed: notice on NextCellent gallery management pages
+* fixed: missing JS for AJAX actions in NextCellent
+
+= 4.0.1 =
+* fixed: ExactDN option not disabled when verification fails too many times
+* fixed: theme scanner sometimes skipped images on PHP 5.3
+* fixed: invalid (float) width parameters for srcset attributes
+* fixed: Jetpack lightbox and carousel were not fully working with Alt WebP
+* fixed: WooCommerce lightbox and gallery not working with Alt WebP
+* fixed: incorrect message about scanning scope when selecting images from media library for bulk optimization
+* security: fixed wildcard LIKE queries to allow proper escaping
+
 = 4.0.0 =
 * added: ExactDN with CDN and automatic image resizing
 * added: image resize detection for admin users
