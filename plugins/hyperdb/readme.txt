@@ -24,6 +24,7 @@ It supports:
 * Smart post-write master reads
 * Failover for downed host
 * Advanced statistics for profiling
+* WordPress Multisite
 
 It is based on the code currently used in production on WordPress.com with many MySQL servers spanning multiple datacenters.
 
@@ -75,7 +76,13 @@ Since HyperDB attempts a connection only when a query is made, your WordPress in
 
 == Changelog ==
 
-= 1.4 = 
+= 1.5 =
+* Fix WordPress 4.8.3 SQLi vulnerability
+* Add action for SQL logging
+* Never db_connect for SELECT FOUND_ROWS()
+* Better cleanup when disconnecing db connections
+
+= 1.4 =
 * Additional logging for HyperDB failures and do not save "null" queries.
 
 = 1.3 =

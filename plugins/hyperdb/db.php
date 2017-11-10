@@ -6,7 +6,7 @@ Plugin URI: https://wordpress.org/plugins/hyperdb/
 Description: An advanced database class that supports replication, failover, load balancing, and partitioning.
 Author: Automattic
 License: GPLv2 or later
-Version: 1.4
+Version: 1.5
 */
 
 /** This file should be installed at ABSPATH/wp-content/db.php **/
@@ -761,9 +761,12 @@ class hyperdb extends wpdb {
  	 * This is also the reason why we don't allow certain charsets. See set_charset().
  	 */
 	function _real_escape( $string ) {
-		return addslashes( $string );
+		$escaped = addslashes( $string );
+		if ( method_exists( get_parent_class( $this ), 'add_placeholder_escape' ) ) {
+			$escaped = $this->add_placeholder_escape( $escaped );
+		}
+		return $escaped;
 	}
-
 	/**
 	 * Disconnect and remove connection from open connections list
 	 * @param string $tdbhname
@@ -771,6 +774,10 @@ class hyperdb extends wpdb {
 	function disconnect($dbhname) {
 		if ( false !== $k = array_search($dbhname, $this->open_connections) )
 			unset($this->open_connections[$k]);
+
+		foreach ( array_keys( $this->db_connections ) as $i )
+			if ( $this->db_connections[$i]['dbhname'] == $dbhname )
+				unset( $this->db_connections[$i] );
 
 		if ( $this->is_mysql_connection( $this->dbhs[$dbhname] ) )
 			$this->ex_mysql_close( $this->dbhs[$dbhname] );
@@ -808,9 +815,14 @@ class hyperdb extends wpdb {
 		// Keep track of the last query for debug..
 		$this->last_query = $query;
 
-		if ( preg_match( '/^\s*SELECT\s+FOUND_ROWS(\s*)/i', $query ) && $this->is_mysql_result( $this->last_found_rows_result ) ) {
-			$this->result = $this->last_found_rows_result;
-			$elapsed = 0;
+		if ( preg_match( '/^\s*SELECT\s+FOUND_ROWS(\s*)/i', $query ) ) {
+			if ( $this->is_mysql_result( $this->last_found_rows_result ) ) {
+				$this->result = $this->last_found_rows_result;
+				$elapsed = 0;
+			} else {
+				$this->print_error( "Attempted SELECT FOUND_ROWS() without prior SQL_CALC_FOUND_ROWS." );
+				return false;
+			}
 		} else {
 			$this->dbh = $this->db_connect( $query );
 
@@ -818,6 +830,7 @@ class hyperdb extends wpdb {
 				$this->check_current_query = true;
 				$this->last_error = 'Database connection failed';
 				$this->num_failed_queries++;
+				do_action( 'sql_query_log', $query, false, $this->last_error );
 				return false;
 			}
 
@@ -832,6 +845,7 @@ class hyperdb extends wpdb {
 					$this->insert_id = 0;
 					$this->last_error = 'Invalid query';
 					$this->num_failed_queries++;
+					do_action( 'sql_query_log', $query, false, $this->last_error );
 					return false;
 				}
 			}
@@ -890,6 +904,7 @@ class hyperdb extends wpdb {
 			$this->dbhname_heartbeats[$this->dbhname]['last_errno'] = $this->last_errno;
 			$this->print_error($this->last_error);
 			$this->num_failed_queries++;
+			do_action( 'sql_query_log', $query, false, $this->last_error );
 			return false;
 		}
 
@@ -929,6 +944,7 @@ class hyperdb extends wpdb {
 			$return_val = $this->num_rows;
 		}
 
+		do_action( 'sql_query_log', $query, $return_val, $this->last_error );
 		return $return_val;
 	}
 
