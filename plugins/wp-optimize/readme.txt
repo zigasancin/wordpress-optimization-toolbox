@@ -3,7 +3,7 @@ Contributors: DavidAnderson, ruhanirabin, DNutbourne, aporter, snightingale
 Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
-Tested up to: 4.7
+Tested up to: 4.9
 Stable tag: 2.1.1
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
