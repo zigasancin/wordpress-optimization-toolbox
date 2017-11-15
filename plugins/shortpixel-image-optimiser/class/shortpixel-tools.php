@@ -54,4 +54,20 @@ class ShortPixelTools {
         @header( 'Content-Type: application/json; charset=' . get_option( 'blog_charset' ) );
         die(json_encode($response));
     }
+
+    /**
+     * finds if an array contains an item, comparing the property given as key
+     * @param $item
+     * @param $arr
+     * @param $key
+     * @return the position that was removed, false if not found
+     */
+    public static function findItem($item, $arr, $key) {
+        foreach($arr as $elm) {
+            if($elm[$key] == $item) {
+                return $elm;
+            }
+        }
+        return false;
+    }    
 }

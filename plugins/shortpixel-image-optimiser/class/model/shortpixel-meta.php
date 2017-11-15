@@ -11,6 +11,7 @@ class ShortPixelMeta extends ShortPixelEntity{
     protected $webPath;
     protected $compressionType;
     protected $compressedSize;
+    protected $png2Jpg;
     protected $thumbsOpt;
     protected $thumbsOptList;
     protected $thumbsMissing;
@@ -119,6 +120,14 @@ class ShortPixelMeta extends ShortPixelEntity{
 
     function getCompressedSize() {
         return $this->compressedSize;
+    }
+
+    function getPng2Jpg() {
+        return $this->png2Jpg;
+    }
+
+    function setPng2Jpg($png2jpg) {
+        $this->png2Jpg = $png2jpg;
     }
 
     function setName($name) {

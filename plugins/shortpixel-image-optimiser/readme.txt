@@ -2,8 +2,9 @@
 Contributors: ShortPixel 
 Tags: compress, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
 Requires at least: 3.2.0
-Tested up to: 4.8
-Stable tag: 4.7.2
+Tested up to: 4.9
+Requires PHP: 5.3
+Stable tag: 4.8.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -226,6 +227,26 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.8.2 =
+* fix minified punycode.js not generated because of ECMA6 not supported by YUI...
+
+= 4.8.1 =
+* fix notice that would not dismiss
+
+= 4.8.0 =
+* propose best plans options for optimizing all images
+* option to optimize or not the found unlisted thumbs, alert the user about them.
+* convert png to jpeg also when doing bulk if option set. Also search for usages of the image and replace the URLs in the content.
+* fix compatbility problem with S3 Offload which caused sending two different sets of URLs for an image.
+* trim site_url output - found a client case where it ended with a tab...
+* all wp_options with autoload=no
+* subscribe and get the API Key directly from the plugin
+* minify all js and css files
+* performance improvements for the picture tag generation
+* retina versions of the icons
+* fix compatibility with PHP 5.3 for using class:: inside closures
+* fix "Optimize 0 thumbnails" in column menu generated from Javascript.
 
 = 4.7.2 =
 * fix wrong use of _ function which displayed warning

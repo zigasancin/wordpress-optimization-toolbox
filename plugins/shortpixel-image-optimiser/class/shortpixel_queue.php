@@ -357,8 +357,8 @@ class ShortPixelQueue {
         delete_option( 'wp-short-pixel-cancel-pointer');
         delete_option( "wp-short-pixel-flag-id");
         $startBulkId = $stopBulkId = ShortPixelMetaFacade::getMaxMediaId();
-        update_option( 'wp-short-pixel-query-id-stop', $startBulkId );
-        update_option( 'wp-short-pixel-query-id-start', $startBulkId );                    
+        update_option( 'wp-short-pixel-query-id-stop', $startBulkId, 'no');
+        update_option( 'wp-short-pixel-query-id-start', $startBulkId, 'no');                    
         delete_option( "wp-short-pixel-bulk-previous-percent");
         delete_option( "wp-short-pixel-bulk-processed-items");
         delete_option('wp-short-pixel-bulk-running-time');

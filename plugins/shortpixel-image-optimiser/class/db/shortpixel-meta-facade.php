@@ -54,6 +54,7 @@ class ShortPixelMetaFacade {
                     "webPath" => (isset($rawMeta["file"]) ? $rawMeta["file"] : null),
                     "thumbs" => (isset($rawMeta["sizes"]) ? $rawMeta["sizes"] : array()),
                     "message" =>(isset($rawMeta["ShortPixelImprovement"]) ? $rawMeta["ShortPixelImprovement"] : null),
+                    "png2jpg" => (isset($rawMeta["ShortPixelPng2Jpg"]) ? $rawMeta["ShortPixelPng2Jpg"] : false),
                     "compressionType" =>(isset($rawMeta["ShortPixel"]["type"]) 
                             ? ($rawMeta["ShortPixel"]["type"] == 'glossy' ? 2 : ($rawMeta["ShortPixel"]["type"] == "lossy" ? 1 : 0) )
                             : null),
@@ -197,6 +198,7 @@ class ShortPixelMetaFacade {
             }
             unset($rawMeta["ShortPixelImprovement"]);
             unset($rawMeta['ShortPixel']);
+            unset($rawMeta['ShortPixelPng2Jpg']);
             unset($this->meta);
             wp_update_attachment_metadata($this->ID, $rawMeta);
             $this->rawMeta = $rawMeta;
@@ -272,7 +274,8 @@ class ShortPixelMetaFacade {
     }
     
     public static function getHomeUrl() {
-        return trailingslashit((function_exists("is_multisite") && is_multisite()) ? network_site_url("/") : home_url());
+        //trim is because we found a site set up with a tab, like this: https://modernpeasantcooking.com\t
+        return trailingslashit((function_exists("is_multisite") && is_multisite()) ? trim(network_site_url("/")) : trim(home_url()));
     }
     
     //this is in test
@@ -369,7 +372,7 @@ class ShortPixelMetaFacade {
                 WPShortPixel::log("getURLsAndPATHs: no meta sizes for ID " . $this->ID . " : " . json_encode($this->rawMeta));
             }
             
-            if($onlyThumbs && $mainExists) { //remove the main image
+            if($onlyThumbs && $mainExists && count($urlList) > 1) { //remove the main image
                 array_shift($urlList);
                 array_shift($filePaths);
             }            
@@ -541,7 +544,7 @@ class ShortPixelMetaFacade {
      * @param type $file
      * @return string
      */
-    static public function returnSubDirOld($file, $type)
+    static public function returnSubDirOld($file)
     {
         if(strstr($file, get_home_path())) {
             $path = str_replace( get_home_path(), "", $file);
@@ -559,7 +562,7 @@ class ShortPixelMetaFacade {
      * @param type $file
      * @return string
      */
-    static public function returnSubDir($file, $type)
+    static public function returnSubDir($file)
     {
         $hp = wp_normalize_path(get_home_path());
         $file = wp_normalize_path($file);

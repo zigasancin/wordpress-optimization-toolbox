@@ -28,6 +28,7 @@ class WPShortPixelSettings {
         'createWebp' => array('key' => 'wp-short-create-webp', 'default' => null),
         'createWebpMarkup' => array('key' => 'wp-short-pixel-create-webp-markup', 'default' => null),
         'optimizeRetina' => array('key' => 'wp-short-pixel-optimize-retina', 'default' => 1),
+        'optimizeUnlisted' => array('key' => 'wp-short-pixel-optimize-unlisted', 'default' => 0),
         'backupImages' => array('key' => 'wp-short-backup_images', 'default' => 1),
         'resizeImages' => array('key' => 'wp-short-pixel-resize-images', 'default' => false),
         'resizeType' => array('key' => 'wp-short-pixel-resize-type', 'default' => null),
@@ -64,6 +65,7 @@ class WPShortPixelSettings {
         'activationNotice' => array('key' => 'wp-short-pixel-activation-notice', 'default' => null),
         'mediaLibraryViewMode' => array('key' => 'wp-short-pixel-view-mode', 'default' => null),
         'redirectedSettings' => array('key' => 'wp-short-pixel-redirected-settings', 'default' => null),
+        'convertedPng2Jpg' => array('key' => 'wp-short-pixel-converted-png2jpg', 'default' => array()),
         
         //bulk state machine
         'bulkType' => array('key' => 'wp-short-pixel-bulk-type', 'default' => null),
@@ -124,14 +126,15 @@ class WPShortPixelSettings {
     
     public static function onActivate() {
         if(!self::getOpt('wp-short-pixel-verifiedKey', false)) {
-            update_option('wp-short-pixel-activation-notice', true);
+            update_option('wp-short-pixel-activation-notice', true, 'no');
         }
-        update_option( 'wp-short-pixel-activation-date', time());
+        update_option( 'wp-short-pixel-activation-date', time(), 'no');
         delete_option( 'wp-short-pixel-bulk-last-status');
+        delete_option( 'wp-short-pixel-current-total-files');
         $dismissed = get_option('wp-short-pixel-dismissed-notices', array());
         if(isset($dismissed['compat'])) {
             unset($dismissed['compat']);
-            update_option('wp-short-pixel-dismissed-notices', $dismissed);
+            update_option('wp-short-pixel-dismissed-notices', $dismissed, 'no');
         }
 
     }
@@ -170,17 +173,48 @@ class WPShortPixelSettings {
             $key = self::$_optionsMap[$key]['key'];
         }
         if(get_option($key) === false) {
-            add_option( $key, $default, '', 'yes' );
+            add_option( $key, $default, '', 'no' );
         }
         return get_option($key);
     }
     
     public function setOpt($key, $val) {
-        $ret = update_option($key, $val);
+        $ret = update_option($key, $val, 'no');
+
         //hack for the situation when the option would just not update....
-        if($ret === false && $val != get_option($key)) {
+        if($ret === false && !is_array($val) && $val != get_option($key)) {
             delete_option($key);
-            update_option($key, $val);
+            $alloptions = wp_load_alloptions();
+            if ( isset( $alloptions[$key] ) ) {
+                wp_cache_delete( 'alloptions', 'options' );
+            } else {
+                wp_cache_delete( $key, 'options' );
+            }
+            add_option($key, $val, '', 'no');
+
+            // still not? try the DB way...
+            if($ret === false && $val != get_option($key)) {
+                global $wpdb;
+                $sql = "SELECT * FROM {$wpdb->prefix}options WHERE option_name = '" . $key . "'";
+                $rows = $wpdb->get_results($sql);
+                if(count($rows) === 0) {
+                    $wpdb->insert($wpdb->prefix.'options', 
+                                 array("option_name" => $key, "option_value" => (is_array($val) ? serialize($val) : $val), "autoload" => "no"), 
+                                 array("option_name" => "%s", "option_value" => (is_numeric($val) ? "%d" : "%s")));
+                } else { //update
+                    $sql = "update {$wpdb->prefix}options SET option_value=" . 
+                           (is_array($val) 
+                               ? "'" . serialize($val) . "'" 
+                               : (is_numeric($val) ? $val : "'" . $val . "'")) . " WHERE option_name = '" . $key . "'";
+                    $rows = $wpdb->get_results($sql);
+                }
+                
+                if($val != get_option($key)) {
+                    //tough luck, gonna use the bomb...
+                    wp_cache_flush();
+                    add_option($key, $val, '', 'no');
+                }
+            }
         }
     }
 }

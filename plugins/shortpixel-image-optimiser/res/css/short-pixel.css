@@ -416,6 +416,10 @@ div.shortpixel-modal .sptw-modal-spinner {
 .wp-core-ui .bulk-play a.button .bulk-btn-txt span.total {
     font-size: 1.4em;
 }
+.short-pixel-notice-icon {
+    float:left;
+    margin: 10px 10px 10px 0;
+}
 .bulk-progress {
     padding: 20px 32px 17px;
     background-color: #ffffff;
@@ -545,6 +549,9 @@ p.settings-info {
     color: #818181;
     font-size:13px !important;
 }
+p.settings-info.shortpixel-settings-error {
+    color: #c32525;
+}
 
 /* TABS CONTROLS */
 article.sp-tabs {
@@ -622,6 +629,10 @@ article.sp-tabs section h2 {
     transition: all 500ms ease;
 }
 */
+.shortpixel-help-link span.dashicons{
+    text-decoration: none;
+    margin-top: -1px;
+}
 /* Resources */
 @media(min-width: 1000px) {
     section#tab-resources .col-md-6 {

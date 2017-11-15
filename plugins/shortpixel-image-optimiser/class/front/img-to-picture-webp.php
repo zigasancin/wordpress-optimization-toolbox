@@ -10,24 +10,31 @@ class ShortPixelImgToPictureWebp {
         // Don't do anything with the RSS feed.
         if ( is_feed() || is_admin() ) { return $content; }
 
-        return preg_replace_callback('/<img[^>]*>/', function ($match) {
+        $thisClass = __CLASS__; // hack for PHP 5.3 which doesn't accept self:: in closures
+        return preg_replace_callback('/<img[^>]*>/', function ($match) use ($thisClass) {
             // Do nothing with images that has the 'rwp-not-responsive' class.
             if ( strpos($match[0], 'sp-no-webp') ) { return $match[0]; }
             
-            $img = self::get_attributes($match[0]);
+            $img = $thisClass::get_attributes($match[0]);
 
             $src = (isset($img['src'])) ? $img['src'] : false;
             $srcset = (isset($img['srcset'])) ? $img['srcset'] : false;
             $sizes = (isset($img['sizes'])) ? $img['sizes'] : false;
             
             //check if there are webps
-            $id = self::url_to_attachment_id( $src );
+            /*$id = $thisClass::url_to_attachment_id( $src );
             if(!$id) { 
                 return $match[0]; 
             }
-            
             $imageBase = dirname(get_attached_file($id)) . '/';
-            
+            */
+            $updir = wp_upload_dir();
+            $imageBase = str_replace($updir['baseurl'], $updir['basedir'], $src);
+            if($imageBase == $src) {
+                return $match[0];
+            }
+            $imageBase = dirname($imageBase) . '/';
+
             // We don't wanna have an src attribute on the <img>
             unset($img['src']);
             //unset($img['srcset']);
@@ -64,7 +71,7 @@ class ShortPixelImgToPictureWebp {
             return '<picture>'
                       .'<source srcset="' . $srcsetWebP . '"' . ($sizes ? ' sizes="' . $sizes . '"' : '') . ' type="image/webp">'
                       .'<source srcset="' . $srcset . '"' . ($sizes ? ' sizes="' . $sizes . '"' : '') . '>'
-                      .'<img src="' . $src . '" ' . self::create_attributes($img) . '>'
+                      .'<img src="' . $src . '" ' . $thisClass::create_attributes($img) . '>'
                   .'</picture>';
         }, $content);
     }

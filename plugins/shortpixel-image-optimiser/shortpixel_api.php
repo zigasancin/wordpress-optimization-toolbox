@@ -248,7 +248,7 @@ class ShortPixelAPI {
         
         if(!isset($APIresponse['Status'])) {
             WpShortPixel::log("API Response Status unfound : " . json_encode($APIresponse));
-            return array("Status" => self::STATUS_FAIL, "Message" => __('Unrecognized API response. Please contact support.','shortpixel-image-optimiser'));
+            return array("Status" => self::STATUS_FAIL, "Message" => __('Unrecognized API response. Please contact support. (SERVER RESPONSE: ' . $response . ')','shortpixel-image-optimiser'));
         } else {
             switch($APIresponse['Status']->Code) 
             {            
@@ -367,6 +367,46 @@ class ShortPixelAPI {
         }
         return $returnMessage;        
     }
+    
+    public static function backupImage($mainPath, $PATHs) {
+        //$fullSubDir = str_replace(wp_normalize_path(get_home_path()), "", wp_normalize_path(dirname($itemHandler->getMeta()->getPath()))) . '/';
+        //$SubDir = ShortPixelMetaFacade::returnSubDir($itemHandler->getMeta()->getPath(), $itemHandler->getType());
+        $fullSubDir = ShortPixelMetaFacade::returnSubDir($mainPath);
+        $source = $PATHs; //array with final paths for these files
+
+        if( !file_exists(SHORTPIXEL_BACKUP_FOLDER) && !@mkdir(SHORTPIXEL_BACKUP_FOLDER, 0777, true) ) {//creates backup folder if it doesn't exist
+            return array("Status" => self::STATUS_FAIL, "Message" => __('Backup folder does not exist and it cannot be created','shortpixel-image-optimiser'));
+        }
+        //create subdir in backup folder if needed
+        @mkdir( SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir, 0777, true);
+
+        foreach ( $source as $fileID => $filePATH )//create destination files array
+        {
+            $destination[$fileID] = SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir . self::MB_basename($source[$fileID]);     
+        }
+        //die("IZ BACKUP: " . SHORTPIXEL_BACKUP_FOLDER . '/' . $SubDir . var_dump($destination));
+
+        //now that we have original files and where we should back them up we attempt to do just that
+        if(is_writable(SHORTPIXEL_BACKUP_FOLDER)) 
+        {
+            foreach ( $destination as $fileID => $filePATH )
+            {
+                if ( !file_exists($filePATH) )
+                {  
+                    if ( !@copy($source[$fileID], $filePATH) )
+                    {//file couldn't be saved in backup folder
+                        $msg = sprintf(__('Cannot save file <i>%s</i> in backup directory','shortpixel-image-optimiser'),self::MB_basename($source[$fileID]));
+                        return array("Status" => self::STATUS_FAIL, "Message" => $msg);
+                    }
+                }
+            }
+            return array("Status" => self::STATUS_SUCCESS);
+        } 
+        else {//cannot write to the backup dir, return with an error
+            $msg = __('Cannot save file in backup directory','shortpixel-image-optimiser');
+            return array("Status" => self::STATUS_FAIL, "Message" => $msg);
+        }
+    }
 
     /**
      * handles a successful optimization, setting metadata and handling download for each file in the set
@@ -379,7 +419,7 @@ class ShortPixelAPI {
     private function handleSuccess($APIresponse, $PATHs, $itemHandler, $compressionType) {
         $counter = $savedSpace =  $originalSpace =  $optimizedSpace =  $averageCompression = 0;
         $NoBackup = true;
-                
+
         $fileType = ( $compressionType ) ? "LossySize" : "LoselessSize";
         
         //download each file from array and process it
@@ -416,50 +456,17 @@ class ShortPixelAPI {
         }
         
         //figure out in what SubDir files should land
-        //$fullSubDir = str_replace(wp_normalize_path(get_home_path()), "", wp_normalize_path(dirname($itemHandler->getMeta()->getPath()))) . '/';
-        //$SubDir = ShortPixelMetaFacade::returnSubDir($itemHandler->getMeta()->getPath(), $itemHandler->getType());
         $mainPath = $itemHandler->getMeta()->getPath();
-        $fullSubDir = ShortPixelMetaFacade::returnSubDir($mainPath, $itemHandler->getType());
 
         //if backup is enabled - we try to save the images
         if( $this->_settings->backupImages )
         {
-            $source = $PATHs; //array with final paths for these files
-
-            if( !file_exists(SHORTPIXEL_BACKUP_FOLDER) && !@mkdir(SHORTPIXEL_BACKUP_FOLDER, 0777, true) ) {//creates backup folder if it doesn't exist
-                return array("Status" => self::STATUS_FAIL, "Message" => __('Backup folder does not exist and it cannot be created','shortpixel-image-optimiser'));
+            $backupStatus = self::backupImage($mainPath, $PATHs);
+            if($backupStatus == self::STATUS_FAIL) {
+                $itemHandler->incrementRetries(1, self::ERR_SAVE_BKP, $backupStatus["Message"]);
+                return $backupStatus;
             }
-            //create subdir in backup folder if needed
-            @mkdir( SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir, 0777, true);
-            
-            foreach ( $source as $fileID => $filePATH )//create destination files array
-            {
-                $destination[$fileID] = SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir . self::MB_basename($source[$fileID]);     
-            }
-            //die("IZ BACKUP: " . SHORTPIXEL_BACKUP_FOLDER . '/' . $SubDir . var_dump($destination));
-            
-            //now that we have original files and where we should back them up we attempt to do just that
-            if(is_writable(SHORTPIXEL_BACKUP_FOLDER)) 
-            {
-                foreach ( $destination as $fileID => $filePATH )
-                {
-                    if ( !file_exists($filePATH) )
-                    {  
-                        if ( !@copy($source[$fileID], $filePATH) )
-                        {//file couldn't be saved in backup folder
-                            $msg = sprintf(__('Cannot save file <i>%s</i> in backup directory','shortpixel-image-optimiser'),self::MB_basename($source[$fileID]));
-                            $itemHandler->incrementRetries(1, self::ERR_SAVE_BKP, $msg);
-                            return array("Status" => self::STATUS_FAIL, "Message" => $msg);
-                        }
-                    }
-                }
-                $NoBackup = true;
-            } else {//cannot write to the backup dir, return with an error
-                $msg = __('Cannot save file in backup directory','shortpixel-image-optimiser');
-                $itemHandler->incrementRetries(1, self::ERR_SAVE_BKP, $msg);
-                return array("Status" => self::STATUS_FAIL, "Message" => $msg);
-            }
-
+            $NoBackup = false;
         }//end backup section
 
         $writeFailed = 0;
@@ -537,7 +544,7 @@ class ShortPixelAPI {
                 $msg = sprintf(__('Optimized version of %s file(s) couldn\'t be updated.','shortpixel-image-optimiser'),$writeFailed);
                 //#ShortPixelAPI::SaveMessageinMetadata($ID, 'Error: optimized version of ' . $writeFailed . ' file(s) couldn\'t be updated.');
                 $itemHandler->incrementRetries(1, self::ERR_SAVE, $msg);
-                update_option('bulkProcessingStatus', "error");
+                $this->_settings->bulkProcessingStatus = "error";
                 return array("Status" => self::STATUS_FAIL, "Code" =>"write-fail", "Message" => $msg);
             }
         } elseif( 0 + $fileData->PercentImprovement < 5) {
@@ -558,15 +565,17 @@ class ShortPixelAPI {
         if($meta->getThumbsTodo()) {
             $percentImprovement = $meta->getImprovementPercent();
         }
+        $png2jpg = $meta->getPng2Jpg();
+        $png2jpg = is_array($png2jpg) ? $png2jpg['optimizationPercent'] : 0;
         $meta->setMessage($originalSpace 
-                ? number_format(100.0 - 100.0 * $optimizedSpace / $originalSpace, 2)
+                ? number_format(100.0 * (1.0 - $optimizedSpace / $originalSpace), 2)
                 : "Couldn't compute thumbs optimization percent. Main image: " . $percentImprovement);
         WPShortPixel::log("HANDLE SUCCESS: Image optimization: ".$meta->getMessage());
         $meta->setCompressionType($compressionType);
         $meta->setCompressedSize(@filesize($meta->getPath()));
         $meta->setKeepExif($this->_settings->keepExif);
         $meta->setTsOptimized(date("Y-m-d H:i:s"));
-        $meta->setThumbsOptList(array_unique(array_merge($meta->getThumbsOptList(), $thumbsOptList)));
+        $meta->setThumbsOptList(is_array($meta->getThumbsOptList()) ? array_unique(array_merge($meta->getThumbsOptList(), $thumbsOptList)) : $thumbsOptList);
         $meta->setThumbsOpt(($meta->getThumbsTodo() ||  $this->_settings->processThumbnails) ? count($meta->getThumbsOptList()) : 0);
         $meta->setRetinasOpt($retinas);
         $meta->setThumbsTodo(false);
@@ -589,7 +598,10 @@ class ShortPixelAPI {
         //we reset the retry counter in case of success
         $this->_settings->apiRetries = 0;
         
-        return array("Status" => self::STATUS_SUCCESS, "Message" => 'Success: No pixels remained unsqueezed :-)', "PercentImprovement" => $meta->getMessage());
+        return array("Status" => self::STATUS_SUCCESS, "Message" => 'Success: No pixels remained unsqueezed :-)',
+            "PercentImprovement" => $originalSpace
+            ? number_format(100.0 * (1.0 - (1.0 - $png2jpg / 100.0) * $optimizedSpace / $originalSpace), 2)
+            : "Couldn't compute thumbs optimization percent. Main image: " . $percentImprovement);
     }//end handleSuccess
         
     /**
