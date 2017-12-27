@@ -291,7 +291,7 @@ var sp_punycode = function(){
      * @param {String} input The string of Unicode symbols.
      * @returns {String} The resulting Punycode string of ASCII-only symbols.
      */
-    const encode = function(input) {
+    var encode = function(input) {
             var output = [];
 
             // Convert the input in UCS-2 to an array of Unicode code points.

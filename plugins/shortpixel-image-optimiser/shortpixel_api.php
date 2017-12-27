@@ -193,9 +193,11 @@ class ShortPixelAPI {
         
         //die(var_dump($response));
         
-        if($response['response']['code'] != 200)//response <> 200 -> there was an error apparently?
-            return array("Status" => self::STATUS_FAIL, "Message" => __('There was an error and your request was not processed.','shortpixel-image-optimiser'));
-        
+        if($response['response']['code'] != 200) {//response <> 200 -> there was an error apparently?
+            return array("Status" => self::STATUS_FAIL, "Message" => __('There was an error and your request was not processed.', 'shortpixel-image-optimiser')
+                . (isset($response['response']['message']) ? ' (' . $response['response']['message'] . ')' : ''), "Code" => $response['response']['code']);
+        }
+
         $APIresponse = $this->parseResponse($response);//get the actual response from API, its an array
         
         if ( isset($APIresponse[0]) ) //API returned image details
@@ -248,7 +250,8 @@ class ShortPixelAPI {
         
         if(!isset($APIresponse['Status'])) {
             WpShortPixel::log("API Response Status unfound : " . json_encode($APIresponse));
-            return array("Status" => self::STATUS_FAIL, "Message" => __('Unrecognized API response. Please contact support. (SERVER RESPONSE: ' . $response . ')','shortpixel-image-optimiser'));
+            return array("Status" => self::STATUS_FAIL, "Message" => __('Unrecognized API response. Please contact support.','shortpixel-image-optimiser'),
+                         "Code" => self::ERR_UNKNOWN, "Debug" => ' (SERVER RESPONSE: ' . json_encode($response) . ')');
         } else {
             switch($APIresponse['Status']->Code) 
             {            

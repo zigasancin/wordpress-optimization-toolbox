@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.8.2
+ * Version: 4.8.9
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.8.2");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.8.9");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -50,16 +50,25 @@ else
 */
 
 define('SHORTPIXEL_MAX_EXECUTION_TIME2', 2 );
-define("SHORTPIXEL_MAX_RESULTS_QUERY", 6);    
+define("SHORTPIXEL_MAX_RESULTS_QUERY", 30);
 
 function shortpixelInit() {
     global $pluginInstance;
-    //is admin, is logged in - :) seems funny but it's not, ajax scripts are admin even if no admin is logged in.
-    $prio = get_option('wp-short-pixel-priorityQueue');
+    //limit to certain admin pages if function available
+    $loadOnThisPage = !function_exists('get_current_screen');
+    if(!$loadOnThisPage) {
+        $screen = get_current_screen();
+        if(is_object($screen) && in_array($screen->id, array('upload', 'edit', 'edit-tags', 'post-new', 'post'))) {
+
+        }
+    }
+    require_once('class/shortpixel_queue.php');
+    $prio = ShortPixelQueue::get();
+    $isAjaxButNotSP = defined( 'DOING_AJAX' ) && DOING_AJAX && !(isset($_REQUEST['action']) && (strpos($_REQUEST['action'], 'shortpixel_') === 0));
     if (!isset($pluginInstance)
-        && (($prio && is_array($prio) && count($prio) && get_option('wp-short-pixel-front-bootstrap'))
-            || is_admin()
-               && (function_exists("is_user_logged_in") && is_user_logged_in())
+        && (   ($prio && is_array($prio) && count($prio) && get_option('wp-short-pixel-front-bootstrap'))
+            || is_admin() && !$isAjaxButNotSP
+               && (function_exists("is_user_logged_in") && is_user_logged_in()) //is admin, is logged in - :) seems funny but it's not, ajax scripts are admin even if no admin is logged in.
                && (   current_user_can( 'manage_options' )
                    || current_user_can( 'upload_files' )
                    || current_user_can( 'edit_posts' )

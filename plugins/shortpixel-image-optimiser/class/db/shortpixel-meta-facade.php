@@ -148,7 +148,7 @@ class ShortPixelMetaFacade {
                 }
                 
                 $thumbsMissing = $this->meta->getThumbsMissing();
-                if(count($thumbsMissing)) {
+                if(is_array($thumbsMissing) && count($thumbsMissing)) {
                     $rawMeta['ShortPixel']['thumbsMissing'] = $this->meta->getThumbsMissing();
                 } else {
                     unset($rawMeta['ShortPixel']['thumbsMissing']);
@@ -189,16 +189,24 @@ class ShortPixelMetaFacade {
         }        
     }
     
-    function cleanupMeta() {
+    function cleanupMeta($fakeOptPending = false) {
         if($this->type == ShortPixelMetaFacade::MEDIA_LIBRARY_TYPE) {
             if(!isset($this->rawMeta)) {
-                $rawMeta = $this->sanitizeMeta(wp_get_attachment_metadata($_ID));
+                $rawMeta = $this->sanitizeMeta(wp_get_attachment_metadata($this->getId()));
             } else {
                 $rawMeta = $this->rawMeta;
             }
-            unset($rawMeta["ShortPixelImprovement"]);
-            unset($rawMeta['ShortPixel']);
-            unset($rawMeta['ShortPixelPng2Jpg']);
+
+            if($fakeOptPending && !isset($rawMeta['ShortPixel']['WaitingProcessing'])) {
+                return;
+            } elseif ($fakeOptPending) {
+                unset($rawMeta['ShortPixel']['WaitingProcessing']);
+                $rawMeta["ShortPixelImprovement"] = '999';
+            } else {
+                unset($rawMeta["ShortPixelImprovement"]);
+                unset($rawMeta['ShortPixel']);
+                unset($rawMeta['ShortPixelPng2Jpg']);
+            }
             unset($this->meta);
             wp_update_attachment_metadata($this->ID, $rawMeta);
             $this->rawMeta = $rawMeta;

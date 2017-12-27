@@ -11,13 +11,24 @@ class WpShortPixelMediaLbraryAdapter {
         $filesMap = $processedFilesMap = array();
         $limit = self::getOptimalChunkSize();
         $pointer = 0;
-        $filesWithErrors = array();
+        $filesWithErrors = array(); $moreFilesWithErrors = 0;
         $excludePatterns = WPShortPixelSettings::getOpt("excludePatterns");
-        
-        $month1 = new DateTime(); $month2 = new DateTime(); $month3 = new DateTime(); $month4 = new DateTime();
-        $mi1 = new DateInterval('P1M'); $mi2 = new DateInterval('P2M'); $mi3 = new DateInterval('P3M'); $mi4 = new DateInterval('P4M');
-        $month1->sub($mi1); $month2->sub($mi2); $month3->sub($mi3); $month4->sub($mi4);
-        
+
+        if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+            $month1 = new DateTime();
+            $month2 = new DateTime();
+            $month3 = new DateTime();
+            $month4 = new DateTime();
+            $mi1 = new DateInterval('P1M');
+            $mi2 = new DateInterval('P2M');
+            $mi3 = new DateInterval('P3M');
+            $mi4 = new DateInterval('P4M');
+            $month1->sub($mi1);
+            $month2->sub($mi2);
+            $month3->sub($mi3);
+            $month4->sub($mi4);
+        }
+
         $counter = 0; $foundUnlistedThumbs = false;
         
         //count all the files, main and thumbs 
@@ -51,9 +62,9 @@ class WpShortPixelMediaLbraryAdapter {
                         $filesMap[$file->meta_value] = 1;                        
                     }
                 }
-                else //_wp_attachment_metadata
+                elseif ( $file->meta_key == "_wp_attachment_metadata" ) //_wp_attachment_metadata
                 {
-                    $attachment = unserialize($file->meta_value);
+                    $attachment = @unserialize($file->meta_value);
                     $sizesCount = isset($attachment['sizes']) ? WpShortPixelMediaLbraryAdapter::countNonWebpSizes($attachment['sizes']) : 0;
 
                     // LA FIECARE 100 de imagini facem un test si daca findThumbs da diferit, sa dam o avertizare si eventual optiune
@@ -165,25 +176,30 @@ class WpShortPixelMediaLbraryAdapter {
                             $processedFilesMap[$attachment['file']] = 1;
                         }
                     }
-                    elseif($isProcessable && isset($attachment['ShortPixelImprovement']) && count($filesWithErrors) < 50) {
-                        $filePath = explode("/", $attachment["file"]);
-                        $name = is_array($filePath)? $filePath[count($filePath) - 1] : $file->post_id;
-                        $filesWithErrors[$file->post_id] = array('Name' => $name, 'Message' => $attachment['ShortPixelImprovement']);
+                    elseif($isProcessable && isset($attachment['ShortPixelImprovement'])) {
+                        if(count($filesWithErrors) < 50) {
+                            $filePath = explode("/", $attachment["file"]);
+                            $name = is_array($filePath)? $filePath[count($filePath) - 1] : $file->post_id;
+                            $filesWithErrors[$file->post_id] = array('Name' => $name, 'Message' => $attachment['ShortPixelImprovement']);
+                        } else {
+                            $moreFilesWithErrors++;
+                        }
                     }
 
                 }
 
-                $dt = new DateTime($idInfo->idDates[$file->post_id]);
-                if($dt > $month1) {
-                    $totalFilesM1 += $totalFilesThis;
-                } else if($dt > $month2) {
-                    $totalFilesM2 += $totalFilesThis;
-                } else if($dt > $month3) {
-                    $totalFilesM3 += $totalFilesThis;
-                } else if($dt > $month4) {
-                    $totalFilesM4 += $totalFilesThis;
+                if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+                    $dt = new DateTime($idInfo->idDates[$file->post_id]);
+                    if ($dt > $month1) {
+                        $totalFilesM1 += $totalFilesThis;
+                    } else if ($dt > $month2) {
+                        $totalFilesM2 += $totalFilesThis;
+                    } else if ($dt > $month3) {
+                        $totalFilesM3 += $totalFilesThis;
+                    } else if ($dt > $month4) {
+                        $totalFilesM4 += $totalFilesThis;
+                    }
                 }
-
             }   
             unset($filesList);
             $pointer += $limit;
@@ -202,6 +218,7 @@ class WpShortPixelMediaLbraryAdapter {
                      "totalProcUndefMlFiles" => $procUndefTotalFiles, "mainProcUndefMlFiles" => $procUndefMainFiles,
                      "mainUnprocessedThumbs" => $mainUnprocessedThumbs, "totalM1" => $totalFilesM1, "totalM2" => $totalFilesM2, "totalM3" => $totalFilesM3, "totalM4" => $totalFilesM4,
                      "filesWithErrors" => $filesWithErrors,
+                     "moreFilesWithErrors" => $moreFilesWithErrors,
                      "foundUnlistedThumbs" => $foundUnlistedThumbs
                     );
     } 
@@ -247,9 +264,11 @@ class WpShortPixelMediaLbraryAdapter {
         $pattern = '/' . preg_quote($base, '/') . '-\d+x\d+\.'. $ext .'/';
         $thumbsCandidates = @glob($base . "-*." . $ext);
         $thumbs = array();
-        foreach($thumbsCandidates as $th) {
-            if(preg_match($pattern, $th)) {
-                $thumbs[]= $th;
+        if(is_array($thumbsCandidates)) {
+            foreach($thumbsCandidates as $th) {
+                if(preg_match($pattern, $th)) {
+                    $thumbs[]= $th;
+                }
             }
         }
         return $thumbs;
@@ -257,10 +276,16 @@ class WpShortPixelMediaLbraryAdapter {
 
     protected static function getOptimalChunkSize() {
         global  $wpdb;
-        $cnt = $wpdb->get_results("SELECT count(*) posts FROM " . $wpdb->prefix . "posts");
+        //get an aproximate but fast row count.
+        $row = $wpdb->get_results("EXPLAIN SELECT count(*) from " . $wpdb->prefix . "posts");
+        if(isset($row['rows'])) {
+            $cnt = $row['rows'];
+        } else {
+            $cnt = $wpdb->get_results("SELECT count(*) posts FROM " . $wpdb->prefix . "posts");
+        }
         $posts = isset($cnt) && count($cnt) > 0 ? $cnt[0]->posts : 0;
         if($posts > 100000) {
-            return 20000;
+            return 10000;
         } elseif ($posts > 50000) {
             return 5000;
         } elseif($posts > 10000) {

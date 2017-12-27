@@ -43,7 +43,7 @@ var ShortPixel = function() {
     }
     
     function isEmailValid(email) {
-        return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email);
+        return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{1,63})+$/.test(email);
     }
     
     function updateSignupEmail() {
@@ -87,6 +87,8 @@ var ShortPixel = function() {
         jQuery("#resize").change(function(){ enableResize(this); });
         jQuery(".resize-sizes").blur(function(e){
             var elm = jQuery(this);
+            if(ShortPixel.resizeSizesAlert == elm.val()) return;
+            ShortPixel.resizeSizesAlert = elm.val();
             var minSize = jQuery("#min-" + elm.attr('name')).val();
             if(elm.val() < Math.min(minSize, 1024)) {
                 if(minSize > 1024) {
@@ -95,13 +97,12 @@ var ShortPixel = function() {
                     alert( _spTr.pleaseDoNotSetLesserSize.format(elm.attr('name'), elm.attr('name'), minSize) );
                 }
                 e.preventDefault();
-                elm.val(this.defaultValue);
+                //elm.val(this.defaultValue);
                 elm.focus();
             }
             else {
                 this.defaultValue = elm.val();
             }
-            
         });
         /*
         jQuery("#width").blur(function(e){
@@ -616,7 +617,8 @@ var ShortPixel = function() {
             width       : 0,
             height      : 0
         },
-        toRefresh       : false
+        toRefresh       : false,
+        resizeSizesAlert: false
     }
 }();
 

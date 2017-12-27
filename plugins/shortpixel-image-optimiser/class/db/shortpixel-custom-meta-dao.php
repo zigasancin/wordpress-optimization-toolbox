@@ -43,7 +43,7 @@ class ShortPixelCustomMetaDao {
             name varchar(64),
             path_md5 char(32),
             file_count int,
-            status tinyint DEFAULT 0,
+            status SMALLINT NOT NULL DEFAULT 0,
             ts_updated timestamp,
             ts_created timestamp,
             UNIQUE KEY id (id)
@@ -67,8 +67,8 @@ class ShortPixelCustomMetaDao {
             resize_width smallint,
             resize_height smallint,
             backup tinyint,
-            status tinyint DEFAULT 0,
-            retries tinyint DEFAULT 0,
+            status SMALLINT NOT NULL DEFAULT 0,
+            retries tinyint NOT NULL DEFAULT 0,
             message varchar(255),
             ts_added timestamp,
             ts_optimized timestamp,
@@ -190,6 +190,9 @@ class ShortPixelCustomMetaDao {
     public function newFolderFromPath($path, $uploadPath, $rootPath) {
         WpShortPixelDb::checkCustomTables(); // check if custom tables are created, if not, create them
         $addedFolder = ShortPixelFolder::checkFolder($path, $uploadPath);
+        if(!$addedFolder) {
+            return __('Folder could not be found: ' . $uploadPath . $path ,'shortpixel-image-optimiser');
+        }
         $addedFolderReal = realpath($addedFolder);
         $addedFolder = wp_normalize_path($addedFolder); $addedFolderReal = wp_normalize_path($addedFolderReal); $rootPath = wp_normalize_path($rootPath);
         if(strpos($addedFolder, $rootPath) !== 0) {
@@ -434,9 +437,13 @@ class ShortPixelCustomMetaDao {
         $filesWithErrors = array();
         $sql = "SELECT id, name, path, message FROM {$this->db->getPrefix()}shortpixel_meta WHERE status < -1 AND retries >= 3 LIMIT 30";
         $failRows = $this->db->query($sql);
-        $filesWithErrors = array();
+        $filesWithErrors = array(); $moreFilesWithErrors = 0;
         foreach($failRows as $failLine) {
-            $filesWithErrors['C-' . $failLine->id] = array('Name' => $failLine->name, 'Message' => $failLine->message, 'Path' => $failLine->path);
+            if(count($filesWithErrors) < 50){
+                $filesWithErrors['C-' . $failLine->id] = array('Name' => $failLine->name, 'Message' => $failLine->message, 'Path' => $failLine->path);
+            } else {
+                $moreFilesWithErrors++;
+            }
         }
         
         if(!isset($rows[0])) {
@@ -453,7 +460,8 @@ class ShortPixelCustomMetaDao {
                      "totalProcLossyCustomFiles" => $rows[0]->totalProcLossyFiles, "mainProcLossyCustomFiles" => $rows[0]->totalProcLossyFiles,
                      "totalProcGlossyCustomFiles" => $rows[0]->totalProcGlossyFiles, "mainProcGlossyCustomFiles" => $rows[0]->totalProcGlossyFiles,
                      "totalProcLosslessCustomFiles" => $rows[0]->totalProcLosslessFiles, "mainProcLosslessCustomFiles" => $rows[0]->totalProcLosslessFiles,
-                     "filesWithErrors" => $filesWithErrors
+                     "filesWithErrors" => $filesWithErrors,
+                     "moreFilesWithErrors" => $moreFilesWithErrors
                     );
        
     }

@@ -15,13 +15,13 @@ class WPShortPixel {
     private $spMetaDao = null;
     
     private $jsSuffix = '.min.js';
+
+    private $timer;
     
     public static $PROCESSABLE_EXTENSIONS = array('jpg', 'jpeg', 'gif', 'png', 'pdf');
 
     public function __construct() {
-        if (!session_id()) {
-            @session_start();
-        }
+        $this->timer = time();
 
         if (SHORTPIXEL_DEBUG === true) {
             $this->jsSuffix = '.js'; //use unminified versions for easier debugging
@@ -183,7 +183,8 @@ class WPShortPixel {
             'CheetahO Image Optimizer' => 'cheetaho-image-optimizer/cheetaho.php',
             'Zara 4 Image Compression' => 'zara-4/zara-4.php',
             'Prizm Image' => 'prizm-image/wp-prizmimage.php',
-            'CW Image Optimizer' => 'cw-image-optimizer/cw-image-optimizer.php'
+            'CW Image Optimizer' => 'cw-image-optimizer/cw-image-optimizer.php',
+            'Regenerate Thumbnails: recreating image files may require re-optimization of the resulting thumbnails, even if they were previously optimized.' => 'regenerate-thumbnails/regenerate-thumbnails.php'
         );
         $found = array();
         foreach($conflictPlugins as $name => $path) {
@@ -195,6 +196,9 @@ class WPShortPixel {
     }
     
     public function displayAdminNotices() {
+        if(!ShortPixelQueue::testQ()) {
+            ShortPixelView::displayActivationNotice('fileperms');
+        }
         $dismissed = $this->_settings->dismissedNotices ? $this->_settings->dismissedNotices : array();
         $this->_settings->dismissedNotices = $dismissed;
         
@@ -228,8 +232,8 @@ class WPShortPixel {
         if(!is_array($currentStats) || isset($_GET['checkquota']) || isset($currentStats["quotaData"])) {
             $this->getQuotaInformation();
         }
-        if($this->_settings->verifiedKey
-           && (!isset($dismissed['upgmonth']) || !isset($dismissed['upgbulk']))
+        if($this->_settings->verifiedKey && !$this->_settings->quotaExceeded
+           && (!isset($dismissed['upgmonth']) || !isset($dismissed['upgbulk'])) && isset($this->_settings->currentStats['optimizePdfs'])
            && $this->_settings->currentStats['optimizePdfs'] == $this->_settings->optimizePdfs ) {
             $screen = get_current_screen();
             $stats = $this->countAllIfNeeded($this->_settings->currentStats, 300);
@@ -239,7 +243,7 @@ class WPShortPixel {
             if( !isset($dismissed['upgbulk']) && $screen && $screen->id == 'media_page_wp-short-pixel-bulk' && $this->bulkUpgradeNeeded($stats)) {
                 //looks like the user hasn't got enough credits to bulk process all media library
                 ShortPixelView::displayActivationNotice('upgbulk', array('filesTodo' => $stats['totalFiles'] - $stats['totalProcessedFiles'], 
-                                                        'quotaAvailable' => $quotaData['APICallsQuotaNumeric'] + $quotaData['APICallsQuotaOneTimeNumeric'] - $quotaData['APICallsMadeNumeric'] - $quotaData['APICallsMadeOneTimeNumeric']));
+                                                        'quotaAvailable' => max(0, $quotaData['APICallsQuotaNumeric'] + $quotaData['APICallsQuotaOneTimeNumeric'] - $quotaData['APICallsMadeNumeric'] - $quotaData['APICallsMadeOneTimeNumeric'])));
             }
             //consider the monthly plus 1/6 of the available one-time credits.
             elseif(!isset($dismissed['upgmonth']) && $this->monthlyUpgradeNeeded($stats)) {
@@ -273,9 +277,8 @@ class WPShortPixel {
         return ($stats['totalM1'] + $stats['totalM2'] + $stats['totalM3'] + $stats['totalM4']) / max(1,$count);
     }
     
-    protected function monthlyUpgradeNeeded($stats) {
-        $quotaData = $stats;
-        return $this->getMonthAvg($stats) > $quotaData['APICallsQuotaNumeric'] + ($quotaData['APICallsQuotaOneTimeNumeric'] - $quotaData['APICallsMadeOneTimeNumeric'])/6 + 20;
+    protected function monthlyUpgradeNeeded($quotaData) {
+        return isset($quotaData['APICallsQuotaNumeric']) && $this->getMonthAvg($quotaData) > $quotaData['APICallsQuotaNumeric'] + ($quotaData['APICallsQuotaOneTimeNumeric'] - $quotaData['APICallsMadeOneTimeNumeric'])/6 + 20;
     }
 
     protected function bulkUpgradeNeeded($stats) {
@@ -321,7 +324,7 @@ class WPShortPixel {
         //require_once(ABSPATH . 'wp-admin/includes/screen.php');
         if(function_exists('get_current_screen')) {
             $screen = get_current_screen();
-            if(is_object($screen) && ($screen->id == 'upload')) {
+            if(is_object($screen) && in_array($screen->id, array('attachment', 'upload'))) {
                 //output the comparer html
                 $this->view->outputComparerHTML();
                 //render a template of the list cell to be used by the JS
@@ -375,7 +378,8 @@ class WPShortPixel {
                 'pleaseDoNotSetLesserSize' => __( "Please do not set a {0} less than the {1} of the largest thumbnail which is {2}, to be able to still regenerate all your thumbnails in case you'll ever need this.", 'shortpixel-image-optimiser' ),
                 'pleaseDoNotSetLesser1024' => __( "Please do not set a {0} less than 1024, to be able to still regenerate all your thumbnails in case you'll ever need this.", 'shortpixel-image-optimiser' ),
                 'confirmBulkRestore' => __( "Are you sure you want to restore from backup all the images in your Media Library optimized with ShortPixel?", 'shortpixel-image-optimiser' ),
-                'confirmBulkCleanup' => __( "Are you sure you want to cleanup the ShortPixel metadata info for the images in your Media Library optimized with ShortPixel? This will make ShortPixel 'forget' that it optimized them and will optimize them again if you re-run the Bulk Optimization process.", 'shortpixel-image-optimiser' )
+                'confirmBulkCleanup' => __( "Are you sure you want to cleanup the ShortPixel metadata info for the images in your Media Library optimized with ShortPixel? This will make ShortPixel 'forget' that it optimized them and will optimize them again if you re-run the Bulk Optimization process.", 'shortpixel-image-optimiser' ),
+                'confirmBulkCleanupPending' => __( "Are you sure you want to cleanup the pending metadata?", 'shortpixel-image-optimiser' )
             );
         wp_localize_script( 'short-pixel' . $this->jsSuffix, '_spTr', $jsTranslation );
         wp_enqueue_script('short-pixel' . $this->jsSuffix);
@@ -537,286 +541,26 @@ class WPShortPixel {
         } 
     }//end handleMediaLibraryImageUpload
 
-    protected function canConvertPng2Jpg($image) {
-        $transparent = 0;
-        if (ord(file_get_contents($image, false, null, 25, 1)) & 4) {
-            $transparent = 1;
-        }
-        $contents = file_get_contents($image);
-        if (stripos($contents, 'PLTE') !== false && stripos($contents, 'tRNS') !== false) {
-            $transparent = 1;
-        }
-        $transparent_pixel = $img = $bg = false;
-        if (!$transparent) {
-            $img = imagecreatefrompng($image);
-            $w = imagesx($img); // Get the width of the image
-            $h = imagesy($img); // Get the height of the image
-            //run through pixels until transparent pixel is found:
-            for ($i = 0; $i < $w; $i++) {
-                for ($j = 0; $j < $h; $j++) {
-                    $rgba = imagecolorat($img, $i, $j);
-                    if (($rgba & 0x7F000000) >> 24) {
-                        $transparent_pixel = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        //pass on the img too, if it was already loaded from PNG, matter of performance
-        return array('notTransparent' => !$transparent && !$transparent_pixel, 'img' => $img);
-    }
-    
-    /**
-     * 
-     * @param array $params
-     * @param string $backupPath
-     * @param string $suffixRegex for example [0-9]+x[0-9]+ - a thumbnail suffix - to add the counter of file name collisions files before that suffix (img-2-150x150.jpg).
-     * @param image $img
-     * @return string
-     */
-    protected function doConvertPng2Jpg($params, $backup, $suffixRegex = false, $img = false) {
-        $image = $params['file'];
-        if(!$img) {
-            $img = imagecreatefrompng($image);
-        }
-
-        $bg = imagecreatetruecolor(imagesx($img), imagesy($img));
-        if(!$bg) return $params;
-        imagefill($bg, 0, 0, imagecolorallocate($bg, 255, 255, 255));
-        imagealphablending($bg, 1);
-        imagecopy($bg, $img, 0, 0, 0, 0, imagesx($img), imagesy($img));
-        $newPath = preg_replace("/\.png$/i", ".jpg", $image);
-        $newUrl = preg_replace("/\.png$/i", ".jpg", $params['url']);
-        for ($i = 1; file_exists($newPath); $i++) {
-            if($suffixRegex) {
-                $newPath = preg_replace("/(" . $suffixRegex . ")\.png$/i", $i . '-$1.jpg', $image);
-            }else {
-                $newPath = preg_replace("/\.png$/i", "-" . $i . ".jpg", $image);
-            }
-        }
-        if (imagejpeg($bg, $newPath, 90)) {
-            $newSize = filesize($newPath);
-            $origSize = filesize($image);
-            if($newSize > $origSize * 0.95) {
-                //if the image is not 5% smaller, don't bother.
-                unlink($newPath);
-                return $params;
-            }
-            //backup?
-            if($backup) {
-                $imageForBk = trailingslashit(dirname($image)) . ShortPixelAPI::MB_basename($newPath, '.jpg') . '.png';
-                @rename($image, $imageForBk);
-                if(!file_exists($imageForBk)) {
-                    unlink($newPath);
-                    return $params;
-                }
-                $image = $imageForBk;
-                $ret = ShortPixelAPI::backupImage($image, array($image));
-                if($ret['Status'] !== ShortPixelAPI::STATUS_SUCCESS) {
-                    unlink($newPath);
-                    return $params;
-                }
-            }
-            unlink($image);
-            $params['file'] = $newPath;
-            $params['original_file'] = $image;
-            $params['url'] = $newUrl;
-            $params['type'] = 'image/jpeg';
-            $params['png_size'] = $origSize;
-            $params['jpg_size'] = $newSize;
-        }
-        return $params;
-    }
-
     /**
      * Convert an uploaded image from PNG to JPG
      * @param type $params
      * @return string
      */
     public function convertPng2Jpg($params) {
-        
-        //echo("PARAMS : ");var_dump($params);
-        if(!$this->_settings->png2jpg || strtolower(substr($params['file'], -4)) !== '.png') {
-            return $params;
-        }
-        
-        $image = $params['file'];
-        self::log("Convert Media PNG to JPG on upload: {$image}");
-        
-        $ret = $this->canConvertPng2Jpg($image);
-        if ($ret['notTransparent']) {
-            $paramsC = $this->doConvertPng2Jpg($params, $this->_settings->backupImages, false, $ret['img']);
-            if($paramsC['type'] == 'image/jpeg') {
-                // we don't have metadata, so save the information in a temporary map
-                $conv = $this->_settings->convertedPng2Jpg;
-                //do a cleanup first
-                foreach($conv as $key => $val) {
-                    if(time() - $val['timestamp'] > 3600) unset($conv[$key]);
-                }
-                $conv[$paramsC['file']] = array('pngFile' => $paramsC['original_file'], 'backup' => $this->_settings->backupImages,
-                                                'optimizationPercent' => round(100.0 * (1.00 - $paramsC['jpg_size'] / $paramsC['png_size'])),
-                                                'timestamp' => time());
-                $this->_settings->convertedPng2Jpg = $conv;
-            }
-            return $paramsC;
-        }
-        return $params;
+        $converter = new ShortPixelPng2Jpg($this->_settings);
+        return $converter->convertPng2Jpg($params);
     }
-    
+
     /**
      * convert PNG to JPEG if possible - already existing image in Media Library
-     * 
+     *
      * @param type $meta
      * @param type $ID
      * @return string
      */
     public function checkConvertMediaPng2Jpg($meta, $ID) {
-        
-        if(!$this->_settings->png2jpg || strtolower(substr($meta['file'], -4)) !== '.png') {
-            return $meta;
-        }
-
-        self::log("Send to processing: Convert Media PNG to JPG #{$ID}");
-
-        $image = $meta['file'];
-        $imagePath = get_attached_file($ID);
-        $basePath = trailingslashit(str_replace($image, "", $imagePath));
-        $imageUrl = wp_get_attachment_url($ID);
-        $baseUrl = trailingslashit(str_replace($image, "", $imageUrl));
-
-        $ret = $this->canConvertPng2Jpg($imagePath);
-        if (!$ret['notTransparent']) {
-             return $meta; //cannot convert it
-        }
-        
-        $ret = $this->doConvertPng2Jpg(array('file' => $imagePath, 'url' => false, 'type' => 'image/png'), $this->_settings->backupImages, false, $ret['img']);
-        //echo("CONVERT: " . $imagePath); var_dump($ret);
-                
-        if ($ret['type'] == 'image/jpeg') {
-            //convert to the new URLs the urls in the existing posts.
-            $baseRelPath = trailingslashit(dirname($image));
-            $this->png2JpgUpdateUrls(array(), $imageUrl, $baseUrl . $baseRelPath . wp_basename($ret['file']));
-            $pngSize = $ret['png_size'];
-            $jpgSize = $ret['jpg_size'];
-            $imagePath = isset($ret['original_file']) ? $ret['original_file'] : $imagePath;
-            
-            //conversion succeeded for the main image, update meta and proceed to thumbs. (It could also not succeed if the converted file is not smaller)
-            $meta['file'] = str_replace($basePath, '', $ret['file']);
-            $meta['type'] = 'image/jpeg';
-            
-            $originalSizes = isset($meta['sizes']) ? $meta['sizes'] : array();
-            foreach($meta['sizes'] as $size => $info) {
-                $rett = $this->doConvertPng2Jpg(array('file' => $basePath . $baseRelPath . $info['file'], 'url' => false, 'type' => 'image/png'), 
-                                                $this->_settings->backupImages, "[0-9]+x[0-9]+");
-                if ($rett['type'] == 'image/jpeg') {
-                    $meta['sizes'][$size]['file'] = wp_basename($rett['file']);
-                    $meta['sizes'][$size]['mime-type'] = 'image/jpeg';
-                    $pngSize += $ret['png_size'];
-                    $jpgSize += $ret['jpg_size'];
-                    $originalSizes[$size]['file'] = wp_basename($rett['file'], '.jpg') . '.png';
-                    $this->png2JpgUpdateUrls(array(), $baseUrl . $baseRelPath . $info['file'], $baseUrl . $baseRelPath . wp_basename($rett['file']));
-                }
-            }
-            $meta['ShortPixelPng2Jpg'] = array('originalFile' => $imagePath, 'originalSizes' => $originalSizes, 
-                                               'backup' => $this->_settings->backupImages,
-                                               'optimizationPercent' => round(100.0 * (1.00 - $jpgSize / $pngSize)));
-            update_attached_file($ID, $meta['file']);
-            wp_update_attachment_metadata($ID, $meta);
-        }
-
-        return $meta;
-    }
-
-    /**
-     * taken from Velvet Blues Update URLs plugin
-     * @param $options
-     * @param $oldurl
-     * @param $newurl
-     * @return array
-     */
-    protected function png2JpgUpdateUrls($options,$oldurl,$newurl){
-        global $wpdb;
-        $results = array();
-        $queries = array(
-            'content' =>		array("UPDATE $wpdb->posts SET post_content = replace(post_content, %s, %s)",  __('Content Items (Posts, Pages, Custom Post Types, Revisions)','hortpixel-image-optimiser') ),
-            'excerpts' =>		array("UPDATE $wpdb->posts SET post_excerpt = replace(post_excerpt, %s, %s)", __('Excerpts','hortpixel-image-optimiser') ),
-            'attachments' =>	array("UPDATE $wpdb->posts SET guid = replace(guid, %s, %s) WHERE post_type = 'attachment'",  __('Attachments','hortpixel-image-optimiser') ),
-            'links' =>			array("UPDATE $wpdb->links SET link_url = replace(link_url, %s, %s)", __('Links','hortpixel-image-optimiser') ),
-            'custom' =>			array("UPDATE $wpdb->postmeta SET meta_value = replace(meta_value, %s, %s)",  __('Custom Fields','hortpixel-image-optimiser') ),
-            'guids' =>			array("UPDATE $wpdb->posts SET guid = replace(guid, %s, %s)",  __('GUIDs','hortpixel-image-optimiser') )
-        );
-        if(count($options) == 0) {
-            $options = array_keys($queries);
-        }
-        foreach($options as $option){
-            if( $option == 'custom' ){
-                $n = 0;
-                $row_count = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->postmeta" );
-                $page_size = 10000;
-                $pages = ceil( $row_count / $page_size );
-
-                for( $page = 0; $page < $pages; $page++ ) {
-                    $current_row = 0;
-                    $start = $page * $page_size;
-                    $end = $start + $page_size;
-                    $pmquery = "SELECT * FROM $wpdb->postmeta WHERE meta_value <> ''";
-                    $items = $wpdb->get_results( $pmquery );
-                    foreach( $items as $item ){
-                        $value = $item->meta_value;
-                        if( trim($value) == '' )
-                            continue;
-
-                        $edited = $this->png2JpgUnserializeReplace( $oldurl, $newurl, $value );
-
-                        if( $edited != $value ){
-                            $fix = $wpdb->query("UPDATE $wpdb->postmeta SET meta_value = '".$edited."' WHERE meta_id = ".$item->meta_id );
-                            if( $fix )
-                                $n++;
-                        }
-                    }
-                }
-                $results[$option] = array($n, $queries[$option][1]);
-            }
-            else{
-                $result = $wpdb->query( $wpdb->prepare( $queries[$option][0], $oldurl, $newurl) );
-                $results[$option] = array($result, $queries[$option][1]);
-            }
-        }
-        return $results;
-    }
-
-    /**
-     * taken from Velvet Blues Update URLs plugin
-     * @param string $from
-     * @param string $to
-     * @param string $data
-     * @param bool|false $serialised
-     * @return array|mixed|string
-     */
-    function png2JpgUnserializeReplace( $from = '', $to = '', $data = '', $serialised = false ) {
-        try {
-            if ( false !== is_serialized( $data ) ) {
-                $unserialized = unserialize( $data );
-                $data = $this->png2JpgUnserializeReplace( $from, $to, $unserialized, true );
-            }
-            elseif ( is_array( $data ) ) {
-                $_tmp = array( );
-                foreach ( $data as $key => $value ) {
-                    $_tmp[ $key ] = $this->png2JpgUnserializeReplace( $from, $to, $value, false );
-                }
-                $data = $_tmp;
-                unset( $_tmp );
-            }
-            else {
-                if ( is_string( $data ) )
-                    $data = str_replace( $from, $to, $data );
-            }
-            if ( $serialised )
-                return serialize( $data );
-        } catch( Exception $error ) {
-        }
-        return $data;
+        $converter = new ShortPixelPng2Jpg($this->_settings);
+        return $converter->checkConvertMediaPng2Jpg($meta, $ID);
     }
 
     /**
@@ -907,6 +651,9 @@ class WPShortPixel {
         $startTime = time(); 
         $maxTime = min(30, (is_numeric(SHORTPIXEL_MAX_EXECUTION_TIME)  && SHORTPIXEL_MAX_EXECUTION_TIME > 10 ? SHORTPIXEL_MAX_EXECUTION_TIME - 5 : 25));
         $maxResults = SHORTPIXEL_MAX_RESULTS_QUERY * 2;
+        if(in_array($this->prioQ->getBulkType(), array(ShortPixelQueue::BULK_TYPE_CLEANUP, ShortPixelQueue::BULK_TYPE_CLEANUP_PENDING))) {
+            $maxResults *= 20;
+        }
         $restored = array();
         
         //$ind = 0;
@@ -931,7 +678,7 @@ class WPShortPixel {
                         $res = $this->doRestore($crtStartQueryID); //this is restore, the real
                     } else { 
                         //this is only meta cleanup, no files are replaced (BACKUP REMAINS IN PLACE TOO)
-                        $item->cleanupMeta();
+                        $item->cleanupMeta($this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP_PENDING);
                         $res = true;
                     }
                     $restored[] = array('id' => $crtStartQueryID, 'status' => $res ? 'success' : 'fail');
@@ -956,7 +703,8 @@ class WPShortPixel {
         $idList = array();
         $itemList = array();
         for ($sanityCheck = 0, $crtStartQueryID = $startQueryID;  
-             ($crtStartQueryID >= $endQueryID) && (count($itemList) < SHORTPIXEL_PRESEND_ITEMS) && ($sanityCheck < 150); $sanityCheck++) {
+             ($crtStartQueryID >= $endQueryID) && (count($itemList) < SHORTPIXEL_PRESEND_ITEMS) && ($sanityCheck < 150)
+              && (SHORTPIXEL_MAX_EXECUTION_TIME < 10 || time() - $this->timer < SHORTPIXEL_MAX_EXECUTION_TIME - 5); $sanityCheck++) {
  
             self::log("GETDB: current StartID: " . $crtStartQueryID);
 
@@ -988,11 +736,13 @@ class WPShortPixel {
                     if($meta->getStatus() != 2) {
                         $itemList[] = $item;
                         $idList[] = $crtStartQueryID;
+                        if(count($itemList) > SHORTPIXEL_PRESEND_ITEMS) break;
                     } 
                     elseif($meta->getCompressionType() !== null && $meta->getCompressionType() != $this->_settings->compressionType) {//a different type of compression was chosen in settings
                         if($this->doRestore($crtStartQueryID)) {
                             $itemList[] = $item = new ShortPixelMetaFacade($crtStartQueryID); //force reload after restore
                             $idList[] = $crtStartQueryID;
+                            if(count($itemList) > SHORTPIXEL_PRESEND_ITEMS) break;
                         } else {
                             $skippedAlreadyProcessed++;
                         }
@@ -1005,7 +755,8 @@ class WPShortPixel {
                         $item->updateMeta($meta);//wp_update_attachment_metadata($crtStartQueryID, $meta);
                         $itemList[] = $item;
                         $idList[] = $crtStartQueryID;
-                    } 
+                        if(count($itemList) > SHORTPIXEL_PRESEND_ITEMS) break;
+                    }
                     elseif($itemMetaData->meta_key == '_wp_attachment_metadata') { //count skipped
                         $skippedAlreadyProcessed++;
                     }
@@ -1023,7 +774,7 @@ class WPShortPixel {
                 $crtStartQueryID--;
             }
         }
-        return array("items" => $itemList, "skipped" => $skippedAlreadyProcessed, "searching" => ($sanityCheck >= 150));
+        return array("items" => $itemList, "skipped" => $skippedAlreadyProcessed, "searching" => ($sanityCheck >= 150) || (SHORTPIXEL_MAX_EXECUTION_TIME >= 10 && time() - $this->timer >= SHORTPIXEL_MAX_EXECUTION_TIME - 5));
     }
 
     /**
@@ -1085,7 +836,9 @@ class WPShortPixel {
         
         //handle the bulk restore and cleanup first - these are fast operations taking precedece over optimization
         if(   $this->prioQ->bulkRunning() 
-           && ($this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_RESTORE || $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP)) {
+           && (   $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_RESTORE
+               || $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP
+               || $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP_PENDING)) {
             $res = $this->bulkRestore();
             if($res === false) {
                 $this->sendEmptyQueue();
@@ -1551,15 +1304,15 @@ class WPShortPixel {
     }
     
     public function getBackupFolderAny($file, $thumbs) {
-            if(!file_exists($file)) {
-                //try with the thumbnails
-                if(isset($thumbs)) foreach($thumbs as $size) {
-                    $backup = $this->getBackupFolder(trailingslashit(dirname($file)) . $size['file']);
-                    if($backup) return $backup;
-                }
-        } else {
-            return $this->getBackupFolder($file);
-        }        
+        $ret = $this->getBackupFolder($file);
+        if(!$ret && !file_exists($file) && isset($thumbs)) {
+            //try with the thumbnails
+            foreach($thumbs as $size) {
+                $backup = $this->getBackupFolder(trailingslashit(dirname($file)) . $size['file']);
+                if($backup) return $backup;
+            }
+        }
+        return $ret;
     }
     
     protected function setFilePerms($file) {
@@ -1661,9 +1414,9 @@ class WPShortPixel {
                         $crtMeta['height'] = $height;
                     }
                     if($png2jpgMain) {
+                        $crtMeta['file'] = trailingslashit(dirname($crtMeta['file'])) . ShortPixelAPI::MB_basename($file);
+                        update_attached_file($ID, $crtMeta['file']);
                         if($png2jpgSizes) {
-                            $crtMeta['file'] = trailingslashit(dirname($crtMeta['file'])) . ShortPixelAPI::MB_basename($file);
-                            update_attached_file($ID, $crtMeta['file']);
                             $crtMeta['sizes'] = $png2jpgSizes;
                         } else {
                             //this was an image converted on upload, regenerate the thumbs using the PNG main image BUT deactivate temporarily the filter!!
@@ -1872,8 +1625,12 @@ class WPShortPixel {
                 $customImageCount = $this->spMetaDao->countAllProcessableFiles();
                 foreach($customImageCount as $key => $val) {
                     $quotaData[$key] = isset($quotaData[$key]) 
-                                       ? (is_array($quotaData[$key]) ? array_merge($quotaData[$key], $val) : $quotaData[$key] + $val) 
-                                       : $val;
+                                       ? (is_array($quotaData[$key])
+                                          ? array_merge($quotaData[$key], $val)
+                                          : (is_numeric($quotaData[$key])
+                                             ? $quotaData[$key] + $val
+                                             : $quotaData[$key] . ", " . $val)) //array
+                                       : $val; //string
                 }
             }
             $this->_settings->currentStats = $quotaData;
@@ -1881,7 +1638,7 @@ class WPShortPixel {
         }
     }
     
-    public function checkQuotaAndAlert($quotaData = null, $recheck = false) {
+    public function checkQuotaAndAlert($quotaData = null, $recheck = false, $refreshFiles = 300) {
         if(!$quotaData) {
             $quotaData = $this->getQuotaInformation();
         }
@@ -1890,7 +1647,7 @@ class WPShortPixel {
             return $quotaData;
         }
         //$tempus = microtime(true);
-        $quotaData = $this->countAllIfNeeded($quotaData, 300);
+        $quotaData = $this->countAllIfNeeded($quotaData, $refreshFiles);
         //echo("Count took (seconds): " . (microtime(true) - $tempus));
 
         if($quotaData['APICallsQuotaNumeric'] + $quotaData['APICallsQuotaOneTimeNumeric'] > $quotaData['APICallsMadeNumeric'] + $quotaData['APICallsMadeOneTimeNumeric']) {
@@ -1976,10 +1733,10 @@ class WPShortPixel {
             return;
         }
         
-        $quotaData = $this->checkQuotaAndAlert(null, isset($_GET['checkquota']));
-        if($this->_settings->quotaExceeded != 0) {
-            return;
-        }
+        $quotaData = $this->checkQuotaAndAlert(null, isset($_GET['checkquota']), 0);
+        //if($this->_settings->quotaExceeded != 0) {
+            //return;
+        //}
         
         if(isset($_POST['bulkProcessPause'])) 
         {//pause an ongoing bulk processing, it might be needed sometimes
@@ -2027,7 +1784,13 @@ class WPShortPixel {
             $this->prioQ->startBulk(ShortPixelQueue::BULK_TYPE_CLEANUP);
             $this->_settings->customBulkPaused = 0;
         }//end bulk restore  was clicked    
-        
+
+        if(isset($_POST["bulkCleanupPending"]))
+        {
+            $this->prioQ->startBulk(ShortPixelQueue::BULK_TYPE_CLEANUP_PENDING);
+            $this->_settings->customBulkPaused = 0;
+        }//end bulk restore  was clicked
+
         if(isset($_POST["bulkProcessResume"]))
         {
             $this->prioQ->resumeBulk();
@@ -2046,8 +1809,8 @@ class WPShortPixel {
         
         //check the custom bulk
         $pendingMeta = $this->_settings->hasCustomFolders ? $this->spMetaDao->getPendingMetaCount() : 0;
-        
-        if (   ($filesLeft[0]->FilesLeftToBeProcessed > 0 && $this->prioQ->bulkRunning()) 
+
+        if (   ($filesLeft[0]->FilesLeftToBeProcessed > 0 && $this->prioQ->bulkRunning())
             || (0 + $pendingMeta > 0 && !$this->_settings->customBulkPaused && $this->prioQ->bulkRan())//bulk processing was started
                 && (!$this->prioQ->bulkPaused() || $this->_settings->skipToCustom)) //bulk not paused or if paused, user pressed Process Custom button
         {
@@ -2055,7 +1818,8 @@ class WPShortPixel {
 
             $this->view->displayBulkProcessingRunning($this->getPercent($quotaData), $msg, $quotaData['APICallsRemaining'], $this->getAverageCompression(), 
                      $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_RESTORE ? 0 : 
-                    ($this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP ? -1 : ($pendingMeta !== null ? ($this->prioQ->bulkRunning() ? 3 : 2) : 1)));
+                    (   $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP
+                     || $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP_PENDING ? -1 : ($pendingMeta !== null ? ($this->prioQ->bulkRunning() ? 3 : 2) : 1)));
 
         } else 
         {
@@ -2579,7 +2343,11 @@ class WPShortPixel {
             //add the NextGen galleries to custom folders
             $ngGalleries = ShortPixelNextGenAdapter::getGalleries();
             foreach($ngGalleries as $gallery) {
-                $folderMsg = $this->spMetaDao->newFolderFromPath($gallery, get_home_path(), self::getCustomFolderBase());
+                $msg = $this->spMetaDao->newFolderFromPath($gallery, get_home_path(), self::getCustomFolderBase());
+                if($msg) { //try again with ABSPATH as maybe WP is in a subdir
+                    $msg = $this->spMetaDao->newFolderFromPath($gallery, ABSPATH, self::getCustomFolderBase());
+                }
+                $folderMsg .= $msg;
                 $this->_settings->hasCustomFolders = time();                    
             }
             $customFolders = $this->spMetaDao->getFolders();
@@ -2751,6 +2519,7 @@ class WPShortPixel {
         if( $this->_settings->quotaExceeded == 1) {
             $dismissed = $this->_settings->dismissedNotices ? $this->_settings->dismissedNotices : array();
             unset($dismissed['exceed']);
+            $this->_settings->prioritySkip = array();
             $this->_settings->dismissedNotices = $dismissed;
         }
         $this->_settings->quotaExceeded = 0;
@@ -2859,6 +2628,7 @@ class WPShortPixel {
                 $renderData['status'] = $quotaExceeded ? 'quotaExceeded' : 'retry';
                 $renderData['message'] = "<img src=\"" . plugins_url( 'res/img/loading.gif', SHORTPIXEL_PLUGIN_FILE ) . "\" class='sp-loading-small'>&nbsp;" . __("Image waiting to be processed.",'shortpixel-image-optimiser');
                 if($this->_settings->autoMediaLibrary && !$quotaExceeded && ($id > $this->prioQ->getFlagBulkId() || !$this->prioQ->bulkRunning())) {
+                    $this->prioQ->unskip($id);
                     $this->prioQ->push($id); //should be there but just to make sure
                 }
             }

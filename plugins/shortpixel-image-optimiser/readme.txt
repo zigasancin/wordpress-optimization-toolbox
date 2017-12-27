@@ -3,8 +3,8 @@ Contributors: ShortPixel
 Tags: compress, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
 Requires at least: 3.2.0
 Tested up to: 4.9
-Requires PHP: 5.3
-Stable tag: 4.8.2
+Requires PHP: 5.2
+Stable tag: 4.8.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Speed up your website and boost your SEO by compressing old & new images and PDF
 
 == Description ==
 
-**A freeemium easy to use, comprehensive, stable and frequently updated image compression plugin supported by the friendly team that created it.  :)**
+**A freemium easy to use, comprehensive, stable and frequently updated image compression plugin supported by the friendly team that created it.  :)**
 
 Increase your website's SEO ranking, number of visitors and ultimately your sales by optimizing any image or PDF document on your website.
 ShortPixel is an easy to use, lightweight, install-and-forget-about-it <a rel="friend" href="https://shortpixel.com" target="_blank">image optimization</a> plugin that can compress all your past images and PDF documents with a single click. New images are automatically resized/rescaled and optimized on the fly, in the background.
@@ -227,6 +227,42 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.8.9 =
+* On some multisites installed in a subdirectory, the get_home_path() doesn't return the subdirectory, fallback to ABSPATH
+* Sometimes images are not PNG even if they have .png extension. Don't try to convert them if imagecreatefrompng returns false.
+* Get an aproximate row count for InnoDB tables to optimize the speed, but fallback to normal count(*) for MyISAM
+* Fix several warnings ($thumbsMissing not an array, $found is not set, etc.)
+* Return error message when folder could not be found, when adding other media folders
+* More info to some API errors
+
+= 4.8.8 =
+* fix for trying to convert .png files that are not png actually
+* fix for installs which don't have PHP GD - deactivate the png 2 jpg conversion
+* fix for unserialize warnings
+* improvements in bulk speed when passing through already optimized images.
+* fix unsupported usage of const by third party punycode.js
+* fix emails with new root domains like user@domain.store
+* fix unsupported flock problem
+* hidden button pending cleanup
+* fix javascript not being able to generate the actions menu upon image being optimized while inside the image edit and displaying false instead
+
+= 4.8.7 =
+* fix bug of the resize minimum size alert not dismissing
+
+= 4.8.6 =
+* alert user when the plugin doesn't have rights to write to the uploads folder
+
+= 4.8.5 =
+* drop usage of the PHP session / wp_option for the priority queue - use a flat file instead.
+
+= 4.8.4 =
+* fix compatibility problem with WP 4.9 when editing source files with the new built-in editor
+* fix restore converted PNGs in some situations
+* fix some minor warnings
+* refactor png2jpg functions in another class
+* add compatibility with PHP 5.2
+* generate WebP urls - account for settings with different scheme (http - https)
 
 = 4.8.2 =
 * fix minified punycode.js not generated because of ECMA6 not supported by YUI...

@@ -29,6 +29,12 @@ class ShortPixelImgToPictureWebp {
             $imageBase = dirname(get_attached_file($id)) . '/';
             */
             $updir = wp_upload_dir();
+            $proto = explode("://", $src);
+            $proto = $proto[0];
+            if(strpos($updir['baseurl'], $proto."://") === false) {
+                $base = explode("://", $updir['baseurl']);
+                $updir['baseurl'] = $proto . "://" . $base[1];
+            }
             $imageBase = str_replace($updir['baseurl'], $updir['basedir'], $src);
             if($imageBase == $src) {
                 return $match[0];
@@ -67,6 +73,9 @@ class ShortPixelImgToPictureWebp {
                 }
             }
             if(!strlen($srcsetWebP))  { return $match[0]; }
+
+            //add the exclude class so if this content is processed again in other filter, the img is not converted again in picture
+            $img['class'] = (isset($img['class']) ? $img['class'] . " " : "") . "sp-no-webp";
             
             return '<picture>'
                       .'<source srcset="' . $srcsetWebP . '"' . ($sizes ? ' sizes="' . $sizes . '"' : '') . ' type="image/webp">'
@@ -76,7 +85,7 @@ class ShortPixelImgToPictureWebp {
         }, $content);
     }
     
-    protected static function get_attributes( $image_node )
+    public static function get_attributes( $image_node )
     {
         $image_node = mb_convert_encoding($image_node, 'HTML-ENTITIES', 'UTF-8');
         $dom = new DOMDocument();
@@ -95,7 +104,7 @@ class ShortPixelImgToPictureWebp {
      * @param $attribute_array
      * @return string
      */
-    protected static function create_attributes( $attribute_array )
+    public static function create_attributes( $attribute_array )
     {
         $attributes = '';
         foreach ($attribute_array as $attribute => $value) {

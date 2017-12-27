@@ -8,7 +8,8 @@ class ShortPixelQueue {
     const BULK_TYPE_OPTIMIZE = 0;
     const BULK_TYPE_RESTORE = 1;
     const BULK_TYPE_CLEANUP = 2;
-    
+    const BULK_TYPE_CLEANUP_PENDING = 3;
+
     const BULK_NEVER = 0; //bulk never ran
     const BULK_RUNNING = 1; //bulk is running
     const BULK_PAUSED = 2; //bulk is paused
@@ -17,32 +18,6 @@ class ShortPixelQueue {
     public function __construct($controller, $settings) {
         $this->ctrl = $controller;
         $this->settings = $settings;
-    //init the option if needed
-        if(   !isset($_SESSION["wp-short-pixel-priorityQueue"]) //session is not defined
-           || !(is_admin() && function_exists("is_user_logged_in") && is_user_logged_in())) { //or we're not in the admin - re-init each time
-            //take the priority list from the options (we persist there the priority IDs from the previous session)
-            $prioQueueOpt = $this->settings->getOpt( 'priorityQueue', array());//here we save the IDs for the files that need to be processed after an image upload for example
-            $_SESSION["wp-short-pixel-priorityQueue"] = array();
-            foreach($prioQueueOpt as $ID) {
-                if(ShortPixelMetaFacade::isCustomQueuedId($ID)) {
-                    $meta = $this->ctrl->getSpMetaDao()->getMeta(ShortPixelMetaFacade::stripQueuedIdType($ID));
-                    $todo = isset($meta) && ($meta->getStatus() == 0 || $meta->getStatus() == 1);
-                } else {
-                    $meta = wp_get_attachment_metadata($ID);
-                    $todo = !isset($meta['ShortPixelImprovement']);
-                }
-                WPShortPixel::log("INIT: Item $ID from options has metadata: " .json_encode($meta));
-                if($todo) {
-                    $this->push($ID);
-                }
-            }
-            $this->settings->priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"];
-            
-            if(is_admin() && function_exists("is_user_logged_in") && is_user_logged_in()) {
-                WPShortPixel::log("INIT: Session queue not found, updated from Options with "
-                             .json_encode($_SESSION["wp-short-pixel-priorityQueue"]));
-            }
-        }
     }
     
     //handling older
@@ -50,8 +25,67 @@ class ShortPixelQueue {
         $this->__construct($controller);
     }
 
-    public function get() {
-        return $_SESSION["wp-short-pixel-priorityQueue"];//get_option("wp-short-pixel-priorityQueue");
+    public static function get() {
+        $fp = self::openQ(LOCK_SH);
+        if(!$fp) return false;
+        $itemsRaw = fgets($fp);
+        $items = strlen($itemsRaw) ? self::parseQ($itemsRaw) : array();
+        self::closeQ($fp);
+        return $items;
+    }
+
+    public static function set($items) {
+        $fp = self::openQ();
+        if(!$fp) return false;
+        fseek($fp, 0);
+        ftruncate($fp, 0);      // truncate file
+        fwrite($fp, implode(',', $items));
+        fflush($fp);            // flush output before releasing the lock
+        self::closeQ($fp);
+    }
+
+    public function apply($callable, $extra = false) {
+        $fp = self::openQ();
+        if(!$fp) return false;
+        $itemsRaw = fgets($fp);
+        $items = strlen($itemsRaw) ? self::parseQ($itemsRaw) : array();
+        if($extra) {
+            $items = call_user_func($callable, $items, $extra);
+        } else {
+            $items = call_user_func($callable, $items);
+        }
+        fseek($fp, 0);
+        ftruncate($fp, 0);      // truncate file
+        fwrite($fp, implode(',', $items));
+        fflush($fp);            // flush output before releasing the lock
+        self::closeQ($fp);
+        return $items;
+    }
+
+    public static function testQ() {
+        $fp = self::openQ();
+        if($fp === false) return false;
+        self::closeQ($fp);
+        return true;
+    }
+
+    protected static function openQ($lock = LOCK_EX) {
+        $queueName = SHORTPIXEL_UPLOADS_BASE . "/.shortpixel-q-" . get_current_blog_id();
+         $fp = @fopen($queueName, "r+");
+        if(!$fp) {
+            $fp = @fopen($queueName, "w");
+        }
+        if(!$fp) return false;
+        flock($fp, $lock);
+        return $fp;
+    }
+    protected static function closeQ($fp) {
+        flock($fp, LOCK_UN);    // release the lock
+        fclose($fp);
+    }
+
+    protected static function parseQ($items) {
+        return explode(',', preg_replace("/[^0-9,C-]/", "", $items));
     }
     
     public function skip($id) {
@@ -61,10 +95,15 @@ class ShortPixelQueue {
             $this->settings->prioritySkip = array($id);
         }            
     }
+
+    public function unskip($id) {
+        $prioSkip = $this->settings->prioritySkip;
+        $this->settings->prioritySkip = is_array($prioSkip) ? array_diff($prioSkip, array($id)) : array();
+    }
     
     public function allSkipped() {
         if( !is_array($this->settings->prioritySkip) ) return false;
-        count(array_diff($_SESSION["wp-short-pixel-priorityQueue"], $this->settings->prioritySkip));
+        count(array_diff($this->get(), $this->settings->prioritySkip));
     }
     
     public function skippedCount() {
@@ -76,7 +115,8 @@ class ShortPixelQueue {
     }
     
     public function isPrio($id) {
-        return is_array($_SESSION["wp-short-pixel-priorityQueue"]) && in_array($id, $_SESSION["wp-short-pixel-priorityQueue"]);
+        $prioItems = $this->get();
+        return is_array($prioItems) && in_array($id, $prioItems);
     }
     
     public function getSkipped() {
@@ -84,48 +124,45 @@ class ShortPixelQueue {
     }
     
     public function reverse() {
-        $this->settings->priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"] = array_reverse($_SESSION["wp-short-pixel-priorityQueue"]);
+        $this->apply('array_reverse');
+        //$this->settings->priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"] = array_reverse($_SESSION["wp-short-pixel-priorityQueue"]);
 
     }
     
     public function push($ID)//add an ID to priority queue
     {
-        $priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"]; //get_option("wp-short-pixel-priorityQueue");
-        WPShortPixel::log("PUSH: Push ID $ID into queue ".json_encode($priorityQueue));
-        array_push($priorityQueue, $ID);
-        $prioQ = array_unique($priorityQueue);
-        $_SESSION["wp-short-pixel-priorityQueue"] = $prioQ;
-        //push also to the options queue, in case the session gets killed retrieve from there
-        $this->settings->priorityQueue = $prioQ;
-
-        WPShortPixel::log("PUSH: Updated: ".json_encode($_SESSION["wp-short-pixel-priorityQueue"]));//get_option("wp-short-pixel-priorityQueue")));
+        $this->apply(function($priorityQueue, $ID) {
+            WPShortPixel::log("PUSH: Push ID $ID into queue " . json_encode($priorityQueue));
+            array_push($priorityQueue, $ID);
+            $prioQ = array_unique($priorityQueue);
+            WPShortPixel::log("PUSH: Updated: " . json_encode($prioQ));//get_option("wp-short-pixel-priorityQueue")));
+            return $prioQ;
+        }, $ID);
     }
 
     public function enqueue($ID)//add an ID to priority queue as LAST
     {
-        $priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"]; //get_option("wp-short-pixel-priorityQueue");
-        WPShortPixel::log("PUSH: Push ID $ID into queue ".json_encode($priorityQueue));
-        array_unshift($priorityQueue, $ID);
-        $prioQ = array_unique($priorityQueue);
-        $_SESSION["wp-short-pixel-priorityQueue"] = $prioQ;
-        //push also to the options queue, in case the session gets killed retrieve from there
-        $this->settings->priorityQueue = $prioQ;
-
-        WPShortPixel::log("ENQUEUE: Updated: ".json_encode($_SESSION["wp-short-pixel-priorityQueue"]));//get_option("wp-short-pixel-priorityQueue")));
+        $this->apply(function($priorityQueue, $ID) {
+            WPShortPixel::log("ENQUEUE: Enqueue ID $ID into queue " . json_encode($priorityQueue));
+            array_unshift($priorityQueue, $ID);
+            $prioQ = array_unique($priorityQueue);
+            WPShortPixel::log("ENQUEUE: Updated: " . json_encode($prioQ));//get_option("wp-short-pixel-priorityQueue")));
+            return $prioQ;
+        }, $ID);
     }
 
     public function getFirst($count = 1)//return the first values added to priority queue
     {
-        $priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"];//self::getOpt("wp-short-pixel-priorityQueue", array());
+        $priorityQueue = $this->get();
         $count = min(count($priorityQueue), $count);
         return(array_slice($priorityQueue, count($priorityQueue) - $count, $count));
     }
     
     public function getFromPrioAndCheck() {
+        $idsPrio = $this->get();
+
         $ids = array();
         $removeIds = array();
-        
-        $idsPrio = $this->get();
         for($i = count($idsPrio) - 1, $cnt = 0; $i>=0 && $cnt < 3; $i--) {
             if(!isset($idsPrio[$i])) continue; //saw this situation but then couldn't reproduce it to see the cause, so at least treat the effects.
             $id = $idsPrio[$i];
@@ -145,20 +182,27 @@ class ShortPixelQueue {
 
     public function remove($ID)//remove an ID from priority queue
     {
-        $priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"];//get_option("wp-short-pixel-priorityQueue");
-        WPShortPixel::log("REM: Remove ID $ID from queue ".json_encode($priorityQueue));
-        $newPriorityQueue = array();
+        $fp = $this->openQ();
+        if(!$fp) return false;
+        $items = fgets($fp);
+        $items = self::parseQ($items);
+        $items = is_array($items) ? $items : array();
+        $newItems = array();
         $found = false;
-        foreach($priorityQueue as $item) {
+        foreach($items as $item) { // this instead of array_values(array_diff(.. because we need to know if we actually removed it
             if($item != $ID) {
-                $newPriorityQueue[] = $item;
+                $newItems[] = $item;
             } else {
                 $found = true;
             }
         }
-        //$this->settings->setOpt("wp-short-pixel-priorityQueue", $newPriorityQueue);
-        $_SESSION["wp-short-pixel-priorityQueue"] = $newPriorityQueue;
-        WPShortPixel::log("REM: " . ($found ? "Updated: " : "Not found") . json_encode($_SESSION["wp-short-pixel-priorityQueue"]));//get_option("wp-short-pixel-priorityQueue")));
+        if($found) {
+            fseek($fp, 0);
+            ftruncate($fp, 0);
+            fwrite($fp, implode(',', $newItems));
+            fflush($fp);            // flush output before releasing the lock
+        }
+        $this->closeQ($fp);
         return $found;
     }
     
@@ -370,11 +414,9 @@ class ShortPixelQueue {
     }
     
     public static function resetPrio() {
-        delete_option( "wp-short-pixel-priorityQueue");
-        if(isset($_SESSION["wp-short-pixel-priorityQueue"])){
-            unset($_SESSION["wp-short-pixel-priorityQueue"]);   
-        }
-    }    
+        //delete_option( "wp-short-pixel-priorityQueue");
+        self::set(array());
+    }
     
     public function logBulkProgress() {
         $t = time();

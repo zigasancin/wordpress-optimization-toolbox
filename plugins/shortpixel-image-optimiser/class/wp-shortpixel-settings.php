@@ -86,7 +86,7 @@ class WPShortPixelSettings {
         'failedImages' => array('key' => 'wp-short-pixel-failed-imgs', 'default' => 0),
         'bulkProcessingStatus' => array('key' => 'bulkProcessingStatus', 'default' => null),
         
-        'priorityQueue' => array('key' => 'wp-short-pixel-priorityQueue', 'default' => array()),
+        //'priorityQueue' => array('key' => 'wp-short-pixel-priorityQueue', 'default' => array()),
         'prioritySkip' => array('key' => 'wp-short-pixel-prioritySkip', 'default' => array()),
         
         //'' => array('key' => 'wp-short-pixel-', 'default' => null),
@@ -118,9 +118,6 @@ class WPShortPixelSettings {
         foreach(self::$_optionsMap as $key => $val) {
             delete_option($val['key']);
         }
-        if(isset($_SESSION["wp-short-pixel-priorityQueue"])) {
-            unset($_SESSION["wp-short-pixel-priorityQueue"]);
-        }
         delete_option("wp-short-pixel-bulk-previous-percent");
     }
     
@@ -136,7 +133,11 @@ class WPShortPixelSettings {
             unset($dismissed['compat']);
             update_option('wp-short-pixel-dismissed-notices', $dismissed, 'no');
         }
-
+        $formerPrio = get_option('wp-short-pixel-priorityQueue');
+        if(is_array($formerPrio) && !count(ShortPixelQueue::get())) {
+            ShortPixelQueue::set($formerPrio);
+            delete_option('wp-short-pixel-priorityQueue');
+        }
     }
     
     public static function onDeactivate() {
