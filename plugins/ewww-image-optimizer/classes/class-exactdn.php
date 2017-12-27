@@ -54,6 +54,14 @@ class ExactDN {
 	public $filtering_the_content = false;
 
 	/**
+	 * List of permitted domains for ExactDN rewriting.
+	 *
+	 * @access public
+	 * @var array $allowed_domains
+	 */
+	public $allowed_domains = array();
+
+	/**
 	 * The ExactDN domain/zone.
 	 *
 	 * @access private
@@ -96,6 +104,9 @@ class ExactDN {
 			ewwwio_debug_message( 'aq_resize detected, image_downsize filter disabled' );
 		}
 
+		// Overrides for admin-ajax images.
+		add_filter( 'exactdn_admin_allow_image_downsize', array( $this, 'allow_admin_image_downsize' ), 10, 2 );
+
 		// Responsive image srcset substitution.
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'filter_srcset_array' ), 1001, 5 );
 		add_filter( 'wp_calculate_image_sizes', array( $this, 'filter_sizes' ), 1, 2 ); // Early so themes can still filter.
@@ -107,6 +118,12 @@ class ExactDN {
 		if ( defined( 'EXACTDN_RECALC' ) && EXACTDN_RECALC ) {
 			add_action( 'wp_enqueue_scripts', array( $this, 'action_wp_enqueue_scripts' ), 9 );
 		}
+
+		// Find the "local" domain.
+		$upload_dir          = wp_upload_dir( null, false );
+		$this->upload_domain = defined( 'EXACTDN_LOCAL_DOMAIN' ) && EXACTDN_LOCAL_DOMAIN ? EXACTDN_LOCAL_DOMAIN : $this->parse_url( $upload_dir['baseurl'], PHP_URL_HOST );
+		ewwwio_debug_message( "allowing images from here: $this->upload_domain" );
+		$this->allowed_domains[] = $this->upload_domain;
 	}
 
 	/**
@@ -244,7 +261,7 @@ class ExactDN {
 		if ( ! $domain ) {
 			return;
 		}
-		if ( strlen( $domain > 76 ) ) {
+		if ( strlen( $domain ) > 80 ) {
 			ewwwio_debug_message( "$domain too long" );
 			return false;
 		}
@@ -367,7 +384,7 @@ class ExactDN {
 		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 		$width_height_string = array();
 		ewwwio_debug_message( "looking for dimensions in $src" );
-		if ( preg_match( '#-(\d+)x(\d+)(@2x)?\.(?:' . implode( '|', $this->extensions ) . '){1}$#i', $src, $width_height_string ) ) {
+		if ( preg_match( '#-(\d+)x(\d+)(@2x)?\.(?:' . implode( '|', $this->extensions ) . '){1}(?:\?.+)?$#i', $src, $width_height_string ) ) {
 			$width  = (int) $width_height_string[1];
 			$height = (int) $width_height_string[2];
 
@@ -376,6 +393,7 @@ class ExactDN {
 				$height = 2 * $height;
 			}
 			if ( $width && $height ) {
+				ewwwio_debug_message( "found w$width h$height" );
 				return array( $width, $height );
 			}
 		}
@@ -441,10 +459,7 @@ class ExactDN {
 			}
 			$resize_existing = defined( 'EXACTDN_RESIZE_EXISTING' ) && EXACTDN_RESIZE_EXISTING;
 
-			$image_sizes   = $this->image_sizes();
-			$upload_dir    = wp_upload_dir( null, false );
-			$upload_domain = defined( 'EXACTDN_LOCAL_DOMAIN' ) && EXACTDN_LOCAL_DOMAIN ? EXACTDN_LOCAL_DOMAIN : $this->parse_url( $upload_dir['baseurl'], PHP_URL_HOST );
-			ewwwio_debug_message( "allowing images from here: $upload_domain" );
+			$image_sizes = $this->image_sizes();
 
 			foreach ( $images[0] as $index => $tag ) {
 				// Default to resize, though fit may be used in certain cases where a dimension cannot be ascertained.
@@ -460,11 +475,6 @@ class ExactDN {
 				$src      = $images['img_url'][ $index ];
 				$src_orig = $images['img_url'][ $index ];
 				ewwwio_debug_message( $src );
-				// Not a local image.
-				if ( false === strpos( $src, $upload_domain ) && false === strpos( $src, 'exactdn.com' ) ) {
-					ewwwio_debug_message( 'not local, skipping' );
-					continue;
-				}
 
 				/**
 				 * Allow specific images to be skipped by ExactDN.
@@ -543,7 +553,7 @@ class ExactDN {
 
 							// Basic check on returned post object.
 							if ( is_object( $attachment ) && ! is_wp_error( $attachment ) && 'attachment' == $attachment->post_type ) {
-								$src_per_wp = wp_get_attachment_image_src( $attachment_id, isset( $size ) ? $size : 'full' );
+								$src_per_wp = wp_get_attachment_image_src( $attachment_id, 'full' );
 
 								if ( $this->validate_image_url( $src_per_wp[0] ) ) {
 									ewwwio_debug_message( "detected $width filenamew $filename_width" );
@@ -621,6 +631,8 @@ class ExactDN {
 						// Build URL, first maybe removing WP's resized string so we pass the original image to ExactDN (for higher quality).
 						$src = $this->strip_image_dimensions_maybe( $src );
 					}
+
+					$args = $this->maybe_smart_crop( $args, $attachment_id );
 
 					/**
 					 * Filter the array of ExactDN arguments added to an image.
@@ -702,7 +714,17 @@ class ExactDN {
 						$width = $width_string[1];
 						ewwwio_debug_message( 'found the width' );
 						// Insert new image src into the srcset as well, if we have a width.
-						if ( false !== $width && false === strpos( $width, '%' ) && false !== strpos( $src, $width ) && false !== strpos( $src, 'exactdn.com' ) ) {
+						if (
+							false !== $width &&
+							false === strpos( $width, '%' ) &&
+							false !== strpos( $src, $width ) &&
+							(
+								false !== strpos( $src, 'exactdn.com' ) ||
+								false !== strpos( $src, 'exactdn.net' ) ||
+								false !== strpos( $src, 'exactcdn.com' ) ||
+								false !== strpos( $src, 'exactcdn.net' )
+							)
+						) {
 							$new_tag     = $tag;
 							$exactdn_url = $src;
 							ewwwio_debug_message( 'checking to see if srcset width already exists' );
@@ -722,11 +744,11 @@ class ExactDN {
 			} // End foreach().
 			if ( $this->filtering_the_page && defined( 'EXACTDN_ALL_THE_THINGS' ) && EXACTDN_ALL_THE_THINGS ) {
 				ewwwio_debug_message( 'rewriting all other wp_content urls' );
-				if ( $this->exactdn_domain && $upload_domain ) {
-					$escaped_upload_domain = str_replace( '.', '\.', $upload_domain );
+				if ( $this->exactdn_domain && $this->upload_domain ) {
+					$escaped_upload_domain = str_replace( '.', '\.', $this->upload_domain );
 					ewwwio_debug_message( $escaped_upload_domain );
 					// Pre-empt rewriting of wp-includes and wp-content if the extension is php/ashx by using a temporary placeholder.
-					$content = preg_replace( '#(https?)://' . $escaped_upload_domain . '([^"\'?>]+?)?/wp-content/([^"\'?>]+?)\.(php|ashx)#i', '$1://' . $upload_domain . '$2/?wpcontent-bypass?/$3.$4', $content );
+					$content = preg_replace( '#(https?)://' . $escaped_upload_domain . '([^"\'?>]+?)?/wp-content/([^"\'?>]+?)\.(php|ashx)#i', '$1://' . $this->upload_domain . '$2/?wpcontent-bypass?/$3.$4', $content );
 					$content = preg_replace( '#(https?)://' . $escaped_upload_domain . '/([^"\'?>]+?)?wp-(includes|content)#i', '$1://' . $this->exactdn_domain . '/$2wp-$3', $content );
 					$content = str_replace( '?wpcontent-bypass?', 'wp-content', $content );
 				}
@@ -739,6 +761,23 @@ class ExactDN {
 		ewwwio_debug_message( "parsing the_content took $elapsed_time seconds" );
 		$this->elapsed_time += microtime( true ) - $started;
 		return $content;
+	}
+
+	/**
+	 * Allow resizing of images for some admin-ajax requests.
+	 *
+	 * @param bool  $allow Will normally be false, unless already modified by another function.
+	 * @param array $image Bunch of information about the image, but we don't care about that here.
+	 * @return bool True if it's an allowable admin-ajax request, false for all other admin requests.
+	 */
+	function allow_admin_image_downsize( $allow, $image ) {
+		if ( ! wp_doing_ajax() ) {
+			return $allow;
+		}
+		if ( ! empty( $_POST['action'] ) && 'eddvbugm_viewport_downloads' == $_POST['action'] ) {
+			return true;
+		}
+		return $allow;
 	}
 
 	/**
@@ -898,6 +937,9 @@ class ExactDN {
 				} else {
 					$resize_existing = true;
 				}
+
+				$exactdn_args = $this->maybe_smart_crop( $exactdn_args, $attachment_id, $image_meta );
+
 				/**
 				 * Filter the ExactDN arguments added to an image, when that image size is a string.
 				 * Image size will be a string (e.g. "full", "medium") when it is known to WordPress.
@@ -961,6 +1003,8 @@ class ExactDN {
 				$exactdn_args = array(
 					'fit' => $width . ',' . $height,
 				);
+
+				$exactdn_args = $this->maybe_smart_crop( $exactdn_args, $attachment_id, $image_meta );
 
 				/**
 				 * Filter the ExactDN arguments added to an image, when the image size is an array of height and width values.
@@ -1048,9 +1092,11 @@ class ExactDN {
 
 			list( $width, $height ) = $this->parse_dimensions_from_filename( $url );
 			if ( ! $resize_existing && 'w' === $source['descriptor'] && $source['value'] == $width ) {
+				ewwwio_debug_message( "preventing further processing for $url" );
 				$sources[ $i ]['url'] = $this->generate_url( $source['url'] );
 				continue;
 			}
+			ewwwio_debug_message( 'continuing: ' . $width . ' vs. ' . $source['value'] );
 
 			// It's quicker to get the full size with the data we have already, if available.
 			if ( ! empty( $attachment_id ) ) {
@@ -1058,6 +1104,7 @@ class ExactDN {
 			} else {
 				$url = $this->strip_image_dimensions_maybe( $url );
 			}
+			ewwwio_debug_message( "building srcs from $url" );
 
 			$args = array();
 			if ( 'w' === $source['descriptor'] ) {
@@ -1067,6 +1114,8 @@ class ExactDN {
 					$args['w'] = $source['value'];
 				}
 			}
+
+			$args = $this->maybe_smart_crop( $args, $attachment_id, $image_meta );
 
 			$sources[ $i ]['url'] = $this->generate_url( $url, $args );
 		}
@@ -1142,6 +1191,8 @@ class ExactDN {
 					);
 				}
 
+				$args = $this->maybe_smart_crop( $args, $attachment_id, $image_meta );
+
 				$newsources[ $newwidth ] = array(
 					'url'        => $this->generate_url( $url, $args ),
 					'descriptor' => 'w',
@@ -1154,6 +1205,7 @@ class ExactDN {
 		} // if ( isset( $image_meta['width'] ) && isset( $image_meta['file'] ) )
 		$elapsed_time = microtime( true ) - $started;
 		ewwwio_debug_message( "parsing srcset took $elapsed_time seconds" );
+		/* ewwwio_debug_message( print_r( $sources, true ) ); */
 		$this->elapsed_time += microtime( true ) - $started;
 		return $sources;
 	}
@@ -1188,13 +1240,109 @@ class ExactDN {
 	}
 
 	/**
+	 * Check for smart-cropping plugin to adjust cropping parameters.
+	 * Currently supports Theia Smart Thumbnails using the theiaSmartThumbnails_position meta.
+	 *
+	 * @param array $args The arguments that have been generated so far.
+	 * @param int   $attachment_id The ID number for the current image.
+	 * @param array $meta Optional. The attachment (image) metadata. Default false.
+	 * @return array The arguments, possibly altered for smart cropping.
+	 */
+	function maybe_smart_crop( $args, $attachment_id, $meta = false ) {
+		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+		if ( ! empty( $args['crop'] ) ) {
+			ewwwio_debug_message( 'already cropped' );
+			return $args;
+		}
+		// Doing something other than a hard crop, or we don't know what the ID is.
+		if ( empty( $args['resize'] ) || empty( $attachment_id ) ) {
+			ewwwio_debug_message( 'not resizing, so no custom crop' );
+			return $args;
+		}
+		// TST is not active.
+		if ( ! defined( 'TST_VERSION' ) ) {
+			ewwwio_debug_message( 'no TST plugin' );
+			return $args;
+		}
+		if ( ! class_exists( 'TstPostOptions' ) || ! defined( 'TstPostOptions::META_POSITION' ) ) {
+			ewwwio_debug_message( 'no TstPostOptions class' );
+			return $args;
+		}
+		if ( ! $meta || ! is_array( $meta ) || empty( $meta['sizes'] ) ) {
+			// $focus_point = get_post_meta( $attachment_id, TstPostOptions::META_POSITION, true );
+			$meta = wp_get_attachment_metadata( $attachment_id );
+			if ( ! is_array( $meta ) || empty( $meta['width'] ) || empty( $meta['height'] ) ) {
+				ewwwio_debug_message( 'unusable meta retrieved' );
+				return $args;
+			}
+			$focus_point = TstPostOptions::get_meta( $attachment_id, $meta['width'], $meta['height'] );
+		} elseif ( ! empty( $meta['tst_thumbnail_version'] ) ) {
+			if ( empty( $meta['width'] ) || empty( $meta['height'] ) ) {
+				ewwwio_debug_message( 'unusable meta passed' );
+				return $args;
+			}
+			$focus_point = TstPostOptions::get_meta( $attachment_id, $meta['width'], $meta['height'] );
+		} else {
+			ewwwio_debug_message( 'unusable meta' );
+			return $args;
+		}
+		if ( empty( $focus_point ) || ! is_array( $focus_point ) ) {
+			ewwwio_debug_message( 'unusable focus point' );
+			return $args;
+		}
+
+		$dimensions = explode( ',', $args['resize'] );
+
+		$new_w = $dimensions[0];
+		$new_h = $dimensions[1];
+		ewwwio_debug_message( "full size dims: w{$meta['width']} h{$meta['height']}" );
+		ewwwio_debug_message( "smart crop dims: w$new_w h$new_h" );
+		if ( ! empty( $args['zoom'] ) ) {
+			$new_w = round( $args['zoom'] * $new_w );
+			$new_h = round( $args['zoom'] * $new_h );
+			ewwwio_debug_message( "zooming: {$args['zoom']} w$new_w h$new_h" );
+		}
+		if ( ! $new_w || ! $new_h ) {
+			ewwwio_debug_message( 'empty dimension, not cropping' );
+			return $args;
+		}
+		$size_ratio = max( $new_w / $meta['width'], $new_h / $meta['height'] );
+		$crop_w     = round( $new_w / $size_ratio );
+		$crop_h     = round( $new_h / $size_ratio );
+		$s_x        = floor( ( $meta['width'] - $crop_w ) * $focus_point[0] );
+		$s_y        = floor( ( $meta['height'] - $crop_h ) * $focus_point[1] );
+		ewwwio_debug_message( "doing the math with size_ratio of $size_ratio" );
+
+		$args = array( 'crop' => $s_x . 'px,' . $s_y . 'px,' . $crop_w . 'px,' . $crop_h . 'px' ) + $args;
+		ewwwio_debug_message( $args['crop'] );
+		return $args;
+	}
+
+	/**
+	 * Make sure the image domain is on the list of approved domains.
+	 *
+	 * @param string $domain The hostname to validate.
+	 * @return bool True if the hostname is allowed, false otherwise.
+	 */
+	public function allow_image_domain( $domain ) {
+		$domain = trim( $domain );
+		foreach ( $this->allowed_domains as $allowed ) {
+			$allowed = trim( $allowed );
+			if ( $domain === $allowed ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Ensure image URL is valid for ExactDN.
 	 * Though ExactDN functions address some of the URL issues, we should avoid unnecessary processing if we know early on that the image isn't supported.
 	 *
 	 * @param string $url The image url to be validated.
 	 * @param bool   $exactdn_is_valid Optional. Whether an ExactDN URL should be considered valid. Default false.
 	 * @uses wp_parse_args
-	 * @return bool
+	 * @return bool True if the url is considerd valid, false otherwise.
 	 */
 	protected function validate_image_url( $url, $exactdn_is_valid = false ) {
 		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
@@ -1238,10 +1386,22 @@ class ExactDN {
 			ewwwio_debug_message( 'exactdn image' );
 			return false;
 		}
+		if ( ! $exactdn_is_valid && strpos( $url_info['host'], '.exactdn.net' ) ) {
+			ewwwio_debug_message( 'exactdn image' );
+			return false;
+		}
+		if ( ! $exactdn_is_valid && strpos( $url_info['host'], '.exactcdn.com' ) ) {
+			ewwwio_debug_message( 'exactdn image' );
+			return false;
+		}
+		if ( ! $exactdn_is_valid && strpos( $url_info['host'], '.exactcdn.net' ) ) {
+			ewwwio_debug_message( 'exactdn image' );
+			return false;
+		}
 
 		// Bail if the image already went through Photon to avoid conflicts.
 		if ( preg_match( '#^i[\d]{1}.wp.com$#i', $url_info['host'] ) ) {
-			ewwwio_debug_message( 'photon image' );
+			ewwwio_debug_message( 'photon/wp.com image' );
 			return false;
 		}
 
@@ -1254,6 +1414,12 @@ class ExactDN {
 		// Ensure image extension is acceptable.
 		if ( ! in_array( strtolower( pathinfo( $url_info['path'], PATHINFO_EXTENSION ) ), $this->extensions ) ) {
 			ewwwio_debug_message( 'invalid extension' );
+			return false;
+		}
+
+		// Make sure this is an allowed image domain/hostname for ExactDN on this site.
+		if ( ! $this->allow_image_domain( $url_info['host'] ) ) {
+			ewwwio_debug_message( 'invalid host for ExactDN' );
 			return false;
 		}
 
@@ -1280,7 +1446,7 @@ class ExactDN {
 		$stripped_src = $src;
 
 		// Build URL, first removing WP's resized string so we pass the original image to ExactDN.
-		if ( preg_match( '#(-\d+x\d+)\.(' . implode( '|', $this->extensions ) . '){1}$#i', $src, $src_parts ) ) {
+		if ( preg_match( '#(-\d+x\d+)\.(' . implode( '|', $this->extensions ) . '){1}(?:\?.+)?$#i', $src, $src_parts ) ) {
 			$stripped_src = str_replace( $src_parts[1], '', $src );
 			$upload_dir   = wp_get_upload_dir();
 
@@ -1290,6 +1456,7 @@ class ExactDN {
 			if ( file_exists( $upload_dir['basedir'] . $file_path ) ) {
 				$src = $stripped_src;
 			}
+			ewwwio_debug_message( 'stripped dims' );
 		}
 		return $src;
 	}
@@ -1393,6 +1560,23 @@ class ExactDN {
 			return $image_url;
 		}
 
+		// TODO: Not differentiated yet, but it will be, so stay tuned!
+		$jpg_quality  = apply_filters( 'jpeg_quality', null, 'image_resize' );
+		$webp_quality = apply_filters( 'jpeg_quality', $jpg_quality, 'image/webp' );
+
+		$more_args = array();
+		if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpegtran_copy' ) ) {
+			$more_args['strip'] = 'all';
+		}
+		if ( ewww_image_optimizer_get_option( 'exactdn_lossy' ) ) {
+			$more_args['lossy'] = is_numeric( ewww_image_optimizer_get_option( 'exactdn_lossy' ) ) ? (int) ewww_image_optimizer_get_option( 'exactdn_lossy' ) : 80;
+		}
+		if ( ! is_null( $jpg_quality ) && 82 != $jpg_quality ) {
+			$more_args['quality'] = $jpg_quality;
+		}
+		// Merge given args with the automatic (option-based) args, and also makes sure args is an array if it was previously a string.
+		$args = wp_parse_args( $args, $more_args );
+
 		/**
 		 * Filter the original image URL before it goes through ExactDN.
 		 *
@@ -1475,22 +1659,16 @@ class ExactDN {
 		if ( isset( $image_url_parts['query'] ) && apply_filters( 'exactdn_add_query_string_to_domain', false, $image_url_parts['host'] ) ) {
 			$exactdn_url .= '?q=' . rawurlencode( $image_url_parts['query'] );
 		}
+		// This is disabled, as I don't think we really need it.
+		if ( false && ! empty( $image_url_parts['query'] ) && false !== strpos( $image_url_parts['query'], 'theia_smart' ) ) {
+			$args = wp_parse_args( $image_url_parts['query'], $args );
+		}
 
 		if ( $args ) {
-			// TODO: Not differentiated yet, but it will be, so stay tuned!
-			$jpg_quality  = apply_filters( 'jpeg_quality', null, 'image_resize' );
-			$webp_quality = apply_filters( 'jpeg_quality', $jpg_quality, 'image/webp' );
-
 			if ( is_array( $args ) ) {
-				if ( ! is_null( $jpg_quality ) && 82 != $jpg_quality ) {
-					$args['quality'] = $jpg_quality;
-				}
 				$exactdn_url = add_query_arg( $args, $exactdn_url );
 			} else {
-				if ( ! is_null( $jpg_quality ) && 82 != $jpg_quality ) {
-					$args .= "&quality=$jpg_quality";
-				}
-				// You can pass a query string for complicated requests.
+				// You can pass a query string for complicated requests, although this should have been converted to an array already.
 				$exactdn_url .= '?' . $args;
 			}
 		}

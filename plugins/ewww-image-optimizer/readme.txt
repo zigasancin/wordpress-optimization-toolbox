@@ -5,7 +5,7 @@ Tags: image, compress, optimize, optimization, lossless, lossy, seo, jpegmini, t
 Requires at least: 4.6
 Tested up to: 4.9
 Requires PHP: 5.3
-Stable tag: 4.0.2
+Stable tag: 4.0.5
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -179,6 +179,30 @@ Pngout, TinyJPG/TinyPNG, JPEGmini, and Pngquant were recommended by EWWW IO user
 * Feature requests can be submitted via https://ewww.io/contact-us/ and commented on here: https://trello.com/b/Fp81dWof/ewww-image-optimizer
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
 
+= 4.0.5 =
+* added: enable lossy compression with ExactDN: http://docs.ewww.io/article/47-getting-more-from-exactdn
+* added: CSS/JS minification with ExactDN, see http://docs.ewww.io/article/47-getting-more-from-exactdn
+* added: disable WebP for specific files with ewww_image_optimizer_bypass_webp filter
+* added: ExactDN obeys focus point from Theia Smart Thumbnails plugin
+* added: admin-ajax requests for eddvbugm loader work with ExactDN
+* fixed: multisite settings would not save in certain circumstances
+* fixed: compression levels reset for API users on multisite after toggling single-site override on and off
+* fixed: media library items with non-local images rewritten incorrectly by ExactDN
+* fixed: restoring images throws errors on PHP 7.1
+* fixed: has_cap with invalid argument not recognizing utf8-mb4 v5.2
+
+= 4.0.4 =
+* fixed: ExactDN domain validation failing on length check for some domains
+* updated: PEL for better EXIF preservation
+
+= 4.0.3 =
+* added: support for additional ExactDN root domains
+* added: button to remove WebP rewrite rules
+* added: informational notice on thumbnail rebuild pages of how the plugins interact
+* changed: WebP rewrite rules removed automatically when ExactDN is enabled, use Alt WebP instead
+* changed: ExactDN now removes metadata if option is enabled
+* fixed: multisite settings set to defaults when single-site resize settings are submitted
+
 = 4.0.2 =
 * fixed: WooCommerce images still not working with Alt WebP in all cases
 * fixed: ob_clean() breaks AJAX actions when there is no buffer to clean
@@ -209,36 +233,6 @@ Pngout, TinyJPG/TinyPNG, JPEGmini, and Pngquant were recommended by EWWW IO user
 * fixed: notice of undefined index with some configurations of the Shield security plugin
 * deprecated: PHP 5.3 support will be removed by March 2018
 
-= 3.6.1 =
-* fixed: bulk optimizer fails to initialize if the bulk_attachments array is set to an empty string
-* fixed: misplaced parenthesis breaks option overrides
-
-= 3.6.0 =
-In an effort to simplify the settings page and make room for new features, many settings have been "hidden" and/or rearranged. It is my hope that this will make it easier for new users to get going with EWWW IO.
-You can find more information about overriding options in the [Documentation](http://docs.ewww.io)
-* added: ability to override any boolean/integer options by defining constant of the same name
-* added: debug information included automatically with help beacon requests when debugging is enabled
-* added: use wp_raise_memory_limit (WP 4.6+) to avoid memory issues
-* added: use wp_is_ini_value_changeable (WP 4.6+) to avoid errors when raising max_execution_time
-* added: notice to use cloud version on Kinsta sites
-* changed: Better Lossless and Maximum Lossless have been combined for PNG images with more intelligent usage of advpng on the API
-* changed: resize settings moved to new tab
-* changed: various options have been removed from the settings page, but are still available via constants, see removals
-* changed: bulk optimizer will auto-adjust settings if an image fails to optimize
-* changed: bulk scanner will go into fall-back mode if the normal mode is too slow or if the image table takes longer than 5 seconds to load
-* changed: images previously compressed by TinyPNG/JPG will be skipped during bulk optimization
-* fixed: Optipng not working properly on Windows servers.
-* fixed: notice on settings and bulk pages when debug mode is disabled
-* removed: ewww_image_optimizer_delay (Bulk Delay), can be selected on the bulk page instead
-* removed: ewww_image_optimizer_optipng_level (OptiPNG level) option
-* removed: ewww_image_optimizer_pngout_level (PNGOUT level) option
-* removed: ewww_image_optimizer_disable_pngout (Disable PNGOUT) option
-* removed: ewww_image_optimizer_skip_size (Skip Small Images) option
-* removed: ewww_image_optimizer_skip_png_size (Skip Large PNG Images) option
-* removed: ewww_image_optimizer_lossy_skip_full (Exclude full-size images from lossy optimization) option
-* removed: ewww_image_optimizer_metadata_skip_full (Exclude full-size images from metadata removal) option
-* removed: ewww_image_optimizer_skip_bundle (Use System Paths) option
-
 = Earlier versions =
 Please refer to the separate changelog.txt file.
 
@@ -256,13 +250,6 @@ Please refer to the separate changelog.txt file.
 
 = 3.3.0 =
 * Requires PHP 5.3+. All sites hosted on Pantheon will now use "relative" paths. Existing Pantheon sites will need to update the ewwwio_images table to match (contact support for help), or disable this function by setting EWWW_IMAGE_OPTIMIZER_RELATIVE to false in wp-config.php.
-
-= 3.2.3 =
-* The bulk scanner will now attempt to auto-detect how much memory is available to avoid exceeding memory limits within PHP. Some webhosts do not allow the ini_get() function, so the plugin will fall back to the current memory usage plug 16MB. If you need to set the memory limit for EWWW IO manually, you can do so with the EWWW_MEMORY_LIMIT constant in wp-config.php.
-
-= 2.9.0 =
-* changed: JPG quality setting applies to conversion AND image editing (but not regular optimization), so that you can override the WP default of 82 (it is NOT recommended to increase the quality)
-* added: parallel optimization for Media uploads (original and resizes are done concurrently), turn off under Advanced if it affects site performance
 
 == Contact and Credits ==
 
