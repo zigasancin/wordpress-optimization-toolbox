@@ -5,7 +5,7 @@ Tags: image, compress, optimize, optimization, lossless, lossy, seo, jpegmini, t
 Requires at least: 4.6
 Tested up to: 4.9
 Requires PHP: 5.3
-Stable tag: 4.0.5
+Stable tag: 4.0.6
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -133,7 +133,7 @@ Yes, but only if the optimized version is smaller. The plugin should NEVER creat
 
 = Can I resize my images with this plugin? =
 
-Yes, you can, set it up on the Advanced tab.
+Yes, you can, set it up on the Resize tab.
 
 = Can I lower the compression setting for JPGs to save more space? =
 
@@ -178,6 +178,14 @@ Pngout, TinyJPG/TinyPNG, JPEGmini, and Pngquant were recommended by EWWW IO user
 
 * Feature requests can be submitted via https://ewww.io/contact-us/ and commented on here: https://trello.com/b/Fp81dWof/ewww-image-optimizer
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
+
+= 4.0.6 =
+* changed: dummy images have no args appended with exactdn except for ssl flag
+* fixed: resize_detection.js being combined with other scripts by Autoptimize
+* fixed: retina optimization not deferred in async mode
+* fixed: PDF files could trigger license exceeded message
+* fixed: binary detection not fully functional with MacOS and PHP 7.2
+* fixed: compatibility with Regenerate Thumbnails version 3
 
 = 4.0.5 =
 * added: enable lossy compression with ExactDN: http://docs.ewww.io/article/47-getting-more-from-exactdn
