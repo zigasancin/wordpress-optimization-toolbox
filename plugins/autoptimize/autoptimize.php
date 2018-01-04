@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Autoptimize
-Plugin URI: http://autoptimize.com/
+Plugin URI: https://autoptimize.com/
 Description: Optimizes your website, concatenating the CSS and JavaScript code, and compressing it.
-Version: 2.2.2
+Version: 2.3.1
 Author: Frank Goossens (futtta)
-Author URI: http://blog.futtta.be/
+Author URI: https://autoptimize.com/
 Domain Path: localization/
 Text Domain: autoptimize
 Released under the GNU General Public License (GPL)
@@ -46,7 +46,12 @@ if (is_multisite() && apply_filters( 'autoptimize_separate_blog_caches' , true )
     define('AUTOPTIMIZE_CACHE_DIR', WP_CONTENT_DIR.AUTOPTIMIZE_CACHE_CHILD_DIR);
 }
 define('AUTOPTIMIZE_CACHE_DELAY',true);
-define('WP_ROOT_DIR',str_replace(AUTOPTIMIZE_WP_CONTENT_NAME,'',WP_CONTENT_DIR));
+define('WP_ROOT_DIR',substr(WP_CONTENT_DIR, 0, strlen(WP_CONTENT_DIR)-strlen(AUTOPTIMIZE_WP_CONTENT_NAME)));
+
+// WP CLI
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once AUTOPTIMIZE_PLUGIN_DIR . 'classes/autoptimizeCLI.php';
+}
 
 // Initialize the cache at least once
 $conf = autoptimizeConfig::instance();
@@ -54,7 +59,7 @@ $conf = autoptimizeConfig::instance();
 /* Check if we're updating, in which case we might need to do stuff and flush the cache
 to avoid old versions of aggregated files lingering around */
 
-$autoptimize_version="2.2.0";
+$autoptimize_version="2.3.0";
 $autoptimize_db_version=get_option('autoptimize_version','none');
 
 if ($autoptimize_db_version !== $autoptimize_version) {
@@ -78,7 +83,7 @@ add_action( 'init', 'autoptimize_load_plugin_textdomain' );
 function autoptimize_uninstall(){
     autoptimizeCache::clearall();
 
-    $delete_options=array("autoptimize_cache_clean", "autoptimize_cache_nogzip", "autoptimize_css", "autoptimize_css_datauris", "autoptimize_css_justhead", "autoptimize_css_defer", "autoptimize_css_defer_inline", "autoptimize_css_inline", "autoptimize_css_exclude", "autoptimize_html", "autoptimize_html_keepcomments", "autoptimize_js", "autoptimize_js_exclude", "autoptimize_js_forcehead", "autoptimize_js_justhead", "autoptimize_js_trycatch", "autoptimize_version", "autoptimize_show_adv", "autoptimize_cdn_url", "autoptimize_cachesize_notice","autoptimize_css_include_inline","autoptimize_js_include_inline","autoptimize_css_nogooglefont","autoptimize_optimize_logged","autoptimize_optimize_checkout");
+    $delete_options=array("autoptimize_cache_clean", "autoptimize_cache_nogzip", "autoptimize_css", "autoptimize_css_datauris", "autoptimize_css_justhead", "autoptimize_css_defer", "autoptimize_css_defer_inline", "autoptimize_css_inline", "autoptimize_css_exclude", "autoptimize_html", "autoptimize_html_keepcomments", "autoptimize_js", "autoptimize_js_exclude", "autoptimize_js_forcehead", "autoptimize_js_justhead", "autoptimize_js_trycatch", "autoptimize_version", "autoptimize_show_adv", "autoptimize_cdn_url", "autoptimize_cachesize_notice","autoptimize_css_include_inline","autoptimize_js_include_inline","autoptimize_optimize_logged","autoptimize_optimize_checkout","autoptimize_extra_settings");
 
     if ( !is_multisite() ) {
         foreach ($delete_options as $del_opt) { delete_option( $del_opt ); }
@@ -316,6 +321,13 @@ function autoptimize_activate() {
 register_activation_hook( __FILE__, 'autoptimize_activate' );
 
 include_once('classlesses/autoptimizeCacheChecker.php');
+
+add_action('plugins_loaded','includeAutoptimizeExtra');
+function includeAutoptimizeExtra() {
+    if ( apply_filters('autoptimize_filter_extra_activate',true) ) {
+        include_once('classlesses/autoptimizeExtra.php');
+    }
+}
 
 // Do not pollute other plugins
 unset($conf);
