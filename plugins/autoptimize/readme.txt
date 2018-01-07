@@ -1,16 +1,16 @@
 === Autoptimize ===
 Contributors: futtta, optimizingmatters, turl
-Tags: css, javascript, optimize, minify, performance
+Tags: optimize, minify, performance, pagespeed, async
 Donate link: http://blog.futtta.be/2013/10/21/do-not-donate-to-me/
 Requires at least: 4.0
 Tested up to: 4.9
-Stable tag: 2.3.1
+Stable tag: 2.3.2
 
-Autoptimize speeds up your website and helps you save bandwidth by aggregating and minimizing JS, CSS and HTML.
+Autoptimize speeds up your website by optimizing JS, CSS and HTML, async-ing JavaScript, removing emoji cruft, optimizing Google Fonts and more.
 
 == Description ==
 
-Autoptimize makes optimizing your site really easy. It can aggregate, minify and cache scripts and styles, injects CSS in the page head by default and can move and defer scripts to the footer. It also minifies the HTML code itself, making your page really lightweight. There are advanced options and an extensive API available to enable you to tailor Autoptimize to each and every site's specific needs. And it can even improve your site's performance when on HTTP/2!
+Autoptimize makes optimizing your site really easy. It can aggregate, minify and cache scripts and styles, injects CSS in the page head by default (but can also defer), moves and defers scripts to the footer and minifies HTML. The "Extra" options allow you to async non-aggregated JavaScript, remove WordPress core emoji cruft, optimize Google Fonts and more. As such it can improve your site's performance even when already on HTTP/2! There is extensive API available to enable you to tailor Autoptimize to each and every site's specific needs.
 
 If you consider performance important, you really should use one of the many caching plugins to do page caching. Some good candidates to complement Autoptimize that way are e.g. [WP Super Cache](http://wordpress.org/plugins/wp-super-cache/), [HyperCache](http://wordpress.org/plugins/hyper-cache/), [Comet Cache](https://wordpress.org/plugins/comet-cache/) or [KeyCDN's Cache Enabler](https://wordpress.org/plugins/cache-enabler).
 
@@ -247,6 +247,12 @@ You can get help on the [wordpress.org support forum](http://wordpress.org/suppo
 Just [fork Autoptimize on Github](https://github.com/futtta/autoptimize) and code away!
 
 == Changelog ==
+
+= 2.3.2 =
+* workaround for [stale options-data in external object cache such as Redis, Memcached (core bug)](https://core.trac.wordpress.org/ticket/31245) resulting in Autoptimize continuously executing the upgrade-procedure including clearing the cache and trying to preload it with HTTP-requests with "cachebuster" in the query string, thanks to [Haroon Q. Raja](https://hqraja.com/) and [Tomas Trkulja](https://twitter.com/zytzagoo) for their great assistance!
+* fixes for "undefined index" notices on Extra settings page
+* now removing respective dns-prefetch resource hints when "remove emojis" or when Google Fonts are optimized or removed.
+* changed JS code to load webfont.js deferred instead of asynced to make sure the js-file or fonts are not consider render blocking.
 
 = 2.3.1 =
 * fix for issue with update-code in some circumstances, thanks to [Rajendra Zore](https://rajendrazore.com/) to report & help fix!

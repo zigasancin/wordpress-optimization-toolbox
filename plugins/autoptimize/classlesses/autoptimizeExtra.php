@@ -24,12 +24,12 @@ function autoptimize_extra_init() {
     $autoptimize_extra_options = autoptimize_extra_get_options();
 
     /* disable emojis */
-    if ($autoptimize_extra_options['autoptimize_extra_checkbox_field_1']) {
+    if ( !empty($autoptimize_extra_options['autoptimize_extra_checkbox_field_1']) ) {
         autoptimize_extra_disable_emojis();
     }
     
     /* remove version from query string */
-    if ($autoptimize_extra_options['autoptimize_extra_checkbox_field_0']) {
+    if ( !empty($autoptimize_extra_options['autoptimize_extra_checkbox_field_0']) ) {
         add_filter( 'script_loader_src', 'autoptimize_extra_remove_qs', 15, 1 );
         add_filter( 'style_loader_src', 'autoptimize_extra_remove_qs', 15, 1 );
     }
@@ -41,6 +41,7 @@ function autoptimize_extra_init() {
 
     /* optimize google fonts */
     if ( !empty( $autoptimize_extra_options['autoptimize_extra_radio_field_4'] ) && ( $autoptimize_extra_options['autoptimize_extra_radio_field_4'] != "1" ) ) {
+        add_filter( 'wp_resource_hints', 'autoptimize_extra_gfonts_remove_dnsprefetch', 10, 2 );        
         if ( $autoptimize_extra_options['autoptimize_extra_radio_field_4'] == "2" ) {
             add_filter('autoptimize_filter_css_removables','autoptimize_extra_remove_gfonts',10,1);
         } else {
@@ -68,6 +69,9 @@ function autoptimize_extra_disable_emojis() {
 
     // filter to remove TinyMCE emojis
     add_filter( 'tiny_mce_plugins', 'autoptimize_extra_disable_emojis_tinymce' );
+
+    // and remove dns-prefetch for emoji
+    add_filter( 'wp_resource_hints', 'autoptimize_extra_emojis_remove_dns_prefetch', 10, 2 );
 }
 
 function autoptimize_extra_disable_emojis_tinymce( $plugins ) {
@@ -76,6 +80,12 @@ function autoptimize_extra_disable_emojis_tinymce( $plugins ) {
     } else {
         return array();
     }
+}
+
+function autoptimize_extra_emojis_remove_dns_prefetch( $urls, $relation_type ) {
+    $_emoji_svg_url = apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/' );
+
+    return autoptimize_extra_remove_dns_prefetch( $urls, $relation_type, $_emoji_svg_url );
 }
 
 // remove query string function
@@ -147,6 +157,12 @@ function autoptimize_extra_preconnect($hints, $relation_type) {
 }
 
 // google font functions
+function autoptimize_extra_gfonts_remove_dnsprefetch ( $urls, $relation_type ) {
+    $_gfonts_url = "fonts.googleapis.com";
+    
+    return autoptimize_extra_remove_dns_prefetch( $urls, $relation_type, $_gfonts_url );
+}
+
 function autoptimize_extra_remove_gfonts($in) { 
     // simply remove google fonts
     return $in.", fonts.googleapis.com"; 
@@ -229,7 +245,7 @@ function autoptimize_extra_gfonts($in) {
             $_fontsOut .= $_font."','";
         }
         $_fontsOut = trim(trim($_fontsOut,"'"),",");
-        $_fontsOut .= '] },classes:false, events:false, timeout:1500};(function() {var wf = document.createElement(\'script\');wf.src=\'https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js\';wf.type=\'text/javascript\';wf.async=\'true\';var s=document.getElementsByTagName(\'script\')[0];s.parentNode.insertBefore(wf, s);})();</script>';
+        $_fontsOut .= '] },classes:false, events:false, timeout:1500};(function() {var wf = document.createElement(\'script\');wf.src=\'https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js\';wf.type=\'text/javascript\';wf.defer=\'true\';var s=document.getElementsByTagName(\'script\')[0];s.parentNode.insertBefore(wf, s);})();</script>';
     }
  
     // inject in HTML
@@ -244,10 +260,24 @@ function autoptimize_extra_preconnectgooglefonts($in) {
     $in[] = "https://fonts.gstatic.com";
     if ( $autoptimize_extra_options['autoptimize_extra_radio_field_4'] == "4" ) {
         // and more preconnects for webfont.js
-        $in[] = "https://ajax.googleapis.com/";
+        $in[] = "https://ajax.googleapis.com";
         $in[] = "https://fonts.googleapis.com";
     }
     return $in;
+}
+
+function autoptimize_extra_remove_dns_prefetch( $urls, $relation_type, $_remove_url ) {
+        if ( 'dns-prefetch' == $relation_type ) {
+        $_count=0;
+        foreach ($urls as $_url) {
+            if ( strpos($_url, $_remove_url) !== false ) {
+                unset($urls[$_count]);
+            }
+            $_count++;
+        }
+    }
+
+    return $urls;
 }
 
 /* admin page functions */
@@ -281,13 +311,13 @@ function autoptimize_extra_options_page() {
             <tr>
                 <th scope="row"><?php _e('Remove emojis','autoptimize'); ?></th>
                 <td>
-                    <label><input type='checkbox' name='autoptimize_extra_settings[autoptimize_extra_checkbox_field_1]' <?php checked( $autoptimize_extra_options['autoptimize_extra_checkbox_field_1'], 1 ); ?> value='1'><?php _e('Removes WordPress\' core emojis\' inline CSS, inline JavaScript, and an otherwise un-autoptimized JavaScript file.','autoptimize'); ?></label>
+                    <label><input type='checkbox' name='autoptimize_extra_settings[autoptimize_extra_checkbox_field_1]' <?php if (!empty($autoptimize_extra_options['autoptimize_extra_checkbox_field_1']) && 1 == $autoptimize_extra_options['autoptimize_extra_checkbox_field_1']) echo 'checked="checked"'; ?> value='1'><?php _e('Removes WordPress\' core emojis\' inline CSS, inline JavaScript, and an otherwise un-autoptimized JavaScript file.','autoptimize'); ?></label>
                 </td>
             </tr>
             <tr>
                 <th scope="row"><?php _e('Remove query strings from static resources','autoptimize'); ?></th>
                 <td>
-                    <label><input type='checkbox' name='autoptimize_extra_settings[autoptimize_extra_checkbox_field_0]' <?php checked( $autoptimize_extra_options['autoptimize_extra_checkbox_field_0'], 1 ); ?> value='1'><?php _e('Removing query strings (or more specificaly the <code>ver</code> parameter) will not improve load time, but might improve performance scores.','autoptimize'); ?></label>
+                    <label><input type='checkbox' name='autoptimize_extra_settings[autoptimize_extra_checkbox_field_0]' <?php if (!empty( $autoptimize_extra_options['autoptimize_extra_checkbox_field_0']) && 1 == $autoptimize_extra_options['autoptimize_extra_checkbox_field_0']) echo 'checked="checked"'; ?> value='1'><?php _e('Removing query strings (or more specificaly the <code>ver</code> parameter) will not improve load time, but might improve performance scores.','autoptimize'); ?></label>
                 </td>
             </tr>
             <tr>
