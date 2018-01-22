@@ -113,6 +113,7 @@ class WPShortPixel {
         add_action('admin_action_shortpixel_check_quota', array(&$this, 'handleCheckQuota'));
         //This adds the constants used in PHP to be available also in JS
         add_action( 'admin_footer', array( &$this, 'shortPixelJS') );
+        add_action( 'admin_head', array( &$this, 'headCSS') );
 
         if($this->_settings->frontBootstrap) {
             //also need to have it in the front footer then
@@ -319,6 +320,10 @@ class WPShortPixel {
             error_log($message);
         }
     }
+
+    function headCSS() {
+        echo('<style>.shortpixel-hide {display:none;}</style>');
+    }
    
     function shortPixelJS() { 
         //require_once(ABSPATH . 'wp-admin/includes/screen.php');
@@ -353,6 +358,10 @@ class WPShortPixel {
                 FRONT_BOOTSTRAP: <?php echo $this->_settings->frontBootstrap && (!isset($this->_settings->lastBackAction) || (time() - $this->_settings->lastBackAction > 600)) ? 1 : 0; ?>,
                 AJAX_URL: '<?php echo admin_url('admin-ajax.php'); ?>'
             };
+            //check after 10 seconds if ShortPixel initialized OK, if not, force the init (could happen if a JS error somewhere else stopped the JS execution).
+            setTimeout(function($) {
+                ShortPixel.init();
+            }, 10000);
         </script> <?php
         wp_enqueue_style('short-pixel.min.css', plugins_url('/res/css/short-pixel.min.css',SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
         
@@ -497,8 +506,16 @@ class WPShortPixel {
             return $meta;
         }
         elseif( self::_isProcessable($ID, array(), $this->_settings->excludePatterns, $meta) == false )
-        {//not a file that we can process
-            $meta['ShortPixelImprovement'] = __('Optimization N/A','shortpixel-image-optimiser');
+        {
+            if(isset($meta['file']) && in_array(strtolower(pathinfo($meta['file'], PATHINFO_EXTENSION)), self::$PROCESSABLE_EXTENSIONS)) {
+                //in some rare cases (images added from the front-end) it's an image but get_attached_file returns null (the record is not yet saved in the DB)
+                //in this case add it to the queue nevertheless
+                $this->prioQ->push($ID);
+                $meta['ShortPixel'] = array('WaitingProcessing' => true);
+            } else {
+                //not a file that we can process
+                $meta['ShortPixelImprovement'] = __('Optimization N/A', 'shortpixel-image-optimiser');
+            }
             return $meta;
         }
         else 
@@ -509,8 +526,9 @@ class WPShortPixel {
             $itemHandler->setRawMeta($meta);
             //that's a hack for watermarking plugins, don't send the image right away to processing, only add it in the queue
             include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-            if(   !is_plugin_active('image-watermark/image-watermark.php') 
+            if(   !is_plugin_active('image-watermark/image-watermark.php')
                && !is_plugin_active('amazon-s3-and-cloudfront/wordpress-s3.php')
+               && !is_plugin_active('amazon-s3-and-cloudfront-pro/amazon-s3-and-cloudfront-pro.php')
                && !is_plugin_active('easy-watermark/index.php')) {
                 try {
                     $URLsAndPATHs = $this->getURLsAndPATHs($itemHandler);
@@ -766,7 +784,7 @@ class WPShortPixel {
                 //daca n-am adaugat niciuna pana acum, n-are sens sa mai selectez zona asta de id-uri in bulk-ul asta.
                 $leapStart = $this->prioQ->getStartBulkId();
                 $crtStartQueryID = $startQueryID = $itemMetaData->post_id - 1; //decrement it so we don't select it again
-                $res = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->_settings->optimizePdfs, $leapStart, $crtStartQueryID);
+                $res = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->_settings, $leapStart, $crtStartQueryID);
                 $skippedAlreadyProcessed += $res["mainProcessedFiles"] - $res["mainProc".($this->getCompressionType() == 1 ? "Lossy" : "Lossless")."Files"]; 
                 self::log("GETDB: empty list. setStartBulkID to $startQueryID");
                 $this->prioQ->setStartBulkId($startQueryID);
@@ -1613,7 +1631,7 @@ class WPShortPixel {
         {
             return $this->_settings->currentStats;
         } else {
-            $imageCount = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->_settings->optimizePdfs);
+            $imageCount = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->_settings);
             $quotaData['time'] = time();
             $quotaData['optimizePdfs'] = $this->_settings->optimizePdfs;
             //$quotaData['quotaData'] = $quotaData;
@@ -1860,7 +1878,9 @@ class WPShortPixel {
         } elseif ($minutes > 240) {
             $timeEst = "~ " . round($minutes / 60) . " hours left";
         } elseif ($minutes > 60) {
-            $timeEst = "~ " . round($minutes / 60) . " hours " . round($minutes % 60 / 10) * 10 . " min. left";
+            $hours = round($minutes / 60);
+            $minutes = round(max(0, $minutes - $hours * 60) / 10) * 10;
+            $timeEst = "~ " . $hours . " hours " . ($minutes > 0 ? $minutes . " min." : "") . " left";
         } elseif ($minutes > 20) {
             $timeEst = "~ " . round($minutes / 10) * 10 . " minutes left";
         } else {
@@ -2035,6 +2055,7 @@ class WPShortPixel {
                 //'m1' => 4625, 'm2' => 4592, 'm3' => 4711, 'm4' => 4121, 'filesTodo' => 51143, 'estimated' => 'true'
                 //'m1' => 4625, 'm2' => 4592, 'm3' => 4711, 'm4' => 4121, 'filesTodo' => 41143, 'estimated' => 'true'
                 //'m1' => 7625, 'm2' => 6592, 'm3' => 6711, 'm4' => 5121, 'filesTodo' => 41143, 'estimated' => 'true'
+                //'m1' => 1010, 'm2' => 4875, 'm3' => 2863, 'm4' => 1026, 'filesTodo' => 239595, 'estimated' => 'true',
                 'm1' => $stats['totalM1'],
                 'm2' => $stats['totalM2'],
                 'm3' => $stats['totalM3'],
@@ -2390,7 +2411,7 @@ class WPShortPixel {
         if($validate) {
             $args['body']['DomainCheck'] = get_site_url();
             $args['body']['Info'] = get_bloginfo('version') . '|' . phpversion();
-            $imageCount = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->_settings->optimizePdfs);
+            $imageCount = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->_settings);
             $args['body']['ImagesCount'] = $imageCount['mainFiles'];
             $args['body']['ThumbsCount'] = $imageCount['totalFiles'] - $imageCount['mainFiles'];
             $argsStr .= "&DomainCheck={$args['body']['DomainCheck']}&Info={$args['body']['Info']}&ImagesCount={$imageCount['mainFiles']}&ThumbsCount={$args['body']['ThumbsCount']}";

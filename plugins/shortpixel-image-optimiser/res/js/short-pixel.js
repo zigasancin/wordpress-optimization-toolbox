@@ -2,39 +2,42 @@
  * Short Pixel WordPress Plugin javascript
  */
 
-jQuery(document).ready(function($){
-    //are we on media list?
-    if( jQuery('table.wp-list-table.media').length > 0) {
-        //register a bulk action
-        jQuery('select[name^="action"] option:last-child').before('<option value="short-pixel-bulk">' + _spTr.optimizeWithSP + '</option>');
-    }    
-    
-    ShortPixel.setOptions(ShortPixelConstants);
-
-    if(jQuery('#backup-folder-size').length) {
-        jQuery('#backup-folder-size').html(ShortPixel.getBackupSize());
-    }
-    
-    if( ShortPixel.MEDIA_ALERT == 'todo' && jQuery('div.media-frame.mode-grid').length > 0) {
-        //the media table is not in the list mode, alert the user
-        jQuery('div.media-frame.mode-grid').before('<div id="short-pixel-media-alert" class="notice notice-warning"><p>' 
-                + _spTr.changeMLToListMode.format('<a href="upload.php?mode=list" class="view-list"><span class="screen-reader-text">',' </span>',
-                                                  '</a><a class="alignright" href="javascript:ShortPixel.dismissMediaAlert();">','</a>') 
-                + '</p></div>');
-    }
-    //
-    jQuery(window).on('beforeunload', function(){
-        if(ShortPixel.bulkProcessor == true) {        
-            clearBulkProcessor();
-        }
-    });
-    //check if  bulk processing
-    checkQuotaExceededAlert();
-    checkBulkProgress();
-});
+jQuery(document).ready(function($){ShortPixel.init();});
 
 
 var ShortPixel = function() {
+
+    function init() {
+        if (typeof ShortPixel.API_KEY !== 'undefined') return; //was initialized by the 10 sec. setTimeout, rare but who knows, might happen on very slow connections...
+        //are we on media list?
+        if( jQuery('table.wp-list-table.media').length > 0) {
+            //register a bulk action
+            jQuery('select[name^="action"] option:last-child').before('<option value="short-pixel-bulk">' + _spTr.optimizeWithSP + '</option>');
+        }
+
+        ShortPixel.setOptions(ShortPixelConstants);
+
+        if(jQuery('#backup-folder-size').length) {
+            jQuery('#backup-folder-size').html(ShortPixel.getBackupSize());
+        }
+
+        if( ShortPixel.MEDIA_ALERT == 'todo' && jQuery('div.media-frame.mode-grid').length > 0) {
+            //the media table is not in the list mode, alert the user
+            jQuery('div.media-frame.mode-grid').before('<div id="short-pixel-media-alert" class="notice notice-warning"><p>'
+                + _spTr.changeMLToListMode.format('<a href="upload.php?mode=list" class="view-list"><span class="screen-reader-text">',' </span>',
+                    '</a><a class="alignright" href="javascript:ShortPixel.dismissMediaAlert();">','</a>')
+                + '</p></div>');
+        }
+        //
+        jQuery(window).on('beforeunload', function(){
+            if(ShortPixel.bulkProcessor == true) {
+                clearBulkProcessor();
+            }
+        });
+        //check if  bulk processing
+        checkQuotaExceededAlert();
+        checkBulkProgress();
+    }
 
     function setOptions(options) {
         for(var opt in options) {
@@ -112,6 +115,14 @@ var ShortPixel = function() {
             jQuery(this).val(Math.max(minHeight, parseInt(jQuery(this).val())));
         });
         */
+        jQuery('.shortpixel-confirm').click(function(event){
+            var choice = confirm(event.target.getAttribute('data-confirm'));
+            if (!choice) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        });
     }
     
     function setupAdvancedTab() {
@@ -570,6 +581,7 @@ var ShortPixel = function() {
     }
 
     return {
+        init                : init,
         setOptions          : setOptions,
         isEmailValid        : isEmailValid,
         updateSignupEmail   : updateSignupEmail,

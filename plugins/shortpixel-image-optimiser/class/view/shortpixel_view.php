@@ -777,7 +777,7 @@ class ShortPixelView {
             <p><?php printf(__('New images uploaded to the Media Library will be optimized automatically.<br/>If you have existing images you would like to optimize, you can use the <a href="%supload.php?page=wp-short-pixel-bulk">Bulk Optimization Tool</a>.','shortpixel-image-optimiser'),get_admin_url());?></p>
         <?php } else { 
             if($showApiKey) {?>
-            <h3><?php _e('Step 1:','shortpixel-image-optimiser');?></h3>
+            <h3><?php _e('Request an API Key:','shortpixel-image-optimiser');?></h3>
             <p style='font-size: 14px'><?php _e('If you don\'t have an API Key, you can request one for free. Just press the "Request Key" button after checking that the e-mail is correct.','shortpixel-image-optimiser');?></p>
             <table class="form-table">
                 <tbody>
@@ -798,7 +798,7 @@ class ShortPixelView {
                             </p>
                             <p class="settings-info" id='pluginemail-info'>
                                 <?php if($adminEmail) {
-                                    printf(__('<b>%s</b> is the e-mail address in your WordPress Settings. You can use it, or change it to any valid e-mail address that you own.','shortpixel-image-optimiser'), $adminEmail);
+                                    printf(__('<b>%s</b> is the e-mail address in your WordPress Settings. You can use it, or change it to any valid e-mail address that you own. By signing up you agree to our <a href="https://shortpixel.com/tos" target="_blank">Terms of Service</a>.','shortpixel-image-optimiser'), $adminEmail);
                                 } else {
                                     _e('Please input your e-mail address and press the Request Key button.','shortpixel-image-optimiser');
                                 }?>
@@ -808,10 +808,10 @@ class ShortPixelView {
                 </tbody>
             </table>
             <h3>
-                <?php _e('Step 2:','shortpixel-image-optimiser');?>
+                <?php _e('Already have an API Key:','shortpixel-image-optimiser');?>
             </h3>
             <p style='font-size: 14px'>
-                <?php _e('Please enter here the API Key and press Validate.','shortpixel-image-optimiser');?>
+                <?php _e('If you already have an API Key please input it below and press Validate.','shortpixel-image-optimiser');?>
             </p>
             <?php } 
         }?>
@@ -930,6 +930,9 @@ class ShortPixelView {
                             <img src="<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner.png' ));?>" 
                                  srcset='<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner.png' ));?> 1x, <?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner@2x.png' ));?> 2x'
                                  title="<?php _e('Sizes will be smaller or equal to the corresponding value. For example, if you set the resize dimensions at 1000x1200, an image of 2000x3000px will be resized to 800x1200px while an image of 3000x2000px will be resized to 1000x667px','shortpixel-image-optimiser');?>">
+                            <div style="display:inline-block;margin-left: 20px;"><a href="https://blog.shortpixel.com/resize-images/" class="shortpixel-help-link" target="_blank">
+                                <span class="dashicons dashicons-editor-help"></span>What is this?</a>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -1287,7 +1290,9 @@ class ShortPixelView {
                             <?php if ($backupFolderSize === null) { ?> 
                                 <span id='backup-folder-size'>Calculating...</span>
                             <?php } else { echo($backupFolderSize); }?>
-                            <input type="submit"  style="margin-left: 15px; vertical-align: middle;" class="button button-secondary" name="emptyBackup" value="<?php _e('Empty backups','shortpixel-image-optimiser');?>"/>
+                            <input type="submit"  style="margin-left: 15px; vertical-align: middle;" class="button button-secondary shortpixel-confirm"
+                                   name="emptyBackup" value="<?php _e('Empty backups','shortpixel-image-optimiser');?>"
+                                   data-confirm="<?php  _e('Are you sure you want to delete all the backup images? You won\'t be able to restore from backup or to reoptimize with different settings if you delete the backups.','shortpixel-image-optimiser'); ?>"/>
                         </form>
                     </td>
                 </tr>

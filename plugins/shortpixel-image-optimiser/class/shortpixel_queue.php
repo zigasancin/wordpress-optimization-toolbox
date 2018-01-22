@@ -128,27 +128,31 @@ class ShortPixelQueue {
         //$this->settings->priorityQueue = $_SESSION["wp-short-pixel-priorityQueue"] = array_reverse($_SESSION["wp-short-pixel-priorityQueue"]);
 
     }
-    
+
+    protected function pushCallback($priorityQueue, $ID) {
+        WPShortPixel::log("PUSH: Push ID $ID into queue " . json_encode($priorityQueue));
+        array_push($priorityQueue, $ID);
+        $prioQ = array_unique($priorityQueue);
+        WPShortPixel::log("PUSH: Updated: " . json_encode($prioQ));//get_option("wp-short-pixel-priorityQueue")));
+        return $prioQ;
+    }
+
     public function push($ID)//add an ID to priority queue
     {
-        $this->apply(function($priorityQueue, $ID) {
-            WPShortPixel::log("PUSH: Push ID $ID into queue " . json_encode($priorityQueue));
-            array_push($priorityQueue, $ID);
-            $prioQ = array_unique($priorityQueue);
-            WPShortPixel::log("PUSH: Updated: " . json_encode($prioQ));//get_option("wp-short-pixel-priorityQueue")));
-            return $prioQ;
-        }, $ID);
+        $this->apply(array(&$this, 'pushCallback'), $ID);
+    }
+
+    protected function enqueueCallback($priorityQueue, $ID) {
+        WPShortPixel::log("ENQUEUE: Enqueue ID $ID into queue " . json_encode($priorityQueue));
+        array_unshift($priorityQueue, $ID);
+        $prioQ = array_unique($priorityQueue);
+        WPShortPixel::log("ENQUEUE: Updated: " . json_encode($prioQ));//get_option("wp-short-pixel-priorityQueue")));
+        return $prioQ;
     }
 
     public function enqueue($ID)//add an ID to priority queue as LAST
     {
-        $this->apply(function($priorityQueue, $ID) {
-            WPShortPixel::log("ENQUEUE: Enqueue ID $ID into queue " . json_encode($priorityQueue));
-            array_unshift($priorityQueue, $ID);
-            $prioQ = array_unique($priorityQueue);
-            WPShortPixel::log("ENQUEUE: Updated: " . json_encode($prioQ));//get_option("wp-short-pixel-priorityQueue")));
-            return $prioQ;
-        }, $ID);
+        $this->apply(array(&$this, 'enqueueCallback'), $ID);
     }
 
     public function getFirst($count = 1)//return the first values added to priority queue
@@ -291,7 +295,7 @@ class ShortPixelQueue {
     
     public function setBulkPreviousPercent() {
         //processable and already processed
-        $res = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->settings->optimizePdfs, $this->getFlagBulkId(), $this->settings->stopBulkId);
+        $res = WpShortPixelMediaLbraryAdapter::countAllProcessableFiles($this->settings, $this->getFlagBulkId(), $this->settings->stopBulkId);
         $this->settings->bulkCount = $res["mainFiles"];
         
         //if compression type changed, add also the images with the other compression type

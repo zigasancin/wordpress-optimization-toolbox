@@ -531,16 +531,9 @@ class ShortPixelAPI {
                 if(file_exists($tempWebpFilePATH)) {
                     $targetWebPFile = dirname($targetFile) . '/' . self::MB_basename($targetFile, '.' . pathinfo($targetFile, PATHINFO_EXTENSION)) . ".webp";                
                     copy($tempWebpFilePATH, $targetWebPFile);
-
-                    /* the webp thumbnails in metadata sizes is not working so deactivate for now
-                    $webpSize = $itemHandler->getWebpSizeMeta($targetFile);
-                    if($webpSize) {
-                        $webpSizes[$webpSize['key']] = $webpSize['val'];
-                    }
-                    */
+                    @unlink($tempWebpFilePATH);
                 }
-                @unlink($tempWebpFilePATH);
-            }        
+            }
             
             if ( $writeFailed > 0 )//there was an error
             {
