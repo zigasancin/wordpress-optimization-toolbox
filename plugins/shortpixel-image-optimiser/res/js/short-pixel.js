@@ -634,7 +634,7 @@ var ShortPixel = function() {
     }
 }();
 
-function showToolBarAlert($status, $message) {
+function showToolBarAlert($status, $message, id) {
     var robo = jQuery("li.shortpixel-toolbar-processing");
     switch($status) {
         case ShortPixel.STATUS_QUOTA_EXCEEDED:
@@ -651,12 +651,12 @@ function showToolBarAlert($status, $message) {
             jQuery("a div", robo).attr("title", "ShortPixel quota exceeded. Click for details.");
             break;
         case ShortPixel.STATUS_SKIP:        
-            robo.addClass("shortpixel-alert shortpixel-processing"); 
+        case ShortPixel.STATUS_FAIL:
+            robo.addClass("shortpixel-alert shortpixel-processing");
             jQuery("a div", robo).attr("title", $message);
-            break;
-        case ShortPixel.STATUS_FAIL:        
-            robo.addClass("shortpixel-alert shortpixel-processing"); 
-            jQuery("a div", robo).attr("title", $message);
+            if(typeof id !== 'undefined') {
+                jQuery("a", robo).attr("href", "post.php?post=" + id + "&action=edit");
+            }
             break;
         case ShortPixel.STATUS_NO_KEY:
             robo.addClass("shortpixel-alert");
@@ -797,9 +797,9 @@ function checkBulkProcessingCallApi(){
                     case ShortPixel.STATUS_FAIL:
                         setCellMessage(id, data["Message"], "<a class='button button-smaller button-primary' href=\"javascript:manualOptimization('" + id + "', false)\">" 
                                 + _spTr.retry + "</a>");
+                        showToolBarAlert(ShortPixel.STATUS_FAIL, data["Message"], id);
                         if(isBulkPage) {
                             ShortPixel.bulkShowError(id, data["Message"], data["Filename"], data["CustomImageLink"]);
-                            showToolBarAlert(ShortPixel.STATUS_FAIL, data["Message"]);
                             if(data["BulkPercent"]) {
                                 progressUpdate(data["BulkPercent"], data["BulkMsg"]);
                             }
@@ -927,17 +927,39 @@ function setCellMessage(id, message, actions){
 function manualOptimization(id, cleanup) {
     setCellMessage(id, "<img src='" + ShortPixel.WP_PLUGIN_URL + "/res/img/loading.gif' class='sp-loading-small'>Image waiting to be processed", "");
     jQuery("li.shortpixel-toolbar-processing").removeClass("shortpixel-hide");
+    jQuery("li.shortpixel-toolbar-processing").removeClass("shortpixel-alert");
     jQuery("li.shortpixel-toolbar-processing").addClass("shortpixel-processing");
     var data = { action  : 'shortpixel_manual_optimization',
                  image_id: id, cleanup: cleanup};
-    jQuery.get(ShortPixel.AJAX_URL, data, function(response) {
-            data = JSON.parse(response);
-            if(data["Status"] == ShortPixel.STATUS_SUCCESS) {
+    jQuery.ajax({
+        type: "GET",
+        url: ShortPixel.AJAX_URL, //formerly ajaxurl , but changed it because it's not available in the front-end and now we have an option to run in the front-end
+        data: data,
+        success: function(response) {
+            var resp = JSON.parse(response);
+            if(resp["Status"] == ShortPixel.STATUS_SUCCESS) {
                 setTimeout(checkBulkProgress, 2000);
             } else {
-                setCellMessage(id, typeof data["Message"] !== "undefined" ? data["Message"] : _spTr.thisContentNotProcessable, "");
+                setCellMessage(id, typeof resp["Message"] !== "undefined" ? resp["Message"] : _spTr.thisContentNotProcessable, "");
             }
         //aici e aici
+        },
+        error: function(response){
+            //if error, give the ajax processor a chance to maybe find out why.
+            data.action = 'shortpixel_check_status'
+            jQuery.ajax({
+                type: "GET",
+                url: ShortPixel.AJAX_URL, //formerly ajaxurl , but changed it because it's not available in the front-end and now we have an option to run in the front-end
+                data: data,
+                success: function (response) {
+                    var resp = JSON.parse(response);
+                    if (resp["Status"] !== ShortPixel.STATUS_SUCCESS) {
+                        setCellMessage(id, typeof resp["Message"] !== "undefined" ? resp["Message"] : _spTr.thisContentNotProcessable, "");
+                    }
+                    //aici e aici
+                }
+            });
+        }
     });
 }
 

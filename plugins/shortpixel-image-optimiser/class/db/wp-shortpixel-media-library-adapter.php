@@ -6,7 +6,7 @@ class WpShortPixelMediaLbraryAdapter {
     public static function countAllProcessableFiles($settings = array(), $maxId = PHP_INT_MAX, $minId = 0){
         global  $wpdb;
 
-        $totalFiles = $mainFiles = $processedMainFiles = $processedTotalFiles = $totalFilesM1 = $totalFilesM2 = $totalFilesM3 = $totalFilesM4 = 
+        $totalFiles = $mainFiles = $processedMainFiles = $processedTotalFiles = $totalFilesM1 = $totalFilesM2 = $totalFilesM3 = $totalFilesM4 =
         $procGlossyMainFiles = $procGlossyTotalFiles = $procLossyMainFiles = $procLossyTotalFiles = $procLosslessMainFiles = $procLosslessTotalFiles = $procUndefMainFiles = $procUndefTotalFiles = $mainUnprocessedThumbs = 0;
         $filesMap = $processedFilesMap = array();
         $limit = self::getOptimalChunkSize();
@@ -270,6 +270,18 @@ class WpShortPixelMediaLbraryAdapter {
             foreach($thumbsCandidates as $th) {
                 if(preg_match($pattern, $th)) {
                     $thumbs[]= $th;
+                }
+            }
+        }
+        if(defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX')) {
+            $pattern = '/' . preg_quote($base, '/') . '-\d+x\d+'. SHORTPIXEL_CUSTOM_THUMB_SUFFIX . '\.'. $ext .'/';
+            $thumbsCandidates = @glob($base . "-*." . $ext);
+            $thumbs = array();
+            if(is_array($thumbsCandidates)) {
+                foreach($thumbsCandidates as $th) {
+                    if(preg_match($pattern, $th)) {
+                        $thumbs[]= $th;
+                    }
                 }
             }
         }

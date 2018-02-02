@@ -145,6 +145,8 @@ div.wrap.short-pixel-bulk-page .bulk-notice-container .bulk-notice-msg.bulk-erro
     border: 1px solid #b5914d;
     background-color: #ffe996;
     margin-right:20px;
+    position: relative;
+    z-index: 10;
 }
 div.wrap.short-pixel-bulk-page .bulk-notice-container .bulk-notice-msg.bulk-error.bulk-error-fatal {
     border: 1px solid #c32525;
@@ -710,7 +712,8 @@ section#tab-resources p {
     top: 0px;
     left: -1px;
 }
-#wpadminbar .shortpixel-toolbar-processing.shortpixel-quota-exceeded .cssload-container{
+#wpadminbar .shortpixel-toolbar-processing.shortpixel-quota-exceeded .cssload-container,
+#wpadminbar .shortpixel-toolbar-processing.shortpixel-alert .cssload-container{
     display: none;
 }
 

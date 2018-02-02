@@ -5,10 +5,12 @@
  * Time: 13:44
  */
 
+//TODO decouple from directly using WP metadata, in order to be able to use it for custom images
 class ShortPixelPng2Jpg {
     private $_settings = null;
 
     public function __construct($settings){
+        wp_raise_memory_limit( 'image' );
         $this->_settings = $settings;
     }
 
@@ -23,6 +25,9 @@ class ShortPixelPng2Jpg {
         }
         $transparent_pixel = $img = $bg = false;
         if (!$transparent) {
+            $is = getimagesize($image);
+            WPShortPixel::log("PNG2JPG Image size: " . round($is[0]*$is[1]*5/1024/1024) . "M memory limit: " . ini_get('memory_limit') . " USED: " . memory_get_usage());
+            WPShortPixel::log("PNG2JPG create from png $image");
             $img = @imagecreatefrompng($image);
             if(!$img) {
                 $transparent = true; //it's not a PNG, can't convert it
@@ -51,7 +56,7 @@ class ShortPixelPng2Jpg {
      * @param array $params
      * @param string $backupPath
      * @param string $suffixRegex for example [0-9]+x[0-9]+ - a thumbnail suffix - to add the counter of file name collisions files before that suffix (img-2-150x150.jpg).
-     * @param image $img
+     * @param image $img - the image if it was already created from png. It will be destroyed at the end.
      * @return string
      */
 
@@ -64,11 +69,14 @@ class ShortPixelPng2Jpg {
             }
         }
 
-        $bg = imagecreatetruecolor(imagesx($img), imagesy($img));
+        $x = imagesx($img);
+        $y = imagesy($img);
+        $bg = imagecreatetruecolor($x, $y);
         if(!$bg) return $params;
         imagefill($bg, 0, 0, imagecolorallocate($bg, 255, 255, 255));
         imagealphablending($bg, 1);
-        imagecopy($bg, $img, 0, 0, 0, 0, imagesx($img), imagesy($img));
+        imagecopy($bg, $img, 0, 0, 0, 0, $x, $y);
+        imagedestroy($img);
         $newPath = preg_replace("/\.png$/i", ".jpg", $image);
         $newUrl = preg_replace("/\.png$/i", ".jpg", $params['url']);
         for ($i = 1; file_exists($newPath); $i++) {
@@ -160,7 +168,7 @@ class ShortPixelPng2Jpg {
             return $meta;
         }
 
-        WPShortPixel::log("Send to processing: Convert Media PNG to JPG #{$ID}");
+        WPShortPixel::log("Send to processing: Convert Media PNG to JPG #{$ID} META: " . json_encode($meta));
 
         $image = $meta['file'];
         $imagePath = get_attached_file($ID);
@@ -168,13 +176,32 @@ class ShortPixelPng2Jpg {
         $imageUrl = wp_get_attachment_url($ID);
         $baseUrl = trailingslashit(str_replace($image, "", $imageUrl));
 
+        // set a temporary error in order to make sure user gets something if the image failed from memory limit.
+        if(   isset($meta['ShortPixel']['Retries']) && $meta['ShortPixel']['Retries'] > 3
+           && isset($meta['ShortPixel']['ErrCode']) && $meta['ShortPixel']['ErrCode'] == ShortPixelAPI::ERR_PNG2JPG_MEMORY) {
+            WPShortPixel::log("PNG2JPG too many memory failures!");
+            throw new Exception('Not enough memory to convert from PNG to JPG.', ShortPixelAPI::ERR_PNG2JPG_MEMORY);
+        }
+        $meta['ShortPixelImprovement'] = 'Error: <i>Not enough memory to convert from PNG to JPG.</i>';
+        if(!isset($meta['ShortPixel']) || !is_array($meta['ShortPixel'])) {
+            $meta['ShortPixel'] = array();
+        }
+        $meta['ShortPixel']['Retries'] = isset($meta['ShortPixel']['Retries']) ? $meta['ShortPixel']['Retries'] + 1 : 1;
+        $meta['ShortPixel']['ErrCode'] = ShortPixelAPI::ERR_PNG2JPG_MEMORY;
+        wp_update_attachment_metadata($ID, $meta);
+
         $ret = $this->canConvertPng2Jpg($imagePath);
         if (!$ret['notTransparent']) {
             return $meta; //cannot convert it
         }
 
         $ret = $this->doConvertPng2Jpg(array('file' => $imagePath, 'url' => false, 'type' => 'image/png'), $this->_settings->backupImages, false, $ret['img']);
-        //echo("CONVERT: " . $imagePath); var_dump($ret);
+
+        //unset the temporary error
+        unset($meta['ShortPixelImprovement']);
+        unset($meta['ShortPixel']['ErrCode']);
+        $meta['ShortPixel']['Retries'] -= 1;
+        wp_update_attachment_metadata($ID, $meta);
 
         if ($ret['type'] == 'image/jpeg') {
             //convert to the new URLs the urls in the existing posts.

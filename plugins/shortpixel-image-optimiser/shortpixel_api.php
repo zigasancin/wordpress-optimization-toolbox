@@ -23,6 +23,8 @@ class ShortPixelAPI {
     const ERR_SAVE_BKP = -5;
     const ERR_INCORRECT_FILE_SIZE = -6;
     const ERR_DOWNLOAD = -7;
+    const ERR_PNG2JPG_MEMORY = -8;
+    const ERR_POSTMETA_CORRUPT = -9;
     const ERR_UNKNOWN = -999;
 
     private $_settings;
@@ -538,7 +540,6 @@ class ShortPixelAPI {
             if ( $writeFailed > 0 )//there was an error
             {
                 $msg = sprintf(__('Optimized version of %s file(s) couldn\'t be updated.','shortpixel-image-optimiser'),$writeFailed);
-                //#ShortPixelAPI::SaveMessageinMetadata($ID, 'Error: optimized version of ' . $writeFailed . ' file(s) couldn\'t be updated.');
                 $itemHandler->incrementRetries(1, self::ERR_SAVE, $msg);
                 $this->_settings->bulkProcessingStatus = "error";
                 return array("Status" => self::STATUS_FAIL, "Code" =>"write-fail", "Message" => $msg);
@@ -672,13 +673,5 @@ class ShortPixelAPI {
     
     static public function getCompressionTypeCode($compressionName) {
         return $compressionName == 'glossy' ? 2 : ($compressionName == 'lossy' ? 1 : 0);
-    }
-    
-    static private function SaveMessageinMetadata($ID, $Message)
-    {
-        $meta = wp_get_attachment_metadata($ID);
-        $meta['ShortPixelImprovement'] = $Message;
-        unset($meta['ShortPixel']['WaitingProcessing']);
-        wp_update_attachment_metadata($ID, $meta);
     }
 }

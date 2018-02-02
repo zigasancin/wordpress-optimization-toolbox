@@ -294,7 +294,7 @@ class ShortPixelMetaFacade {
     public static function safeGetAttachmentUrl($id) {
         $attURL = wp_get_attachment_url($id);        
         if(!$attURL || !strlen($attURL)) {
-            throw new Exception("Post metadata is corrupt (No attachment URL)");
+            throw new Exception("Post metadata is corrupt (No attachment URL)", ShortPixelAPI::ERR_POSTMETA_CORRUPT);
         }
         if ( !parse_url($attURL, PHP_URL_SCHEME) ) {//no absolute URLs used -> we implement a hack
            return self::getHomeUrl() . $attURL;//get the file URL 
@@ -344,7 +344,11 @@ class ShortPixelMetaFacade {
                 
                 $count = 0;
                 foreach( $sizes as $thumbnailName => $thumbnailInfo ) {
-                    
+
+                    if(!isset($thumbnailInfo['file'])) { //cases when $thumbnailInfo is NULL
+                        continue;
+                    }
+
                     if(strpos($thumbnailName, ShortPixelMeta::WEBP_THUMB_PREFIX) === 0) {
                         continue;
                     }

@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.8.10
+ * Version: 4.9.0
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.8.10");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.9.0");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -37,7 +37,7 @@ require_once(ABSPATH . 'wp-admin/includes/file.php');
 
 $sp__uploads = wp_upload_dir();
 define('SHORTPIXEL_UPLOADS_BASE', $sp__uploads['basedir']);
-define('SHORTPIXEL_UPLOADS_URL', $sp__uploads['baseurl']);
+define('SHORTPIXEL_UPLOADS_URL', is_main_site() ? $sp__uploads['baseurl'] : dirname(dirname($sp__uploads['baseurl'])));
 define('SHORTPIXEL_UPLOADS_NAME', basename(is_main_site() ? SHORTPIXEL_UPLOADS_BASE : dirname(dirname(SHORTPIXEL_UPLOADS_BASE))));
 $sp__backupBase = is_main_site() ? SHORTPIXEL_UPLOADS_BASE : dirname(dirname(SHORTPIXEL_UPLOADS_BASE));
 define('SHORTPIXEL_BACKUP_FOLDER', $sp__backupBase . '/' . SHORTPIXEL_BACKUP);

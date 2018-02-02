@@ -19,7 +19,7 @@ ShortPixel is an easy to use, lightweight, install-and-forget-about-it <a href="
 
 **Ready for a quick DEMO? <a href="https://addendio.com/try-plugin/?slug=shortpixel-image-optimiser" target="_blank">Test here.</a>**
 
-This plugin uses minimal resources and works well with any shared, cloud, VPS or dedicated web hosting. It can optimize any image you have on your website even the images that aren't listed in Media Library like those in galleries like <a href="https://wordpress.org/plugins/nextgen-gallery/" target="_blank">NextGEN</a>, <a href="https://wordpress.org/plugins/modula-best-grid-gallery/" target="_blank">Modula</a> or added directly via FTP!
+Short Pixel uses minimal resources and works well with any shared, cloud, VPS or dedicated web hosting. It can optimize any image you have on your website even the images that aren't listed in Media Library like those in galleries like <a href="https://wordpress.org/plugins/nextgen-gallery/" target="_blank">NextGEN</a>, <a href="https://wordpress.org/plugins/modula-best-grid-gallery/" target="_blank">Modula</a> or added directly via FTP!
 
 Both lossy and lossless image compression is available for the most common image types (JPG, PNG, GIF and WebP) plus PDF files.
 We also offer **glossy** JPEG compression which is a very high quality lossy optimization algorithm. Specially designed for photographers!
@@ -227,6 +227,14 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.9.0 =
+* inline help beacon
+* fix exclude patterns not working after last update
+* handle situations when not enough memory to convert from PNG to JPG.
+* fix particular situations where there was no 'file' property in the metadata.
+* fix slider optimized percent over the bulk warning box.
+* display the x close link for the bulk warning box.
 
 = 4.8.10 =
 * restore compatibility with PHP 5.2.x

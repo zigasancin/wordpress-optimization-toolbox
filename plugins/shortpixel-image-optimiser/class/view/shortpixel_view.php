@@ -188,6 +188,7 @@ class ShortPixelView {
     public function displayBulkProcessingForm($quotaData,  $thumbsProcessedCount, $under5PercentCount, $bulkRan, 
                                               $averageCompression, $filesOptimized, $savedSpace, $percent, $customCount) {
         $settings = $this->ctrl->getSettings();
+        $this->ctrl->outputHSBeacon();
         ?>
         <div class="wrap short-pixel-bulk-page">
             <h1>Bulk Image Optimization by ShortPixel</h1>
@@ -540,8 +541,8 @@ class ShortPixelView {
                         <?php _e("Too many images processing simultaneously for your site, automatically retrying in 1 min. Please don't close this window.",'shortpixel-image-optimiser');?>
                     </div>
                     <div class="bulk-notice-msg bulk-error" id="bulk-error-template">
-                        <div style="float: right; margin-top: -4px; margin-right: -8px;">
-                            <a href="javascript:void(0);" onclick="ShortPixel.removeBulkMsg(this)" style='color: #c32525;'>&#10006;</a>
+                        <div style="float: right; margin-top: -4px; margin-right: -3px;">
+                            <a href="javascript:void(0);" onclick="ShortPixel.removeBulkMsg(this)" style='color: #c32525;font-size: 20px;text-decoration: none;'>&times;</a>
                         </div>
                         <img src="<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/exclamation-big.png' ));?>">
                         <span class="sp-err-title"><?php _e('Error processing file:','shortpixel-image-optimiser');?><br></span>
@@ -687,11 +688,12 @@ class ShortPixelView {
         <?php
     }
 
-    function displaySettings($showApiKey, $editApiKey, $quotaData, $notice, $resources = null, $averageCompression = null, $savedSpace = null, $savedBandwidth = null, 
+    function displaySettings($showApiKey, $editApiKey, $quotaData, $notice, $resources = null, $averageCompression = null, $savedSpace = null, $savedBandwidth = null,
                          $remainingImages = null, $totalCallsMade = null, $fileCount = null, $backupFolderSize = null, 
                          $customFolders = null, $folderMsg = false, $addedFolder = false, $showAdvanced = false) { 
         //wp_enqueue_script('jquery.idTabs.js', plugins_url('/js/jquery.idTabs.js',__FILE__) );
-        ?>        
+        $this->ctrl->outputHSBeacon();
+        ?>
         <h1><?php _e('ShortPixel Plugin Settings','shortpixel-image-optimiser');?></h1>
         <p style="font-size:18px">
             <a href="https://shortpixel.com/<?php 
@@ -798,10 +800,12 @@ class ShortPixelView {
                             </p>
                             <p class="settings-info" id='pluginemail-info'>
                                 <?php if($adminEmail) {
-                                    printf(__('<b>%s</b> is the e-mail address in your WordPress Settings. You can use it, or change it to any valid e-mail address that you own. By signing up you agree to our <a href="https://shortpixel.com/tos" target="_blank">Terms of Service</a>.','shortpixel-image-optimiser'), $adminEmail);
+                                    printf(__('<b>%s</b> is the e-mail address in your WordPress Settings. You can use it, or change it to any valid e-mail address that you own.','shortpixel-image-optimiser'), $adminEmail);
                                 } else {
                                     _e('Please input your e-mail address and press the Request Key button.','shortpixel-image-optimiser');
-                                }?>
+                                }
+                                echo(' ');_e('By signing up or validating your API Key, you agree to our <a href="https://shortpixel.com/tos" target="_blank">Terms of Service</a>.','shortpixel-image-optimiser');
+                                ?>
                             </p>
                         </td>
                     </tr>
@@ -1336,16 +1340,23 @@ class ShortPixelView {
                         echo("<br>+" . $data['thumbsTotal'] . " thumbnails");
                     }
                     break;
+                case 'waiting':
                 case 'retry':
                         echo($data['message']);
                         if(isset($data['cleanup'])) {?>  <a class='button button-smaller button-primary' href="javascript:manualOptimization('<?php echo($id)?>', true)">
                             <?php _e('Cleanup&Retry','shortpixel-image-optimiser');?>
                             </a> <?php 
                         } else {
-                            ?> 
+                            if($data['status'] == 'retry') { ?>
+                            <a class="button button-smaller sp-action-restore" href="admin.php?action=shortpixel_restore_backup&attachment_ID=<?php echo($id)?>" style="margin-left:5px;"
+                                title="Cleanup the metadata and return the image to the status before the error.">
+                                <?php _e('Cleanup','shortpixel-image-optimiser');?>
+                            </a>
+                            <?php } ?>
                             <a class='button button-smaller button-primary' href="javascript:manualOptimization('<?php echo($id)?>', false)">
                                 <?php _e('Retry','shortpixel-image-optimiser');?>
-                            </a> <?php
+                            </a>
+                            <?php
                         }
                     break;
                 case 'pdfOptimized': 
