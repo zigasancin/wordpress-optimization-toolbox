@@ -91,7 +91,7 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 					while ( $get_posts ) {
 
 						//Remove the Filters added by WP Media Folder
-						$wpsmush_db->remove_filters();
+						$this->remove_filters();
 
 						$query = new WP_Query( $args );
 
@@ -193,7 +193,7 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 			$limit  = $wpsmushit_admin->query_limit();
 
 			$mime  = implode( "', '", $wpsmushit_admin->mime_types );
-			$query = "SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND post_status != 'trash' AND post_mime_type IN ('$mime') ORDER BY `ID` DESC LIMIT %d, %d";
+			$query = "SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND post_status = 'inherit' AND post_mime_type IN ('$mime') ORDER BY `ID` DESC LIMIT %d, %d";
 			//Remove the Filters added by WP Media Folder
 			$this->remove_filters();
 
@@ -263,6 +263,11 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 				if ( ! empty( $wpsmushit_admin->total_count ) && $wpsmushit_admin->total_count <= $offset ) {
 					$query_next = false;
 				}
+			}
+
+			//Remove resmush ids from the list
+			if ( ! empty( $wpsmushit_admin->resmush_ids ) && is_array( $wpsmushit_admin->resmush_ids ) ) {
+				$posts = array_diff( $posts, $wpsmushit_admin->resmush_ids );
 			}
 
 			return $return_ids ? $posts : count( $posts );
@@ -839,7 +844,8 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 				'savings_conversion' => 0,
 				'count_images'       => 0,
 				'count_supersmushed' => 0,
-				'count_smushed'      => 0
+				'count_smushed'      => 0,
+				'count_resize'       => 0
 			);
 
 			//If we don't have any attachments, return empty array
@@ -868,8 +874,9 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 				if ( ! empty( $resize_savings ) ) {
 					//Add resize and conversion savings
 					$stats['savings_resize'] += ! empty( $resize_savings['bytes'] ) ? $resize_savings['bytes'] : 0;
-					$stats['size_before']    += ! empty( $resize_savings['size_before'] ) ? ! empty( $resize_savings['size_before'] ) : 0;
-					$stats['size_after']     += ! empty( $resize_savings['size_after'] ) ? ! empty( $resize_savings['size_after'] ) : 0;
+					$stats['size_before']    += ! empty( $resize_savings['size_before'] ) ? $resize_savings['size_before'] : 0;
+					$stats['size_after']     += ! empty( $resize_savings['size_after'] ) ? $resize_savings['size_after'] : 0;
+					$stats['count_resize']   += 1;
 				}
 
 				//Add conversion saving stats

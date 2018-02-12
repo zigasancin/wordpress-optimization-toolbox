@@ -31,15 +31,20 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		}
 
 		function init() {
-			global $WpSmush;
+			global $WpSmush, $wpsmush_settings;
 			//Filters the setting variable to add S3 setting title and description
 			add_filter( 'wp_smush_settings', array( $this, 'register' ), 5 );
 
 			//Filters the setting variable to add S3 setting in premium features
 			add_filter( 'wp_smush_pro_settings', array( $this, 'add_setting' ), 5 );
 
-			//return if not a pro user
-			if( !$WpSmush->validate_install() ) {
+			//Check if integration is Enabled or not
+			//Smush NextGen key
+			$opt_nextgen     = WP_SMUSH_PREFIX . 'nextgen';
+			$opt_nextgen_val = $wpsmush_settings->get_setting( $opt_nextgen, false );
+
+			//return if not a pro user, or nextgen integration is not enabled
+			if( !$WpSmush->validate_install() || !$opt_nextgen_val ) {
 				return;
 			}
 
@@ -525,6 +530,7 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 					'message' => esc_html__( "Error in processing restore action, Fields empty.", "wp-smushit" )
 				) );
 			}
+
 			//Check Nonce
 			if ( ! wp_verify_nonce( $_POST['_nonce'], "wp-smush-restore-" . $_POST['attachment_id'] ) ) {
 				wp_send_json_error( array(

@@ -605,7 +605,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			//Set a transient to avoid multiple request
 			set_transient( 'smush-in-progress-' . $ID, true, WP_SMUSH_TIMEOUT );
 
-			global $wpsmush_resize, $wpsmush_pngjpg, $wpsmush_settings;
+			global $wpsmush_resize, $wpsmush_pngjpg, $wpsmush_settings, $wpsmush_helper;
 
 			// While uploading from Mobile App or other sources, admin_init action may not fire.
 			// So we need to manually initialize those.
@@ -614,6 +614,13 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 			//Check if auto is enabled
 			$auto_smush = $this->is_auto_smush_enabled();
+
+			//Get the file path for backup
+			$attachment_file_path = $wpsmush_helper->get_attached_file( $ID );
+
+			//Take Backup
+			global $wpsmush_backup;
+			$wpsmush_backup->create_backup( $attachment_file_path, '', $ID );
 
 			//Optionally Resize Images
 			$meta = $wpsmush_resize->auto_resize( $ID, $meta );
@@ -707,7 +714,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				}
 				//Check for timeout error and suggest to filter timeout
 				if ( strpos( $er_msg, 'timed out' ) ) {
-					$data['message'] = esc_html__( "Skipped due to a timeout error, You can increase the request timeout to make sure Smush has enough time to process larger files. `define('WP_SMUSH_API_TIMEOUT', 150);`.", "wp-smushit" );
+					$data['message'] = esc_html__( "Skipped due to a timeout error. You can increase the request timeout to make sure Smush has enough time to process larger files. `define('WP_SMUSH_API_TIMEOUT', 150);`.", "wp-smushit" );
 				}else {
 					//Handle error
 					$data['message'] = sprintf( __( 'Error posting to API: %s', 'wp-smushit' ), $result->get_error_message() );
@@ -748,6 +755,12 @@ if ( ! class_exists( 'WpSmush' ) ) {
 					$data['success'] = true;
 					$data['data']    = $response->data;
 				}
+
+				//Check for API message and store in db
+				if( isset( $response->data->api_message ) && !empty( $response->data->api_message ) ) {
+					$this->add_api_message( $response->data->api_message );
+				}
+
 				//If is_premium is set in response, send it over to check for member validity
 				if ( ! empty( $response->data ) && isset( $response->data->is_premium ) ) {
 					$wpsmushit_admin->api_headers['is_premium'] = $response->data->is_premium;
@@ -981,15 +994,19 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				$percent        = isset( $combined_stats['stats']['percent'] ) ? $combined_stats['stats']['percent'] : 0;
 				$percent        = $percent < 0 ? 0 : $percent;
 
-				if ( isset( $wp_smush_data['stats']['size_before'] ) && $wp_smush_data['stats']['size_before'] == 0 && ! empty( $wp_smush_data['sizes'] ) ) {
-					$status_txt  = __( 'Already Optimized', 'wp-smushit' );
+				//Show resmush link, if the settings were changed
+				$show_resmush = $this->show_resmush( $id, $wp_smush_data );
+
+				if ( empty( $wp_resize_savings['bytes'] ) && isset( $wp_smush_data['stats']['size_before'] ) && $wp_smush_data['stats']['size_before'] == 0 && ! empty( $wp_smush_data['sizes'] ) ) {
+					$status_txt = __( 'Already Optimized', 'wp-smushit' );
+					if ( $show_resmush ) {
+						$status_txt .= '<br />' . $this->get_resmsuh_link( $id );
+					}
 					$show_button = false;
 				} else {
 					if ( $bytes == 0 || $percent == 0 ) {
 						$status_txt = __( 'Already Optimized', 'wp-smushit' );
 
-						//Show resmush link, if the settings were changed
-						$show_resmush = $this->show_resmush( $id, $wp_smush_data );
 						if ( $show_resmush ) {
 							$status_txt .= '<br />' . $this->get_resmsuh_link( $id );
 						}
@@ -1152,8 +1169,9 @@ if ( ! class_exists( 'WpSmush' ) ) {
 					return $wrapper ? '<div class="smush-wrap' . $class . '">' . $html . '</div>' : $html;
 				}
 			}
+			$mode_class = ! empty( $_POST['mode'] ) && 'grid' == $_POST['mode'] ? ' button-primary' : '';
 			if ( ! $echo ) {
-				$button_class = $wrapper ? 'button button-primary wp-smush-send' : 'button wp-smush-send';
+				$button_class = $wrapper || ! empty( $mode_class ) ? 'button button-primary wp-smush-send' : 'button wp-smush-send';
 				$html .= '
 				<button  class="' . $button_class . '" data-id="' . $id . '">
 	                <span>' . $button_txt . '</span>
@@ -1169,7 +1187,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 
 				return $html;
 			} else {
-				$html .= '<button class="button wp-smush-send" data-id="' . $id . '">
+				$html .= '<button class="button wp-smush-send' . $mode_class . '" data-id="' . $id . '">
                     <span>' . $button_txt . '</span>
 				</button>';
 				$html = $html . $this->progress_bar();
@@ -1402,7 +1420,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			$smush_orgnl_txt = sprintf( esc_html__( "When you upload an image to WordPress it automatically creates %s thumbnail sizes that are commonly used in your pages. WordPress also stores the original full-size image, but because these are not usually embedded on your site we don’t Smush them. Pro users can override this.", 'wp_smushit' ), $count );
 			$skip_msg        = array(
 				'large_size' => $smush_orgnl_txt,
-				'size_limit' => esc_html__( "Image couldn't be smushed as it exceeded the 1Mb size limit, Pro users can smush images with size upto 32Mb.", "wp-smushit" )
+				'size_limit' => esc_html__( "Image couldn't be smushed as it exceeded the 1Mb size limit, Pro users can smush images with size up to 32Mb.", "wp-smushit" )
 			);
 			$skip_rsn        = ! empty( $skip_msg[ $msg_id ] ) ? esc_html__( " Skipped", 'wp-smushit', 'wp-smushit' ) : '';
 			$skip_rsn        = ! empty( $skip_rsn ) ? $skip_rsn . '<span tooltip="' . $skip_msg[ $msg_id ] . '"><i class="dashicons dashicons-editor-help"></i></span>' : '';
@@ -1539,7 +1557,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		 */
 		function load_s3() {
 
-			//If we don't have free or pro verison for WP S3 Offload, return
+			//If we don't have free or pro verison for WP Offload S3, return
 			if ( ! class_exists( 'Amazon_S3_And_CloudFront' ) && ! class_exists( 'Amazon_S3_And_CloudFront_Pro' ) ) {
 				return;
 			}
@@ -1872,6 +1890,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 		 * @return bool
 		 */
 		function show_resmush( $id = '', $wp_smush_data ) {
+			global $wpsmush_resize;
 			//Resmush: Show resmush link, Check if user have enabled smushing the original and full image was skipped
 			//Or: If keep exif is unchecked and the smushed image have exif
 			//PNG To JPEG
@@ -1880,6 +1899,11 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				if ( ! empty( $wp_smush_data ) && empty( $wp_smush_data['sizes']['full'] ) ) {
 					return true;
 				}
+			}
+
+			//If image needs to be resized
+			if( $wpsmush_resize->should_resize( $id ) ) {
+				return true;
 			}
 
 			//EXIF Check
@@ -2017,7 +2041,7 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			$backup_name = $this->get_image_backup_path( $file );
 
 			//If file exists, corresponding to our backup path, delete it
-			@ unlink( $backup_name );
+			@unlink( $backup_name );
 
 			//Check meta for rest of the sizes
 			if ( ! empty( $meta ) && ! empty( $meta['sizes'] ) ) {
@@ -2080,11 +2104,22 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				return $smush_stats;
 			}
 
+			//Initialize key full if not there already
+			if( !isset( $smush_stats['sizes']['full'] ) ) {
+				$smush_stats['sizes']['full'] = new stdClass();
+				$smush_stats['sizes']['full']->bytes = 0;
+				$smush_stats['sizes']['full']->size_before = 0;
+				$smush_stats['sizes']['full']->size_after = 0;
+				$smush_stats['sizes']['full']->percent = 0;
+			}
+
 			//Full Image
 			if ( ! empty( $smush_stats['sizes']['full'] ) ) {
 				$smush_stats['sizes']['full']->bytes       = ! empty( $resize_savings['bytes'] ) ? $smush_stats['sizes']['full']->bytes + $resize_savings['bytes'] : $smush_stats['sizes']['full']->bytes;
 				$smush_stats['sizes']['full']->size_before = ! empty( $resize_savings['size_before'] ) && ( $resize_savings['size_before'] > $smush_stats['sizes']['full']->size_before ) ? $resize_savings['size_before'] : $smush_stats['sizes']['full']->size_before;
 				$smush_stats['sizes']['full']->percent     = ! empty( $smush_stats['sizes']['full']->bytes ) && $smush_stats['sizes']['full']->size_before > 0 ? ( $smush_stats['sizes']['full']->bytes / $smush_stats['sizes']['full']->size_before ) * 100 : $smush_stats['sizes']['full']->percent;
+
+				$smush_stats['sizes']['full']->size_after = $smush_stats['sizes']['full']->size_before - $smush_stats['sizes']['full']->bytes;
 
 				$smush_stats['sizes']['full']->percent = round( $smush_stats['sizes']['full']->percent, 1 );
 			}
@@ -2107,6 +2142,16 @@ if ( ! class_exists( 'WpSmush' ) ) {
 				return $stats;
 			}
 			foreach ( $conversion_savings as $size_k => $savings ) {
+
+				//Initialize Object for size
+				if ( empty( $stats['sizes'][ $size_k ] ) ) {
+					$stats['sizes'][ $size_k ]              = new stdClass();
+					$stats['sizes'][ $size_k ]->bytes       = 0;
+					$stats['sizes'][ $size_k ]->size_before = 0;
+					$stats['sizes'][ $size_k ]->size_after  = 0;
+					$stats['sizes'][ $size_k ]->percent     = 0;
+				}
+
 				if ( ! empty( $stats['sizes'][ $size_k ] ) && ! empty( $savings ) ) {
 					$stats['sizes'][ $size_k ]->bytes       = $stats['sizes'][ $size_k ]->bytes + $savings['bytes'];
 					$stats['sizes'][ $size_k ]->size_before = $stats['sizes'][ $size_k ]->size_before > $savings['size_before'] ? $stats['sizes'][ $size_k ]->size_before : $savings['size_before'];
@@ -2338,6 +2383,32 @@ if ( ! class_exists( 'WpSmush' ) ) {
 			$stats['savings']         = $wpsmushit_admin->stats;
 
 			$request->send_json_success( $stats );
+		}
+
+		/**
+		 * Replace the old API message with the latest one if it doesn't exists already
+		 *
+		 * @param array $api_message
+		 *
+		 * @return null
+		 */
+		function add_api_message( $api_message = array() ) {
+			if ( empty( $api_message ) || ! sizeof( $api_message ) || empty( $api_message['timestamp'] ) || empty( $api_message['message'] ) ) {
+				return null;
+			}
+			$o_api_message = get_site_option(WP_SMUSH_PREFIX . 'api_message', array() );
+			if( array_key_exists( $api_message['timestamp'], $o_api_message ) ){
+				return null;
+			}
+			$api_message['status'] = 'show';
+
+			$message = array();
+			$message[$api_message['timestamp']] = array(
+				'message'   => sanitize_text_field( $api_message['message'] ),
+				'type'      => sanitize_text_field( $api_message['type'] ),
+				'status'    => 'show'
+			);
+			update_site_option( WP_SMUSH_PREFIX . 'api_message', $message );
 		}
 	}
 

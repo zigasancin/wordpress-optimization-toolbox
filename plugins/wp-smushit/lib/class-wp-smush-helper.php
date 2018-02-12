@@ -133,6 +133,28 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 
 			return $file_exists;
 		}
+
+		/**
+		 * Add ellipsis in middle of long strings
+		 *
+		 * @param string $string
+		 *
+		 * @return string Truncated string
+		 */
+		function add_ellipsis( $string = '' ) {
+			if( empty( $string ) ){
+				return $string;
+			}
+			//Return if the character length is 120 or less, else add ellipsis in between
+			if( strlen( $string ) < 121 ) {
+				return $string;
+			}
+			$start = substr( $string, 0, 60 );
+			$end = substr( $string, -40 );
+			$string = $start . '...' . $end;
+
+			return $string;
+		}
 	}
 
 	global $wpsmush_helper;

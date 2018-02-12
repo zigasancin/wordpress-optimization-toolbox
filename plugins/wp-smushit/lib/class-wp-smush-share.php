@@ -31,11 +31,11 @@ if ( ! class_exists( 'WpSmushShare' ) ) {
 					<!-- Twitter Button -->
 					<a href="https://twitter.com/intent/tweet?text=<?php echo esc_attr( $share_msg ); ?>"
 					   class="button wp-smush-share-button" id="wp-smush-twitter-share">
-						<i class="dev-icon dev-icon-twitter"></i><?php esc_html_e( "TWEET", "wp-smushit" ); ?></a>
+						<i class="icon-fi-social-twitter"></i><?php esc_html_e( "TWEET", "wp-smushit" ); ?></a>
 					<!-- Facebook Button -->
 					<a href="http://www.facebook.com/sharer.php?s=100&p[title]=WP Smush&p[url]=http://wordpress.org/plugins/wp-smushit/"
 					   class="button wp-smush-share-button" id="wp-smush-facebook-share">
-						<i class="dev-icon dev-icon-facebook"></i><?php esc_html_e( "SHARE", "wp-smushit" ); ?></a>
+						<i class="icon-fi-social-facebook"></i><?php esc_html_e( "SHARE", "wp-smushit" ); ?></a>
 					<a href="whatsapp://send?text='<?php echo esc_attr( $share_msg ); ?>'"
 					   class="button wp-smush-share-button"
 					   id="wp-smush-whatsapp-share">

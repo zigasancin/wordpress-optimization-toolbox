@@ -291,17 +291,8 @@ if ( ! class_exists( 'WpSmushPngtoJpg' ) ) {
 				$meta['sizes'][ $size_k ]['mime-type'] = $mime;
 			}
 
-			if ( 'full' == $size_k ) {
-				//Get the updated image URL
-				$n_url = wp_get_attachment_url( $id );
-			} else {
-				$n_url = dirname( $o_url ) . '/' . basename( $n_file );
-			}
-
-			//Update In Post Content
-			global $wpdb;
-			$query = $wpdb->prepare( "UPDATE $wpdb->posts SET post_content = REPLACE(post_content, '%s', '%s');", $o_url, $n_url );
-			$wpdb->query( $query );
+			//To be called after the attached file key is updated for the image
+			$this->update_image_url( $id, $size_k, $n_file, $o_url );
 
 			//Delete the Original files if backup not enabled
 			if ( 'conversion' == $o_type && ! $wpsmush_settings->settings['backup'] ) {
@@ -698,6 +689,50 @@ if ( ! class_exists( 'WpSmushPngtoJpg' ) ) {
 			}
 
 			return false;
+		}
+
+		/**
+		 * Update Image URL in post content
+		 *
+		 * @param $id
+		 * @param $size_k
+		 * @param $n_file
+		 * @param $o_url
+		 */
+		function update_image_url( $id, $size_k, $n_file, $o_url  ) {
+			if ( 'full' == $size_k ) {
+				//Get the updated image URL
+				$n_url = wp_get_attachment_url( $id );
+			} else {
+				$n_url = trailingslashit( dirname( $o_url ) ) . basename( $n_file );
+			}
+
+			//Update In Post Content, Loop Over a set of posts to avoid the query failure for large sites
+			global $wpdb;
+			//Get existing Images with current URL
+			$query = $wpdb->prepare(
+				"SELECT ID, post_content FROM $wpdb->posts WHERE post_content LIKE '%%%s%%'", $o_url );
+
+			$rows = $wpdb->get_results( $query, ARRAY_A );
+
+			//Iterate over rows to update post content
+			if ( ! empty( $rows ) && is_array( $rows ) ) {
+				foreach ( $rows as $row ) {
+					// replace old URLs with new URLs.
+					$post_content = $row["post_content"];
+					$post_content = str_replace( $o_url, $n_url, $post_content );
+					// Update Post content
+					$wpdb->update(
+						$wpdb->posts,
+						array(
+							'post_content' => $post_content,
+						),
+						array(
+							'ID' => $row['ID'],
+						)
+					);
+				}
+			}
 		}
 	}
 

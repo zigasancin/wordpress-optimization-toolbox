@@ -467,9 +467,17 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 				if ( $size_value->bytes > 0 ) {
 					$stats .= '<tr>
 					<td>' . strtoupper( $size_key ) . '</td>
-					<td>' . size_format( $size_value->bytes, 1 ) . ' ( ' . $size_value->percent . '% )</td>
-				</tr>';
+					<td>' . size_format( $size_value->bytes, 1 );
+
 				}
+
+				//Add percentage if set
+				if ( isset( $size_value->percent ) && $size_value->percent > 0 ) {
+					$stats .= " ( $size_value->percent% )";
+				}
+
+				$stats .='</td>
+				</tr>';
 			}
 			$stats .= '</tbody>
 				</table>

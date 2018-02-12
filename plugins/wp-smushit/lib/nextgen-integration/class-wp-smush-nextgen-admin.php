@@ -396,7 +396,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			} else { ?>
 				<!-- Hide All done div if there are images pending -->
 				<div class="wp-smush-notice wp-smush-all-done<?php echo $all_done ? '' : ' hidden' ?>">
-					<i class="dev-icon dev-icon-tick"></i><?php esc_html_e( "All images are smushed and up to date. Awesome!", "wp-smushit" ); ?>
+					<i class="icon-fi-check-tick"></i><?php esc_html_e( "All images are smushed and up to date. Awesome!", "wp-smushit" ); ?>
 				</div>
 				<div class="wp-smush-bulk-wrapper <?php echo $all_done ? ' hidden' : ''; ?>"><?php
 				//If all the images in media library are smushed
@@ -405,7 +405,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 				// DO not show the remaining notice if we have resmush ids
 				?>
 				<div class="wp-smush-notice wp-smush-remaining  <?php echo count( $this->resmush_ids ) > 0 ? ' hidden' : ''; ?>">
-                    <i class="wdv-icon wdv-icon-fw wdv-icon-exclamation-sign"></i>
+                    <i class="icon-fi-warning-alert"></i>
 					<span class="wp-smush-notice-text">
 						<?php printf( _n( "%s, you have %s%s%d%s attachment%s that needs smushing!", "%s, you have %s%s%d%s attachments%s that need smushing!", $this->remaining_count, "wp-smushit" ), $wpsmushit_admin->get_user_name(), '<strong>', '<span class="wp-smush-remaining-count">', $this->remaining_count, '</span>', '</strong>' ); ?>
 					</span>
@@ -422,7 +422,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 						),
 						$url
 					); ?>
-					<p class="wp-smush-enable-lossy"><?php printf( esc_html__( "Enable Super-smush in the %sSettings%s area to get even more savings with almost no noticeable quality loss.", "wp-smushit" ), '<a href="' . $url .'" target="_blank">', "</a>"); ?></p><?php
+					<p class="wp-smush-enable-lossy"><?php printf( esc_html__( "Enable Super-smush in the %sSettings%s area to get even more savings with almost no visible drop in quality.", "wp-smushit" ), '<a href="' . $url .'" target="_blank">', "</a>"); ?></p><?php
 				} ?>
 				</div><?php
 				$wpsmush_bulkui->progress_bar( $this );
@@ -644,7 +644,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			$smush_stats    = ! empty( $metadata['wp_smush'] ) ? $metadata['wp_smush'] : '';
 			$resize_savings = ! empty( $metadata['wp_smush_resize_savings'] ) ? $metadata['wp_smush_resize_savings'] : '';
 
-			if ( empty( $resize_savings ) ) {
+			if ( empty( $resize_savings ) || empty( $smush_stats ) ) {
 				return $metadata;
 			}
 
