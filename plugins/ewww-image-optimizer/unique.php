@@ -242,7 +242,7 @@ function ewww_image_optimizer_tool_folder_permissions_notice() {
 		sprintf( esc_html__( 'EWWW Image Optimizer could not install tools in %s', 'ewww-image-optimizer' ), htmlentities( EWWW_IMAGE_OPTIMIZER_TOOL_PATH ) ) . '.</strong> ' .
 		esc_html__( 'Please adjust permissions or create the folder. If you have installed the tools elsewhere on your system, check the option to Use System Paths.', 'ewww-image-optimizer' ) . ' ' .
 		/* translators: 1: Settings Page (link) 2: Installation Instructions (link) */
-		sprintf( esc_html__( 'For more details, visit the %1$s or the %2$s.', 'ewww-image-optimizer' ), "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='http://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
+		sprintf( esc_html__( 'For more details, visit the %1$s or the %2$s.', 'ewww-image-optimizer' ), "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='https://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
 }
 
 /**
@@ -263,7 +263,7 @@ function ewww_image_optimizer_tool_installation_failed_notice() {
 		sprintf( esc_html__( 'EWWW Image Optimizer could not install tools in %s', 'ewww-image-optimizer' ), htmlentities( EWWW_IMAGE_OPTIMIZER_TOOL_PATH ) ) . '.</strong> ' .
 		esc_html__( 'Please adjust permissions or create the folder. If you have installed the tools elsewhere on your system, check the option to Use System Paths.', 'ewww-image-optimizer' ) . ' ' .
 		/* translators: 1: Settings Page (link) 2: Installation Instructions (link) */
-		sprintf( esc_html__( 'For more details, visit the %1$s or the %2$s.', 'ewww-image-optimizer' ), "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='http://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
+		sprintf( esc_html__( 'For more details, visit the %1$s or the %2$s.', 'ewww-image-optimizer' ), "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='https://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
 }
 
 /**
@@ -585,7 +585,7 @@ function ewww_image_optimizer_notice_utils( $quiet = null ) {
 		}
 		echo "<div id='ewww-image-optimizer-warning-opt-missing' class='error'><p>" .
 		/* translators: 1-6: jpegtran, optipng, pngout, pngquant, gifsicle, and cwebp (links) 7: Settings Page (link) 8: Installation Instructions (link) */
-		sprintf( esc_html__( 'EWWW Image Optimizer uses %1$s, %2$s, %3$s, %4$s, %5$s, and %6$s. You are missing: %7$s. Please install via the %8$s or the %9$s.', 'ewww-image-optimizer' ), "<a href='http://jpegclub.org/jpegtran/'>jpegtran</a>", "<a href='http://optipng.sourceforge.net/'>optipng</a>", "<a href='http://advsys.net/ken/utils.htm'>pngout</a>", "<a href='http://pngquant.org/'>pngquant</a>", "<a href='http://www.lcdf.org/gifsicle/'>gifsicle</a>", "<a href='https://developers.google.com/speed/webp/'>cwebp</a>", $msg, "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='http://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
+		sprintf( esc_html__( 'EWWW Image Optimizer uses %1$s, %2$s, %3$s, %4$s, %5$s, and %6$s. You are missing: %7$s. Please install via the %8$s or the %9$s.', 'ewww-image-optimizer' ), "<a href='http://jpegclub.org/jpegtran/'>jpegtran</a>", "<a href='http://optipng.sourceforge.net/'>optipng</a>", "<a href='http://advsys.net/ken/utils.htm'>pngout</a>", "<a href='http://pngquant.org/'>pngquant</a>", "<a href='http://www.lcdf.org/gifsicle/'>gifsicle</a>", "<a href='https://developers.google.com/speed/webp/'>cwebp</a>", $msg, "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='https://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
 		ewwwio_memory( __FUNCTION__ );
 	}
 }
@@ -866,6 +866,11 @@ function ewww_image_optimizer_md5check( $path ) {
 		'd4f11e96733aed64a72e744843dcd0929e144a7fc97f40d405a034a72eb9bbc6', // optipng-mac 0.7.6, EWWW 2.8.0.
 		'1ed9343194cfca0a1c32677c974192746adfd48cb4cea6a2df668452df0e68f7', // optipng-sol 0.7.6, EWWW 2.8.0.
 		'03b86ce2c08e2cc78d76d3d3dd173986b498b055c3c19e13a97a7c3c674772c6', // optipng.exe 0.7.6, EWWW 2.8.0.
+		'f01cba0ab658e08738315843ee635be273726bf102ae448416b3d8956843d864', // optipng-fbsd 0.7.7 EWWW 4.1.0.
+		'4404076a4f9119d4dfbb7acb00eb65345e804186a019c7136d8f8e87fb0cb997', // optipng-linux 0.7.7 EWWW 4.1.0.
+		'36535c1b262e0c457bbb0ed2bc71e812a49e26a6cada63b6acbd8d809c68a5a1', // optipng-mac 0.7.7 EWWW 4.1.0.
+		'41a4c78e6c97ea26836f4b021157b34f1812a9e5c2341502aad8cde942b18576', // optipng-sol 0.7.7 EWWW 4.1.0.
+		'6a321e07eca8e28fa8a969b5db3c1d3cc008a2064d636cf74762bbe4364b7b14', // optipng.exe 0.7.7 EWWW 4.1.0.
 		// end optipng.
 		'a2292c0085863a65c99cb41ff8418ce63033e162906df72e8fdde52f0633579b', // gifsicle linux 1.67, EWWW 1.2.0.
 		'd7f9609b6fd0000b2eaad2bd0c3cb85476988b18705762e915bda3f2e6007801', // gifsicle-linux 1.68, EWWW 1.3.0.
@@ -892,6 +897,11 @@ function ewww_image_optimizer_md5check( $path ) {
 		'3966e01474601059c6a13aefbe4f313c6cb6d49c799f7850966950892a9ab45a', // gifsicle-sol 1.87, EWWW 2.4.4.
 		'40b86b2ea6642f4c921152923af1e631922b624f7d23189f53c659506c7179b5', // gifsicle.exe 1.87, EWWW 2.4.4.
 		'3da9e1a764a459d78dc1468ba60d882ff042050a86f82d895777b172b50f2f19', // gifsicle.exe 1.87, EWWW 2.4.5.
+		'327c21635ea8c789e3e9533210e6baf372db27c7bbed3791881d74a7dd41cef9', // gifsicle-fbsd 1.91, EWWW 4.1.0.
+		'566f058b2043c4f3c8c049b0507bfa78dcb33dac52b132cade5f67bbb62d91e4', // gifsicle-linux 1.91, EWWW 4.1.0.
+		'03602b141432af2211882fc079ba15a773a7ec782c92755cb31279eb6d8b99d4', // gifsicle-mac 1.91, EWWW 4.1.0.
+		'5fcdd102146984e41b01a160d072dd36852d7be14ab569a323c47e7e56916d0d', // gifsicle-sol 1.91, EWWW 4.x.
+		'7156bfe16dc5e33af7facdc6847d268154ffeb75c0217517e4e188b58b293c6a', // gifsicle.exe 1.91, EWWW 4.1.0.
 		// end gifsicle.
 		'bdea95497d6e60aae8938cae8e999ef74a255ad603531bf523dcdb531f61fc8f', // 20110722-bsd/i686/pngout.
 		'57c09b3ebd7d4623d16f6056efd7951e8f98e2362a27993a7d865af677875c00', // 20110722-bsd-static/i686/pngout-static.
@@ -941,6 +951,11 @@ function ewww_image_optimizer_md5check( $path ) {
 		'65dc20f05af588d948fc6f4df37c294f4a3a1c1ad207a8b56d13e6829773165a', // pngquant-mac 2.9.1, EWWW 3.4.0.
 		'dbc9e12d5bb3e806aaf5e2c3d30d122d569069027a633485761cbf072cf2236d', // pngquant-sol 2.9.1, EWWW 3.4.0.
 		'84e63e6f9f9630a1a0c3e782609349c12b8df9ea9d02c5a29230819379e56b3c', // pngquant.exe 2.8.1, EWWW 3.4.0.
+		'd6433dc6ecf6a0fdedf754782e6d5c9e494ddec762426a6d0b1896a220bd6d3f', // pngquant-fbsd 2.11.7 EWWW 4.1.0.
+		'40b0860abba39342fb64612a612e0f24571d259b6b83d7483af9a1d586950d79', // pngquant-linux 2.11.7 EWWW 4.1.0.
+		'c924e11d9a3166afd5ed19165193c1351ff4a2cc993498f1f28c7daee829ca76', // pngquant-mac 2.11.7 EWWW 4.1.0.
+		'34534e69929e7fe267f77c55f487e419f76cc1d24e41fdb642f9671383012c56', // pngquant-sol 2.11.7 EWWW 4.1.0.
+		'af7598aa09ba519ad15305a56011949db19c5b2176187662640bc0ebc4ddd19a', // pngquant.exe 2.11.7 EWWW 4.1.0.
 		// end pngquant.
 		'bf0e12f996802dc114a864e5150647ce41089a5a2b5e36c3a270ac848b655c26', // cwebp-fbsd 0.4.1, EWWW 2.0.0.
 		'5349646072c3ef5f8b4588bbee8635e882c245439e2d86b863f04b7e27f4fafe', // cwebp-fbsd64 0.4.1, EWWW 2.0.0.
@@ -1012,13 +1027,77 @@ function ewww_image_optimizer_mimetype( $path, $case ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	ewwwio_debug_message( "testing mimetype: $path" );
 	$type = false;
-	if ( 'i' === $case && preg_match( '/^RIFF.+WEBPVP8/', file_get_contents( $path, null, null, 0, 16 ) ) ) {
-		return 'image/webp';
-	}
 	// For S3 images/files, don't attempt to read the file, just use the quick (filename) mime check.
 	if ( 'i' === $case && strpos( $path, 's3' ) === 0 ) {
 		return ewww_image_optimizer_quick_mimetype( $path );
 	}
+	if ( 'i' === $case && preg_match( '/^RIFF.+WEBPVP8/', file_get_contents( $path, null, null, 0, 16 ) ) ) {
+		/* return 'image/webp'; */
+	}
+	if ( 'i' === $case ) {
+		$fhandle = fopen( $path, 'rb' );
+		if ( $fhandle ) {
+			// Read first 12 bytes, which equates to 24 hex characters.
+			$magic = bin2hex( fread( $fhandle, 12 ) );
+			if ( 0 === strpos( $magic, '52494646' ) && 16 === strpos( $magic, '57454250' ) ) {
+				$type = 'image/webp';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			if ( 'ffd8ff' === substr( $magic, 0, 6 ) ) {
+				$type = 'image/jpeg';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			if ( '89504e470d0a1a0a' === substr( $magic, 0, 16 ) ) {
+				$type = 'image/png';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			if ( '474946383761' === substr( $magic, 0, 12 ) || '474946383961' === substr( $magic, 0, 12 ) ) {
+				$type = 'image/gif';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			if ( '25504446' === substr( $magic, 0, 8 ) ) {
+				$type = 'application/pdf';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			ewwwio_debug_message( "match not found for image: $magic" );
+		} else {
+			ewwwio_debug_message( 'could not open for reading' );
+		}
+	}
+	if ( 'b' === $case ) {
+		$fhandle = fopen( $path, 'rb' );
+		if ( $fhandle ) {
+			// Read first 4 bytes, which equates to 8 hex characters.
+			$magic = bin2hex( fread( $fhandle, 4 ) );
+			// Mac (Mach-O) binary.
+			if ( 'cffaedfe' === $magic || 'feedface' === $magic || 'feedfacf' === $magic || 'cefaedfe' === $magic || 'cafebabe' === $magic ) {
+				$type = 'application/x-executable';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			// ELF (Linux or BSD) binary.
+			if ( '7f454c46' === $magic ) {
+				$type = 'application/x-executable';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			// MS (DOS) binary.
+			if ( '4d5a9000' === $magic ) {
+				$type = 'application/x-executable';
+				ewwwio_debug_message( "ewwwio type: $type" );
+				return $type;
+			}
+			ewwwio_debug_message( "match not found for binary: $magic" );
+		} else {
+			ewwwio_debug_message( 'could not open for reading' );
+		}
+	}
+	return false;
 	if ( function_exists( 'finfo_file' ) && defined( 'FILEINFO_MIME' ) ) {
 		// Create a finfo resource.
 		$finfo = finfo_open( FILEINFO_MIME );
