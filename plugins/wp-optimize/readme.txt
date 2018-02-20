@@ -4,7 +4,7 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 4.9
-Stable tag: 2.1.1
+Stable tag: 2.2.0
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,22 @@ When you use this plugin for the first time or just updated to major version, ma
 = Developers =
 
 If you interested in the development of this plugin, join with us at our GitLab: https://source.updraftplus.com/team-updraft/wp-optimize/ (but please file all support questions in the wordpress.org system).
+
+= WP-Optimize Premium =
+
+<strong>Our free version of WP-Optimize is great, but we also have a more powerful Premium version with extra features that offer the ultimate in freedom and flexibility:</strong>
+
+<strong>Multisite Support:</strong> extends database optimisations so they function for multiple WordPress sites at a time. If you manage more than one website, you will need WP-Optimize Premium.
+
+<strong>Flexibility and Control:</strong> gives you the power to optimize select individual tables or a particular combination of tables on one or more WordPress websites, rather than having to optimize all database tables.
+
+<strong>Image Optimization:</strong> removes orphaned images from your WordPress site, plus images of a certain, pre-defined size.
+
+<strong>Sophisticated Scheduling:</strong> offers a wide range of options for scheduling automatic optimization. Specify an exact time and run clean-ups daily, weekly, fortnightly or monthly and perform any number of aditional one off optimizations.
+
+<strong>Seamless Graphical User Interface:</strong> for superb clarity in scheduling and managing of multi-site optimizations.
+
+<strong>WP-CLI support:</strong> provides a way to manage optimizations from command-line interface.
 
 = Translations =
 
@@ -125,6 +141,32 @@ Please check your database for corrupted tables. That can happen, usually your w
 4. Settings
 
 == Changelog ==
+
+= 2.2.0 - 19/Feb/2018 =
+
+* FEATURE: Added the ability to export/import WP-Optimize settings
+* FEATURE: Extended the logging class to include logging for Simple History Logger, Slack, Email, syslog and a simple 'ring' log
+* FEATURE: Added the ability to optimize ARCHIVE and Aria (MariaDB) database tables.
+* FEATURE: Added the ability to sort data in the "Table Information" tab
+* FEATURE: Added the ability to search tables in "Table Information" tab
+* FEATURE: Added the ability to optimize an individual table. (Premium)
+* FEATURE: Added the ability to optimize multisites. (Premium)
+* FEATURE: Allow the user to create arbitrarily complex automatic optimization schedules (Premium)
+* FEATURE: Added ability to use WP CLI interface for run optimizations. (Premium)
+* FIX: Auto clean-up settings not optimizing database tables
+* FIX: Comments count after related to comments optimization
+* FIX: Fix unapproved comments count
+* TWEAK: Add functions to pull WP-Optimize templates for UpdraftCentral
+* TWEAK: Allow user to tick the "Take a backup with UpdraftPlus before optimizing" option from UpdraftCentral
+* TWEAK: Show last automatic optimization time using site's configured timezone and locale
+* TWEAK: Extra MySQL and MariaDB checks for optimization, along with an over-ride functionality.
+* TWEAK: updated previous optimizations and added optimizations for trash posts, trash comments and orphaned attachements
+* TWEAK: Use higher-quality spinner image
+* TWEAK: Adjusted notices about other products
+* TWEAK: Added message for multisite users with proposal to upgrade to Premium.
+* TWEAK: Optimize the check for whether both free and Premium are installed
+* TWEAK: Added Premium / Plugin Family tab
+* TWEAK: Added seasonal dashboard notices  
 
 = 2.1.1 - 28/Feb/2017 =
 
@@ -340,4 +382,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.1.1: Integrate easy pre-optimize backups with UpdraftPlus; reduce scope for optimization timeouts; other small tweaks and fixes
+* 2.2.0 : Lots of new features, tweaks and fixes; including the introduction of a Premium version with even more features.
