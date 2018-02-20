@@ -10,7 +10,9 @@ class ShortPixelPng2Jpg {
     private $_settings = null;
 
     public function __construct($settings){
-        wp_raise_memory_limit( 'image' );
+        if(function_exists('wp_raise_memory_limit')) {
+            wp_raise_memory_limit( 'image' );
+        }
         $this->_settings = $settings;
     }
 

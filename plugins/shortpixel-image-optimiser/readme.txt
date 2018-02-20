@@ -4,7 +4,7 @@ Tags: compress, image, compression, optimize, image optimizer, image optimiser, 
 Requires at least: 3.2.0
 Tested up to: 4.9
 Requires PHP: 5.2
-Stable tag: 4.8.10
+Stable tag: 4.9.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -227,6 +227,9 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.9.1 =
+* fix error for older WP versions which don't have wp_raise_memory_limit
 
 = 4.9.0 =
 * inline help beacon
