@@ -13,7 +13,7 @@
 	<tbody>
 	<?php
 	$optimizations = $optimizer->sort_optimizations($optimizer->get_optimizations());
-	$hidden_in_optimizations_list = apply_filters('wpo_hidden_in_optimizations_list', array('images'));
+	$hidden_in_optimizations_list = apply_filters('wpo_hidden_in_optimizations_list', array('images', 'attachments'));
 
 	foreach ($optimizations as $id => $optimization) {
 		// If we don't want to show optimization on the first tab.
@@ -30,7 +30,7 @@
 			$table_list = $optimizer->get_table_information();
 
 			// Make sure that optimization_table_inno_db is set.
-			if ($table_list['inno_db_tables'] > 0 && 0 == $table_list['is_optimizable']) {
+			if ($table_list['inno_db_tables'] > 0 && 0 == $table_list['is_optimizable'] && 0 == $table_list['non_inno_db_tables']) {
 				$optimize_table_list_disabled .= 'disabled';
 				$optimize_table_list_data_disabled = 'data-disabled="1"';
 				$html['activated'] = '';

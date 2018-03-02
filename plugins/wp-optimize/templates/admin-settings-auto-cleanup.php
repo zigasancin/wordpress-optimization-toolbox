@@ -3,6 +3,10 @@
 	<h3><?php _e('Scheduled clean-up settings', 'wp-optimize'); ?></h3>
 
 	<p>
+		<a href="<?php echo WP_Optimize()->premium_version_link; ?>" target="_blank"><?php _e('Take control of clean-ups: Upgrade to Premium for a more powerful and flexible scheduler', 'wp-optimize'); ?></a>
+	</p>
+
+	<p>
 
 		<input name="enable-schedule" id="enable-schedule" type="checkbox" value ="true"  <?php checked($options->get_option('schedule'), 'true'); ?>>
 		<label for="enable-schedule"><?php _e('Enable scheduled clean-up and optimization (Beta feature)', 'wp-optimize'); ?></label>

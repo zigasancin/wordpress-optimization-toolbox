@@ -319,6 +319,121 @@ img.addons {
 	color: #46B450;
 }
 
+#wp-optimize-logging-options {
+	margin-top: 10px;
+}
+
+/* Logger settings*/
+.wpo_logging_header {
+	font-weight: bold;
+	border-top: 1px solid #333;
+	border-bottom: 1px solid #333;
+	padding: 5px 0;
+	margin: 0;
+}
+
+.wpo_logging_row {
+	border-bottom: 1px solid #A1A2A3;
+	padding: 5px 0;
+}
+
+.wpo_logging_logger_title,
+.wpo_logging_options_title,
+.wpo_logging_status_title,
+.wpo_logging_actions_title,
+.wpo_logging_logger_row,
+.wpo_logging_options_row,
+.wpo_logging_status_row,
+.wpo_logging_actions_row {
+	display: inline-block;
+}
+
+.wpo_logging_logger_title,
+.wpo_logging_logger_row {
+	width: 38%;
+}
+
+.wpo_logging_options_title,
+.wpo_logging_options_row {
+	width: 44%;
+}
+
+.wpo_logging_status_title,
+.wpo_logging_status_row {
+	width: 8%;
+}
+
+.wpo_logging_actions_title,
+.wpo_logging_actions_row {
+	width: 7%;
+}
+
+.wpo_logging_actions_row {
+	text-align: right;
+}
+
+.wpo_logging_options_row {
+	word-wrap: break-word;
+}
+
+#wpo_add_logger_link {
+	clear: both;
+	display: block;
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.wpo_logging_actions_row .dashicons-no-alt,
+.wpo_add_logger_form .dashicons-no-alt {
+	background-color: #F06666;
+	color: #FFF;
+	width: 20px;
+	height: 20px;
+	border-radius: 20px;
+	display: inline-block;
+	cursor: pointer;
+	margin-left: 5px;
+}
+
+.wpo_add_logger_form .dashicons-no-alt {
+	margin-top: 12px;
+	margin-right: 10px;
+	float: right;
+}
+
+.wpo_logger_type {
+	width: 90%;
+	margin-top: 10px;
+}
+
+.wpo_logger_addition_option {
+	width: 100%;
+	margin-top: 5px;
+}
+
+.wpo_alert_notice {
+	background-color: #F06666;
+	color: #FFF;
+	padding: 5px;
+	display: block;
+	margin-bottom: 5px;
+	border-radius: 5px;
+}
+
+.wpo_error_field {
+	border-color: #F06666 !important;
+}
+
+.save_settings_reminder {
+	display: none;
+	color: #333;
+	padding: 5px 10px;
+	border: 1px solid #F00;
+	background-color: #F0A5A4;
+	border-radius: 5px;
+	margin: 15px 0;
+}
+
 /* Added for WPO Premium Features tab */
 .wpo_feature_cont {
 	width: 54.5%;

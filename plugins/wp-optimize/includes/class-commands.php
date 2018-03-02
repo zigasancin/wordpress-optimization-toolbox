@@ -225,7 +225,7 @@ class WP_Optimize_Commands {
 
 		$results = array();
 		$optimizations = $this->optimizer->get_optimizations();
-		$hidden_in_optimizations_list = apply_filters('wpo_hidden_in_optimizations_list', array('images'));
+		$hidden_in_optimizations_list = apply_filters('wpo_hidden_in_optimizations_list', array('images', 'attachments'));
 
 		foreach ($optimizations as $optimization_id => $optimization) {
 			if (in_array($optimization_id, $hidden_in_optimizations_list)) continue;

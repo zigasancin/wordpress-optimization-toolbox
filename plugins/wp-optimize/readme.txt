@@ -4,7 +4,7 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 4.9
-Stable tag: 2.2.0
+Stable tag: 2.2.2
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ WP-Optimize is an effective tool for automatically cleaning your WordPress datab
 * Carries out automatic weekly (or otherwise) clean-ups
 * Retains a set number of weeks' data during clean-ups
 * Performs optimizations without the need for running manual queries
-* Automatically trigger a pre-optimize backup via UpdraftPlus (https://updraftplus.com)
+* Automatically trigger a pre-optimize backup via <a href="https://updraftplus.com">UpdraftPlus</a>
 * Show database statistics and potential savings
 * Mobile friendly and easy-to-use
 * Translated into several languages
@@ -49,10 +49,6 @@ When you use this plugin for the first time or just updated to major version, ma
 * WP-Optimize reports which database tables have overhead and wasted spaces also it allows you to shrink and get rid of those wasted spaces.
 
 * Automatically cleans database every week and respects the "Keeps selected number of weeks data" option.
-
-= Developers =
-
-If you interested in the development of this plugin, join with us at our GitLab: https://source.updraftplus.com/team-updraft/wp-optimize/ (but please file all support questions in the wordpress.org system).
 
 = WP-Optimize Premium =
 
@@ -141,6 +137,16 @@ Please check your database for corrupted tables. That can happen, usually your w
 4. Settings
 
 == Changelog ==
+
+= 2.2.2 - 28/Feb/2018 =
+
+* TWEAK: Prevent possible PHP notice when parsing logger options
+
+= 2.2.1 - 28/Feb/2018 =
+
+* FIX: Fix number counting in Table information tab
+* FIX: Fix InnoDB optimization UI
+* TWEAK: Removed orphaned attachment optimization from optimizations UI list
 
 = 2.2.0 - 19/Feb/2018 =
 
@@ -382,4 +388,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.2.0 : Lots of new features, tweaks and fixes; including the introduction of a Premium version with even more features.
+* 2.2.2 : 2.2 has lots of new features, tweaks and fixes; including the introduction of a Premium version with even more features. 2.2.2 fixes bugs in the initial 2.2.0 release.

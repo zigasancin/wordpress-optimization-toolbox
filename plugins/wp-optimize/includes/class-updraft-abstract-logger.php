@@ -11,12 +11,67 @@ abstract class Updraft_Abstract_Logger implements Updraft_Logger_Interface {
 
 	protected $enabled = true;
 
+	protected $allow_multiple = false;
+
 	protected $options = array();
 
 	/**
 	 * Updraft_Abstract_Logger constructor
 	 */
 	public function __construct() {
+	}
+
+	/**
+	 * Returns true if allow multiple.
+	 *
+	 * @return bool
+	 */
+	public function is_allow_multiple() {
+		return $this->allow_multiple;
+	}
+
+	/**
+	 * Returns current options in text.
+	 *
+	 * @return string
+	 */
+	public function get_options_text() {
+		$options_values = $this->get_options_values();
+
+		if (array_key_exists('active', $options_values)) {
+			unset($options_values['active']);
+		}
+
+		return join(', ', $options_values);
+	}
+
+	/**
+	 * Returns list of logger options.
+	 *
+	 * @return array
+	 */
+	public function get_options_list() {
+		return array(
+		// 'option_name' => __('Placeholder', 'wp-optimize')
+		);
+	}
+
+	/**
+	 * Returns array with options values list.
+	 *
+	 * @return array
+	 */
+	public function get_options_values() {
+		$options_values = array();
+		$options_list = $this->get_options_list();
+
+		if (empty($options_list)) return $options_values;
+
+		foreach (array_keys($options_list) as $option_name) {
+			$options_values[$option_name] = $this->get_option($option_name);
+		}
+
+		return $options_values;
 	}
 
 	/**

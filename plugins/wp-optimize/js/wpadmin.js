@@ -35,7 +35,7 @@ wp_optimize_send_command_admin_ajax = function (action, data, callback, json_par
 			if ('undefined' !== typeof callback) callback(response);
 		}
 	});
-
+	
 };
 
 jQuery(document).ready(function ($) {
@@ -48,11 +48,11 @@ jQuery(document).ready(function ($) {
  * @param {string}  send_command Function for sending remote communications via
  */
 var WP_Optimize = function (send_command) {
-
+	
 	var $ = jQuery;
 	var debug_level = 0;
 	var queue = new Updraft_Queue();
-
+	
 	/**
 	 * Either display normally, or grey-out, the scheduling options, depending on whether any schedule has been selected.
 	 *
@@ -139,9 +139,9 @@ var WP_Optimize = function (send_command) {
 		delay = ('undefined' === typeof delay) ? 15 : delay;
 		$(html_contents).hide().prependTo(where).slideDown('slow').delay(delay * 1000).slideUp('slow', function () {
 			$(this).remove();
-		});;
+		});
 	}
-
+	
 	/**
 	 * Send a request to disable or enable comments or trackbacks
 	 *
@@ -151,18 +151,18 @@ var WP_Optimize = function (send_command) {
 	 * @return {string}
 	 */
 	function enable_or_disable_feature(type, enable) {
-
+		
 		var data = {
 			type: type,
 			enable: enable ? 1 : 0
 		};
 
 		$('#' + type + '_spinner').show();
-
+		
 		send_command('enable_or_disable_feature', data, function (resp) {
-
+			
 			$('#' + type + '_spinner').hide();
-
+			
 			if (resp && resp.hasOwnProperty('output')) {
 				for (var i = 0, len = resp.output.length; i < len; i++) {
 					var new_html = '<div class="updated">' + resp.output[i] + '</div>';
@@ -171,36 +171,36 @@ var WP_Optimize = function (send_command) {
 			}
 		});
 	}
-
+	
 	$('#wp-optimize-disable-enable-trackbacks-enable').click(function () {
 		enable_or_disable_feature('trackbacks', true);
 	});
-
+	
 	$('#wp-optimize-disable-enable-trackbacks-disable').click(function () {
 		enable_or_disable_feature('trackbacks', false);
 	});
-
+	
 	$('#wp-optimize-disable-enable-comments-enable').click(function () {
 		enable_or_disable_feature('comments', true);
 	});
-
+	
 	$('#wp-optimize-disable-enable-comments-disable').click(function () {
 		enable_or_disable_feature('comments', false);
 	});
-
+	
 	$('#wp-optimize-nav-tab-wrapper .nav-tab').click(function (e) {
-
+		
 		var clicked_tab_id = $(this).attr('id');
 		if (!clicked_tab_id) { return; }
 		if ('wp-optimize-nav-tab-' != clicked_tab_id.substring(0, 20)) { return; }
-
+		
 		var clicked_tab_id = clicked_tab_id.substring(20);
-
+		
 		e.preventDefault();
-
+		
 		$('#wp-optimize-nav-tab-wrapper .nav-tab:not(#wp-optimize-nav-tab-' + clicked_tab_id + ')').removeClass('nav-tab-active');
 		$(this).addClass('nav-tab-active');
-
+		
 		$('#wp-optimize-wrap .wp-optimize-nav-tab-contents:not(#wp-optimize-nav-tab-contents-' + clicked_tab_id + ')').hide();
 		$('#wp-optimize-nav-tab-contents-' + clicked_tab_id).show();
 
@@ -213,7 +213,7 @@ var WP_Optimize = function (send_command) {
 			$("#wpoptimize_table_list").trigger('applyWidgets');
 		}
 	});
-
+	
 	/**
 	 * Gathers the settings from the settings tab and return in selected format.
 	 *
@@ -269,11 +269,11 @@ var WP_Optimize = function (send_command) {
 			}
 			return;
 		}
-
+		
 		if (debug_level > 0) {
 			console.log("WP-Optimize: process_queue(): got queue lock");
 		}
-
+		
 		var id = queue.peek();
 
 		// Check to see if an object has been returned.
@@ -283,16 +283,16 @@ var WP_Optimize = function (send_command) {
 		} else {
 			data = {};
 		}
-
+		
 		if ('undefined' === typeof id) {
 			if (debug_level > 0) console.log("WP-Optimize: process_queue(): queue is apparently empty - exiting");
 			queue.unlock();
 			process_done();
 			return;
 		}
-
+		
 		if (debug_level > 0) console.log("WP-Optimize: process_queue(): processing item: " + id);
-
+			   
 		queue.dequeue();
 
 		$(document).trigger(['do_optimization_', id, '_start'].join(''));
@@ -357,7 +357,7 @@ var WP_Optimize = function (send_command) {
 			}, 10);
 		});
 	}
-
+	
 	/**
 	 * Runs a specified optimization, displaying the progress and results in the optimization's row
 	 *
@@ -701,9 +701,9 @@ var WP_Optimize = function (send_command) {
 
 		send_command('save_manual_run_optimization_options', optimization_options);
 	}
-
+	
 	$('#wp_optimize_table_list_refresh').click(function () {
-
+		
 		$('#wpoptimize_table_list tbody').css('opacity', '0.5');
 		send_command('get_table_list', false, function (response) {
 			
@@ -724,9 +724,12 @@ var WP_Optimize = function (send_command) {
 	});
 	
 	$('#settings_form').on('click', '#wp-optimize-settings-save', function (e) {
-		
-		e.preventDefault();
 
+		// validate logger settings.
+		if (!validate_logger_settings()) return false;
+
+		e.preventDefault();
+		
 		$('#save_spinner').show();
 
 		var form_data = gather_settings();
@@ -796,6 +799,11 @@ var WP_Optimize = function (send_command) {
 				optimization_table: table_name,
 				optimization_table_type: table_type
 			};
+
+		// if checked force button then send force value.
+		if (single_table_optimization_force.is(':checked')) {
+			data['optimization_force'] = true;
+		}
 
 		spinner.removeClass('visibility-hidden');
 
@@ -1063,6 +1071,104 @@ var WP_Optimize = function (send_command) {
 		take_a_backup_with_updraftplus: take_a_backup_with_updraftplus,
 		save_auto_backup_options: save_auto_backup_options
 	}
+	/**
+	 * Validate loggers settings.
+	 *
+	 * @return {boolean}
+	 */
+	function validate_logger_settings() {
+		var valid = true;
+
+		$('.wpo_logger_addition_option, .wpo_logger_type').each(function() {
+			if (!validate_field($(this), true)) {
+				valid = false;
+				$(this).addClass('wpo_error_field');
+			} else {
+				$(this).removeClass('wpo_error_field');
+			}
+		});
+
+		if (!valid) {
+			$('#wp-optimize-settings-save-results')
+				.show()
+				.addClass('wpo_alert_notice')
+				.text(wpoptimize.fill_all_settings_fields)
+				.delay(5000)
+				.fadeOut(3000, function() {
+					$(this).removeClass('wpo_alert_notice');
+				});
+		} else {
+			$('#wp-optimize-logger-settings .save_settings_reminder').slideUp();
+		}
+
+		return valid;
+	}
+
+	/**
+	 * Validate import field with data-validate attribute.
+	 *
+	 * @param {object}  field    jquery element
+	 * @param {boolean} required
+	 *
+	 * @return {boolean}
+	 */
+	function validate_field(field, required) {
+		var value = field.val(),
+			validate = field.data('validate');
+
+		if (!validate && required) {
+			return ('' != $.trim(value));
+		}
+
+		if (validate && !required && '' == $.trim(value)) {
+			return true;
+		}
+
+		var valid = true;
+
+		switch (validate) {
+			case 'email':
+				var regex = /\S+@\S+\.\S+/,
+					emails = value.split(","),
+					email = '';
+
+				for (var i = 0; i < emails.length; i++) {
+					email = $.trim(emails[i]);
+
+					if ('' == email || !regex.test(email)) {
+						valid = false;
+					}
+				}
+				break;
+
+			case 'url':
+				// https://gist.github.com/dperini/729294
+				// @codingStandardsIgnoreLine
+				var regex = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/i;
+
+				valid = regex.test(value);
+				break;
+		}
+
+		return valid;
+	}
+
+	/**
+	 * Send check_overdue_crons command and output warning if need.
+	 */
+	setTimeout(function() {
+		send_command('check_overdue_crons', null, function (resp) {
+			if (resp && resp.hasOwnProperty('m')) {
+				$('#wpo_settings_warnings').append(resp.m);
+			}
+		});
+	}, 11000);
+
+	return {
+		send_command: send_command,
+		take_a_backup_with_updraftplus: take_a_backup_with_updraftplus,
+		save_auto_backup_options: save_auto_backup_options
+	}
 };
 
 jQuery(document).ready(function ($) {
@@ -1091,5 +1197,212 @@ jQuery(document).ready(function ($) {
 			show_hide_additional_logger_options($checkbox);
 		});
 	});
+
+	var add_logging_btn = $('#wpo_add_logger_link');
+
+	/**
+	 * Handle add logging destination click.
+	 */
+	add_logging_btn.on('click', function() {
+		$('#wp-optimize-logger-settings .save_settings_reminder').after(get_add_logging_form_html());
+
+		filter_select_destinations($('.wpo_logger_type').first());
+	});
+
+	/**
+	 * Handle logging destination select change.
+	 */
+	$('#wp-optimize-nav-tab-contents-settings').on('change', '.wpo_logger_type', function() {
+		var select = $(this),
+			logger_id = select.val(),
+			options_container = select.parent().find('.wpo_additional_logger_options');
+
+		options_container.html(get_logging_additional_options_html(logger_id));
+
+		if (select.val()) {
+			show_logging_save_settings_reminder();
+		}
+	});
+
+	/**
+	 * Show save settings reminder for logging settings.
+	 *
+	 * @return {void}
+	 */
+	function show_logging_save_settings_reminder() {
+		var reminder = $('#wp-optimize-logger-settings .save_settings_reminder');
+
+		if (!reminder.is(':visible')) {
+			reminder.slideDown('normal');
+		}
+	}
+
+	/**
+	 * Handle edit logger click.
+	 */
+	$('.wpo_logging_actions_row .dashicons-edit').on('click', function() {
+
+		var link = $(this),
+			container = link.closest('.wpo_logging_row');
+
+		$('.wpo_additional_logger_options', container).removeClass('wpo_hidden');
+		$('.wpo_logging_options_row', container).text('');
+		$('.wpo_logging_status_row', container).text('');
+		link.hide();
+
+		return false;
+	});
+
+	$('#wp-optimize-logger-settings').on('change', '.wpo_logger_addition_option', function() {
+		show_logging_save_settings_reminder();
+	});
+
+	/**
+	 * Handle change of active/inactive status and update hidden field value.
+	 */
+	$('.wpo_logger_active_checkbox').on('change', function() {
+		var checkbox = $(this),
+			hidden_input = checkbox.closest('label').find('input[type="hidden"]');
+
+		hidden_input.val(checkbox.is(':checked') ? '1' : '0');
+	});
+
+	/**
+	 * Handle delete logger destination click.
+	 */
+	$('#wp-optimize-nav-tab-contents-settings').on('click', '.wpo_delete_logger', function() {
+
+		if (!confirm(wpoptimize.are_you_sure_you_want_to_remove_logging_destination)) {
+			return false;
+		}
+
+		var btn = $(this);
+		btn.closest('.wpo_logging_row, .wpo_add_logger_form').remove();
+		filter_all_select_destinations();
+
+		if (0 == $('#wp-optimize-logging-options .wpo_logging_row').length) {
+			$('#wp-optimize-logging-options').hide();
+		}
+
+		show_logging_save_settings_reminder();
+
+		return false;
+	});
+
+	/**
+	 * Filter all selects with logger destinations, called after some destination deleted.
+	 *
+	 * @return {void}
+	 */
+	function filter_all_select_destinations() {
+		$('.wpo_logger_type').each(function() {
+			filter_select_destinations($(this));
+		});
+	}
+
+	/**
+	 * Filter certain select options depending on currently selected values.
+	 *
+	 * @param {object} select
+	 *
+	 * @return {void}
+	 */
+	function filter_select_destinations(select) {
+		var i,
+			destination,
+			current_destinations = get_current_destinations();
+
+		for (i in current_destinations) {
+			destination = current_destinations[i];
+			if (wpoptimize.loggers_classes_info[destination].allow_multiple) {
+				$('option[value="'+destination+'"]', select).show();
+			} else {
+				$('option[value="'+destination+'"]', select).hide();
+			}
+		}
+	}
+
+	/**
+	 * Returns currently selected loggers destinations.
+	 *
+	 * @return {Array}
+	 */
+	function get_current_destinations() {
+		var destinations = [];
+
+		$('.wpo_logging_row, .wpo_logger_type').each(function() {
+			var destination = $(this).is('select') ? $(this).val() : $(this).data('id');
+
+			if (destination) destinations.push(destination);
+		});
+
+		return destinations;
+	}
+
+	/**
+	 * Return add logging form.
+	 *
+	 * @return {string}
+	 */
+	function get_add_logging_form_html() {
+		var i,
+			select_options = [
+				'<option value="">Select destination</option>'
+			];
+
+		for (i in wpoptimize.loggers_classes_info) {
+			if (!wpoptimize.loggers_classes_info.hasOwnProperty(i)) continue;
+			select_options.push(['<option value="',i,'">',wpoptimize.loggers_classes_info[i].description,'</option>'].join(''));
+		}
+
+		return [
+			'<div class="wpo_add_logger_form">',
+				'<select class="wpo_logger_type" name="wpo-logger-type[]">',
+					select_options.join(''),
+				'<select>',
+				'<a href="#" class="wpo_delete_logger dashicons dashicons-no-alt"></a>',
+				'<div class="wpo_additional_logger_options"></div>',
+			'</div>'
+		].join('');
+	}
+
+	/**
+	 * Returns logging options html.
+	 *
+	 * @param {string} logger_id
+	 *
+	 * @return {string}
+	 */
+	function get_logging_additional_options_html(logger_id) {
+		if (!wpoptimize.loggers_classes_info[logger_id].options) return '';
+
+		var i,
+			options = wpoptimize.loggers_classes_info[logger_id].options,
+			options_list = [],
+			placeholder = '',
+			validate = '';
+
+		for (i in options) {
+			if (!options.hasOwnProperty(i)) continue;
+
+			if ($.isArray(options[i])) {
+				placeholder = $.trim(options[i][0]);
+				validate = $.trim(options[i][1]);
+			} else {
+				placeholder = $.trim(options[i]);
+				validate = '';
+			}
+
+			options_list.push([
+				'<input class="wpo_logger_addition_option" type="text" name="wpo-logger-options[',i,'][]" value="" ',
+				'placeholder="',placeholder,'" ',('' !== validate ? 'data-validate="'+validate+'"' : ''), '/>'
+			].join(''));
+		}
+
+		// Add hidden field for active/inactive value.
+		options_list.push('<input type="hidden" name="wpo-logger-options[active][]" value="1" />');
+
+		return options_list.join('');
+	}
 });
 

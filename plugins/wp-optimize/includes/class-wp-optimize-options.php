@@ -228,17 +228,8 @@ class WP_Optimize_Options {
 		}
 
 		/** Save logging options */
-		$new_logging_options = isset($settings['wp-optimize-logging']) ? $settings['wp-optimize-logging'] : array();
-
-		if (!is_array($new_logging_options)) $new_logging_options = array();
-
-		$this->update_option('logging', $new_logging_options);
-
-		$new_logging_additional_options = isset($settings['wp-optimize-logging-additional']) ? $settings['wp-optimize-logging-additional'] : array();
-
-		if (!is_array($new_logging_additional_options)) $new_logging_additional_options = array();
-
-		$this->update_option('logging-additional', $new_logging_additional_options);
+		$this->update_option('logging', $settings['wpo-logger-type']);
+		$this->update_option('logging-additional', $settings['wpo-logger-options']);
 
 		// Save selected optimization settings.
 		$this->save_sent_manual_run_optimization_options($settings, true, false);
@@ -328,9 +319,7 @@ class WP_Optimize_Options {
 		$deprecated = null;
 		$autoload_no = 'no';
 
-		if ($this->get_option('schedule') !== false) {
-			// The option already exists, so we just update it.
-		} else {
+		if (false === $this->get_option('schedule')) {
 			// The option hasn't been added yet. We'll add it with $autoload_no set to 'no'.
 			$this->update_option('schedule', 'false', $deprecated, $autoload_no);
 			$this->update_option('last-optimized', 'Never', $deprecated, $autoload_no);
@@ -339,22 +328,16 @@ class WP_Optimize_Options {
 			wpo_cron_deactivate();
 		}
 
-		if ($this->get_option('retention-enabled') !== false) {
-			//
-		} else {
+		if (false === $this->get_option('retention-enabled')) {
 			$this->update_option('retention-enabled', 'false', $deprecated, $autoload_no);
 			$this->update_option('retention-period', '2', $deprecated, $autoload_no);
 		}
 
-		if ($this->get_option('enable-admin-menu') !== false) {
-			//
-		} else {
+		if (false === $this->get_option('enable-admin-menu')) {
 			$this->update_option('enable-admin-menu', 'false', $deprecated, $autoload_no);
 		}
 
-		if ($this->get_option('total-cleaned') !== false) {
-			//
-		} else {
+		if (false === $this->get_option('total-cleaned')) {
 			$this->update_option('total-cleaned', '0', $deprecated, $autoload_no);
 		}
 
@@ -380,9 +363,7 @@ class WP_Optimize_Options {
 
 
 		// Settings for main screen.
-		if (false !== $this->get_main_settings()) {
-			// The option already exists, so we just update it.
-		} else {
+		if (false === $this->get_main_settings()) {
 			$optimizer = WP_Optimize()->get_optimizer();
 
 			$optimizations = $optimizer->get_optimizations();

@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: https://getwpo.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.2.0
+Version: 2.2.2
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,14 +15,14 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '2.2.0');
+define('WPO_VERSION', '2.2.2');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
 
 class WP_Optimize {
 
-	public $premium_version_link = 'https://getwpo.com';
+	public $premium_version_link = 'https://getwpo.com/buy/';
 
 	private $template_directories;
 
@@ -411,7 +411,12 @@ class WP_Optimize {
 
 		wp_enqueue_style('tablesorter-css', WPO_PLUGIN_URL.'css/tablesorter/theme.default.min.css', array(), $enqueue_version);
 
-		wp_localize_script('wp-optimize-admin-js', 'wpoptimize', $this->wpo_js_translations());
+		$js_variables = $this->wpo_js_translations();
+		$js_variables['loggers_classes_info'] = $this->get_loggers_classes_info();
+
+		wp_localize_script('wp-optimize-admin-js', 'wpoptimize', $js_variables);
+
+		do_action('wpo_premium_scripts_styles', $min_or_not, $enqueue_version);
 
 		do_action('wpo_premium_scripts_styles', $min_or_not, $enqueue_version);
 
@@ -513,7 +518,9 @@ class WP_Optimize {
 			'optimization_complete' => __('Optimization complete', 'wp-optimize'),
 			'run_optimizations' => __('Run optimizations', 'wp-optimize'),
 			'cancel' => __('Cancel', 'wp-optimize'),
-			'please_select_settings_file' => __('Please, select settings file.', 'wp-optimize')
+			'please_select_settings_file' => __('Please, select settings file.', 'wp-optimize'),
+			'are_you_sure_you_want_to_remove_logging_destination' => __('Are you sure you want to remove this logging destination?', 'wp-optimize'),
+			'fill_all_settings_fields' => __('Before saving, you need to complete the currently incomplete settings (or remove them).', 'wp-optimize'),
 		));
 	}
 
@@ -892,7 +899,6 @@ class WP_Optimize {
 		}
 
 		add_action('wp_optimize_after_optimizations', array($this, 'after_optimizations_logger_action'));
-		add_filter('additional_options_updraft_ring_logger', array($this, 'additional_options_updraft_ring_logger'), 20, 4);
 	}
 
 	/**
@@ -910,33 +916,103 @@ class WP_Optimize {
 	}
 
 	/**
-	 * Additional options fo ring logger.
-	 *
-	 * @param  string 					$additional_options_html   The HTML to output.
-	 * @param  string 					$logger_form_name          The prefix being used in the options form for this logger.
-	 * @param  array  					$logger_additional_options Any saved options.
-	 * @param  Updraft_Logger_Interface $logger_class              The logger that the additional options are for.
-	 * @return string
-	 */
-	public function additional_options_updraft_ring_logger($additional_options_html, $logger_form_name, $logger_additional_options, $logger_class) {
-
-		$ring_logger_limit = ((!empty($logger_additional_options['ring_logger_limit']) && is_numeric($logger_additional_options['ring_logger_limit'])) ? $logger_additional_options['ring_logger_limit'] : '50');
-
-		return $additional_options_html.
-		sprintf(__('Store the last %s entries', 'wp-optimize'), '<input type="number" min="10" step="1" size="4" name="'.$logger_form_name.'[ring_logger_limit]" value="'.esc_attr($ring_logger_limit).'" placeholder="'.esc_attr__('Ring logger limit', 'wp-optimize').'">');
-	}
-
-
-	/**
 	 * Returns list of WPO loggers instances
 	 * Apply filter wp_optimize_loggers
 	 *
-	 * @return array|mixed|void
+	 * @return array
 	 */
 	public function wpo_loggers() {
 
 		$loggers = array();
+		$loggers_classes_by_id = array();
+		$options_keys = array();
 
+		$loggers_classes = $this->get_loggers_classes();
+
+		foreach ($loggers_classes as $logger_class => $source) {
+			$loggers_classes_by_id[strtolower($logger_class)] = $logger_class;
+		}
+
+		$saved_loggers = $this->get_options()->get_option('logging');
+		$logger_additional_options = $this->get_options()->get_option('logging-additional');
+
+		// create loggers classes instances.
+		if (!empty($saved_loggers)) {
+			// check for previous version options format.
+			$keys = array_keys($saved_loggers);
+
+			// if options stored in old format then reformat it.
+			if (false == is_numeric($keys[0])) {
+				$_saved_loggers = array();
+				foreach ($saved_loggers as $logger_id => $enabled) {
+					if ($enabled) {
+						$_saved_loggers[] = $logger_id;
+					}
+				}
+
+				// fill email with admin.
+				if (array_key_exists('updraft_email_logger', $saved_loggers) && $saved_loggers['updraft_email_logger']) {
+					$logger_additional_options['updraft_email_logger'] = array(
+						get_option('admin_email')
+					);
+				}
+
+				$saved_loggers = $_saved_loggers;
+			}
+
+			foreach ($saved_loggers as $i => $logger_id) {
+
+				if (!array_key_exists($logger_id, $loggers_classes_by_id)) continue;
+
+				$logger_class = $loggers_classes_by_id[$logger_id];
+
+				$logger = new $logger_class();
+
+				$logger_options = $logger->get_options_list();
+
+				if (!empty($logger_options)) {
+					foreach (array_keys($logger_options) as $option_name) {
+						if (array_key_exists($option_name, $options_keys)) {
+							$options_keys[$option_name]++;
+						} else {
+							$options_keys[$option_name] = 0;
+						}
+
+						$option_value = isset($logger_additional_options[$option_name][$options_keys[$option_name]]) ? $logger_additional_options[$option_name][$options_keys[$option_name]] : '';
+
+						// if options in old format then get correct value.
+						if ('' === $option_value && array_key_exists($logger_id, $logger_additional_options)) {
+							$option_value = array_shift($logger_additional_options[$logger_id]);
+						}
+
+						$logger->set_option($option_name, $option_value);
+					}
+				}
+
+				// check if logger is active.
+				$active = (!is_array($logger_additional_options) || (array_key_exists('active', $logger_additional_options) && empty($logger_additional_options['active'][$i]))) ? false : true;
+
+				if ($active) {
+					$logger->enable();
+				} else {
+					$logger->disable();
+				}
+
+				$loggers[] = $logger;
+			}
+		}
+
+		$loggers = apply_filters('wp_optimize_loggers', $loggers);
+
+		return $loggers;
+	}
+
+	/**
+	 * Returns associative array with logger class name in a key and path to class file in a value.
+	 *
+	 * @return array
+	 */
+	public function get_loggers_classes() {
 		$loggers_classes = array(
 			'Updraft_PHP_Logger' => WPO_PLUGIN_MAIN_PATH . 'includes/class-updraft-php-logger.php',
 			'Updraft_Email_Logger' => WPO_PLUGIN_MAIN_PATH . 'includes/class-updraft-email-logger.php',
@@ -952,33 +1028,39 @@ class WP_Optimize {
 						include_once($logger_file);
 					}
 				}
-
-				if (class_exists($logger_class)) {
-					$loggers[] = new $logger_class();
-				}
 			}
 		}
 
-		$loggers = apply_filters('wp_optimize_loggers', $loggers);
+		return $loggers_classes;
+	}
 
-		if (empty($loggers)) return array();
+	/**
+	 * Returns information about all loggers classes.
+	 *
+	 * @return array
+	 */
+	public function get_loggers_classes_info() {
+		$loggers_classes = $this->get_loggers_classes();
 
-		$logger_options = $this->get_options()->get_option('logging');
-		$logger_additional_options = $this->get_options()->get_option('logging-additional');
+		$loggers_classes_info = array();
 
-		foreach ($loggers as $logger) {
-			$logger_class_name = get_class($logger);
-			$logger_id = strtolower($logger_class_name);
-			if (empty($logger_options[$logger_id])) {
-				$logger->disable();
-			}
+		if (!empty($loggers_classes)) {
+			foreach (array_keys($loggers_classes) as $logger_class_name) {
 
-			if (!empty($logger_additional_options) && array_key_exists($logger_id, $logger_additional_options)) {
-				$logger->set_option($logger_additional_options[$logger_id]);
+				if (!class_exists($logger_class_name)) continue;
+
+				$logger_id = strtolower($logger_class_name);
+				$logger_class = new $logger_class_name();
+
+				$loggers_classes_info[$logger_id] = array(
+					'description' => $logger_class->get_description(),
+					'allow_multiple' => $logger_class->is_allow_multiple(),
+					'options' => $logger_class->get_options_list()
+				);
 			}
 		}
 
-		return $loggers;
+		return $loggers_classes_info;
 	}
 
 	/**

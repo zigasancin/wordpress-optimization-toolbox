@@ -25,6 +25,17 @@ class Updraft_Ring_Logger extends Updraft_Abstract_Logger {
 	}
 
 	/**
+	 * Returns list of logger options.
+	 *
+	 * @return array
+	 */
+	public function get_options_list() {
+		return array(
+			'ring_logger_limit' => __('How many last records store?', 'wp-optimize')
+		);
+	}
+
+	/**
 	 * Emergency message
 	 *
 	 * @param  string $message

@@ -29,7 +29,7 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 	 */
 	public function optimize() {
 		// check if force optimize sent.
-		$force = (isset($this->data['force']) && $this->data['force']) ? true : false;
+		$force = (isset($this->data['optimization_force']) && $this->data['optimization_force']) ? true : false;
 
 		// check if single table name posted or optimize all tables.
 		if (isset($this->data['optimization_table']) && '' != $this->data['optimization_table']) {
@@ -82,7 +82,11 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 
 			if ($tablesstatus['inno_db_tables'] > 0) {
 				// Output message for how many InnoDB tables will not be optimized.
-				$this->register_output(sprintf(__('Tables using the InnoDB engine (%d) will not be optimized. Other tables will be optimized (%s).', 'wp-optimize'), $tablesstatus['inno_db_tables'], $tablesstatus['non_inno_db_tables']));
+				$this->register_output(sprintf(__('Tables using the InnoDB engine (%d) will not be optimized.'), $tablesstatus['inno_db_tables']));
+
+				if ($tablesstatus['non_inno_db_tables'] > 0) {
+					$this->register_output(sprintf(__('Other tables will be optimized (%s).', 'wp-optimize'), $tablesstatus['non_inno_db_tables']));
+				}
 
 				$faq_url = apply_filters('wpo_faq_url', 'https://wordpress.org/plugins/wp-optimize/#faq');
 				$force_db_option = $this->options->get_option('innodb-force-optimize', 'false');

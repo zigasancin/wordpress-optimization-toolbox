@@ -31,7 +31,20 @@ class Updraft_Logger implements Updraft_Logger_Interface {
 	 * @param Updraft_Logger_Interface $logger
 	 */
 	public function add_logger(Updraft_Logger_Interface $logger) {
-		$this->_loggers[] = $logger;
+		$logger_id = $logger_class = get_class($logger);
+
+		// don't add logger if it doesn't support multiple loggers.
+		if (!empty($this->_loggers) && array_key_exists($logger_id, $this->_loggers) && false == $logger->is_allow_multiple()) return false;
+
+		$index = 0;
+
+		// get free id key.
+		while (array_key_exists($logger_id, $this->_loggers)) {
+			$index++;
+			$logger_id = $logger_class.'_'.$index;
+		}
+
+		$this->_loggers[$logger_id] = $logger;
 	}
 
 	/**

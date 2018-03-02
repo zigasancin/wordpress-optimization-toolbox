@@ -9,6 +9,8 @@ if (class_exists('Updraft_Email_Logger')) return;
  */
 class Updraft_Email_Logger extends Updraft_Abstract_Logger {
 
+	protected $allow_multiple = true;
+
 	/**
 	 * Updraft_Email_Logger constructor
 	 */
@@ -18,10 +20,24 @@ class Updraft_Email_Logger extends Updraft_Abstract_Logger {
 	/**
 	 * Returns logger description
 	 *
-	 * @return string|void
+	 * @return string
 	 */
 	public function get_description() {
 		return __('Log events to email', 'wp-optimize');
+	}
+
+	/**
+	 * Returns list of logger options.
+	 *
+	 * @return array
+	 */
+	public function get_options_list() {
+		return array(
+			'emails' => array(
+				__('Enter email for logs here', 'wp-optimize'),
+				'email', // validator
+			)
+		);
 	}
 
 	/**

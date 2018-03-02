@@ -25,8 +25,16 @@ msgstr ""
 msgid "Please upload a valid settings file."
 msgstr ""
 
-#: src/includes/class-updraft-email-logger.php:24
+#: src/includes/class-updraft-abstract-logger.php:55
+msgid "Placeholder"
+msgstr ""
+
+#: src/includes/class-updraft-email-logger.php:26
 msgid "Log events to email"
+msgstr ""
+
+#: src/includes/class-updraft-email-logger.php:37
+msgid "Enter email for logs here"
 msgstr ""
 
 #: src/includes/class-updraft-php-logger.php:24
@@ -37,11 +45,15 @@ msgstr ""
 msgid "Store the most recent log entries in the WordPress database"
 msgstr ""
 
+#: src/includes/class-updraft-ring-logger.php:34
+msgid "How many last records store?"
+msgstr ""
+
 #: src/includes/class-wp-optimize-options.php:142
 msgid "Auto backup option updated."
 msgstr ""
 
-#: src/includes/class-wp-optimize-options.php:257
+#: src/includes/class-wp-optimize-options.php:248
 msgid "Settings updated."
 msgstr ""
 
@@ -251,23 +263,23 @@ msgstr ""
 msgid "Total gain:"
 msgstr ""
 
-#: src/optimizations/optimizetables.php:85
-msgid "Tables using the InnoDB engine (%d) will not be optimized. Other tables will be optimized (%s)."
+#: src/optimizations/optimizetables.php:88
+msgid "Other tables will be optimized (%s)."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:89
+#: src/optimizations/optimizetables.php:93
 msgid "Optimize InnoDB tables anyway."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:89
+#: src/optimizations/optimizetables.php:93
 msgid "Warning: you should read the FAQ on the risks of this operation first."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:92
+#: src/optimizations/optimizetables.php:96
 msgid "Tables will be optimized (%s)."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:97, src/optimizations/optimizetables.php:101
+#: src/optimizations/optimizetables.php:101, src/optimizations/optimizetables.php:105
 msgid "Optimize database tables"
 msgstr ""
 
@@ -555,27 +567,31 @@ msgstr ""
 msgid "Scheduled clean-up settings"
 msgstr ""
 
-#: src/templates/admin-settings-auto-cleanup.php:8
+#: src/templates/admin-settings-auto-cleanup.php:6
+msgid "Take control of clean-ups: Upgrade to Premium for a more powerful and flexible scheduler"
+msgstr ""
+
+#: src/templates/admin-settings-auto-cleanup.php:12
 msgid "Enable scheduled clean-up and optimization (Beta feature)"
 msgstr ""
 
-#: src/templates/admin-settings-auto-cleanup.php:16
+#: src/templates/admin-settings-auto-cleanup.php:20
 msgid "Select schedule type (default is Weekly)"
 msgstr ""
 
-#: src/templates/admin-settings-auto-cleanup.php:21
+#: src/templates/admin-settings-auto-cleanup.php:25
 msgid "Daily"
 msgstr ""
 
-#: src/templates/admin-settings-auto-cleanup.php:22
+#: src/templates/admin-settings-auto-cleanup.php:26
 msgid "Weekly"
 msgstr ""
 
-#: src/templates/admin-settings-auto-cleanup.php:23
+#: src/templates/admin-settings-auto-cleanup.php:27
 msgid "Fortnightly"
 msgstr ""
 
-#: src/templates/admin-settings-auto-cleanup.php:24
+#: src/templates/admin-settings-auto-cleanup.php:28
 msgid "Monthly (approx. - every 30 days)"
 msgstr ""
 
@@ -615,7 +631,39 @@ msgstr ""
 msgid "Logging settings"
 msgstr ""
 
-#: src/templates/admin-settings-logging.php:48
+#: src/templates/admin-settings-logging.php:7
+msgid "Add logging destination"
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:11
+msgid "Remember to save your settings so that your changes take effect."
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:22
+msgid "Destination"
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:23
+msgid "Options"
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:24, src/templates/status-box-contents.php:11
+msgid "Status"
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:25
+msgid "Actions"
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:39, src/templates/admin-settings-logging.php:79
+msgid "Active"
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:39
+msgid "Inactive"
+msgstr ""
+
+#: src/templates/admin-settings-logging.php:96
 msgid "Save settings"
 msgstr ""
 
@@ -1013,10 +1061,6 @@ msgstr ""
 msgid "You may wish to run a backup before optimizing."
 msgstr ""
 
-#: src/templates/status-box-contents.php:11
-msgid "Status"
-msgstr ""
-
 #: src/templates/status-box-contents.php:16
 msgid "running on:"
 msgstr ""
@@ -1102,14 +1146,14 @@ msgid "Total:"
 msgstr ""
 
 #: src/templates/tables-body.php:68
-msgid "%d Table"
-msgid_plural "%d Tables"
+msgid "%s Table"
+msgid_plural "%s Tables"
 msgstr[0] ""
 msgstr[1] ""
 
 #: src/templates/tables-body.php:69
-msgid "%d Record"
-msgid_plural "%d Records"
+msgid "%s Record"
+msgid_plural "%s Records"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1201,7 +1245,7 @@ msgstr ""
 msgid "Table information"
 msgstr ""
 
-#: src/wp-optimize.php:387, src/wp-optimize.php:565
+#: src/wp-optimize.php:387, src/wp-optimize.php:572
 msgid "Settings"
 msgstr ""
 
@@ -1209,106 +1253,106 @@ msgstr ""
 msgid "Premium / Plugin family"
 msgstr ""
 
-#: src/wp-optimize.php:511
+#: src/wp-optimize.php:516
 msgid "Automatic backup before optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:512
+#: src/wp-optimize.php:517
 msgid "An unexpected response was received."
 msgstr ""
 
-#: src/wp-optimize.php:513
+#: src/wp-optimize.php:518
 msgid "Optimization complete"
 msgstr ""
 
-#: src/wp-optimize.php:514
+#: src/wp-optimize.php:519
 msgid "Run optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:515
+#: src/wp-optimize.php:520
 msgid "Cancel"
 msgstr ""
 
-#: src/wp-optimize.php:516
+#: src/wp-optimize.php:521
 msgid "Please, select settings file."
 msgstr ""
 
-#: src/wp-optimize.php:546
+#: src/wp-optimize.php:522
+msgid "Are you sure you want to remove this logging destination?"
+msgstr ""
+
+#: src/wp-optimize.php:523
+msgid "Before saving, you need to complete the currently incomplete settings (or remove them)."
+msgstr ""
+
+#: src/wp-optimize.php:553
 msgid "Optimize"
 msgstr ""
 
-#: src/wp-optimize.php:568
+#: src/wp-optimize.php:575
 msgid "Optimizer"
 msgstr ""
 
-#: src/wp-optimize.php:671
+#: src/wp-optimize.php:678
 msgid "Warning"
 msgstr ""
 
-#: src/wp-optimize.php:671
+#: src/wp-optimize.php:678
 msgid "WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working."
 msgstr ""
 
-#: src/wp-optimize.php:671
+#: src/wp-optimize.php:678
 msgid "Read this page for a guide to possible causes and how to fix it."
 msgstr ""
 
-#: src/wp-optimize.php:738
+#: src/wp-optimize.php:745
 msgid "Error:"
 msgstr ""
 
-#: src/wp-optimize.php:738
+#: src/wp-optimize.php:745
 msgid "template not found"
 msgstr ""
 
-#: src/wp-optimize.php:790
+#: src/wp-optimize.php:797
 msgid "Automatic Operation Completed"
 msgstr ""
 
-#: src/wp-optimize.php:792
+#: src/wp-optimize.php:799
 msgid "Scheduled optimization was executed at"
 msgstr ""
 
-#: src/wp-optimize.php:793
+#: src/wp-optimize.php:800
 msgid "You can safely delete this email."
 msgstr ""
 
-#: src/wp-optimize.php:795
+#: src/wp-optimize.php:802
 msgid "Regards,"
 msgstr ""
 
-#: src/wp-optimize.php:796
+#: src/wp-optimize.php:803
 msgid "WP-Optimize Plugin"
 msgstr ""
 
-#: src/wp-optimize.php:818
+#: src/wp-optimize.php:825
 msgid "GB"
 msgstr ""
 
-#: src/wp-optimize.php:820
+#: src/wp-optimize.php:827
 msgid "MB"
 msgstr ""
 
-#: src/wp-optimize.php:822
+#: src/wp-optimize.php:829
 msgid "KB"
 msgstr ""
 
-#: src/wp-optimize.php:824
+#: src/wp-optimize.php:831
 msgid "bytes"
 msgstr ""
 
-#: src/wp-optimize.php:926
-msgid "Store the last %s entries"
-msgstr ""
-
-#: src/wp-optimize.php:926
-msgid "Ring logger limit"
-msgstr ""
-
-#: src/wp-optimize.php:1128
+#: src/wp-optimize.php:1210
 msgid "Only Network Administrator can activate WP-Optimize plugin."
 msgstr ""
 
-#: src/wp-optimize.php:1129
+#: src/wp-optimize.php:1211
 msgid "go back"
 msgstr ""
