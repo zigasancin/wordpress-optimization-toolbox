@@ -32,11 +32,14 @@
 // TODO: fix ExactDN failure after multisite save settings.
 // TODO: add ExactDN compat with A3 lazy.
 // TODO: can svg/use tags be exluded from all the things?
+// TODO: make the force checkbox persistent.
+// TODO: detect WPFC web rules.
+// TODO: add a notice for PHP 5.3 users
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '410.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '411.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
@@ -558,10 +561,16 @@ function ewww_image_optimizer_filter_webp_page_output( $buffer ) {
 	}
 	$uri = $_SERVER['REQUEST_URI'];
 	// Based on the uri, if this is a cornerstone editing page, don't filter the response.
-	if ( strpos( $uri, '&cornerstone=1' ) || strpos( $uri, 'cornerstone-endpoint' ) !== false ) {
+	if ( ! empty( $_GET['cornerstone'] ) || strpos( $uri, 'cornerstone-endpoint' ) !== false ) {
 		return $buffer;
 	}
 	if ( ! empty( $_GET['et_fb'] ) ) {
+		return $buffer;
+	}
+	if ( ! empty( $_GET['tatsu'] ) ) {
+		return $buffer;
+	}
+	if ( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === $_POST['action'] ) {
 		return $buffer;
 	}
 	// Modify buffer here, and then return the updated code.
@@ -4443,6 +4452,9 @@ function ewww_image_optimizer_remote_fetch( $id, $meta ) {
 		ewwwio_debug_message( "unfiltered fullsize path: $filename" );
 		$temp_file = download_url( $full_url );
 		if ( ! is_wp_error( $temp_file ) ) {
+			if ( ! is_dir( dirname( $filename ) ) ) {
+				wp_mkdir_p( dirname( $filename ) );
+			}
 			rename( $temp_file, $filename );
 		}
 		// Resized versions, so we'll grab those too.
@@ -4479,6 +4491,9 @@ function ewww_image_optimizer_remote_fetch( $id, $meta ) {
 					ewwwio_debug_message( "fetching $resize_url to $resize_path" );
 					$temp_file = download_url( $resize_url );
 					if ( ! is_wp_error( $temp_file ) ) {
+						if ( ! is_dir( dirname( $resize_path ) ) ) {
+							wp_mkdir_p( dirname( $resize_path ) );
+						}
 						rename( $temp_file, $resize_path );
 					}
 				}
@@ -4495,6 +4510,9 @@ function ewww_image_optimizer_remote_fetch( $id, $meta ) {
 		ewwwio_debug_message( "fullsize path: $filename" );
 		$temp_file = download_url( $full_url );
 		if ( ! is_wp_error( $temp_file ) ) {
+			if ( ! is_dir( dirname( $filename ) ) ) {
+				wp_mkdir_p( dirname( $filename ) );
+			}
 			rename( $temp_file, $filename );
 		}
 		// Resized versions, so we'll grab those too.
@@ -4533,6 +4551,9 @@ function ewww_image_optimizer_remote_fetch( $id, $meta ) {
 					ewwwio_debug_message( "fetching $resize_url to $resize_path" );
 					$temp_file = download_url( $resize_url );
 					if ( ! is_wp_error( $temp_file ) ) {
+						if ( ! is_dir( dirname( $resize_path ) ) ) {
+							wp_mkdir_p( dirname( $resize_path ) );
+						}
 						rename( $temp_file, $resize_path );
 					}
 				}

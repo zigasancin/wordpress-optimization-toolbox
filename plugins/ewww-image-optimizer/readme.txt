@@ -5,7 +5,7 @@ Tags: image, compress, optimize, optimization, lossless, lossy, seo, tinyjpg, ti
 Requires at least: 4.6
 Tested up to: 4.9
 Requires PHP: 5.3
-Stable tag: 4.1.0
+Stable tag: 4.1.1
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -176,6 +176,14 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 
 * Feature requests can be submitted via https://ewww.io/contact-us/ and commented on here: https://trello.com/b/Fp81dWof/ewww-image-optimizer
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
+
+= 4.1.1 =
+* added: reduce ExactDN load time by suppressing db queries with EXACTDN_PREVENT_DB_QUERIES
+* added: $fullsize indicator added to pre/post optimization hooks, props Schweinepriester
+* fixed: missing www preventing rewrites for ExactDN
+* fixed: Alt WebP compatibility with Tatsu page builder
+* fixed: relative path support not working properly for Pantheon users
+* fixed: missing directories prevent optimization of S3 files
 
 = 4.1.0 =
 * SECURITY: gifsicle and optipng have been updated to address security flaws

@@ -126,6 +126,14 @@ class ExactDN {
 		$this->upload_domain = defined( 'EXACTDN_LOCAL_DOMAIN' ) && EXACTDN_LOCAL_DOMAIN ? EXACTDN_LOCAL_DOMAIN : $this->parse_url( $upload_dir['baseurl'], PHP_URL_HOST );
 		ewwwio_debug_message( "allowing images from here: $this->upload_domain" );
 		$this->allowed_domains[] = $this->upload_domain;
+		if ( strpos( $this->upload_domain, 'www' ) === false ) {
+			$this->allowed_domains[] = 'www.' . $this->upload_domain;
+		} else {
+			$nonwww = ltrim( 'www.', $this->upload_domain );
+			if ( $nonwww !== $this->upload_domain ) {
+				$this->allowed_domains[] = $nonwww;
+			}
+		}
 	}
 
 	/**
@@ -547,10 +555,12 @@ class ExactDN {
 					list( $filename_width, $filename_height ) = $this->parse_dimensions_from_filename( $src );
 					// WP Attachment ID, if uploaded to this site.
 					preg_match( '#class=["|\']?[^"\']*wp-image-([\d]+)[^"\']*["|\']?#i', $images['img_tag'][ $index ], $attachment_id );
-					if ( empty( $attachment_id ) ) {
+					if ( ! ewww_image_optimizer_get_option( 'exactdn_prevent_db_queries' ) && empty( $attachment_id ) ) {
+						ewwwio_debug_message( 'looking for attachment id' );
 						$attachment_id = array( attachment_url_to_postid( $src ) );
 					}
-					if ( ! empty( $attachment_id ) ) {
+					if ( ! ewww_image_optimizer_get_option( 'exactdn_prevent_db_queries' ) && ! empty( $attachment_id ) ) {
+						ewwwio_debug_message( 'using attachment id to get source image' );
 						$attachment_id = intval( array_pop( $attachment_id ) );
 
 						if ( $attachment_id ) {
@@ -638,7 +648,8 @@ class ExactDN {
 						$src = $this->strip_image_dimensions_maybe( $src );
 					}
 
-					if ( ! empty( $attachment_id ) ) {
+					if ( ! ewww_image_optimizer_get_option( 'exactdn_prevent_db_queries' ) && ! empty( $attachment_id ) ) {
+						ewwwio_debug_message( 'using attachment id to check smart crop' );
 						$args = $this->maybe_smart_crop( $args, $attachment_id );
 					}
 
@@ -1362,7 +1373,6 @@ class ExactDN {
 	protected function validate_image_url( $url, $exactdn_is_valid = false ) {
 		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 		$parsed_url = parse_url( $url );
-		// TODO: add a parameter to allow validation of exactdn urls.
 		if ( ! $parsed_url ) {
 			ewwwio_debug_message( 'could not parse' );
 			return false;
