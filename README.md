@@ -1,2 +1,2 @@
 # wordpress-optimization-toolbox
-WordPress plugins, Nginx&amp;MySQL Server configurations, code samples, etc.
+WordPress plugins, web&db server configurations, code samples, etc.
