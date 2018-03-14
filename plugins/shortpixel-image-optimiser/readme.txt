@@ -4,7 +4,7 @@ Tags: compress, image, compression, optimize, image optimizer, image optimiser, 
 Requires at least: 3.2.0
 Tested up to: 4.9
 Requires PHP: 5.2
-Stable tag: 4.9.1
+Stable tag: 4.10.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,7 +36,7 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 * option to freely convert any JPEG, PNG or GIF (even animated ones!) to **WebP** for more Google love. <a href="http://blog.shortpixel.com/how-webp-images-can-speed-up-your-site/" target="_blank">How to enable WebP?</a>
 * option to include the generated WebP images into the front-end pages by using the &lt;picture&gt; tag instead of &lt;img&gt;
 * compatible with WP Retina 2x - all **retina images** are automatically compressed. <a href="http://blog.shortpixel.com/how-to-use-optimized-retina-images-on-your-wordpress-site-for-best-user-experience-on-apple-devices/" target="_blank">How to benefit from Retina displays?</a>
-* optimize thumbnails as well as featured images
+* optimize thumbnails as well as featured images. You can also **select individual thumbnails to exclude** from optimization.
 * ability to optimize any image on your site including images in **NextGEN Gallery** and any other image gallery or slider
 * featured images can be automatically resized before being optimized with 2 different options. No need for additional plugins like Imsanity
 * CMYK to RGB conversion
@@ -227,6 +227,19 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.10.1 =
+* fix missing file from commit
+
+= 4.10.0 =
+* option to exclude thumbnails from optimization
+* options to delete Cloudflare cache for optimized images
+* method to define affilate codes for themes
+* error message when restore could not be performed
+* better handling of situations with files with different owner but with write permissions for all
+* fix bug for inner resize when setting and unsetting the resize parameter
+* fix bug for third-party WebP thumbnails registered in the 'sizes' metadata array which were sent to optimization.
+* check if function mb_convert_encoding exists before using it
 
 = 4.9.1 =
 * fix error for older WP versions which don't have wp_raise_memory_limit

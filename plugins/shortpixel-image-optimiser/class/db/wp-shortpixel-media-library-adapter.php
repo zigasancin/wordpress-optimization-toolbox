@@ -65,7 +65,7 @@ class WpShortPixelMediaLbraryAdapter {
                 elseif ( $file->meta_key == "_wp_attachment_metadata" ) //_wp_attachment_metadata
                 {
                     $attachment = @unserialize($file->meta_value);
-                    $sizesCount = isset($attachment['sizes']) ? WpShortPixelMediaLbraryAdapter::countNonWebpSizes($attachment['sizes']) : 0;
+                    $sizesCount = isset($attachment['sizes']) ? self::countSizesNotExcluded($attachment['sizes'], $settings->excludeSizes) : 0;
 
                     // LA FIECARE 100 de imagini facem un test si daca findThumbs da diferit, sa dam o avertizare si eventual optiune
                     $dismissed = $settings->dismissedNotices ? $settings->dismissedNotices : array();
@@ -236,15 +236,18 @@ class WpShortPixelMediaLbraryAdapter {
         return $wpdb->get_results($queryPostMeta);        
     }
     
-    public static function countNonWebpSizes($sizes) {
+    public static function countSizesNotExcluded($sizes, $exclude = false) {
         $uniq = array();
+        $exclude = is_array($exclude) ? $exclude : array(); //this is because it sometimes receives directly the setting which could be false
         foreach($sizes as $key => $val) {
             if (strpos($key, ShortPixelMeta::WEBP_THUMB_PREFIX) === 0) continue;
+            if (isset($val['mime-type']) && $val['mime-type'] == "image/webp") continue;
+            if (in_array($key, $exclude)) continue;
             $uniq[$val['file']] = $key;
         }
         return count($uniq);
     }
-    
+
     public static function cleanupFoundThumbs($itemHandler) {
         $meta = $itemHandler->getMeta();
         $sizesAll = $meta->getThumbs();

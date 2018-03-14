@@ -781,7 +781,8 @@ function checkBulkProcessingCallApi(){
 
                 switch (data["Status"]) {
                     case ShortPixel.STATUS_NO_KEY:
-                        setCellMessage(id, data["Message"], "<a class='button button-smaller button-primary' href=\"https://shortpixel.com/wp-apikey\" target=\"_blank\">" + _spTr.getApiKey + "</a>");
+                        setCellMessage(id, data["Message"], "<a class='button button-smaller button-primary' href=\"https://shortpixel.com/wp-apikey"
+                                       + ShortPixel.AFFILIATE + "\" target=\"_blank\">" + _spTr.getApiKey + "</a>");
                         showToolBarAlert(ShortPixel.STATUS_NO_KEY);
                         break;
                     case ShortPixel.STATUS_QUOTA_EXCEEDED:

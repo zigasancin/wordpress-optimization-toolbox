@@ -12,7 +12,7 @@ class ShortPixelImgToPictureWebp {
 
         $thisClass = __CLASS__; // hack for PHP 5.3 which doesn't accept self:: in closures
         return preg_replace_callback('/<img[^>]*>/', function ($match) use ($thisClass) {
-            // Do nothing with images that has the 'rwp-not-responsive' class.
+            // Do nothing with images that have the 'sp-no-webp' class.
             if ( strpos($match[0], 'sp-no-webp') ) { return $match[0]; }
             
             $img = $thisClass::get_attributes($match[0]);
@@ -87,7 +87,9 @@ class ShortPixelImgToPictureWebp {
     
     public static function get_attributes( $image_node )
     {
-        $image_node = mb_convert_encoding($image_node, 'HTML-ENTITIES', 'UTF-8');
+        if(function_exists("mb_convert_encoding")) {
+            $image_node = mb_convert_encoding($image_node, 'HTML-ENTITIES', 'UTF-8');
+        }
         $dom = new DOMDocument();
         @$dom->loadHTML($image_node);
         $image = $dom->getElementsByTagName('img')->item(0);

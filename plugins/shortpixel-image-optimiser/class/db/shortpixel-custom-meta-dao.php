@@ -326,7 +326,7 @@ class ShortPixelCustomMetaDao {
                 . "FROM {$this->db->getPrefix()}shortpixel_meta sm "
                 . "INNER JOIN  {$this->db->getPrefix()}shortpixel_folders sf on sm.folder_id = sf.id "
                 . ($hasNextGen ? "LEFT JOIN {$this->db->getPrefix()}ngg_gallery ng on sf.path = ng.path " : " ")
-                . "WHERE sf.status <> -1 ";
+                . "WHERE sf.status <> -1 AND sm.status <> 3";
         foreach($filters as $field => $value) {
             $sql .= " AND sm.$field " . $value->operator . " ". $value->value . " ";
         }                

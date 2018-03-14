@@ -60,9 +60,11 @@ class ShortPixelMetaFacade {
                             : null),
                     "thumbsOpt" =>(isset($rawMeta["ShortPixel"]["thumbsOpt"]) ? $rawMeta["ShortPixel"]["thumbsOpt"] : null),
                     "thumbsOptList" =>(isset($rawMeta["ShortPixel"]["thumbsOptList"]) ? $rawMeta["ShortPixel"]["thumbsOptList"] : array()),
+                    'excludeSizes' =>(isset($rawMeta["ShortPixel"]["excludeSizes"]) ? $rawMeta["ShortPixel"]["excludeSizes"] : null),
                     "thumbsMissing" =>(isset($rawMeta["ShortPixel"]["thumbsMissing"]) ? $rawMeta["ShortPixel"]["thumbsMissing"] : null),
                     "retinasOpt" =>(isset($rawMeta["ShortPixel"]["retinasOpt"]) ? $rawMeta["ShortPixel"]["retinasOpt"] : null),
                     "thumbsTodo" =>(isset($rawMeta["ShortPixel"]["thumbsTodo"]) ? $rawMeta["ShortPixel"]["thumbsTodo"] : false),
+                    "tsOptimized" => (isset($rawMeta["ShortPixel"]["date"]) ? $rawMeta["ShortPixel"]["date"] : false),
                     "backup" => !isset($rawMeta['ShortPixel']['NoBackup']),
                     "status" => (!isset($rawMeta["ShortPixel"]) ? 0 
                                  : (isset($rawMeta["ShortPixelImprovement"]) && is_numeric($rawMeta["ShortPixelImprovement"]) 
@@ -135,7 +137,7 @@ class ShortPixelMetaFacade {
                 if(null === $this->meta->getTsOptimized()) {
                     unset($rawMeta['ShortPixel']['date']);
                 } else {
-                    $rawMeta['ShortPixel']['date'] = date("Y-m-d", strtotime($this->meta->getTsOptimized()));
+                    $rawMeta['ShortPixel']['date'] = date("Y-m-d H:i:s", strtotime($this->meta->getTsOptimized()));
                 }
                 
                 //thumbs were processed if settings or if they were explicitely requested
@@ -146,7 +148,14 @@ class ShortPixelMetaFacade {
                     $rawMeta['ShortPixel']['thumbsOpt'] = $this->meta->getThumbsOpt();
                     $rawMeta['ShortPixel']['thumbsOptList'] = $this->meta->getThumbsOptList();
                 }
-                
+
+                //thumbs that were explicitely excluded from settings
+                if(null === $this->meta->getExcludeSizes()) {
+                    unset($rawMeta['ShortPixel']['excludeSizes']);
+                } else {
+                    $rawMeta['ShortPixel']['excludeSizes'] = $this->meta->getExcludeSizes();
+                }
+
                 $thumbsMissing = $this->meta->getThumbsMissing();
                 if(is_array($thumbsMissing) && count($thumbsMissing)) {
                     $rawMeta['ShortPixel']['thumbsMissing'] = $this->meta->getThumbsMissing();
@@ -223,7 +232,19 @@ class ShortPixelMetaFacade {
             wp_update_attachment_metadata($this->ID, $this->rawMeta);
         }        
     }
-    
+
+    function deleteAllSPMeta() {
+        if($this->type == self::CUSTOM_TYPE) {
+            throw new Exception("Not implemented 1");
+        } else {
+            unset($this->rawMeta["ShortPixelImprovement"]);
+            unset($this->rawMeta['ShortPixel']);
+            unset($this->rawMeta['ShortPixelPng2Jpg']);
+            unset($this->meta);
+            wp_update_attachment_metadata($this->ID, $this->rawMeta);
+        }
+    }
+
     function incrementRetries($count = 1, $errorCode = ShortPixelAPI::ERR_UNKNOWN, $errorMessage = '') {
         if($this->type == self::CUSTOM_TYPE) {
             $this->meta->setRetries($this->meta->getRetries() + $count);
@@ -304,7 +325,7 @@ class ShortPixelMetaFacade {
         }
     }
     
-    public function getURLsAndPATHs($processThumbnails, $onlyThumbs = false, $addRetina = true) {
+    public function getURLsAndPATHs($processThumbnails, $onlyThumbs = false, $addRetina = true, $excludeSizes = array(), $includeOptimized = false) {
         $sizesMissing = array();
         
         if($this->type == self::CUSTOM_TYPE) {
@@ -349,11 +370,19 @@ class ShortPixelMetaFacade {
                         continue;
                     }
 
+                    if(isset($thumbnailInfo['mime-type']) && $thumbnailInfo['mime-type'] == "image/webp") {
+                        continue; // found a case when there were .jpg.webp thumbnails registered in sizes
+                    }
+
+                    if(in_array($thumbnailName, $excludeSizes)) {
+                        continue;
+                    }
+
                     if(strpos($thumbnailName, ShortPixelMeta::WEBP_THUMB_PREFIX) === 0) {
                         continue;
                     }
                     
-                    if(in_array($thumbnailInfo['file'], $meta->getThumbsOptList())) {
+                    if(!$includeOptimized && in_array($thumbnailInfo['file'], $meta->getThumbsOptList())) {
                         continue;
                     }
                     

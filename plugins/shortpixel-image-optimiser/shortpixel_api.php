@@ -30,11 +30,45 @@ class ShortPixelAPI {
     private $_settings;
     private $_maxAttempts = 10;
     private $_apiEndPoint;
+    private $_apiDumpEndPoint;
 
 
     public function __construct($settings) {
         $this->_settings = $settings;
-        $this->_apiEndPoint = $this->_settings->httpProto . '://api.shortpixel.com/v2/reducer.php';
+        $this->_apiEndPoint = $this->_settings->httpProto . '://' . SHORTPIXEL_API . '/v2/reducer.php';
+        $this->_apiDumpEndPoint = $this->_settings->httpProto . '://' . SHORTPIXEL_API . '/v2/cleanup.php';
+    }
+
+    protected function prepareRequest($requestParameters, $Blocking = false) {
+        $arguments = array(
+            'method' => 'POST',
+            'timeout' => 15,
+            'redirection' => 3,
+            'sslverify' => false,
+            'httpversion' => '1.0',
+            'blocking' => $Blocking,
+            'headers' => array(),
+            'body' => json_encode($requestParameters),
+            'cookies' => array()
+        );
+        //die(var_dump($requestParameters));
+        //add this explicitely only for https, otherwise (for http) it slows down the request
+        if($this->_settings->httpProto !== 'https') {
+            unset($arguments['sslverify']);
+        }
+
+        return $arguments;
+    }
+
+    public function doDumpRequests($URLs) {
+        if(!count($URLs)) {
+            return false;
+        }
+        return wp_remote_post($this->_apiDumpEndPoint, $this->prepareRequest(array(
+                'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
+                'key' => $this->_settings->apiKey,
+                'urllist' => $URLs
+            ) ) );
     }
 
     /**
@@ -58,7 +92,7 @@ class ShortPixelAPI {
             'cmyk2rgb' => $this->_settings->CMYKtoRGBconversion,
             'keep_exif' => ($this->_settings->keepExif ? "1" : "0"),
             'convertto' => ($this->_settings->createWebp ? urlencode("+webp") : ""),
-            'resize' => $this->_settings->resizeImages + 2 * ($this->_settings->resizeType == 'inner' ? 1 : 0),
+            'resize' => $this->_settings->resizeImages ? 1 + 2 * ($this->_settings->resizeType == 'inner' ? 1 : 0) : 0,
             'resize_width' => $this->_settings->resizeWidth,
             'resize_height' => $this->_settings->resizeHeight,
             'urllist' => $URLs
@@ -66,32 +100,15 @@ class ShortPixelAPI {
         if($refresh) {
             $requestParameters['refresh'] = 1;
         }
-        $arguments = array(
-            'method' => 'POST',
-            'timeout' => 15,
-            'redirection' => 3,
-            'sslverify' => false,
-            'httpversion' => '1.0',
-            'blocking' => $Blocking,
-            'headers' => array(),
-            'body' => json_encode($requestParameters),
-            'cookies' => array()
-        );
-        //die(var_dump($requestParameters));
-        //add this explicitely only for https, otherwise (for http) it slows down the request
-        if($this->_settings->httpProto !== 'https') {
-            unset($arguments['sslverify']);
-        }
-        //WpShortPixel::log("Calling API with params : " . json_encode($arguments));
 
-        $response = wp_remote_post($this->_apiEndPoint, $arguments );
+        $response = wp_remote_post($this->_apiEndPoint, $this->prepareRequest($requestParameters, $Blocking) );
         
         //only if $Blocking is true analyze the response
         if ( $Blocking )
         {
             //WpShortPixel::log("API response : " . json_encode($response));
             
-            //die(var_dump(array('URL: ' => $this->_apiEndPoint, '<br><br>REQUEST:' => $arguments, '<br><br>RESPONSE: ' => $response )));
+            //die(var_dump(array('URL: ' => $this->_apiEndPoint, '<br><br>REQUEST:' => $this->prepareRequest($requestParameters), '<br><br>RESPONSE: ' => $response )));
             //there was an error, save this error inside file's SP optimization field
             if ( is_object($response) && get_class($response) == 'WP_Error' ) 
             {
@@ -289,7 +306,7 @@ class ShortPixelAPI {
         //switch protocol based on the formerly detected working protocol
         if($this->_settings->downloadProto == '' || $reset) {
             //make a test to see if the http is working
-            $testURL = 'http://api.shortpixel.com/img/connection-test-image.png';
+            $testURL = 'http://' . SHORTPIXEL_API . '/img/connection-test-image.png';
             $result = download_url($testURL, 10);
             $this->_settings->downloadProto = is_wp_error( $result ) ? 'https' : 'http';
         }
@@ -357,20 +374,20 @@ class ShortPixelAPI {
                 "Message" => __('Error downloading file','shortpixel-image-optimiser') . " ({$fileData->$fileType}) " . $tempFile->get_error_message());
         } 
         //check response so that download is OK
+        elseif (!file_exists($tempFile)) {
+            $returnMessage = array("Status" => self::STATUS_ERROR,
+                "Code" => self::ERR_FILE_NOT_FOUND,
+                "Message" => __('Unable to locate downloaded file','shortpixel-image-optimiser') . " " . $tempFile);
+        }
         elseif( filesize($tempFile) != $correctFileSize) {
             $size = filesize($tempFile);
             @unlink($tempFile);
             $returnMessage = array(
-                "Status" => self::STATUS_ERROR, 
+                "Status" => self::STATUS_ERROR,
                 "Code" => self::ERR_INCORRECT_FILE_SIZE,
                 "Message" => sprintf(__('Error downloading file - incorrect file size (downloaded: %s, correct: %s )','shortpixel-image-optimiser'),$size, $correctFileSize));
         }
-        elseif (!file_exists($tempFile)) {
-            $returnMessage = array("Status" => self::STATUS_ERROR, 
-                "Code" => self::ERR_FILE_NOT_FOUND,
-                "Message" => __('Unable to locate downloaded file','shortpixel-image-optimiser') . " " . $tempFile);
-        }
-        return $returnMessage;        
+        return $returnMessage;
     }
     
     public static function backupImage($mainPath, $PATHs) {
@@ -575,6 +592,9 @@ class ShortPixelAPI {
         $meta->setThumbsOptList(is_array($meta->getThumbsOptList()) ? array_unique(array_merge($meta->getThumbsOptList(), $thumbsOptList)) : $thumbsOptList);
         $meta->setThumbsOpt(($meta->getThumbsTodo() ||  $this->_settings->processThumbnails) ? count($meta->getThumbsOptList()) : 0);
         $meta->setRetinasOpt($retinas);
+        if(null !== $this->_settings->excludeSizes) {
+            $meta->setExcludeSizes($this->_settings->excludeSizes);
+        }
         $meta->setThumbsTodo(false);
         //* Not yet as it doesn't seem to work... */$meta->addThumbs($webpSizes);
         if($width && $height) {

@@ -40,7 +40,13 @@ class WPShortPixelSettings {
         'optimizePdfs' => array('key' => 'wp-short-pixel-optimize-pdfs', 'default' => 1, 'group' => 'options'),
         'excludePatterns' => array('key' => 'wp-short-pixel-exclude-patterns', 'default' => array(), 'group' => 'options'),
         'png2jpg' => array('key' => 'wp-short-pixel-png2jpg', 'default' => 0, 'group' => 'options'),
-        
+        'excludeSizes' => array('key' => 'wp-short-pixel-excludeSizes', 'default' => array(), 'group' => 'options'),
+
+        //CloudFlare
+        'cloudflareEmail'   => array( 'key' => 'wp-short-pixel-cloudflareAPIEmail', 'default' => '', 'group' => 'options'),
+        'cloudflareAuthKey' => array( 'key' => 'wp-short-pixel-cloudflareAuthKey', 'default' => '', 'group' => 'options'),
+        'cloudflareZoneID'  => array( 'key' => 'wp-short-pixel-cloudflareAPIZoneID', 'default' => '', 'group' => 'options'),
+
         //optimize other images than the ones in Media Library
         'includeNextGen' => array('key' => 'wp-short-pixel-include-next-gen', 'default' => null, 'group' => 'options'),
         'hasCustomFolders' => array('key' => 'wp-short-pixel-has-custom-folders', 'default' => false, 'group' => 'options'),

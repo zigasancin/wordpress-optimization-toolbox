@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.9.1
+ * Version: 4.10.1
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -16,9 +16,9 @@ define('SHORTPIXEL_RESET_ON_ACTIVATE', false); //if true TODO set false
 
 define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
-define('SHORTPIXEL_AFFILIATE_CODE', '');
+//define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.9.0");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.10.1");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -30,6 +30,7 @@ if(!defined('SHORTPIXEL_MAX_THUMBS')) { //can be defined in wp-config.php
 }
 
 define('SHORTPIXEL_PRESEND_ITEMS', 3);
+define('SHORTPIXEL_API', 'api.shortpixel.com');
 
 define('SHORTPIXEL_MAX_EXECUTION_TIME', ini_get('max_execution_time'));
 
@@ -88,6 +89,18 @@ function shortPixelHandleImageUploadHook($meta, $ID = null) {
         $pluginInstance = new WPShortPixel;
     }
     return $pluginInstance->handleMediaLibraryImageUpload($meta, $ID);
+}
+
+function shortPixelReplaceHook($params) {
+    if(isset($params['post_id'])) { //integration with EnableMediaReplace - that's an upload for replacing an existing ID
+        global $pluginInstance;
+        if (!isset($pluginInstance)) {
+            require_once('wp-shortpixel-req.php');
+            $pluginInstance = new WPShortPixel;
+        }
+        $itemHandler = $pluginInstance->onDeleteImage($params['post_id']);
+        $itemHandler->deleteAllSPMeta();
+    }
 }
 
 function shortPixelPng2JpgHook($params) {
@@ -159,6 +172,7 @@ if ( !function_exists( 'vc_action' ) || vc_action() !== 'vc_inline' ) { //handle
     if($autoPng2Jpg) {
         add_action( 'wp_handle_upload', 'shortPixelPng2JpgHook');
     }
+    add_action('wp_handle_replace', 'shortPixelReplaceHook');
     $autoMediaLibrary = get_option('wp-short-pixel-auto-media-library');
     if($autoMediaLibrary) {
         add_filter( 'wp_generate_attachment_metadata', 'shortPixelHandleImageUploadHook', 10, 2 );
