@@ -4,7 +4,7 @@ Tags: compress, image, compression, optimize, image optimizer, image optimiser, 
 Requires at least: 3.2.0
 Tested up to: 4.9
 Requires PHP: 5.2
-Stable tag: 4.10.1
+Stable tag: 4.10.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -227,6 +227,9 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.10.2 =
+* fix error when listing Other media in some circumstances
 
 = 4.10.1 =
 * fix missing file from commit

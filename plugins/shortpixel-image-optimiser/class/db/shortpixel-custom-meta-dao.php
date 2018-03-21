@@ -330,8 +330,8 @@ class ShortPixelCustomMetaDao {
         foreach($filters as $field => $value) {
             $sql .= " AND sm.$field " . $value->operator . " ". $value->value . " ";
         }                
-        $sql  .= ($orderby ? "ORDER BY $orderby $order " : "")
-                . "LIMIT $count OFFSET " . ($page - 1) * $count;
+        $sql  .= ($orderby ? " ORDER BY $orderby $order " : "")
+                . " LIMIT $count OFFSET " . ($page - 1) * $count;
                 
                 //die($sql);
         return $this->db->query($sql);
