@@ -47,8 +47,7 @@ class Servers_List extends WP_List_Table {
     public function prepare_items() {
 
         if ( ! class_exists( 'Predis\Client' ) ) {
-            require_once dirname(__FILE__) . '/predis.php';
-            Predis\Autoloader::register();
+            require_once dirname(__FILE__) . '/predis/autoload.php';
         }
 
         $this->items = $this->get_servers();
@@ -98,8 +97,8 @@ class Servers_List extends WP_List_Table {
             $constant = sprintf( 'WP_REDIS_%s', strtoupper( $setting ) );
 
             if ( defined( $constant ) ) {
-    			$server[ $setting ] = constant( $constant );
-    		}
+                $server[ $setting ] = constant( $constant );
+            }
         }
 
         if ( defined( 'WP_REDIS_CLUSTER' ) ) {

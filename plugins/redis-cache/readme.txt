@@ -1,10 +1,10 @@
 === Redis Object Cache ===
 Contributors: tillkruess
 Donate link: https://www.paypal.me/tillkruss
-Tags: redis, predis, hhvm, pecl, caching, cache, object cache, wp object cache, server, performance, optimize, speed, load, replication, clustering
+Tags: redis, predis, phpredis, hhvm, pecl, caching, cache, object cache, performance, replication, clustering
 Requires at least: 3.3
 Tested up to: 4.9
-Stable tag: 1.3.5
+Stable tag: 1.3.8
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -26,7 +26,7 @@ For detailed installation instructions, please read the [standard installation p
 
 1. Make sure [Redis is installed and running](http://redis.io/topics/quickstart).
 2. Install and activate plugin.
-3. Enable the object cache under _Settings -> Redis_.
+3. Enable the object cache under _Settings -> Redis_, or in Multisite setups under _Network Admin -> Settings -> Redis_.
 4. If necessary, adjust [connection parameters](http://wordpress.org/extend/plugins/redis-cache/other_notes/).
 
 If your server doesn't support the [WordPress Filesystem API](https://codex.wordpress.org/Filesystem_API), you have to manually copy the `object-cache.php` file from the `/plugins/redis-cache/includes/` directory to the `/wp-content/` directory.
@@ -73,7 +73,11 @@ To adjust the configuration, define any of the following constants in your `wp-c
 
   * `WP_CACHE_KEY_SALT` (default: _not set_)
 
-    Set the prefix for all cache keys. Useful in setups where multiple installs share a common `wp-config.php` or `$table_prefix`, to guarantee uniqueness of cache keys.
+    Set the prefix for all cache keys. Useful in setups where multiple installs share a common `wp-config.php` or `$table_prefix` to guarantee uniqueness of cache keys.
+
+  * `WP_REDIS_SELECTIVE_FLUSH` (default: _not set_)
+
+    If set to `true`, flushing the cache will only delete keys that are prefixed with `WP_CACHE_KEY_SALT` (instead of emptying the entire Redis database). The selective flush is an atomic `O(n)` operation.
 
   * `WP_REDIS_MAXTTL` (default: _not set_)
 
@@ -94,21 +98,38 @@ To adjust the configuration, define any of the following constants in your `wp-c
 
 == Replication & Clustering ==
 
-To use Replication and Clustering, make sure your server is running PHP7, your setup is using Predis to connect to Redis and you consulted the [Predis documentation](https://github.com/nrk/predis).
+To use Replication, Sharding or Clustering, make sure your server is running PHP7 or higher (HHVM is not supported) and you consulted the [Predis](https://github.com/nrk/predis) or [PhpRedis](https://github.com/phpredis/phpredis) documentation.
 
-For replication use the `WP_REDIS_SERVERS` constant and for clustering the `WP_REDIS_CLUSTER` constant. You can use a named array or an URI string to specify the parameters.
+For replication use the `WP_REDIS_SERVERS` constant, for sharding the `WP_REDIS_SHARDS` constant and for clustering the `WP_REDIS_CLUSTER` constant.
 
 For authentication use the `WP_REDIS_PASSWORD` constant.
 
-__Master-Slave Replication Example:__
+__Replication (Master-Slave):__
 
     define( 'WP_REDIS_SERVERS', [
-        'tcp://127.0.0.1:6379?database=15&alias=master',
-        'tcp://127.0.0.2:6379?database=15&alias=slave-01',
+        'tcp://127.0.0.1:6379?database=5&alias=master',
+        'tcp://127.0.0.2:6379?database=5&alias=slave-01',
     ] );
 
+__Replication (Redis Sentinel):__
 
-__Clustering via Client-side Sharding Example:__
+    define( 'WP_REDIS_CLIENT', 'predis' );
+    define( 'WP_REDIS_SENTINEL', 'mymaster' );
+    define( 'WP_REDIS_SERVERS', [
+        'tcp://127.0.0.1:5380',
+        'tcp://127.0.0.2:5381',
+        'tcp://127.0.0.3:5382',
+    ] );
+
+__Sharding:__
+
+    define( 'WP_REDIS_SHARDS', [
+        'tcp://127.0.0.1:6379?database=10&alias=shard-01',
+        'tcp://127.0.0.2:6379?database=10&alias=shard-02',
+        'tcp://127.0.0.3:6379?database=10&alias=shard-03',
+    ] );
+
+__Clustering (Redis 3.0+):__
 
     define( 'WP_REDIS_CLUSTER', [
         'tcp://127.0.0.1:6379?database=15&alias=node-01',
@@ -149,6 +170,26 @@ The following commands are supported:
 
 
 == Changelog ==
+
+= 1.3.8 =
+
+  * Switched from single file Predis version to full library
+
+= 1.3.7 =
+
+  * Revert back to single file Predis version
+
+= 1.3.6 =
+
+  * Added support for Redis Sentinel
+  * Added support for sharing
+  * Switched to PHAR version of Predis
+  * Improved diagnostics
+  * Added `WP_REDIS_SELECTIVE_FLUSH`
+  * Added `$fail_gracefully` parameter to `WP_Object_Cache::__construct()`
+  * Always enforce `WP_REDIS_MAXTTL`
+  * Pass `$selective` and `$salt` to `redis_object_cache_flush` action
+  * Don’t set `WP_CACHE_KEY_SALT` constant
 
 = 1.3.5 =
 
@@ -262,6 +303,18 @@ The following commands are supported:
 
 
 == Upgrade Notice ==
+
+= 1.3.7 =
+
+This update contains a critical fix for Predis.
+
+= 1.3.7 =
+
+This update fixes an issue with Predis in some environments.
+
+= 1.3.6 =
+
+This update contains various improvements.
 
 = 1.3.5 =
 
