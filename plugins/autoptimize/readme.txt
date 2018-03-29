@@ -4,7 +4,7 @@ Tags: optimize, minify, performance, pagespeed, async
 Donate link: http://blog.futtta.be/2013/10/21/do-not-donate-to-me/
 Requires at least: 4.0
 Tested up to: 4.9
-Stable tag: 2.3.2
+Stable tag: 2.3.4
 
 Autoptimize speeds up your website by optimizing JS, CSS and HTML, async-ing JavaScript, removing emoji cruft, optimizing Google Fonts and more.
 
@@ -196,7 +196,8 @@ NextGen Galleries does some nifty stuff to add JavaScript. In order for Autoptim
 = What is noptimize? =
 
 Starting with version 1.6.6 Autoptimize excludes everything inside noptimize tags, e.g.:
-`&lt;!--noptimize-->&lt;script>alert('this will not get autoptimized');&lt;/script>&lt;!--/noptimize-->`
+
+     <!--noptimize--><script>alert('this will not get autoptimized')></script><!--/noptimize-->
 
 You can do this in your page/ post content, in widgets and in your theme files (consider creating [a child theme](http://codex.wordpress.org/Child_Themes) to avoid your work being overwritten by theme updates).
 
@@ -247,6 +248,17 @@ You can get help on the [wordpress.org support forum](http://wordpress.org/suppo
 Just [fork Autoptimize on Github](https://github.com/futtta/autoptimize) and code away!
 
 == Changelog ==
+
+= 2.3.4 =
+* bugfix: is_plugin_active causing errors in some cases as [reported by @iluminancia and @lozula](https://wordpress.org/support/topic/fatal-error-after-update-to-2-3-3/)
+* bugfix: added language domain to 4 __/_e functions, un grand merci à Guillaume Blet!
+
+= 2.3.3 =
+* improvement: updated to latest version of Filamentgroup's loadCSS
+* improvement: by default exclude `wp-content/cache` and `wp-content/uploads` from CSS optimization (Divi, Avada & possibly others store page-specific CSS there)
+* bugfix: stop double try/catch-blocks
+* misc. bugfixes (see [GitHub commit log](https://github.com/futtta/autoptimize/commits/master))
+* heads-up: this is (supposed to be) the last minor release of the 2.3 branch, [2.4 is a major change with some big under-the-hood and functional changes](https://blog.futtta.be/2018/02/18/introducing-zytzagoos-major-changes-for-autoptimize-2-4/)
 
 = 2.3.2 =
 * workaround for [stale options-data in external object cache such as Redis, Memcached (core bug)](https://core.trac.wordpress.org/ticket/31245) resulting in Autoptimize continuously executing the upgrade-procedure including clearing the cache and trying to preload it with HTTP-requests with "cachebuster" in the query string, thanks to [Haroon Q. Raja](https://hqraja.com/) and [Tomas Trkulja](https://twitter.com/zytzagoo) for their great assistance!

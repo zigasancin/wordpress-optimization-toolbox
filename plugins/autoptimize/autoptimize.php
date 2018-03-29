@@ -3,7 +3,7 @@
 Plugin Name: Autoptimize
 Plugin URI: https://autoptimize.com/
 Description: Optimizes your website, concatenating the CSS and JavaScript code, and compressing it.
-Version: 2.3.2
+Version: 2.3.4
 Author: Frank Goossens (futtta)
 Author URI: https://autoptimize.com/
 Domain Path: localization/
@@ -39,11 +39,13 @@ if (!defined('AUTOPTIMIZE_CACHE_CHILD_DIR')) { define('AUTOPTIMIZE_CACHE_CHILD_D
 if (!defined('AUTOPTIMIZE_CACHEFILE_PREFIX')) { define('AUTOPTIMIZE_CACHEFILE_PREFIX', 'autoptimize_'); }
 
 // Plugin dir constants (plugin url's defined later to accomodate domain mapped sites)
-if (is_multisite() && apply_filters( 'autoptimize_separate_blog_caches' , true )) {
-    $blog_id = get_current_blog_id();
-    define('AUTOPTIMIZE_CACHE_DIR', WP_CONTENT_DIR.AUTOPTIMIZE_CACHE_CHILD_DIR.$blog_id.'/' );
-} else {
-    define('AUTOPTIMIZE_CACHE_DIR', WP_CONTENT_DIR.AUTOPTIMIZE_CACHE_CHILD_DIR);
+if (!defined('AUTOPTIMIZE_CACHE_DIR')) {
+    if (is_multisite() && apply_filters( 'autoptimize_separate_blog_caches' , true )) {
+        $blog_id = get_current_blog_id();
+        define('AUTOPTIMIZE_CACHE_DIR', WP_CONTENT_DIR.AUTOPTIMIZE_CACHE_CHILD_DIR.$blog_id.'/' );
+    } else {
+        define('AUTOPTIMIZE_CACHE_DIR', WP_CONTENT_DIR.AUTOPTIMIZE_CACHE_CHILD_DIR );
+    }
 }
 define('AUTOPTIMIZE_CACHE_DELAY',true);
 define('WP_ROOT_DIR',substr(WP_CONTENT_DIR, 0, strlen(WP_CONTENT_DIR)-strlen(AUTOPTIMIZE_WP_CONTENT_NAME)));

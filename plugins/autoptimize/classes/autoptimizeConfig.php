@@ -159,7 +159,11 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 <div class="wrap">
 
 <?php if (version_compare(PHP_VERSION, '5.3.0') < 0) { ?>
-<div class="notice-error notice"><?php echo '<p>' . sprintf( __('<strong>You are using a very old version of PHP</strong> (5.2.x or older) which has <a href=%s>serious security and performance issues</a>. Support for PHP 5.5 and below will be removed in one of the next AO released, please ask your hoster to provide you with an upgrade path to 7.x.','autoptimize'), '"http://blog.futtta.be/2016/03/15/why-would-you-still-be-on-php-5-2/" target="_blank"') . '</p>'; ?></div>
+<div class="notice-error notice"><?php echo '<p>' . sprintf( __('<strong>You are using a very old version of PHP</strong> which will not be supported as from the upcoming Autoptimize 2.4 any more, cfr. <a href=%s>this blogpost for more info</a>. please ask your hoster to provide you with an upgrade path to 7.x.','autoptimize'), '"https://blog.futtta.be/2018/02/13/introducing-zytzagoos-major-changes-for-autoptimize-2-4/" target="_blank"' ) . '</p>'; ?></div>
+<?php } ?>
+
+<?php if (defined('AUTOPTIMIZE_LEGACY_MINIFIERS')) { ?>
+<div class="notice-error notice"><?php echo '<p>' . sprintf( __('You are forcing Autoptimize to use the "legacy minifiers" by setting the AUTOPTIMIZE_LEGACY_MINIFIERS constant in /wp-config.php. The "legacy minifiers" will not be supported as from the upcoming Autoptimize 2.4 any more, cfr. <a href=%s>this blogpost for more info</a>.','autoptimize'), '"https://blog.futtta.be/2018/02/13/introducing-zytzagoos-major-changes-for-autoptimize-2-4/" target="_blank"') . '</p>'; ?></div>
 <?php } ?>
 
 <div id="autoptimize_main">
@@ -285,7 +289,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 </tr>
 <tr valign="top" class="<?php echo $hiddenClass;?>ao_adv css_sub">
 <th scope="row"><?php _e('Exclude CSS from Autoptimize:','autoptimize'); ?></th>
-<td><label><input type="text" style="width:100%;" name="autoptimize_css_exclude" value="<?php echo get_option('autoptimize_css_exclude','admin-bar.min.css, dashicons.min.css'); ?>"/><br />
+<td><label><input type="text" style="width:100%;" name="autoptimize_css_exclude" value="<?php echo get_option('autoptimize_css_exclude','wp-content/cache/, wp-content/uploads/, admin-bar.min.css, dashicons.min.css'); ?>"/><br />
 <?php _e('A comma-separated list of CSS you want to exclude from being optimized.','autoptimize'); ?></label></td>
 </tr>
 </table>
@@ -622,7 +626,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
                 'autoptimize_js_include_inline' => 0,
                 'autoptimize_js_forcehead' => 0,
                 'autoptimize_css' => 0,
-                'autoptimize_css_exclude' => "admin-bar.min.css, dashicons.min.css",
+                'autoptimize_css_exclude' => "admin-bar.min.css, dashicons.min.css, wp-content/cache/, wp-content/uploads/",
                 'autoptimize_css_justhead' => 0,
                 'autoptimize_css_include_inline' => 1,
                 'autoptimize_css_defer' => 0,

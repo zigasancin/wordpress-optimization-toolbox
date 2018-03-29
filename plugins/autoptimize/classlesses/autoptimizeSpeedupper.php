@@ -29,21 +29,18 @@ function ao_js_snippetcacher($jsin,$jsfilename) {
             $scriptsrc=preg_replace("#^\s*\/\/.*$#Um","",$jsin);
             $scriptsrc=preg_replace("#^\s*\/\*[^!].*\*\/\s?#Us","",$scriptsrc);
             $scriptsrc=preg_replace("#(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+#", "\n", $scriptsrc);
-
-            if ((substr($scriptsrc,-1,1)!==";")&&(substr($scriptsrc,-1,1)!=="}")) {
-                $scriptsrc.=";";
-            }
         }
+
+        if ( (substr($scriptsrc,-1,1)!==";") && (substr($scriptsrc,-1,1)!=="}") ) {
+            $scriptsrc.=";";
+        }
+
         if ( !empty($jsfilename) && str_replace( apply_filters('autoptimize_filter_js_speedup_cache',false), '', $jsfilename ) === $jsfilename ) {
             // don't cache inline CSS or if filter says no
             $ccheck->cache($scriptsrc,'text/javascript');
         }
     }
     unset($ccheck);
-
-    if (get_option("autoptimize_js_trycatch")==="on") {
-        $scriptsrc="try{".$scriptsrc."}catch(e){}";
-    }
 
     return $scriptsrc;
 }
@@ -97,7 +94,12 @@ function ao_js_speedup_cleanup($jsin) {
 	return trim($jsin);
 }
 
-add_filter('autoptimize_css_individual_style','ao_css_snippetcacher',10,2);
-add_filter('autoptimize_js_individual_script','ao_js_snippetcacher',10,2);
-add_filter('autoptimize_css_after_minify','ao_css_speedup_cleanup',10,1);
-add_filter('autoptimize_js_after_minify','ao_js_speedup_cleanup',10,1);
+// conditionally attach filters
+if ( apply_filters('autoptimize_css_do_minify',true) ) {
+    add_filter('autoptimize_css_individual_style','ao_css_snippetcacher',10,2);
+    add_filter('autoptimize_css_after_minify','ao_css_speedup_cleanup',10,1);
+}
+if ( apply_filters('autoptimize_js_do_minify',true) ) {
+    add_filter('autoptimize_js_individual_script','ao_js_snippetcacher',10,2);
+    add_filter('autoptimize_js_after_minify','ao_js_speedup_cleanup',10,1);
+}
