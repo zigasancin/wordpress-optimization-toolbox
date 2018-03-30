@@ -54,7 +54,7 @@ class WpShortPixelMediaLbraryAdapter {
                 if ( $file->meta_key == "_wp_attached_file" )
                 {//count pdf files only
                     $extension = substr($file->meta_value, strrpos($file->meta_value,".") + 1 );
-                    if ( $extension == "pdf" && !isset($filesMap[$file->meta_value]))
+                    if ( $extension == "pdf" && $settings->optimizePdfs && !isset($filesMap[$file->meta_value]))
                     {
                         $totalFiles++;
                         $totalFilesThis++;

@@ -902,7 +902,7 @@ class ShortPixelView {
                     <th scope="row"><label for="thumbnails"><?php _e('Also include thumbnails:','shortpixel-image-optimiser');?></label></th>
                     <td><input name="thumbnails" type="checkbox" id="thumbnails" <?php echo( $checked );?>> <?php 
                             _e('Apply compression also to <strong>image thumbnails.</strong> ','shortpixel-image-optimiser');?>
-                            <?php echo($thumbnailsToProcess ? "(" . number_format($thumbnailsToProcess) . " " . __('thumbnails to optimize','shortpixel-image-optimiser') . ")" : "");?>
+                            <?php echo($thumbnailsToProcess > 0 ? "(" . number_format($thumbnailsToProcess) . " " . __('thumbnails to optimize','shortpixel-image-optimiser') . ")" : "");?>
                         <p class="settings-info">
                             <?php _e('It is highly recommended that you optimize the thumbnails as they are usually the images most viewed by end users and can generate most traffic.<br>Please note that thumbnails count up to your total quota.','shortpixel-image-optimiser');?>
                         </p>

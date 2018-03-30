@@ -3123,6 +3123,27 @@ class WPShortPixel {
                     email: "<?php $u = wp_get_current_user(); echo($u->user_email); ?>",
                     apiKey: "<?php echo($this->getApiKey());?>"
                 });
+                HS.beacon.suggest([<?php
+                    $screen = get_current_screen();
+                    if($screen) {
+                        switch($screen->id) {
+                            case 'media_page_wp-short-pixel-bulk':
+                                echo(" '5a5de2782c7d3a19436843af', '5a5de6902c7d3a19436843e9', '5a5de5c42c7d3a19436843d0', '5a9945e42c7d3a75495145d0', '5a5de1c2042863193801047c',
+                                       '5a5de66f2c7d3a19436843e0', '5a9946e62c7d3a75495145d8', '5a5de4f02c7d3a19436843c8', '5a5de65f042863193801049f', '5a5de2df0428631938010485' ");
+                                break;
+                            case 'settings_page_wp-shortpixel':
+                                echo(" '5a5de1de2c7d3a19436843a8', '5a6612032c7d3a39e6263a1d', '5a5de1c2042863193801047c', '5a5de2782c7d3a19436843af', '5a6610c62c7d3a39e6263a02',
+                                       '5a9945e42c7d3a75495145d0', '5a5de66f2c7d3a19436843e0',  '5a6597e80428632faf620487', '5a5de5c42c7d3a19436843d0', '5a5de5642c7d3a19436843cc' ");
+                                break;
+                            case 'media_page_wp-short-pixel-custom':
+                                echo(" '5a9946e62c7d3a75495145d8', '5a5de1c2042863193801047c', '5a5de2782c7d3a19436843af', '5a5de6902c7d3a19436843e9', '5a5de4f02c7d3a19436843c8',
+                                       '5a6610c62c7d3a39e6263a02', '5a9945e42c7d3a75495145d0', '5a5de46c2c7d3a19436843c1', '5a5de1de2c7d3a19436843a8', '5a5de25c2c7d3a19436843ad' ");
+                                break;
+                            default:
+                                die($screen->id);
+                        }
+                    }
+                ?>]);
             });
         </script><?php
     }
