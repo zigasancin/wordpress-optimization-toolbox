@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: https://getwpo.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.2.2
+Version: 2.2.3
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '2.2.2');
+define('WPO_VERSION', '2.2.3');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -66,7 +66,12 @@ class WP_Optimize {
 		// Show update to Premium notice for non-premium multisite.
 		add_action('wpo_additional_options', array($this, 'show_multisite_update_to_premium_notice'));
 
+		// Action column (show repair button if need).
+		add_filter('wpo_tables_list_additional_column_data', array($this, 'tables_list_additional_column_data'), 15, 2);
+
 		include_once(WPO_PLUGIN_MAIN_PATH.'/includes/updraftcentral.php');
+
+		register_shutdown_function(array($this, 'log_fatal_errors'));
 
 	}
 
@@ -318,10 +323,10 @@ class WP_Optimize {
 		$results = array();
 
 		// Some commands that are available via AJAX only.
-		if ('dismiss_dash_notice_until' == $subaction) {
-			$options->update_option('dismiss_dash_notice_until', (time() + 366 * 86400));
-		} elseif ('dismiss_page_notice_until' == $subaction) {
-			$options->update_option('dismiss_page_notice_until', (time() + 84 * 86400));
+		if (in_array($subaction, array('dismiss_dash_notice_until', 'dismiss_season'))) {
+			$options->update_option($subaction, (time() + 366 * 86400));
+		} elseif (in_array($subaction, array('dismiss_page_notice_until', 'dismiss_notice'))) {
+			$options->update_option($subaction, (time() + 84 * 86400));
 		} else {
 			// Other commands, available for any remote method.
 			if (!class_exists('WP_Optimize_Commands')) include_once(WPO_PLUGIN_MAIN_PATH . 'includes/class-commands.php');
@@ -521,6 +526,7 @@ class WP_Optimize {
 			'please_select_settings_file' => __('Please, select settings file.', 'wp-optimize'),
 			'are_you_sure_you_want_to_remove_logging_destination' => __('Are you sure you want to remove this logging destination?', 'wp-optimize'),
 			'fill_all_settings_fields' => __('Before saving, you need to complete the currently incomplete settings (or remove them).', 'wp-optimize'),
+			'table_was_not_repaired' => __('%s was not repaired. For more details, please check your logs configured in logging destinations settings.', 'wp-optimize'),
 		));
 	}
 
@@ -575,6 +581,26 @@ class WP_Optimize {
 		$optimize_link = '<a href="' . esc_url($admin_page_url) . '">' . __('Optimizer', 'wp-optimize') . '</a>';
 		array_unshift($links, $optimize_link);
 		return $links;
+	}
+
+	/**
+	 * Action wpo_tables_list_additional_column_data. Output button Optimize in the action column.
+	 *
+	 * @param string $content    String for output to column
+	 * @param object $table_info Object with table info.
+	 *
+	 * @return string
+	 */
+	public function tables_list_additional_column_data($content, $table_info) {
+		if ($table_info->is_needing_repair) {
+			$content .= '<div class="wpo_button_wrap">'
+				.'<button class="button button-secondary run-single-table-repair" data-table="'.esc_attr($table_info->Name).'">'.__('Repair', 'wp-optimize').'</button>'
+				.'<img class="optimization_spinner visibility-hidden" src="'.esc_attr(admin_url('images/spinner-2x.gif')).'" width="20" height="20" alt="...">'
+				.'<span class="optimization_done_icon dashicons dashicons-yes visibility-hidden"></span>'
+				.'</div>';
+		}
+
+		return $content;
 	}
 
 	/**
@@ -1197,6 +1223,18 @@ class WP_Optimize {
 		}
 
 		return $val;
+	}
+
+	/**
+	 * Log fatal errors to defined log destinations.
+	 */
+	public function log_fatal_errors() {
+		$last_error = error_get_last();
+
+		if (E_ERROR === $last_error['type']) {
+			$this->get_logger()->critical($last_error['message']);
+			die();
+		}
 	}
 }
 

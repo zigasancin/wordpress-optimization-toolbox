@@ -48,34 +48,67 @@ class WP_Optimize_Commands {
 	 * Pulls and return the "WP Optimize" template contents. Primarily used for UpdraftCentral
 	 * content display through ajax request.
 	 *
-	 * @return string "WP Optimize" tab's rendered contents
+	 * @return array An array containing the WPO translations and the "WP Optimize" tab's rendered contents
 	 */
 	public function get_wp_optimize_contents() {
-		return WP_Optimize()->include_template('optimize-table.php', true, array('optimize_db' => false));
+		$content = WP_Optimize()->include_template('optimize-table.php', true, array('optimize_db' => false));
+
+		return array(
+			'content' => $content,
+			'translations' => $this->get_js_translation()
+		);
 	}
 
 	/**
 	 * Pulls and return the "Table Information" template contents. Primarily used for UpdraftCentral
 	 * content display through ajax request.
 	 *
-	 * @return string "Table Information" tab's rendered contents
+	 * @return array An array containing the WPO translations and the "Table Information" tab's rendered contents
 	 */
 	public function get_table_information_contents() {
-		return WP_Optimize()->include_template('tables.php', true, array('optimize_db' => false));
+		$content = WP_Optimize()->include_template('tables.php', true, array('optimize_db' => false));
+
+		return array(
+			'content' => $content,
+			'translations' => $this->get_js_translation()
+		);
 	}
 
 	/**
 	 * Pulls and return the "Settings" template contents. Primarily used for UpdraftCentral
 	 * content display through ajax request.
 	 *
-	 * @return string "Settings" tab's rendered contents
+	 * @return array An array containing the WPO translations and the "Settings" tab's rendered contents
 	 */
 	public function get_settings_contents() {
 		$admin_settings = WP_Optimize()->include_template('admin-settings-general.php', true, array('optimize_db' => false));
 		$admin_settings .= WP_Optimize()->include_template('admin-settings-auto-cleanup.php', true, array('optimize_db' => false));
 		$admin_settings .= WP_Optimize()->include_template('admin-settings-logging.php', true, array('optimize_db' => false));
 		$admin_settings .= WP_Optimize()->include_template('admin-settings-sidebar.php', true, array('optimize_db' => false));
-		return $admin_settings;
+		$content = $admin_settings;
+
+		return array(
+			'content' => $content,
+			'translations' => $this->get_js_translation()
+		);
+	}
+
+	/**
+	 * Returns array of translations used by the WPO plugin. Primarily used for UpdraftCentral
+	 * consumption.
+	 *
+	 * @return array The WPO translations
+	 */
+	public function get_js_translation() {
+		$translations = WP_Optimize()->wpo_js_translations();
+
+		// Make sure that we include the loggers classes info whenever applicable before
+		// returning the translations to UpdraftCentral.
+		if (is_callable(array(WP_Optimize(), 'get_loggers_classes_info'))) {
+			$translations['loggers_classes_info'] = WP_Optimize()->get_loggers_classes_info();
+		}
+
+		return $translations;
 	}
 
 	public function save_settings($data) {
@@ -225,10 +258,10 @@ class WP_Optimize_Commands {
 
 		$results = array();
 		$optimizations = $this->optimizer->get_optimizations();
-		$hidden_in_optimizations_list = apply_filters('wpo_hidden_in_optimizations_list', array('images', 'attachments'));
 
 		foreach ($optimizations as $optimization_id => $optimization) {
-			if (in_array($optimization_id, $hidden_in_optimizations_list)) continue;
+			if (false === $optimization->display_in_optimizations_list()) continue;
+
 			$results[$optimization_id] = $optimization->get_settings_html();
 		}
 

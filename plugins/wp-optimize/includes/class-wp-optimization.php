@@ -104,6 +104,15 @@ abstract class WP_Optimization {
 	}
 
 	/**
+	 * Display or hide optimization in optimizations list.
+	 *
+	 * @return bool
+	 */
+	public function display_in_optimizations_list() {
+		return true;
+	}
+
+	/**
 	 * Do actions before get_info() function.
 	 */
 	public function before_get_info() {

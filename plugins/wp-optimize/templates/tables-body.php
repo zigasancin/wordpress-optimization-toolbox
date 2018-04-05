@@ -49,7 +49,7 @@
 			$inno_db_tables++;
 		}
 
-		do_action('wpo_tables_list_additional_column_data', $tablestatus);
+		echo '<td>'.apply_filters('wpo_tables_list_additional_column_data', '', $tablestatus).'</td>';
 
 		$row_usage += $tablestatus->Rows;
 		$data_usage += $tablestatus->Data_length;
@@ -66,7 +66,7 @@
 	echo '<tr class="thead">'."\n";
 	echo '<th>'.__('Total:', 'wp-optimize').'</th>'."\n";
 	echo '<th>'.sprintf(_n('%s Table', '%s Tables', $no, 'wp-optimize'), number_format_i18n($no)).'</th>'."\n";
-	echo '<th>'.sprintf(_n('%s Record', '%s Records', $row_usage, 'wp-optimize'), number_format_i18n($row_usage)).'</th>'."\n";
+	echo '<th>'.number_format_i18n($row_usage).'</th>'."\n";
 	echo '<th>'.$wp_optimize->format_size($data_usage).'</th>'."\n";
 	echo '<th>'.$wp_optimize->format_size($index_usage).'</th>'."\n";
 	echo '<th>'.'-'.'</th>'."\n";
@@ -78,6 +78,6 @@
 	
 	?>
 	</th>
-	<?php do_action('wpo_tables_list_additional_column_footer'); ?>
+	<th><?php _e('Actions', 'wp-optimize'); ?></th>
 	</tr>
 </tbody>

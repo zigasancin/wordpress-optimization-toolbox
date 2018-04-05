@@ -25,7 +25,7 @@ do_action('wpo_tables_list_before', $table_information);
 			<th><?php _e('Index Size', 'wp-optimize'); ?></th>
 			<th><?php _e('Type', 'wp-optimize'); ?></th>
 			<th><?php _e('Overhead', 'wp-optimize'); ?></th>
-			<?php do_action('wpo_tables_list_additional_column_header'); ?>
+			<th><?php _e('Actions', 'wp-optimize'); ?></th>
 		</tr>
 	</thead>
 	

@@ -4,7 +4,7 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 4.9
-Stable tag: 2.2.2
+Stable tag: 2.2.3
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,6 +137,15 @@ Please check your database for corrupted tables. That can happen, usually your w
 4. Settings
 
 == Changelog ==
+
+= 2.2.3 - 04/Apr/2018 =
+
+* FEATURE: Added the ability to repair corrupted database tables
+* FIX: Fixed dismiss notices functionality
+* FIX: When detecting potentially unused images, exclude those found mentionned in the options table(s)
+* TWEAK: Load WPO translations (logger classes info included) when template is pulled for UpdraftCentral-WPO module
+* TWEAK: Add get_js_translation command for the UpdraftCentral WPO module
+* TWEAK: Added logging for fatal errors
 
 = 2.2.2 - 28/Feb/2018 =
 
@@ -388,4 +397,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.2.2 : 2.2 has lots of new features, tweaks and fixes; including the introduction of a Premium version with even more features. 2.2.2 fixes bugs in the initial 2.2.0 release.
+* 2.2.3 : 2.2 has lots of new features, tweaks and fixes; including the introduction of a Premium version with even more features. 2.2.3 adds a feature for detecting and fixing MySQL corruption, plus some fixes and tweaks.

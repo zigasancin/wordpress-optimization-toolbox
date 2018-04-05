@@ -17,11 +17,11 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/includes/class-commands.php:127, src/includes/class-commands.php:170
+#: src/includes/class-commands.php:160, src/includes/class-commands.php:203
 msgid "No optimization was indicated."
 msgstr ""
 
-#: src/includes/class-commands.php:279, src/includes/class-commands.php:288
+#: src/includes/class-commands.php:312, src/includes/class-commands.php:321
 msgid "Please upload a valid settings file."
 msgstr ""
 
@@ -61,19 +61,19 @@ msgstr ""
 msgid "No such optimization"
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:442
+#: src/includes/class-wp-optimizer.php:448
 msgid "Comments have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:445
+#: src/includes/class-wp-optimizer.php:451
 msgid "Comments have now been enabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:452
+#: src/includes/class-wp-optimizer.php:458
 msgid "Trackbacks have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:455
+#: src/includes/class-wp-optimizer.php:461
 msgid "Trackbacks have now been enabled on all current and previously published posts."
 msgstr ""
 
@@ -161,29 +161,29 @@ msgstr ""
 msgid "Summer sale - 20% off WP-Optimize Premium until July 31st"
 msgstr ""
 
-#: src/optimizations/attachments.php:21
+#: src/optimizations/attachments.php:30
 msgid "%s orphaned attachment deleted"
 msgid_plural "%s orphaned attachments deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/attachments.php:24, src/optimizations/attachments.php:64, src/optimizations/autodraft.php:28, src/optimizations/autodraft.php:63, src/optimizations/commentmeta.php:33, src/optimizations/commentmeta.php:90, src/optimizations/orphandata.php:16, src/optimizations/orphandata.php:45, src/optimizations/pingbacks.php:16, src/optimizations/pingbacks.php:44, src/optimizations/postmeta.php:20, src/optimizations/postmeta.php:48, src/optimizations/revisions.php:24, src/optimizations/revisions.php:59, src/optimizations/spam.php:48, src/optimizations/spam.php:117, src/optimizations/trackbacks.php:16, src/optimizations/trackbacks.php:44, src/optimizations/transient.php:30, src/optimizations/transient.php:160, src/optimizations/trash.php:31, src/optimizations/trash.php:94, src/optimizations/unapproved.php:24, src/optimizations/unapproved.php:65
+#: src/optimizations/attachments.php:33, src/optimizations/attachments.php:73, src/optimizations/autodraft.php:28, src/optimizations/autodraft.php:63, src/optimizations/commentmeta.php:33, src/optimizations/commentmeta.php:90, src/optimizations/orphandata.php:16, src/optimizations/orphandata.php:45, src/optimizations/pingbacks.php:16, src/optimizations/pingbacks.php:44, src/optimizations/postmeta.php:20, src/optimizations/postmeta.php:48, src/optimizations/revisions.php:24, src/optimizations/revisions.php:59, src/optimizations/spam.php:48, src/optimizations/spam.php:117, src/optimizations/trackbacks.php:16, src/optimizations/trackbacks.php:44, src/optimizations/transient.php:30, src/optimizations/transient.php:160, src/optimizations/trash.php:31, src/optimizations/trash.php:94, src/optimizations/unapproved.php:24, src/optimizations/unapproved.php:65
 msgid "across %s site"
 msgid_plural "across %s sites"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/attachments.php:58
+#: src/optimizations/attachments.php:67
 msgid "%s orphaned attachment found"
 msgid_plural "%s orphaned attachments found"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/attachments.php:60
+#: src/optimizations/attachments.php:69
 msgid "No orphaned attachments found"
 msgstr ""
 
-#: src/optimizations/attachments.php:88, src/optimizations/attachments.php:98
+#: src/optimizations/attachments.php:97, src/optimizations/attachments.php:107
 msgid "Remove orphaned attachments"
 msgstr ""
 
@@ -345,6 +345,14 @@ msgstr ""
 
 #: src/optimizations/postmeta.php:74
 msgid "Remove orphaned post meta"
+msgstr ""
+
+#: src/optimizations/repairtables.php:123
+msgid "No corrupted tables found"
+msgstr ""
+
+#: src/optimizations/repairtables.php:135
+msgid "Repair database tables"
 msgstr ""
 
 #: src/optimizations/revisions.php:21
@@ -651,7 +659,7 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/templates/admin-settings-logging.php:25
+#: src/templates/admin-settings-logging.php:25, src/templates/tables-body.php:81, src/templates/tables.php:28
 msgid "Actions"
 msgstr ""
 
@@ -1029,11 +1037,11 @@ msgstr ""
 msgid "Notes"
 msgstr ""
 
-#: src/templates/optimizations-table.php:72
+#: src/templates/optimizations-table.php:71
 msgid "Run optimization"
 msgstr ""
 
-#: src/templates/optimizations-table.php:74
+#: src/templates/optimizations-table.php:73
 msgid "Go"
 msgstr ""
 
@@ -1151,12 +1159,6 @@ msgid_plural "%s Tables"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/templates/tables-body.php:69
-msgid "%s Record"
-msgid_plural "%s Records"
-msgstr[0] ""
-msgstr[1] ""
-
 #: src/templates/tables.php:3
 msgid "Database name:"
 msgstr ""
@@ -1233,126 +1235,134 @@ msgstr ""
 msgid "Please update UpdraftPlus to the latest version."
 msgstr ""
 
-#: src/wp-optimize.php:262
+#: src/wp-optimize.php:267
 msgid "WP-Optimize (Free) has been de-activated, because WP-Optimize Premium is active."
 msgstr ""
 
-#: src/wp-optimize.php:272
+#: src/wp-optimize.php:277
 msgid "New feature: WP-Optimize Premium can now optimize all sites within a multisite install, not just the main one."
 msgstr ""
 
-#: src/wp-optimize.php:387
+#: src/wp-optimize.php:392
 msgid "Table information"
 msgstr ""
 
-#: src/wp-optimize.php:387, src/wp-optimize.php:572
+#: src/wp-optimize.php:392, src/wp-optimize.php:578
 msgid "Settings"
 msgstr ""
 
-#: src/wp-optimize.php:387
+#: src/wp-optimize.php:392
 msgid "Premium / Plugin family"
 msgstr ""
 
-#: src/wp-optimize.php:516
+#: src/wp-optimize.php:521
 msgid "Automatic backup before optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:517
+#: src/wp-optimize.php:522
 msgid "An unexpected response was received."
 msgstr ""
 
-#: src/wp-optimize.php:518
+#: src/wp-optimize.php:523
 msgid "Optimization complete"
 msgstr ""
 
-#: src/wp-optimize.php:519
+#: src/wp-optimize.php:524
 msgid "Run optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:520
+#: src/wp-optimize.php:525
 msgid "Cancel"
 msgstr ""
 
-#: src/wp-optimize.php:521
+#: src/wp-optimize.php:526
 msgid "Please, select settings file."
 msgstr ""
 
-#: src/wp-optimize.php:522
+#: src/wp-optimize.php:527
 msgid "Are you sure you want to remove this logging destination?"
 msgstr ""
 
-#: src/wp-optimize.php:523
+#: src/wp-optimize.php:528
 msgid "Before saving, you need to complete the currently incomplete settings (or remove them)."
 msgstr ""
 
-#: src/wp-optimize.php:553
+#: src/wp-optimize.php:529
+msgid "%s was not repaired. For more details, please check your logs configured in logging destinations settings."
+msgstr ""
+
+#: src/wp-optimize.php:559
 msgid "Optimize"
 msgstr ""
 
-#: src/wp-optimize.php:575
+#: src/wp-optimize.php:581
 msgid "Optimizer"
 msgstr ""
 
-#: src/wp-optimize.php:678
+#: src/wp-optimize.php:597
+msgid "Repair"
+msgstr ""
+
+#: src/wp-optimize.php:704
 msgid "Warning"
 msgstr ""
 
-#: src/wp-optimize.php:678
+#: src/wp-optimize.php:704
 msgid "WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working."
 msgstr ""
 
-#: src/wp-optimize.php:678
+#: src/wp-optimize.php:704
 msgid "Read this page for a guide to possible causes and how to fix it."
 msgstr ""
 
-#: src/wp-optimize.php:745
+#: src/wp-optimize.php:771
 msgid "Error:"
 msgstr ""
 
-#: src/wp-optimize.php:745
+#: src/wp-optimize.php:771
 msgid "template not found"
 msgstr ""
 
-#: src/wp-optimize.php:797
+#: src/wp-optimize.php:823
 msgid "Automatic Operation Completed"
 msgstr ""
 
-#: src/wp-optimize.php:799
+#: src/wp-optimize.php:825
 msgid "Scheduled optimization was executed at"
 msgstr ""
 
-#: src/wp-optimize.php:800
+#: src/wp-optimize.php:826
 msgid "You can safely delete this email."
 msgstr ""
 
-#: src/wp-optimize.php:802
+#: src/wp-optimize.php:828
 msgid "Regards,"
 msgstr ""
 
-#: src/wp-optimize.php:803
+#: src/wp-optimize.php:829
 msgid "WP-Optimize Plugin"
 msgstr ""
 
-#: src/wp-optimize.php:825
+#: src/wp-optimize.php:851
 msgid "GB"
 msgstr ""
 
-#: src/wp-optimize.php:827
+#: src/wp-optimize.php:853
 msgid "MB"
 msgstr ""
 
-#: src/wp-optimize.php:829
+#: src/wp-optimize.php:855
 msgid "KB"
 msgstr ""
 
-#: src/wp-optimize.php:831
+#: src/wp-optimize.php:857
 msgid "bytes"
 msgstr ""
 
-#: src/wp-optimize.php:1210
+#: src/wp-optimize.php:1248
 msgid "Only Network Administrator can activate WP-Optimize plugin."
 msgstr ""
 
-#: src/wp-optimize.php:1211
+#: src/wp-optimize.php:1249
 msgid "go back"
 msgstr ""

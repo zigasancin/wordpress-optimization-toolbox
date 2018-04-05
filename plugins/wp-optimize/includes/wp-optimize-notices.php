@@ -186,7 +186,7 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 			),
 			'spring' => array(
 				'prefix' => '',
-				'title' => __('Spring sale - 20% off WP-Optimize Premium until April 31st', 'wpo-premium'),
+				'title' => __('Spring sale - 20% off WP-Optimize Premium until April 30th', 'wpo-premium'),
 				'text' => __('To benefit, use this discount code:', 'wpo-premium').' ',
 				'image' => 'notices/spring.png',
 				'button_link' => 'https://getwpo.com',
@@ -332,7 +332,7 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 	 * This method checks to see if the notices dismiss_time parameter has been dismissed
 	 *
 	 * @param  String $dismiss_time a string containing the dimiss time ID
-	 * @return Boolaen              returns true if the notice has been dismissed and shouldn't be shown otherwise display it
+	 * @return Boolean returns true if the notice has been dismissed and shouldn't be shown otherwise display it
 	 */
 	protected function check_notice_dismissed($dismiss_time) {
 
@@ -340,13 +340,9 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 	
 		$options = WP_Optimize()->get_options();
 
-		$notice_dismiss = ($time_now < $options->get_option('dismiss_page_notice_until', 0));
+		$notice_dismiss = ($time_now < $options->get_option($dismiss_time, 0));
 
-		$dismiss = false;
-
-		if ('dismiss_page_notice_until' == $dismiss_time) $dismiss = $notice_dismiss;
-
-		return $dismiss;
+		return $notice_dismiss;
 	}
 
 	/**

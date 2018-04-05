@@ -149,6 +149,8 @@ class WP_Optimizer {
 			return $optimization;
 		}
 
+		$this->change_time_limit();
+
 		$optimization->init();
 	
 		if (apply_filters('wp_optimize_do_optimization', true, $which_optimization, $optimization)) {
@@ -189,6 +191,8 @@ class WP_Optimizer {
 		
 		if (is_wp_error($optimization)) return $optimization;
 
+		$this->change_time_limit();
+
 		$optimization->before_get_info();
 
 		if ($optimization->run_multisite) {
@@ -220,17 +224,15 @@ class WP_Optimizer {
 		if (empty($optimization_options)) return $results;
 	
 		$optimizations = $this->sort_optimizations($this->get_optimizations(), 'run_sort_order');
-		
-		$time_limit = (defined('WP_OPTIMIZE_SET_TIME_LIMIT') && WP_OPTIMIZE_SET_TIME_LIMIT > 15) ? WP_OPTIMIZE_SET_TIME_LIMIT : 1800;
-		
+
 		foreach ($optimizations as $optimization_id => $optimization) {
 			$option_id = call_user_func(array($optimization, 'get_'.$which_option.'_id'));
 			
 			if (isset($optimization_options[$option_id])) {
 				if ('auto' == $which_option && empty($optimization->available_for_auto)) continue;
-			
-				// Try to reduce the chances of PHP self-terminating via reaching max_execution_time.
-				set_time_limit($time_limit);
+
+				$this->change_time_limit();
+
 				$results[$optimization_id] = $this->do_optimization($optimization);
 			}
 		}
@@ -277,7 +279,9 @@ class WP_Optimizer {
 				$include_table = apply_filters('wp_optimize_get_tables_include_table', $include_table, $table_name, $table_prefix);
 
 				$table_status[$index]->is_optimizable = WP_Optimize()->get_db_info()->is_table_optimizable($table_name);
-				$table_status[$index]->is_type_supported = WP_Optimize()->get_db_info()->is_table_type_supported($table_name);
+				$table_status[$index]->is_type_supported = WP_Optimize()->get_db_info()->is_table_type_optimize_supported($table_name);
+				// add information about corrupted tables.
+				$table_status[$index]->is_needing_repair = WP_Optimize()->get_db_info()->is_table_needing_repair($table_name);
 
 				if (!$include_table) unset($table_status[$index]);
 			}
@@ -297,8 +301,10 @@ class WP_Optimizer {
 		$table = WP_Optimize()->get_db_info()->get_table_status($table_name);
 
 		$table->is_optimizable = WP_Optimize()->get_db_info()->is_table_optimizable($table_name);
-		$table->is_type_supported = WP_Optimize()->get_db_info()->is_table_type_supported($table_name);
+		$table->is_type_supported = WP_Optimize()->get_db_info()->is_table_type_optimize_supported($table_name);
+		$table->is_needing_repair = WP_Optimize()->get_db_info()->is_table_needing_repair($table_name);
 
+		$table = apply_filters('wp_optimize_get_table', $table);
 		return $table;
 	}
 
@@ -457,5 +463,16 @@ class WP_Optimizer {
 		}
 		
 		return array('output' => $output);
+	}
+
+	/**
+	 * Try to change PHP script time limit.
+	 */
+	private function change_time_limit() {
+		$time_limit = (defined('WP_OPTIMIZE_SET_TIME_LIMIT') && WP_OPTIMIZE_SET_TIME_LIMIT > 15) ? WP_OPTIMIZE_SET_TIME_LIMIT : 1800;
+
+		// Try to reduce the chances of PHP self-terminating via reaching max_execution_time.
+		// @codingStandardsIgnoreLine
+		@set_time_limit($time_limit);
 	}
 }

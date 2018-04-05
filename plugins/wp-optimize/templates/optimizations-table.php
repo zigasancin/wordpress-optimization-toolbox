@@ -13,11 +13,10 @@
 	<tbody>
 	<?php
 	$optimizations = $optimizer->sort_optimizations($optimizer->get_optimizations());
-	$hidden_in_optimizations_list = apply_filters('wpo_hidden_in_optimizations_list', array('images', 'attachments'));
 
 	foreach ($optimizations as $id => $optimization) {
 		// If we don't want to show optimization on the first tab.
-		if (in_array($id, $hidden_in_optimizations_list)) continue;
+		if (false === $optimization->display_in_optimizations_list()) continue;
 		// This is an array, with attributes dom_id, activated, settings_label, info; all values are strings.
 		$use_ajax = defined('WP_OPTIMIZE_DEBUG_OPTIMIZATIONS') && WP_OPTIMIZE_DEBUG_OPTIMIZATIONS ? false : true;
 		$html = $optimization->get_settings_html($use_ajax);

@@ -1054,23 +1054,98 @@ var WP_Optimize = function (send_command) {
 		});
 	});
 
-	/**
-	 * Send check_overdue_crons command and output warning if need.
-	 */
-	setTimeout(function() {
-		send_command('check_overdue_crons', null, function (resp) {
-			if (resp && resp.hasOwnProperty('m')) {
-				$('#wpo_settings_warnings').append(resp.m);
+	// Handle repair table click
+	$('#wpoptimize_table_list').on('click', '.run-single-table-repair', function() {
+		var btn = $(this),
+			spinner = btn.next(),
+			action_done_icon = spinner.next(),
+			table_name = btn.data('table'),
+			data = {
+				optimization_id: 'repairtables',
+				optimization_table: table_name
+			};
+
+		spinner.removeClass('visibility-hidden');
+
+		send_command('do_optimization', { optimization_id: 'repairtables', data: data }, function (response) {
+			if (response.result.meta.success) {
+				var row = btn.closest('tr'),
+					tableinfo = response.result.meta.tableinfo;
+
+				btn.prop('disabled', false);
+				spinner.addClass('visibility-hidden');
+				action_done_icon.show().removeClass('visibility-hidden');
+
+				// update table information in row.
+				$('td:eq(2)', row).text(tableinfo.rows);
+				$('td:eq(3)', row).text(tableinfo.data_size);
+				$('td:eq(4)', row).text(tableinfo.index_size);
+				$('td:eq(5)', row).text(tableinfo.type);
+
+				if (tableinfo.is_optimizable) {
+					$('td:eq(6)', row).html(['<span color="', tableinfo.overhead > 0 ? '#0000FF' : '#004600', '">', tableinfo.overhead,'</span>'].join(''));
+				} else {
+					$('td:eq(6)', row).html('<span color="#0000FF">-</span>');
+				}
+
+				// keep visible results from previous operation for one second and show optimize button if possible.
+				setTimeout(function() {
+					var parent_td = btn.closest('td'),
+						btn_wrap = btn.closest('.wpo_button_wrap');
+
+					// remove Repair button and show Optimize button.
+					btn_wrap.fadeOut('fast', function() {
+						btn_wrap.closest('.wpo_button_wrap').remove();
+
+						// if table is optimizable then show OPTIMIZE button.
+						if (tableinfo.is_optimizable) {
+							$('.wpo_button_wrap', parent_td).removeClass('wpo_hidden');
+						}
+					});
+
+					change_actions_column_visibility();
+				}, 1000);
+			} else {
+				btn.prop('disabled', false);
+				spinner.addClass('visibility-hidden');
+				alert(wpoptimize.table_was_not_repaired.replace('%s', table_name));
 			}
 		});
-	}, 11000);
+	});
 
-	return {
-		send_command: send_command,
-		optimization_get_info: optimization_get_info,
-		take_a_backup_with_updraftplus: take_a_backup_with_updraftplus,
-		save_auto_backup_options: save_auto_backup_options
+	change_actions_column_visibility();
+
+	/**
+	 * Show or hide actions column if need.
+	 *
+	 * @return void
+	 */
+	function change_actions_column_visibility() {
+		var table = $('#wpoptimize_table_list'),
+			hideLastColumn  = true;
+
+		// check if any button exists in the actions column.
+		$('tr', table).each(function() {
+			var row = $(this);
+
+			if ($('button', row).length > 0) {
+				hideLastColumn = false;
+				return false;
+			}
+		});
+
+		// hide or show last column
+		$('tr', table).each(function() {
+			var row = $(this);
+
+			if (hideLastColumn) {
+				$('td:last, th:last', row).hide();
+			} else {
+				$('td:last, th:last', row).show();
+			}
+		});
 	}
+
 	/**
 	 * Validate loggers settings.
 	 *
@@ -1166,6 +1241,7 @@ var WP_Optimize = function (send_command) {
 
 	return {
 		send_command: send_command,
+		optimization_get_info: optimization_get_info,
 		take_a_backup_with_updraftplus: take_a_backup_with_updraftplus,
 		save_auto_backup_options: save_auto_backup_options
 	}

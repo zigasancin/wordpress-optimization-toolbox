@@ -15,6 +15,7 @@ class WP_Optimize_Database_Information {
 	const MEMORY_ENGINE = 'Memory';
 	const INNODB_ENGINE = 'InnoDB';
 	const ARCHIVE_ENGINE = 'ARCHIVE';
+	const CSV_ENGINE = 'CSV';
 	const NDB_ENGINE = 'NDB';
 	const ARIA_ENGINE = 'Aria'; // MariaDB
 
@@ -86,13 +87,20 @@ class WP_Optimize_Database_Information {
 	 * Returns information about database table.
 	 *
 	 * @param string $table_name
+	 * @param bool   $update     if true, then force request to database and don't use cached values.
 	 * @return bool|mixed
 	 */
-	public function get_table_status($table_name) {
-		$tables_info = $this->get_show_table_status();
+	public function get_table_status($table_name, $update = false) {
+		global $wpdb;
 
-		foreach ($tables_info as $table_info) {
-			if ($table_name == $table_info->Name) return $table_info;
+		if (false == $update) {
+			$tables_info = $this->get_show_table_status();
+
+			foreach ($tables_info as $table_info) {
+				if ($table_name == $table_info->Name) return $table_info;
+			}
+		} else {
+			return $wpdb->get_row($wpdb->prepare('SHOW TABLE STATUS LIKE %s;', $table_name));
 		}
 
 		return false;
@@ -217,7 +225,7 @@ class WP_Optimize_Database_Information {
 	 * @param string $table_name Name of database table
 	 * @return bool
 	 */
-	public function is_table_type_supported($table_name) {
+	public function is_table_type_optimize_supported($table_name) {
 		$table_type = $this->get_table_type($table_name);
 
 		$supported_table_types = array(
@@ -231,11 +239,102 @@ class WP_Optimize_Database_Information {
 	}
 
 	/**
+	 * Returns true if table type is supported for repair.
+	 *
+	 * @param string $table_name
+	 * @return bool
+	 */
+	public function is_table_type_repair_supported($table_name) {
+		$table_type = $this->get_table_type($table_name);
+
+		$supported_table_types = array(
+			self::MYISAM_ENGINE,
+			self::ARCHIVE_ENGINE,
+			self::CSV_ENGINE,
+		);
+
+		return in_array($table_type, $supported_table_types);
+	}
+
+	/**
+	 * Run CHECK TABLE query and returns statuses for single or list of tables.
+	 *
+	 * @param array|string $table
+	 */
+	public function check_table($table) {
+		global $wpdb;
+
+		if (is_array($table)) {
+			$table = join(',', $table);
+		}
+
+		$result = array();
+
+		if (empty($table)) return $result;
+
+		$query_result = $wpdb->get_results('CHECK TABLE '.$table.';');
+
+		if (empty($query_result)) return $result;
+
+		foreach ($query_result as $row) {
+			$table_name = array_pop(explode('.', $row->Table));
+
+			if (!array_key_exists($table_name, $result)) $result[$table_name] = array();
+
+			if ('error' == $row->Msg_type) {
+				$result[$table_name]['status'] = $row->Msg_type;
+
+				if (preg_match('/corrupt/i', $row->Msg_text)) {
+					$result[$table_name]['corrupted'] = true;
+				} else {
+					$result[$table_name]['message'] = $row->Msg_text;
+				}
+			}
+
+			if ('status' == $row->Msg_type) {
+				$result[$table_name]['status'] = $row->Msg_text;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Check all supported for repair tables and return statuses for them.
+	 *
+	 * @return array
+	 */
+	public function check_all_tables() {
+		static $result = null;
+
+		if (null !== $result) return $result;
+
+		$tables = $this->get_show_table_status();
+		$supported_tables = array();
+
+		foreach ($tables as $table) {
+			if ('' == $table->Engine || $this->is_table_type_repair_supported($table->Name)) {
+				$supported_tables[] = $table->Name;
+			}
+		}
+
+		$result = $this->check_table($supported_tables);
+
+		return $result;
+	}
+
+	/**
 	 * Returns true if table needing repair.
 	 *
 	 * @param string $table_name Database table name.
 	 */
 	public function is_table_needing_repair($table_name) {
-		// code it later.
+		$table_statuses = $this->check_all_tables();
+
+		if (is_array($table_statuses) && array_key_exists($table_name, $table_statuses) && $table_statuses[$table_name]['corrupted']) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

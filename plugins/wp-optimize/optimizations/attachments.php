@@ -14,6 +14,15 @@ class WP_Optimization_attachments extends WP_Optimization {
 	public $auto_default = false;
 
 	/**
+	 * Display or hide optimization in optimizations list.
+	 *
+	 * @return bool
+	 */
+	public function display_in_optimizations_list() {
+		return false;
+	}
+
+	/**
 	 * Do actions after optimize() function.
 	 */
 	public function after_optimize() {
