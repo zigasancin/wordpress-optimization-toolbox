@@ -386,9 +386,9 @@ class ShortPixelView {
                     <?php $this->displayBulkStats($quotaData['totalProcessedFiles'], $quotaData['mainProcessedFiles'], $under5PercentCount, $averageCompression, $savedSpace);?>
                 </div>            
             </div>
-            <p><?php printf(__('Go to the ShortPixel <a href="%soptions-general.php?page=wp-shortpixel#stats">Stats</a> '
-                             . 'and see all your websites\' optimized stats. Download your detailed <a href="https://%s/v2/report.php?key=%s">Optimization Report</a> '
-                             . 'to check your image optimization statistics for the last 40 days.','shortpixel-image-optimiser'),
+            <p><?php printf(__('Go to the ShortPixel <a href="%soptions-general.php?page=wp-shortpixel#stats">Stats</a>
+                               and see all your websites\' optimized stats. Download your detailed <a href="https://%s/v2/report.php?key=%s">Optimization Report</a>
+                               to check your image optimization statistics for the last 40 days.','shortpixel-image-optimiser'),
                              SHORTPIXEL_API,
                              get_admin_url(), (defined("SHORTPIXEL_HIDE_API_KEY") ? '' : $this->ctrl->getApiKey()) );?></p>
             <?php 
@@ -703,7 +703,7 @@ class ShortPixelView {
         <h1><?php _e('ShortPixel Plugin Settings','shortpixel-image-optimiser');?></h1>
         <p style="font-size:18px">
             <a href="https://shortpixel.com/<?php 
-            echo($this->ctrl->getVerifiedKey() ? "login/".(defined("SHORTPIXEL_HIDE_API_KEY") ? '' : $this->ctrl->getApiKey()) : "pricing" . WPShortPixel::getAffiliateSufix());
+            echo(($this->ctrl->getVerifiedKey() ? "login/".(defined("SHORTPIXEL_HIDE_API_KEY") ? '' : $this->ctrl->getApiKey()) : "pricing") . WPShortPixel::getAffiliateSufix());
             ?>" target="_blank" style="font-size:18px">
                 <?php _e('Upgrade now','shortpixel-image-optimiser');?>
             </a> | <a href="https://shortpixel.com/pricing<?php echo(WPShortPixel::getAffiliateSufix()); ?>#faq" target="_blank" style="font-size:18px"><?php _e('FAQ','shortpixel-image-optimiser');?> </a> |
@@ -1181,16 +1181,16 @@ class ShortPixelView {
                             _e('name:keepbig, path:/ignore_regex/i, size:1000x2000','shortpixel-image-optimiser');?>"> 
                         <?php _e('Exclude certain images from being optimized, based on patterns.','shortpixel-image-optimiser');?>
                         <p class="settings-info"> 
-                            <?php _e('Add patterns separated by comma. A pattern consist of a <strong>type:value</strong> pair; the accepted types are '
-                                    . '<strong>"name"</strong>, <strong>"path"</strong> and <strong>"size"</strong>. '
-                                    . 'A file will be excluded if it matches any of the patterns. '
-                                    . '<br>For a <strong>"name"</strong> pattern only the filename will be matched but for a <strong>"path"</strong>, '
-                                    . 'all the path will be matched (useful for excluding certain subdirectories altoghether).'
-                                    . 'For these you can also use regular expressions accepted by preg_match, but without "," or ":". '
-                                    . 'A pattern will be considered a regex if it starts with a "/" and is valid. '
-                                    . '<br>For the <strong>"size"</strong> type, '
-                                    . 'which applies only to Media Library images, <strong>the main images (not thumbnails)</strong> that have the size in the specified range will be excluded. '
-                                    . 'The format for the "size" exclude is: <strong>minWidth</strong>-<strong>maxWidth</strong>x<strong>minHeight</strong>-<strong>maxHeight</strong>, for example <strong>size:1000-1100x2000-2200</strong>. You can also specify a precise size, as <strong>1000x2000</strong>.','shortpixel-image-optimiser');?>
+                            <?php _e('Add patterns separated by comma. A pattern consists of a <strong>type:value</strong> pair; the accepted types are
+                                      <strong>"name"</strong>, <strong>"path"</strong> and <strong>"size"</strong>.
+                                       A file will be excluded if it matches any of the patterns.
+                                       <br>For a <strong>"name"</strong> pattern only the filename will be matched but for a <strong>"path"</strong>,
+                                       all the path will be matched (useful for excluding certain subdirectories altoghether).
+                                       For these you can also use regular expressions accepted by preg_match, but without "," or ":".
+                                       A pattern will be considered a regex if it starts with a "/" and is valid.
+                                       <br>For the <strong>"size"</strong> type,
+                                       which applies only to Media Library images, <strong>the main images (not thumbnails)</strong> that have the size in the specified range will be excluded.
+                                       The format for the "size" exclude is: <strong>minWidth</strong>-<strong>maxWidth</strong>x<strong>minHeight</strong>-<strong>maxHeight</strong>, for example <strong>size:1000-1100x2000-2200</strong>. You can also specify a precise size, as <strong>1000x2000</strong>.','shortpixel-image-optimiser');?>
                         </p>
                     </td>
                 </tr>
@@ -1455,16 +1455,15 @@ class ShortPixelView {
                 case 'imgOptimized':
                     $excluded = (isset($data['excludeSizes']) ? count($data['excludeSizes']) : 0);
                     $successText = $this->getSuccessText($data['percent'],$data['bonus'],$data['type'],$data['thumbsOpt'],$data['thumbsTotal'], $data['retinasOpt'], $data['excludeSizes']);
+                    $missingThumbs = $excludeSizes = '';
                     if($extended) {
-                        $excludeSizes = '';
                         if(isset($data['excludeSizes'])) {
                             $excludeSizes .= "<br><span> <span style='font-weight: bold;'>" . __("Excluded thumbnails:", 'shortpixel-image-optimiser') . "</span>";
-                            foreach($data['excludeSizes'] as $excluded) {
-                                $excludeSizes .= "<br> &#8226; " . $excluded;
+                            foreach($data['excludeSizes'] as $excludedItem) {
+                                $excludeSizes .= "<br> &#8226; " . $excludedItem;
                             }
                             $excludeSizes .= '</span>';
                         }
-                        $missingThumbs = '';
                         if(count($data['thumbsMissing'])) {
                             $missingThumbs .= "<br><span> <span style='font-weight: bold;'>" . __("Missing thumbnails:", 'shortpixel-image-optimiser') . "</span>";
                             foreach($data['thumbsMissing'] as $miss) {
