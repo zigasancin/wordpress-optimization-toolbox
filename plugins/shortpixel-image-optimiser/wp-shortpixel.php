@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.10.3
+ * Version: 4.10.4
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.10.3");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.10.4");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -54,19 +54,19 @@ define('SHORTPIXEL_MAX_EXECUTION_TIME2', 2 );
 define("SHORTPIXEL_MAX_RESULTS_QUERY", 30);
 
 function shortpixelInit() {
-    global $pluginInstance;
+    global $shortPixelPluginInstance;
     //limit to certain admin pages if function available
     $loadOnThisPage = !function_exists('get_current_screen');
     if(!$loadOnThisPage) {
         $screen = get_current_screen();
-        if(is_object($screen) && in_array($screen->id, array('upload', 'edit', 'edit-tags', 'post-new', 'post'))) {
-
+        if(is_object($screen) && !in_array($screen->id, array('upload', 'edit', 'edit-tags', 'post-new', 'post'))) {
+            return;
         }
     }
     require_once('class/shortpixel_queue.php');
     $prio = ShortPixelQueue::get();
     $isAjaxButNotSP = defined( 'DOING_AJAX' ) && DOING_AJAX && !(isset($_REQUEST['action']) && (strpos($_REQUEST['action'], 'shortpixel_') === 0));
-    if (!isset($pluginInstance)
+    if (!isset($shortPixelPluginInstance)
         && (   ($prio && is_array($prio) && count($prio) && get_option('wp-short-pixel-front-bootstrap'))
             || is_admin() && !$isAjaxButNotSP
                && (function_exists("is_user_logged_in") && is_user_logged_in()) //is admin, is logged in - :) seems funny but it's not, ajax scripts are admin even if no admin is logged in.
@@ -78,47 +78,47 @@ function shortpixelInit() {
        ) 
     {
         require_once('wp-shortpixel-req.php');
-        $pluginInstance = new WPShortPixel;
+        $shortPixelPluginInstance = new WPShortPixel;
     }
 } 
 
 function shortPixelHandleImageUploadHook($meta, $ID = null) {
-    global $pluginInstance;
-    if(!isset($pluginInstance)) {
+    global $shortPixelPluginInstance;
+    if(!isset($shortPixelPluginInstance)) {
         require_once('wp-shortpixel-req.php');
-        $pluginInstance = new WPShortPixel;
+        $shortPixelPluginInstance = new WPShortPixel;
     }
-    return $pluginInstance->handleMediaLibraryImageUpload($meta, $ID);
+    return $shortPixelPluginInstance->handleMediaLibraryImageUpload($meta, $ID);
 }
 
 function shortPixelReplaceHook($params) {
     if(isset($params['post_id'])) { //integration with EnableMediaReplace - that's an upload for replacing an existing ID
-        global $pluginInstance;
-        if (!isset($pluginInstance)) {
+        global $shortPixelPluginInstance;
+        if (!isset($shortPixelPluginInstance)) {
             require_once('wp-shortpixel-req.php');
-            $pluginInstance = new WPShortPixel;
+            $shortPixelPluginInstance = new WPShortPixel;
         }
-        $itemHandler = $pluginInstance->onDeleteImage($params['post_id']);
+        $itemHandler = $shortPixelPluginInstance->onDeleteImage($params['post_id']);
         $itemHandler->deleteAllSPMeta();
     }
 }
 
 function shortPixelPng2JpgHook($params) {
-    global $pluginInstance;
-    if(!isset($pluginInstance)) {
+    global $shortPixelPluginInstance;
+    if(!isset($shortPixelPluginInstance)) {
         require_once('wp-shortpixel-req.php');
-        $pluginInstance = new WPShortPixel;
+        $shortPixelPluginInstance = new WPShortPixel;
     }
-    return $pluginInstance->convertPng2Jpg($params);
+    return $shortPixelPluginInstance->convertPng2Jpg($params);
 }
 
 function shortPixelNggAdd($image) {
-    global $pluginInstance;
-    if(!isset($pluginInstance)) {
+    global $shortPixelPluginInstance;
+    if(!isset($shortPixelPluginInstance)) {
         require_once('wp-shortpixel-req.php');
-        $pluginInstance = new WPShortPixel;
+        $shortPixelPluginInstance = new WPShortPixel;
     }
-    $pluginInstance->handleNextGenImageUpload($image);
+    $shortPixelPluginInstance->handleNextGenImageUpload($image);
 }
 
 function shortPixelActivatePlugin () {

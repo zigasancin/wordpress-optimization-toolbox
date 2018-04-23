@@ -1409,23 +1409,36 @@ class WPShortPixel {
     }
 
     //TODO specific to Media Lib., move accordingly
-    protected function doRestore($attachmentID, $meta = null) {
+    protected function doRestore($attachmentID, $rawMeta = null) {
         $file = $origFile = get_attached_file($attachmentID);
-        if(!$meta) {
-            $meta = wp_get_attachment_metadata($attachmentID);
+
+        $itemHandler = new ShortPixelMetaFacade($attachmentID);
+        if($rawMeta) {
+            $itemHandler->setRawMeta($rawMeta); //prevent another database trip
+        } else {
+            $itemHandler->getMeta();
+            $rawMeta = $itemHandler->getRawMeta();
         }
+        $toUnlink = $itemHandler->getURLsAndPATHs(true, false, true, array(), true);
+
         $pathInfo = pathinfo($file);
-        $sizes = isset($meta["sizes"]) ? $meta["sizes"] : array();
+        $sizes = isset($rawMeta["sizes"]) ? $rawMeta["sizes"] : array();
         
         //check if the images were converted from PNG
-        $png2jpgMain = isset($meta['ShortPixelPng2Jpg']['originalFile']) ? $meta['ShortPixelPng2Jpg']['originalFile'] : false;
-        $jpgFile = false; $jpgSizes = array();
-        $png2jpgSizes = $png2jpgMain ? $meta['ShortPixelPng2Jpg']['originalSizes'] : array();
+        $png2jpgMain = isset($rawMeta['ShortPixelPng2Jpg']['originalFile']) ? $rawMeta['ShortPixelPng2Jpg']['originalFile'] : false;
         $bkFolder = $this->getBackupFolderAny($file, $sizes);
-        if($png2jpgMain) { 
-            $jpgFile = $file; 
-            $file = $png2jpgMain; 
-            $jpgSizes = $sizes; 
+        $toReplace = array();
+        if($png2jpgMain) {
+            $png2jpgSizes = $png2jpgMain ? $rawMeta['ShortPixelPng2Jpg']['originalSizes'] : array();
+            $image = $rawMeta['file'];
+            $imageUrl = wp_get_attachment_url($attachmentID);
+            $baseUrl = ShortPixelPng2Jpg::removeUrlProtocol(trailingslashit(str_replace($image, "", $imageUrl))); //make the base url protocol agnostic if it's not already
+            $baseRelPath = trailingslashit(dirname($image));
+            $toReplace[ShortPixelPng2Jpg::removeUrlProtocol($imageUrl)] = $baseUrl . $baseRelPath . wp_basename($png2jpgMain);
+            foreach($sizes as $key => $size) {
+                $toReplace[$baseUrl . $baseRelPath . $size['file']] = $baseUrl . $baseRelPath . wp_basename($png2jpgSizes[$key]['file']);
+            }
+            $file = $png2jpgMain;
             $sizes = $png2jpgSizes;
         }
         $bkFile = trailingslashit($bkFolder) . ShortPixelAPI::MB_basename($file);
@@ -1433,43 +1446,42 @@ class WPShortPixel {
         //first check if the file is readable by the current user - otherwise it will be unaccessible for the web browser
         // - collect the thumbs paths in the process
         $bkCount = 0;
-        if(isset($meta["ShortPixel"]['ErrCode'])) {
+        if(isset($rawMeta["ShortPixel"]['ErrCode'])) {
             $lastStatus = $this->_settings->bulkLastStatus;
-            if($lastStatus['ImageID'] == $attachmentID) {
+            if(isset($lastStatus['ImageID']) && $lastStatus['ImageID'] == $attachmentID) {
                 $this->_settings->bulkLastStatus = null;
             }
-        } else {
-            if(file_exists($bkFile)) {
-                if(!is_readable($bkFile) || (file_exists($file) && !$this->setFilePerms($file)) ) {
+        }
+        if(file_exists($bkFile)) {
+            if(!is_readable($bkFile) || (file_exists($file) && !$this->setFilePerms($file)) ) {
+                $this->throwNotice('generic-err',
+                    sprintf(__("File %s cannot be restored due to lack of permissions, please contact your hosting provider to assist you in fixing this.",'shortpixel-image-optimiser'),
+                            (is_readable($bkFile) ? "" : "$bkFile and ") . "$file"));
+                return false;
+            }
+            $bkCount++;
+            $main = true;
+        }
+        $thumbsPaths = array();
+        if($bkFolder && !empty($rawMeta['file']) && count($sizes) ) {
+            foreach($sizes as $size => $imageData) {
+                $dest = $pathInfo['dirname'] . '/' . $imageData['file'];
+                $source = trailingslashit($bkFolder) . $imageData['file'];
+                if(!file_exists($source)) continue; // if thumbs were not optimized, then the backups will not be there.
+                if(!$this->setFilePerms($source) || (file_exists($dest) && !$this->setFilePerms($dest))) {
+                    $failedFile = ($this->setFilePerms($bkFile) ? $file : $bkFile);
                     $this->throwNotice('generic-err',
                         sprintf(__("File %s cannot be restored due to lack of permissions, please contact your hosting provider to assist you in fixing this.",'shortpixel-image-optimiser'),
-                                (is_readable($bkFile) ? "" : "$bkFile and ") . "$file"));
+                                "$failedFile (current permissions: " . sprintf("%o", fileperms($failedFile)) . ")"));
                     return false;
                 }
                 $bkCount++;
-                $main = true;
+                $thumbsPaths[$source] = $dest;
             }
-            $thumbsPaths = array();
-            if($bkFolder && !empty($meta['file']) && count($sizes) ) {
-                foreach($sizes as $size => $imageData) {
-                    $dest = $pathInfo['dirname'] . '/' . $imageData['file'];
-                    $source = trailingslashit($bkFolder) . $imageData['file'];
-                    if(!file_exists($source)) continue; // if thumbs were not optimized, then the backups will not be there.
-                    if(!$this->setFilePerms($source) || (file_exists($dest) && !$this->setFilePerms($dest))) {
-                        $failedFile = ($this->setFilePerms($bkFile) ? $file : $bkFile);
-                        $this->throwNotice('generic-err',
-                            sprintf(__("File %s cannot be restored due to lack of permissions, please contact your hosting provider to assist you in fixing this.",'shortpixel-image-optimiser'),
-                                    "$failedFile (current permissions: " . sprintf("%o", fileperms($failedFile)) . ")"));
-                        return false;
-                    }
-                    $bkCount++;
-                    $thumbsPaths[$source] = $dest;
-                }
-            }
-            if(!$bkCount) {
-                $this->throwNotice('generic-err', __("No backup files found. Restore not performed.",'shortpixel-image-optimiser'));
-                return false;
-            }
+        }
+        if(!$bkCount) {
+            $this->throwNotice('generic-err', __("No backup files found. Restore not performed.",'shortpixel-image-optimiser'));
+            return false;
         }
         //either backups exist, or it was error so it's normal no backup is present
         try {
@@ -1494,7 +1506,7 @@ class WPShortPixel {
 
             $duplicates = ShortPixelMetaFacade::getWPMLDuplicates($attachmentID);
             foreach($duplicates as $ID) {
-                $crtMeta = $attachmentID == $ID ? $meta : wp_get_attachment_metadata($ID);
+                $crtMeta = $attachmentID == $ID ? $rawMeta : wp_get_attachment_metadata($ID);
                 if(   isset($crtMeta["ShortPixelImprovement"]) && is_numeric($crtMeta["ShortPixelImprovement"])
                    && 0 + $crtMeta["ShortPixelImprovement"] < 5 && $this->_settings->under5Percent > 0) {
                     $this->_settings->under5Percent = $this->_settings->under5Percent - 1; // - (isset($crtMeta["ShortPixel"]["thumbsOpt"]) ? $crtMeta["ShortPixel"]["thumbsOpt"] : 0);
@@ -1520,15 +1532,29 @@ class WPShortPixel {
                 }
                 wp_update_attachment_metadata($ID, $crtMeta);
             }
-            unset($meta["ShortPixelImprovement"]);
-            unset($meta['ShortPixel']);
-            unset($meta['ShortPixelPng2Jpg']);
+            unset($rawMeta["ShortPixelImprovement"]);
+            unset($rawMeta['ShortPixel']);
+            unset($rawMeta['ShortPixelPng2Jpg']);
 
+            if($png2jpgMain) {
+                $spPng2Jpg = new ShortPixelPng2Jpg($this->_settings);
+                $spPng2Jpg->png2JpgUpdateUrls(array(), $toReplace);
+            }
+            if(isset($toUnlink['PATHs'])) foreach($toUnlink['PATHs'] as $unlink) {
+                if($png2jpgMain) {
+                    WPShortPixel::log("PNG2JPG unlink $unlink");
+                    @unlink($unlink);
+                }
+                //try also the .webp
+                $unlinkWebp = trailingslashit(dirname($unlink)) . wp_basename($unlink, '.' . pathinfo($unlink, PATHINFO_EXTENSION)) . '.webp';
+                WPShortPixel::log("PNG2JPG unlink $unlinkWebp");
+                @unlink($unlinkWebp);
+            }
         } catch(Exception $e) {
             $this->throwNotice('generic-err', $e->getMessage());
             return false;
         }
-        return $meta;
+        return $rawMeta;
     }
 
     /**
@@ -1552,9 +1578,13 @@ class WPShortPixel {
     
     protected function renameWithRetina($bkFile, $file) {
         @rename($bkFile, $file);
-        $ext = pathinfo($file, PATHINFO_EXTENSION);
-        @rename(substr($bkFile, 0, strlen($bkFile) - 1 - strlen($ext)) . "@2x." . $ext, substr($file, 0, strlen($file) - 1 - strlen($ext)) . "@2x." . $ext);
+        @rename($this->retinaName($bkFile), $this->retinaName($file));
         
+    }
+
+    protected function retinaName($file) {
+        $ext = pathinfo($file, PATHINFO_EXTENSION);
+        return substr($file, 0, strlen($file) - 1 - strlen($ext)) . "@2x." . $ext;
     }
 
     public function doCustomRestore($ID) {
@@ -1915,7 +1945,7 @@ class WPShortPixel {
         $qry_left = "SELECT count(*) FilesLeftToBeProcessed FROM " . $wpdb->prefix . "postmeta
         WHERE meta_key = '_wp_attached_file' AND post_id <= " . (0 + $this->prioQ->getStartBulkId());
         $filesLeft = $wpdb->get_results($qry_left);
-        
+
         //check the custom bulk
         $pendingMeta = $this->_settings->hasCustomFolders ? $this->spMetaDao->getPendingMetaCount() : 0;
 
@@ -2286,6 +2316,12 @@ class WPShortPixel {
             }
             else
             {
+                if(isset($_POST['save']) || isset($_POST['saveAdv'])) {
+                    //these are needed for the call to api-status, set them first.
+                    $this->_settings->siteAuthUser = (isset($_POST['siteAuthUser']) ? $_POST['siteAuthUser'] : $this->_settings->siteAuthUser);
+                    $this->_settings->siteAuthPass = (isset($_POST['siteAuthPass']) ? $_POST['siteAuthPass'] : $this->_settings->siteAuthPass);
+                }
+
                 $validityData = $this->getQuotaInformation($_POST['key'], true, isset($_POST['validate']) && $_POST['validate'] == "validate");
     
                 $this->_settings->apiKey = $_POST['key'];
@@ -2335,9 +2371,6 @@ class WPShortPixel {
                 $this->_settings->resizeType = (isset($_POST['resize_type']) ? $_POST['resize_type']: false);
                 $this->_settings->resizeWidth = (isset($_POST['width']) ? $_POST['width']: $this->_settings->resizeWidth);
                 $this->_settings->resizeHeight = (isset($_POST['height']) ? $_POST['height']: $this->_settings->resizeHeight);
-                $this->_settings->siteAuthUser = (isset($_POST['siteAuthUser']) ? $_POST['siteAuthUser']: $this->_settings->siteAuthUser);
-                $this->_settings->siteAuthPass = (isset($_POST['siteAuthPass']) ? $_POST['siteAuthPass']: $this->_settings->siteAuthPass);
-                
                 $uploadDir = wp_upload_dir();
                 $uploadPath = realpath($uploadDir["basedir"]);
 
@@ -2518,11 +2551,12 @@ class WPShortPixel {
             $args['body']['ThumbsCount'] = $imageCount['totalFiles'] - $imageCount['mainFiles'];
             $argsStr .= "&DomainCheck={$args['body']['DomainCheck']}&Info={$args['body']['Info']}&ImagesCount={$imageCount['mainFiles']}&ThumbsCount={$args['body']['ThumbsCount']}";
         }
-        if(strlen($this->_settings->siteAuthUser)) { 
-            $args['body']['url'] = parse_url(get_site_url(),PHP_URL_HOST);
-            $args['body']['user'] = $this->_settings->siteAuthUser; 
+        $args['body']['host'] = parse_url(get_site_url(),PHP_URL_HOST);
+        $argsStr .= "&url={$args['body']['host']}";
+        if(strlen($this->_settings->siteAuthUser)) {
+            $args['body']['user'] = $this->_settings->siteAuthUser;
             $args['body']['pass'] = urlencode($this->_settings->siteAuthPass);
-            $argsStr .= "&url={$args['body']['url']}&user={$args['body']['user']}&pass={$args['body']['pass']}";
+            $argsStr .= "&user={$args['body']['user']}&pass={$args['body']['pass']}";
         }
 
         $comm = array();
@@ -2767,7 +2801,6 @@ class WPShortPixel {
                         . ' (<a href="https://shortpixel.com/image-compression-test?site-url=' . urlencode(ShortPixelMetaFacade::safeGetAttachmentUrl($id)) . '" target="_blank">' 
                         . __('Test&nbsp;for&nbsp;free','shortpixel-image-optimiser') . '</a>)';
             }  
-            
             $this->view->renderCustomColumn($id, $renderData, $extended);
         }
     }

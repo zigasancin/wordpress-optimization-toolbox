@@ -1181,7 +1181,7 @@ class ShortPixelView {
                             _e('name:keepbig, path:/ignore_regex/i, size:1000x2000','shortpixel-image-optimiser');?>"> 
                         <?php _e('Exclude certain images from being optimized, based on patterns.','shortpixel-image-optimiser');?>
                         <p class="settings-info"> 
-                            <?php _e('Add patterns separated by comma. A pattern consists of a <strong>type:value</strong> pair; the accepted types are
+                            <?php _e('Add patterns separated by comma. A pattern consist of a <strong>type:value</strong> pair; the accepted types are
                                       <strong>"name"</strong>, <strong>"path"</strong> and <strong>"size"</strong>.
                                        A file will be excluded if it matches any of the patterns.
                                        <br>For a <strong>"name"</strong> pattern only the filename will be matched but for a <strong>"path"</strong>,
@@ -1191,6 +1191,9 @@ class ShortPixelView {
                                        <br>For the <strong>"size"</strong> type,
                                        which applies only to Media Library images, <strong>the main images (not thumbnails)</strong> that have the size in the specified range will be excluded.
                                        The format for the "size" exclude is: <strong>minWidth</strong>-<strong>maxWidth</strong>x<strong>minHeight</strong>-<strong>maxHeight</strong>, for example <strong>size:1000-1100x2000-2200</strong>. You can also specify a precise size, as <strong>1000x2000</strong>.','shortpixel-image-optimiser');?>
+                            <a href="http://blog.shortpixel.com/shortpixel-how-to-exclude-images-and-folders-from-optimization/" target="_blank" class="shortpixel-help-link">
+                                <span class="dashicons dashicons-editor-help"></span><?php _e('More info','shortpixel-image-optimiser');?>
+                            </a>
                         </p>
                     </td>
                 </tr>

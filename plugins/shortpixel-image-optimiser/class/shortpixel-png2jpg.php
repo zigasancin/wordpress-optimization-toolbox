@@ -113,6 +113,7 @@ class ShortPixelPng2Jpg {
             //backup?
             if($backup) {
                 $imageForBk = trailingslashit(dirname($image)) . ShortPixelAPI::MB_basename($newPath, '.jpg') . '.png';
+                WPShortPixel::log("imageForBk should be PNG: $imageForBk");
                 if($image != $imageForBk) {
                     WPShortPixel::log("PNG2JPG doConvert rename $image to $imageForBk");
                     @rename($image, $imageForBk);
@@ -130,6 +131,7 @@ class ShortPixelPng2Jpg {
             }
             //unlink($image);
             $params['file'] = $newPath;
+            WPShortPixel::log("original_file should be PNG: $image");
             $params['original_file'] = $image;
             $params['url'] = $newUrl;
             $params['type'] = 'image/jpeg';
@@ -195,7 +197,7 @@ class ShortPixelPng2Jpg {
         $imagePath = get_attached_file($ID);
         $basePath = trailingslashit(str_replace($image, "", $imagePath));
         $imageUrl = wp_get_attachment_url($ID);
-        $baseUrl = trailingslashit(str_replace($image, "", $imageUrl));
+        $baseUrl = self::removeUrlProtocol(trailingslashit(str_replace($image, "", $imageUrl))); //make the base url protocol agnostic if it's not already
 
         // set a temporary error in order to make sure user gets something if the image failed from memory limit.
         if(   isset($meta['ShortPixel']['Retries']) && $meta['ShortPixel']['Retries'] > 3
@@ -217,7 +219,9 @@ class ShortPixelPng2Jpg {
             return $meta; //cannot convert it
         }
 
+        WPShortPixel::log(" CONVERTING MAIN: $imagePath");
         $retMain = $this->doConvertPng2Jpg(array('file' => $imagePath, 'url' => false, 'type' => 'image/png'), $this->_settings->backupImages, false, $retC['img']);
+        WPShortPixel::log(" CONVERTED MAIN: " . json_encode($retMain));
         WPShortPixel::log("PNG2JPG doConvert Main RETURNED " . json_encode($retMain));
         $ret = $retMain->params;
         $toUnlink = array();
@@ -233,11 +237,12 @@ class ShortPixelPng2Jpg {
             $toUnlink[] = $retMain->unlink;
             //convert to the new URLs the urls in the existing posts.
             $baseRelPath = trailingslashit(dirname($image));
-            $toReplace[$imageUrl] = $baseUrl . $baseRelPath . wp_basename($ret['file']);
-            //$this->png2JpgUpdateUrls(array(), $imageUrl, $baseUrl . $baseRelPath . wp_basename($ret['file']));
+            $toReplace[self::removeUrlProtocol($imageUrl)] = $baseUrl . $baseRelPath . wp_basename($ret['file']);
             $pngSize = $ret['png_size'];
             $jpgSize = $ret['jpg_size'];
+            WPShortPixel::log(" IMAGE PATH: $imagePath");
             $imagePath = isset($ret['original_file']) ? $ret['original_file'] : $imagePath;
+            WPShortPixel::log(" SET IMAGE PATH: $imagePath");
 
             //conversion succeeded for the main image, update meta and proceed to thumbs. (It could also not succeed if the converted file is not smaller)
             $meta['file'] = str_replace($basePath, '', $ret['file']);
@@ -261,18 +266,19 @@ class ShortPixelPng2Jpg {
                     $jpgSize += $rett['jpg_size'];
                     WPShortPixel::log("PNG2JPG total PNG size: $pngSize total JPG size: $jpgSize");
                     $originalSizes[$size]['file'] = wp_basename($rett['file'], '.jpg') . '.png';
+                    WPShortPixel::log("PNG2JPG thumb original: " . $originalSizes[$size]['file']);
                     $toReplace[$baseUrl . $baseRelPath . $info['file']] = $baseUrl . $baseRelPath . wp_basename($rett['file']);
-                    //$this->png2JpgUpdateUrls(array(), $baseUrl . $baseRelPath . $info['file'], $baseUrl . $baseRelPath . wp_basename($rett['file']));
                     wp_update_attachment_metadata($ID, $meta);
                 }
             }
-            $meta['ShortPixelPng2Jpg'] = array('originalFile' => $imagePath, 'originalSizes' => $originalSizes,
+            WPShortPixel::log("ORIGINAL SIZESSSS: " . json_encode($originalSizes));
+            $meta['ShortPixelPng2Jpg'] = array('originalFile' => $imagePath, 'originalSizes' => $originalSizes, 'originalSizes2' => $originalSizes,
                 'backup' => $this->_settings->backupImages,
                 'optimizationPercent' => round(100.0 * (1.00 - $jpgSize / $pngSize)));
             wp_update_attachment_metadata($ID, $meta);
         }
 
-        $this->png2JpgUpdateUrls(array(), $toReplace);
+        self::png2JpgUpdateUrls(array(), $toReplace);
         foreach($toUnlink as $unlink) {
             if($unlink) {
                 WPShortPixel::log("PNG2JPG unlink $unlink");
@@ -291,7 +297,7 @@ class ShortPixelPng2Jpg {
      * @param $newurl
      * @return array
      */
-    protected function png2JpgUpdateUrls($options, $map){
+    public static function png2JpgUpdateUrls($options, $map){
         global $wpdb;
         WPShortPixel::log("PNG2JPG update URLS " . json_encode($map));
         $results = array();
@@ -316,9 +322,9 @@ class ShortPixelPng2Jpg {
 
                 for( $page = 0; $page < $pages; $page++ ) {
                     $start = $page * $page_size;
-                    $pmquery = "SELECT * FROM $wpdb->postmeta WHERE meta_value <> '' AND meta_value <> '_wp_attachment_metadata' AND meta_value <> '_wp_attached_file' LIMIT $start, $page_size";
+                    $pmquery = "SELECT * FROM $wpdb->postmeta WHERE meta_value <> '' AND meta_key <> '_wp_attachment_metadata' AND meta_key <> '_wp_attached_file' LIMIT $start, $page_size";
                     $items = $wpdb->get_results( $pmquery );
-                    foreach( $items as $item ){
+                    foreach( $items as $item ) {
                         $value = $item->meta_value;
                         if( trim($value) == '' )
                             continue;
@@ -326,7 +332,7 @@ class ShortPixelPng2Jpg {
                         $edited = (object)array('data' => $value, 'replaced' => false);
                         foreach($map as $oldurl => $newurl) {
                             if (strlen($newurl)) {
-                                $editedOne = $this->png2JpgUnserializeReplace($oldurl, $newurl, $edited->data);
+                                $editedOne = self::png2JpgUnserializeReplace($oldurl, $newurl, $edited->data);
                                 $edited->data = $editedOne->data;
                                 $edited->replaced = $edited->replaced || $editedOne->replaced;
                             }
@@ -352,6 +358,10 @@ class ShortPixelPng2Jpg {
         return $results;
     }
 
+    public static function removeUrlProtocol($url) {
+        return preg_replace("/^http[s]{0,1}:\/\//", "//", $url);
+    }
+
     /**
      * taken from Velvet Blues Update URLs plugin
      * @param string $from
@@ -360,7 +370,7 @@ class ShortPixelPng2Jpg {
      * @param bool|false $serialised
      * @return array|mixed|string
      */
-    function png2JpgUnserializeReplace( $from = '', $to = '', $data = '', $serialised = false ) {
+    static function png2JpgUnserializeReplace( $from = '', $to = '', $data = '', $serialised = false ) {
         $replaced = false;
         try {
             if ( false !== is_serialized( $data ) ) {
@@ -370,14 +380,14 @@ class ShortPixelPng2Jpg {
                 }
 
                 $unserialized = unserialize( $data );
-                $ret = $this->png2JpgUnserializeReplace( $from, $to, $unserialized, true );
+                $ret = self::png2JpgUnserializeReplace( $from, $to, $unserialized, true );
                 $data = $ret->data;
                 $replaced = $replaced || $ret->replaced;
             }
             elseif ( is_array( $data ) ) {
                 $_tmp = array( );
                 foreach ( $data as $key => $value ) {
-                    $ret = $this->png2JpgUnserializeReplace( $from, $to, $value, false );
+                    $ret = self::png2JpgUnserializeReplace( $from, $to, $value, false );
                     $_tmp[ $key ] = $ret->data;
                     $replaced = $replaced || $ret->replaced;
                 }
@@ -386,7 +396,7 @@ class ShortPixelPng2Jpg {
             }
             elseif(is_object( $data )) {
                 foreach(get_object_vars($data) as $key => $value) {
-                    $ret = $this->png2JpgUnserializeReplace( $from, $to, $value, false );
+                    $ret = self::png2JpgUnserializeReplace( $from, $to, $value, false );
                     $_tmp[ $key ] = $ret->data;
                     $replaced = $replaced || $ret->replaced;
                 }

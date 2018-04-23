@@ -330,7 +330,7 @@ class ShortPixelMetaFacade {
         
         if($this->type == self::CUSTOM_TYPE) {
             $meta = $this->getMeta();
-            
+
             //fix for situations where site_url is lala.com/en and home_url is lala.com - if using the site_url will get a duplicated /en in the URL
             $homeUrl = self::getHomeUrl();
             $urlList[] = self::replaceHomePath($meta->getPath(), $homeUrl);
@@ -363,7 +363,7 @@ class ShortPixelMetaFacade {
                 $TmpCount = count($Tmp);
                 $StichString = $Tmp[$TmpCount-2] . "/" . $Tmp[$TmpCount-1];
                 
-                $count = 0;
+                $count = 1;
                 foreach( $sizes as $thumbnailName => $thumbnailInfo ) {
 
                     if(!isset($thumbnailInfo['file'])) { //cases when $thumbnailInfo is NULL

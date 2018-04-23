@@ -4,7 +4,7 @@ Tags: compress, image, compression, optimize, image optimizer, image optimiser, 
 Requires at least: 3.2.0
 Tested up to: 4.9
 Requires PHP: 5.2
-Stable tag: 4.10.3
+Stable tag: 4.10.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -227,6 +227,15 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.10.4 =
+* replace back the PNG links when restoring a PNG converted to JPG
+* fix incompatibility with Dynamics 365 Integration plugin
+* improve restore capabilities after certain types of PNG to JPG errors which left the media item in an unconsistent state.
+* remove AUTH credentials on server too, if removed in plugin's settings.
+* more performance improvements to PNG 2 JPG conversion
+* fix replacing PNG urls having http:// instead of https:// for a SSL site. (and viceversa)
+* fix string not appearing in translations
 
 = 4.10.3 =
 * improvements to context help beacon
