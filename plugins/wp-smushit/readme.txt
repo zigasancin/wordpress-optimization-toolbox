@@ -20,7 +20,7 @@ Compress and optimize (or optimise) image files, improve performance and boost y
 (You say optimise I say optimize...lets call the whole thing off ;) )
 
 = Award Winning Image Optimizer =
-Smush has been benchmarked and tested number one for speed and quality and is the <a href="https://torquemag.io/2017/04/wp-smush-defeats-wordfence-wins-plugin-madness-2017/">award-winning</a>, proven crowd favorite image optimization plugin for WordPress.
+Smush has been benchmarked and tested number one for speed and quality and is the <a href="https://torquemag.io/2018/04/smush-image-compression-wins-2018-plugin-madness/">award-winning</a>, back-to-back proven crowd favorite image optimization plugin for WordPress.
 
 Now with image resizing! Set a max width and height and large images will scale down as they are being compressed.
 
