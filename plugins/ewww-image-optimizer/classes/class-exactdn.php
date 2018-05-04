@@ -120,6 +120,8 @@ class ExactDN {
 		} else {
 			ewwwio_debug_message( 'aq_resize detected, image_downsize filter disabled' );
 		}
+		// Disable image_downsize filter during themify_get_image().
+		add_action( 'themify_before_post_image', array( $this, 'disable_image_downsize' ) );
 
 		// Overrides for admin-ajax images.
 		add_filter( 'exactdn_admin_allow_image_downsize', array( $this, 'allow_admin_image_downsize' ), 10, 2 );
@@ -145,8 +147,14 @@ class ExactDN {
 		}
 
 		// Configure Autoptimize with our CDN domain.
-		if ( defined( 'AUTOPTIMIZE_PLUGIN_DIR' ) && ! ewww_image_optimizer_get_option( 'autoptimize_cdn_url' ) ) {
-			ewww_image_optimizer_set_option( 'autoptimize_cdn_url', '//' . $this->exactdn_domain );
+		add_filter( 'autoptimize_filter_cssjs_multidomain', array( $this, 'autoptimize_cdn_url' ) );
+		if ( defined( 'AUTOPTIMIZE_PLUGIN_DIR' ) ) {
+			$ao_cdn_url = ewww_image_optimizer_get_option( 'autoptimize_cdn_url' );
+			if ( empty( $ao_cdn_url ) ) {
+				ewww_image_optimizer_set_option( 'autoptimize_cdn_url', '//' . $this->exactdn_domain );
+			} elseif ( strpos( $ao_cdn_url, 'exactdn' ) && '//' . $this->exactdn_domain !== $ao_cdn_url ) {
+				ewww_image_optimizer_set_option( 'autoptimize_cdn_url', '//' . $this->exactdn_domain );
+			}
 		}
 
 		// Find the "local" domain.
@@ -162,6 +170,7 @@ class ExactDN {
 				$this->allowed_domains[] = $nonwww;
 			}
 		}
+		$this->allowed_domains = apply_filters( 'exactdn_allowed_domains', $this->allowed_domains );
 	}
 
 	/**
@@ -196,16 +205,23 @@ class ExactDN {
 			$this->exactdn_domain = $exactdn_domain;
 			ewwwio_debug_message( 'exactdn_domain: ' . $exactdn_domain );
 			return true;
-		} elseif ( get_option( 'ewww_image_optimizer_exactdn_failures' ) < 5 ) {
+		} elseif ( $this->get_exactdn_option( 'checkin' ) < time() - 5 && get_option( 'ewww_image_optimizer_exactdn_failures' ) < 10 ) {
 			$failures = (int) get_option( 'ewww_image_optimizer_exactdn_failures' );
 			$failures++;
 			ewwwio_debug_message( "could not verify existing exactDN domain, failures: $failures" );
 			update_option( 'ewww_image_optimizer_exactdn_failures', $failures );
-			$this->set_exactdn_checkin( time() + 3600 );
+			$this->set_exactdn_option( 'checkin', time() + 300 );
+			return false;
+		} elseif ( get_option( 'ewww_image_optimizer_exactdn_failures' ) < 10 ) {
+			$failures = (int) get_option( 'ewww_image_optimizer_exactdn_failures' );
+			ewwwio_debug_message( 'could not verify existing exactDN domain, waiting for ' . human_time_diff( $this->get_exactdn_option( 'checkin' ) ) );
+			ewwwio_debug_message( 10 - $failures . ' attempts remaining' );
 			return false;
 		}
 		delete_option( 'ewww_image_optimizer_exactdn_domain' );
+		delete_option( 'ewww_image_optimizer_exactdn_verified' );
 		delete_site_option( 'ewww_image_optimizer_exactdn_domain' );
+		delete_site_option( 'ewww_image_optimizer_exactdn_verified' );
 		return false;
 	}
 
@@ -251,13 +267,49 @@ class ExactDN {
 	 * @return bool Whether the domain is still valid.
 	 */
 	function verify_domain( $domain ) {
+		if ( empty( $domain ) ) {
+			return false;
+		}
 		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 		// Check the time, to see how long it has been since we verified the domain.
-		$last_checkin = $this->get_exactdn_checkin();
+		$last_checkin = $this->get_exactdn_option( 'checkin' );
 		if ( ! empty( $last_checkin ) && $last_checkin > time() ) {
-			ewwwio_debug_message( 'not time yet' );
+			ewwwio_debug_message( 'not time yet: ' . human_time_diff( $this->get_exactdn_option( 'checkin' ) ) );
+			if ( $this->get_exactdn_option( 'suspended' ) ) {
+				return false;
+			}
 			return true;
 		}
+
+		$this->check_verify_method();
+
+		if ( $this->get_exactdn_option( 'verify_method' ) > 0 ) {
+			// Test with an image file that should be available on the ExactDN zone.
+			$test_url     = plugins_url( '/images/testorig.jpg', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE );
+			$local_domain = $this->parse_url( $test_url, PHP_URL_HOST );
+			$test_url     = str_replace( $local_domain, $domain, $test_url );
+			ewwwio_debug_message( "test url is $test_url" );
+			$test_result = wp_remote_get( $test_url );
+			if ( is_wp_error( $test_result ) ) {
+				$error_message = $test_result->get_error_message();
+				ewwwio_debug_message( "exactdn verification request failed: $error_message" );
+				$this->set_exactdn_option( 'suspended', 1 );
+				return false;
+			} elseif ( ! empty( $test_result['body'] ) && strlen( $test_result['body'] ) > 300 ) {
+				if ( 200 === $test_result['response']['code'] && 'ffd8ff' === bin2hex( substr( $test_result['body'], 0, 3 ) ) ) {
+					ewwwio_debug_message( 'exactdn (real-world) verification succeeded' );
+					$this->set_exactdn_option( 'checkin', time() + 3600 );
+					$this->set_exactdn_option( 'verified', 1, false );
+					$this->set_exactdn_option( 'suspended', 0 );
+					return true;
+				}
+				ewwwio_debug_message( 'mime check failed' . bin2hex( substr( $test_result['body'], 0, 3 ) ) );
+			}
+			$this->set_exactdn_option( 'suspended', 1 );
+			return false;
+		}
+
+		// Secondary test against the API db.
 		$url = 'http://optimize.exactlywww.com/exactdn/verify.php';
 		$ssl = wp_http_supports( array( 'ssl' ) );
 		if ( $ssl ) {
@@ -272,20 +324,50 @@ class ExactDN {
 		if ( is_wp_error( $result ) ) {
 			$error_message = $result->get_error_message();
 			ewwwio_debug_message( "exactdn verification request failed: $error_message" );
+			$this->set_exactdn_option( 'suspended', 1 );
 			return false;
 		} elseif ( ! empty( $result['body'] ) && strpos( $result['body'], 'error' ) === false ) {
 			$response = json_decode( $result['body'], true );
 			if ( ! empty( $response['success'] ) ) {
-				$this->set_exactdn_checkin( time() + 86400 );
+				ewwwio_debug_message( 'exactdn (secondary) verification succeeded' );
+				$this->set_exactdn_option( 'checkin', time() + 3600 );
+				$this->set_exactdn_option( 'verified', 1, false );
+				$this->set_exactdn_option( 'suspended', 0 );
 				return true;
 			}
 		} elseif ( ! empty( $result['body'] ) ) {
 			$response      = json_decode( $result['body'], true );
 			$error_message = $response['error'];
 			ewwwio_debug_message( "exactdn activation request failed: $error_message" );
+			$this->set_exactdn_option( 'suspended', 1 );
 			return false;
 		}
+		$this->set_exactdn_option( 'suspended', 1 );
 		return false;
+	}
+
+	/**
+	 * Run a simulation to decide which verification method to use.
+	 */
+	function check_verify_method() {
+		if ( ! $this->get_exactdn_option( 'verify_method' ) ) {
+			ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+			// Prelim test with a known valid image to ensure http(s) connectivity.
+			$sim_url    = 'https://optimize.exactlywww.com/exactdn/testorig.jpg';
+			$sim_result = wp_remote_get( $sim_url );
+			if ( is_wp_error( $sim_result ) ) {
+				$error_message = $sim_result->get_error_message();
+				ewwwio_debug_message( "exactdn (simulated) verification request failed: $error_message" );
+			} elseif ( ! empty( $sim_result['body'] ) && strlen( $sim_result['body'] ) > 300 ) {
+				if ( 'ffd8ff' === bin2hex( substr( $sim_result['body'], 0, 3 ) ) ) {
+					ewwwio_debug_message( 'exactdn (simulated) verification succeeded' );
+					$this->set_exactdn_option( 'verify_method', 1, false );
+					return;
+				}
+			}
+			ewwwio_debug_message( 'exactdn (simulated) verification request failed, error unknown' );
+			$this->set_exactdn_option( 'verify_method', -1, false );
+		}
 	}
 
 	/**
@@ -316,7 +398,6 @@ class ExactDN {
 	 * @return string The ExactDN domain name for this site or network.
 	 */
 	function get_exactdn_domain() {
-		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 		if ( defined( 'EXACTDN_DOMAIN' ) && EXACTDN_DOMAIN ) {
 			return $this->sanitize_domain( EXACTDN_DOMAIN );
 		}
@@ -329,21 +410,21 @@ class ExactDN {
 	}
 
 	/**
-	 * Get the ExactDN last check-in time.
+	 * Get the ExactDN option.
 	 *
-	 * @return int The last time we verified the ExactDN domain.
+	 * @param string $option_name The name of the ExactDN option.
+	 * @return int The numerical value of the option.
 	 */
-	function get_exactdn_checkin() {
-		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+	function get_exactdn_option( $option_name ) {
 		if ( defined( 'EXACTDN_DOMAIN' ) && EXACTDN_DOMAIN ) {
-			return (int) get_option( 'ewww_image_optimizer_exactdn_validation' );
+			return (int) get_option( 'ewww_image_optimizer_exactdn_' . $option_name );
 		}
 		if ( is_multisite() ) {
 			if ( ! SUBDOMAIN_INSTALL ) {
-				return (int) get_site_option( 'ewww_image_optimizer_exactdn_validation' );
+				return (int) get_site_option( 'ewww_image_optimizer_exactdn_' . $option_name );
 			}
 		}
-		return (int) get_option( 'ewww_image_optimizer_exactdn_validation' );
+		return (int) get_option( 'ewww_image_optimizer_exactdn_' . $option_name );
 	}
 
 	/**
@@ -371,21 +452,23 @@ class ExactDN {
 	}
 
 	/**
-	 * Set the last check-in time for ExactDN.
+	 * Set an option for ExactDN.
 	 *
-	 * @param int $time The last time we verified the ExactDN domain.
+	 * @param string $option_name The name of the ExactDN option.
+	 * @param int    $option_value The value to set for the ExactDN option.
+	 * @param bool   $autoload Optional. Whether to load the option when WordPress starts up.
 	 */
-	function set_exactdn_checkin( $time ) {
+	function set_exactdn_option( $option_name, $option_value, $autoload = null ) {
 		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 		if ( defined( 'EXACTDN_DOMAIN' ) && EXACTDN_DOMAIN ) {
-			return update_option( 'ewww_image_optimizer_exactdn_validation', $time );
+			return update_option( 'ewww_image_optimizer_exactdn_' . $option_name, $option_value, $autoload );
 		}
 		if ( is_multisite() ) {
 			if ( ! SUBDOMAIN_INSTALL ) {
-				return update_site_option( 'ewww_image_optimizer_exactdn_validation', $time );
+				return update_site_option( 'ewww_image_optimizer_exactdn_' . $option_name, $option_value );
 			}
 		}
-		return update_option( 'ewww_image_optimizer_exactdn_validation', $time );
+		return update_option( 'ewww_image_optimizer_exactdn_' . $option_name, $option_value, $autoload );
 	}
 
 	/**
@@ -534,6 +617,11 @@ class ExactDN {
 					$src                  = $lazy_load_src[1];
 					$src_orig             = $lazy_load_src[1];
 				} elseif ( preg_match( '#data-lazy-original=["|\'](.+?)["|\']#i', $images['img_tag'][ $index ], $lazy_load_src ) ) {
+					$placeholder_src      = $src;
+					$placeholder_src_orig = $src;
+					$src                  = $lazy_load_src[1];
+					$src_orig             = $lazy_load_src[1];
+				} elseif ( strpos( $images['img_tag'][ $index ], 'a3-lazy-load/assets/images/lazy_placeholder' ) && preg_match( '#data-src=["|\'](.+?)["|\']#i', $images['img_tag'][ $index ], $lazy_load_src ) ) {
 					$placeholder_src      = $src;
 					$placeholder_src_orig = $src;
 					$src                  = $lazy_load_src[1];
@@ -806,24 +894,29 @@ class ExactDN {
 					}
 				} // End if().
 			} // End foreach().
-			if ( $this->filtering_the_page && ewww_image_optimizer_get_option( 'exactdn_all_the_things' ) ) {
-				ewwwio_debug_message( 'rewriting all other wp_content urls' );
-				if ( $this->exactdn_domain && $this->upload_domain ) {
-					$escaped_upload_domain = str_replace( '.', '\.', $this->upload_domain );
-					ewwwio_debug_message( $escaped_upload_domain );
-					// Pre-empt rewriting of wp-includes and wp-content if the extension is php/ashx by using a temporary placeholder.
-					$content = preg_replace( '#(https?)://' . $escaped_upload_domain . '([^"\'?>]+?)?/wp-content/([^"\'?>]+?)\.(php|ashx)#i', '$1://' . $this->upload_domain . '$2/?wpcontent-bypass?/$3.$4', $content );
-					$content = preg_replace( '#(https?)://' . $escaped_upload_domain . '/([^"\'?>]+?)?wp-(includes|content)#i', '$1://' . $this->exactdn_domain . '/$2wp-$3', $content );
-					$content = str_replace( '?wpcontent-bypass?', 'wp-content', $content );
-				}
-			}
 		} // End if();
+		if ( $this->filtering_the_page && ewww_image_optimizer_get_option( 'exactdn_all_the_things' ) ) {
+			ewwwio_debug_message( 'rewriting all other wp_content urls' );
+			if ( $this->exactdn_domain && $this->upload_domain ) {
+				$escaped_upload_domain = str_replace( '.', '\.', ltrim( $this->upload_domain, 'w.' ) );
+				ewwwio_debug_message( $escaped_upload_domain );
+				// Pre-empt rewriting of wp-includes and wp-content if the extension is php/ashx by using a temporary placeholder.
+				$content = preg_replace( '#(https?)://(?:www\.)?' . $escaped_upload_domain . '([^"\'?>]+?)?/wp-content/([^"\'?>]+?)\.(php|ashx)#i', '$1://' . $this->upload_domain . '$2/?wpcontent-bypass?/$3.$4', $content );
+				$content = str_replace( 'wp-content/themes/jupiter"', '?wpcontent-bypass?/themes/jupiter"', $content );
+				$content = preg_replace( '#(https?)://(?:www\.)?' . $escaped_upload_domain . '/([^"\'?>]+?)?wp-(includes|content)#i', '$1://' . $this->exactdn_domain . '/$2wp-$3', $content );
+				$content = str_replace( '?wpcontent-bypass?', 'wp-content', $content );
+			}
+		}
 		ewwwio_debug_message( 'done parsing page' );
 		$this->filtering_the_content = false;
 
 		$elapsed_time = microtime( true ) - $started;
 		ewwwio_debug_message( "parsing the_content took $elapsed_time seconds" );
 		$this->elapsed_time += microtime( true ) - $started;
+		ewwwio_debug_message( "parsing the page took $this->elapsed_time seconds so far" );
+		if ( $this->elapsed_time > .5 ) {
+			ewww_image_optimizer_set_option( 'exactdn_prevent_db_queries', true );
+		}
 		return $content;
 	}
 
@@ -848,6 +941,25 @@ class ExactDN {
 			return true;
 		}
 		return $allow;
+	}
+
+	/**
+	 * Disable resizing of images during image_downsize().
+	 *
+	 * @param mixed $param Could be anything (or nothing), we just pass it along untouched.
+	 * @return mixed Just the same value, going back out the door.
+	 */
+	function disable_image_downsize( $param = false ) {
+		remove_filter( 'image_downsize', array( $this, 'filter_image_downsize' ) );
+		add_action( 'themify_after_post_image', array( $this, 'enable_image_downsize' ) );
+		return $param;
+	}
+
+	/**
+	 * Re-enable resizing of images during image_downsize().
+	 */
+	function enable_image_downsize() {
+		add_filter( 'image_downsize', array( $this, 'filter_image_downsize' ), 10, 3 );
 	}
 
 	/**
@@ -1052,22 +1164,26 @@ class ExactDN {
 				if ( ! $width || ! $height ) {
 					return $image;
 				}
+				ewwwio_debug_message( "requested w$width by h$height" );
 
 				$image_meta = wp_get_attachment_metadata( $attachment_id );
 				if ( isset( $image_meta['width'], $image_meta['height'] ) ) {
-					$image_resized = image_resize_dimensions( $image_meta['width'], $image_meta['height'], $width, $height );
+					$image_resized = image_resize_dimensions( $image_meta['width'], $image_meta['height'], $width, $height, true );
 
 					if ( $image_resized ) { // This could be false when the requested image size is larger than the full-size image.
 						$width  = $image_resized[6];
 						$height = $image_resized[7];
+						ewwwio_debug_message( "using resize dims w$width by h$height" );
 					} else {
 						$width  = $image_meta['width'];
 						$height = $image_meta['height'];
+						ewwwio_debug_message( "using meta dims w$width by h$height" );
 					}
 					$has_size_meta = true;
 				}
 
 				list( $width, $height ) = image_constrain_size_for_editor( $width, $height, $size );
+				ewwwio_debug_message( "constrained to w$width by h$height" );
 
 				// Expose arguments to a filter before passing to ExactDN.
 				$exactdn_args = array(
@@ -1633,7 +1749,7 @@ class ExactDN {
 
 		// Make sure this is an allowed image domain/hostname for ExactDN on this site.
 		if ( ! $this->allow_image_domain( $parsed_url['host'] ) ) {
-			ewwwio_debug_message( 'invalid host for ExactDN' );
+			ewwwio_debug_message( "invalid host for ExactDN: {$parsed_url['host']}" );
 			return $url;
 		}
 
@@ -1874,6 +1990,21 @@ class ExactDN {
 			echo "\r\n";
 			printf( "<link rel='dns-prefetch' href='%s'>\r\n", '//' . esc_attr( $this->exactdn_domain ) );
 		}
+	}
+
+	/**
+	 * Adds the ExactDN domain to the list of 'local' domains for Autoptimize.
+	 *
+	 * @param array $domains A list of domains considered 'local' by Autoptimize.
+	 * @return array The same list, with the ExactDN domain appended.
+	 */
+	function autoptimize_cdn_url( $domains ) {
+		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+		if ( is_array( $domains ) && ! in_array( $this->exactdn_domain, $domains ) ) {
+			ewwwio_debug_message( 'adding to AO list: ' . $this->exactdn_domain );
+			$domains[] = $this->exactdn_domain;
+		}
+		return $domains;
 	}
 }
 
