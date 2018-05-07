@@ -1428,6 +1428,9 @@ jQuery(document).ready(function ($) {
 
 		for (i in wpoptimize.loggers_classes_info) {
 			if (!wpoptimize.loggers_classes_info.hasOwnProperty(i)) continue;
+
+			if (!wpoptimize.loggers_classes_info[i].available) continue;
+
 			select_options.push(['<option value="',i,'">',wpoptimize.loggers_classes_info[i].description,'</option>'].join(''));
 		}
 

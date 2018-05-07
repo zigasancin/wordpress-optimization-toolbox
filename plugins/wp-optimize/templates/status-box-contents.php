@@ -22,18 +22,36 @@ if ('Never' !== $lastopt) {
 	if (is_numeric($lastopt)) {
 		$lastopt = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $lastopt + ( get_option('gmt_offset') * HOUR_IN_SECONDS ));
 	}
-	echo __('Last automatic optimization was at', 'wp-optimize').': ';
+	echo __('Last scheduled optimization was at', 'wp-optimize').': ';
 	echo '<span style="font-color: #004600; font-weight:bold;">';
 	echo htmlspecialchars($lastopt);
 	echo '</span>';
 } else {
-	echo __('There was no automatic optimization', 'wp-optimize');
+	echo __('There was no scheduled optimization', 'wp-optimize');
 }
 ?>
 <br>
 
 <?php
-if ($options->get_option('schedule', 'false') == 'true') {
+
+$scheduled_optimizations_enabled = false;
+
+if ($wp_optimize->is_premium()) {
+	$scheduled_optimizations = WP_Optimize_Premium()->get_scheduled_optimizations();
+
+	if (!empty($scheduled_optimizations)) {
+		foreach ($scheduled_optimizations as $optimization) {
+			if (1 == $optimization['status']) {
+				$scheduled_optimizations_enabled = true;
+				break;
+			}
+		}
+	}
+} else {
+	$scheduled_optimizations_enabled = $options->get_option('schedule', 'false') == 'true';
+}
+
+if ($scheduled_optimizations_enabled) {
 	echo '<strong><span style="font-color: #004600">';
 	_e('Scheduled cleaning enabled', 'wp-optimize');
 	echo ', </span></strong>';

@@ -75,7 +75,7 @@ class WP_Optimizer {
 	}
 	
 	/**
-	 * This method returns an array of available optimisations.
+	 * This method returns an array of available optimizations.
 	 * Each array key is an optimization ID, and the value is an object,
 	 * as returned by get_optimization()
 	 *
@@ -278,12 +278,18 @@ class WP_Optimizer {
 				
 				$include_table = apply_filters('wp_optimize_get_tables_include_table', $include_table, $table_name, $table_prefix);
 
+				if (!$include_table) {
+					unset($table_status[$index]);
+					continue;
+				}
+
+				$table_status[$index]->Engine = WP_Optimize()->get_db_info()->get_table_type($table_name);
+
 				$table_status[$index]->is_optimizable = WP_Optimize()->get_db_info()->is_table_optimizable($table_name);
 				$table_status[$index]->is_type_supported = WP_Optimize()->get_db_info()->is_table_type_optimize_supported($table_name);
 				// add information about corrupted tables.
 				$table_status[$index]->is_needing_repair = WP_Optimize()->get_db_info()->is_table_needing_repair($table_name);
 
-				if (!$include_table) unset($table_status[$index]);
 			}
 		}
 

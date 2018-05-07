@@ -51,9 +51,9 @@
 		</tr>
 		<tr>
 			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'images/features/automatic-clean-ups.png';?>" alt="<?php esc_attr_e('Automatic clean-ups', 'wp-optimize');?>" class="wpo-premium-image">
-				<h4><?php _e('Automatic clean-ups', 'wp-optimize');?></h4>
-				<p><?php _e('Carries out automatic clean-ups daily, weekly, fortnightly and monthly', 'wp-optimize');?></p>
+				<img src="<?php echo WPO_PLUGIN_URL.'images/features/automatic-clean-ups.png';?>" alt="<?php esc_attr_e('Scheduled clean-ups', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Scheduled clean-ups', 'wp-optimize');?></h4>
+				<p><?php _e('Carries out scheduled clean-ups daily, weekly, fortnightly and monthly', 'wp-optimize');?></p>
 			</td>
 			<td>
 				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>

@@ -36,7 +36,7 @@
 												class="dashicons dashicons-arrow-right"></span><?php echo $logger->get_description(); ?>
 									</div>
 									<div class="wpo_logging_options_row"><?php echo $logger->get_options_text(); ?></div>
-									<div class="wpo_logging_status_row"><?php echo ($logger->is_enabled()) ? __('Active', 'wp-optimize') : __('Inactive', 'wp-optimize'); ?></div>
+									<div class="wpo_logging_status_row"><?php echo ($logger->is_enabled() && $logger->is_available()) ? __('Active', 'wp-optimize') : __('Inactive', 'wp-optimize'); ?></div>
 									<div class="wpo_logging_actions_row"><a href="#" class="dashicons dashicons-edit"></a><a
 												href="#" class="wpo_delete_logger dashicons dashicons-no-alt"></a></div>
 
@@ -73,7 +73,7 @@
 										?>
 										<label>
 											<input class="wpo_logger_active_checkbox"
-												   type="checkbox" <?php checked($logger->is_enabled()); ?>>
+												   type="checkbox" <?php checked($logger->is_enabled() && $logger->is_available()); ?> <?php disabled($logger->is_available(), false); ?>>
 											<input type="hidden" name="wpo-logger-options[active][]"
 												   value="<?php echo $logger->is_enabled() ? '1' : '0'; ?>"/>
 											<?php _e('Active', 'wp-optimize'); ?>

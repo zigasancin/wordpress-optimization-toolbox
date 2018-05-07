@@ -101,8 +101,8 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 			),
 			'wpo-premium-multisite' => array(
 				'prefix' => '',
-				'title' => __("Manage a multi-site installation? Need extra control?", "wp-optimize"),
-				'text' => __("WP-Optimize Premium's multi-site feature includes a locking system that restricts optimization commands to users with the right permissions.", "wp-optimize"),
+				'title' => __("Manage a multisite installation? Need extra control?", "wp-optimize"),
+				'text' => __("WP-Optimize Premium's multisite feature includes a locking system that restricts optimization commands to users with the right permissions.", "wp-optimize"),
 				'image' => 'notices/wp_optimize_logo.png',
 				'button_link' => 'https://getwpo.com',
 				'button_meta' => 'wpo-premium',
@@ -112,7 +112,7 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 			),
 			'wpo-premium2' => array(
 				'prefix' => '',
-				'title' => __("WP-Optimize Premium offers unparallelled choice and flexibility", "wp-optimize"),
+				'title' => __("WP-Optimize Premium offers unparalleled choice and flexibility", "wp-optimize"),
 				'text' => __("Upgrade today to combine over a dozen optimization options.", "wp-optimize"),
 				'image' => 'notices/wp_optimize_logo.png',
 				'button_link' => 'https://getwpo.com',

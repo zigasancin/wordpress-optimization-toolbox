@@ -25,7 +25,7 @@ msgstr ""
 msgid "Please upload a valid settings file."
 msgstr ""
 
-#: src/includes/class-updraft-abstract-logger.php:55
+#: src/includes/class-updraft-abstract-logger.php:79
 msgid "Placeholder"
 msgstr ""
 
@@ -61,19 +61,19 @@ msgstr ""
 msgid "No such optimization"
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:448
+#: src/includes/class-wp-optimizer.php:454
 msgid "Comments have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:451
+#: src/includes/class-wp-optimizer.php:457
 msgid "Comments have now been enabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:458
+#: src/includes/class-wp-optimizer.php:464
 msgid "Trackbacks have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:461
+#: src/includes/class-wp-optimizer.php:467
 msgid "Trackbacks have now been enabled on all current and previously published posts."
 msgstr ""
 
@@ -114,15 +114,15 @@ msgid "WP-Optimize Premium features an advanced scheduling system that allows yo
 msgstr ""
 
 #: src/includes/wp-optimize-notices.php:104
-msgid "Manage a multi-site installation? Need extra control?"
+msgid "Manage a multisite installation? Need extra control?"
 msgstr ""
 
 #: src/includes/wp-optimize-notices.php:105
-msgid "WP-Optimize Premium's multi-site feature includes a locking system that restricts optimization commands to users with the right permissions."
+msgid "WP-Optimize Premium's multisite feature includes a locking system that restricts optimization commands to users with the right permissions."
 msgstr ""
 
 #: src/includes/wp-optimize-notices.php:115
-msgid "WP-Optimize Premium offers unparallelled choice and flexibility"
+msgid "WP-Optimize Premium offers unparalleled choice and flexibility"
 msgstr ""
 
 #: src/includes/wp-optimize-notices.php:116
@@ -744,11 +744,11 @@ msgid "Yes"
 msgstr ""
 
 #: src/templates/may-also-like.php:54, src/templates/may-also-like.php:55
-msgid "Automatic clean-ups"
+msgid "Scheduled clean-ups"
 msgstr ""
 
 #: src/templates/may-also-like.php:56
-msgid "Carries out automatic clean-ups daily, weekly, fortnightly and monthly"
+msgid "Carries out scheduled clean-ups daily, weekly, fortnightly and monthly"
 msgstr ""
 
 #: src/templates/may-also-like.php:67, src/templates/may-also-like.php:68
@@ -1078,74 +1078,74 @@ msgid "MySQL"
 msgstr ""
 
 #: src/templates/status-box-contents.php:25
-msgid "Last automatic optimization was at"
+msgid "Last scheduled optimization was at"
 msgstr ""
 
 #: src/templates/status-box-contents.php:30
-msgid "There was no automatic optimization"
+msgid "There was no scheduled optimization"
 msgstr ""
 
-#: src/templates/status-box-contents.php:38
+#: src/templates/status-box-contents.php:56
 msgid "Scheduled cleaning enabled"
 msgstr ""
 
-#: src/templates/status-box-contents.php:50
+#: src/templates/status-box-contents.php:68
 msgid "Next schedule:"
 msgstr ""
 
-#: src/templates/status-box-contents.php:55
+#: src/templates/status-box-contents.php:73
 msgid "Refresh"
 msgstr ""
 
-#: src/templates/status-box-contents.php:59
+#: src/templates/status-box-contents.php:77
 msgid "Scheduled cleaning disabled"
 msgstr ""
 
-#: src/templates/status-box-contents.php:66
+#: src/templates/status-box-contents.php:84
 msgid "Keeping last %s weeks data"
 msgstr ""
 
-#: src/templates/status-box-contents.php:69
+#: src/templates/status-box-contents.php:87
 msgid "Not keeping recent data"
 msgstr ""
 
-#: src/templates/status-box-contents.php:75
+#: src/templates/status-box-contents.php:93
 msgid "Current database size:"
 msgstr ""
 
-#: src/templates/status-box-contents.php:82
+#: src/templates/status-box-contents.php:100
 msgid "You have saved:"
 msgstr ""
 
-#: src/templates/status-box-contents.php:86
+#: src/templates/status-box-contents.php:104
 msgid "You can save around:"
 msgstr ""
 
-#: src/templates/status-box-contents.php:99
+#: src/templates/status-box-contents.php:117
 msgid "Total clean up overall:"
 msgstr ""
 
-#: src/templates/status-box-contents.php:108
+#: src/templates/status-box-contents.php:126
 msgid "Support and feedback"
 msgstr ""
 
-#: src/templates/status-box-contents.php:110
+#: src/templates/status-box-contents.php:128
 msgid "If you like WP-Optimize,"
 msgstr ""
 
-#: src/templates/status-box-contents.php:110
+#: src/templates/status-box-contents.php:128
 msgid "please give us a positive review, here."
 msgstr ""
 
-#: src/templates/status-box-contents.php:110
+#: src/templates/status-box-contents.php:128
 msgid "Or, if you did not like it,"
 msgstr ""
 
-#: src/templates/status-box-contents.php:110
+#: src/templates/status-box-contents.php:128
 msgid "please tell us why at this link."
 msgstr ""
 
-#: src/templates/status-box-contents.php:111
+#: src/templates/status-box-contents.php:129
 msgid "Support is available here."
 msgstr ""
 
@@ -1235,134 +1235,134 @@ msgstr ""
 msgid "Please update UpdraftPlus to the latest version."
 msgstr ""
 
-#: src/wp-optimize.php:267
+#: src/wp-optimize.php:268
 msgid "WP-Optimize (Free) has been de-activated, because WP-Optimize Premium is active."
 msgstr ""
 
-#: src/wp-optimize.php:277
+#: src/wp-optimize.php:278
 msgid "New feature: WP-Optimize Premium can now optimize all sites within a multisite install, not just the main one."
 msgstr ""
 
-#: src/wp-optimize.php:392
+#: src/wp-optimize.php:393
 msgid "Table information"
 msgstr ""
 
-#: src/wp-optimize.php:392, src/wp-optimize.php:578
+#: src/wp-optimize.php:393, src/wp-optimize.php:579
 msgid "Settings"
 msgstr ""
 
-#: src/wp-optimize.php:392
+#: src/wp-optimize.php:393
 msgid "Premium / Plugin family"
 msgstr ""
 
-#: src/wp-optimize.php:521
+#: src/wp-optimize.php:522
 msgid "Automatic backup before optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:522
+#: src/wp-optimize.php:523
 msgid "An unexpected response was received."
 msgstr ""
 
-#: src/wp-optimize.php:523
+#: src/wp-optimize.php:524
 msgid "Optimization complete"
 msgstr ""
 
-#: src/wp-optimize.php:524
+#: src/wp-optimize.php:525
 msgid "Run optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:525
+#: src/wp-optimize.php:526
 msgid "Cancel"
 msgstr ""
 
-#: src/wp-optimize.php:526
+#: src/wp-optimize.php:527
 msgid "Please, select settings file."
 msgstr ""
 
-#: src/wp-optimize.php:527
+#: src/wp-optimize.php:528
 msgid "Are you sure you want to remove this logging destination?"
 msgstr ""
 
-#: src/wp-optimize.php:528
+#: src/wp-optimize.php:529
 msgid "Before saving, you need to complete the currently incomplete settings (or remove them)."
 msgstr ""
 
-#: src/wp-optimize.php:529
+#: src/wp-optimize.php:530
 msgid "%s was not repaired. For more details, please check your logs configured in logging destinations settings."
 msgstr ""
 
-#: src/wp-optimize.php:559
+#: src/wp-optimize.php:560
 msgid "Optimize"
 msgstr ""
 
-#: src/wp-optimize.php:581
+#: src/wp-optimize.php:582
 msgid "Optimizer"
 msgstr ""
 
-#: src/wp-optimize.php:597
+#: src/wp-optimize.php:598
 msgid "Repair"
 msgstr ""
 
-#: src/wp-optimize.php:704
+#: src/wp-optimize.php:705
 msgid "Warning"
 msgstr ""
 
-#: src/wp-optimize.php:704
+#: src/wp-optimize.php:705
 msgid "WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working."
 msgstr ""
 
-#: src/wp-optimize.php:704
+#: src/wp-optimize.php:705
 msgid "Read this page for a guide to possible causes and how to fix it."
 msgstr ""
 
-#: src/wp-optimize.php:771
+#: src/wp-optimize.php:772
 msgid "Error:"
 msgstr ""
 
-#: src/wp-optimize.php:771
+#: src/wp-optimize.php:772
 msgid "template not found"
 msgstr ""
 
-#: src/wp-optimize.php:823
+#: src/wp-optimize.php:824
 msgid "Automatic Operation Completed"
 msgstr ""
 
-#: src/wp-optimize.php:825
+#: src/wp-optimize.php:826
 msgid "Scheduled optimization was executed at"
 msgstr ""
 
-#: src/wp-optimize.php:826
+#: src/wp-optimize.php:827
 msgid "You can safely delete this email."
 msgstr ""
 
-#: src/wp-optimize.php:828
+#: src/wp-optimize.php:829
 msgid "Regards,"
 msgstr ""
 
-#: src/wp-optimize.php:829
+#: src/wp-optimize.php:830
 msgid "WP-Optimize Plugin"
 msgstr ""
 
-#: src/wp-optimize.php:851
+#: src/wp-optimize.php:852
 msgid "GB"
 msgstr ""
 
-#: src/wp-optimize.php:853
+#: src/wp-optimize.php:854
 msgid "MB"
 msgstr ""
 
-#: src/wp-optimize.php:855
+#: src/wp-optimize.php:856
 msgid "KB"
 msgstr ""
 
-#: src/wp-optimize.php:857
+#: src/wp-optimize.php:858
 msgid "bytes"
 msgstr ""
 
-#: src/wp-optimize.php:1248
+#: src/wp-optimize.php:1250
 msgid "Only Network Administrator can activate WP-Optimize plugin."
 msgstr ""
 
-#: src/wp-optimize.php:1249
+#: src/wp-optimize.php:1251
 msgid "go back"
 msgstr ""

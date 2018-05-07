@@ -9,16 +9,40 @@ if (class_exists('Updraft_Abstract_Logger')) return;
  */
 abstract class Updraft_Abstract_Logger implements Updraft_Logger_Interface {
 
+	/**
+	 * True if logger enabled.
+	 *
+	 * @var bool
+	 */
 	protected $enabled = true;
 
+	/**
+	 * True if possible to add multiple loggers.
+	 *
+	 * @var bool
+	 */
 	protected $allow_multiple = false;
 
+	/**
+	 * Logger options.
+	 *
+	 * @var array
+	 */
 	protected $options = array();
 
 	/**
 	 * Updraft_Abstract_Logger constructor
 	 */
 	public function __construct() {
+	}
+
+	/**
+	 * True if logger is available for use, i.e. required plugins installed.
+	 *
+	 * @return bool
+	 */
+	public function is_available() {
+		return true;
 	}
 
 	/**

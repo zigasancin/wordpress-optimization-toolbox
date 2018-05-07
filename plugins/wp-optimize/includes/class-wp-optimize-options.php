@@ -145,7 +145,7 @@ class WP_Optimize_Options {
 	}
 
 	/**
-	 * Save option which sites to optimize in multi-site mode
+	 * Save option which sites to optimize in multisite mode
 	 *
 	 * @param array $settings array of blog ids or "all" item for all sites.
 	 * @return bool
@@ -155,7 +155,7 @@ class WP_Optimize_Options {
 	}
 
 	/**
-	 * Return list of blog ids to optimize in multi-site mode
+	 * Return list of blog ids to optimize in multisite mode
 	 *
 	 * @return mixed|void
 	 */

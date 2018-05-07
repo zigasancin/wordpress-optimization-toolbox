@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: https://getwpo.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.2.3
+Version: 2.2.4
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '2.2.3');
+define('WPO_VERSION', '2.2.4');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -132,16 +132,17 @@ class WP_Optimize {
 		return self::$_logger_instance;
 	}
 
+	/**
+	 * Load Task Manager
+	 */
 	public function get_task_manager() {
-		include_once(WPO_PLUGIN_MAIN_PATH.'/includes/class-updraft-tasks-activation.php');
+		include_once(WPO_PLUGIN_MAIN_PATH.'/vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-tasks-activation.php');
 
 		Updraft_Tasks_Activation::check_updates();
 
-		include_once(WPO_PLUGIN_MAIN_PATH . '/includes/class-updraft-task-meta.php');
-		include_once(WPO_PLUGIN_MAIN_PATH . '/includes/class-updraft-task-options.php');
-		include_once(WPO_PLUGIN_MAIN_PATH . '/includes/class-updraft-task.php');
-
-		// TODO: return here Task Manager instance in future.
+		include_once(WPO_PLUGIN_MAIN_PATH . '/vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-task-meta.php');
+		include_once(WPO_PLUGIN_MAIN_PATH . '/vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-task-options.php');
+		include_once(WPO_PLUGIN_MAIN_PATH . '/vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-task.php');
 	}
 
 	/**
@@ -1080,6 +1081,7 @@ class WP_Optimize {
 
 				$loggers_classes_info[$logger_id] = array(
 					'description' => $logger_class->get_description(),
+					'available' => $logger_class->is_available(),
 					'allow_multiple' => $logger_class->is_allow_multiple(),
 					'options' => $logger_class->get_options_list()
 				);

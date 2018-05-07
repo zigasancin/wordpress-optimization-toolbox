@@ -18,6 +18,7 @@ class WP_Optimize_Database_Information {
 	const CSV_ENGINE = 'CSV';
 	const NDB_ENGINE = 'NDB';
 	const ARIA_ENGINE = 'Aria'; // MariaDB
+	const VIEW = 'VIEW';
 
 	/**
 	 * Returns server type MySQL or MariaDB if mysql database or Unknown if not mysql.
@@ -77,6 +78,8 @@ class WP_Optimize_Database_Information {
 		$table_info = $this->get_table_status($table_name);
 
 		if ($table_info) {
+			if (!$table_info->Engine && $this->is_view($table_name)) return self::VIEW;
+
 			return $table_info->Engine;
 		}
 
@@ -115,11 +118,48 @@ class WP_Optimize_Database_Information {
 		global $wpdb;
 		static $tables_info = array();
 
-		if (empty($tables_info)) {
+		if (empty($tables_info) || !is_array($tables_info)) {
 			$tables_info = $wpdb->get_results('SHOW TABLE STATUS');
 		}
 
 		return $tables_info;
+	}
+
+	/**
+	 * Returns result for query SHOW FULL TABLES as associative array [table_name] => table_type.
+	 *
+	 * @return array
+	 */
+	public function get_show_full_tables() {
+		global $wpdb;
+
+		static $tables_info = array();
+
+		if (empty($tables_info) || !is_array($tables_info)) {
+			$_tables_info = $wpdb->get_results('SHOW FULL TABLES', ARRAY_N);
+
+			if (!empty($_tables_info)) {
+				foreach ($_tables_info as $row) {
+					$tables_info[$row[0]] = $row[1];
+				}
+			}
+		}
+
+		return $tables_info;
+	}
+
+	/**
+	 * Checks if table is a VIEW.
+	 *
+	 * @param  string $table_name
+	 * @return bool
+	 */
+	public function is_view($table_name) {
+		$tables_info = $this->get_show_full_tables();
+
+		if (!array_key_exists($table_name, $tables_info)) return false;
+
+		return ('VIEW' == $tables_info[$table_name]);
 	}
 
 	/**
@@ -277,9 +317,15 @@ class WP_Optimize_Database_Information {
 		if (empty($query_result)) return $result;
 
 		foreach ($query_result as $row) {
-			$table_name = array_pop(explode('.', $row->Table));
+			$table_name_parts = explode('.', rtrim($row->Table, ' .'));
+			$table_name = array_pop($table_name_parts);
 
-			if (!array_key_exists($table_name, $result)) $result[$table_name] = array();
+			if (!array_key_exists($table_name, $result)) {
+				$result[$table_name] = array(
+					'status' => '',
+					'corrupted' => false,
+				);
+			}
 
 			if ('error' == $row->Msg_type) {
 				$result[$table_name]['status'] = $row->Msg_type;

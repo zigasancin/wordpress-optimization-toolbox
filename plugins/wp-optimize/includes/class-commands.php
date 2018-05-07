@@ -135,7 +135,7 @@ class WP_Optimize_Commands {
 	}
 
 	/**
-	 * Save option which sites to optimize in multi-site mode.
+	 * Save option which sites to optimize in multisite mode.
 	 *
 	 * @param array $data Array of settings.
 	 * @return bool

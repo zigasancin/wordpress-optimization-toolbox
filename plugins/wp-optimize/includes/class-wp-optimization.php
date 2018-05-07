@@ -31,7 +31,7 @@ abstract class WP_Optimization {
 	protected $support_ajax_get_info = false; // set to true if optimization support getting info about optimization asynchronously.
 
 	/**
-	 * This property indicates whether running this optimization is likely to change the overall table optimization state. We set this to 'true' on optimizations that run SQL OPTIMIZE commands. It is only used for the UI. Strictly, of course, any optimization that deletes something can cause increased fragmentation; so; in that sense, it would be true for every optimization; but since we are just using it to keep the UI reasonably fresh, and since there is a manual "refresh" button, we set it only on some optimisations.
+	 * This property indicates whether running this optimization is likely to change the overall table optimization state. We set this to 'true' on optimizations that run SQL OPTIMIZE commands. It is only used for the UI. Strictly, of course, any optimization that deletes something can cause increased fragmentation; so; in that sense, it would be true for every optimization; but since we are just using it to keep the UI reasonably fresh, and since there is a manual "refresh" button, we set it only on some optimizations.
 	 *
 	 * @var [$changes_table_data
 	 */
@@ -302,7 +302,7 @@ abstract class WP_Optimization {
 	
 
 	/**
-	 * The next three functions reflect the fact that historically, WP-Optimize has not, for all optimizations, used the same ID consistently throughout forms, saved settings, and saved settings for automatic clean-ups. Mostly, it has; but some flexibility is needed for the exceptions.
+	 * The next three functions reflect the fact that historically, WP-Optimize has not, for all optimizations, used the same ID consistently throughout forms, saved settings, and saved settings for scheduled clean-ups. Mostly, it has; but some flexibility is needed for the exceptions.
 	 */
 	public function get_setting_id() {
 		return empty($this->setting_id) ? 'user-'.$this->id : 'user-'.$this->setting_id;
@@ -330,7 +330,7 @@ abstract class WP_Optimization {
 	 * @return string Error message.
 	 */
 	public function get_auto_option_description() {
-		return 'Error: missing automatic option description ('.$this->id.')';
+		return 'Error: missing scheduled option description ('.$this->id.')';
 	}
 	
 	/**
