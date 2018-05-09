@@ -214,7 +214,7 @@ class ExactDN {
 			return false;
 		} elseif ( get_option( 'ewww_image_optimizer_exactdn_failures' ) < 10 ) {
 			$failures = (int) get_option( 'ewww_image_optimizer_exactdn_failures' );
-			ewwwio_debug_message( 'could not verify existing exactDN domain, waiting for ' . human_time_diff( $this->get_exactdn_option( 'checkin' ) ) );
+			ewwwio_debug_message( 'could not verify existing exactDN domain, waiting for ' . $this->human_time_diff( $this->get_exactdn_option( 'checkin' ) ) );
 			ewwwio_debug_message( 10 - $failures . ' attempts remaining' );
 			return false;
 		}
@@ -230,7 +230,7 @@ class ExactDN {
 	 */
 	function activate_site() {
 		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
-		$site_url = get_home_url();
+		$site_url = defined( 'EXACTDN_LOCAL_DOMAIN' ) && EXACTDN_LOCAL_DOMAIN ? EXACTDN_LOCAL_DOMAIN : get_home_url();
 		$url      = 'http://optimize.exactlywww.com/exactdn/activate.php';
 		$ssl      = wp_http_supports( array( 'ssl' ) );
 		if ( $ssl ) {
@@ -274,7 +274,7 @@ class ExactDN {
 		// Check the time, to see how long it has been since we verified the domain.
 		$last_checkin = $this->get_exactdn_option( 'checkin' );
 		if ( ! empty( $last_checkin ) && $last_checkin > time() ) {
-			ewwwio_debug_message( 'not time yet: ' . human_time_diff( $this->get_exactdn_option( 'checkin' ) ) );
+			ewwwio_debug_message( 'not time yet: ' . $this->human_time_diff( $this->get_exactdn_option( 'checkin' ) ) );
 			if ( $this->get_exactdn_option( 'suspended' ) ) {
 				return false;
 			}
@@ -283,9 +283,9 @@ class ExactDN {
 
 		$this->check_verify_method();
 
-		if ( $this->get_exactdn_option( 'verify_method' ) > 0 ) {
+		if ( ! defined( 'EXACTDN_LOCAL_DOMAIN' ) && $this->get_exactdn_option( 'verify_method' ) > 0 ) {
 			// Test with an image file that should be available on the ExactDN zone.
-			$test_url     = plugins_url( '/images/testorig.jpg', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE );
+			$test_url     = plugins_url( '/images/test.png', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE );
 			$local_domain = $this->parse_url( $test_url, PHP_URL_HOST );
 			$test_url     = str_replace( $local_domain, $domain, $test_url );
 			ewwwio_debug_message( "test url is $test_url" );
@@ -296,14 +296,15 @@ class ExactDN {
 				$this->set_exactdn_option( 'suspended', 1 );
 				return false;
 			} elseif ( ! empty( $test_result['body'] ) && strlen( $test_result['body'] ) > 300 ) {
-				if ( 200 === $test_result['response']['code'] && 'ffd8ff' === bin2hex( substr( $test_result['body'], 0, 3 ) ) ) {
+				if ( 200 === $test_result['response']['code'] &&
+					( '89504e470d0a1a0a' === bin2hex( substr( $test_result['body'], 0, 8 ) ) || '52494646' === bin2hex( substr( $test_result['body'], 0, 4 ) ) ) ) {
 					ewwwio_debug_message( 'exactdn (real-world) verification succeeded' );
 					$this->set_exactdn_option( 'checkin', time() + 3600 );
 					$this->set_exactdn_option( 'verified', 1, false );
 					$this->set_exactdn_option( 'suspended', 0 );
 					return true;
 				}
-				ewwwio_debug_message( 'mime check failed' . bin2hex( substr( $test_result['body'], 0, 3 ) ) );
+				ewwwio_debug_message( 'mime check failed: ' . bin2hex( substr( $test_result['body'], 0, 3 ) ) );
 			}
 			$this->set_exactdn_option( 'suspended', 1 );
 			return false;
@@ -1980,6 +1981,24 @@ class ExactDN {
 			$url = ( is_ssl() ? 'https:' : 'http:' ) . $url;
 		}
 		return parse_url( $url, $component );
+	}
+
+	/**
+	 * A wrapper for human_time_diff() that gives sub-minute times in seconds.
+	 *
+	 * @param int $from Unix timestamp from which the difference begins.
+	 * @param int $to Optional. Unix timestamp to end the time difference. Default is time().
+	 * @return string Human readable time difference.
+	 */
+	function human_time_diff( $from, $to = '' ) {
+		if ( empty( $to ) ) {
+			$to = time();
+		}
+		$diff = (int) abs( $to - $from );
+		if ( $diff < 60 ) {
+			return "$diff sec";
+		}
+		return human_time_diff( $from, $to );
 	}
 
 	/**

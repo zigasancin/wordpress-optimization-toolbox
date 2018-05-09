@@ -5,7 +5,7 @@ Tags: image, compress, optimize, optimization, lossless, lossy, seo, tinyjpg, ti
 Requires at least: 4.6
 Tested up to: 4.9
 Requires PHP: 5.4
-Stable tag: 4.2.0
+Stable tag: 4.2.1
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -176,6 +176,11 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 
 * Feature requests can be submitted via https://ewww.io/contact-us/ and commented on here: https://trello.com/b/Fp81dWof/ewww-image-optimizer
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
+
+= 4.2.1 =
+* fixed: EXACTDN_LOCAL_DOMAIN does not work with auto-verification
+* fixed: uncaught error during upgrade when 'SHOW FULL COLUMNS' fails
+* fixed: async simulation gets 403 error
 
 = 4.2.0 =
 * added: disable ExactDN attachment ID queries if they take too long
