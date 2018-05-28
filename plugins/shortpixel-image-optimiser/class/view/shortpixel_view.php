@@ -820,7 +820,12 @@ class ShortPixelView {
                                 } else {
                                     _e('Please input your e-mail address and press the Request Key button.','shortpixel-image-optimiser');
                                 }
-                                echo(' ');_e('By signing up or validating your API Key, you agree to our <a href="https://shortpixel.com/tos" target="_blank">Terms of Service</a>.','shortpixel-image-optimiser');
+                                ?><br><span style="position:relative;">
+                                    <input name="tos" type="checkbox" id="tos">
+                                    <img id="tos-robo" src="<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/slider.png' ));?>" style="position: absolute;left: -95px;bottom: -26px;display:none;">
+                                    <img id="tos-hand" src="<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/point.png' ));?>" style="position: absolute;left: -39px;bottom: -9px;display:none;">
+                                </span>
+                                <?php _e('I have read and I agree to the <a href="https://shortpixel.com/tos" target="_blank">Terms of Service</a> and the <a href="https://shortpixel.com/privacy" target="_blank">Privacy Policy</a> (<a href="https://shortpixel.com/privacy#gdpr" target="_blank">GDPR compliant</a>).','shortpixel-image-optimiser');
                                 ?>
                             </p>
                         </td>

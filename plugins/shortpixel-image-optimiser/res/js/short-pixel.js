@@ -303,6 +303,15 @@ var ShortPixel = function() {
     }
 
     function newApiKey(event) {
+        if(!jQuery("#tos").is( ":checked" )) {
+            event.preventDefault();
+            jQuery("#tos-robo").fadeIn(400,function(){jQuery("#tos-hand").fadeIn();});
+            jQuery("#tos").click(function(){
+                jQuery("#tos-robo").css("display", "none");
+                jQuery("#tos-hand").css("display", "none");
+            });
+            return;
+        }
         jQuery('#request_key').addClass('disabled');
         jQuery('#pluginemail_spinner').addClass('is-active');
         ShortPixel.updateSignupEmail();
