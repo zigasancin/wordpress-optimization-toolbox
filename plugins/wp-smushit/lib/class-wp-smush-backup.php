@@ -163,8 +163,8 @@ if ( ! class_exists( 'WpSmushBackup' ) ) {
 			//Process Now
 			$attachment_id = empty( $attachment ) ? absint( (int) $_POST['attachment_id'] ) : $attachment;
 
-			//Set a transient to avoid the smush-restore-smush loop
-			set_transient( "wp-smush-restore-$attachment_id", true, 60 );
+			//Set a Option to avoid the smush-restore-smush loop
+			update_option( "wp-smush-restore-$attachment_id", true );
 
 			//Restore Full size -> get other image sizes -> restore other images
 
@@ -264,11 +264,14 @@ if ( ! class_exists( 'WpSmushBackup' ) ) {
 				//Remove Original File
 				delete_post_meta( $attachment_id, WP_SMUSH_PREFIX . 'original_file' );
 
+				//Delete resize savings
+				delete_post_meta( $attachment_id, WP_SMUSH_PREFIX . 'resize_savings' );
+
 				//Get the Button html without wrapper
 				$button_html = $WpSmush->set_status( $attachment_id, false, false, false );
 
 				//Remove the transient
-				delete_transient( "wp-smush-restore-$attachment_id" );
+				delete_option( "wp-smush-restore-$attachment_id" );
 
 				if ( $resp ) {
 					wp_send_json_success( array( 'button' => $button_html ) );
@@ -277,8 +280,9 @@ if ( ! class_exists( 'WpSmushBackup' ) ) {
 				}
 			}
 			//Remove the transient
-			delete_transient( "wp-smush-restore-$attachment_id" );
-			if ( $resp ) {
+			delete_option( "wp-smush-restore-$attachment_id" );
+
+			if ( !$resp ) {
 				wp_send_json_error( array( 'message' => '<div class="wp-smush-error">' . __( "Unable to restore image", "wp-smushit" ) . '</div>' ) );
 			}
 

@@ -155,7 +155,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 
 			// Do not display the notice on Bulk Smush Screen.
 			global $current_screen;
-			if ( ! empty( $current_screen->base ) && 'media_page_wp-smush-bulk' != $current_screen->base && 'gallery_page_wp-smush-nextgen-bulk' != $current_screen->base && 'settings_page_wp-smush-network' != $current_screen->base ) {
+			if ( ! empty( $current_screen->base ) && 'toplevel_page_smush' != $current_screen->base && 'toplevel_page_smush-network' != $current_screen->base && 'gallery_page_wp-smush-nextgen-bulk' != $current_screen->base && 'toplevel_page_smush-network' != $current_screen->base ) {
 				return true;
 			}
 
@@ -171,7 +171,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 
 			wp_enqueue_script( 'wp-smushit-notice-js' );
 			// Settings link.
-			$settings_link = is_multisite() && $wpsmush_settings->settings['networkwide'] ? network_admin_url( 'settings.php?page=wp-smush' ) : admin_url( 'upload.php?page=wp-smush-bulk' );
+			$settings_link = is_multisite() && is_network_admin() ? network_admin_url( 'admin.php?page=smush' ) : menu_page_url( 'smush', false );
 
 			if ( $wpsmushit_admin->validate_install() ) {
 				// If premium user, but S3 support is not enabled.
@@ -217,7 +217,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 			}
 
 			//If we only have the attachment id
-			$full_url = $as3cf->is_attachment_served_by_s3( $attachment_id );
+			$full_url = $as3cf->is_attachment_served_by_s3( $attachment_id, true );
 			//If the filepath contains S3, get the s3 URL for the file
 			if ( ! empty( $full_url ) ) {
 				$full_url = $as3cf->get_attachment_url( $attachment_id );
@@ -256,7 +256,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 
 			//If we have plugin method available, us that otherwise check it ourselves
 			if ( method_exists( $as3cf, 'is_attachment_served_by_s3' ) ) {
-				$s3_object        = $as3cf->is_attachment_served_by_s3( $attachment_id );
+				$s3_object        = $as3cf->is_attachment_served_by_s3( $attachment_id, true );
 				$size_prefix      = dirname( $s3_object['key'] );
 				$size_file_prefix = ( '.' === $size_prefix ) ? '' : $size_prefix . '/';
 				if ( ! empty( $size_details ) && is_array( $size_details ) ) {
@@ -331,7 +331,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 				return false;
 			}
 			//Get s3 object for the file
-			$s3_object = $as3cf->is_attachment_served_by_s3( $attachment_id );
+			$s3_object = $as3cf->is_attachment_served_by_s3( $attachment_id, true );
 
 			$size_prefix      = dirname( $s3_object['key'] );
 			$size_file_prefix = ( '.' === $size_prefix ) ? '' : $size_prefix . '/';

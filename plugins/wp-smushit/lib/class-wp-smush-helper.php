@@ -155,6 +155,57 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 
 			return $string;
 		}
+
+		/**
+		 * Bump up the PHP memory limit temporarily
+		 */
+		function increase_memory_limit() {
+			$mlimit = ini_get('memory_limit');
+			$trim_limit = rtrim($mlimit,"M");
+			if ($trim_limit < '256') {
+				@ini_set('memory_limit', '256M');
+			}
+		}
+
+		/**
+		 * Returns true if a database table column exists. Otherwise returns false.
+		 *
+		 * @link http://stackoverflow.com/a/5943905/2489248
+		 * @global wpdb $wpdb
+		 *
+		 * @param string $table_name Name of table we will check for column existence.
+		 * @param string $column_name Name of column we are checking for.
+		 *
+		 * @return boolean True if column exists. Else returns false.
+		 */
+		function table_column_exists( $table_name, $column_name ) {
+			global $wpdb;
+			$column = $wpdb->get_results( $wpdb->prepare(
+				"SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s ",
+				DB_NAME, $table_name, $column_name
+			) );
+			if ( ! empty( $column ) ) {
+				return true;
+			}
+			return false;
+		}
+
+		/**
+		 * Drops a specified index from a table.
+		 *
+		 * @since 1.0.1
+		 *
+		 * @global wpdb  $wpdb
+		 *
+		 * @param string $table Database table name.
+		 * @param string $index Index name to drop.
+		 * @return true True, when finished.
+		 */
+		function drop_index($table, $index) {
+			global $wpdb;
+			$wpdb->query("ALTER TABLE `$table` DROP INDEX `$index`");
+			return true;
+		}
 	}
 
 	global $wpsmush_helper;

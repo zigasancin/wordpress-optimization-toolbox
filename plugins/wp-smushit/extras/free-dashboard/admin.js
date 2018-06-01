@@ -4,9 +4,9 @@ jQuery(function() {
 		plugin_id = el_notice.find( "input[name=plugin_id]" ).val(),
 		url_wp = el_notice.find( "input[name=url_wp]" ).val(),
 		drip_plugin = el_notice.find( "input[name=drip_plugin]" ).val(),
-		inp_email = el_notice.find( "input[name=email]" );
+		inp_email = el_notice.find( "input[name=email]" ),
 		btn_act = el_notice.find( ".frash-notice-act" ),
-		btn_dismiss = el_notice.find( ".frash-notice-dismiss" );
+		btn_dismiss = el_notice.find( ".frash-notice-dismiss" ),
 		ajax_data = {};
 
 	ajax_data.plugin_id = plugin_id;

@@ -305,9 +305,9 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 				//If we have any savings
 				$upgrade_url = add_query_arg(
 					array(
-						'utm_source' => 'Smush-Free',
-						'utm_medium' => 'Banner',
-						'utm_campaign'=> 'pro-only-stats'
+						'utm_source' => 'smush',
+						'utm_medium' => 'plugin',
+						'utm_campaign'=> 'smush_stats_prosavings_tag'
 					),
 					$wpsmushit_admin->upgrade_url
 				);
@@ -357,9 +357,9 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 				}
 				$upgrade_url = add_query_arg(
 					array(
-						'utm_source' => 'Smush-Free',
-						'utm_medium' => 'Banner',
-						'utm_campaign'=> 'pro-only-advanced-settings'
+						'utm_source' => 'smush',
+						'utm_medium' => 'plugin',
+						'utm_campaign'=> 'smush_advancedsettings_profeature_tag'
 					),
 					$wpsmushit_admin->upgrade_url
 				);
@@ -592,7 +592,7 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 
 			if( !$is_network ) {
 				//Show Configure screen for only a new installation and for only network admins
-				if ( ( 1 != get_site_option( 'skip-smush-setup' ) && 1 != get_site_option( 'wp-smush-hide_smush_welcome' ) && 1 != get_option( 'wp-smush-hide_smush_welcome' ) ) && 1 != get_option( 'hide_smush_features' ) && is_super_admin() ) {
+				if ( ( 1 != get_site_option( 'skip-smush-setup' ) && 1 != get_option( 'wp-smush-hide_smush_welcome' ) ) && 1 != get_option( 'hide_smush_features' ) && is_super_admin() ) {
 					echo '<div class="block float-l">';
 					$this->quick_setup();
 					echo '</div>';
@@ -645,69 +645,9 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 					$this->settings_ui();
 				}
 
-				do_action('smush_settings_ui_bottom');
-
-				//Validate Membership
-				if( !$wpsmushit_admin->validate_install() ) {?>
-					<div class="wp-smush-pro-for-free wp-smushit-container-left col-half float-l"><?php
-						$this->wp_smush_promo();?>
-					</div>
-					<div class="wp-smushit-container-left col-half float-l"><?php
-						$this->wp_smush_hummingbird_promo(); ?>
-					</div><?php
-				} ?>
+				do_action('smush_settings_ui_bottom'); ?>
 			</div><?php
 			$this->smush_page_footer();
-		}
-
-		/**
-		 * Pro Version
-		 */
-		function wp_smush_promo() {
-			global $wpsmushit_admin;
-			$this->container_header( 'wp-smush-pro-adv', 'wp-smush-pro-promo', "READY TO LEVEL UP YOUR WEB DEVELOPMENT?" );
-			$upgrade_url = add_query_arg(
-				array(
-				'utm_source' => 'Smush-Free',
-				'utm_medium' => 'Banner',
-				'utm_campaign' => 'settings-sidebar'
-				),
-				$wpsmushit_admin->upgrade_url
-			);
-			?>
-			<div class="box-content">
-				<p class="wp-smush-promo-content wp-smush-promo-content-2 roboto">Create amazing websites, automate your workflow, and run your business like a well-oiled machine.
-				Get access to the tools that will win you more clients and help you spend less time working.
-				Start a free WPMU DEV trial today.</p>
-				<span class="wp-smush-pro-cta tc">
-					<a href="#smush-pro-features" class="button button-cta button-green get-smush-pro-cta" rel="dialog" target="_blank"><?php esc_html_e("GET STARTED", "wp-smushit"); ?></a>
-				</span>
-			</div><?php
-			echo "</section>";
-		}
-
-		/**
-		 * HummingBird Promo
-		 */
-		function wp_smush_hummingbird_promo() {
-			//Plugin Already Installed
-			if ( class_exists( 'WP_Hummingbird' ) ) {
-				return;
-			}
-			$this->container_header( 'wp-smush-hb-adv', 'wp-smush-hb-promo', "OH YEAH, SMUSHING ON STEROIDS!" ); ?>
-			<div class="box-content">
-			<span class="wp-smush-hummingbird-image tc">
-					<img src="<?php echo WP_SMUSH_URL . 'assets/images/hummingbird.png'; ?>"
-					     alt="<?php esc_html_e( "BOOST YOUR PERFORMANCE - HUMMINGBIRD", "wp-smushit" ); ?>">
-	        </span>
-			<p class="wp-smush-promo-content tc roboto">Hummingbird goes beyond Smush compression with
-				minification, caching, performance monitoring and more - every millisecond counts!</p>
-			<span class="wp-smush-hb-cta tc roboto-medium">
-				<a href="<?php echo esc_url( "https://premium.wpmudev.org/project/wp-hummingbird/" ); ?>"
-				   class="button button-cta" target="_blank">TRY HUMMINGBIRD FOR FREE</a>
-			</span>
-			</div><?php
-			echo "</section>";
 		}
 
 		/**
@@ -777,9 +717,9 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 					$class = count( $wpsmushit_admin->resmush_ids ) > 0 ? ' hidden' : '';
 					$upgrade_url = add_query_arg(
 						array(
-						'utm_source' => 'Smush-Free',
-						'utm_medium' => 'Banner',
-						'utm_campaign' => 'yellow-bulk-smush-upsell'
+						'utm_source' => 'smush',
+						'utm_medium' => 'plugin',
+						'utm_campaign' => 'smush_bulksmush_limit_notice'
 						),
 						$wpsmushit_admin->upgrade_url
 					);
@@ -789,7 +729,7 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 						<span class="wp-smush-notice-text"><?php
 							printf( _n( "%s, you have %s%s%d%s attachment%s that needs smushing!", "%s, you have %s%s%d%s attachments%s that need smushing!", $wpsmushit_admin->remaining_count, "wp-smushit" ), $wpsmushit_admin->get_user_name(), '<strong>', '<span class="wp-smush-remaining-count">', $wpsmushit_admin->remaining_count, '</span>', '</strong>' );
 							if( !$WpSmush->validate_install() && $wpsmushit_admin->remaining_count > 50 ) {
-								printf( esc_html__(" %sUpgrade to Pro%s to bulk smush all your images with one click.", "wp-smushit") , '<a href="' . esc_url( $upgrade_url ). '" target="_blank" title="' . esc_html__("WP Smush Pro", "wp-smushit") . '">', '</a>' );
+								printf( esc_html__(" %sUpgrade to Pro%s to bulk smush all your images with one click.", "wp-smushit") , '<a href="' . esc_url( $upgrade_url ). '" target="_blank" title="' . esc_html__("Smush Pro", "wp-smushit") . '">', '</a>' );
 								esc_html_e(" Free users can smush 50 images with each click.", "wp-smushit");
 							 }?>
 						</span>
@@ -816,7 +756,7 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 			// calculate %ages, avoid divide by zero error with no attachments
 
 			if ( $count->total_count > 0 && $count->smushed_count > 0 ) {
-				$smushed_pc = $count->smushed_count / $count->total_count * 100;
+				$smushed_pc = ( $count->smushed_count / $count->total_count ) * 100;
 			} else {
 				$smushed_pc = 0;
 			}
@@ -917,7 +857,7 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 		 * Prints out the page header for Bulk Smush Page
 		 */
 		function smush_page_header() {
-			global $WpSmush, $wpsmushit_admin, $wpsmush_s3;
+			global $WpSmush, $wpsmushit_admin, $wpsmush_s3, $wpsmush_dir;
 
 			//Include Shared UI
 			require_once WP_SMUSH_DIR . 'assets/shared-ui/plugin-ui.php';
@@ -928,7 +868,7 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 			}
 
 			//Page Heading for Free and Pro Version
-			$page_heading = $WpSmush->validate_install() ? esc_html__( 'WP Smush Pro', 'wp-smushit' ) : esc_html__( 'WP Smush', 'wp-smushit' );
+			$page_heading = esc_html__("DASHBOARD", "wp-smushit");
 
 			$auto_smush_message = $WpSmush->is_auto_smush_enabled() ? sprintf( esc_html__( "Automatic smushing is %senabled%s. Newly uploaded images will be automagically compressed.", "wp-smushit" ), '<span class="wp-smush-auto-enabled">', '</span>' ) : sprintf( esc_html__( "Automatic smushing is %sdisabled%s. Newly uploaded images will need to be manually smushed.", "wp-smushit" ), '<span class="wp-smush-auto-disabled">', '</span>' );
 
@@ -946,6 +886,7 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 					</div>' .
 					$user_validation .
 					$recheck_notice .
+					$wpsmush_dir->check_for_table_error();
 				'</section>';
 
 			//Check for any stored API message and show it
@@ -1023,16 +964,16 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 			}
 			$upgrade_url = add_query_arg(
 				array(
-				'utm_source' => 'Smush-Free',
-				'utm_medium' => 'Banner',
-				'utm_campaign' => 'smush-lady-upgrade'
+				'utm_source' => 'smush',
+				'utm_medium' => 'plugin',
+				'utm_campaign' => 'smush_bulksmush_upsell_notice'
 				),
 				$wpsmushit_admin->upgrade_url
 			); ?>
 			<div class="wp-smush-super-smush-promo">
 			    <div class="wp-smush-super-smush-content-wrapper">
                     <div class="wp-smush-super-smush-content"><?php
-                        printf( esc_html__("Did you know WP Smush Pro delivers up to 2x better compression, allows you to smush your originals and removes any bulk smushing limits? – %sTry it absolutely FREE%s", "wp-smushit"), '<a href="' . esc_url( $upgrade_url ). '" target="_blank" title="' . esc_html__("Try WP Smush Pro for FREE", "wp-smushit") . '">', '</a>' ); ?>
+                        printf( esc_html__("Did you know Smush Pro delivers up to 2x better compression, allows you to smush your originals and removes any bulk smushing limits? – %sTry it absolutely FREE%s", "wp-smushit"), '<a href="' . esc_url( $upgrade_url ). '" target="_blank" title="' . esc_html__("Try Smush Pro for FREE", "wp-smushit") . '">', '</a>' ); ?>
                     </div>
 				</div>
 			</div>
@@ -1049,15 +990,15 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 			}
 			$upgrade_url = add_query_arg(
 				array(
-				'utm_source' => 'Smush-Free',
-				'utm_medium' => 'Banner',
+				'utm_source' => 'smush',
+				'utm_medium' => 'plugin',
 				'utm_campaign' => 'smush-advanced-settings-upsell'
 				),
 				$wpsmushit_admin->upgrade_url
 			); ?>
 			<div class="wp-smush-super-smush-promo">
 				<div class="wp-smush-super-smush-content"><?php
-					printf( esc_html__("Smush Pro gives you all these extra settings and absolutely no limits on smushing your images! Did we mention Smush Pro also gives you up to 2x better compression too? – %sTry it all free with a WPMU DEV membership today!%s", "wp-smushit"), '<a href="' . esc_url( $upgrade_url ). '" target="_blank" title="' . esc_html__("Try WP Smush Pro for FREE", "wp-smushit") . '">', '</a>' ); ?>
+					printf( esc_html__("Smush Pro gives you all these extra settings and absolutely no limits on smushing your images! Did we mention Smush Pro also gives you up to 2x better compression too? – %sTry it all free with a WPMU DEV membership today!%s", "wp-smushit"), '<a href="' . esc_url( $upgrade_url ). '" target="_blank" title="' . esc_html__("Try Smush Pro for FREE", "wp-smushit") . '">', '</a>' ); ?>
 				</div>
 			</div>
 			<?php
@@ -1207,7 +1148,8 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
                 <div class="wp-smush-resize-note" id="<?php echo $prefix; ?>wp-smush-resize-note"><?php printf( esc_html__("Currently, your largest image size is set at %s%dpx wide %s %dpx high%s.", "wp-smushit"), '<strong>', $max_sizes['width'], '&times;', $max_sizes['height'], '</strong>' ); ?></div>
                 <div class="wp-smush-settings-info wp-smush-size-info wp-smush-update-width hidden" tabindex="0"><?php esc_html_e( "Just to let you know, the width you've entered is less than your largest image and may result in pixelation.", "wp-smushit" ); ?></div>
                 <div class="wp-smush-settings-info wp-smush-size-info wp-smush-update-height hidden" tabindex="0"><?php esc_html_e( "Just to let you know, the height you’ve entered is less than your largest image and may result in pixelation.", "wp-smushit" ); ?></div>
-            </div><?php
+            </div>
+            <span class="wp-smush-setting-desc desc-note"><?php esc_html_e("Note: Image resizing happens automatically when you upload attachments. This setting does not apply to images smushed using Directory Smush feature. To support retina devices, we recommend using 2x the dimensions of your image size.", "wp-smushit"); ?></span><?php
         }
 
         /**
@@ -1286,9 +1228,9 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
             //If we have any savings
 				$upgrade_url = add_query_arg(
 					array(
-						'utm_source' => 'Smush-Free',
-						'utm_medium' => 'Banner',
-						'utm_campaign'=> 'pro-only-stats'
+						'utm_source' => 'smush',
+						'utm_medium' => 'plugin',
+						'utm_campaign'=> 'smush_stats_prosavings_tag'
 					),
 					$wpsmushit_admin->upgrade_url
 				);?>

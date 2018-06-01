@@ -835,7 +835,7 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 		 *
 		 *
 		 */
-		function get_savings_for_attachments( $attachments = array() ) {
+		function get_stats_for_attachments( $attachments = array() ) {
 			//@todo: Add image_count, lossy count, count_smushed
 			$stats = array(
 				'size_before'        => 0,
@@ -845,7 +845,8 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 				'count_images'       => 0,
 				'count_supersmushed' => 0,
 				'count_smushed'      => 0,
-				'count_resize'       => 0
+				'count_resize'       => 0,
+				'count_remaining'    => 0
 			);
 
 			//If we don't have any attachments, return empty array

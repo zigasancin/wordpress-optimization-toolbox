@@ -39,9 +39,13 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 			add_filter( 'wp_smush_pro_settings', array( $this, 'add_setting' ), 5 );
 
 			//Check if integration is Enabled or not
-			//Smush NextGen key
-			$opt_nextgen     = WP_SMUSH_PREFIX . 'nextgen';
-			$opt_nextgen_val = $wpsmush_settings->get_setting( $opt_nextgen, false );
+			if ( ! empty( $wpsmush_settings->settings ) ) {
+				$opt_nextgen_val = $wpsmush_settings->settings['nextgen'];
+			} else {
+				//Smush NextGen key
+				$opt_nextgen     = WP_SMUSH_PREFIX . 'nextgen';
+				$opt_nextgen_val = $wpsmush_settings->get_setting( $opt_nextgen, false );
+			}
 
 			//return if not a pro user, or nextgen integration is not enabled
 			if( !$WpSmush->validate_install() || !$opt_nextgen_val ) {
@@ -600,6 +604,9 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 			}
 			//If any of the image is restored, we count it as success
 			if ( in_array( true, $restored ) ) {
+
+				//Update the global Stats
+				$wpsmushnextgenadmin->update_nextgen_stats( $image_id );
 
 				//Remove the Meta, And send json success
 				$image->meta_data['wp_smush'] = '';

@@ -22,6 +22,11 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		);
 
 		function __construct() {
+			//Do not initialize if not in admin area
+			#wp_head runs specifically in the frontend, good check to make sure we're accidentally not loading settings on required pages
+			if ( ! is_admin() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) && did_action('wp_head') ) {
+				return null;
+			}
 
 			//Save Settings
 			add_action( 'wp_ajax_save_settings', array( $this, 'save_settings' ) );
@@ -36,13 +41,24 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 */
 		function init_settings() {
 
+			#See if we've got serialised settings stored already
 			$last_settings = $this->get_setting( WP_SMUSH_PREFIX . 'last_settings', array() );
-			if( empty( $last_settings ) ) {
+			if ( empty( $last_settings ) ) {
+				#Nope - No serialised settings, We populate it and store it in db
 				$last_settings = $this->get_serialised_settings();
+				if ( ! empty( $last_settings ) ) {
+					//Store Last Settings in db
+					$this->update_setting( WP_SMUSH_PREFIX . 'last_settings', $last_settings );
+				}
 			}
+
+			#Store it in class variable
 			$last_settings = maybe_unserialize( $last_settings );
-			//Merge with the existing settings
-			$this->settings = array_merge( $this->settings, $last_settings );
+			if ( ! empty( $last_settings ) && is_array( $last_settings ) ) {
+				//Merge with the existing settings
+				$this->settings = array_merge( $this->settings, $last_settings );
+			}
+
 			return $this->settings;
 
 		}
@@ -69,7 +85,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		function get_serialised_settings() {
 			$settings = array();
 			foreach ( $this->settings as $key => $val ) {
-				$value = $this->get_setting( WP_SMUSH_PREFIX . $key );;
+				$value = $this->get_setting( WP_SMUSH_PREFIX . $key );
 				if ( 'auto' == $key && $value === false ) {
 					$settings[ $key ] = 1;
 				} else {
@@ -118,6 +134,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 
 			//Check the last settings stored in db
 			$settings = $this->get_setting( WP_SMUSH_PREFIX . 'last_settings', array() );
+			$settings = maybe_unserialize( $settings );
 
 			//If not saved earlier, get it from stored options
 			if ( empty( $settings ) || 0 == sizeof( $settings ) ) {

@@ -23,7 +23,7 @@ if ( ! class_exists( 'WpSmushShare' ) ) {
 			}
 
 			$message   = sprintf( esc_html__( "%s, you've smushed %s%d%s images and saved %s%s%s in total. Help your friends save bandwidth easily, and help me in my quest to Smush the internet!", "wp-smushit" ), $wpsmushit_admin->get_user_name(), '<span class="smush-share-image-count">', $savings['total_images'], '</span>', '<span class="smush-share-savings">', $savings['human'], '</span>' );
-			$share_msg = sprintf( esc_html__( 'I saved %s%s%s on my site with WP Smush ( %s ) - wanna make your website light and faster?', "wp-smushit" ) , '<span class="smush-share-savings">', $savings['human'], '</span>', urlencode( "https://wordpress.org/plugins/wp-smushit/" ) ); ?>
+			$share_msg = sprintf( esc_html__( 'I saved %s%s%s on my site with Smush ( %s ) - wanna make your website light and faster?', "wp-smushit" ) , '<span class="smush-share-savings">', $savings['human'], '</span>', urlencode( "https://wordpress.org/plugins/wp-smushit/" ) ); ?>
 			<section class="dev-box" id="wp-smush-share-widget">
 			<div class="box-content roboto-medium">
 				<p class="wp-smush-share-message"><?php echo $message; ?></p>
@@ -33,7 +33,7 @@ if ( ! class_exists( 'WpSmushShare' ) ) {
 					   class="button wp-smush-share-button" id="wp-smush-twitter-share">
 						<i class="icon-fi-social-twitter"></i><?php esc_html_e( "TWEET", "wp-smushit" ); ?></a>
 					<!-- Facebook Button -->
-					<a href="http://www.facebook.com/sharer.php?s=100&p[title]=WP Smush&p[url]=http://wordpress.org/plugins/wp-smushit/"
+					<a href="http://www.facebook.com/sharer.php?s=100&p[title]=Smush&p[url]=http://wordpress.org/plugins/wp-smushit/"
 					   class="button wp-smush-share-button" id="wp-smush-facebook-share">
 						<i class="icon-fi-social-facebook"></i><?php esc_html_e( "SHARE", "wp-smushit" ); ?></a>
 					<a href="whatsapp://send?text='<?php echo esc_attr( $share_msg ); ?>'"

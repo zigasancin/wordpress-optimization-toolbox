@@ -35,13 +35,12 @@ if ( ! class_exists( 'WPSmushNextGenBulk' ) ) {
 				if ( ! empty( $_REQUEST['is_bulk_resmush'] ) && $_REQUEST['is_bulk_resmush'] ) {
 					$wpsmushit_admin->update_resmush_list( $atchmnt_id, 'wp-smush-nextgen-resmush-list' );
 				}
+				$stats['is_lossy'] = !empty( $smush['stats'] ) ? $smush['stats']['lossy'] : 0;
+
+				//Size before and after smush
+				$stats['size_before'] = !empty( $smush['stats'] ) ? $smush['stats']['size_before'] : 0;
+				$stats['size_after'] = !empty( $smush['stats'] ) ? $smush['stats']['size_after'] : 0;
 			}
-
-			$stats['is_lossy'] = !empty( $smush['stats'] ) ? $smush['stats']['lossy'] : 0;
-
-			//Size before and after smush
-			$stats['size_before'] = !empty( $smush['stats'] ) ? $smush['stats']['size_before'] : 0;
-			$stats['size_after'] = !empty( $smush['stats'] ) ? $smush['stats']['size_after'] : 0;
 
 			//Get the resmush ids list
 			if ( empty( $wpsmushnextgenadmin->resmush_ids ) ) {

@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: WP Smush
+Plugin Name: Smush
 Plugin URI: http://wordpress.org/extend/plugins/wp-smushit/
 Description: Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
 Author: WPMU DEV
-Version: 2.7.8
+Version: 2.7.9.1
 Author URI: https://premium.wpmudev.org/
 Text Domain: wp-smushit
 */
@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Constants
  */
 $prefix  = 'WP_SMUSH_';
-$version = '2.7.8';
+$version = '2.7.9.1';
 
 //Deactivate the .org version, if pro version is active
 add_action( 'admin_init', 'deactivate_smush_org' );
@@ -53,7 +53,7 @@ if ( ! function_exists( 'deactivate_smush_org' ) ) {
 /**
  * Set the default timeout for API request and AJAX timeout
  */
-$timeout = apply_filters( 'WP_SMUSH_API_TIMEOUT', 90 );
+$timeout = apply_filters( 'WP_SMUSH_API_TIMEOUT', 150 );
 
 // To support smushing on staging sites like SiteGround staging where
 // staging site urls are different but redirects to main site url.
@@ -130,7 +130,7 @@ if ( ! function_exists( 'wp_smush_rating_message' ) ) {
  */
 if ( ! function_exists( 'wp_smush_email_message' ) ) {
 	function wp_smush_email_message( $message ) {
-		$message = "You're awesome for installing %s! Site speed isn't all image optimization though, so we've collected all the best speed resources we know in a single email - just for users of WP Smush!";
+		$message = "You're awesome for installing %s! Site speed isn't all image optimization though, so we've collected all the best speed resources we know in a single email - just for users of Smush!";
 
 		return $message;
 	}
@@ -194,7 +194,8 @@ if ( is_admin() ) {
 			'name'    => 'WP Smush Pro',
 			'screens' => array(
 				'upload',
-				'media_page_wp-smush-bulk'
+				'toplevel_page_smush',
+				'toplevel_page_smush-network'
 			)
 		);
 	}
@@ -206,9 +207,10 @@ add_action( 'admin_notices', 'smush_deactivated' );
 //Display a admin Notice about plugin deactivation
 if ( ! function_exists( 'smush_deactivated' ) ) {
 	function smush_deactivated() {
-		if ( get_site_option( 'smush_deactivated' ) && is_super_admin() ) { ?>
+		//Display only in backend for administrators
+		if ( is_admin() && is_super_admin() && get_site_option( 'smush_deactivated' ) ) { ?>
             <div class="updated">
-                <p><?php esc_html_e( 'WP Smush Free was deactivated. You have WP Smush Pro active!', 'wp-smushit' ); ?></p>
+                <p><?php esc_html_e( 'Smush Free was deactivated. You have Smush Pro active!', 'wp-smushit' ); ?></p>
             </div> <?php
 			delete_site_option( 'smush_deactivated' );
 		}
@@ -293,6 +295,27 @@ if ( ! function_exists( 'smush_i18n' ) ) {
 	function smush_i18n() {
 		$path = path_join( dirname( plugin_basename( __FILE__ ) ), 'languages/' );
 		load_plugin_textdomain( 'wp-smushit', false, $path );
+	}
+}
+
+//Add Share UI Class
+add_filter( 'admin_body_class', 'smush_body_classes' );
+
+if ( ! function_exists( 'smush_body_classes' ) ) {
+	function smush_body_classes( $classes ) {
+		//Exit if function doesn't exists
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return $classes;
+		}
+		$current_screen = get_current_screen();
+		//If not on plugin page
+		if ( 'toplevel_page_smush' != $current_screen->id && 'toplevel_page_smush-network' != $current_screen->id ) {
+			return $classes;
+		}
+		$classes .= 'sui-2-1-0';
+
+		return $classes;
+
 	}
 }
 
