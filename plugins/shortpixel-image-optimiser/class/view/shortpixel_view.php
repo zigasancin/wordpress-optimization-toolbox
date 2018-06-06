@@ -298,7 +298,7 @@ class ShortPixelView {
             <p><?php _e('Please see below the optimization status so far:','shortpixel-image-optimiser');?></p>
             <?php $this->displayBulkStats($quotaData['totalProcessedFiles'], $quotaData['mainProcessedFiles'], $under5PercentCount, $averageCompression, $savedSpace);?>
             <?php if($quotaData['totalProcessedFiles'] < $quotaData['totalFiles']) { ?>
-                <p><?php printf(__('%d images and %d thumbnails are not yet optimized by ShortPixel.','shortpixel-image-optimiser'),
+                <p><?php printf(__('%s images and %s thumbnails are not yet optimized by ShortPixel.','shortpixel-image-optimiser'),
                                 number_format($quotaData['mainFiles'] - $quotaData['mainProcessedFiles']),
                                 number_format(($quotaData['totalFiles'] - $quotaData['mainFiles']) - ($quotaData['totalProcessedFiles'] - $quotaData['mainProcessedFiles'])));?> 
                 </p>
@@ -389,8 +389,7 @@ class ShortPixelView {
             <p><?php printf(__('Go to the ShortPixel <a href="%soptions-general.php?page=wp-shortpixel#stats">Stats</a>
                                and see all your websites\' optimized stats. Download your detailed <a href="https://%s/v2/report.php?key=%s">Optimization Report</a>
                                to check your image optimization statistics for the last 40 days.','shortpixel-image-optimiser'),
-                             SHORTPIXEL_API,
-                             get_admin_url(), (defined("SHORTPIXEL_HIDE_API_KEY") ? '' : $this->ctrl->getApiKey()) );?></p>
+                              get_admin_url(), SHORTPIXEL_API, (defined("SHORTPIXEL_HIDE_API_KEY") ? '' : $this->ctrl->getApiKey()) );?></p>
             <?php 
             $failed = $this->ctrl->getPrioQ()->getFailed();
             if(count($failed)) { ?>
@@ -850,7 +849,7 @@ class ShortPixelView {
                         if($showApiKey) {
                             $canValidate = true;?>
                             <input name="key" type="text" id="key" value="<?php echo( $this->ctrl->getApiKey() );?>" 
-                               class="regular-text" <?php echo($editApiKey ? "" : 'disabled') ?>>
+                               class="regular-text" <?php echo($editApiKey ? "" : 'disabled') ?> <?php echo $this->ctrl->getVerifiedKey() ? 'onkeyup="ShortPixel.apiKeyChanged()"' : '' ?>>
                         <?php } elseif(defined("SHORTPIXEL_API_KEY")) { 
                             $canValidate = true;?>
                             <input name="key" type="text" id="key" disabled="true" placeholder="<?php 
@@ -864,7 +863,12 @@ class ShortPixelView {
                             <input type="hidden" name="validate" id="valid" value=""/>
                             <span class="spinner" id="pluginemail_spinner" style="float:none;"></span>
                             <button type="button" id="validate" class="button button-primary" title="<?php _e('Validate the provided API key','shortpixel-image-optimiser');?>"
-                                onclick="ShortPixel.validateKey()" <?php echo $canValidate ? "" : "disabled"?>><?php _e('Validate','shortpixel-image-optimiser');?></button>
+                                onclick="ShortPixel.validateKey()" <?php echo $canValidate ? "" : "disabled"?> <?php echo $this->ctrl->getVerifiedKey() ? 'style="display:none;"' : '' ?>>
+                                <?php _e('Validate','shortpixel-image-optimiser');?>
+                            </button>
+                            <span class="shortpixel-key-valid" <?php echo $this->ctrl->getVerifiedKey() ? '' : 'style="display:none;"' ?>>
+                                <span class="dashicons dashicons-yes"></span>Your API key is valid.
+                            </span>
                         <?php if($showApiKey && !$editApiKey) { ?>
                             <p class="settings-info"><?php _e('Key defined in wp-config.php.','shortpixel-image-optimiser');?></p>
                         <?php } ?>
@@ -880,29 +884,44 @@ class ShortPixelView {
                         <label for="compressionType"><?php _e('Compression type:','shortpixel-image-optimiser');?></label>
                     </th>
                     <td>
-                        <input type="radio" name="compressionType" value="1" <?php echo( $this->ctrl->getCompressionType() == 1 ? "checked" : "" );?>><?php 
-                            _e('Lossy (recommended)','shortpixel-image-optimiser');?></br>
-                        <p class="settings-info"><?php _e('<b>Lossy compression: </b>offers the best compression rate.</br> This is the recommended option for most users, producing results that look the same as the original to the human eye. You can run a test for free ','shortpixel-image-optimiser');?>
-                            <a href="https://shortpixel.com/online-image-compression" target="_blank"><?php _e('here','shortpixel-image-optimiser');?></a>.</p></br>
-                        <input type="radio" name="compressionType" value="2" <?php echo( $this->ctrl->getCompressionType() == 2 ? "checked" : "" );?>><?php 
-                            _e('Glossy','shortpixel-image-optimiser');?></br>
-                        <p class="settings-info"><?php _e('<b>Glossy compression: </b>creates images that are almost pixel-perfect identical to the originals.</br> Best option for photographers and other professionals that use very high quality images on their sites and want best compression while keeping the quality untouched.','shortpixel-image-optimiser');?>
-                            <a href="http://blog.shortpixel.com/glossy-image-optimization-for-photographers/" target="_blank" class="shortpixel-help-link">
-                                <span class="dashicons dashicons-editor-help"></span><?php _e('More info about glossy','shortpixel-image-optimiser');?>
-                            </a></p>
-                        </br>
-                        <input type="radio" name="compressionType" value="0" <?php echo( $this->ctrl->getCompressionType() == 0 ? "checked" : "" );?>><?php 
-                            _e('Lossless','shortpixel-image-optimiser');?>
-                        <p class="settings-info">
-                            <?php _e('<b>Lossless compression: </b> the resulting image is pixel-identical with the original image.</br>Make sure not a single pixel looks different in the optimized image compared with the original. 
-                            In some rare cases you will need to use this type of compression. Some technical drawings or images from vector graphics are possible situations.','shortpixel-image-optimiser');?>
-                        </p>
+
+
+                        <div class="shortpixel-compression">
+                            <div class="shortpixel-compression-options">
+                                <label class="lossy" title="This is the recommended option in most cases, producing results that look the same as the original to the human eye.">
+                                    <input type="radio" class="shortpixel-radio-lossy" name="compressionType" value="1"  <?php echo( $this->ctrl->getCompressionType() == 1 ? "checked" : "" );?>><span>Lossy</span>
+                                </label>
+                                <label class="glossy" title="Best option for photographers and other professionals that use very high quality images on their sites and want best compression while keeping the quality untouched.">
+                                    <input type="radio" class="shortpixel-radio-glossy" name="compressionType" value="2" <?php echo( $this->ctrl->getCompressionType() == 2 ? "checked" : "" );?>><span>Glossy</span>
+                                </label>
+                                <label class="lossless" title="Make sure not a single pixel looks different in the optimized image compared with the original. In some rare cases you will need to use this type of compression. Some technical drawings or images from vector graphics are possible situations.">
+                                    <input type="radio" class="shortpixel-radio-lossless" name="compressionType" value="0" <?php echo( $this->ctrl->getCompressionType() == 0 ? "checked" : "" );?>><span>Lossless</span>
+                                </label>
+                                <a href="https://shortpixel.com/online-image-compression" style="margin-left:20px;" target="_blank">Make a few tests</a> to help you decide.
+                            </div>
+                            <p class="settings-info shortpixel-radio-info shortpixel-radio-lossy" <?php echo( $this->ctrl->getCompressionType() == 1 ? "" : 'style="display:none"' );?>>
+                                <?php _e('<b>Lossy compression (recommended): </b>offers the best compression rate.</br> This is the recommended option for most users, producing results that look the same as the original to the human eye.','shortpixel-image-optimiser');?>
+                            </p>
+                            <p class="settings-info shortpixel-radio-info shortpixel-radio-glossy" <?php echo( $this->ctrl->getCompressionType() == 2 ? "" : 'style="display:none"' );?>>
+                                <?php _e('<b>Glossy compression: </b>creates images that are almost pixel-perfect identical to the originals.</br> Best option for photographers and other professionals that use very high quality images on their sites and want best compression while keeping the quality untouched.','shortpixel-image-optimiser');?>
+                                <a href="http://blog.shortpixel.com/glossy-image-optimization-for-photographers/" target="_blank" class="shortpixel-help-link">
+                                    <span class="dashicons dashicons-editor-help"></span><?php _e('More info about glossy','shortpixel-image-optimiser');?>
+                                </a></p>
+                            <p class="settings-info shortpixel-radio-info shortpixel-radio-lossless" <?php echo( $this->ctrl->getCompressionType() == 0 ? "" : 'style="display:none"' );?>>
+                                <?php _e('<b>Lossless compression: </b> the resulting image is pixel-identical with the original image.</br>Make sure not a single pixel looks different in the optimized image compared with the original.
+                                In some rare cases you will need to use this type of compression. Some technical drawings or images from vector graphics are possible situations.','shortpixel-image-optimiser');?>
+                            </p>
+                        </div>
+                        <script>
+                            function shortpixelCompressionLevelInfo() {
+                                jQuery(".shortpixel-compression p").css("display", "none");
+                                jQuery(".shortpixel-compression p." + jQuery(".shortpixel-compression-options input:radio:checked").attr('class')).css("display", "block");
+                            }
+                            //shortpixelCompressionLevelInfo();
+                            jQuery(".shortpixel-compression-options input:radio").change(shortpixelCompressionLevelInfo);
+                        </script>
                     </td>
                 </tr>
-            </tbody>
-        </table>
-        <table class="form-table">
-            <tbody>
                 <tr>
                     <th scope="row"><label for="thumbnails"><?php _e('Also include thumbnails:','shortpixel-image-optimiser');?></label></th>
                     <td><input name="thumbnails" type="checkbox" id="thumbnails" <?php echo( $checked );?>> <?php 
@@ -1003,6 +1022,7 @@ class ShortPixelView {
             $settings->png2jpg = 0;
         }
         $convertPng2Jpg = ($settings->png2jpg ? 'checked' : '');
+        $convertPng2JpgForce = ($settings->png2jpg > 1 ? 'checked' : '');
         $allSizes = $this->ctrl->getAllThumbnailSizes();
         $excludeSizes = $settings->excludeSizes;
         ?>
@@ -1013,7 +1033,7 @@ class ShortPixelView {
         <table class="form-table">
             <tbody>
                 <tr>
-                    <th scope="row"><label for="resize"><?php _e('Additional media folders','shortpixel-image-optimiser');?></label></th>
+                    <th scope="row"><label for="additional-media"><?php _e('Additional media folders','shortpixel-image-optimiser');?></label></th>
                     <td>
                         <span style="display:none;">Current PHP version: <?php echo(phpversion()) ?></span>
                         <?php if($customFolders) { ?>
@@ -1115,8 +1135,10 @@ class ShortPixelView {
                 <tr>
                     <th scope="row"><label for="png2jpg"><?php _e('Convert PNG images to JPEG','shortpixel-image-optimiser');?></label></th>
                     <td>
-                        <input name="png2jpg" type="checkbox" id="resize" <?php echo( $convertPng2Jpg );?> <?php echo($gdInstalled ? '' : 'disabled') ?>> <?php
-                        _e('Automatically convert the PNG images to JPEG if possible.','shortpixel-image-optimiser');
+                        <input name="png2jpg" type="checkbox" id="png2jpg" <?php echo( $convertPng2Jpg );?> <?php echo($gdInstalled ? '' : 'disabled') ?>> <?php
+                        _e('Automatically convert the PNG images to JPEG if possible.','shortpixel-image-optimiser');?>
+                        <input name="png2jpgForce" type="checkbox" id="png2jpgForce" <?php echo( $convertPng2JpgForce );?> <?php echo($gdInstalled ? '' : 'disabled') ?>> <?php
+                        _e('Force conversion of images with transparency.','shortpixel-image-optimiser');
                         if(!$gdInstalled) {echo("&nbsp;<span style='color:red;'>" . __('You need PHP GD for this. Please ask your hosting to install it.','shortpixel-image-optimiser') . "</span>");}
                         ?>
                         <p class="settings-info">
@@ -1213,9 +1235,9 @@ class ShortPixelView {
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="resize"><?php _e('Process in front-end','shortpixel-image-optimiser');?></label></th>
+                    <th scope="row"><label for="frontBootstrap"><?php _e('Process in front-end','shortpixel-image-optimiser');?></label></th>
                     <td>
-                        <input name="frontBootstrap" type="checkbox" id="resize" <?php echo( $frontBootstrap );?>> <?php _e('Automatically optimize images added by users in front end.','shortpixel-image-optimiser');?>
+                        <input name="frontBootstrap" type="checkbox" id="frontBootstrap" <?php echo( $frontBootstrap );?>> <?php _e('Automatically optimize images added by users in front end.','shortpixel-image-optimiser');?>
                         <p class="settings-info">
                             <?php _e('Check this if you have users that add images or PDF documents from custom forms in the front-end. This could increase the load on your server if you have a lot of users simultaneously connected.','shortpixel-image-optimiser');?>
                         </p>

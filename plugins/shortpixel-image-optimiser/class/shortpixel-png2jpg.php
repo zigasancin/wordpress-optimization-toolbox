@@ -20,6 +20,8 @@ class ShortPixelPng2Jpg {
         $transparent = 0;
         $transparent_pixel = $img = $bg = false;
 
+        //WPShortPixel::log("PNG2JPG SHELL EXEC: " . shell_exec('convert ' . $image . ' -format "%[opaque]" info:'));
+
         if (!file_exists($image) || ord(file_get_contents($image, false, null, 25, 1)) & 4) {
             $transparent = 1;
         } else {
@@ -156,9 +158,14 @@ class ShortPixelPng2Jpg {
         $image = $params['file'];
         WPShortPixel::log("Convert Media PNG to JPG on upload: {$image}");
 
-        $ret = $this->canConvertPng2Jpg($image);
-        if ($ret['notTransparent']) {
-            $ret = $this->doConvertPng2Jpg($params, $this->_settings->backupImages, false, $ret['img']);
+        if($this->_settings->png2jpg == 2) {
+            $doConvert = true;
+        } else {
+            $ret = $this->canConvertPng2Jpg($image);
+            $doConvert =  $ret['notTransparent'];
+        }
+        if ($doConvert) {
+            $ret = $this->doConvertPng2Jpg($params, $this->_settings->backupImages, false, isset($ret['img']) ? $ret['img'] : false);
             if($ret->unlink) @unlink($ret->unlink);
             $paramsC = $ret->params;
             if($paramsC['type'] == 'image/jpeg') {
@@ -185,10 +192,12 @@ class ShortPixelPng2Jpg {
      * @param type $ID
      * @return string
      */
-    public function checkConvertMediaPng2Jpg($meta, $ID) {
+    public function checkConvertMediaPng2Jpg($itemHandler) {
 
+        $meta = $itemHandler->getRawMeta();
+        $ID = $itemHandler->getId();
         if(!$this->_settings->png2jpg || !isset($meta['file']) || strtolower(substr($meta['file'], -4)) !== '.png') {
-            return $meta;
+            return ;
         }
 
         WPShortPixel::log("Send to processing: Convert Media PNG to JPG #{$ID} META: " . json_encode($meta));
@@ -213,15 +222,19 @@ class ShortPixelPng2Jpg {
         $meta['ShortPixel']['ErrCode'] = ShortPixelAPI::ERR_PNG2JPG_MEMORY;
         wp_update_attachment_metadata($ID, $meta);
 
-        $retC = $this->canConvertPng2Jpg($imagePath);
-        if (!$retC['notTransparent']) {
+        if($this->_settings->png2jpg == 2) {
+            $doConvert = true;
+        } else {
+            $retC = $this->canConvertPng2Jpg($image);
+            $doConvert =  $retC['notTransparent'];
+        }
+        if (!$doConvert) {
             WPShortPixel::log("PNG2JPG not a PNG");
             return $meta; //cannot convert it
         }
 
         WPShortPixel::log(" CONVERTING MAIN: $imagePath");
-        $retMain = $this->doConvertPng2Jpg(array('file' => $imagePath, 'url' => false, 'type' => 'image/png'), $this->_settings->backupImages, false, $retC['img']);
-        WPShortPixel::log(" CONVERTED MAIN: " . json_encode($retMain));
+        $retMain = $this->doConvertPng2Jpg(array('file' => $imagePath, 'url' => false, 'type' => 'image/png'), $this->_settings->backupImages, false, isset($retC['img']) ? $retC['img'] : false);
         WPShortPixel::log("PNG2JPG doConvert Main RETURNED " . json_encode($retMain));
         $ret = $retMain->params;
         $toUnlink = array();
@@ -245,10 +258,8 @@ class ShortPixelPng2Jpg {
             WPShortPixel::log(" SET IMAGE PATH: $imagePath");
 
             //conversion succeeded for the main image, update meta and proceed to thumbs. (It could also not succeed if the converted file is not smaller)
-            $meta['file'] = str_replace($basePath, '', $ret['file']);
-            $meta['type'] = 'image/jpeg';
-            update_attached_file($ID, $meta['file']);
-            wp_update_attachment_metadata($ID, $meta);
+            $duplicates = $this->updateFileAlsoInWPMLDuplicates($ID, $meta, str_replace($basePath, '', $ret['file']));
+            WPShortPixel::log(" WPML duplicates: " . json_encode($duplicates));
 
             $originalSizes = isset($meta['sizes']) ? $meta['sizes'] : array();
             foreach($meta['sizes'] as $size => $info) {
@@ -260,18 +271,16 @@ class ShortPixelPng2Jpg {
                 if ($rett['type'] == 'image/jpeg') {
                     $toUnlink[] = $retThumb->unlink;
                     WPShortPixel::log("PNG2JPG thumb is jpg");
-                    $meta['sizes'][$size]['file'] = wp_basename($rett['file']);
-                    $meta['sizes'][$size]['mime-type'] = 'image/jpeg';
                     $pngSize += $rett['png_size'];
                     $jpgSize += $rett['jpg_size'];
                     WPShortPixel::log("PNG2JPG total PNG size: $pngSize total JPG size: $jpgSize");
                     $originalSizes[$size]['file'] = wp_basename($rett['file'], '.jpg') . '.png';
                     WPShortPixel::log("PNG2JPG thumb original: " . $originalSizes[$size]['file']);
                     $toReplace[$baseUrl . $baseRelPath . $info['file']] = $baseUrl . $baseRelPath . wp_basename($rett['file']);
-                    wp_update_attachment_metadata($ID, $meta);
+
+                    $this->updateThumbAlsoInWPMLDuplicates($ID, $meta, $duplicates, $size, wp_basename($rett['file']));
                 }
             }
-            WPShortPixel::log("ORIGINAL SIZESSSS: " . json_encode($originalSizes));
             $meta['ShortPixelPng2Jpg'] = array('originalFile' => $imagePath, 'originalSizes' => $originalSizes, 'originalSizes2' => $originalSizes,
                 'backup' => $this->_settings->backupImages,
                 'optimizationPercent' => round(100.0 * (1.00 - $jpgSize / $pngSize)));
@@ -288,6 +297,42 @@ class ShortPixelPng2Jpg {
         WPShortPixel::log("PNG2JPG done. Return: " . json_encode($meta));
 
         return $meta;
+    }
+
+    /**
+     * @param $parentID
+     * @param $parentMeta by ref. is changed
+     * @param $file
+     * @return array WPML duplicates
+     */
+    protected function updateFileAlsoInWPMLDuplicates($parentID, &$parentMeta, $file){
+        $duplicates = ShortPixelMetaFacade::getWPMLDuplicates($parentID);
+        foreach($duplicates as $ID) {
+            $meta = $parentID == $ID ? $parentMeta : wp_get_attachment_metadata($ID);
+            $meta['file'] = $file;
+            $meta['type'] = 'image/jpeg';
+            if($parentID == $ID) $parentMeta = $meta;
+            update_attached_file($ID, $meta['file']);
+            wp_update_attachment_metadata($ID, $meta);
+        }
+        return $duplicates;
+    }
+
+    /**
+     * @param $parentID
+     * @param $parentMeta by ref. is changed
+     * @param $duplicates
+     * @param $size
+     * @param $thumbnail
+     */
+    protected function updateThumbAlsoInWPMLDuplicates($parentID, &$parentMeta, $duplicates, $size, $thumbnail) {
+        foreach($duplicates as $ID) {
+            $meta = $parentID == $ID ? $parentMeta : wp_get_attachment_metadata($ID);
+            $meta['sizes'][$size]['file'] = wp_basename($thumbnail);
+            $meta['sizes'][$size]['mime-type'] = 'image/jpeg';
+            if($parentID == $ID) $parentMeta = $meta;
+            wp_update_attachment_metadata($ID, $meta);
+        }
     }
 
     /**
@@ -316,18 +361,14 @@ class ShortPixelPng2Jpg {
             WPShortPixel::log("PNG2JPG update URLS on $option ");
             if( $option == 'custom' ){
                 $n = 0;
-                $row_count = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->postmeta" );
-                $page_size = 10000;
-                $pages = ceil( $row_count / $page_size );
+                $page_size = WpShortPixelMediaLbraryAdapter::getOptimalChunkSize('postmeta');
 
-                for( $page = 0; $page < $pages; $page++ ) {
-                    $start = $page * $page_size;
-                    $pmquery = "SELECT * FROM $wpdb->postmeta WHERE meta_value <> '' AND meta_key <> '_wp_attachment_metadata' AND meta_key <> '_wp_attached_file' LIMIT $start, $page_size";
-                    $items = $wpdb->get_results( $pmquery );
+                for( $page = 0; $items = $wpdb->get_results("SELECT * FROM $wpdb->postmeta LIMIT " . ($page * $page_size) . ", $page_size"); $page++ ) {
                     foreach( $items as $item ) {
                         $value = $item->meta_value;
-                        if( trim($value) == '' )
+                        if( trim($value) == '' || $item->meta_key == '_wp_attached_file' || $item->meta_key == '_wp_attachment_metadata') {
                             continue;
+                        }
 
                         $edited = (object)array('data' => $value, 'replaced' => false);
                         foreach($map as $oldurl => $newurl) {

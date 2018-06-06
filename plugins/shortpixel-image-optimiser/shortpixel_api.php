@@ -84,7 +84,9 @@ class ShortPixelAPI {
         if(!count($URLs)) {
             throw new Exception(__('Image files are missing.','shortpixel-image-optimiser'));
         }
-        
+
+        //WpShortPixel::log("DO REQUESTS for META: " . json_encode($itemHandler->getRawMeta()) . " STACK: " . json_encode(debug_backtrace()));
+
         $requestParameters = array(
             'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
             'key' => $this->_settings->apiKey,
@@ -606,7 +608,7 @@ class ShortPixelAPI {
         $meta->setStatus(2);
         
         $itemHandler->updateMeta($meta);
-        $itemHandler->doActions();
+        $itemHandler->optimizationSucceeded();
         
         if(!$originalSpace) { //das kann nicht sein, alles klar?!
             throw new Exception("OriginalSpace = 0. APIResponse" . json_encode($APIresponse));

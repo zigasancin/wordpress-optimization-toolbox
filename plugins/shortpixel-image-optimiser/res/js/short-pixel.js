@@ -12,7 +12,12 @@ var ShortPixel = function() {
         //are we on media list?
         if( jQuery('table.wp-list-table.media').length > 0) {
             //register a bulk action
-            jQuery('select[name^="action"] option:last-child').before('<option value="short-pixel-bulk">' + _spTr.optimizeWithSP + '</option>');
+            jQuery('select[name^="action"] option:last-child').before('<option value="short-pixel-bulk">' + _spTr.optimizeWithSP
+                + '</option><option value="short-pixel-bulk-lossy"> → ' + _spTr.redoLossy
+                + '</option><option value="short-pixel-bulk-glossy"> → ' + _spTr.redoGlossy
+                + '</option><option value="short-pixel-bulk-lossless"> → ' + _spTr.redoLossless
+                + '</option><option value="short-pixel-bulk-restore"> → ' + _spTr.restoreOriginal
+                + '</option>');
         }
 
         ShortPixel.setOptions(ShortPixelConstants);
@@ -83,7 +88,9 @@ var ShortPixel = function() {
                 if(this !== prev) {
                     prev = this;
                 }
+                if(typeof ShortPixel.setupGeneralTabAlert !== 'undefined') return;
                 alert(_spTr.alertOnlyAppliesToNewImages);
+                ShortPixel.setupGeneralTabAlert = 1;
             };
         }
         ShortPixel.enableResize("#resize");
@@ -123,6 +130,11 @@ var ShortPixel = function() {
             }
             return true;
         });
+    }
+
+    function apiKeyChanged() {
+        jQuery(".wp-shortpixel-options .shortpixel-key-valid").css("display", "none");
+        jQuery(".wp-shortpixel-options button#validate").css("display", "inline-block");
     }
     
     function setupAdvancedTab() {
@@ -597,6 +609,7 @@ var ShortPixel = function() {
         validateKey         : validateKey,
         enableResize        : enableResize,
         setupGeneralTab     : setupGeneralTab,
+        apiKeyChanged       : apiKeyChanged,
         setupAdvancedTab    : setupAdvancedTab,
         checkThumbsUpdTotal : checkThumbsUpdTotal,
         switchSettingsTab   : switchSettingsTab,

@@ -397,6 +397,14 @@ div.shortpixel-modal .sptw-modal-spinner {
     line-height:16px;
     float:right;
 }
+
+th.sortable.column-wp-shortPixel a,
+th.sorted.column-wp-shortPixel a {
+    display: inline-block;
+}
+.column-wp-shortPixel .sorting-indicator {
+    display: inline-block;
+}
 .wp-core-ui .bulk-play a.button .bulk-btn-img {
     float:left;
     display:inline-block;
@@ -550,6 +558,48 @@ p.settings-info {
 }
 p.settings-info.shortpixel-settings-error {
     color: #c32525;
+}
+
+.shortpixel-key-valid{
+    font-weight:bold;
+}
+.shortpixel-key-valid .dashicons-yes:before{
+    font-size: 2em;
+    line-height: 25px;
+    color: #3485ba;
+    margin-left: -20px;
+}
+.shortpixel-compression .shortpixel-compression-options {
+    color: #999;
+}
+.shortpixel-compression strong {
+    line-height: 22px;
+}
+.shortpixel-compression .shortpixel-compression-options {
+    display: inline-block;
+}
+.shortpixel-compression label {
+    width:158px;
+    margin: 0 -2px;
+    background-color:#e2faff;
+    font-weight: bold;
+    display: inline-block;
+}
+.shortpixel-compression label span {
+    text-align:center;
+    font-size: 18px;
+    padding:8px 0px;
+    display:block;
+}
+.shortpixel-compression label input {
+    display: none;
+}
+.shortpixel-compression input:checked + span {
+    background-color:#0085ba;
+    color:#F7F7F7;
+}
+.shortpixel-compression .shortpixel-radio-info {
+    min-height: 60px;
 }
 
 /* TABS CONTROLS */

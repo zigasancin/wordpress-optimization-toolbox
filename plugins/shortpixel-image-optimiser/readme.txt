@@ -4,17 +4,15 @@ Tags: compress, image, compression, optimize, image optimizer, image optimiser, 
 Requires at least: 3.2.0
 Tested up to: 4.9
 Requires PHP: 5.2
-Stable tag: 4.10.5
+Stable tag: 4.11.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Speed up your website and boost your SEO by compressing old & new images and PDFs. Compatible with any gallery, slider or ecommerce plugin.
+Speed up your website and boost your SEO by compressing old & new images and PDFs - compatible with any gallery, slider or ecommerce plugin.
 
 == Description ==
 
 **A freemium easy to use, comprehensive, stable and frequently updated image compression plugin supported by the friendly team that created it.  :)**
-
-We are GDPR ready! <a href="https://shortpixel.com/privacy#gdpr" target="_blank">Read more.</a>
 
 Increase your website's SEO ranking, number of visitors and ultimately your sales by optimizing any image or PDF document on your website.
 ShortPixel is an easy to use, lightweight, install-and-forget-about-it <a href="https://shortpixel.com" target="_blank">image optimization</a> plugin that can compress all your past images and PDF documents with a single click. New images are automatically resized/rescaled and optimized on the fly, in the background.
@@ -31,7 +29,7 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 
 **Why is ShortPixel the best choice when it comes to image optimization or PDF compression?**
 
-* popular plugin with over 50,000 active installations according to WordPress
+* popular plugin with over 80,000 active installations according to WordPress
 * compress JPG, PNG, GIF (still or animated) images and also PDF documents
 * option to automatically convert PNG to JPG if that will result in smaller images. Ideal for large images in PNG format.
 * no file size limit
@@ -39,13 +37,15 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 * option to include the generated WebP images into the front-end pages by using the &lt;picture&gt; tag instead of &lt;img&gt;
 * compatible with WP Retina 2x - all **retina images** are automatically compressed. <a href="http://blog.shortpixel.com/how-to-use-optimized-retina-images-on-your-wordpress-site-for-best-user-experience-on-apple-devices/" target="_blank">How to benefit from Retina displays?</a>
 * optimize thumbnails as well as featured images. You can also **select individual thumbnails to exclude** from optimization.
-* ability to optimize any image on your site including images in **NextGEN Gallery** and any other image gallery or slider
+* ability to optimize any image on your site including images in **NextGEN Gallery** and any other image galleries or sliders
+* integrates with Gravity Forms post_image field type optimizing the images upon upload
 * featured images can be automatically resized before being optimized with 2 different options. No need for additional plugins like Imsanity
 * CMYK to RGB conversion
 * **24h <a href="https://wordpress.org/support/plugin/shortpixel-image-optimiser/reviews/?filter=5" target="_blank">stellar support</a>** (24/7) directly from developers.
 * easily **test lossy/lossless** versions of the images with a single click in your Media Library
 * **great for photographers**: <a href="http://blog.shortpixel.com/how-much-smaller-can-be-images-without-exif-icc/" target="_blank">keep or remove EXIF</a> data from your images, compress images with lossless option
 * works well with both HTTPS and HTTP websites
+* uses progressive JPEG for larger images in order to speed up the image display
 * you can run ShortPixel plugin on **multiple websites** or on a **multisite** with a **single API Key**
 * it is **safe to test** and use the plugin: all the original images can be restored with a click, either one by one or in bulk
 * 'Bulk' optimize all the existing images in Media Library or in any gallery with one click
@@ -57,11 +57,12 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 * compatible with watermarking plugins
 * option to deactivate auto-optimizing images on upload
 * images that are optimized less that 5% are bonus
-* WooCommerce, WP offload S3 compatible
+* WooCommerce, WP offload S3 and WP Stateless compatible
 * 40 days optimization report with all image details and overall statistics
+* We are GDPR compliant! <a href="https://shortpixel.com/privacy#gdpr" target="_blank">Read more.</a>
 * **free optimization credits for non-profits**, <a href="https://shortpixel.com/contact" target="_blank">contact us</a> for details
     
-**How much it costs?**
+**How much does it cost?**
 ShortPixel comes with 100 free credits/month and additional credits can be bought with as little as $4.99 for 5,000 image credits.
 Check out <a href="https://shortpixel.com/pricing" target="_blank">our prices</a>.
 
@@ -208,6 +209,16 @@ Let's get ShortPixel plugin running on your WordPress website:
 
 The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Contact us</a>!
 
+
+== Actions and Filters for Developers ==
+
+The ShortPixel Image Optimiser plugin calls the following actions and filters:
+> do_action( 'shortpixel_image_optimised', $post_id ); //upon successful optimization
+> do_action("shortpixel_before_restore_image", $post_id); //before restoring an image from backup
+> do_action("shortpixel_after_restore_image", $post_id); //after succesful restore
+> apply_filters("shortpixel_backup_folder", $backup_folder); //just before returning the ShortPixel backup folder, usually ...wp-content/uploads/ShortpixelBackups
+
+
 == Screenshots ==
 
 1. Bulk optimization running. (Media>Bulk ShortPixel)
@@ -229,6 +240,20 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.11.0 =
+* add bulk menu options: restore, reoptimize
+* filter the media list by optimization status
+* sort the media list by optimization status
+* do not display the Media Library (years) folders in the selection list for Other Media folders
+* force PNG 2 JPG conversion option
+* integrate with Gravity Forms
+* integrate with WP Stateless
+* add several actions and a filter (see the Actions and Filters section of the readme)
+* UI improvements to the settings page
+* fix the WPML compatibility when converting from PNG
+* fix SELECT IN image counting bug on rare cases and when >100k records in wp_postmeta
+* add option to delete ShortPixel settings and give feedback form on deactivate plugin
 
 = 4.10.5 =
 * GDPR compliance
@@ -349,7 +374,7 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 
 = 4.7.0 =
 * convert PNG images to JPG option
-* action called upon optimizing an image: do_action('shortpixel_image_optimized', $post_id);
+* action called upon optimizing an image: do_action('shortpixel_image_optimised', $post_id);
 * monitor Other Media folders for changes every hour
 * button to delete all ShortPixel metadata making ShortPixel forget it optimized the images in Media Library
 * plugin images at @2x

@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.10.5
+ * Version: 4.11.0
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.10.5");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.11.0");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -26,7 +26,7 @@ define('SHORTPIXEL_MAX_API_RETRIES', 50);
 define('SHORTPIXEL_MAX_ERR_RETRIES', 5);
 define('SHORTPIXEL_MAX_FAIL_RETRIES', 3);
 if(!defined('SHORTPIXEL_MAX_THUMBS')) { //can be defined in wp-config.php
-    define('SHORTPIXEL_MAX_THUMBS', 100);
+    define('SHORTPIXEL_MAX_THUMBS', 149);
 }
 
 define('SHORTPIXEL_PRESEND_ITEMS', 3);
@@ -131,6 +131,11 @@ function shortPixelDeactivatePlugin () {
     WPShortPixel::shortPixelDeactivatePlugin();    
 }
 
+function shortPixelUninstallPlugin () {
+    require_once('wp-shortpixel-req.php');
+    WPShortPixel::shortPixelUninstallPlugin();
+}
+
 //Picture generation, hooked on the_content filter
 function shortPixelConvertImgToPictureAddWebp($content) {
     if(function_exists('is_amp_endpoint') && is_amp_endpoint()) {
@@ -156,13 +161,24 @@ function shortPixelAddPictureJs() {
        . '</script>';
 }
 
+add_filter( 'gform_save_field_value', 'shortPixelGravityForms', 10, 5 );
+
+function shortPixelGravityForms( $value, $lead, $field, $form ) {
+    global $shortPixelPluginInstance;
+    if($field->type == 'post_image') {
+        require_once('wp-shortpixel-req.php');
+        $shortPixelPluginInstance = new WPShortPixel;
+        $shortPixelPluginInstance->handleGravityFormsImageField($value);
+    }
+    return $value;
+}
+
 if ( get_option('wp-short-pixel-create-webp-markup')) { 
     add_filter( 'the_content', 'shortPixelConvertImgToPictureAddWebp', 10000 ); // priority big, so it will be executed last
     add_filter( 'post_thumbnail_html', 'shortPixelConvertImgToPictureAddWebp');
     add_action( 'wp_head', 'shortPixelAddPictureJs');
 //    add_action( 'wp_enqueue_scripts', 'spAddPicturefillJs' );
 }
-
 
 if ( !function_exists( 'vc_action' ) || vc_action() !== 'vc_inline' ) { //handle incompatibility with Visual Composer
     add_action( 'init',  'shortpixelInit');
@@ -180,5 +196,5 @@ if ( !function_exists( 'vc_action' ) || vc_action() !== 'vc_inline' ) { //handle
     
     register_activation_hook( __FILE__, 'shortPixelActivatePlugin' );
     register_deactivation_hook( __FILE__, 'shortPixelDeactivatePlugin' );
-}
+    register_uninstall_hook(__FILE__, 'shortPixelUninstallPlugin');}
 ?>

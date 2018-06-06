@@ -51,7 +51,10 @@ class WPShortPixelSettings {
         'includeNextGen' => array('key' => 'wp-short-pixel-include-next-gen', 'default' => null, 'group' => 'options'),
         'hasCustomFolders' => array('key' => 'wp-short-pixel-has-custom-folders', 'default' => false, 'group' => 'options'),
         'customBulkPaused' => array('key' => 'wp-short-pixel-custom-bulk-paused', 'default' => false, 'group' => 'options'),
-        
+
+        //uninstall
+        'removeSettingsOnDeletePlugin' => array('key' => 'wp-short-pixel-remove-settings-on-delete-plugin', 'default' => false, 'group' => 'options'),
+
         //stats, notices, etc.
         'currentStats' => array('key' => 'wp-short-pixel-current-total-files', 'default' => null, 'group' => 'state'),
         'fileCount' => array('key' => 'wp-short-pixel-fileCount', 'default' => 0, 'group' => 'state'),
@@ -134,6 +137,7 @@ class WPShortPixelSettings {
         update_option( 'wp-short-pixel-activation-date', time(), 'no');
         delete_option( 'wp-short-pixel-bulk-last-status');
         delete_option( 'wp-short-pixel-current-total-files');
+        delete_option(self::$_optionsMap['removeSettingsOnDeletePlugin']['key']);
         $dismissed = get_option('wp-short-pixel-dismissed-notices', array());
         if(isset($dismissed['compat'])) {
             unset($dismissed['compat']);

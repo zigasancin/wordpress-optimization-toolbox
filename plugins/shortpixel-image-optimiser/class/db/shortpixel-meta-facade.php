@@ -192,8 +192,12 @@ class ShortPixelMetaFacade {
                     unset($rawMeta['ShortPixel']['ErrCode']);
                 }
                 
-                wp_update_attachment_metadata($this->ID, $rawMeta);
-                $this->rawMeta = $rawMeta;
+                wp_update_attachment_metadata($_ID, $rawMeta);
+                update_post_meta($_ID, '_shortpixel_status', $this->meta->getStatus());
+
+                if($_ID == $this->ID) {
+                    $this->rawMeta = $rawMeta;
+                }
             }
         }        
     }
@@ -624,12 +628,12 @@ class ShortPixelMetaFacade {
         return implode('/', $pathArr) . '/';
     }
 
-    public static function isMediaSubfolder($path) {
+    public static function isMediaSubfolder($path, $orParent = true) {
         $uploadDir = wp_upload_dir();
         $uploadBase = $uploadDir["basedir"];
         $uploadPath = $uploadDir["path"];
         //contains the current media upload path
-        if(ShortPixelFolder::checkFolderIsSubfolder($uploadPath, $path)) {
+        if($orParent && ShortPixelFolder::checkFolderIsSubfolder($uploadPath, $path)) {
             return true;
         }
         //contains one of the year subfolders of the media library
@@ -645,10 +649,15 @@ class ShortPixelMetaFacade {
         return false;
     }
     
-    public function doActions() {
+    public function optimizationSucceeded() {
         if($this->getType() == self::MEDIA_LIBRARY_TYPE) {
             do_action( 'shortpixel_image_optimised', $this->getId() );
         }
+    }
 
+    public function optimizationStarted() {
+        if($this->getType() == self::MEDIA_LIBRARY_TYPE) {
+            do_action( 'shortpixel_start_image_optimisation', $this->getId() );
+        }
     }
 }

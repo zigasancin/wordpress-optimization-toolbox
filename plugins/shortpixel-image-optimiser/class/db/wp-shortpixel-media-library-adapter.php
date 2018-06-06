@@ -45,6 +45,12 @@ class WpShortPixelMediaLbraryAdapter {
             $filesList= $wpdb->get_results("SELECT * FROM " . $wpdb->prefix . "postmeta
                                         WHERE post_id IN (" . implode(',', $idInfo->ids) . ")
                                           AND ( meta_key = '_wp_attached_file' OR meta_key = '_wp_attachment_metadata' )");
+
+            //in one case this query returned zero items but if fewer items in the IDs list, it worked so apply this workaround:
+            if($limit > 1000 && count($filesList) == 0) {
+                $limit = 1000;
+                continue;
+            }
              
             foreach ( $filesList as $file ) 
             {                
@@ -291,15 +297,16 @@ class WpShortPixelMediaLbraryAdapter {
         return $thumbs;
     }
 
-    protected static function getOptimalChunkSize() {
+    public static function getOptimalChunkSize($table = 'posts') {
         global  $wpdb;
         //get an aproximate but fast row count.
-        $row = $wpdb->get_results("EXPLAIN SELECT count(*) from " . $wpdb->prefix . "posts");
+        $row = $wpdb->get_results("EXPLAIN SELECT count(*) from " . $wpdb->prefix . $table);
         if(isset($row['rows'])) {
             $cnt = $row['rows'];
         } else {
-            $cnt = $wpdb->get_results("SELECT count(*) posts FROM " . $wpdb->prefix . "posts");
+            $cnt = $wpdb->get_results("SELECT count(*) posts FROM " . $wpdb->prefix . $table);
         }
+        //json_encode($wpdb->get_results("SHOW VARIABLES LIKE 'max_allowed_packet'"));
         $posts = isset($cnt) && count($cnt) > 0 ? $cnt[0]->posts : 0;
         if($posts > 100000) {
             return 10000;
