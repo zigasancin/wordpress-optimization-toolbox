@@ -29,17 +29,19 @@
 // TODO: can svg/use tags be exluded from all the things?
 // TODO: match Adaptive Images functionality with ExactDN.
 // TODO: handle relative urls with ExactDN.
+// TODO: escape html responses in the debugging output, particular in the async test.
+// TODO: check all instances of json_encode for safety.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '421.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '422.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
 $ewww_defer = true;
 
-if ( WP_DEBUG ) {
+if ( WP_DEBUG && function_exists( 'memory_get_usage' ) ) {
 	$ewww_memory = 'plugin load: ' . memory_get_usage( true ) . "\n";
 }
 
@@ -74,12 +76,16 @@ if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) ) {
 		// Resizes and auto-rotates images.
 		add_filter( 'wp_handle_upload', 'ewww_image_optimizer_handle_upload' );
 	}
-	// Turns off the ewwwio_image_editor during uploads.
-	add_action( 'add_attachment', 'ewww_image_optimizer_add_attachment' );
-	// Turns off ewwwio_image_editor during Enable Media Replace.
-	add_filter( 'emr_unfiltered_get_attached_file', 'ewww_image_optimizer_image_sizes' );
-	// Enables direct integration to the editor's save function.
-	add_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
+	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_disable_editor' ) ) {
+		// Turns off the ewwwio_image_editor during uploads.
+		add_action( 'add_attachment', 'ewww_image_optimizer_add_attachment' );
+		// Turns off ewwwio_image_editor during Enable Media Replace.
+		add_filter( 'emr_unfiltered_get_attached_file', 'ewww_image_optimizer_image_sizes' );
+		// Checks to see if thumb regen or other similar operation is running via REST API.
+		add_action( 'rest_api_init', 'ewww_image_optimizer_restapi_compat_check' );
+		// Enables direct integration to the editor's save function.
+		add_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
+	}
 	// Processes an image via the metadata after upload.
 	add_filter( 'wp_generate_attachment_metadata', 'ewww_image_optimizer_resize_from_meta_data', 15, 2 );
 	// Add hook for PTE confirmation to make sure new resizes are optimized.
@@ -91,8 +97,6 @@ if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) ) {
 }
 // Makes sure the optimizer never optimizes it's own testing images.
 add_filter( 'ewww_image_optimizer_bypass', 'ewww_image_optimizer_ignore_self', 10, 2 );
-// This filter turns off ewwwio_image_editor during save from the actual image editor and ensures that we parse the resizes list during the image editor save function.
-add_filter( 'load_image_to_edit_path', 'ewww_image_optimizer_editor_save_pre' );
 // Adds a column to the media library list view to display optimization results.
 add_filter( 'manage_media_columns', 'ewww_image_optimizer_columns' );
 // Outputs the actual column information for each attachment.
@@ -115,6 +119,8 @@ add_filter( 'ewww_image_optimizer_settings', 'ewww_image_optimizer_filter_settin
 add_filter( 'myarcade_filter_screenshot', 'ewww_image_optimizer_myarcade_thumbnail' );
 // Processes thumbnails created by MyArcadePlugin.
 add_filter( 'myarcade_filter_thumbnail', 'ewww_image_optimizer_myarcade_thumbnail' );
+// This filter turns off ewwwio_image_editor during save from the actual image editor and ensures that we parse the resizes list during the image editor save function.
+add_filter( 'load_image_to_edit_path', 'ewww_image_optimizer_editor_save_pre' );
 // Allows the user to override the default JPG quality used by WordPress.
 add_filter( 'jpeg_quality', 'ewww_image_optimizer_set_jpg_quality' );
 // Makes sure the plugin bypasses any files affected by the Folders to Ignore setting.
@@ -125,8 +131,8 @@ add_action( 'plugins_loaded', 'ewww_image_optimizer_preinit' );
 add_action( 'init', 'ewww_image_optimizer_gallery_support' );
 // Initializes the plugin for admin interactions, like saving network settings and scheduling cron jobs.
 add_action( 'admin_init', 'ewww_image_optimizer_admin_init' );
-// Checks to see if thumb regen or other similar operation is running via REST API.
-add_action( 'rest_api_init', 'ewww_image_optimizer_restapi_compat_check' );
+// Get admin color scheme and save it for later.
+add_action( 'admin_head', 'ewww_image_optimizer_save_admin_colors' );
 // Legacy (non-AJAX) action hook for manually optimizing an image.
 add_action( 'admin_action_ewww_image_optimizer_manual_optimize', 'ewww_image_optimizer_manual' );
 // Legacy (non-AJAX) action hook for manually restoring a converted image.
@@ -187,7 +193,7 @@ register_uninstall_hook( EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE, 'ewww_image_optimizer
 // Makes sure we flush the debug info to the log on shutdown.
 add_action( 'shutdown', 'ewww_image_optimizer_debug_log' );
 // If ExactDN is enabled.
-if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) ) {
+if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) && empty( $_GET['exactdn_disable'] ) ) {
 	/**
 	 * ExactDN class for parsing image urls and rewriting them.
 	 */
@@ -557,12 +563,6 @@ function ewww_image_optimizer_filter_amp_webp( $buffer ) {
 		$buffer = $html->saveHTML( $html->documentElement );
 		libxml_clear_errors();
 		libxml_use_internal_errors( $libxml_previous_error_reporting );
-		if ( false ) { // Set to true for extra debugging.
-			ewwwio_debug_message( 'html head' );
-			ewwwio_debug_message( $html_head[0] );
-			ewwwio_debug_message( 'buffer beginning' );
-			ewwwio_debug_message( substr( $buffer, 0, 500 ) );
-		}
 		if ( false ) { // Set to true for extra debugging.
 			ewwwio_debug_message( 'buffer after replacement' );
 			ewwwio_debug_message( substr( $buffer, 0, 500 ) );
@@ -1001,7 +1001,7 @@ function ewww_image_optimizer_filter_webp_page_output( $buffer ) {
 			ewwwio_debug_message( 'buffer beginning' );
 			ewwwio_debug_message( substr( $buffer, 0, 500 ) );
 		}
-		if ( ! empty( $html_head ) ) {
+		if ( ! empty( $html_head ) && is_array( $html_head ) ) {
 			$buffer = preg_replace( '/<html.+>\s.*<head>/', $html_head[0], $buffer );
 		}
 		// Do some cleanup for the Easy Social Share Buttons for WordPress plugin (can't have <li> elements with newlines between them).
@@ -1066,6 +1066,32 @@ if ( ! function_exists( 'boolval' ) ) {
 	function boolval( $value ) {
 		return (bool) $value;
 	}
+}
+
+/**
+ * Wrapper around json_encode to handle non-utf8 characters.
+ *
+ * @param mixed $value The value to encode to JSON.
+ * @return string The JSON-encoded version of the value.
+ */
+function ewwwio_json_encode( $value ) {
+	if ( is_string( $value ) && function_exists( 'utf8_encode' ) && ! seems_utf8( $value ) ) {
+		$value = utf8_encode( $value );
+	} elseif ( is_string( $value ) && ! seems_utf8( $value ) ) {
+		$value = '';
+	} elseif ( is_array( $value ) ) {
+		$parsed_value = array();
+		foreach ( $value as $key => $data ) {
+			if ( is_string( $data ) && function_exists( 'utf8_encode' ) && ! seems_utf8( $data ) ) {
+				$data = utf8_encode( $data );
+			} elseif ( is_string( $data ) && ! seems_utf8( $data ) ) {
+				$data = '';
+			}
+			$parsed_value[ $key ] = $data;
+		}
+		$value = $parsed_value;
+	}
+	return json_encode( $value );
 }
 
 /**
@@ -1139,8 +1165,9 @@ function ewww_image_optimizer_gallery_support() {
 				$ngg = ewww_image_optimizer_get_plugin_version( trailingslashit( WP_PLUGIN_DIR ) . $active_plugin );
 				// Include the file that loads the nextgen gallery optimization functions.
 				ewwwio_debug_message( 'Nextgen version: ' . $ngg['Version'] );
-				if ( preg_match( '/^2\./', $ngg['Version'] ) ) { // For Nextgen 2 support.
-					ewwwio_debug_message( "loading nextgen2 support for $active_plugin" );
+				if ( 1 < intval( substr( $ngg['Version'], 0, 1 ) ) ) { // For Nextgen 2+ support.
+					$nextgen_major_version = substr( $ngg['Version'], 0, 1 );
+					ewwwio_debug_message( "loading nextgen $nextgen_major_version support for $active_plugin" );
 					require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'classes/class-ewww-nextgen.php' );
 				} else {
 					preg_match( '/\d+\.\d+\.(\d+)/', $ngg['Version'], $nextgen_minor_version );
@@ -1669,11 +1696,57 @@ function ewww_image_optimizer_progressbar_style() {
 }
 
 /**
+ * Grabs the color scheme information from the current admin theme and saves it for later.
+ *
+ * @global $ewwwio_admin_color The color we want to use for theming.
+ * @global array $_wp_admin_css_colors An array of available admin color/theme objects.
+ */
+function ewww_image_optimizer_save_admin_colors() {
+	global $ewwwio_admin_color;
+	global $_wp_admin_css_colors;
+	if ( function_exists( 'wp_add_inline_style' ) ) {
+		$user_info = wp_get_current_user();
+		if (
+			is_array( $_wp_admin_css_colors ) &&
+			! empty( $user_info->admin_color ) &&
+			is_object( $_wp_admin_css_colors[ $user_info->admin_color ] ) &&
+			is_array( $_wp_admin_css_colors[ $user_info->admin_color ]->colors ) &&
+			! empty( $_wp_admin_css_colors[ $user_info->admin_color ]->colors[2] ) &&
+			preg_match( '/^\#([0-9a-fA-F]){3,6}$/', $_wp_admin_css_colors[ $user_info->admin_color ]->colors[2] )
+		) {
+			$ewwwio_admin_color = $_wp_admin_css_colors[ $user_info->admin_color ]->colors[2];
+		}
+	}
+	if ( empty( $ewwwio_admin_color ) ) {
+		$ewwwio_admin_color = '#0073aa';
+	}
+	ewwwio_debug_message( "admin color selected: $ewwwio_admin_color" );
+}
+/**
  * Determines the background color to use based on the selected admin theme.
  */
 function ewww_image_optimizer_admin_background() {
+	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+	global $ewwwio_admin_color;
+	if ( ! empty( $ewwwio_admin_color ) && preg_match( '/^\#([0-9a-fA-F]){3,6}$/', $ewwwio_admin_color ) ) {
+		ewwwio_debug_message( "admin color previously saved: $ewwwio_admin_color" );
+		return $ewwwio_admin_color;
+	}
 	if ( function_exists( 'wp_add_inline_style' ) ) {
 		$user_info = wp_get_current_user();
+		global $_wp_admin_css_colors;
+		if (
+			is_array( $_wp_admin_css_colors ) &&
+			! empty( $user_info->admin_color ) &&
+			is_object( $_wp_admin_css_colors[ $user_info->admin_color ] ) &&
+			is_array( $_wp_admin_css_colors[ $user_info->admin_color ]->colors ) &&
+			! empty( $_wp_admin_css_colors[ $user_info->admin_color ]->colors[2] ) &&
+			preg_match( '/^\#([0-9a-fA-F]){3,6}$/', $_wp_admin_css_colors[ $user_info->admin_color ]->colors[2] )
+		) {
+			$ewwwio_admin_color = $_wp_admin_css_colors[ $user_info->admin_color ]->colors[2];
+			ewwwio_debug_message( "had to go searching for admin color: $ewwwio_admin_color" );
+			return $ewwwio_admin_color;
+		}
 		switch ( $user_info->admin_color ) {
 			case 'midnight':
 				return '#e14d43';
@@ -2037,7 +2110,9 @@ function ewww_image_optimizer_image_sizes( $sizes ) {
  */
 function ewww_image_optimizer_restore_editor_hooks( $metadata = false ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
-	add_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
+	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) && ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_disable_editor' ) ) {
+		add_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
+	}
 	if ( function_exists( 'wr2x_wp_generate_attachment_metadata' ) ) {
 		remove_filter( 'wp_generate_attachment_metadata', 'wr2x_wp_generate_attachment_metadata' );
 		add_filter( 'wp_generate_attachment_metadata', 'ewww_image_optimizer_retina_wrapper' );
@@ -2063,7 +2138,7 @@ function ewww_image_optimizer_restore_editor_hooks( $metadata = false ) {
  */
 function ewww_image_optimizer_editor_save_pre( $image ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
-	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) ) {
+	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) && ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_disable_editor' ) ) {
 		remove_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
 		add_filter( 'wp_update_attachment_metadata', 'ewww_image_optimizer_restore_editor_hooks', 1 );
 		add_filter( 'wp_update_attachment_metadata', 'ewww_image_optimizer_resize_from_meta_data', 15, 2 );
@@ -2137,6 +2212,9 @@ function ewww_image_optimizer_path_renamed( $post, $old_filepath, $new_filepath 
  * @return array The unaltered metadata.
  */
 function ewww_image_optimizer_retina_wrapper( $meta ) {
+	if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) || ewww_image_optimizer_get_option( 'ewww_image_optimizer_disable_editor' ) ) {
+		return $meta;
+	}
 	remove_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
 	if ( class_exists( 'Meow_WR2X_Core' ) ) {
 		global $wr2x_core;
@@ -2359,10 +2437,9 @@ function ewww_image_optimizer_auto() {
 			} else {
 				$ewwwdb = $wpdb;
 			}
-			$i = 0;
-			while ( $i < $count &&
-				$attachment = $ewwwdb->get_row( "SELECT id,path FROM $ewwwdb->ewwwio_images WHERE pending=1 LIMIT 1", ARRAY_A )
-			) {
+			$i          = 0;
+			$attachment = $ewwwdb->get_row( "SELECT id,path FROM $ewwwdb->ewwwio_images WHERE pending=1 LIMIT 1", ARRAY_A );
+			while ( $i < $count && $attachment ) {
 				// If the nonce has changed since we started, bail out, since that means another aux scan/optimize is running.
 				// Do a direct query using $wpdb, because get_option() is cached.
 				$current_nonce = $wpdb->get_var( "SELECT option_value FROM $wpdb->options WHERE option_name = 'ewww_image_optimizer_aux_resume'" );
@@ -2380,6 +2457,7 @@ function ewww_image_optimizer_auto() {
 				if ( ! empty( $delay ) && ewww_image_optimizer_function_exists( 'sleep' ) ) {
 					sleep( $delay );
 				}
+				$attachment = $ewwwdb->get_row( "SELECT id,path FROM $ewwwdb->ewwwio_images WHERE pending=1 LIMIT 1", ARRAY_A );
 				ewww_image_optimizer_debug_log();
 				$i++;
 			}
@@ -2690,11 +2768,11 @@ function ewww_image_optimizer_webp_load_jquery() {
 function ewww_image_optimizer_webp_inline_script() {
 	if ( ! ewww_image_optimizer_ce_webp_enabled() ) {
 		ewwwio_debug_message( 'loading webp script without wp_add_inline_script' );
-?>
+		?>
 <script>
 function check_webp_feature(t,e){var a={alpha:"UklGRkoAAABXRUJQVlA4WAoAAAAQAAAAAAAAAAAAQUxQSAwAAAARBxAR/Q9ERP8DAABWUDggGAAAABQBAJ0BKgEAAQAAAP4AAA3AAP7mtQAAAA==",animation:"UklGRlIAAABXRUJQVlA4WAoAAAASAAAAAAAAAAAAQU5JTQYAAAD/////AABBTk1GJgAAAAAAAAAAAAAAAAAAAGQAAABWUDhMDQAAAC8AAAAQBxAREYiI/gcA"},i=!1,r=new Image;r.onload=function(){var t=r.width>0&&r.height>0;i=!0,e(t)},r.onerror=function(){i=!1,e(!1)},r.src="data:image/webp;base64,"+a[t]}function ewww_load_images(t){jQuery(document).arrive(".ewww_webp",function(){ewww_load_images(t)}),function(e){function a(t,a){for(var r=["align","alt","border","crossorigin","height","hspace","ismap","longdesc","usemap","vspace","width","accesskey","class","contenteditable","contextmenu","dir","draggable","dropzone","hidden","id","lang","spellcheck","style","tabindex","title","translate","sizes","data-caption","data-attachment-id","data-permalink","data-orig-size","data-comments-opened","data-image-meta","data-image-title","data-image-description","data-event-trigger","data-highlight-color","data-highlight-opacity","data-highlight-border-color","data-highlight-border-width","data-highlight-border-opacity","data-no-lazy","data-lazy","data-large_image_width","data-large_image_height"],n=0,o=r.length;n<o;n++){var s=e(t).attr(i+r[n]);void 0!==s&&!1!==s&&e(a).attr(r[n],s)}return a}var i="data-";t&&(e(".batch-image img, .image-wrapper a, .ngg-pro-masonry-item a").each(function(){var t=e(this).attr("data-webp");void 0!==t&&!1!==t&&e(this).attr("data-src",t),void 0!==(t=e(this).attr("data-webp-thumbnail"))&&!1!==t&&e(this).attr("data-thumbnail",t)}),e(".image-wrapper a, .ngg-pro-masonry-item a").each(function(){var t=e(this).attr("data-webp");void 0!==t&&!1!==t&&e(this).attr("href",t)}),e(".rev_slider ul li").each(function(){var t=e(this).attr("data-webp-thumb");void 0!==t&&!1!==t&&e(this).attr("data-thumb",t);for(var a=1;a<11;)void 0!==(t=e(this).attr("data-webp-param"+a))&&!1!==t&&e(this).attr("data-param"+a,t),a++}),e(".rev_slider img").each(function(){var t=e(this).attr("data-webp-lazyload");void 0!==t&&!1!==t&&e(this).attr("data-lazyload",t)}),e("div.woocommerce-product-gallery__image").each(function(){var t=e(this).attr("data-webp-thumb");void 0!==t&&!1!==t&&e(this).attr("data-thumb",t)})),e("img.ewww_webp_lazy_retina").each(function(){if(t)void 0!==(a=e(this).attr("data-srcset-webp"))&&!1!==a&&e(this).attr("data-srcset",a);else{var a=e(this).attr("data-srcset-img");void 0!==a&&!1!==a&&e(this).attr("data-srcset",a)}e(this).removeClass("ewww_webp_lazy_retina")}),e("video").each(function(){if(t)void 0!==(a=e(this).attr("data-poster-webp"))&&!1!==a&&e(this).attr("poster",a);else{var a=e(this).attr("data-poster-image");void 0!==a&&!1!==a&&e(this).attr("poster",a)}}),e("img.ewww_webp_lazy_load").each(function(){if(t)e(this).attr("data-lazy-src",e(this).attr("data-lazy-webp-src")),void 0!==(a=e(this).attr("data-srcset-webp"))&&!1!==a&&e(this).attr("srcset",a),void 0!==(a=e(this).attr("data-lazy-srcset-webp"))&&!1!==a&&e(this).attr("data-lazy-srcset",a);else{e(this).attr("data-lazy-src",e(this).attr("data-lazy-img-src"));var a=e(this).attr("data-srcset");void 0!==a&&!1!==a&&e(this).attr("srcset",a),void 0!==(a=e(this).attr("data-lazy-srcset-img"))&&!1!==a&&e(ewww_img).attr("data-lazy-srcset",a)}e(this).removeClass("ewww_webp_lazy_load")}),e(".ewww_webp_lazy_hueman").each(function(){var i=document.createElement("img");if(e(i).attr("src",e(this).attr("data-src")),t)e(i).attr("data-src",e(this).attr("data-webp-src")),void 0!==(r=e(this).attr("data-srcset-webp"))&&!1!==r&&e(i).attr("data-srcset",r);else{e(i).attr("data-src",e(this).attr("data-img"));var r=e(this).attr("data-srcset-img");void 0!==r&&!1!==r&&e(i).attr("data-srcset",r)}i=a(this,i),e(this).after(i),e(this).removeClass("ewww_webp_lazy_hueman")}),e(".ewww_webp").each(function(){var i=document.createElement("img");if(t)e(i).attr("src",e(this).attr("data-webp")),void 0!==(r=e(this).attr("data-srcset-webp"))&&!1!==r&&e(i).attr("srcset",r),void 0!==(r=e(this).attr("data-webp-orig-file"))&&!1!==r?e(i).attr("data-orig-file",r):void 0!==(r=e(this).attr("data-orig-file"))&&!1!==r&&e(i).attr("data-orig-file",r),void 0!==(r=e(this).attr("data-webp-medium-file"))&&!1!==r?e(i).attr("data-medium-file",r):void 0!==(r=e(this).attr("data-medium-file"))&&!1!==r&&e(i).attr("data-medium-file",r),void 0!==(r=e(this).attr("data-webp-large-file"))&&!1!==r?e(i).attr("data-large-file",r):void 0!==(r=e(this).attr("data-large-file"))&&!1!==r&&e(i).attr("data-large-file",r),void 0!==(r=e(this).attr("data-webp-large_image"))&&!1!==r?e(i).attr("data-large_image",r):void 0!==(r=e(this).attr("data-large_image"))&&!1!==r&&e(i).attr("data-large_image",r),void 0!==(r=e(this).attr("data-webp-src"))&&!1!==r?e(i).attr("data-src",r):void 0!==(r=e(this).attr("data-src"))&&!1!==r&&e(i).attr("data-src",r);else{e(i).attr("src",e(this).attr("data-img"));var r=e(this).attr("data-srcset-img");void 0!==r&&!1!==r&&e(i).attr("srcset",r),void 0!==(r=e(this).attr("data-orig-file"))&&!1!==r&&e(i).attr("data-orig-file",r),void 0!==(r=e(this).attr("data-medium-file"))&&!1!==r&&e(i).attr("data-medium-file",r),void 0!==(r=e(this).attr("data-large-file"))&&!1!==r&&e(i).attr("data-large-file",r),void 0!==(r=e(this).attr("data-large_image"))&&!1!==r&&e(i).attr("data-large_image",r),void 0!==(r=e(this).attr("data-src"))&&!1!==r&&e(i).attr("data-src",r)}i=a(this,i),e(this).after(i),e(this).removeClass("ewww_webp")})}(jQuery),jQuery.fn.isotope&&jQuery.fn.imagesLoaded&&(jQuery(".fusion-posts-container-infinite").imagesLoaded(function(){jQuery(".fusion-posts-container-infinite").hasClass("isotope")&&jQuery(".fusion-posts-container-infinite").isotope()}),jQuery(".fusion-portfolio:not(.fusion-recent-works) .fusion-portfolio-wrapper").imagesLoaded(function(){jQuery(".fusion-portfolio:not(.fusion-recent-works) .fusion-portfolio-wrapper").isotope()}))}var Arrive=function(t,e,a){"use strict";function i(t,e,a){o.addMethod(e,a,t.unbindEvent),o.addMethod(e,a,t.unbindEventWithSelectorOrCallback),o.addMethod(e,a,t.unbindEventWithSelectorAndCallback)}function r(t){t.arrive=l.bindEvent,i(l,t,"unbindArrive"),t.leave=c.bindEvent,i(c,t,"unbindLeave")}if(t.MutationObserver&&"undefined"!=typeof HTMLElement){var n=0,o=function(){var e=HTMLElement.prototype.matches||HTMLElement.prototype.webkitMatchesSelector||HTMLElement.prototype.mozMatchesSelector||HTMLElement.prototype.msMatchesSelector;return{matchesSelector:function(t,a){return t instanceof HTMLElement&&e.call(t,a)},addMethod:function(t,e,a){var i=t[e];t[e]=function(){return a.length==arguments.length?a.apply(this,arguments):"function"==typeof i?i.apply(this,arguments):void 0}},callCallbacks:function(t){for(var e,a=0;e=t[a];a++)e.callback.call(e.elem)},checkChildNodesRecursively:function(t,e,a,i){for(var r,n=0;r=t[n];n++)a(r,e,i)&&i.push({callback:e.callback,elem:r}),r.childNodes.length>0&&o.checkChildNodesRecursively(r.childNodes,e,a,i)},mergeArrays:function(t,e){var a,i={};for(a in t)i[a]=t[a];for(a in e)i[a]=e[a];return i},toElementsArray:function(e){return void 0===e||"number"==typeof e.length&&e!==t||(e=[e]),e}}}(),s=function(){var t=function(){this._eventsBucket=[],this._beforeAdding=null,this._beforeRemoving=null};return t.prototype.addEvent=function(t,e,a,i){var r={target:t,selector:e,options:a,callback:i,firedElems:[]};return this._beforeAdding&&this._beforeAdding(r),this._eventsBucket.push(r),r},t.prototype.removeEvent=function(t){for(var e,a=this._eventsBucket.length-1;e=this._eventsBucket[a];a--)t(e)&&(this._beforeRemoving&&this._beforeRemoving(e),this._eventsBucket.splice(a,1))},t.prototype.beforeAdding=function(t){this._beforeAdding=t},t.prototype.beforeRemoving=function(t){this._beforeRemoving=t},t}(),d=function(e,i){var r=new s,n=this,d={fireOnAttributesModification:!1};return r.beforeAdding(function(a){var r,o=a.target;a.selector,a.callback;o!==t.document&&o!==t||(o=document.getElementsByTagName("html")[0]),r=new MutationObserver(function(t){i.call(this,t,a)});var s=e(a.options);r.observe(o,s),a.observer=r,a.me=n}),r.beforeRemoving(function(t){t.observer.disconnect()}),this.bindEvent=function(t,e,a){e=o.mergeArrays(d,e);for(var i=o.toElementsArray(this),n=0;n<i.length;n++)r.addEvent(i[n],t,e,a)},this.unbindEvent=function(){var t=o.toElementsArray(this);r.removeEvent(function(e){for(var i=0;i<t.length;i++)if(this===a||e.target===t[i])return!0;return!1})},this.unbindEventWithSelectorOrCallback=function(t){var e,i=o.toElementsArray(this),n=t;e="function"==typeof t?function(t){for(var e=0;e<i.length;e++)if((this===a||t.target===i[e])&&t.callback===n)return!0;return!1}:function(e){for(var r=0;r<i.length;r++)if((this===a||e.target===i[r])&&e.selector===t)return!0;return!1},r.removeEvent(e)},this.unbindEventWithSelectorAndCallback=function(t,e){var i=o.toElementsArray(this);r.removeEvent(function(r){for(var n=0;n<i.length;n++)if((this===a||r.target===i[n])&&r.selector===t&&r.callback===e)return!0;return!1})},this},l=new function(){function t(t,e,i){if(o.matchesSelector(t,e.selector)&&(t._id===a&&(t._id=n++),-1==e.firedElems.indexOf(t._id))){if(e.options.onceOnly){if(0!==e.firedElems.length)return;e.me.unbindEventWithSelectorAndCallback.call(e.target,e.selector,e.callback)}e.firedElems.push(t._id),i.push({callback:e.callback,elem:t})}}var e={fireOnAttributesModification:!1,onceOnly:!1,existing:!1},i=(l=new d(function(t){var e={attributes:!1,childList:!0,subtree:!0};return t.fireOnAttributesModification&&(e.attributes=!0),e},function(e,a){e.forEach(function(e){var i=e.addedNodes,r=e.target,n=[];null!==i&&i.length>0?o.checkChildNodesRecursively(i,a,t,n):"attributes"===e.type&&t(r,a,n)&&n.push({callback:a.callback,elem:node}),o.callCallbacks(n)})})).bindEvent;return l.bindEvent=function(t,a,r){void 0===r?(r=a,a=e):a=o.mergeArrays(e,a);var n=o.toElementsArray(this);if(a.existing){for(var s=[],d=0;d<n.length;d++)for(var l=n[d].querySelectorAll(t),c=0;c<l.length;c++)s.push({callback:r,elem:l[c]});if(a.onceOnly&&s.length)return r.call(s[0].elem);setTimeout(o.callCallbacks,1,s)}i.call(this,t,a,r)},l},c=new function(){function t(t,e){return o.matchesSelector(t,e.selector)}var e={},a=(c=new d(function(t){return{childList:!0,subtree:!0}},function(e,a){e.forEach(function(e){var i=e.removedNodes,r=(e.target,[]);null!==i&&i.length>0&&o.checkChildNodesRecursively(i,a,t,r),o.callCallbacks(r)})})).bindEvent;return c.bindEvent=function(t,i,r){void 0===r?(r=i,i=e):i=o.mergeArrays(e,i),a.call(this,t,i,r)},c};e&&r(e.fn),r(HTMLElement.prototype),r(NodeList.prototype),r(HTMLCollection.prototype),r(HTMLDocument.prototype),r(Window.prototype);var h={};return i(l,h,"unbindAllArrive"),i(c,h,"unbindAllLeave"),h}}(window,"undefined"==typeof jQuery?null:jQuery,void 0);"undefined"!=typeof jQuery&&check_webp_feature("alpha",ewww_load_images);
 </script>
-<?php
+		<?php
 	} // End if().
 	// Current length 10783.
 }
@@ -3092,7 +3170,7 @@ function ewww_image_optimizer_manual() {
 			wp_die( esc_html__( 'You do not have permission to optimize images.', 'ewww-image-optimizer' ) );
 		}
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'You do not have permission to optimize images.', 'ewww-image-optimizer' ),
 		) ) );
 	}
@@ -3103,7 +3181,7 @@ function ewww_image_optimizer_manual() {
 			wp_die( esc_html__( 'No attachment ID was provided.', 'ewww-image-optimizer' ) );
 		}
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'No attachment ID was provided.', 'ewww-image-optimizer' ),
 		) ) );
 	}
@@ -3115,7 +3193,7 @@ function ewww_image_optimizer_manual() {
 			wp_die( esc_html__( 'Access denied.', 'ewww-image-optimizer' ) );
 		}
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'Access denied.', 'ewww-image-optimizer' ),
 		) ) );
 	}
@@ -3135,7 +3213,7 @@ function ewww_image_optimizer_manual() {
 			wp_die( esc_html__( 'Access denied.', 'ewww-image-optimizer' ) );
 		}
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'Access denied.', 'ewww-image-optimizer' ),
 		) ) );
 	}
@@ -3153,7 +3231,7 @@ function ewww_image_optimizer_manual() {
 			wp_die( esc_html__( 'License exceeded', 'ewww-image-optimizer' ) );
 		}
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'License exceeded', 'ewww-image-optimizer' ),
 		) ) );
 	}
@@ -3171,7 +3249,7 @@ function ewww_image_optimizer_manual() {
 	}
 	ewwwio_memory( __FUNCTION__ );
 	ewwwio_ob_clean();
-	wp_die( json_encode( array(
+	wp_die( ewwwio_json_encode( array(
 		'success'  => $success,
 		'basename' => $basename,
 	) ) );
@@ -3247,7 +3325,7 @@ function ewww_image_optimizer_cloud_restore_single_image_handler() {
 	if ( false === current_user_can( $permissions ) ) {
 		// Display error message if insufficient permissions.
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'You do not have permission to optimize images.', 'ewww-image-optimizer' ),
 		) ) );
 	}
@@ -3255,13 +3333,13 @@ function ewww_image_optimizer_cloud_restore_single_image_handler() {
 	if ( empty( $_REQUEST['ewww_image_id'] ) ) {
 		// Display an error message since we don't have anything to work on.
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'No image ID was provided.', 'ewww-image-optimizer' ),
 		) ) );
 	}
 	if ( empty( $_REQUEST['ewww_wpnonce'] ) || ! wp_verify_nonce( $_REQUEST['ewww_wpnonce'], 'ewww-image-optimizer-bulk' ) ) {
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'error' => esc_html__( 'Access token has expired, please reload the page.', 'ewww-image-optimizer' ),
 		) ) );
 	}
@@ -3269,12 +3347,12 @@ function ewww_image_optimizer_cloud_restore_single_image_handler() {
 	$image = (int) $_REQUEST['ewww_image_id'];
 	if ( ewww_image_optimizer_cloud_restore_single_image( $image ) ) {
 		ewwwio_ob_clean();
-		wp_die( json_encode( array(
+		wp_die( ewwwio_json_encode( array(
 			'success' => 1,
 		) ) );
 	}
 	ewwwio_ob_clean();
-	wp_die( json_encode( array(
+	wp_die( ewwwio_json_encode( array(
 		'error' => esc_html__( 'Unable to restore image.', 'ewww-image-optimizer' ),
 	) ) );
 }
@@ -3321,7 +3399,7 @@ function ewww_image_optimizer_cloud_restore_single_image( $image ) {
 	) );
 	if ( is_wp_error( $result ) ) {
 		$error_message = $result->get_error_message();
-		ewwwio_debug_message( "quota request failed: $error_message" );
+		ewwwio_debug_message( "restore request failed: $error_message" );
 		ewwwio_memory( __FUNCTION__ );
 		return false;
 	} elseif ( ! empty( $result['body'] ) && strpos( $result['body'], 'missing' ) === false ) {
@@ -3370,9 +3448,8 @@ function ewww_image_optimizer_delete( $id ) {
 	}
 	$id = (int) $id;
 	// Finds non-meta images to remove from disk, and from db, as well as converted originals.
-	if (
-		$optimized_images = $ewwwdb->get_results( "SELECT path,converted FROM $ewwwdb->ewwwio_images WHERE attachment_id = $id AND gallery = 'media'", ARRAY_A )
-	) {
+	$optimized_images = $ewwwdb->get_results( "SELECT path,converted FROM $ewwwdb->ewwwio_images WHERE attachment_id = $id AND gallery = 'media'", ARRAY_A );
+	if ( $optimized_images ) {
 		if ( ewww_image_optimizer_iterable( $optimized_images ) ) {
 			foreach ( $optimized_images as $image ) {
 				if ( ! empty( $image['path'] ) ) {
@@ -3538,8 +3615,9 @@ function ewww_image_optimizer_cloud_enable() {
  * @return string The useragent with the EWWW IO version appended.
  */
 function ewww_image_optimizer_cloud_useragent( $useragent ) {
-	$useragent .= ' EWWW/' . EWWW_IMAGE_OPTIMIZER_VERSION . ' ';
-	ewwwio_memory( __FUNCTION__ );
+	if ( strpos( $useragent, 'EWWW' ) === false ) {
+		$useragent .= ' EWWW/' . EWWW_IMAGE_OPTIMIZER_VERSION . ' ';
+	}
 	return $useragent;
 }
 
@@ -3667,16 +3745,18 @@ function ewww_image_optimizer_cloud_post_key( $url, $key ) {
 /**
  * Checks the configured API key for quota information.
  *
+ * @param bool $raw True to return the usage array as-is.
  * @return string A message with how many credits they have used/left and possibly a renwal date.
  */
-function ewww_image_optimizer_cloud_quota() {
+function ewww_image_optimizer_cloud_quota( $raw = false ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	$api_key = ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' );
-	$url     = 'http://optimize.exactlywww.com/quota/';
+	$url     = 'http://optimize.exactlywww.com/quota/v2/';
 	$ssl     = wp_http_supports( array( 'ssl' ) );
 	if ( $ssl ) {
 		$url = set_url_scheme( $url, 'https' );
 	}
+	add_filter( 'http_headers_useragent', 'ewww_image_optimizer_cloud_useragent', PHP_INT_MAX );
 	$result = wp_remote_post( $url, array(
 		'timeout'   => 5,
 		'sslverify' => false,
@@ -3691,30 +3771,37 @@ function ewww_image_optimizer_cloud_quota() {
 		return '';
 	} elseif ( ! empty( $result['body'] ) ) {
 		ewwwio_debug_message( "quota data retrieved: {$result['body']}" );
-		$quota = explode( ' ', $result['body'] );
+		// $quota = explode( ' ', $result['body'] );.
+		$quota = json_decode( $result['body'], true );
+		if ( ! is_array( $quota ) ) {
+			return '';
+		}
 		ewwwio_memory( __FUNCTION__ );
-		if ( 0 == $quota[0] && $quota[1] > 0 ) {
+		if ( $raw ) {
+			return $quota;
+		}
+		if ( 0 == $quota['licensed'] && $quota['consumed'] > 0 ) {
 			return esc_html( sprintf(
 				/* translators: 1: Number of images 2: Number of days until renewal */
-				_n( 'optimized %1$d images, usage will reset in %2$d day.', 'optimized %1$d images, usage will reset in %2$d days.', $quota[2], 'ewww-image-optimizer' ), $quota[1], $quota[2]
+				_n( 'optimized %1$d images, renewal is in %2$d day.', 'optimized %1$d images, renewal is in %2$d days.', $quota['days'], 'ewww-image-optimizer' ), $quota['consumed'], $quota['days']
 			) );
-		} elseif ( 0 == $quota[0] && $quota[1] < 0 ) {
+		} elseif ( 0 == $quota['licensed'] && $quota['consumed'] < 0 ) {
 			return esc_html( sprintf(
 				/* translators: 1: Number of images */
-				_n( '%1$d image credit remaining.', '%1$d image credits remaining.', abs( $quota[1] ), 'ewww-image-optimizer' ), abs( $quota[1] )
+				_n( '%1$d image credit remaining.', '%1$d image credits remaining.', abs( $quota['consumed'] ), 'ewww-image-optimizer' ), abs( $quota['consumed'] )
 			) );
-		} elseif ( $quota[0] > 0 && $quota[1] < 0 ) {
-			$real_quota = $quota[0] - $quota[1];
+		} elseif ( $quota['licensed'] > 0 && $quota['consumed'] < 0 ) {
+			$real_quota = $quota['licensed'] - $quota['consumed'];
 			return esc_html( sprintf(
 				/* translators: 1: Number of images */
 				_n( '%1$d image credit remaining.', '%1$d image credits remaining.', $real_quota, 'ewww-image-optimizer' ), $real_quota
 			) );
-		} elseif ( 0 == $quota[0] && 0 == $quota[1] && 0 == $quota[2] ) {
+		} elseif ( 0 == $quota['licensed'] && 0 == $quota['consumed'] && 0 == $quota['days'] && 0 == $quota['metered'] ) {
 			return esc_html__( 'no credits remaining, please purchase more.', 'ewww-image-optimizer' );
 		} else {
 			return esc_html( sprintf(
 				/* translators: 1: Number of image credits used 2: Number of image credits available 3: days until subscription renewal */
-				_n( 'used %1$d of %2$d, usage will reset in %3$d day.', 'used %1$d of %2$d, usage will reset in %3$d days.', $quota[2], 'ewww-image-optimizer' ), $quota[1], $quota[0], $quota[2]
+				_n( 'used %1$d of %2$d, usage will reset in %3$d day.', 'used %1$d of %2$d, usage will reset in %3$d days.', $quota['days'], 'ewww-image-optimizer' ), $quota['consumed'], $quota['licensed'], $quota['days']
 			) );
 		}
 	}
@@ -3906,7 +3993,7 @@ function ewww_image_optimizer_cloud_optimizer( $file, $type, $convert = false, $
 	$payload .= "Upload\r\n";
 	$payload .= '--' . $boundary . '--';
 
-	// Retrieve the time when the optimizer starts.
+	add_filter( 'http_headers_useragent', 'ewww_image_optimizer_cloud_useragent', PHP_INT_MAX );
 	$response = wp_remote_post( $url, array(
 		'timeout'   => 300,
 		'headers'   => $headers,
@@ -4036,6 +4123,7 @@ function ewww_image_optimizer_cloud_autorotate( $file, $type ) {
 	$payload .= "Upload\r\n";
 	$payload .= '--' . $boundary . '--';
 
+	add_filter( 'http_headers_useragent', 'ewww_image_optimizer_cloud_useragent', PHP_INT_MAX );
 	$response = wp_remote_post( $url, array(
 		'timeout'   => 60,
 		'headers'   => $headers,
@@ -4405,8 +4493,7 @@ function ewww_image_optimizer_aux_images_loop( $attachment = null, $auto = false
 	$permissions = apply_filters( 'ewww_image_optimizer_bulk_permissions', '' );
 	if ( ! $auto && ( empty( $_REQUEST['ewww_wpnonce'] ) || ! wp_verify_nonce( $_REQUEST['ewww_wpnonce'], 'ewww-image-optimizer-bulk' ) || ! current_user_can( $permissions ) ) ) {
 		$output['error'] = esc_html__( 'Access token has expired, please reload the page.', 'ewww-image-optimizer' );
-		echo json_encode( $output );
-		wp_die();
+		wp_die( ewwwio_json_encode( $output ) );
 	}
 	session_write_close();
 	if ( ! empty( $_REQUEST['ewww_wpnonce'] ) ) {
@@ -4452,7 +4539,7 @@ function ewww_image_optimizer_aux_images_loop( $attachment = null, $auto = false
 	if ( ! empty( $ewww_status ) && preg_match( '/exceeded/', $ewww_status ) ) {
 		if ( ! $auto ) {
 			$output['error'] = esc_html__( 'License Exceeded', 'ewww-image-optimizer' );
-			echo json_encode( $output );
+			echo ewwwio_json_encode( $output );
 		}
 		if ( $cli ) {
 			WP_CLI::error( __( 'License Exceeded', 'ewww-image-optimizer' ) );
@@ -4480,7 +4567,7 @@ function ewww_image_optimizer_aux_images_loop( $attachment = null, $auto = false
 			$loading_image       = plugins_url( '/images/wpspin.gif', __FILE__ );
 			$output['next_file'] = '<p>' . esc_html__( 'Optimizing', 'ewww-image-optimizer' ) . ' <b>' . esc_html( $next_file ) . "</b>&nbsp;<img src='$loading_image' alt='loading'/></p>";
 		}
-		echo json_encode( $output );
+		echo ewwwio_json_encode( $output );
 		ewwwio_memory( __FUNCTION__ );
 		wp_die();
 	}
@@ -4825,15 +4912,26 @@ function ewww_image_optimizer_autorotate( $file ) {
 	}
 	if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' ) < 20 ) {
 		// Read the exif, if it fails, we won't autorotate.
-		$jpeg = new PelJpeg( $file );
-		$exif = $jpeg->getExif();
-		if ( null == $exif ) {
+		try {
+			$jpeg = new PelJpeg( $file );
+			$exif = $jpeg->getExif();
+		} catch ( PelDataWindowOffsetException $pelerror ) {
+			ewwwio_debug_message( 'pel exception: ' . $pelerror->getMessage() );
+			$exif = null;
+		} catch ( PelDataWindowOffsetException $pelerror ) {
+			ewwwio_debug_message( 'pel exception: ' . $pelerror->getMessage() );
+			$exif = null;
+		} catch ( Exception $pelerror ) {
+			ewwwio_debug_message( 'pel exception: ' . $pelerror->getMessage() );
+			$exif = null;
+		}
+		if ( is_null( $exif ) ) {
 			ewwwio_debug_message( 'could not work with PelJpeg object, no rotation happening here' );
 		} elseif ( ewww_image_optimizer_jpegtran_autorotate( $file, $type, $orientation ) ) {
 			// Use PEL to correct the orientation flag when metadata was preserved.
 			$jpeg = new PelJpeg( $file );
 			$exif = $jpeg->getExif();
-			if ( null != $exif ) {
+			if ( ! is_null( $exif ) ) {
 				$tiff        = $exif->getTiff();
 				$ifd0        = $tiff->getIfd();
 				$orientation = $ifd0->getEntry( PelTag::ORIENTATION );
@@ -4975,7 +5073,9 @@ function ewww_image_optimizer_resize_upload( $file ) {
 	if ( is_wp_error( $saved ) ) {
 		ewwwio_debug_message( 'error saving resized image' );
 	}
-	add_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
+	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) && ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_disable_editor' ) ) {
+		add_filter( 'wp_image_editors', 'ewww_image_optimizer_load_editor', 60 );
+	}
 	// to here is replaced by cloud/API function.
 	$new_size = ewww_image_optimizer_filesize( $new_file );
 	if ( $new_size && $new_size < $orig_size ) {
@@ -4986,10 +5086,21 @@ function ewww_image_optimizer_resize_upload( $file ) {
 		// Use PEL to get the exif (if Remove Meta is unchecked) and GD is in use, so we can save it to the new image.
 		if ( 'image/jpeg' === $type && ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_metadata_skip_full' ) || ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpegtran_copy' ) ) && ! ewww_image_optimizer_imagick_support() ) {
 			ewwwio_debug_message( 'manually copying metadata for GD' );
-			$old_jpeg = new PelJpeg( $file );
-			$old_exif = $old_jpeg->getExif();
-			$new_jpeg = new PelJpeg( $new_file );
-			if ( null != $old_exif ) {
+			try {
+				$old_jpeg = new PelJpeg( $file );
+				$old_exif = $old_jpeg->getExif();
+				$new_jpeg = new PelJpeg( $new_file );
+			} catch ( PelDataWindowOffsetException $pelerror ) {
+				ewwwio_debug_message( 'pel exception: ' . $pelerror->getMessage() );
+				$old_exif = null;
+			} catch ( PelDataWindowOffsetException $pelerror ) {
+				ewwwio_debug_message( 'pel exception: ' . $pelerror->getMessage() );
+				$old_exif = null;
+			} catch ( Exception $pelerror ) {
+				ewwwio_debug_message( 'pel exception: ' . $pelerror->getMessage() );
+				$old_exif = null;
+			}
+			if ( ! is_null( $old_exif ) ) {
 				if ( $rotated ) {
 					$tiff        = $old_exif->getTiff();
 					$ifd0        = $tiff->getIfd();
@@ -5449,7 +5560,7 @@ function ewww_image_optimizer_resize_from_meta_data( $meta, $id = null, $log = t
 	}
 	if ( ewww_image_optimizer_test_background_opt( $type ) ) {
 		add_filter( 'http_headers_useragent', 'ewww_image_optimizer_cloud_useragent', PHP_INT_MAX );
-		if ( ! defined( 'EWWW_IMAGE_OPTIMIZER_NO_DEFER_S3' ) || ! EWWW_IMAGE_OPTIMIZER_NO_DEFER_S3 ) {
+		if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_defer_s3' ) ) {
 			ewwwio_debug_message( 's3 upload deferred' );
 			add_filter( 'as3cf_pre_update_attachment_metadata', '__return_true' );
 		}
@@ -5530,6 +5641,14 @@ function ewww_image_optimizer_resize_from_meta_data( $meta, $id = null, $log = t
 		}
 		ewww_image_optimizer_hidpi_optimize( $file );
 	}
+
+	// See if we are forcing re-optimization per the user's request.
+	if ( ! empty( $_REQUEST['ewww_force'] ) ) {
+		$force = true;
+	} else {
+		$force = false;
+	}
+
 	// Resized versions, so we can continue.
 	if ( isset( $meta['sizes'] ) && ewww_image_optimizer_iterable( $meta['sizes'] ) ) {
 		$disabled_sizes = get_option( 'ewww_image_optimizer_disable_resizes_opt' );
@@ -5688,11 +5807,6 @@ function ewww_image_optimizer_resize_from_meta_data( $meta, $id = null, $log = t
 		$increment        = (int) apply_filters( 'ewww_image_optimizer_background_timer_increment', 1 );
 		$timer_max        = (int) apply_filters( 'ewww_image_optimizer_background_timer_max', 20 );
 		$processing_sizes = array();
-		if ( ! empty( $_REQUEST['ewww_force'] ) ) {
-			$force = true;
-		} else {
-			$force = false;
-		}
 		global $ewwwio_async_optimize_media;
 		if ( ! class_exists( 'WP_Background_Process' ) ) {
 			require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'background.php' );
@@ -6965,14 +7079,14 @@ function ewww_image_optimizer_add_bulk_actions_via_javascript() {
 	if ( ! current_user_can( apply_filters( 'ewww_image_optimizer_bulk_permissions', '' ) ) ) {
 		return;
 	}
-?>
+	?>
 	<script type="text/javascript">
 		jQuery(document).ready(function($){
 			$('select[name^="action"] option:last-child').before('<option value="bulk_optimize"><?php esc_html_e( 'Bulk Optimize', 'ewww-image-optimizer' ); ?></option>');
 			$('.ewww-manual-convert').tooltip();
 		});
 	</script>
-<?php
+	<?php
 }
 
 /**
@@ -7510,6 +7624,7 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 			$status_output .= '<span style="color: red">' . esc_html__( 'Not Verified', 'ewww-image-optimizer' ) . '</span>';
 			$collapsible    = false;
 		}
+		$status_output .= ' <a target="_blank" href="https://history.exactlywww.com/show/?api_key=' . ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) . '">' . esc_html__( 'View Usage', 'ewww-image-optimizer' ) . '</a>';
 		$status_output .= "</p>\n";
 		$disable_level  = '';
 	} else {
@@ -7924,7 +8039,7 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 					$error_message = $async_response->get_error_message();
 					ewwwio_debug_message( "async test failed: $error_message" );
 				} elseif ( is_array( $async_response ) && isset( $async_response['body'] ) ) {
-					ewwwio_debug_message( 'async success, possibly (response should be empty): ' . $async_response['body'] );
+					ewwwio_debug_message( 'async success, possibly (response should be empty): ' . esc_html( substr( $async_response['body'], 0, 100 ) ) );
 					if ( ! empty( $async_response['response']['code'] ) ) {
 						ewwwio_debug_message( 'async response code: ' . $async_response['response']['code'] );
 					}
@@ -8207,7 +8322,7 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 			'zIndex'            => 100000,
 		);
 		$hs_identify  = array(
-			'email' => $help_email,
+			'email' => utf8_encode( $help_email ),
 		);
 		if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_debug' ) ) {
 			$ewww_debug_array = explode( '<br>', $ewww_debug );
@@ -8353,7 +8468,7 @@ function ewww_image_optimizer_autoptimize_js_exclude( $jsexcludes = '', $content
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	if ( is_array( $jsexcludes ) ) {
 		$jsexcludes['includes/resize_detection.js'] = '';
-		return $jsexludes;
+		return $jsexcludes;
 	}
 	return $jsexcludes . ', includes/resize_detection.js';
 }
@@ -8447,8 +8562,8 @@ function ewww_image_optimizer_debug_log() {
 			}
 		}
 		if ( filesize( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'debug.log' ) + strlen( $ewww_debug ) + 4000000 + memory_get_usage( true ) <= $memory_limit ) {
-			$ewww_debug_log = str_replace( '<br>', "\n", $ewww_debug );
-			file_put_contents( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'debug.log', $timestamp . $ewww_debug_log, FILE_APPEND );
+			$ewww_debug = str_replace( '<br>', "\n", $ewww_debug );
+			file_put_contents( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'debug.log', $timestamp . $ewww_debug, FILE_APPEND );
 		}
 	}
 	$ewww_debug = '';
@@ -8644,7 +8759,7 @@ function ewww_image_optimizer_image_queue_debug() {
 			<input type="hidden" name="ids" value="<?php echo $ids; ?>">
 			<button type="submit" class="button-secondary action"><?php esc_html_e( 'Clear this queue', 'ewww-image-optimizer' ); ?></button>
 		</form>
-<?php
+			<?php
 		}
 		$all_ids = implode( ',', $all_ids );
 		?>
