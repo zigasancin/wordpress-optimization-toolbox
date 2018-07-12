@@ -29,13 +29,12 @@
 // TODO: can svg/use tags be exluded from all the things?
 // TODO: match Adaptive Images functionality with ExactDN.
 // TODO: handle relative urls with ExactDN.
-// TODO: escape html responses in the debugging output, particular in the async test.
-// TODO: check all instances of json_encode for safety.
+// TODO: can we fix minify/combine for WP Rocket and WPFC when ExactDN is active?
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '422.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '423.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
@@ -95,6 +94,8 @@ if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_noauto' ) ) {
 	// Processes a MediaPress image via the metadata after upload.
 	add_filter( 'mpp_generate_metadata', 'ewww_image_optimizer_resize_from_meta_data', 15, 2 );
 }
+// Skips resizing for images with 'noresize' in the filename.
+add_filter( 'ewww_image_optimizer_resize_dimensions', 'ewww_image_optimizer_noresize', 10, 2 );
 // Makes sure the optimizer never optimizes it's own testing images.
 add_filter( 'ewww_image_optimizer_bypass', 'ewww_image_optimizer_ignore_self', 10, 2 );
 // Adds a column to the media library list view to display optimization results.
@@ -4948,6 +4949,20 @@ function ewww_image_optimizer_autorotate( $file ) {
 }
 
 /**
+ * Skips resizing for any image with 'noresize' in the filename.
+ *
+ * @param array  $dimensions The configured dimensions for resizing.
+ * @param string $filename The filename of the uploaded image.
+ * @return array The new dimensions for resizing.
+ */
+function ewww_image_optimizer_noresize( $dimensions, $filename ) {
+	if ( strpos( $filename, 'noresize' ) !== false ) {
+		return array( 0, 0 );
+	}
+	return $dimensions;
+}
+
+/**
  * Resizes Media Library uploads based on the maximum dimensions specified by the user.
  *
  * @global object $wpdb
@@ -7638,6 +7653,9 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 		global $exactdn;
 		if ( $exactdn->get_exactdn_domain() && $exactdn->verify_domain( $exactdn->get_exactdn_domain() ) ) {
 			$status_output .= '<span style="color: green">' . esc_html__( 'Verified', 'ewww-image-optimizer' ) . ' </span>';
+			if ( defined( 'WP_ROCKET_VERSION' ) ) {
+				$status_output .= '<br><i>' . esc_html__( 'If you use the File Optimization options within WP Rocket, you should also enter your ExactDN CNAME in the WP Rocket CDN settings (reserved for CSS and Javascript):', 'ewww-image-optimizer' ) . ' ' . $exactdn->get_exactdn_domain() . '</i>';
+			}
 		} elseif ( $exactdn->get_exactdn_domain() && $exactdn->get_exactdn_option( 'verified' ) ) {
 			$status_output .= '<span style="color: orange">' . esc_html__( 'Temporarily disabled.', 'ewww-image-optimizer' ) . ' </span>';
 			$collapsible    = false;
@@ -7648,6 +7666,9 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 			ewwwio_debug_message( 'could not verify: ' . $exactdn->get_exactdn_domain() );
 			$status_output .= '<span style="color: red"><a href="https://ewww.io/manage-sites/" target="_blank">' . esc_html__( 'Not Verified', 'ewww-image-optimizer' ) . '</a></span>';
 			$collapsible    = false;
+		}
+		if ( function_exists( 'remove_query_strings_link' ) || function_exists( 'rmqrst_loader_src' ) || function_exists( 'qsr_remove_query_strings_1' ) ) {
+			$status_output .= '<br><i>' . esc_html__( 'Plugins that remove query strings are unnecessary with ExactDN. You may remove them at your convenience.', 'ewww-image-optimizer' ) . '</i>';
 		}
 		$status_output .= '</p>';
 	} elseif ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) ) {

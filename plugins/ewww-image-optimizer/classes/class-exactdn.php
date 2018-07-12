@@ -142,8 +142,8 @@ class ExactDN {
 
 		// Get all the script/css urls and rewrite them (if enabled).
 		if ( ewww_image_optimizer_get_option( 'exactdn_all_the_things' ) ) {
-			add_filter( 'style_loader_src', array( $this, 'parse_enqueue' ) );
-			add_filter( 'script_loader_src', array( $this, 'parse_enqueue' ) );
+			add_filter( 'style_loader_src', array( $this, 'parse_enqueue' ), 20 );
+			add_filter( 'script_loader_src', array( $this, 'parse_enqueue' ), 20 );
 		}
 
 		// Configure Autoptimize with our CDN domain.
@@ -296,9 +296,6 @@ class ExactDN {
 				$error_message = $test_result->get_error_message();
 				ewwwio_debug_message( "exactdn verification request failed: $error_message" );
 				$this->set_exactdn_option( 'suspended', 1 );
-				if ( ! empty( $test_result['response']['code'] ) ) {
-					ewwwio_debug_message( 'exactdn response code: ' . $test_result['response']['code'] );
-				}
 				return false;
 			} elseif ( ! empty( $test_result['body'] ) && strlen( $test_result['body'] ) > 300 ) {
 				if ( 200 === $test_result['response']['code'] &&
@@ -1776,12 +1773,16 @@ class ExactDN {
 
 		// If a resource doesn't have a version string, we add one to help with cache-busting.
 		if ( empty( $parsed_url['query'] ) ) {
+			$modified = ewww_image_optimizer_function_exists( 'filemtime' ) ? filemtime( get_template_directory() ) : '';
+			if ( empty( $modified ) ) {
+				$modified = (int) EWWW_IMAGE_OPTIMIZER_VERSION;
+			}
 			/**
 			 * Allows a custom version string for resources that are missing one.
 			 *
 			 * @param string EWWW IO version.
 			 */
-			$parsed_url['query'] = apply_filters( 'exactdn_version_string', EWWW_IMAGE_OPTIMIZER_VERSION );
+			$parsed_url['query'] = apply_filters( 'exactdn_version_string', "m=$modified" );
 		}
 
 		$exactdn_url = '//' . $this->exactdn_domain . '/' . ltrim( $parsed_url['path'], '/' ) . '?' . $parsed_url['query'];
