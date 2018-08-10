@@ -120,7 +120,7 @@ function wp_cache_serve_cache_file() {
 		} elseif ( isset( $wpsc_save_headers ) && $wpsc_save_headers ) {
 			wp_cache_debug( 'Saving headers. Cannot serve a supercache file.' );
 			return false;
-		} elseif ( ( filemtime( $file ) + $cache_max_time ) < time() ) {
+		} elseif ( $cache_max_time > 0 && ( filemtime( $file ) + $cache_max_time ) < time() ) {
 			wp_cache_debug( sprintf( "Cache has expired and is older than %d seconds old.", $cache_max_time ) );
 			return false;
 		}
@@ -196,17 +196,15 @@ function wp_cache_serve_cache_file() {
 
 			// don't try to match modified dates if using dynamic code.
 			if ( $wp_cache_mfunc_enabled == 0 && $wp_supercache_304 ) {
-				if ( function_exists( 'apache_request_headers' ) ) {
-					$request = apache_request_headers();
-					$remote_mod_time = ( isset ( $request[ 'If-Modified-Since' ] ) ) ? $request[ 'If-Modified-Since' ] : null;
-				} else {
-					if ( isset( $_SERVER[ 'HTTP_IF_MODIFIED_SINCE' ] ) )
-						$remote_mod_time = $_SERVER[ 'HTTP_IF_MODIFIED_SINCE' ];
-					else
-						$remote_mod_time = null;
+				$headers         = apache_request_headers();
+				$remote_mod_time = isset ( $headers['If-Modified-Since'] ) ? $headers['If-Modified-Since'] : null;
+
+				if ( is_null( $remote_mod_time ) && isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) {
+					$remote_mod_time = $_SERVER['HTTP_IF_MODIFIED_SINCE'];
 				}
+
 				$local_mod_time = gmdate("D, d M Y H:i:s",filemtime( $file )).' GMT';
-				if ( !is_null($remote_mod_time) && $remote_mod_time == $local_mod_time ) {
+				if ( ! is_null( $remote_mod_time ) && $remote_mod_time == $local_mod_time ) {
 					header( $_SERVER[ 'SERVER_PROTOCOL' ] . " 304 Not Modified" );
 					exit();
 				}
@@ -322,6 +320,7 @@ function wp_cache_late_loader() {
 }
 
 function wp_cache_get_cookies_values() {
+	global $wpsc_cookies;
 	static $string = '';
 
 	if ( $string != '' ) {
@@ -350,6 +349,20 @@ function wp_cache_get_cookies_values() {
 
 	// If you use this hook, make sure you update your .htaccess rules with the same conditions
 	$string = do_cacheaction( 'wp_cache_get_cookies_values', $string );
+
+	if (
+		isset( $wpsc_cookies ) &&
+		is_array( $wpsc_cookies ) &&
+		! empty( $wpsc_cookies )
+	) {
+		foreach( $wpsc_cookies as $name ) {
+			if ( isset( $_COOKIE[ $name ] ) ) {
+				wp_cache_debug( "wp_cache_get_cookies_values - found extra cookie: $name" );
+				$string .= $name . "=" . $_COOKIE[ $name ] . ",";
+			}
+		}
+	}
+
 	if ( $string != '' )
 		$string = md5( $string );
 
@@ -1340,15 +1353,21 @@ function wpcache_logged_in_message() {
 function wp_cache_user_agent_is_rejected() {
 	global $cache_rejected_user_agent;
 
-	if (!function_exists('apache_request_headers')) return false;
-	$headers = apache_request_headers();
-	if (!isset($headers["User-Agent"])) return false;
-	if ( false == is_array( $cache_rejected_user_agent ) )
+	if ( empty( $cache_rejected_user_agent ) || ! is_array( $cache_rejected_user_agent ) ) {
 		return false;
-	foreach ($cache_rejected_user_agent as $expr) {
-		if (strlen($expr) > 0 && stristr($headers["User-Agent"], $expr))
-			return true;
 	}
+
+	$headers = apache_request_headers();
+	if ( empty( $headers['User-Agent'] ) ) {
+		return false;
+	}
+
+	foreach ( $cache_rejected_user_agent as $user_agent ) {
+		if ( ! empty( $user_agent ) && stristr( $headers['User-Agent'], $user_agent ) ) {
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -2325,6 +2344,11 @@ function wp_cache_rebuild_or_delete( $file ) {
 function wp_cache_phase2_clean_expired( $file_prefix, $force = false ) {
 	global $cache_path, $cache_max_time, $blog_cache_dir, $wp_cache_preload_on;
 
+	if ( $cache_max_time == 0 ) {
+		wp_cache_debug( "wp_cache_phase2_clean_expired: disabled because GC disabled.", 2 );
+		return false;
+	}
+
 	clearstatcache();
 	if( !wp_cache_writers_entry() )
 		return false;
@@ -2662,6 +2686,10 @@ function wpsc_delete_post_archives( $post ) {
 }
 
 function wpsc_delete_cats_tags( $post ) {
+	if ( function_exists( '_deprecated_function' ) ) {
+		_deprecated_function( __FUNCTION__, 'WP Super Cache 1.6.3', 'wpsc_delete_post_archives' );
+	}
+
 	$post = get_post($post);
 	$categories = get_the_category($post->ID);
 	if ( $categories ) {
@@ -2688,14 +2716,17 @@ function wpsc_delete_cats_tags( $post ) {
 }
 
 function wpsc_post_transition( $new_status, $old_status, $post ) {
-	if (
-		($old_status == 'publish' && $new_status != 'publish' ) // post unpublished
-		||
-		($new_status == 'publish') // post published or updated
-	) {
-		//wpsc_delete_cats_tags( $post );
+
+	if ( $old_status === 'publish' && $new_status !== 'publish' ) { // post unpublished
+		list( $permalink, $post_name ) = get_sample_permalink( $post->ID );
+		$post_url = str_replace( array( '%pagename%', '%postname%' ), $post->post_name, $permalink );
+	}
+	elseif ( $new_status === 'publish' )  {	// post published or updated
+		$post_url  = get_permalink( $post->ID );
+	}
+
+	if ( ! empty( $post_url ) ) {
 		wpsc_delete_post_archives( $post );
-		$post_url = get_permalink( $post->ID );
 		wpsc_delete_url_cache( $post_url );
 		wp_cache_debug( 'wpsc_post_transition: deleting cache of post: ' . $post_url );
 	}
@@ -2735,6 +2766,7 @@ function wp_cache_post_edit($post_id) {
 	} else {
 		wp_cache_debug( "wp_cache_post_edit: Clearing cache for post $post_id on post edit.", 2 );
 		wp_cache_post_change( $post_id );
+		wpsc_delete_post_archives( $post_id ); // delete related archive pages.
 	}
 }
 
@@ -3029,4 +3061,23 @@ function wp_cache_gc_watcher() {
 	}
 }
 
-?>
+if ( ! function_exists( 'apache_request_headers' ) ) {
+	/**
+	 * A fallback for get request headers.
+	 * Based on comments from http://php.net/manual/en/function.apache-request-headers.php
+	 *
+	 * @return array List of request headers
+	 */
+	function apache_request_headers() {
+		$headers = array();
+
+		foreach ( array_keys( $_SERVER ) as $skey ) {
+			if ( 0 === strpos( $skey, 'HTTP_' ) ) {
+				$header = implode( '-', array_map( 'ucfirst', array_slice( explode( '_', strtolower( $skey ) ) , 1 ) ) );
+				$headers[ $header ] = $_SERVER[ $skey ];
+			}
+		}
+
+		return $headers;
+	}
+}
