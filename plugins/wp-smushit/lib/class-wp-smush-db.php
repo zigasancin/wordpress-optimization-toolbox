@@ -1,6 +1,6 @@
 <?php
 /**
- * @package WP Smush
+ * @package WP_Smush
  * @subpackage Admin
  * @version 2.3
  *
@@ -854,11 +854,11 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 				return $stats;
 			}
 
-			global $WpSmush, $wpsmush_helper;
+			global $wp_smush, $wpsmush_helper;
 
 			//Loop over all the attachments to get the cummulative savings
 			foreach ( $attachments as $attachment ) {
-				$smush_stats        = get_post_meta( $attachment, $WpSmush->smushed_meta_key, true );
+				$smush_stats        = get_post_meta( $attachment, $wp_smush->smushed_meta_key, true );
 				$resize_savings     = get_post_meta( $attachment, WP_SMUSH_PREFIX . 'resize_savings', true );
 				$conversion_savings = $wpsmush_helper->get_pngjpg_savings( $attachment );
 

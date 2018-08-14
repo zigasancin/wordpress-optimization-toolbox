@@ -8,7 +8,7 @@ if ( ! class_exists( 'WPSmushNextGenBulk' ) ) {
 
 		function smush_bulk() {
 
-			global $wpsmushnextgenstats, $wpsmush_db, $wpsmushit_admin, $wpsmushnextgenadmin, $WpSmush;
+			global $wpsmushnextgenstats, $wpsmush_db, $wpsmushit_admin, $wpsmushnextgenadmin, $wp_smush;
 
 			$stats = array();
 

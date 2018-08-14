@@ -27,7 +27,7 @@ $smushit_keys = array(
 	'png_to_jpg',
 	'resize-sizes',
 	'nextgen',
-	'keep_exif',
+	'strip_exif',
 	'resmush-list',
 	'resize_sizes',
 	'transparent_png',

@@ -1,6 +1,6 @@
 <?php
 /**
- * @package WP Smush
+ * @package WP_Smush
  *
  * @version 2.4
  *
@@ -169,7 +169,7 @@ if ( ! class_exists( 'WpSmushPngtoJpg' ) ) {
 
 			//False if not a PNG
 			$mime = empty( $mime ) ? get_post_mime_type( $id ) : $mime;
-			if ( 'image/png' != $mime ) {
+			if ( 'image/png' != $mime && 'image/x-png' != $mime ) {
 				return false;
 			}
 
@@ -444,10 +444,10 @@ if ( ! class_exists( 'WpSmushPngtoJpg' ) ) {
 		 * @todo: Save cummulative savings
 		 */
 		function png_to_jpg( $id = '', $meta = '' ) {
-			global $wpsmush_backup, $WpSmush;
+			global $wpsmush_backup, $wp_smush;
 
 			// If we don't have meta or ID, or if not a premium user.
-			if ( empty( $id ) || empty( $meta ) || ! $WpSmush->validate_install() ) {
+			if ( empty( $id ) || empty( $meta ) || ! $wp_smush->validate_install() ) {
 				return $meta;
 			}
 

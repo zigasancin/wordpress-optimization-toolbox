@@ -3,7 +3,7 @@
 /**
  * Handles all the stats related functions
  *
- * @package WP Smush
+ * @package WP_Smush
  * @subpackage NextGen Gallery
  * @version 1.0
  *
@@ -23,8 +23,8 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 
 		function __construct() {
 
-			global $WpSmush;
-			$this->is_pro_user = $WpSmush->validate_install();
+			global $wp_smush;
+			$this->is_pro_user = $wp_smush->validate_install();
 
 			//Update Total Image count
 			add_action( 'ngg_added_new_image', array( $this, 'image_count' ), 10 );
@@ -167,12 +167,12 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 		 * @param bool $text_only Return only text instead of button (Useful for Ajax)
 		 * @param bool $echo Whether to echo the stats or not
 		 *
-		 * @uses WpSmushNextGenAdmin::column_html(), WpSmush::get_restore_link(), WpSmush::get_resmush_link()
+		 * @uses WpSmushNextGenAdmin::column_html(), WP_Smush::get_restore_link(), WP_Smush::get_resmush_link()
 		 *
 		 * @return bool|null|string|void
 		 */
 		function show_stats( $pid, $wp_smush_data = false, $image_type = '', $text_only = false, $echo = true ) {
-			global $WpSmush, $wpsmushnextgenadmin, $wpsmush_settings;
+			global $wp_smush, $wpsmushnextgenadmin, $wpsmush_settings;
 			if ( empty( $wp_smush_data ) ) {
 				return false;
 			}
@@ -193,7 +193,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 					//Add resmush option if needed
 					$show_resmush = $this->show_resmush( $show_resmush, $wp_smush_data );
 					if ( $show_resmush ) {
-						$status_txt .= '<br />' . $WpSmush->get_resmsuh_link( $pid, 'nextgen' );
+						$status_txt .= '<br />' . $wp_smush->get_resmsuh_link( $pid, 'nextgen' );
 					}
 
 				} elseif ( ! empty( $percent ) && ! empty( $bytes_readable ) ) {
@@ -202,7 +202,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 					$show_resmush = $this->show_resmush( $show_resmush, $wp_smush_data );
 
 					if ( $show_resmush ) {
-						$status_txt .= '<br />' . $WpSmush->get_resmsuh_link( $pid, 'nextgen' );
+						$status_txt .= '<br />' . $wp_smush->get_resmsuh_link( $pid, 'nextgen' );
 					}
 
 					//Restore Image: Check if we need to show the restore image option
@@ -216,7 +216,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 							//Show the link in next line
 							$status_txt .= '<br />';
 						}
-						$status_txt .= $WpSmush->get_restore_link( $pid, 'nextgen' );
+						$status_txt .= $wp_smush->get_restore_link( $pid, 'nextgen' );
 					}
 					//Show detailed stats if available
 					if ( ! empty( $wp_smush_data['sizes'] ) ) {
@@ -323,7 +323,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 		 *
 		 */
 		function update_resize_stats( $image_id, $stats ) {
-			global $WpSmush;
+			global $wp_smush;
 
 			$stats = ! empty( $stats['stats'] ) ? $stats['stats'] : '';
 
@@ -454,7 +454,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 		 * @return string
 		 */
 		function get_detailed_stats( $image_id, $wp_smush_data, $attachment_metadata, $full_image ) {
-			global $WpSmush;
+			global $wp_smush;
 
 			$stats      = '<div id="smush-stats-' . $image_id . '" class="smush-stats-wrapper hidden">
 				<table class="wp-smush-stats-holder">
@@ -479,7 +479,7 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 						$skip_class = $img_data['reason'] == 'size_limit' ? ' error' : '';
 						$stats      .= '<tr>
 					<td>' . strtoupper( $img_data['size'] ) . '</td>
-					<td class="smush-skipped' . $skip_class . '">' . $WpSmush->skip_reason( $img_data['reason'] ) . '</td>
+					<td class="smush-skipped' . $skip_class . '">' . $wp_smush->skip_reason( $img_data['reason'] ) . '</td>
 				</tr>';
 					}
 
@@ -583,15 +583,15 @@ if ( ! class_exists( 'WpSmushNextGenStats' ) ) {
 		 * @return string
 		 */
 		function show_resmush( $show_resmush, $wp_smush_data ) {
-			global $WpSmush;
+			global $wp_smush;
 			//Resmush: Show resmush link, Check if user have enabled smushing the original and full image was skipped
-			if ( $WpSmush->smush_original ) {
+			if ( $wp_smush->smush_original ) {
 				//IF full image was not smushed
 				if ( ! empty( $wp_smush_data ) && empty( $wp_smush_data['sizes']['full'] ) ) {
 					$show_resmush = true;
 				}
 			}
-			if ( ! $WpSmush->keep_exif ) {
+			if ( ! $wp_smush->keep_exif ) {
 				//If Keep Exif was set to tru initially, and since it is set to false now
 				if ( ! empty( $wp_smush_data['stats']['keep_exif'] ) && $wp_smush_data['stats']['keep_exif'] == 1 ) {
 					$show_resmush = true;

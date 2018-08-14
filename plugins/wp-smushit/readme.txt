@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 2.7.9.1
+Version: 2.8.0.1
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
 Tags: image, resize, optimize, optimise, compress, performance, optimisation, optimise JPG, photo, pictures, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
-Tested up to: 4.9.6
-Stable tag: 2.7.9.1
+Tested up to: 4.9.8
+Stable tag: 2.8.0.1
 Requires PHP: 5.2.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -164,6 +164,32 @@ Yahoo's Smush.it API is gone forever. So WPMU DEV built our own free API that is
 
 == Changelog ==
 
+= 2.8.0.1 =
+
+* Fixed: Smush causing media uploads to not function properly (in rare conditions)
+
+= 2.8.0 =
+
+* New: High-power API cluster for Smush Pro users
+* New: Updated and improved UI/UX
+* New: Stats meta box
+* Enhance: Smush will have it's own section in the GDPR policy, instead of appending to the end of the policy text
+* Enhance: Compatibility with AJAX Thumbnail Rebuild and ACF plugins
+* Enhance: Add support for image/x-png and image/x-citrix-jpeg mime types
+* Fixed: File size not updated inside the attachment details modal during Smush/restore of an image
+* Fixed: Directory Smush using mobile
+* Fixed: Smush progress during feature image upload
+* Fixed: Image width and height converted to string in async request
+* Fixed: Warnings on PHP 5.2
+* Fixed: Warnings on PHP 7.1
+* Fixed: Fixed wrong method name in S3 offload class. Thanks Tedy Warsitha
+* Fixed: Issues when editing image attributes in the media library
+* Fixed: Missing translation strings
+
+= 2.7.9.2 =
+
+* Fixed: Critical Error: Ajax returns Error 500 on media library in WP Offload S3
+
 = 2.7.9.1 =
 
 * Fixed: Conflict with front-end editors
@@ -282,8 +308,297 @@ Yahoo's Smush.it API is gone forever. So WPMU DEV built our own free API that is
     * WP RSS Aggregator compatibility for Auto Smush
     * WordPress mobile app Auto smush compatibility
 
-= Earlier versions =
-Please refer to the separate changelog.txt file.
+= 2.6.3 =
+
+* Fixed:
+
+    * Compatibility issue with WP Defender
+    * Image dimensions not updated after resizing in Grid view
+
+* Added:
+
+    * Added a check to preserve smush stats on plugin deletion, You can add `define('WP_SMUSH_PRESERVE_STATS', true );` in wp-config.php
+
+= 2.6.2 =
+
+* Added:
+    * WP All Import Compatibility
+
+* Fixed:
+    * Image not being updated to S3 after resmush ( *Only if remove files from server is kept off in S3 plugin settings )
+    * Added check for directory smush savings
+    * Call `wp_update_attachment_metadata` after smushing, to allow the optimised image to be used
+    * Dir Smush: Images with special symbols doesn't gets optimised
+    * Dir Smush: Skip .bak files
+    * Retina Images @2x: Do not smush if auto smush is disabled
+    * Backup ( Pro ): Take backup of original untouched image, improved backup and restore.
+
+* Updated:
+    * Smush Limit ( 50 Images ), do not include images with error in count
+
+= 2.6.1 =
+
+* Fixed:
+    * PHP 5.2 compatibility
+    * DB error: Use a smaller value for Path Index size ( Prefix Indexes )
+    * Updated translation function name
+    * UI/UX fixes for directory smush
+    * Improved optimisation process for directory smush
+    * Updated uninstall.php
+    * Skip sites directory from Directory Smush in a Multisite
+
+= 2.6 =
+
+* Fixed:
+    * PHP 7 warning ( https://goo.gl/GKEMim ), @props: @alexis-mag
+    * Async Smush conflict with other plugins
+
+* Changes:
+    * Moved notice JS/CSS in footer
+    * Bulk Smush page optimisation
+    * Increased timeout for Async request - Fixes Async smush not working for some hosting services
+
+* Added:
+    * Directory Smush ( Pro Feature )
+
+= 2.5.3 =
+
+* Fixed:
+    * Show a Smush progress message in Grid view for Auto Smush
+      ( A lot of people reported it as Auto Smush not working, which works in background though )
+    * Translation domain was incorrect for few strings
+    * Translation: Load translation domain in main plugin file
+    * Include image size `medium_large` in smush list
+    * Error: Cannot use string offset as an array
+    * Error in PNG to JPG conversion ( Pro Feature ), added check for mime_content_type function
+    * Pro Status not recognised
+
+= 2.5.2 =
+
+* Added:
+    * Filter: `wp_smush_image`, Boolean, Whether to Smush image or not
+    * Async Optimisation for Auto Smush on upload ( Set WP_SMUSH_ASYNC to false to turn off async optimisation )
+    * Networkwide settings option in a Multisite
+
+* Fixed:
+    * Double slash in file path causing 403 on some of the sites
+    * Localisation error reported by @talgat ( Thank You :) )
+
+= 2.4.5 =
+
+* Fixed:
+    * Error "No file content sent" with WP 4.6
+
+= 2.4.4 =
+
+* Fixed:
+    * Stats Calculation, Use custom query to retrieve data
+    * Fixed warning and notices
+    * PNG to JPEG conversion not working for Multisite ( Pro Users )
+    * thumbnails not being converted for PNG to JPEG conversion
+* Removed option to convert Transparent PNGs to JPEGs ( Pro Users )
+* Added check for invalid membership
+
+= 2.4.3 =
+
+    * Fixed:
+        * Image resizing not working on image upload
+
+= 2.4.2 =
+
+    * Fixed:
+        * PHP 5.2 compatibility
+
+= 2.4.1 =
+
+* Fixed:
+    Conflict with customizer
+
+= 2.4 =
+
+* Compatibility:
+    * WPML Media Add-on compatibility, you can smush all the images for all the languages at once from Bulk Smush page
+
+* Features:
+    * Added PNG to JPG - Lossy Conversion for higher savings ( Pro Feature )
+
+*Fixed:
+    * EXIF: Device details were left out for some images, even when opted for stripping it
+
+* Updated:
+    * Minor Tweaks on WP Smush Page ( Bulk Smush )
+    * Stats calculation is more accurate
+    * Show current image size and image size dimensions in media library after image has been smushed
+    * JPEG optimisation - higher savings for JPEGs lossy optimisation ( Pro Feature )
+
+= 2.3.1 =
+
+* Fixed:
+    * Stats not updated on resizing images
+    * CSS conflict in Media Library
+
+= 2.3 =
+
+* Fixed:
+    * Tooltip on image edit page
+    * Warning and Notices
+* Updated:
+    * Improved stats calculation
+    * Bulk Smush page optimised for Image heavy sites
+    * Cleanup on uninstall
+* Added:
+    * Image Resizing option for Media, NextGen(Pro Only) images
+    * Total image count on stats page
+
+= 2.2.2 =
+- Fixed: JS error causing issue with Editor on some installs, plugin conflict with CoursePress plugin, ACF ( Clear All Caches after plugin upgrade, Cloudflare as well )
+- Fixed: ReSmush count for bulk smushing
+- Fixed: Smush settings accessibility for Screen reader/Keyboard
+- Fixed: WP Admin loading slow ( Load smush stats on required admin pages only )
+
+= 2.2.1 =
+* New: Option to resmush image if settings are changed after optimising images
+* New: Added an option to preserve EXIF
+* New: Remove Smush meta on image regeneration,
+       This allows user to manually smush them later, if auto smush is off ( WP Image Editor support )
+* New: Manual Image restore option for Media Library and NextGen Gallery, if "Backup Original Images" was kept on while smushing ( Pro Only )
+* New: Delete Backup Files (Pro Only) on attachment deletion
+* Updated: Upfront Integration
+* Fixed: jQuery tooltip conflict
+* Code Optimisation, Updated Settings page UI
+
+= 2.1.5 =
+* Fixed: WP Media Folder Plugin compatibility
+* Fixed: Warning on Plugins Page
+* Updated: Settings Page styling
+
+= 2.1.4 =
+* Fixed: Preserve file permission after smushing ( Fix for Images disappearing in Media library on some hosts )
+* Fixed: Styles plugin compatibility
+* Fixed: Append URL params considering the existing arguments ( WPML Compatibility )
+* Fixed: Warning: For settings link in Network admin, Warning: https://goo.gl/HAfhaF ( Thank you @Maks3w for suggestions )
+* Fixed: Fatal error if both pro version and free version are activated
+* Fixed: NextGen-Smush conflict on plugin activation on a fresh install
+
+= 2.1.3 =
+* Fixed: Compatibility with v4.0 of our Dashboard plugin, was not detecting pro status
+
+= 2.1.2 =
+* Fixed: Important fix for transient issue leading to mutliple api requests
+
+= 2.1.1 =
+* Fixed: Workaround for terrible bug in W3TC file based object caching
+
+= 2.1 =
+
+* Fixed: Untranslatable strings in settings
+* Fixed: Increased is_pro() API timeouts
+* Fixed: Remove redundant _get_api_key() cache check
+* Fixed: Some PHP notices on fresh installs
+* Fixed: Bulk Smush button keeps spinning after 50 images for free version
+* Fixed: NextGen Bulk Smush button issue
+* Fixed: Invalid header issue
+* Fixed: Warnings in file functions
+* Updated: Added limit on query results, for sites with higher image count, Use filter `wp_smush_media_query_limit` to adjust values
+* Added: Sortable WP Smush column in Media Library
+* Added: Filters `wp_smush_media_image` for Media Gallery, `wp_smush_nextgen_image` For NextGen gallery,
+          allows to skip a particular image size from smushing
+* Added: NextGen Gallery support
+
+= 2.0.6.5 =
+
+* Updated: Skip webp images ( causing ajax error for few sites )
+* Fixed: Warning and Notices ( Media Library not loading )
+* Fixed: Smush full size image if no other sizes are available
+* Added: Detailed text for stats and settings
+
+= 2.0.6.3 =
+
+* Fixed: Change File permission after replacing image
+* Fixed: Directory path for files
+* Fixed: Workaround for Auto Smush issue on Hostgator
+* Fixed: Smush button doesn't works in media library dialog on post screen, when add media is clicked
+		 (https://wordpress.org/support/topic/like-wp-smush-a-lot)
+* New:   Show number of images smushed in stats column
+* Added: Support for WP Retina 2x Plugin
+* Added: Filter `WP_SMUSH_API_TIMEOUT` to change the default time out value from 60s
+* Added: Smush original image option (Pro Only)
+
+= 2.0.6.2 =
+
+* Use string for text domain instead of PHP Constant ( WordPress Guideline )
+
+2.0.6.1 - 2015-05-20 - Umesh Kumar
+
+- Updated: Max image size set to 32Mb for Pro Version
+
+2.0.6 - 2015-05-20 - Umesh Kumar
+
+- Fixed: Conflict with various themes while editing post and page
+- Fixed: Word Count not working
+- Fixed: Notice and Warnings
+
+2.0.5 - 2015-04-17 - Aaron Edwards, Sam Najian, Umesh Kumar
+
+- New:   Allow Super-smush for existing smushed images
+- Fixed: IMPORTANT - broken transient caching for is_pro
+- Fixed: Fixed conflict with wp gallery link plugin in grid view
+- Fixed: Other small fixes
+
+2.0.4 - 2015-04-14 - Aaron Edwards, Umesh Kumar
+
+- Fix: Fatal error conflict with some plugins on fronted of site
+
+2.0.3 - 2015-04-14 - Aaron Edwards, Sam Najian and Umesh Kumar
+----------------------------------------------------------------------
+
+- Complete rewrite to use WPMU DEV's new fast and reliable API service.
+- New: "Super-Smush" your images with our intelligent multi-pass lossy compression. Get >60% average compression with almost no noticeable quality loss!
+- New: Keep a backup of your original un-smushed images in case you want to restore later.
+- UX/UI updated with overall stats, progress bar.
+
+1.1.1 - 2015-03-27 - Umesh Kumar
+----------------------------------------------------------------------
+- Updated: Use simplified meta queries
+
+1.1 - 2015-03-27 - Umesh Kumar
+----------------------------------------------------------------------
+- New:     New API Servers added for faster optimization
+- Fixed:   PHP warning for broken files
+
+1.0.3.1 - 2015-03-26 - Umesh Kumar
+----------------------------------------------------------------------
+- New:     Suggest manual smushing for smaller bulk request
+- New:     Allow media sorting in list view as per smush status
+- Updated: Bulk smush query
+- Updated: Wait time estimation
+
+1.0.3 - 2015-02-27 - Umesh Kumar
+----------------------------------------------------------------------
+- New:   Added constant 'WPMUDEV_APIKEY', to specify WPMU membership key explicitly
+- Fixed: Plugin activation issue in Multisite
+- Fixed: Decode URLs received from API to remove any encoded characters
+
+1.0.2 - 2015-02-03 - Umesh Kumar
+----------------------------------------------------------------------
+- Fixed: Use options instead of transient to fix W3TC object caching issue
+- New:   Modify email address for bulk smush notification
+
+1.0.1 - 2015-01-01 - Umesh Kumar
+----------------------------------------------------------------------
+- New:      CDN, suggestion to whitelist IP
+- New:      Use Ajax to check API status
+- New:      Limit concurrent pending single smush to 1000, to avoid hogging up of server resources
+- Fixed:    Db cleanup on uninstall
+- Fixed:    Remove unnecessary meta on install
+- Fixed:    Request status for removed bulk requests
+- Updated:  Allowed file types (JPEF, PNG, GIF )
+- Updated:  Wait Time reduced
+
+
+1.0 - 2014-11-24 - Saurabh Shukla, Umesh Kumar
+----------------------------------------------------------------------
+- First release
 
 == About Us ==
 WPMU DEV is a premium supplier of quality WordPress plugins and themes. For premium support with any WordPress related issues you can join us here:

@@ -1,0 +1,88 @@
+/* ****************************************************************************
+ * MODULE: Directory Smush styles.
+ */
+
+@include body-class {
+
+	.wp-smush-list-dialog {
+		// Remove border on focus.
+		.jqueryFileTree:focus {
+			outline: 0 solid transparent;
+		}
+	}
+
+	.wp-smush-scan-result {
+		// Remove border on focus.
+		.wp-smush-image-list-inner:focus {
+			outline: 0 solid transparent;
+		}
+	}
+
+	ul.jqueryFileTree {
+		color: #666;
+		font-family: "Roboto", sans-serif;
+		font-size: 13px;
+		font-weight: 500;
+		letter-spacing: -0.25px;
+		line-height: 20px;
+		padding: 0;
+		margin: 0;
+		display: none;
+
+		li {
+			line-height: 40px;
+			padding: 0 0 0 20px;
+			margin: 0;
+			white-space: nowrap;
+
+			a, a:hover {
+				color: #666 !important;
+				font-size: 13px;
+				cursor: pointer;
+				padding-left: 5px;
+			}
+
+			&.wait {
+				background: url('#{$img--path}/spinner.gif') left 10px no-repeat !important;
+			}
+
+			.ext_tif,
+			.ext_tif,
+			.ext_tiff,
+			.ext_png,
+			.ext_pcx,
+			.ext_jpeg,
+			.ext_jpg,
+			.ext_gif,
+			.ext_bmp {
+				background: url('#{$img--path}/image.svg') left 10px no-repeat;
+			}
+
+			&.directory {
+				background: url('#{$img--path}/folder-closed.svg') left 10px no-repeat;
+			}
+
+			&.expanded {
+				background: url('#{$img--path}/folder-open.svg') no-repeat left 10px;
+
+				& > a {
+					display: block;
+					background-color: #F8F8F8;
+					border-radius: 4px;
+				}
+
+				&.selected {
+					background: url('#{$img--path}/folder-open-selected.svg') left 10px no-repeat;
+
+					& > a,
+					li.directory,
+					li.file {
+						color: #17A8E3 !important;
+						background-color: #E1F6FF;
+					}
+				}
+			}
+		}
+	}
+
+}
