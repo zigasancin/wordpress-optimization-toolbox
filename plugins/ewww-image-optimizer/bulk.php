@@ -88,21 +88,21 @@ function ewww_image_optimizer_bulk_head_output() {
 		<div id="ewww-bulk-widgets" class="metabox-holder" style="display:none">
 			<div class="meta-box-sortables">
 				<div id="ewww-bulk-last" class="postbox">
-					<button type="button" class="handlediv button-link" aria-expanded="true">
+					<button type="button" class="ewww-handlediv button-link" aria-expanded="true">
 						<span class="screen-reader-text"><?php esc_html_e( 'Click to toggle', 'ewww-image-optimizer' ); ?></span>
-						<span class="toggle-indicator" aria-hidden="true"></span>
+						<span class="toggle-indicator" aria-hidden="false"></span>
 					</button>
-					<h2 class="hndle"><span><?php esc_html_e( 'Last Batch Optimized', 'ewww-image-optimizer' ); ?></span></h2>
+					<h2 class="ewww-hndle"><span><?php esc_html_e( 'Last Batch Optimized', 'ewww-image-optimizer' ); ?></span></h2>
 					<div class="inside"></div>
 				</div>
 			</div>
 			<div class="meta-box-sortables">
 				<div id="ewww-bulk-status" class="postbox">
-					<button type="button" class="handlediv button-link" aria-expanded="true">
+					<button type="button" class="ewww-handlediv button-link" aria-expanded="true">
 						<span class="screen-reader-text"><?php esc_html_e( 'Click to toggle', 'ewww-image-optimizer' ); ?></span>
-						<span class="toggle-indicator" aria-hidden="true"></span>
+						<span class="toggle-indicator" aria-hidden="false"></span>
 					</button>
-					<h2 class="hndle"><span><?php esc_html_e( 'Optimization Log', 'ewww-image-optimizer' ); ?></span></h2>
+					<h2 class="ewww-hndle"><span><?php esc_html_e( 'Optimization Log', 'ewww-image-optimizer' ); ?></span></h2>
 					<div class="inside"></div>
 				</div>
 			</div>
@@ -242,7 +242,7 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 			break;
 		case 'ngg':
 			// See if we were given attachment IDs to work with via GET/POST.
-			if ( ! empty( $_REQUEST['ewww_inline'] ) || get_option( 'ewww_image_optimizer_bulk_ngg_resume' ) ) {
+			if ( ! empty( $_REQUEST['doaction'] ) || get_option( 'ewww_image_optimizer_bulk_ngg_resume' ) ) {
 				// Retrieve the attachment IDs that were pre-loaded in the database.
 				$attachment_ids = get_option( 'ewww_image_optimizer_bulk_ngg_attachments' );
 				array_walk( $attachment_ids, 'intval' );
@@ -257,7 +257,8 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 			// Creating a database storage object from the 'registry' object.
 			$storage = $registry->get_utility( 'I_Gallery_Storage' );
 			// Get an array of sizes available for the $image.
-			$sizes  = $storage->get_image_sizes();
+			$sizes = $storage->get_image_sizes();
+			global $ewwwngg;
 			$offset = 0;
 			while ( $attachments = $wpdb->get_col( "SELECT meta_data FROM $wpdb->nggpictures $attachment_query LIMIT $offset, $max_query" ) ) { // WPCS: unprepared SQL ok.
 				foreach ( $attachments as $attachment ) {
@@ -273,8 +274,9 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 					if ( empty( $meta['ewww_image_optimizer'] ) ) {
 							$unoptimized_full++;
 					}
-					if ( ewww_image_optimizer_iterable( $sizes ) ) {
-						foreach ( $sizes as $size ) {
+					$ngg_sizes = $ewwwngg->maybe_get_more_sizes( $sizes, $meta );
+					if ( ewww_image_optimizer_iterable( $ngg_sizes ) ) {
+						foreach ( $ngg_sizes as $size ) {
 							if ( 'full' !== $size ) {
 								$resize_count++;
 								if ( empty( $meta[ $size ]['ewww_image_optimizer'] ) ) {
@@ -1645,7 +1647,9 @@ function ewww_image_optimizer_bulk_loop( $hook = '', $delay = 0 ) {
 	update_option( 'ewww_image_optimizer_bulk_attachments', $attachments, false );
 	if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_debug' ) ) {
 		global $ewww_debug;
-		$output['results'] .= '<div style="background-color:#ffff99;">' . $ewww_debug . '</div>';
+		$debug_button       = esc_html__( 'Show Debug Output', 'ewww-image-optimizer' );
+		$debug_id           = uniqid();
+		$output['results'] .= "<button type='button' class='ewww-show-debug-meta button button-secondary' data-id='$debug_id'>$debug_button</button><div class='ewww-debug-meta-$debug_id' style='background-color:#ffff99;display:none;'>$ewww_debug</div>";
 	}
 	if ( ! empty( $next_image->file ) ) {
 		$next_file = esc_html( $next_image->file );
