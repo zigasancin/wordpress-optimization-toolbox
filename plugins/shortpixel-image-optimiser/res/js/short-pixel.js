@@ -51,7 +51,7 @@ var ShortPixel = function() {
     }
     
     function isEmailValid(email) {
-        return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{1,63})+$/.test(email);
+        return /^\w+([\.+-]?\w+)*@\w+([\.-]?\w+)*(\.\w{1,63})+$/.test(email);
     }
     
     function updateSignupEmail() {
@@ -601,6 +601,15 @@ var ShortPixel = function() {
         jQuery(document).unbind('keyup.sp_modal_active');
     }
 
+    function convertPunycode(url) {
+        var parser = document.createElement('a');
+        parser.href = url;
+        if(url.indexOf(parser.protocol + '//' + parser.hostname) < 0) {
+            return parser.href;
+        }
+        return url.replace(parser.protocol + '//' + parser.hostname,  parser.protocol + '//' + parser.hostname.split('.').map(function(part) {return sp_punycode.toASCII(part)}).join('.'));
+    }
+
     return {
         init                : init,
         setOptions          : setOptions,
@@ -643,6 +652,7 @@ var ShortPixel = function() {
         loadComparer        : loadComparer,
         displayComparerPopup: displayComparerPopup,
         closeComparerPopup  : closeComparerPopup,
+        convertPunycode     : convertPunycode,
         comparerData        : {
             cssLoaded   : false,
             jsLoaded    : false,
@@ -736,9 +746,8 @@ function checkBulkProgress() {
     
     //handle possible Punycode domain names.
     if(url.search(adminUrl) < 0) {
-        var parser = document.createElement('a');
-        parser.href = url;
-        url = url.replace(parser.protocol + '//' + parser.hostname,  parser.protocol + '//' + parser.hostname.split('.').map(function(part) {return sp_punycode.toASCII(part)}).join('.'));
+        url = ShortPixel.convertPunycode(url);
+        adminUrl = ShortPixel.convertPunycode(adminUrl);
     }
     
     if(   url.search(adminUrl + "upload.php") < 0

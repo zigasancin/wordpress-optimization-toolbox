@@ -440,7 +440,7 @@ class ShortPixelCustomMetaDao {
         $filesWithErrors = array(); $moreFilesWithErrors = 0;
         foreach($failRows as $failLine) {
             if(count($filesWithErrors) < 50){
-                $filesWithErrors['C-' . $failLine->id] = array('Name' => $failLine->name, 'Message' => $failLine->message, 'Path' => $failLine->path);
+                $filesWithErrors['C-' . $failLine->id] = array('Id' => 'C-' . $failLine->id, 'Name' => $failLine->name, 'Message' => $failLine->message, 'Path' => $failLine->path);
             } else {
                 $moreFilesWithErrors++;
             }

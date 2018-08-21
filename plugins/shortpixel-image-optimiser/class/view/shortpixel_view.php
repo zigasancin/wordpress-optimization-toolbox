@@ -431,7 +431,7 @@ class ShortPixelView {
                                 if(ShortPixelMetaFacade::isCustomQueuedId($id)) {
                                     echo('<a href="'. ShortPixelMetaFacade::getHomeUrl() . ShortPixelMetaFacade::filenameToRootRelative($data['Path']).'" title="'.$data['Message'].'" target="_blank">'.$data['Name'].'</a>');
                                 } else {
-                                    echo('<a href="post.php?post='.$id.'&action=edit" title="'.$data['Message'].'">'.$data['Name'].'</a>');
+                                    echo('<a href="post.php?post='.$data['Id'].'&action=edit" title="'.$data['Message'].'">'.$data['Name'].'</a>');
                                 }
                             }
                             if(isset($quotaData['moreFilesWithErrors']) && $quotaData['moreFilesWithErrors']) {
@@ -507,6 +507,7 @@ class ShortPixelView {
                 </form>
             </div>
         <?php } ?>
+            <script>if(window.location.hash == '#pending') {jQuery('#bulkCleanupPending').css('display','')}</script>
         </div>
         <?php
     }
@@ -768,8 +769,10 @@ class ShortPixelView {
                     ShortPixel.adjustSettingsTabs();
                 });
                 if(window.location.hash) {
-                    var target = 'tab-' + window.location.hash.substring(window.location.hash.indexOf("#")+1)
-                    ShortPixel.switchSettingsTab(target);
+                    var target = ('tab-' + window.location.hash.substring(window.location.hash.indexOf("#")+1)).replace(/\//, '');
+                    if(jQuery("section#" + target).length) {
+                        ShortPixel.switchSettingsTab(target);
+                    }
                 }
                 jQuery("article.sp-tabs a.tab-link").click(function(){ShortPixel.switchSettingsTab(jQuery(this).data("id"))});
             });
@@ -1470,14 +1473,16 @@ class ShortPixelView {
                             </a> <?php 
                         } else {
                             if($data['status'] == 'retry') { ?>
-                            <a class="button button-smaller sp-action-restore" href="admin.php?action=shortpixel_restore_backup&attachment_ID=<?php echo($id)?>" style="margin-left:5px;"
-                                title="Cleanup the metadata and return the image to the status before the error.">
-                                <?php _e('Cleanup','shortpixel-image-optimiser');?>
-                            </a>
-                            <?php } ?>
-                            <a class='button button-smaller button-primary' href="javascript:manualOptimization('<?php echo($id)?>', false)">
-                                <?php _e('Retry','shortpixel-image-optimiser');?>
-                            </a>
+                            <div style="overflow:hidden">
+                                <a class="button button-smaller sp-action-restore" href="admin.php?action=shortpixel_restore_backup&attachment_ID=<?php echo($id)?>" style="margin-left:5px;"
+                                    title="Cleanup the metadata and return the image to the status before the error.">
+                                    <?php _e('Cleanup','shortpixel-image-optimiser');?>
+                                </a>
+                                <?php } ?>
+                                <a class='button button-smaller button-primary' href="javascript:manualOptimization('<?php echo($id)?>', false)">
+                                    <?php _e('Retry','shortpixel-image-optimiser');?>
+                                </a>
+                            </div>
                             <?php
                         }
                     break;
@@ -1508,9 +1513,7 @@ class ShortPixelView {
                                 . $excludeSizes . $missingThumbs;
                     }
 
-                    $this->renderListCell($id, $data['status'], $data['showActions'], 
-                            (!$data['thumbsOpt'] && $data['thumbsTotal']) //no thumb was optimized
-                            || (count($data['thumbsOptList']) && ($data['thumbsTotal'] - $data['thumbsOpt'] - $excluded   > 0)), $data['thumbsTotal'] - $data['thumbsOpt'],
+                    $this->renderListCell($id, $data['status'], $data['showActions'], $data['thumbsToOptimize'],
                             $data['backup'], $data['type'], $data['invType'], $successText);
                     
                     break;
@@ -1536,16 +1539,16 @@ class ShortPixelView {
                 .($retinasOpt ? '<br>' . sprintf(__('+%s Retina images optimized','shortpixel-image-optimiser') , $retinasOpt) : '' );
     }
     
-    public function renderListCell($id, $status, $showActions, $optimizeThumbs, $thumbsRemain, $backup, $type, $invType, $message, $extraClass = '') {
-        if($showActions && ($backup || $optimizeThumbs)) { ?>
+    public function renderListCell($id, $status, $showActions, $thumbsRemain, $backup, $type, $invType, $message, $extraClass = '') {
+        if($showActions && ($backup || $thumbsRemain)) { ?>
             <div class='sp-column-actions <?php echo($extraClass);?>'>
                 <div class="sp-dropdown">
-                    <button onclick="ShortPixel.openImageMenu(event);" class="sp-dropbtn button <?php if($optimizeThumbs) { echo('button-primary'); } ?> dashicons dashicons-menu" title="ShortPixel Actions"></button>
+                    <button onclick="ShortPixel.openImageMenu(event);" class="sp-dropbtn button <?php if($thumbsRemain) { echo('button-primary'); } ?> dashicons dashicons-menu" title="ShortPixel Actions"></button>
                     <div id="sp-dd-<?php echo($id);?>" class="sp-dropdown-content">
                         <?php if($backup && $status == 'imgOptimized') { ?>
                             <a class="sp-action-compare" href="javascript:ShortPixel.loadComparer('<?php echo($id);?>')" title="Compare optimized image with the original">Compare</a>
                         <?php } ?>
-                        <?php if($optimizeThumbs) { ?>
+                        <?php if($thumbsRemain) { ?>
                         <a class="sp-action-optimize-thumbs" href="javascript:optimizeThumbs(<?php echo($id)?>);" style="background-color:#0085ba;color:white;">
                             <?php printf(__('Optimize %s  thumbnails','shortpixel-image-optimiser'),$thumbsRemain);?>
                         </a>

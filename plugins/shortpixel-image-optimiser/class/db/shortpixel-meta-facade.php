@@ -191,8 +191,9 @@ class ShortPixelMetaFacade {
                 if($this->meta->getStatus() >= 0) {
                     unset($rawMeta['ShortPixel']['ErrCode']);
                 }
-                
-                wp_update_attachment_metadata($_ID, $rawMeta);
+
+                update_post_meta($_ID, '_wp_attachment_metadata', $rawMeta);
+                //wp_update_attachment_metadata($_ID, $rawMeta);
                 update_post_meta($_ID, '_shortpixel_status', $this->meta->getStatus());
 
                 if($_ID == $this->ID) {
@@ -221,7 +222,8 @@ class ShortPixelMetaFacade {
                 unset($rawMeta['ShortPixelPng2Jpg']);
             }
             unset($this->meta);
-            wp_update_attachment_metadata($this->ID, $rawMeta);
+            update_post_meta($this->ID, '_wp_attachment_metadata', $rawMeta);
+            //wp_update_attachment_metadata($this->ID, $rawMeta);
             $this->rawMeta = $rawMeta;
         } else {
             throw new Exception("Not implemented 1");
@@ -233,7 +235,8 @@ class ShortPixelMetaFacade {
             throw new Exception("Not implemented 1");
         } else {
             unset($this->rawMeta['ShortPixel']);
-            wp_update_attachment_metadata($this->ID, $this->rawMeta);
+            update_post_meta($this->ID, '_wp_attachment_metadata', $this->rawMeta);
+            //wp_update_attachment_metadata($this->ID, $this->rawMeta);
         }        
     }
 
@@ -245,7 +248,8 @@ class ShortPixelMetaFacade {
             unset($this->rawMeta['ShortPixel']);
             unset($this->rawMeta['ShortPixelPng2Jpg']);
             unset($this->meta);
-            wp_update_attachment_metadata($this->ID, $this->rawMeta);
+            update_post_meta($this->ID, '_wp_attachment_metadata', $this->rawMeta);
+            //wp_update_attachment_metadata($this->ID, $this->rawMeta);
         }
     }
 
@@ -273,7 +277,8 @@ class ShortPixelMetaFacade {
             } else {
                 unset($this->rawMeta['ShortPixel']['WaitingProcessing']);
             }
-            wp_update_attachment_metadata($this->ID, $this->rawMeta);
+            update_post_meta($this->ID, '_wp_attachment_metadata', $this->rawMeta);
+            //wp_update_attachment_metadata($this->ID, $this->rawMeta);
         }        
     }
     
@@ -290,7 +295,8 @@ class ShortPixelMetaFacade {
             $this->rawMeta['ShortPixelImprovement'] = $this->meta->getMessage();
             $this->rawMeta['ShortPixel']['ErrCode'] = $errorCode;
             unset($this->rawMeta['ShortPixel']['WaitingProcessing']);
-            wp_update_attachment_metadata($this->ID, $this->rawMeta);
+            update_post_meta($this->ID, '_wp_attachment_metadata', $this->rawMeta);
+            //wp_update_attachment_metadata($this->ID, $this->rawMeta);
         }        
     }
     
@@ -302,7 +308,8 @@ class ShortPixelMetaFacade {
         } else {
             $this->rawMeta['ShortPixelImprovement'] = $this->meta->getMessage();
             unset($this->rawMeta['ShortPixel']['WaitingProcessing']);
-            wp_update_attachment_metadata($this->ID, $this->rawMeta);
+            update_post_meta($this->ID, '_wp_attachment_metadata', $this->rawMeta);
+            //wp_update_attachment_metadata($this->ID, $this->rawMeta);
         }
     }
     
@@ -362,8 +369,7 @@ class ShortPixelMetaFacade {
                  &&*/ ($processThumbnails || $onlyThumbs) 
                  && count($sizes))
             {
-                $uploadDir = wp_upload_dir();
-                $Tmp = explode("/", $uploadDir['basedir']);
+                $Tmp = explode("/", SHORTPIXEL_UPLOADS_BASE);
                 $TmpCount = count($Tmp);
                 $StichString = $Tmp[$TmpCount-2] . "/" . $Tmp[$TmpCount-1];
                 
@@ -395,10 +401,10 @@ class ShortPixelMetaFacade {
                     
                     $origPath = $tPath = str_replace(ShortPixelAPI::MB_basename($path), $thumbnailInfo['file'], $path);
                     if ( !file_exists($tPath) ) {
-                        $tPath = $uploadDir['basedir'] . substr($tPath, strpos($tPath, $StichString) + strlen($StichString));
+                        $tPath = SHORTPIXEL_UPLOADS_BASE . substr($tPath, strpos($tPath, $StichString) + strlen($StichString));
                     }
                     if ( !file_exists($tPath) ) {
-                        $tPath = trailingslashit($uploadDir['basedir']) . $origPath;
+                        $tPath = trailingslashit(SHORTPIXEL_UPLOADS_BASE) . $origPath;
                     }
                     if (file_exists($tPath)) {
                         $tUrl = str_replace(ShortPixelAPI::MB_basename($url), $thumbnailInfo['file'], $url);
@@ -417,7 +423,7 @@ class ShortPixelMetaFacade {
                 WPShortPixel::log("getURLsAndPATHs: no meta sizes for ID " . $this->ID . " : " . json_encode($this->rawMeta));
             }
             
-            if($onlyThumbs && $mainExists && count($urlList) > 1) { //remove the main image
+            if($onlyThumbs && $mainExists && count($urlList) >= 1) { //remove the main image
                 array_shift($urlList);
                 array_shift($filePaths);
             }            
@@ -609,7 +615,11 @@ class ShortPixelMetaFacade {
      */
     static public function returnSubDir($file)
     {
-        $hp = wp_normalize_path(get_home_path());
+        $homePath = get_home_path();
+        if($homePath == '/') {
+            $homePath = ABSPATH;
+        }
+        $hp = wp_normalize_path($homePath);
         $file = wp_normalize_path($file);
         $sp__uploads = wp_upload_dir();
         if(strstr($file, $hp)) {
@@ -618,8 +628,8 @@ class ShortPixelMetaFacade {
             $path = str_replace( trailingslashit(dirname( WP_CONTENT_DIR )), "", $file);
         } elseif( (strstr(realpath($file), realpath($hp)))) {
             $path = str_replace( realpath($hp), "", realpath($file));
-        } elseif( strstr($file, trailingslashit(dirname(dirname( $sp__uploads['basedir'] )))) ) {
-            $path = str_replace( trailingslashit(dirname(dirname( $sp__uploads['basedir'] ))), "", $file);
+        } elseif( strstr($file, trailingslashit(dirname(dirname( SHORTPIXEL_UPLOADS_BASE )))) ) {
+            $path = str_replace( trailingslashit(dirname(dirname( SHORTPIXEL_UPLOADS_BASE ))), "", $file);
         } else {
             $path = (substr($file, 1));
         }
@@ -630,7 +640,7 @@ class ShortPixelMetaFacade {
 
     public static function isMediaSubfolder($path, $orParent = true) {
         $uploadDir = wp_upload_dir();
-        $uploadBase = $uploadDir["basedir"];
+        $uploadBase = SHORTPIXEL_UPLOADS_BASE;
         $uploadPath = $uploadDir["path"];
         //contains the current media upload path
         if($orParent && ShortPixelFolder::checkFolderIsSubfolder($uploadPath, $path)) {

@@ -35,7 +35,7 @@ class ShortPixelImgToPictureWebp {
                 $base = explode("://", $updir['baseurl']);
                 $updir['baseurl'] = $proto . "://" . $base[1];
             }
-            $imageBase = str_replace($updir['baseurl'], $updir['basedir'], $src);
+            $imageBase = str_replace($updir['baseurl'], SHORTPIXEL_UPLOADS_BASE, $src);
             if($imageBase == $src) {
                 return $match[0];
             }
@@ -77,7 +77,7 @@ class ShortPixelImgToPictureWebp {
             //add the exclude class so if this content is processed again in other filter, the img is not converted again in picture
             $img['class'] = (isset($img['class']) ? $img['class'] . " " : "") . "sp-no-webp";
             
-            return '<picture>'
+            return '<picture ' . $thisClass::create_attributes($img) . '>'
                       .'<source srcset="' . $srcsetWebP . '"' . ($sizes ? ' sizes="' . $sizes . '"' : '') . ' type="image/webp">'
                       .'<source srcset="' . $srcset . '"' . ($sizes ? ' sizes="' . $sizes . '"' : '') . '>'
                       .'<img src="' . $src . '" ' . $thisClass::create_attributes($img) . '>'

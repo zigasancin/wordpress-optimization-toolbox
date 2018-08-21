@@ -188,7 +188,7 @@ class WpShortPixelMediaLbraryAdapter {
                         if(count($filesWithErrors) < 50) {
                             $filePath = explode("/", $attachment["file"]);
                             $name = is_array($filePath)? $filePath[count($filePath) - 1] : $file->post_id;
-                            $filesWithErrors[$file->post_id] = array('Name' => $name, 'Message' => $attachment['ShortPixelImprovement']);
+                            $filesWithErrors[$file->post_id] = array('Id' => $file->post_id, 'Name' => $name, 'Message' => $attachment['ShortPixelImprovement']);
                         } else {
                             $moreFilesWithErrors++;
                         }

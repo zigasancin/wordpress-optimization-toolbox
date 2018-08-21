@@ -92,8 +92,7 @@ class ShortPixelFolder extends ShortPixelEntity{
     }    
     
     public function getFileList($onlyNewerThan = 0) {
-        $upl = wp_upload_dir();
-        $fileListPath = tempnam($upl["basedir"] . '/', 'sp_');
+        $fileListPath = tempnam(SHORTPIXEL_UPLOADS_BASE . '/', 'sp_');
         $fileHandle = fopen($fileListPath, 'w+');
         self::getFileListRecursive($this->getPath(), $fileHandle, $onlyNewerThan);
         fclose($fileHandle);

@@ -27,7 +27,7 @@ class ShortPixelQueue {
 
     public static function get() {
         $fp = self::openQ(LOCK_SH);
-        if(!$fp) return false;
+        if(!$fp) return array();
         $itemsRaw = fgets($fp);
         $items = strlen($itemsRaw) ? self::parseQ($itemsRaw) : array();
         self::closeQ($fp);
@@ -42,6 +42,7 @@ class ShortPixelQueue {
         fwrite($fp, implode(',', $items));
         fflush($fp);            // flush output before releasing the lock
         self::closeQ($fp);
+        return true;
     }
 
     public function apply($callable, $extra = false) {

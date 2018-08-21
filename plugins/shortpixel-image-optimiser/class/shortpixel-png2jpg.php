@@ -220,7 +220,8 @@ class ShortPixelPng2Jpg {
         }
         $meta['ShortPixel']['Retries'] = isset($meta['ShortPixel']['Retries']) ? $meta['ShortPixel']['Retries'] + 1 : 1;
         $meta['ShortPixel']['ErrCode'] = ShortPixelAPI::ERR_PNG2JPG_MEMORY;
-        wp_update_attachment_metadata($ID, $meta);
+        //wp_update_attachment_metadata($ID, $meta);
+        update_post_meta($ID, '_wp_attachment_metadata', $meta);
 
         if($this->_settings->png2jpg == 2) {
             $doConvert = true;
@@ -244,7 +245,8 @@ class ShortPixelPng2Jpg {
         unset($meta['ShortPixelImprovement']);
         unset($meta['ShortPixel']['ErrCode']);
         $meta['ShortPixel']['Retries'] -= 1;
-        wp_update_attachment_metadata($ID, $meta);
+        //wp_update_attachment_metadata($ID, $meta);
+        update_post_meta($ID, '_wp_attachment_metadata', $meta);
 
         if ($ret['type'] == 'image/jpeg') {
             $toUnlink[] = $retMain->unlink;
@@ -284,7 +286,8 @@ class ShortPixelPng2Jpg {
             $meta['ShortPixelPng2Jpg'] = array('originalFile' => $imagePath, 'originalSizes' => $originalSizes, 'originalSizes2' => $originalSizes,
                 'backup' => $this->_settings->backupImages,
                 'optimizationPercent' => round(100.0 * (1.00 - $jpgSize / $pngSize)));
-            wp_update_attachment_metadata($ID, $meta);
+            //wp_update_attachment_metadata($ID, $meta);
+            update_post_meta($ID, '_wp_attachment_metadata', $meta);
         }
 
         self::png2JpgUpdateUrls(array(), $toReplace);
@@ -313,7 +316,8 @@ class ShortPixelPng2Jpg {
             $meta['type'] = 'image/jpeg';
             if($parentID == $ID) $parentMeta = $meta;
             update_attached_file($ID, $meta['file']);
-            wp_update_attachment_metadata($ID, $meta);
+            //wp_update_attachment_metadata($ID, $meta);
+            update_post_meta($ID, '_wp_attachment_metadata', $meta);
         }
         return $duplicates;
     }
@@ -331,7 +335,8 @@ class ShortPixelPng2Jpg {
             $meta['sizes'][$size]['file'] = wp_basename($thumbnail);
             $meta['sizes'][$size]['mime-type'] = 'image/jpeg';
             if($parentID == $ID) $parentMeta = $meta;
-            wp_update_attachment_metadata($ID, $meta);
+            //wp_update_attachment_metadata($ID, $meta);
+            update_post_meta($ID, '_wp_attachment_metadata', $meta);
         }
     }
 

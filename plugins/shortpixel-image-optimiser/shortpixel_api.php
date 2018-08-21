@@ -82,7 +82,17 @@ class ShortPixelAPI {
     public function doRequests($URLs, $Blocking, $itemHandler, $compressionType = false, $refresh = false) {
         
         if(!count($URLs)) {
-            throw new Exception(__('Image files are missing.','shortpixel-image-optimiser'));
+            $meta = $itemHandler->getMeta();
+            $files = " (";
+            if(count($meta->getThumbsMissing())) {
+                foreach ($meta->getThumbsMissing() as $miss) {
+                    $files .= $miss . ", ";
+                }
+                if(strrpos($files, ', ')) {
+                    $files = substr_replace($files , ')', strrpos($files , ', '));
+                }
+            }
+            throw new Exception(__('Image files are missing.' . (strlen($files) > 1 ? $files : '') ,'shortpixel-image-optimiser'));
         }
 
         //WpShortPixel::log("DO REQUESTS for META: " . json_encode($itemHandler->getRawMeta()) . " STACK: " . json_encode(debug_backtrace()));
@@ -97,14 +107,19 @@ class ShortPixelAPI {
             'resize' => $this->_settings->resizeImages ? 1 + 2 * ($this->_settings->resizeType == 'inner' ? 1 : 0) : 0,
             'resize_width' => $this->_settings->resizeWidth,
             'resize_height' => $this->_settings->resizeHeight,
+            'group_id' => $itemHandler->getId(),
             'urllist' => $URLs
         );
         if($refresh) {
             $requestParameters['refresh'] = 1;
         }
 
+        //WpShortPixel::log("DO REQUESTS SENDING: " . json_encode($requestParameters));
+
         $response = wp_remote_post($this->_apiEndPoint, $this->prepareRequest($requestParameters, $Blocking) );
-        
+
+        //WpShortPixel::log('RESPONSE: ' . json_encode($response));
+
         //only if $Blocking is true analyze the response
         if ( $Blocking )
         {
@@ -252,7 +267,7 @@ class ShortPixelAPI {
                     //return array("Status" => self::STATUS_FAIL, "Message" => "There was an error and your request was not processed (" . $APIresponse[0]->Status->Message . "). REQ: " . json_encode($URLs));                
                     $err = array("Status" => self::STATUS_FAIL, "Code" => (isset($APIresponse[0]->Status->Code) ? $APIresponse[0]->Status->Code : self::ERR_UNKNOWN), 
                                  "Message" => __('There was an error and your request was not processed.','shortpixel-image-optimiser') 
-                                              . " (" . $APIresponse[0]->Status->Message . ")");                
+                                              . " (" . wp_basename($APIresponse[0]->OriginalURL) . ": " . $APIresponse[0]->Status->Message . ")");
                 } else {
                     $err = array("Status" => self::STATUS_FAIL, "Message" => __('There was an error and your request was not processed.','shortpixel-image-optimiser'),
                                  "Code" => (isset($APIresponse[0]->Status->Code) ? $APIresponse[0]->Status->Code : self::ERR_UNKNOWN));
@@ -318,7 +333,13 @@ class ShortPixelAPI {
 
 
     }
-    
+
+    function downloadAll($target) {
+        //TODO DOCS
+        //http://php.net/manual/en/phardata.buildfromiterator.php
+        //http://php.net/manual/en/phardata.extractto.php
+    }
+
     /**
      * handles the download of an optimized image from ShortPixel API
      * @param type $fileData - info about the file
@@ -332,14 +353,12 @@ class ShortPixelAPI {
             $fileType = "LossyURL";
             $fileSize = "LossySize";
             $webpType = "WebPLossyURL";
-            $webpSize = "WebPLossySize";
-        }    
+        }
         else
         {
             $fileType = "LosslessURL";
             $fileSize = "LoselessSize";
             $webpType = "WebPLosslessURL";
-            $webpSize = "WebPLosslessSize";
         }
         
         $downloadTimeout = max(ini_get('max_execution_time') - 10, 15);        
@@ -653,8 +672,7 @@ class ShortPixelAPI {
     static public function CheckAndFixImagePaths($PATHs){
 
         $ErrorCount = 0;
-        $uploadDir = wp_upload_dir();
-        $Tmp = explode("/", $uploadDir['basedir']);
+        $Tmp = explode("/", SHORTPIXEL_UPLOADS_BASE);
         $TmpCount = count($Tmp);
         $StichString = $Tmp[$TmpCount-2] . "/" . $Tmp[$TmpCount-1];
         //files exist on disk?
@@ -664,11 +682,11 @@ class ShortPixelAPI {
             //we try again with a different path
             if ( !file_exists($File) ){
                 //$NewFile = $uploadDir['basedir'] . "/" . substr($File,strpos($File, $StichString));//+strlen($StichString));
-                $NewFile = $uploadDir['basedir'] . substr($File,strpos($File, $StichString)+strlen($StichString));
+                $NewFile = SHORTPIXEL_UPLOADS_BASE . substr($File,strpos($File, $StichString)+strlen($StichString));
                 if (file_exists($NewFile)) {
                     $PATHs[$Id] = $NewFile;
                 } else {
-	            $NewFile = $uploadDir['basedir'] . "/" . $File;
+	            $NewFile = SHORTPIXEL_UPLOADS_BASE . "/" . $File;
                     if (file_exists($NewFile)) {
                         $PATHs[$Id] = $NewFile;
                     } else {

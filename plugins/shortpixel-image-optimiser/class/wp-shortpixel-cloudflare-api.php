@@ -105,7 +105,7 @@ class ShortPixelCloudFlareApi {
             if ( ! empty( $image_url_for_purge ) ) {
                 $prepare_request_info['files'] = $image_url_for_purge;
                 // Encode the data into JSON before send
-                $dispatch_purge_info = wp_json_encode( $prepare_request_info );
+                $dispatch_purge_info = function_exists('wp_json_encode') ? wp_json_encode( $prepare_request_info ) : json_encode( $prepare_request_info );
                 // Set headers for remote API to authenticate for the request
                 $dispatch_header = array(
                     'X-Auth-Email: ' . $cloudflare_auth_email,

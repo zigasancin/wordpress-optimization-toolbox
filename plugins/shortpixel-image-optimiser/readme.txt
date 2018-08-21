@@ -4,7 +4,7 @@ Tags: compress, image, compression, optimize, image optimizer, image optimiser, 
 Requires at least: 3.2.0
 Tested up to: 4.9
 Requires PHP: 5.2
-Stable tag: 4.11.0
+Stable tag: 4.11.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -241,6 +241,25 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 
 == Changelog ==
 
+= 4.11.2 =
+* Fix not saving properly the metadata on some situations
+
+= 4.11.1 =
+* compatibility with the MediaPress plugin
+* new action to be called by when thumbnails are regenerated: shortpixel-thumbnails-regenerated
+* accept '+' inside the e-mail address
+* fix optimization not working on internationalized domain names
+* better count of the not optimized thumbs for an image, in some circumstances
+* fallback to ABSPATH when get_home_path() returns '/'
+* fix settings tabs navigation when url ends with #/
+* extract all release notes < 4.9 from readme.txt into changelog.txt
+* display the thumbnail name for some errors which refer only to a specific thumbnail.
+* use update_post_meta() instead of wp_update_attachment_metadata() for cases when other plugins cannot be concerned by the meta change (specific to ShortPixel)
+* add the attributes of the original <img> to the <picture> replacement tag, in case the "Generate WebP Markup" option is active.
+* fix action buttons in media edit view overflowing their box
+* restore full compatibility with WP < 4.1 by checking first before using wp_json_encode
+* fix admin when domain is internationalized but the setting in admin uses the punycode-encrypted version
+
 = 4.11.0 =
 * add bulk menu options: restore, reoptimize
 * filter the media list by optimization status
@@ -299,4 +318,4 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 * display the x close link for the bulk warning box.
 
 = EARLIER VERSIONS =
-* please refer to the changelog.txt file
+* please refer to the changelog.txt file inside the plugin archive.
