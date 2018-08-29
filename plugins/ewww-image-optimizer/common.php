@@ -29,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '431.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '432.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
@@ -194,6 +194,10 @@ register_uninstall_hook( EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE, 'ewww_image_optimizer
 add_action( 'shutdown', 'ewww_image_optimizer_debug_log' );
 // If ExactDN is enabled.
 if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) && empty( $_GET['exactdn_disable'] ) ) {
+	/**
+	 * Page Parsing class for working with HTML content.
+	 */
+	require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'classes/class-ewwwio-page-parser.php' );
 	/**
 	 * ExactDN class for parsing image urls and rewriting them.
 	 */
@@ -4284,7 +4288,12 @@ function ewww_image_optimizer_autoconvert( $file ) {
 		return;
 	}
 	$orig_size = ewww_image_optimizer_filesize( $file );
-	if ( $orig_size < 350000 ) {
+	if ( $orig_size < 300000 ) {
+		ewwwio_debug_message( 'not a large PNG, skipping' );
+		return;
+	}
+	if ( ewww_image_optimizer_png_alpha( $file ) && ! ewww_image_optimizer_jpg_background() ) {
+		ewwwio_debug_message( 'alpha detected, skipping' );
 		return;
 	}
 	$ewww_image = new EWWW_Image( 0, '', $file );

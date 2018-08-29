@@ -5,7 +5,7 @@ Tags: image, compress, resize, optimize, optimization, lossless, lossy, seo, web
 Requires at least: 4.6
 Tested up to: 4.9
 Requires PHP: 5.4
-Stable tag: 4.3.1
+Stable tag: 4.3.2
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -173,6 +173,11 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 
 * Feature requests can be submitted via https://ewww.io/contact-us/ and commented on here: https://trello.com/b/Fp81dWof/ewww-image-optimizer
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
+
+= 4.3.2 =
+* changed: prevent dynamic JS/CSS urls within wp-admin/ from being rewritten by ExactDN
+* fixed: auto-convert PNG to JPG was running on images with transparency
+* fixed: Alt WebP broken on sites that have jquery-migrate disabled
 
 = 4.3.1 =
 * fixed: fatal error on older WP versions due to missing privacy policy function
