@@ -51,7 +51,7 @@ if ( ! class_exists( 'WpSmushCDN' ) ) {
 			add_action( 'smush_cdn_settings_ui', array( $this, 'ui' ) );
 
 			// Add cdn url to dns prefetch.
-			add_filter( 'wp_resource_hints', array ( $this, 'dns_prefetch' ), 99, 2 );
+			add_filter( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 99, 2 );
 		}
 
 		/**

@@ -247,12 +247,12 @@ class WP_Smush {
 		// Initialize variables.
 		$this->initialise();
 
-		// Localize version, Update.
+		// Localize version, update.
 		$this->getOptions();
 
 		// Create a clas object, if doesn't exists.
-		if ( empty( $wpsmush_dir ) && class_exists( 'WpSmushDir' ) ) {
-			$wpsmush_dir = new WpSmushDir();
+		if ( empty( $wpsmush_dir ) && class_exists( 'WP_Smush_Dir' ) ) {
+			$wpsmush_dir = new WP_Smush_Dir();
 		}
 
 		// Run only on wp smush page.
@@ -1006,14 +1006,18 @@ class WP_Smush {
 	}
 
 	/**
-	 * Returns api key
+	 * Returns api key.
 	 *
 	 * @return mixed
 	 */
 	function _get_api_key() {
+		$api_key = false;
+
+		// If API key defined manually, get that.
 		if ( defined( 'WPMUDEV_APIKEY' ) && WPMUDEV_APIKEY ) {
 			$api_key = WPMUDEV_APIKEY;
-		} else {
+		} elseif ( class_exists( 'WPMUDEV_Dashboard' ) ) {
+			// If dashboard plugin is active, get API key from db.
 			$api_key = get_site_option( 'wpmudev_apikey' );
 		}
 
@@ -1600,6 +1604,7 @@ class WP_Smush {
 		//Load Nextgen lib, and initialize wp smush async class
 		$this->load_nextgen();
 		$this->wp_smush_async();
+		$this->load_gutenberg();
 	}
 
 	/**
@@ -1618,14 +1623,14 @@ class WP_Smush {
 			$opt_nextgen_val = $wpsmush_settings->get_setting( $opt_nextgen, false );
 		}
 
-		require_once( WP_SMUSH_DIR . '/lib/class-wp-smush-nextgen.php' );
+		require_once( WP_SMUSH_DIR . '/lib/integrations/class-wp-smush-nextgen.php' );
 		// Do not continue if integration not enabled or not a pro user.
 		if ( ! $opt_nextgen_val || ! $this->validate_install() ) {
 			return;
 		}
-		require_once( WP_SMUSH_DIR . '/lib/nextgen-integration/class-wp-smush-nextgen-admin.php' );
-		require_once( WP_SMUSH_DIR . '/lib/nextgen-integration/class-wp-smush-nextgen-stats.php' );
-		require_once( WP_SMUSH_DIR . '/lib/nextgen-integration/class-wp-smush-nextgen-bulk.php' );
+		require_once( WP_SMUSH_DIR . '/lib/integrations/nextgen/class-wp-smush-nextgen-admin.php' );
+		require_once( WP_SMUSH_DIR . '/lib/integrations/nextgen/class-wp-smush-nextgen-stats.php' );
+		require_once( WP_SMUSH_DIR . '/lib/integrations/nextgen/class-wp-smush-nextgen-bulk.php' );
 
 		global $wpsmushnextgen, $wpsmushnextgenadmin, $wpsmushnextgenstats;
 		//Initialize Nextgen support
@@ -1635,6 +1640,17 @@ class WP_Smush {
 		$wpsmushnextgenstats = new WpSmushNextGenStats();
 		$wpsmushnextgenadmin = new WpSmushNextGenAdmin();
 		new WPSmushNextGenBulk();
+	}
+
+	/**
+	 * Load Gutenberg integration.
+	 *
+	 * @since 2.8.1
+	 */
+	private function load_gutenberg() {
+		require_once WP_SMUSH_DIR . '/lib/integrations/class-wp-smush-gutenberg.php';
+
+		new WP_Smush_Gutenberg();
 	}
 
 	/**
@@ -2291,7 +2307,7 @@ class WP_Smush {
 	 */
 	function wp_smush_async() {
 		// Include Smush Async class.
-		require_once WP_SMUSH_DIR . 'lib/class-wp-smush-s3.php';
+		require_once WP_SMUSH_DIR . 'lib/integrations/class-wp-smush-s3.php';
 
 		//Don't load the Async task, if user not logged in or not in backend
 		if ( ! is_admin() || ! is_user_logged_in() ) {
@@ -2585,6 +2601,12 @@ class WP_Smush {
 			'<p>'.__( 'Note: Smush does not interact with end users on your website. The only input option Smush has is to a newsletter subscription for site admins only. If you would like to notify your users of this in your privacy policy, you can use the information below.', 'wp-smushit' ) . '</p>';
 		$content .=
 			'<p>'. __( 'Smush sends images to the WPMU DEV servers to optimize them for web use. This includes the transfer of EXIF data. The EXIF data will either be stripped or returned as it is. It is not stored on the WPMU DEV servers.', 'wp-smushit' ) . '</p>';
+		$content .=
+			'<p>' . sprintf(
+				__( "Smush uses the Stackpath Content Delivery Network (CDN). Stackpath may store web log information of site visitors, including IPs, UA, referrer, Location and ISP info of site visitors for 7 days. Files and images served by the CDN may be stored and served from countries other than your own. Stackpath's privacy policy can be found %shere%s.", 'wp-smushit' ),
+				'<a href="https://www.stackpath.com/legal/privacy-statement/" target="_blank">',
+				'</a>'
+			) . '</p>';
 
 		$dir_path = get_plugin_dir();
 		if ( strpos( $dir_path, 'wp-smushit' ) !== false ) {

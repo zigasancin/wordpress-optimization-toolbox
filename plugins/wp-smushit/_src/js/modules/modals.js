@@ -1,3 +1,7 @@
+/**
+ * Modals JavaScript code.
+ */
+
 ( function ( $ ) {
 	'use strict';
 

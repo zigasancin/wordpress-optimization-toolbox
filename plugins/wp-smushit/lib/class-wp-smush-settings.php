@@ -20,6 +20,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 			'nextgen'     => 0,
 			's3'          => 0,
 			'detection'   => 0,
+			'gutenberg'   => 0,
 		);
 
 		/**
@@ -45,6 +46,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 * @var array
 		 */
 		var $integration_fields = array(
+			'gutenberg',
 			'nextgen',
 			's3',
 		);

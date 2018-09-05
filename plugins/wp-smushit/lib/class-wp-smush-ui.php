@@ -316,6 +316,11 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 												<span class="sui-toggle-slider"></span>
 											</label>
 										</div>
+										<?php if ( 'resize' === $name ) { // Add resize width and height setting. ?>
+											<div class="wp-smush-resize-settings-col">
+												<?php $this->resize_settings( $name, 'quick-setup-' ); ?>
+											</div>
+										<?php } ?>
 									</div>
 									<?php
 								} ?>
@@ -447,15 +452,22 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 
 			echo '</div>';
 
+			/**
+			 * Filter to enable/disable submit button in integration settings.
+			 *
+			 * @param bool $show_submit Should show submit?
+			 */
+			$show_submit = apply_filters( 'wp_smush_integration_show_submit', false );
+
 			// Box footer content including buttons.
 			$div_end = '<span class="wp-smush-submit-wrap">
-				<input type="submit" id="wp-smush-save-settings" class="sui-button sui-button-primary" aria-describedby="smush-submit-description" value="' . esc_html__( 'UPDATE SETTINGS', 'wp-smushit' ) . '" ' . disabled( ! $is_pro, true, false ) . '>
+				<input type="submit" id="wp-smush-save-settings" class="sui-button sui-button-primary" aria-describedby="smush-submit-description" value="' . esc_html__( 'UPDATE SETTINGS', 'wp-smushit' ) . '" ' . disabled( ! $show_submit, true, false ) . '>
 		        <span class="sui-icon-loader sui-loading sui-hidden"></span>
 		        <span class="smush-submit-note" id="smush-submit-description">' . esc_html__( 'Smush will automatically check for any images that need re-smushing.', 'wp-smushit' ) . '</span>
 		        </span>';
 
 			// Container footer if pro.
-			if ( $is_pro ) {
+			if ( $show_submit ) {
 				$this->container_footer( '', $div_end );
 			}
 			echo '</div>';
@@ -469,8 +481,6 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 		/**
 		 * Outputs the smush stats for the site.
 		 *
-		 * @todo Implement this
-		 *
 		 * @return void
 		 */
 		public function smush_stats_container() {
@@ -482,6 +492,10 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 			$resize_count   = $wpsmush_db->resize_savings( false, false, true );
 			$resize_count   = ! $resize_count ? 0 : $resize_count;
 			$remaining      = $wpsmushit_admin->remaining_count;
+			// Split human size to get format and size.
+			$human = explode( ' ', $wpsmushit_admin->stats['human'] );
+			$human_size = empty( $human[ 0 ] ) ? '0' : $human[ 0 ];
+			$human_format = empty( $human[ 1 ] ) ? 'B' : $human[ 1 ];
 			?>
 
 			<div class="sui-box sui-summary sui-summary-smush">
@@ -489,20 +503,20 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 				</div>
 				<div class="sui-summary-segment">
 					<div class="sui-summary-details">
-						<span class="sui-summary-large wp-smush-stats-human"><?php echo $wpsmushit_admin->stats['human_size']; ?></span>
+						<span class="sui-summary-large wp-smush-stats-human"><?php echo $human_size; ?></span>
 						<i class="sui-icon-info sui-warning smush-stats-icon <?php echo $remaining > 0 ? '' : 'sui-hidden'; ?>" aria-hidden="true"></i>
 						<span class="sui-summary-detail wp-smush-savings">
-							<span class="wp-smush-stats-human"><?php echo $wpsmushit_admin->stats['human_format']; ?></span> /
+							<span class="wp-smush-stats-human"><?php echo $human_format; ?></span> /
 							<span class="wp-smush-stats-percent"><?php echo $wpsmushit_admin->stats['percent'] > 0 ? number_format_i18n( $wpsmushit_admin->stats['percent'], 1, '.', '' ) : 0; ?></span>%
 						</span>
 						<span class="sui-summary-sub"><?php _e( 'Total Savings', 'wp-smushit' ); ?></span>
 						<span class="smushed-items-count">
-							<span class="smush-align-left wp-smush-count-total">
+							<span class="wp-smush-count-total">
 								<span class="sui-summary-detail wp-smush-total-optimised"><?php echo $wpsmushit_admin->stats['total_images']; ?></span>
 								<span class="sui-summary-sub"><?php _e( 'Images Smushed', 'wp-smushit' ); ?></span>
 							</span>
 							<?php if ( $resize_count > 0 ) { ?>
-								<span class="smush-align-right wp-smush-count-resize-total">
+								<span class="wp-smush-count-resize-total">
 									<span class="sui-summary-detail wp-smush-total-optimised"><?php echo $resize_count; ?></span>
 									<span class="sui-summary-sub"><?php _e( 'Images Resized', 'wp-smushit' ); ?></span>
 								</span>
@@ -770,9 +784,8 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 				<?php if ( is_multisite() && is_network_admin() ) : ?>
 					<input type="hidden" name="wp-smush-networkwide" id="wp-smush-networkwide" value="1">
 					<input type="hidden" name="setting-type" value="network">
-				<?php endif; ?>
+				<?php endif;
 
-				<?php
 				wp_nonce_field( 'save_wp_smush_options', 'wp_smush_options_nonce', '', true );
 
 				// For subsite admins show only if networkwide options is not enabled.
@@ -780,30 +793,14 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 					foreach ( $this->intgration_group as $name ) {
 						// Settings key.
 						$setting_m_key = WP_SMUSH_PREFIX . $name;
+						// Disable setting.
+						$disable = apply_filters( 'wp_smush_integration_status_' . $name, false );
+						// Gray out row, disable setting.
+						$upsell = ( ! in_array( $name, $wpsmushit_admin->basic_features ) && ! $wp_smush->validate_install() );
 						// Current setting value.
-						$setting_val = empty( $settings[ $name ] ) ? 0 : $settings[ $name ];
+						$setting_val = ( $upsell || empty( $settings[ $name ] ) || $disable ) ? 0 : $settings[ $name ];
 						// Current setting label.
 						$label = ! empty( $wpsmushit_admin->settings[ $name ]['short_label'] ) ? $wpsmushit_admin->settings[ $name ]['short_label'] : $wpsmushit_admin->settings[ $name ]['label'];
-
-						// If we don't have free or pro version for WP Offload S3, disable.
-						$disable = false;
-						if ( 's3' === $name && ! class_exists( 'Amazon_S3_And_CloudFront' ) && ! class_exists( 'Amazon_S3_And_CloudFront_Pro' ) ) {
-							$disable = true;
-							$setting_val = 0;
-						}
-
-						// If we don't have NextGen Gallery installed, disable.
-						if ( 'nextgen' === $name && ! class_exists( 'C_NextGEN_Bootstrap' ) ) {
-							$disable = true;
-							$setting_val = 0;
-						}
-
-						// Gray out row, disable setting.
-						$upsell = false;
-						if ( ! $wp_smush->validate_install() ) {
-							$upsell = true;
-							$setting_val = 0;
-						}
 
 						// Show settings option.
 						$this->settings_row( $setting_m_key, $label, $name, $setting_val, true, $disable, $upsell );
@@ -872,7 +869,17 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 			?>
 			<div class="sui-box-settings-row wp-smush-basic <?php echo $upsell ? 'sui-disabled' : ''; ?>">
 				<div class="sui-box-settings-col-1">
-					<span class="sui-settings-label"><?php echo $label; ?></span>
+					<span class="sui-settings-label">
+						<?php echo $label; ?>
+						<?php if ( 'gutenberg' === $name ) : ?>
+							<span class="sui-tag sui-tag-beta sui-tooltip sui-tooltip-constrained"
+								  data-tooltip="<?php esc_attr_e( 'This feature is likely to work without issue, however Gutenberg is in beta stage and some issues are still present.', 'wp-smushit' ); ?>"
+							>
+								<?php esc_html_e( 'Beta', 'wp-smushit' ); ?>
+							</span>
+						<?php endif; ?>
+					</span>
+
 					<span class="sui-description">
 						<?php echo $wpsmushit_admin->settings[ $name ]['desc']; ?>
 					</span>
@@ -1068,13 +1075,21 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 		 * @param object $count
 		 */
 		public function progress_bar( $count ) {
-
 			$smushed_pc = 0;
 			if ( $count->total_count > 0 && $count->smushed_count > 0 ) {
 				$smushed_pc = $count->smushed_count / $count->total_count * 100;
 			} ?>
 			<div class="wp-smush-bulk-progress-bar-wrapper sui-hidden">
-				<p class="wp-smush-bulk-active roboto-medium"><?php printf( esc_html__( '%sBulk smush is currently running.%s You need to keep this page open for the process to complete.', 'wp-smushit' ), '<strong>', '</strong>' ); ?></p>
+				<p class="wp-smush-bulk-active roboto-medium">
+					<?php printf(
+						esc_html__( '%sBulk smush is currently running.%s You need to keep this page open for the process to complete.', 'wp-smushit' ),
+						'<strong>',
+						'</strong>'
+					); ?>
+				</p>
+
+				<div class="sui-notice sui-notice-warning smush-final-log sui-hidden"></div>
+
 				<div class="sui-progress-block sui-progress-can-close">
 					<div class="sui-progress">
 						<div class="sui-progress-text sui-icon-loader sui-loading">
@@ -1088,8 +1103,19 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 						<i class="sui-icon-close"></i>
 					</button>
 				</div>
-			</div>
-			<div class="smush-final-log notice notice-warning inline sui-hidden"></div><?php
+
+				<div class="sui-progress-state">
+					<span class="sui-progress-state-text">
+						<span><?php echo absint( $count->smushed_count ); ?>/<?php echo absint( $count->total_count ); ?></span> <?php esc_html_e( 'images optimized', 'wp-smushit' ); ?>
+					</span>
+				</div>
+
+				<div class="sui-box-body sui-no-padding-right sui-hidden">
+					<button type="button" class="wp-smush-all wp-smush-button sui-button wp-smush-started">
+						<?php esc_html_e( 'RESUME', 'wp-smushit' ); ?>
+					</button>
+				</div>
+			</div><?php
 		}
 
 		/**
@@ -1515,11 +1541,12 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 		/**
 		 * Prints Dimensions required for Resizing
 		 *
-		 * @param string $name
+		 * @param string $name Setting name.
+		 * @param string $class_prefix Custom class prefix.
 		 *
 		 * @return void
 		 */
-		public function resize_settings( $name = '' ) {
+		public function resize_settings( $name = '', $class_prefix = '' ) {
 			// Add only to full size settings.
 			if ( 'resize' !== $name ) {
 				return;
@@ -1533,6 +1560,9 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 				'height' => ''
 			) );
 
+			// Set default prefix is custom prefix is empty.
+			$prefix = empty( $class_prefix ) ? WP_SMUSH_PREFIX : $class_prefix;
+
 			//Get max dimensions.
 			$max_sizes = $wpsmushit_admin->get_max_image_dimensions();
 
@@ -1543,19 +1573,22 @@ if ( ! class_exists( 'WpSmushBulkUi' ) ) {
 			<div class="wp-smush-resize-settings-wrap<?php echo $setting_status ? '' : ' sui-hidden' ?>">
 				<div class="sui-row">
 					<div class="sui-col">
-						<label aria-labelledby="<?php echo WP_SMUSH_PREFIX; ?>label-max-width" for="<?php echo WP_SMUSH_PREFIX . $name . '_width'; ?>" class="sui-label"><?php esc_html_e( 'Max width', 'wp-smushit' ); ?></label>
-						<input aria-required="true" type="number" aria-describedby="<?php echo WP_SMUSH_PREFIX; ?>wp-smush-resize-note" id="<?php echo WP_SMUSH_PREFIX . $name . '_width'; ?>" name="<?php echo WP_SMUSH_PREFIX . $name . '_width'; ?>" class="sui-form-control wp-smush-resize-input" value="<?php echo isset( $resize_sizes['width'] ) && '' != $resize_sizes['width'] ? $resize_sizes['width'] : $p_width; ?>">
+						<label aria-labelledby="<?php echo $prefix; ?>label-max-width" for="<?php echo $prefix . $name . '_width'; ?>" class="sui-label"><?php esc_html_e( 'Max width', 'wp-smushit' ); ?></label>
+						<input aria-required="true" type="number" aria-describedby="<?php echo $prefix; ?>resize-note" id="<?php echo $prefix . $name . '_width'; ?>" name="<?php echo WP_SMUSH_PREFIX . $name . '_width'; ?>" class="sui-form-control wp-smush-resize-input" value="<?php echo isset( $resize_sizes['width'] ) && '' != $resize_sizes['width'] ? $resize_sizes['width'] : $p_width; ?>">
 					</div>
 					<div class="sui-col">
-						<label aria-labelledby="<?php echo WP_SMUSH_PREFIX; ?>label-max-height" for="<?php echo WP_SMUSH_PREFIX . $name . '_height'; ?>" class="sui-label"><?php esc_html_e( 'Max height', 'wp-smushit' ); ?></label>
-						<input aria-required="true" type="number" aria-describedby="<?php echo WP_SMUSH_PREFIX; ?>wp-smush-resize-note" id="<?php echo WP_SMUSH_PREFIX . $name . '_height'; ?>" name="<?php echo WP_SMUSH_PREFIX . $name . '_height'; ?>" class="sui-form-control wp-smush-resize-input" value="<?php echo isset( $resize_sizes['height'] ) && '' != $resize_sizes['height'] ? $resize_sizes['height'] : $p_height; ?>">
+						<label aria-labelledby="<?php echo $prefix; ?>label-max-height" for="<?php echo $prefix . $name . '_height'; ?>" class="sui-label"><?php esc_html_e( 'Max height', 'wp-smushit' ); ?></label>
+						<input aria-required="true" type="number" aria-describedby="<?php echo $prefix; ?>resize-note" id="<?php echo $prefix . $name . '_height'; ?>" name="<?php echo WP_SMUSH_PREFIX . $name . '_height'; ?>" class="sui-form-control wp-smush-resize-input" value="<?php echo isset( $resize_sizes['height'] ) && '' != $resize_sizes['height'] ? $resize_sizes['height'] : $p_height; ?>">
 					</div>
 				</div>
-				<div class="sui-description" id="<?php echo WP_SMUSH_PREFIX; ?>wp-smush-resize-note"><?php printf( esc_html__( "Currently, your largest image size is set at %s%dpx wide %s %dpx high%s.", "wp-smushit" ), '<strong>', $max_sizes['width'], '&times;', $max_sizes['height'], '</strong>' ); ?></div>
+				<div class="sui-description" id="<?php echo $prefix; ?>resize-note"><?php printf( esc_html__( "Currently, your largest image size is set at %s%dpx wide %s %dpx high%s.", "wp-smushit" ), '<strong>', $max_sizes['width'], '&times;', $max_sizes['height'], '</strong>' ); ?></div>
 				<div class="sui-description sui-notice sui-notice-info wp-smush-update-width sui-hidden" tabindex="0"><?php esc_html_e( "Just to let you know, the width you've entered is less than your largest image and may result in pixelation.", "wp-smushit" ); ?></div>
 				<div class="sui-description sui-notice sui-notice-info wp-smush-update-height sui-hidden" tabindex="0"><?php esc_html_e( "Just to let you know, the height you’ve entered is less than your largest image and may result in pixelation.", "wp-smushit" ); ?></div>
 			</div>
-			<span class="sui-description sui-toggle-description"><?php esc_html_e( "Note: Image resizing happens automatically when you upload attachments. To support retina devices, we recommend using 2x the dimensions of your image size.", "wp-smushit" ); ?></span><?php
+			<span class="sui-description sui-toggle-description">
+			<?php printf( esc_html__( "Note: Image resizing happens automatically when you upload attachments. To support retina devices, we recommend using 2x the dimensions of your image size. Animated GIFs will not be resized as they will lose their animation, please use a tool such as %s to resize then re-upload.", "wp-smushit" ), '<a href="http://gifgifs.com/resizer/" target="_blank">http://gifgifs.com/resizer/</a>' ); ?>
+			<?php esc_html_e( " ", "wp-smushit" ); ?>
+			</span><?php
 		}
 
 		/**

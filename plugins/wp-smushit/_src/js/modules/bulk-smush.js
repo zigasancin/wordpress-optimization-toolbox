@@ -1,6 +1,7 @@
 jQuery( function ( $ ) {
+	'use strict';
 
-	// Remove dismissable notices
+	// Remove dismissable notices.
 	$( '.sui-wrap' ).on( 'click', '.sui-notice-dismiss', function ( e ) {
 		e.preventDefault();
 

@@ -17,6 +17,16 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 	 * Class WpSmushNextGen
 	 */
 	class WpSmushNextGen {
+
+		/**
+		 * Module slug.
+		 *
+		 * @since 2.8.1
+		 *
+		 * @var string $module
+		 */
+		private $module = 'nextgen';
+
 		/**
 		 * Contains the total Stats, for displaying it on bulk page
 		 *
@@ -52,6 +62,12 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 			// Filters the setting variable to add Nextgen setting in premium features.
 			add_filter( 'wp_smush_integration_settings', array( $this, 'add_setting' ), 5 );
 
+			// Disable setting.
+			add_filter( 'wp_smush_integration_status_' . $this->module, array( $this, 'setting_status' ) );
+
+			// Show submit button when Gutenberg is active.
+			add_filter( 'wp_smush_integration_show_submit', array( $this, 'show_submit' ) );
+
 			// Show alert message only if Pro user.
 			if ( $is_pro ) {
 				// Hook at the end of setting row to output a error div.
@@ -60,10 +76,10 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 
 			// Check if integration is Enabled or not.
 			if ( ! empty( $wpsmush_settings->settings ) && $is_pro ) {
-				$opt_nextgen_val = $wpsmush_settings->settings['nextgen'];
+				$opt_nextgen_val = $wpsmush_settings->settings[ $this->module ];
 			} else {
 				// Smush NextGen key.
-				$opt_nextgen     = WP_SMUSH_PREFIX . 'nextgen';
+				$opt_nextgen     = WP_SMUSH_PREFIX . $this->module;
 				$opt_nextgen_val = $wpsmush_settings->get_setting( $opt_nextgen, false );
 			}
 
@@ -115,7 +131,7 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		 * @return mixed
 		 */
 		function register( $settings ) {
-			$settings['nextgen'] = array(
+			$settings[ $this->module ] = array(
 				'label' => esc_html__( 'Enable NextGen Gallery integration', 'wp-smushit' ),
 				'short_label' => esc_html__( 'NextGen Gallery', 'wp-smushit' ),
 				'desc'  => esc_html__( 'Allow smushing images directly through NextGen Gallery settings.', 'wp-smushit' ),
@@ -132,8 +148,8 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		 * @return array
 		 */
 		function add_setting( $int_settings ) {
-			if ( ! isset( $int_settings['nextgen'] ) ) {
-				$int_settings[] = 'nextgen';
+			if ( ! isset( $int_settings[ $this->module ] ) ) {
+				$int_settings[] = $this->module;
 			}
 
 			return $int_settings;
@@ -314,7 +330,7 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 						continue;
 					}
 					// Store details for each size key.
-					$response = $wp_smush->do_smushit( $attachment_file_path_size, $image->pid, 'nextgen' );
+					$response = $wp_smush->do_smushit( $attachment_file_path_size, $image->pid, $this->module );
 
 					if ( is_wp_error( $response ) ) {
 						return $response;
@@ -909,6 +925,46 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 			return $unlink;
 		}
 
+		/**
+		 * Update setting status - disable it if Gutenberg is not active.
+		 *
+		 * @since 2.8.1
+		 *
+		 * @param bool $disabled  Setting status.
+		 *
+		 * @return bool
+		 */
+		public function setting_status( $disabled ) {
+			if ( ! class_exists( 'C_NextGEN_Bootstrap' ) ) {
+				$disabled = true;
+			}
+
+			return $disabled;
+		}
+
+		/**
+		 * Show submit button for integration settings.
+		 *
+		 * If a pro user and NextGen plugin is active, we need to
+		 * make sure settings submit button is shown.
+		 *
+		 * @param bool $show Should show?.
+		 *
+		 * @since 2.8.1
+		 *
+		 * @return bool
+		 */
+		public function show_submit( $show ) {
+			global $wp_smush;
+
+			// If a pro user and NextGen plugin is active.
+			if ( $wp_smush->validate_install() && class_exists( 'C_NextGEN_Bootstrap' ) ) {
+				$show = true;
+			}
+
+			return $show;
+		}
+
 	}// End of Class.
 
 }// End Of if class not exists.
@@ -955,7 +1011,7 @@ if ( class_exists( 'WpSmushNextGen' ) ) {
 					$filename = $success->fileName;
 					// Smush it, if it exists.
 					if ( file_exists( $filename ) ) {
-						$response = $wp_smush->do_smushit( $filename, $image_id, 'nextgen' );
+						$response = $wp_smush->do_smushit( $filename, $image_id, $this->module );
 
 						// If the image was smushed.
 						if ( ! is_wp_error( $response ) && ! empty( $response['data'] ) && $response['data']->bytes_saved > 0 ) {

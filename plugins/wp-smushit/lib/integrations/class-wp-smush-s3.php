@@ -19,6 +19,15 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 	class WpSmushS3 {
 
 		/**
+		 * Module slug.
+		 *
+		 * @since 2.8.1
+		 *
+		 * @var string $module
+		 */
+		private $module = 's3';
+
+		/**
 		 * WpSmushS3 constructor.
 		 */
 		function __construct() {
@@ -40,6 +49,9 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 			// Filters the setting variable to add S3 setting in premium features.
 			add_filter( 'wp_smush_integration_settings', array( $this, 'add_setting' ), 1 );
 
+			// Disable setting.
+			add_filter( 'wp_smush_integration_status_' . $this->module, array( $this, 'setting_status' ) );
+
 			// Return if not a pro user or the S3 plugin is not installed.
 			if ( ! $wp_smush->validate_install() || ( ! class_exists( 'Amazon_S3_And_CloudFront' ) && ! class_exists( 'Amazon_S3_And_CloudFront_Pro' ) ) ) {
 				return;
@@ -51,8 +63,10 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 			// Check if the backup file exists.
 			add_filter( 'smush_backup_exists', array( $this, 'backup_exists_on_s3' ), 10, 3 );
 
-
 			add_action( 'smush_setting_column_right_inside', array( $this, 'additional_notice' ) );
+
+			// Show submit button when a pro user and the S3 plugin is installed.
+			add_filter( 'wp_smush_integration_show_submit', '__return_true' );
 		}
 
 		/**
@@ -63,8 +77,8 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 		 * @return mixed
 		 */
 		function register( $settings ) {
-			$plugin_url     = esc_url( 'https://wordpress.org/plugins/amazon-s3-and-cloudfront/' );
-			$settings['s3'] = array(
+			$plugin_url                = esc_url( 'https://wordpress.org/plugins/amazon-s3-and-cloudfront/' );
+			$settings[ $this->module ] = array(
 				'label'       => esc_html__( 'Enable Amazon S3 support', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Amazon S3', 'wp-smushit' ),
 				'desc'        => sprintf(
@@ -87,8 +101,8 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 		 * @return array
 		 */
 		function add_setting( $pro_settings ) {
-			if ( ! isset( $pro_settings['s3'] ) ) {
-				$pro_settings[] = 's3';
+			if ( ! isset( $pro_settings[ $this->module ] ) ) {
+				$pro_settings[] = $this->module;
 			}
 
 			return $pro_settings;
@@ -103,7 +117,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 		 */
 		function s3_setup_message( $setting_key ) {
 			// Return if not S3.
-			if ( 's3' !== $setting_key ) {
+			if ( $this->module !== $setting_key ) {
 				return;
 			}
 
@@ -112,7 +126,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 			$is_pro = $wp_smush->validate_install();
 
 			// If S3 integration is not enabled, return.
-			$setting_val = $is_pro ? $wpsmush_settings->settings['s3'] : 0;
+			$setting_val = $is_pro ? $wpsmush_settings->settings[ $this->module ] : 0;
 
 			// If integration is disabled when S3 offload is active, do not continue.
 			if ( ! $setting_val && is_object( $as3cf ) ) {
@@ -230,7 +244,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 			}
 
 			// If not Pro user or S3 support is disabled.
-			return ( ! $wpsmushit_admin->validate_install() || ! $wpsmush_settings->settings['s3'] );
+			return ( ! $wpsmushit_admin->validate_install() || ! $wpsmush_settings->settings[ $this->module ] );
 		}
 
 		/**
@@ -275,7 +289,7 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 		 */
 		function download_file( $attachment_id, $size_details = array(), $uf_file_path = '' ) {
 			global $wp_smush, $wpsmush_settings;
-			if ( empty( $attachment_id ) || ! $wpsmush_settings->settings['s3'] || ! $wp_smush->validate_install() ) {
+			if ( empty( $attachment_id ) || ! $wpsmush_settings->settings[ $this->module ] || ! $wp_smush->validate_install() ) {
 				return false;
 			}
 
@@ -427,6 +441,24 @@ if ( ! class_exists( 'WpSmushS3' ) ) {
 
 			return $exists;
 		}
+
+		/**
+		 * Update setting status - disable it if Gutenberg is not active.
+		 *
+		 * @since 2.8.1
+		 *
+		 * @param bool $disabled  Setting status.
+		 *
+		 * @return bool
+		 */
+		public function setting_status( $disabled ) {
+			if ( ! class_exists( 'Amazon_S3_And_CloudFront' ) && ! class_exists( 'Amazon_S3_And_CloudFront_Pro' ) ) {
+				$disabled = true;
+			}
+
+			return $disabled;
+		}
+
 	}
 
 	global $wpsmush_s3;
@@ -481,6 +513,7 @@ if ( class_exists( 'AS3CF_Plugin_Compatibility' ) && ! class_exists( 'wp_smush_s
 
 			$as3cf->plugin_compat->copy_image_to_server_on_action( $action, true, $url, $file, $s3_object );
 		}
+
 	}
 
 	global $wpsmush_s3_compat;

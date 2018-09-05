@@ -337,8 +337,10 @@ if ( ! class_exists( 'WpSmushAutoResize' ) ) {
 
 			// Assign new srcset items to existing ones.
 			if ( ! empty( $new_sources ) ) {
-				// TODO: this will fail on php 5.2.
-				$sources = array_replace( $sources, $new_sources );
+				// Loop through each items and replace/add.
+				foreach ( $new_sources as $_width_key => $_width_values ) {
+					$sources[ $_width_key ] = $_width_values;
+				}
 			}
 
 			return $sources;

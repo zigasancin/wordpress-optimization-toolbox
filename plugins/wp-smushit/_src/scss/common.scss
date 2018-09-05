@@ -331,7 +331,6 @@ ol.smush-recommendation-list li {
 
 /** Image Remaining **/
 div.wp-smush-remaining,
-div.wp-smush-dir-remaining,
 div.wp-smush-dir-limit,
 div.smush-s3-setup-message,
 div.wp-smush-s3support-alert,
@@ -612,7 +611,7 @@ div.wp-smush-resize-note {
 	font-weight: 400;
 }
 
-.smush-final-log.notice.notice-warning {
+.smush-final-log {
 	max-height: 200px;
 	overflow: auto;
 }
@@ -638,16 +637,6 @@ div.wp-smush-dir-desc {
 
 /** Image List **/
 
-.wp-smush-image-list {
-	line-height: 1.5;
-}
-
-span.wp-smush-li-path {
-	cursor: pointer;
-	font-weight: 500;
-	position: relative;
-}
-
 div.wp-smush-scan-result {
 	background: white;
 }
@@ -663,23 +652,6 @@ div.wp-smush-scan-result div.content {
 	width: 100%;
 }
 
-li.wp-smush-image-ele span.wp-smush-image-path {
-	padding: 4px 0 3px;
-}
-
-.wp-smush-image-ele-status {
-	color: #C6C6C6;
-	display: inline-block;
-	height: 23px;
-	line-height: 1;
-	margin-right: 10px;
-	overflow: hidden;
-	position: relative;
-	width: 22px;
-	vertical-align: middle;
-}
-
-.wp-smush-image-ele-status:before,
 .smush-pro-feature-title:before {
 	box-shadow: none;
 	content: url("../images/image.svg");
@@ -703,10 +675,6 @@ li.wp-smush-image-ele span.wp-smush-image-path {
 	width: 22px;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-}
-
-li.wp-smush-image-ele.in-progress .wp-smush-image-ele-status {
-	display: none;
 }
 
 div.wp-smush-info.notice {

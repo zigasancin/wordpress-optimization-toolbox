@@ -12,7 +12,7 @@
  */
 
 /**
- * Singleton class WpSmushRest for extending the WordPress REST API interface.
+ * Singleton class WP_Smush_Rest for extending the WordPress REST API interface.
  *
  * @since 2.8.0
  */
@@ -26,7 +26,7 @@ class WP_Smush_Rest {
 	private static $_instance = null;
 
 	/**
-	 * WpSmushRest constructor.
+	 * WP_Smush_Rest constructor.
 	 */
 	private function __construct() {}
 

@@ -1,14 +1,10 @@
 /**
- * jQueryFileTree plugin
- */
-import 'jqueryfiletree/src/jQueryFileTree.js';
-
-/**
  * Admin modules
  */
 require( './modules/admin' );
 require( './modules/bulk-smush' );
 require( './modules/modals' );
+require( './modules/directory-smush' );
 
 /**
  * Notice scripts.

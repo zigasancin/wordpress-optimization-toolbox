@@ -448,22 +448,19 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 		}
 
 		/**
-		 * Get the savings from image resizing, And force update if set to true
+		 * Get the savings from image resizing, And force update if set to true.
 		 *
-		 * @param bool $force_update , Whether to Re-Calculate all the stats or not
-		 *
-		 * @param bool $format Format the Bytes in readable format
-		 *
-		 * @param bool $return_count Return the resized image count, Set to false by default
+		 * @param bool $force_update , Whether to Re-Calculate all the stats or not.
+		 * @param bool $format Format the Bytes in readable format.
+		 * @param bool $return_count Return the resized image count, Set to false by default.
 		 *
 		 * @return array|bool|mixed|string Array of {
 		 *      'bytes',
 		 *      'before_size',
 		 *      'after_size'
 		 * }
-		 *
 		 */
-		function resize_savings( $force_update = true, $format = false, $return_count =  false ) {
+		function resize_savings( $force_update = true, $format = false, $return_count = false ) {
 			$savings = '';
 
 			if ( ! $force_update ) {
@@ -472,15 +469,15 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 
 			$count = wp_cache_get( WP_SMUSH_PREFIX . 'resize_count', 'wp-smush' );
 
-			//If resize image count is not stored in db, recalculate
-			if( $return_count && !$count ) {
+			// If resize image count is not stored in db, recalculate.
+			if ( $return_count && false === $count ) {
 				$count = 0;
 				$force_update = true;
 			}
 
 			global $wpsmushit_admin;
 
-			//If nothing in cache, Calculate it
+			// If nothing in cache, calculate it.
 			if ( empty( $savings ) || $force_update ) {
 				$savings = array(
 					'bytes'       => 0,
@@ -499,7 +496,7 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 
 					if ( ! empty( $resize_data ) ) {
 						foreach ( $resize_data as $data ) {
-							//Skip resmush ids
+							// Skip resmush ids.
 							if ( ! empty( $wpsmushit_admin->resmush_ids ) && in_array( $data->post_id, $wpsmushit_admin->resmush_ids ) ) {
 								continue;
 							}
@@ -514,14 +511,14 @@ if ( ! class_exists( 'WpSmushDB' ) ) {
 							$count++;
 						}
 					}
-					//Update the offset
+					// Update the offset.
 					$offset += $limit;
 
-					//Compare the Offset value to total images
-					if ( ! empty( $wpsmushit_admin->total_count ) && $wpsmushit_admin->total_count < $offset ) {
+					// Compare the offset value to total images.
+					if ( ! empty( $wpsmushit_admin->total_count ) && $wpsmushit_admin->total_count <= $offset ) {
 						$query_next = false;
 					} elseif ( ! $resize_data ) {
-						//If we didn' got any results
+						// If we didn't get any results.
 						$query_next = false;
 					}
 				}

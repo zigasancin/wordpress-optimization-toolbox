@@ -262,15 +262,12 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			// Load page header.
 			$wpsmush_bulkui->smush_page_header();
 
-			echo '<div class="sui-row">';
 
 			// Show status box.
 			$this->smush_stats_container();
 
 			// Bulk smush container.
 			$this->bulk_smush_container();
-
-			echo '</div>';
 
 			// Close shared ui wrapper.
 			echo '</div>';
@@ -413,7 +410,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 				<span class="wp-smush-no-image tc">
 					<img src="<?php echo WP_SMUSH_URL . 'assets/images/smush-no-media.png'; ?>" alt="<?php esc_html_e( 'No attachments found - Upload some images', 'wp-smushit' ); ?>">
 		        </span>
-                <p class="wp-smush-no-images-content tc"><?php printf( esc_html__( 'We havenвЂ™t found any images in your %sgallery%s yet, so thereвЂ™s no smushing to be done! Once you upload images, reload this page and start playing!', 'wp-smushit' ), '<a href="' . esc_url( admin_url( 'admin.php?page=ngg_addgallery' ) ) . '">', '</a>' ); ?></p>
+                <p class="wp-smush-no-images-content tc"><?php printf( esc_html__( "We haven't found any images in your %sgallery%s yet, so there's no smushing to be done! Once you upload images, reload this page and start playing!", 'wp-smushit' ), '<a href="' . esc_url( admin_url( 'admin.php?page=ngg_addgallery' ) ) . '">', '</a>' ); ?></p>
                 <span class="wp-smush-upload-images sui-no-padding-bottom tc">
                 <a class="sui-button sui-button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=ngg_addgallery' ) ); ?>"><?php esc_html_e( "UPLOAD IMAGES", "wp-smushit" ); ?></a>
                 </span>
@@ -423,9 +420,7 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
                     <p><?php esc_html_e( 'All images are smushed and up to date. Awesome!', 'wp-smushit' ); ?></p>
                 </div>
                 <div class="wp-smush-bulk-wrapper <?php echo $all_done ? ' sui-hidden' : ''; ?>">
-				<?php
-				// DO not show the remaining notice if we have resmush ids
-				?>
+				<!-- Do not show the remaining notice if we have resmush ids -->
                 <div class="sui-notice sui-notice-warning wp-smush-remaining  <?php echo count( $this->resmush_ids ) > 0 ? ' sui-hidden' : ''; ?>">
                     <p>
 	                    <span class="wp-smush-notice-text">
@@ -466,7 +461,6 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			// Class for bulk smush box.
 			$class = $wp_smush->validate_install() ? 'bulk-smush-wrapper wp-smush-pro-install' : 'bulk-smush-wrapper';
 
-			echo '<div class="sui-col-lg-6">';
 
 			echo '<div class="sui-box ' . $class . '" id="wp-smush-bulk-wrap-box">';
 
@@ -478,7 +472,6 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 			// Bulk smush box.
 			$this->bulk_smush_content();
 
-			echo '</div>';
 			echo '</div>';
 			echo '</div>';
 		}
@@ -494,21 +487,11 @@ if ( ! class_exists( 'WpSmushNextGenAdmin' ) ) {
 
 			global $wpsmush_bulkui;
 
-			echo '<div class="sui-col-lg-6">';
 			echo '<div class="sui-box sui-summary sui-summary-smush-nextgen">';
-
-			// Container header.
-			$wpsmush_bulkui->container_header( esc_html__( 'Stats', 'wp-smushit' ) );
-
-			echo '<div class="sui-box-body smush-summary-box-body">';
-
 			$this->smush_stats_content();
 
 			// Allows you to output any content within the stats box at the end.
 			do_action( 'wp_smush_after_stats' );
-
-			echo '</div>';
-			echo '</div>';
 			echo '</div>';
 		}
 

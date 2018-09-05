@@ -90,9 +90,13 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 		public $stats;
 
 		/**
-		 * @var int Limit for allowed number of images per bulk request
+		 * Limit for allowed number of images per bulk request.
+		 *
+		 * This is enforced at api level too
+		 *
+		 * @var int $max_free_bulk
 		 */
-		private $max_free_bulk = 50; //this is enforced at api level too
+		private $max_free_bulk = 50;
 
 		public $upgrade_url = 'https://premium.wpmudev.org/project/wp-smush-pro/';
 
@@ -134,6 +138,7 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 			'auto',
 			'strip_exif',
 			'resize',
+			'gutenberg',
 		);
 
 		/**
@@ -229,6 +234,9 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 			add_action( 'wp_enqueue_media', array( $this, 'enqueue' ) );
 		}
 
+		/**
+		 * Init settings.
+		 */
 		function init_settings() {
 			$this->settings = array(
 				'networkwide'     => array(
@@ -338,6 +346,15 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 			}
 
 			/**
+			 * If this is called by wp_enqueue_media action, check if we are on one of the
+			 * required screen to avoid duplicate queries.
+			 * We have already enqueued scripts using admin_enqueue_scripts on required pages.
+			 */
+			if ( in_array( $current_page, $this->pages, true ) && doing_action( 'wp_enqueue_media' ) ) {
+				return;
+			}
+
+			/**
 			 * Load js and css on all admin pages, in order to display install/upgrade notice.
 			 * And If upgrade/install message is dismissed or for pro users, Do not enqueue script.
 			 */
@@ -379,7 +396,7 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 		 * Localize Translations
 		 */
 		function localize() {
-			global $current_screen, $wpsmush_settings, $wpsmush_db;
+			global $current_screen, $wpsmush_settings, $wpsmush_db, $wpsmush_dir;
 			$current_page = ! empty( $current_screen ) ? $current_screen->base : '';
 
 			$handle = 'smush-admin';
@@ -406,6 +423,11 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 				// Button text.
 				'resmush_check'           => esc_html__( 'RE-CHECK IMAGES', 'wp-smushit' ),
 				'resmush_complete'        => esc_html__( 'CHECK COMPLETE', 'wp-smushit' ),
+				// Progress bar text.
+				'progress_smushed'        => esc_html__( 'images optimized', 'wp-smushit' ),
+				'directory_url'           => admin_url( 'admin.php?page=smush&tab=directory' ),
+				'bulk_resume'             => esc_html__( 'Resume scan', 'wp-smushit' ),
+				'bulk_stop'               => esc_html__( 'Stop current bulk smush process.', 'wp-smushit' ),
 			);
 
 			wp_localize_script( $handle, 'wp_smush_msgs', $wp_smush_msgs );
@@ -414,7 +436,7 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 			if ( 'toplevel_page_smush' === $current_page ) {
 
 				// Get resmush list, If we have a resmush list already, localize those IDs.
-				if ( $resmush_ids = get_option( "wp-smush-resmush-list" ) ) {
+				if ( $resmush_ids = get_option( 'wp-smush-resmush-list' ) ) {
 					// Get the attachments, and get lossless count.
 					$this->resmush_ids = $resmush_ids;
 				}
@@ -462,6 +484,14 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 					'pro_savings'        => '',
 				);
 			} // End if().
+
+			// Check if scanner class is available.
+			$scanner_ready = isset( $wpsmush_dir->scanner );
+
+			$data['dir_smush'] = array(
+				'currentScanStep' => $scanner_ready ? $wpsmush_dir->scanner->get_current_scan_step() : 0,
+				'totalSteps'      => $scanner_ready ? $wpsmush_dir->scanner->get_scan_steps() : 0,
+			);
 
 			$data['resize_sizes'] = $this->get_max_image_dimensions();
 
@@ -562,13 +592,11 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 		 * Processes the Smush request and sends back the next id for smushing
 		 *
 		 * Bulk Smushing Handler
-		 *
 		 */
-		function process_smush_request() {
-
+		public function process_smush_request() {
 			global $wp_smush, $wpsmush_helper;
 
-			// turn off errors for ajax result
+			// Turn off errors for ajax result.
 			@error_reporting( 0 );
 
 			$should_continue = true;
@@ -595,7 +623,7 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 				wp_send_json_error(
 					array(
 						'error'         => 'bulk_request_image_limit_exceeded',
-						'error_message' => sprintf( esc_html__( "You've exceeded Bulk Smush limit of %d images at once for standard users. Click on Bulk Smush to continue.", "wp-smushit" ), $this->max_free_bulk ),
+						'error_message' => sprintf( esc_html__( "You've reached the %d attachment limit for bulk smushing in the free version. Upgrade to Pro to smush unlimited images, or click resume to smush another %d attachments.", "wp-smushit" ), $this->max_free_bulk, $this->max_free_bulk ),
 						'error_class'   => 'limit_exceeded',
 						'continue'      => false
 					)
@@ -1142,10 +1170,10 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 				$smush_data['total_images'] += $this->dir_stats['optimised'];
 			}
 
-			//Resize Savings
+			// Resize Savings.
+			$smush_data['resize_count']   = $wpsmush_db->resize_savings( false, false, true );
 			$resize_savings               = $wpsmush_db->resize_savings( false );
 			$smush_data['resize_savings'] = ! empty( $resize_savings['bytes'] ) ? $resize_savings['bytes'] : 0;
-			$smush_data['resize_count']   = $wpsmush_db->resize_savings( false, false, true );
 
 			//Conversion Savings
 			$conversion_savings               = $wpsmush_db->conversion_savings( false );
@@ -1173,10 +1201,6 @@ if ( ! class_exists( 'WpSmushitAdmin' ) ) {
 			$smush_data['percent'] = round( $smush_data['percent'], 1 );
 
 			$smush_data['human'] = size_format( $smush_data['bytes'], 1 );
-
-			// Set size and size format.
-			$smush_data['human_format'] = preg_replace( '/[^A-Z]+/', '', $smush_data['human'] );
-			$smush_data['human_size'] = preg_replace( '/[^0-9.]+/', '', $smush_data['human'] );
 
 			//Setup Smushed attachment ids
 			$this->smushed_attachments = ! empty( $smush_data['id'] ) ? $smush_data['id'] : '';
