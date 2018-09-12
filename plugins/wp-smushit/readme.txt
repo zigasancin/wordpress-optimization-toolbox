@@ -17,7 +17,7 @@ Compress and optimize (or optimise) image files, improve performance and boost y
 
 *Resize, optimize, optimise and compress all of your images with the incredibly powerful and 100% free WordPress image smusher, brought to you by the superteam at WPMU DEV!*
 
-(You say optimise I say optimize...lets call the whole thing off ;) )
+(You say optimise I say optimize...let's call the whole thing off ;) )
 
 ### Award Winning Image Optimizer
 Smush has been benchmarked and tested number one for speed and quality and is the [award-winning](https://torquemag.io/2018/04/smush-image-compression-wins-2018-plugin-madness/), back-to-back proven crowd favorite image optimization plugin for WordPress.
@@ -106,7 +106,7 @@ Smush sends images to the WPMU DEV servers to optimize them for web use. This in
 This means your images were not properly scaled for where they are being displayed. Scaling images before uploading them can be time consuming but can save space and speedup load time. First, determine what size your image needs to be. You can use the built-in developer tools in Chrome or Firefox to find what height and width your image should be. Once you know how large the image should be, scale your images to the right size.
 
 
-*Tip:* you may not be need to scale each image individually. If the images are in your Media Library, you may be able to fix them with a plugin.
+*Tip:* you may not need to scale each image individually. If the images are in your Media Library, you may be able to fix them with a plugin.
 
 = Does Smush delete or replace my original full-size images? =
 
@@ -148,20 +148,8 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 == Screenshots ==
 
 1. Watch as your image library is processed – up to 50 images at a time.
-2. Set automatic smush to resize and optomize every image as it is uploaded.
+2. Set automatic smush to resize and optimize every image as it is uploaded.
 3. Smush will find and optimize images for you.
-
-== Installation ==
-
-1. Upload the `wp-smush` plugin to your `/wp-content/plugins/` directory.
-1. Activate the plugin through the 'Plugins' menu in WordPress.
-1. Configure your desired settings via the `Smush` settings page in dashboard area
-1. Done!
-
-== Upgrade Notice ==
-
-Yahoo's Smush.it API is gone forever. So WPMU DEV built our own free API that is faster, more reliable, and more powerful. Upgrade now!
-
 
 == Changelog ==
 
@@ -617,7 +605,7 @@ Yahoo's Smush.it API is gone forever. So WPMU DEV built our own free API that is
 - First release
 
 == About Us ==
-WPMU DEV is a premium supplier of quality WordPress plugins and themes. For premium support with any WordPress related issues you can join us here:
+WPMU DEV is a premium supplier of quality WordPress plugins, services and support. Learn more here:
 [https://premium.wpmudev.org/](https://premium.wpmudev.org/?utm_source=wordpress.org&utm_medium=readme)
 
 Don't forget to stay up to date on everything WordPress from the Internet's number one resource:
