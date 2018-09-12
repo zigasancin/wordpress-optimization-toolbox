@@ -1,6 +1,6 @@
 === ShortPixel Image Optimizer ===
 Contributors: ShortPixel 
-Tags: compress, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
+Tags: compressor, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
 Requires at least: 3.2.0
 Tested up to: 4.9
 Requires PHP: 5.2
@@ -240,6 +240,9 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.11.2 =
+* Fix "Image files are missing" warning when thumbails optimization is activated but all the thumbnails are excepted from optimization and the bulk is ran a second time.
 
 = 4.11.2 =
 * Fix not saving properly the metadata on some situations
