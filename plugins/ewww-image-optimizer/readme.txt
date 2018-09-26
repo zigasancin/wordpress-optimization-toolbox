@@ -4,8 +4,8 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: image, compress, resize, optimize, optimization, lossless, lossy, seo, webp, wp-cli, scale, tinypng, tinyjpg
 Requires at least: 4.6
 Tested up to: 4.9
-Requires PHP: 5.4
-Stable tag: 4.3.2
+Requires PHP: 5.5
+Stable tag: 4.4.1
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -174,6 +174,23 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 * Feature requests can be submitted via https://ewww.io/contact-us/ and commented on here: https://trello.com/b/Fp81dWof/ewww-image-optimizer
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
 
+= 4.4.1 =
+* fixed: ExactDN srcset fill replaces images with first image on page
+
+= 4.4.0 =
+* added: preserve animations in GIF images during resize operations
+* added: ExactDN will fill in srcset/sizes attributes for all images based on detected width for better mobile support
+* added: configuration options in the settings page for several "hidden" ExactDN options
+* changed: Alt WebP still depends on jQuery, but jQuery can be loaded in async or defer mode
+* changed: Remove Metadata option has been renamed, if you previously had it configured as an override (JPEGTRAN_COPY), please use the new name: EWWW_IMAGE_OPTIMIZER_METADATA_REMOVE
+* changed: ExactDN uses premium compression by default
+* fixed: regression with ExactDN and max-width style attributes
+* fixed: WP esc_url mangles ExactDN urls
+* fixed: WebP images missing from S3 when using WP Offload S3
+* fixed: PDF uploads with S3 Uploads plugin
+* deprecated: PHP 5.5 support will be removed in the next major release (version 4.5)
+* removed: PHP 5.4 no longer supported
+
 = 4.3.2 =
 * changed: prevent dynamic JS/CSS urls within wp-admin/ from being rewritten by ExactDN
 * fixed: auto-convert PNG to JPG was running on images with transparency
@@ -210,52 +227,6 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 * fixed: PNGOUT installer confirmation notice was missing
 * deprecated: PHP 5.4 support will be removed in the next major release (version 4.4)
 
-= 4.2.3 =
-* added: skip resizing for images with noresize in the filename
-* added: notice about plugins that remove query strings when ExactDN is active
-* changed: cache busting for ExactDN uses theme directory modified time with fallback to EWWW IO version
-* fixed: exactdn test verification attempts to access WP_Error as an array
-
-= 4.2.2 =
-* added: view pages with ExactDN or the entire plugin disabled via GET paramaters: ewwwio_disable and exactdn_disable
-* changed: moved to v2 quota endpoint for API
-* changed: S3 uploads no longer deferred until after optimization by default, define EWWW_IMAGE_OPTIMIZER_DEFER_S3 as true to override
-* changed: image editor extensions can be disabled separately from media library optimization via EWWW_IMAGE_OPTIMIZER_DISABLE_EDITOR
-* changed: use exactdn url instead of standard API url for verification simulation and fallback
-* fixed: async test outputs unescaped html on settings page when debugging enabled
-* fixed: debugging uses extra memory when dumping output to file
-* fixed: json_encode dies silently when passing non-utf8 data, results in AJAX/bulk errors
-* fixed: disabled auto-optimization bypassed for resizes when max dimensions are set
-* fixed: NextGEN support disabled for version 3
-* fixed: progressbar color does not match admin theme for NextGEN/Nextcellent
-* fixed: optimization details overlay styling missing for NextGEN with some locales
-* fixed: FlAGallery batch optimization from Manage Galleries/Images broken
-* fixed: undefined variable notices for resize detection and forced re-optimization
-* updated: PEL library for maintaining metadata during JPG auto-rotation
-
-= 4.2.1 =
-* fixed: EXACTDN_LOCAL_DOMAIN does not work with auto-verification
-* fixed: uncaught error during upgrade when 'SHOW FULL COLUMNS' fails
-* fixed: async simulation gets 403 error
-
-= 4.2.0 =
-* added: disable ExactDN attachment ID queries if they take too long
-* added: ExactDN compatibility with a3 Lazy Load
-* added: ability to re-test async/background mode if it gets disabled
-* changed: better compatibility between Autoptimize and ExactDN
-* changed: .webp files removed when restoring original from API
-* changed: Force re-optimize checkbox persists up to an hour if bulk optimizer is interrupted
-* fixed: CSS, JS, and other resources could be skipped by ExactDN in certain circumstances
-* fixed: Jupiter theme captcha incompatible with ExactDN
-* fixed: prevent calls to php_uname when it is disabled
-* fixed: MacOS X installer for PNGOUT
-* fixed: prevent notices due to empty output from exec()
-* fixed: ExactDN fails to crop when image_downsize() is called with explicit dimensions
-* fixed: ExactDN breaks image resizing with Themify themes
-* fixed: multi-site settings throws error during submission when ExactDN is active
-* fixed: single-site override option displayed when plugin activated per-site
-* removed: PHP 5.3 no longer supported
-
 = Earlier versions =
 Please refer to the separate changelog.txt file.
 
@@ -280,83 +251,3 @@ Please refer to the separate changelog.txt file.
 
 Written by [Shane Bishop](https://ewww.io). Based upon CW Image Optimizer, which was written by [Jacob Allred](http://www.jacoballred.com/) at [Corban Works, LLC](http://www.corbanworks.com/). CW Image Optimizer was based on WP Smush.it. Jpegtran is the work of the Independent JPEG Group. PEL is the work of Martin Geisler, Lars Olesen, and Erik Oskam. ExactDN class based upon the Photon module from Jetpack.
 
-= optipng =
-
-Copyright (C) 2001-2017 Cosmin Truta and the Contributing Authors.
-For the purpose of copyright and licensing, the list of Contributing
-Authors is available in the accompanying AUTHORS file.
-
-This software is provided 'as-is', without any express or implied
-warranty.  In no event will the author(s) be held liable for any damages
-arising from the use of this software.
-
-= pngquant.c =
-
-   © 1989, 1991 by Jef Poskanzer.
-
-   Permission to use, copy, modify, and distribute this software and its
-   documentation for any purpose and without fee is hereby granted, provided
-   that the above copyright notice appear in all copies and that both that
-   copyright notice and this permission notice appear in supporting
-   documentation.  This software is provided "as is" without express or
-   implied warranty.
-
-= pngquant.c and rwpng.c/h =
-
-   © 1997-2002 by Greg Roelofs; based on an idea by Stefan Schneider.
-   © 2009-2017 by Kornel Lesiński.
-
-   All rights reserved.
-
-   Redistribution and use in source and binary forms, with or without modification,
-   are permitted provided that the following conditions are met:
-
-   1. Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
-
-   2. Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-= WebP =
-
-Copyright (c) 2010, Google Inc. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-  * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-
-  * Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in
-    the documentation and/or other materials provided with the
-    distribution.
-
-  * Neither the name of Google nor the names of its contributors may
-    be used to endorse or promote products derived from this software
-    without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
