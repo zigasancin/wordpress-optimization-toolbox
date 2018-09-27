@@ -2838,6 +2838,9 @@ class WPShortPixel {
 
             $file = get_attached_file($id);                        
             $data = wp_get_attachment_metadata($id);
+            if(!is_array($data)) {
+                $data = unserialize($data);
+            }
             //if($extended) {var_dump(wp_get_attachment_url($id)); var_dump($data);}
             $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
             $invalidKey = !$this->_settings->verifiedKey;
@@ -3455,9 +3458,10 @@ class WPShortPixel {
         return $this->_settings->resizeHeight;
     }
     public static function getAffiliateSufix() {
-        return isset($_COOKIE["AffiliateShortPixel"])
-            ? "/affiliate/" . $_COOKIE["AffiliateShortPixel"]
-            : (defined("SHORTPIXEL_AFFILIATE_CODE") && strlen(SHORTPIXEL_AFFILIATE_CODE) ? "/affiliate/" . SHORTPIXEL_AFFILIATE_CODE : "");
+//        return isset($_COOKIE["AffiliateShortPixel"])
+//            ? "/affiliate/" . $_COOKIE["AffiliateShortPixel"]
+//            : (defined("SHORTPIXEL_AFFILIATE_CODE") && strlen(SHORTPIXEL_AFFILIATE_CODE) ? "/affiliate/" . SHORTPIXEL_AFFILIATE_CODE : "");
+        return "";
     }
     public function getVerifiedKey() {
         return $this->_settings->verifiedKey;
