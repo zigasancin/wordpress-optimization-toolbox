@@ -9,19 +9,10 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-// TODO: may remove content property.
 /**
  * HTML element and attribute parsing, replacing, etc.
  */
 class EWWWIO_Page_Parser {
-
-	/**
-	 * The content to parse.
-	 *
-	 * @access public
-	 * @var string $content
-	 */
-	public $content = '';
 
 	/**
 	 * Match all images and any relevant <a> tags in a block of HTML.
@@ -43,7 +34,7 @@ class EWWWIO_Page_Parser {
 		}
 		if ( preg_match_all( $search_pattern, $content, $images ) ) {
 			foreach ( $images as $key => $unused ) {
-				// Simplify the output as much as possible, mostly for confirming test results.
+				// Simplify the output as much as possible.
 				if ( is_numeric( $key ) && $key > 0 ) {
 					unset( $images[ $key ] );
 				}

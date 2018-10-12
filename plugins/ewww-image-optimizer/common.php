@@ -18,14 +18,14 @@
 // TODO: write some conversion tests.
 // TODO: check this patch, to see if the use of 'full' causes any issues: https://core.trac.wordpress.org/ticket/37840 .
 // TODO: use this: https://codex.wordpress.org/AJAX_in_Plugins#The_post-load_JavaScript_Event .
-// TODO: handle relative urls with ExactDN.
-// TODO: see if we can parse all use tags and use the bypass mechanism to avoid ExactDN + SVG issues.
+// TODO: relative urls with ExactDN: https://github.com/nosilver4u/ewww-image-optimizer/issues/17 .
+// TODO: avoid ExactDN + SVG issues in <use> tags: https://github.com/nosilver4u/ewww-image-optimizer/issues/18 .
 // TODO: can some of the bulk "fallbacks" be implemented for async processing?
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '441.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '442.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
@@ -3371,10 +3371,11 @@ function ewww_image_optimizer_cloud_optimizer( $file, $type, $convert = false, $
 			$newsize = filesize( $tempfile );
 			ewwwio_debug_message( "cloud results: $newsize (new) vs. $orig_size (original)" );
 			rename( $tempfile, $newfile );
-		} elseif ( ewww_image_optimizer_mimetype( $tempfile, 'i' ) == $newtype ) {
+		} elseif ( ! is_null( $newtype ) && ! is_null( $newfile ) && ewww_image_optimizer_mimetype( $tempfile, 'i' ) == $newtype ) {
 			$converted = true;
 			$newsize   = filesize( $tempfile );
 			ewwwio_debug_message( "cloud results: $newsize (new) vs. $orig_size (original)" );
+			ewwwio_debug_message( "renaming file from $tempfile to $newfile" );
 			rename( $tempfile, $newfile );
 			$file = $newfile;
 		} else {
@@ -6001,6 +6002,9 @@ function ewww_image_optimizer_quick_mimetype( $path ) {
 		case 'pdf':
 			return 'application/pdf';
 		default:
+			if ( empty( $pathextension ) && 0 !== strpos( $path, 's3' ) && is_file( $path ) ) {
+				return ewww_image_optimizer_mimetype( $path, 'i' );
+			}
 			return false;
 	}
 }
@@ -7277,8 +7281,12 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 	ewwwio_debug_message( 'site url: ' . get_site_url() );
 	ewwwio_debug_message( 'content_url: ' . content_url() );
 	if ( ! defined( 'EWWW_IMAGE_OPTIMIZER_NOEXEC' ) ) {
-		ewww_image_optimizer_tool_init();
-		ewww_image_optimizer_notice_utils( 'quiet' );
+		if ( defined( 'EWWW_IMAGE_OPTIMIZER_CLOUD' ) && EWWW_IMAGE_OPTIMIZER_CLOUD ) {
+			ewww_image_optimizer_disable_tools();
+		} else {
+			ewww_image_optimizer_tool_init();
+			ewww_image_optimizer_notice_utils( 'quiet' );
+		}
 	}
 	$network_class = $network;
 	if ( empty( $network ) ) {
