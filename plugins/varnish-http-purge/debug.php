@@ -1,19 +1,7 @@
 <?php
 /**
  * Debug Code
- *
  * @package varnish-http-purge
- *
- * Copyright 2016-2018 Mika Epstein (email: ipstenu@halfelf.org)
- *
- * This file is part of Varnish HTTP Purge, a plugin for WordPress.
- *
- * Varnish HTTP Purge is free software: you can redistribute it and/or modify
- * it under the terms of the Apache License 2.0 license.
- *
- * Varnish HTTP Purge is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -258,8 +246,8 @@ class VarnishDebug {
 
 			// Headers used by Nginx.
 			$x_varn_hit  = ( $x_varnish && strpos( $headers['X-Varnish'], 'HIT' ) !== false ) ? true : false;
-			$x_age_nginx = ( $x_age && $x_date && strtotime( $headers['Age'] ) < strtotime( $headers['Date'] ) ) ? true : false;
-			$x_pragma    = ( isset( $headers['Pragma'] ) && strpos( $headers['Pragma'], 'no-cache' ) === false ) ? true : false;
+			$x_age_nginx = ( $x_varn_hit || ( $x_age && $x_date && ( strtotime( $headers['Age'] ) < strtotime( $headers['Date'] ) ) ) ) ? true : false;
+			$x_pragma    = ( ! isset( $headers['Pragma'] ) || ( isset( $headers['Pragma'] ) && strpos( $headers['Pragma'], 'no-cache' ) === false ) ) ? true : false;
 
 			// Headers used ONLY by Apache/Varnish.
 			$x_cachable = ( isset( $headers['X-Cacheable'] ) && strpos( $headers['X-Cacheable'], 'YES' ) !== false ) ? true : false;
@@ -281,7 +269,7 @@ class VarnishDebug {
 			$cache_service = false;
 			if ( $x_varnish && $x_nginx ) {
 				$cache_service  = __( 'Nginx', 'varnish-http-purge' );
-				$still_cachable = ( $is_cachable && $x_pragma && $x_age_nginx && $x_varn_hit ) ? true : false;
+				$still_cachable = ( $is_cachable && $x_age_nginx && $x_varn_hit && $x_pragma ) ? true : false;
 			} elseif ( $x_varnish && ! $x_nginx ) {
 				$cache_service  = __( 'Varnish', 'varnish-http-purge' );
 				$still_cachable = ( $is_cachable && $x_cachable && $x_age_vapc ) ? true : false;
@@ -328,10 +316,16 @@ class VarnishDebug {
 	 * @param mixed $varniship - Varnish IP.
 	 * @return array
 	 */
-	public static function remote_ip_results( $remote_ip, $varniship ) {
-		$return = false;
+	public static function remote_ip_results( $remote_ip, $varniship, $headers ) {
+		$return  = false;
+		$x_nginx = ( isset( $headers['server'] ) && ( strpos( $headers['server'], 'nginx' ) !== false || strpos( $headers['server'], 'openresty' ) !== false ) ) ? true : false;
 
-		if ( false === $remote_ip && ! empty( $varniship ) ) {
+		if ( $x_nginx && 'localhost' === $varniship ) {
+			$return = array(
+				'icon'    => 'awesome',
+				'message' => __( 'Your Nginx Proxy is set up correctly.', 'varnish-http-purge' ),
+			);
+		} elseif ( false === $remote_ip && ! empty( $varniship ) ) {
 			$return = array(
 				// translators: %s is an IP address.
 				'message' => sprintf( __( 'Your Varnish IP address is set to %s but a proxy (like Cloudflare or Sucuri) has not been detected. This is mostly harmless, but if you have issues with your cache not emptying when you make a post, you may need to remove your Varnish IP. Please check with your webhost or server admin before doing so.', 'varnish-http-purge' ), $varniship ),
@@ -764,17 +758,17 @@ class VarnishDebug {
 			if ( file_exists( plugin_dir_path( __DIR__ ) . $info->path ) ) {
 				$message = $messages[ $info->reason ];
 				$warning = 'notice';
-				$status  = __( 'Inactive', 'varnish-http-purge' );
+				$active  = __( 'Inactive', 'varnish-http-purge' );
 
 				// If the plugin is inactive, change the warning.
 				if ( is_plugin_active( $info->path ) ) {
 					$warning = $info->type;
-					$status  = __( 'Active', 'varnish-http-purge' );
+					$active  = __( 'Active', 'varnish-http-purge' );
 				}
 
 				$return[ 'Plugin: ' . ucfirst( $plugin ) ] = array(
 					'icon'    => $warning,
-					'message' => $message . ' (' . $status . ')',
+					'message' => $message . ' (' . $active . ')',
 				);
 			}
 		}
@@ -817,7 +811,7 @@ class VarnishDebug {
 
 		// Basic Checks.
 		$output['Cache Service'] = self::varnish_results( $headers );
-		$output['Remote IP']     = self::remote_ip_results( $remote_ip, $varniship );
+		$output['Remote IP']     = self::remote_ip_results( $remote_ip, $varniship, $headers );
 
 		// Server Results.
 		$server_results = self::server_results( $headers, $remote_ip, $varniship );

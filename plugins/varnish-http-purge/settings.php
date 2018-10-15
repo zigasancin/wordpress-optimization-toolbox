@@ -1,20 +1,7 @@
 <?php
 /**
- *
  * Settings Code
- *
  * @package varnish-http-purge
- *
- * Copyright 2016-2018 Mika Epstein (email: ipstenu@halfelf.org)
- *
- * This file is part of Varnish HTTP Purge, a plugin for WordPress.
- *
- * Varnish HTTP Purge is free software: you can redistribute it and/or modify
- * it under the terms of the Apache License 2.0 license.
- *
- * Varnish HTTP Purge is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,12 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Varnish Status Class
+ * Status Class
  *
  * @since 4.0
  */
 class VarnishStatus {
-
 	/**
 	 * Construct
 	 * Fires when class is constructed, adds init hook
@@ -56,8 +42,8 @@ class VarnishStatus {
 	 * @since 4.0
 	 */
 	public function admin_menu() {
-		add_menu_page( __( 'Varnish HTTP Purge', 'varnish-http-purge' ), __( 'Varnish', 'varnish-http-purge' ), 'manage_options', 'varnish-page', array( &$this, 'settings_page' ), VarnishPurger::get_icon_svg( true, '#82878c' ), 75 );
-		add_submenu_page( 'varnish-page', __( 'Varnish HTTP Purge', 'varnish-http-purge' ), __( 'Settings', 'varnish-http-purge' ), 'manage_options', 'varnish-page', array( &$this, 'settings_page' ) );
+		add_menu_page( __( 'Proxy Cache Purge', 'varnish-http-purge' ), __( 'Proxy Cache', 'varnish-http-purge' ), 'manage_options', 'varnish-page', array( &$this, 'settings_page' ), VarnishPurger::get_icon_svg( true, '#82878c' ), 75 );
+		add_submenu_page( 'varnish-page', __( 'Proxy Cache Purge', 'varnish-http-purge' ), __( 'Settings', 'varnish-http-purge' ), 'manage_options', 'varnish-page', array( &$this, 'settings_page' ) );
 		add_submenu_page( 'varnish-page', __( 'Check Caching', 'varnish-http-purge' ), __( 'Check Caching', 'varnish-http-purge' ), 'manage_options', 'varnish-check-caching', array( &$this, 'check_caching_page' ) );
 	}
 
@@ -99,17 +85,19 @@ class VarnishStatus {
 
 		$devmode = get_site_option( 'vhp_varnish_devmode', VarnishPurger::$devmode );
 		$active  = ( isset( $devmode['active'] ) ) ? $devmode['active'] : false;
+		$active  = ( VHP_DEVMODE ) ? true : $active;
 		$expire  = current_time( 'timestamp' ) + DAY_IN_SECONDS;
-
 		?>
 		<input type="hidden" name="vhp_varnish_devmode[expire]" value="<?php $expire; ?>" />
-		<input type="checkbox" name="vhp_varnish_devmode[active]" value="true" <?php checked( $active, true ); ?> />
+		<input type="checkbox" name="vhp_varnish_devmode[active]" value="true" <?php disabled( VHP_DEVMODE ); ?> <?php checked( $active, true ); ?> />
 		<label for="vhp_varnish_devmode['active']">
 			<?php
-			if ( $active && isset( $devmode['expire'] ) ) {
+			if ( $active && isset( $devmode['expire'] ) && ! VHP_DEVMODE ) {
 				$timestamp = date_i18n( get_site_option( 'date_format' ), $devmode['expire'] ) . ' @ ' . date_i18n( get_site_option( 'time_format' ), $devmode['expire'] );
 				// translators: %s is the time (in hours) until Development Mode expires.
-				echo sprintf( esc_html__( 'Development Mode is active until %s. After that, it will automatically disable the next time someone visits your site.', 'varnish-http-purge' ), esc_html( $timestamp ) );
+				echo sprintf( esc_html__( 'Development Mode is active until %s. It will automatically disable after that time.', 'varnish-http-purge' ), esc_html( $timestamp ) );
+			} elseif ( VHP_DEVMODE ) {
+				esc_attr_e( 'Development Mode has been activated via wp-config and cannot be deactivated here.', 'varnish-http-purge' );
 			} else {
 				esc_attr_e( 'Activate Development Mode', 'varnish-http-purge' );
 			}
@@ -136,7 +124,7 @@ class VarnishStatus {
 		} else {
 			$output['active'] = ( isset( $input['active'] ) || $input['active'] ) ? true : false;
 			$output['expire'] = ( isset( $input['expire'] ) && is_int( $input['expire'] ) ) ? $input['expire'] : $expire;
-			$set_message      = ( $output['active'] ) ? __( 'Development Mode activated for the next 24 hours', 'varnish-http-purge' ) : __( 'Development Mode dectivated', 'varnish-http-purge' );
+			$set_message      = ( $output['active'] ) ? __( 'Development Mode activated for the next 24 hours.', 'varnish-http-purge' ) : __( 'Development Mode dectivated.', 'varnish-http-purge' );
 			$set_type         = 'updated';
 		}
 
@@ -156,13 +144,10 @@ class VarnishStatus {
 	 */
 	public function options_settings_ip() {
 		?>
-		<p><a name="#configureip"></a><?php esc_html_e( 'There are cases when a custom Varnish IP Address will need to be set, in order to tell the plugin to empty the cache in a specific location. If you\'re using a CDN like Cloudflare or a Firewall Proxy like Sucuri, you will want to set this.', 'varnish-http-purge' ); ?></p>
-		<p><?php esc_html_e( 'Your Varnish IP is the IP address of the server where your caching service (i.e. Varnish or Nginx) is installed. It must be one of the IPs used by your cache service. If you use multiple IPs, or have customized your ACLs, you\'ll need to pick one that doesn\'t conflict with your other settings. For example, if you have Varnish listening on a public and private IP, pick the private. On the other hand, if you told Varnish to listen on 0.0.0.0 (i.e. "listen on every interface you can") you would need to check what IP you set your purge ACL to allow (commonly 127.0.0.1 aka localhost), and use that (i.e. 127.0.0.1).', 'varnish-http-purge' ); ?></p>
-		<p><?php esc_html_e( 'If your webhost set the service up for you, as is the case with DreamPress or WP Engine, ask them for the specifics if they don\'t have it documented. I\'ve listed the ones I know about here, however you should still check with them if you\'re not sure.', 'varnish-http-purge' ); ?></p>
+		<p><a name="#configureip"></a><?php esc_html_e( 'There are cases when a custom IP Address is needed to for the plugin to properly communicate with the cache service. If you\'re using a CDN like Cloudflare or a Firewall Proxy like Sucuri, or your cache is Nginx based, you may need to customize this setting.', 'varnish-http-purge' ); ?></p>
+		<p><?php esc_html_e( 'Normally your Proxy Cache IP is the IP address of the server where your caching service (i.e. Varnish or Nginx) is installed. It must an address used by your cache service. If you use multiple IPs, or have customized your ACLs, you\'ll need to pick one that doesn\'t conflict with your other settings. For example, if you have Varnish listening on a public and private IP, pick the private. On the other hand, if you told Varnish to listen on 0.0.0.0 (i.e. "listen on every interface you can") you would need to check what IP you set your purge ACL to allow (commonly 127.0.0.1 aka localhost), and use that (i.e. 127.0.0.1 or localhost).', 'varnish-http-purge' ); ?></p>
+		<p><?php esc_html_e( 'If your webhost set the service up for you, as is the case with DreamPress or WP Engine, ask them for the specifics.', 'varnish-http-purge' ); ?></p>
 		<p><strong><?php esc_html_e( 'If you aren\'t sure what to do, contact your webhost or server admin before making any changes.', 'varnish-http-purge' ); ?></strong></p>
-		<ul>
-			<li><?php esc_html_e( 'DreamHost - Go into the Panel and click on the DNS settings for the domain. The entry for <em>resolve-to.domain</em> (if set) will be your cache server. If it\'s not set, then you don\'t need to worry about this at all. Example:', 'varnish-http-purge' ); ?> <code>resolve-to.www A 208.97.157.172</code></li>
-		</ul>
 		<?php
 	}
 
@@ -185,10 +170,10 @@ class VarnishStatus {
 		echo '<label for="vhp_varnish_ip">';
 
 		if ( $disabled ) {
-			esc_html_e( 'A Varnish IP has been defined in your wp-config file, so it is not editable here.', 'varnish-http-purge' );
+			esc_html_e( 'A Proxy Cache IP has been defined in your wp-config file, so it is not editable in settings.', 'varnish-http-purge' );
 		} else {
-			esc_html_e( 'Example:', 'varnish-http-purge' );
-			echo '<code>123.45.67.89</code>';
+			esc_html_e( 'Example: ', 'varnish-http-purge' );
+			echo '<code>123.45.67.89</code> or <code>localhost</code>';
 		}
 
 		echo '</label>';
@@ -208,8 +193,8 @@ class VarnishStatus {
 
 		if ( empty( $input ) ) {
 			return; // do nothing.
-		} elseif ( filter_var( $input, FILTER_VALIDATE_IP ) ) {
-			$set_message = 'IP Updated.';
+		} elseif ( 'localhost' === $input || filter_var( $input, FILTER_VALIDATE_IP ) ) {
+			$set_message = 'Proxy Cache IP Updated.';
 			$set_type    = 'updated';
 			$output      = filter_var( $input, FILTER_VALIDATE_IP );
 		}
@@ -226,7 +211,7 @@ class VarnishStatus {
 	public function register_check_caching() {
 		register_setting( 'varnish-http-purge-url', 'vhp_varnish_url', array( &$this, 'varnish_url_sanitize' ) );
 		add_settings_section( 'varnish-url-settings-section', __( 'Check Caching Status', 'varnish-http-purge' ), array( &$this, 'options_check_caching_scan' ), 'varnish-url-settings' );
-		add_settings_field( 'varnish_url', __( 'Check A URL On Your Site:', 'varnish-http-purge' ), array( &$this, 'check_caching_callback' ), 'varnish-url-settings', 'varnish-url-settings-section' );
+		add_settings_field( 'varnish_url', __( 'Check A URL On Your Site: ', 'varnish-http-purge' ), array( &$this, 'check_caching_callback' ), 'varnish-url-settings', 'varnish-url-settings-section' );
 	}
 
 	/**
@@ -236,13 +221,15 @@ class VarnishStatus {
 	 */
 	public function options_check_caching_scan() {
 		?>
-		<p><?php esc_html_e( 'While it is impossible to detect all possible conflicts, this status page performs a check of the most common issues that prevents your site from caching properly. This feature is provided to help you in resolve potential conflicts on your own. When filing an issue with your web-host, we recommend you include the output in your ticket.', 'varnish-http-purge' ); ?></p>
+		<p><?php esc_html_e( 'This feature performs a check of the most common issues that prevents your site from caching properly. This feature is provided to help you in resolve potential conflicts on your own. When filing an issue with your web-host, we recommend you include the output in your ticket.', 'varnish-http-purge' ); ?></p>
+		<h4><?php esc_html_e( 'Privacy Note', 'varnish-http-purge' ); ?></h4>
 		<p>
 		<?php
 			// translators: %s is a link to the readme for the detection service.
-			printf( wp_kses_post( __( '<strong>This check uses <a href="%s">a remote service hosted on DreamObjects</a></strong>. The service used only for providing up to date compatibility checks on plugins and themes that may conflict with running a server based cache (such as Varnish or Nginx). No personally identifying information regarding persons running this check, nor the plugins and themes in use on this site will be transmitted. The bare minimum of usage information is collected, concerning only IPs and domains making requests of the service. If you do not wish to use this service, please do not use this feature.', 'varnish-http-purge' ) ), 'https://varnish-http-purge.objects-us-east-1.dream.io/readme.txt' );
+			printf( wp_kses_post( __( '<strong>This check uses <a href="%s">a remote service hosted on DreamObjects</a></strong>.', 'varnish-http-purge' ) ), 'https://varnish-http-purge.objects-us-east-1.dream.io/readme.txt' );
 		?>
 		</p>
+		<p><?php esc_html_e( 'The service used only for providing up to date compatibility checks on plugins and themes that may conflict with running a server based cache. No personally identifying information regarding persons running this check, nor the plugins and themes in use on this site will be transmitted. The bare minimum of usage information is collected, concerning only IPs and domains making requests of the service. If you do not wish to use this service, please do not use this feature.', 'varnish-http-purge' ); ?></p>
 		<?php
 
 		// If there's no post made, let's not...
@@ -278,7 +265,7 @@ class VarnishStatus {
 			// Check for Remote IP.
 			$remote_ip = VarnishDebug::remote_ip( $headers );
 
-			// Get the Varnish IP.
+			// Get the IP.
 			if ( false !== VHP_VARNISH_IP ) {
 				$varniship = VHP_VARNISH_IP;
 			} else {
@@ -289,7 +276,7 @@ class VarnishStatus {
 			<h4>
 			<?php
 				// translators: %s is the URL someone asked to scan.
-				printf( esc_html__( 'Results for %s', 'varnish-http-purge' ), esc_url_raw( $varnishurl ) );
+				printf( esc_html__( 'Results for %s ', 'varnish-http-purge' ), esc_url_raw( $varnishurl ) );
 			?>
 			</h4>
 
@@ -350,7 +337,7 @@ class VarnishStatus {
 	}
 
 	/**
-	 * Varnish URL Callback
+	 * URL Callback
 	 *
 	 * @since 4.0
 	 */
@@ -411,9 +398,9 @@ class VarnishStatus {
 		?>
 		<div class="wrap">
 			<?php settings_errors(); ?>
-			<h1><?php esc_html_e( 'Varnish HTTP Purge Settings', 'varnish-http-purge' ); ?></h1>
+			<h1><?php esc_html_e( 'Proxy Cache Purge Settings', 'varnish-http-purge' ); ?></h1>
 
-			<p><?php esc_html_e( 'Varnish HTTP Purge can empty the cache for different server based caching systems, including Varnish and nginx. For most users, there should be no configuration necessary as the plugin is intended to work silently, behind the scenes.', 'varnish-http-purge' ); ?></p>
+			<p><?php esc_html_e( 'Proxy Cache Purge can empty the cache for different server based caching systems, including Varnish and nginx. For most users, there should be no configuration necessary as the plugin is intended to work silently, behind the scenes.', 'varnish-http-purge' ); ?></p>
 
 			<?php
 			if ( ! is_multisite() ) {
@@ -436,7 +423,8 @@ class VarnishStatus {
 				<?php
 			} else {
 				?>
-				<p><?php esc_html_e( 'Editing these settings via the Dashboard is disabled on Multisite as incorrect edits can prevent your network from loading entirely. You can toggle debug mode globally using the admin toolbar option, and you should define your Varnish IP directly into your wp-config file for best results.', 'varnish-http-purge' ); ?></p>
+				<p><?php esc_html_e( 'Editing these settings via the Dashboard is disabled on Multisite as incorrect edits can prevent your network from loading entirely. You can toggle debug mode globally using the admin toolbar option, and you should define your Proxy IP directly into your wp-config file for best results.', 'varnish-http-purge' ); ?></p>
+				<p><?php esc_html_e( 'The cache check page remains available to assist you in determining if pages on your site are properly cached by your server.', 'varnish-http-purge' ); ?></p>
 				<?php
 			}
 			?>
@@ -498,7 +486,7 @@ class VarnishStatus {
 					)
 				),
 				$dream_url,
-				'<strong>Varnish HTTP Purge</strong>',
+				'<strong>Proxy Cache Purge</strong>',
 				$review_url,
 				$review_url
 			);
@@ -507,7 +495,6 @@ class VarnishStatus {
 
 		return $text;
 	}
-
 }
 
-$status = new VarnishStatus();
+new VarnishStatus();
