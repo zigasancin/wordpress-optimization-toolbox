@@ -329,7 +329,7 @@ class ShortPixelMetaFacade {
             throw new Exception("Post metadata is corrupt (No attachment URL)", ShortPixelAPI::ERR_POSTMETA_CORRUPT);
         }
         if ( !parse_url($attURL, PHP_URL_SCHEME) ) {//no absolute URLs used -> we implement a hack
-           return self::getHomeUrl() . $attURL;//get the file URL 
+           return self::getHomeUrl() . ltrim($attURL,'/');//get the file URL
         }
         else {
             return $attURL;//get the file URL
@@ -408,6 +408,7 @@ class ShortPixelMetaFacade {
                     }
                     if (file_exists($tPath)) {
                         $tUrl = str_replace(ShortPixelAPI::MB_basename($url), $thumbnailInfo['file'], $url);
+                        if(in_array($tUrl, $urlList)) continue;
                         $urlList[] = $tUrl;
                         $filePaths[] = $tPath;
                         if($addRetina) {
@@ -453,7 +454,7 @@ class ShortPixelMetaFacade {
 
     public static function isRetina($path) {
         $baseName = pathinfo(ShortPixelAPI::MB_basename($path), PATHINFO_FILENAME);
-        return strpos($baseName, "@2x") == strlen($baseName) - 3;
+        return (substr($baseName, -3) === '@2x');
     }
     
     public static function getWPMLDuplicates( $id ) {
@@ -468,7 +469,16 @@ class ShortPixelMetaFacade {
             SELECT pm.post_id FROM {$wpdb->postmeta} pm
             WHERE pm.meta_value = %s AND pm.meta_key = '_icl_lang_duplicate_of' 
         ", $id ) );
-        
+
+        //Polylang
+        $moreDuplicates = $wpdb->get_col( $wpdb->prepare( "
+            SELECT p.ID FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->posts} pbase ON p.guid = pbase.guid
+         WHERE pbase.ID = %s
+        ", $id ) );
+
+        $duplicates = array_unique(array_merge($duplicates, $moreDuplicates));
+
         if(!in_array($id, $duplicates)) $duplicates[] = $id;
 
         $transTable = $wpdb->get_results("SELECT COUNT(1) hasTransTable FROM information_schema.tables WHERE table_schema='{$wpdb->dbname}' AND table_name='{$wpdb->prefix}icl_translations'");

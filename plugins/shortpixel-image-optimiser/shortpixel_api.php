@@ -28,7 +28,6 @@ class ShortPixelAPI {
     const ERR_UNKNOWN = -999;
 
     private $_settings;
-    private $_maxAttempts = 10;
     private $_apiEndPoint;
     private $_apiDumpEndPoint;
 
@@ -76,23 +75,26 @@ class ShortPixelAPI {
      * @param array $URLs - list of urls to send to API
      * @param Boolean $Blocking - true means it will wait for an answer
      * @param ShortPixelMetaFacade $itemHandler - the Facade that manages different types of image metadatas: MediaLibrary (postmeta table), ShortPixel custom (shortpixel_meta table)
-     * @param int $compressionType 1 - lossy, 2 - glossy, 0 - lossless
-     * @return response from wp_remote_post or error
+     * @param bool|int $compressionType 1 - lossy, 2 - glossy, 0 - lossless
+     * @param bool $refresh
+     * @return Array response from wp_remote_post or error
+     * @throws Exception
      */
     public function doRequests($URLs, $Blocking, $itemHandler, $compressionType = false, $refresh = false) {
         
         if(!count($URLs)) {
             $meta = $itemHandler->getMeta();
-            $files = " (";
             if(count($meta->getThumbsMissing())) {
+                $files = " (";
                 foreach ($meta->getThumbsMissing() as $miss) {
                     $files .= $miss . ", ";
                 }
                 if(strrpos($files, ', ')) {
                     $files = substr_replace($files , ')', strrpos($files , ', '));
                 }
+                throw new Exception(__('Image files are missing.', 'shortpixel-image-optimiser') . (strlen($files) > 1 ? $files : ''));
             }
-            throw new Exception(__('Image files are missing.' . (strlen($files) > 1 ? $files : '') ,'shortpixel-image-optimiser'));
+            else throw new Exception(__('Image files are missing.', 'shortpixel-image-optimiser'));
         }
 
         //WpShortPixel::log("DO REQUESTS for META: " . json_encode($itemHandler->getRawMeta()) . " STACK: " . json_encode(debug_backtrace()));
@@ -107,9 +109,11 @@ class ShortPixelAPI {
             'resize' => $this->_settings->resizeImages ? 1 + 2 * ($this->_settings->resizeType == 'inner' ? 1 : 0) : 0,
             'resize_width' => $this->_settings->resizeWidth,
             'resize_height' => $this->_settings->resizeHeight,
-            'group_id' => $itemHandler->getId(),
             'urllist' => $URLs
         );
+        if(/*false &&*/ $this->_settings->downloadArchive == 7 && class_exists('PharData')) {
+            $requestParameters['group'] = $itemHandler->getId();
+        }
         if($refresh) {
             $requestParameters['refresh'] = 1;
         }
@@ -125,7 +129,7 @@ class ShortPixelAPI {
         {
             //WpShortPixel::log("API response : " . json_encode($response));
             
-            //die(var_dump(array('URL: ' => $this->_apiEndPoint, '<br><br>REQUEST:' => $this->prepareRequest($requestParameters), '<br><br>RESPONSE: ' => $response )));
+            //die(var_dump(array('URL: ' => $this->_apiEndPoint, '<br><br>REQUEST:' => $requestParameters, '<br><br>RESPONSE: ' => $response, '<br><br>BODY: ' => isset($response['body']) ? $response['body'] : '' )));
             //there was an error, save this error inside file's SP optimization field
             if ( is_object($response) && get_class($response) == 'WP_Error' ) 
             {
@@ -153,7 +157,7 @@ class ShortPixelAPI {
     /**
      * parse the JSON response
      * @param $response
-     * @return parsed array
+     * @return array parsed
      */
     public function parseResponse($response) {
         $data = $response['body'];
@@ -166,7 +170,7 @@ class ShortPixelAPI {
      * @param array $URLs - list of urls to send to API
      * @param array $PATHs - list of local paths for the images
      * @param ShortPixelMetaFacade $itemHandler - the Facade that manages different types of image metadatas: MediaLibrary (postmeta table), ShortPixel custom (shortpixel_meta table)
-     * @return status/message array
+     * @return array status/message array
      */
     public function processImage($URLs, $PATHs, $itemHandler = null) {    
         return $this->processImageRecursive($URLs, $PATHs, $itemHandler, 0);       
@@ -177,8 +181,8 @@ class ShortPixelAPI {
      * @param array $URLs - list of urls to send to API
      * @param array $PATHs - list of local paths for the images
      * @param ShortPixelMetaFacade $itemHandler - the Facade that manages different types of image metadatas: MediaLibrary (postmeta table), ShortPixel custom (shortpixel_meta table)
-     * @param type $startTime - time of the first call
-     * @return status/message array
+     * @param int $startTime - time of the first call
+     * @return array status/message array
      */
     private function processImageRecursive($URLs, $PATHs, $itemHandler = null, $startTime = 0) 
     {    
@@ -227,7 +231,7 @@ class ShortPixelAPI {
         $compressionType = $meta->getCompressionType() !== null ? $meta->getCompressionType() : $this->_settings->compressionType;
         $response = $this->doRequests($URLs, true, $itemHandler, $compressionType);//send requests to API
         
-        //die(var_dump($response));
+        //die($response['body']);
         
         if($response['response']['code'] != 200) {//response <> 200 -> there was an error apparently?
             return array("Status" => self::STATUS_FAIL, "Message" => __('There was an error and your request was not processed.', 'shortpixel-image-optimiser')
@@ -235,16 +239,16 @@ class ShortPixelAPI {
         }
 
         $APIresponse = $this->parseResponse($response);//get the actual response from API, its an array
-        
+
         if ( isset($APIresponse[0]) ) //API returned image details
         {
             foreach ( $APIresponse as $imageObject ) {//this part makes sure that all the sizes were processed and ready to be downloaded
-                if ( $imageObject->Status->Code == 0 || $imageObject->Status->Code == 1  ) {
+                if ( isset($imageObject->Status) && ( $imageObject->Status->Code == 0 || $imageObject->Status->Code == 1 ) ) {
                     sleep(1);
                     return $this->processImageRecursive($URLs, $PATHs, $itemHandler, $startTime);    
                 }        
             }
-            
+
             $firstImage = $APIresponse[0];//extract as object first image
             switch($firstImage->Status->Code) 
             {
@@ -317,7 +321,7 @@ class ShortPixelAPI {
      * If http works then it's http, otherwise sets https
      * @param string $url
      * @param bool $reset - forces recheck even if preferred protocol is already set
-     * @return url with the preferred protocol
+     * @return string url with the preferred protocol
      */
     public function setPreferredProtocol($url, $reset = false) {
         //switch protocol based on the formerly detected working protocol
@@ -334,53 +338,71 @@ class ShortPixelAPI {
 
     }
 
-    function downloadAll($target) {
-        //TODO DOCS
-        //http://php.net/manual/en/phardata.buildfromiterator.php
-        //http://php.net/manual/en/phardata.extractto.php
+    function fromArchive($path, $optimizedUrl, $optimizedSize, $originalSize, $webpUrl) {
+        $webpTempFile = "NA";
+        if($webpUrl !== "NA") {
+            $webpTempFile = $path . '/' . wp_basename($webpUrl);
+            $webpTempFile = file_exists($webpTempFile) ? $webpTempFile : 'NA';
+        }
+
+        //if there is no improvement in size then we do not download this file
+        if ( $originalSize == $optimizedSize )
+            return array("Status" => self::STATUS_UNCHANGED, "Message" => "File wasn't optimized so we do not download it.", "WebP" => $webpTempFile);
+
+        $correctFileSize = $optimizedSize;
+        $tempFile = $path . '/' . wp_basename($optimizedUrl);
+
+        if(file_exists($tempFile)) {
+            //on success we return this
+           if( filesize($tempFile) != $correctFileSize) {
+               $size = filesize($tempFile);
+               @unlink($tempFile);
+               @unlink($webpTempFile);
+               $returnMessage = array(
+                   "Status" => self::STATUS_ERROR,
+                   "Code" => self::ERR_INCORRECT_FILE_SIZE,
+                   "Message" => sprintf(__('Error in archive - incorrect file size (downloaded: %s, correct: %s )','shortpixel-image-optimiser'),$size, $correctFileSize));
+            } else {
+               $returnMessage = array("Status" => self::STATUS_SUCCESS, "Message" => $tempFile, "WebP" => $webpTempFile);
+           }
+        } else {
+            $returnMessage = array("Status" => self::STATUS_ERROR,
+                "Code" => self::ERR_FILE_NOT_FOUND,
+                "Message" => __('Unable to locate downloaded file','shortpixel-image-optimiser') . " " . $tempFile);
+        }
+
+        return $returnMessage;
     }
 
     /**
      * handles the download of an optimized image from ShortPixel API
-     * @param type $fileData - info about the file
-     * @param int $compressionType - 1 - lossy, 2 - glossy, 0 - lossless
-     * @return status/message array
+     * @param string $optimizedUrl
+     * @param int $optimizedSize
+     * @param int $originalSize
+     * @param string $webpUrl
+     * @return array status /message array
      */
-    private function handleDownload($fileData, $compressionType){
-        //var_dump($fileData);
-        if($compressionType)
-        {
-            $fileType = "LossyURL";
-            $fileSize = "LossySize";
-            $webpType = "WebPLossyURL";
-        }
-        else
-        {
-            $fileType = "LosslessURL";
-            $fileSize = "LoselessSize";
-            $webpType = "WebPLosslessURL";
-        }
-        
-        $downloadTimeout = max(ini_get('max_execution_time') - 10, 15);        
+    private function handleDownload($optimizedUrl, $optimizedSize, $originalSize, $webpUrl){
+        $downloadTimeout = max(ini_get('max_execution_time') - 10, 15);
         
         $webpTempFile = "NA";
-        if(isset($fileData->$webpType) && $fileData->$webpType !== "NA") {
-            $webpURL = $this->setPreferredProtocol(urldecode($fileData->$webpType));
+        if($webpUrl !== "NA") {
+            $webpURL = $this->setPreferredProtocol(urldecode($webpUrl));
             $webpTempFile = download_url($webpURL, $downloadTimeout);
             $webpTempFile = is_wp_error( $webpTempFile ) ? "NA" : $webpTempFile;
         } 
         
         //if there is no improvement in size then we do not download this file
-        if ( $fileData->OriginalSize == $fileData->$fileSize )
+        if ( $originalSize == $optimizedSize )
             return array("Status" => self::STATUS_UNCHANGED, "Message" => "File wasn't optimized so we do not download it.", "WebP" => $webpTempFile);
         
-        $correctFileSize = $fileData->$fileSize;
-        $fileURL = $this->setPreferredProtocol(urldecode($fileData->$fileType));
+        $correctFileSize = $optimizedSize;
+        $fileURL = $this->setPreferredProtocol(urldecode($optimizedUrl));
  
         $tempFile = download_url($fileURL, $downloadTimeout);
         if(is_wp_error( $tempFile )) 
         { //try to switch the default protocol
-            $fileURL = $this->setPreferredProtocol(urldecode($fileData->$fileType), true); //force recheck of the protocol
+            $fileURL = $this->setPreferredProtocol(urldecode($optimizedUrl), true); //force recheck of the protocol
             $tempFile = download_url($fileURL, $downloadTimeout);
         }    
 
@@ -389,10 +411,11 @@ class ShortPixelAPI {
         
         if ( is_wp_error( $tempFile ) ) {
             @unlink($tempFile);
+            @unlink($webpTempFile);
             $returnMessage = array(
                 "Status" => self::STATUS_ERROR, 
                 "Code" => self::ERR_DOWNLOAD,
-                "Message" => __('Error downloading file','shortpixel-image-optimiser') . " ({$fileData->$fileType}) " . $tempFile->get_error_message());
+                "Message" => __('Error downloading file','shortpixel-image-optimiser') . " ({$optimizedUrl}) " . $tempFile->get_error_message());
         } 
         //check response so that download is OK
         elseif (!file_exists($tempFile)) {
@@ -403,6 +426,7 @@ class ShortPixelAPI {
         elseif( filesize($tempFile) != $correctFileSize) {
             $size = filesize($tempFile);
             @unlink($tempFile);
+            @unlink($webpTempFile);
             $returnMessage = array(
                 "Status" => self::STATUS_ERROR,
                 "Code" => self::ERR_INCORRECT_FILE_SIZE,
@@ -451,23 +475,105 @@ class ShortPixelAPI {
         }
     }
 
+    private function createArchiveTempFolder($archiveBasename) {
+        $archiveTempDir = get_temp_dir() . '/' . $archiveBasename;
+        if(file_exists($archiveTempDir) && is_dir($archiveTempDir) && (time() - filemtime($archiveTempDir) < max(30, SHORTPIXEL_MAX_EXECUTION_TIME) + 10)) {
+            WPShortPixel::log("CONFLICT. Folder already exists and is modified in the last minute. Current IP:" . $_SERVER['REMOTE_ADDR']);
+            return array("Status" => self::STATUS_RETRY, "Code" => 1, "Message" => "Pending");
+        }
+        if( !file_exists($archiveTempDir) && !@mkdir($archiveTempDir) ) {
+            return array("Status" => self::STATUS_ERROR, "Code" => self::ERR_SAVE, "Message" => "Could not create temporary folder.");
+        }
+        return array("Status" => self::STATUS_SUCCESS, "Dir" => $archiveTempDir);
+    }
+
+    private function downloadArchive($archive, $compressionType, $first = true) {
+        if($archive->ArchiveStatus->Code == 1 || $archive->ArchiveStatus->Code == 0) {
+            return array("Status" => self::STATUS_RETRY, "Code" => 1, "Message" => "Pending");
+        } elseif($archive->ArchiveStatus->Code == 2) {
+
+            $suffix = ($compressionType == 0 ? "-lossless" : "");
+            $archiveURL = "Archive" . ($compressionType == 0 ? "Lossless" : "") . "URL";
+            $archiveSize = "Archive" . ($compressionType == 0 ? "Lossless" : "") . "Size";
+
+            $archiveTemp = $this->createArchiveTempFolder(wp_basename($archive->$archiveURL, '.tar'));
+            if($archiveTemp["Status"] == self::STATUS_SUCCESS) { $archiveTempDir = $archiveTemp["Dir"]; }
+            else { return $archiveTemp; }
+
+            $downloadResult = $this->handleDownload($archive->$archiveURL, $archive->$archiveSize, 0, 'NA');
+
+            if ( $downloadResult['Status'] == self::STATUS_SUCCESS ) {
+                $archiveFile = $downloadResult['Message'];
+                if(filesize($archiveFile) !== $archive->$archiveSize) {
+                    @unlink($archiveFile);
+                    ShortpixelFolder::deleteFolder($archiveTempDir);
+                    return array("Status" => self::STATUS_RETRY, "Code" => 1, "Message" => "Pending");
+                }
+                $pharData = new PharData($archiveFile);
+                try {
+                    if (SHORTPIXEL_DEBUG === true) {
+                        $info = "Current IP:" . $_SERVER['REMOTE_ADDR'] . "ARCHIVE CONTENTS: COUNT " . $pharData->count() . ", ";
+                        foreach($pharData as $file) {
+                            $info .= $file . ", ";
+                        }
+                        WPShortPixel::log($info);
+                    }
+                    $pharData->extractTo($archiveTempDir, null, true);
+                    WPShortPixel::log("ARCHIVE EXTRACTED " . json_encode(scandir($archiveTempDir)));
+                    @unlink($archiveFile);
+                } catch (Exception $ex) {
+                    @unlink($archiveFile);
+                    ShortpixelFolder::deleteFolder($archiveTempDir);
+                    return array("Status" => self::STATUS_ERROR, "Code" => $ex->getCode(), "Message" => $ex->getMessage());
+                }
+                return array("Status" => self::STATUS_SUCCESS, "Code" => 2, "Message" => "Success", "Path" => $archiveTempDir);
+
+            } else {
+                WPShortPixel::log("ARCHIVE ERROR (" . $archive->$archiveURL . "): " . json_encode($downloadResult));
+                if($first && $downloadResult['Code'] == self::ERR_INCORRECT_FILE_SIZE) {
+                    WPShortPixel::log("RETRYING AFTER ARCHIVE ERROR");
+                    return $this->downloadArchive($archive, $compressionType, false); // try again, maybe the archive was flushing...
+                }
+                @rmdir($archiveTempDir); //in the case it was just created and it's empty...
+                return array("Status" => $downloadResult['Status'], "Code" => $downloadResult['Code'], "Message" => $downloadResult['Message']);
+            }
+        }
+        return false;
+    }
+
     /**
      * handles a successful optimization, setting metadata and handling download for each file in the set
-     * @param type $APIresponse - the response from the API - contains the optimized images URLs to download
-     * @param type $PATHs - list of local paths for the files
+     * @param array $APIresponse - the response from the API - contains the optimized images URLs to download
+     * @param array $PATHs - list of local paths for the files
      * @param ShortPixelMetaFacade $itemHandler - the Facade that manages different types of image metadatas: MediaLibrary (postmeta table), ShortPixel custom (shortpixel_meta table)
      * @param int $compressionType - 1 - lossy, 2 - glossy, 0 - lossless
-     * @return status/message array
+     * @return array status/message
      */
     private function handleSuccess($APIresponse, $PATHs, $itemHandler, $compressionType) {
         $counter = $savedSpace =  $originalSpace =  $optimizedSpace =  $averageCompression = 0;
         $NoBackup = true;
 
-        $fileType = ( $compressionType ) ? "LossySize" : "LoselessSize";
-        
+        if($compressionType) {
+            $fileType = "LossyURL";
+            $fileSize = "LossySize";
+        } else {
+            $fileType = "LosslessURL";
+            $fileSize = "LoselessSize";
+        }
+        $webpType = "WebP" . $fileType;
+
+        $archive = /*false &&*/
+            ($this->_settings->downloadArchive == 7 && class_exists('PharData') && isset($APIresponse[count($APIresponse) - 1]->ArchiveStatus))
+            ? $this->downloadArchive($APIresponse[count($APIresponse) - 1], $compressionType) : false;
+        if($archive !== false && $archive['Status'] !== self::STATUS_SUCCESS) {
+            return $archive;
+        }
+
         //download each file from array and process it
         foreach ( $APIresponse as $fileData )
         {
+            if(!isset($fileData->Status)) continue; //if optimized images archive is activated, last entry of APIResponse if the Archive data.
+
             if ( $fileData->Status->Code == 2 ) //file was processed OK
             {
                 if ( $counter == 0 ) { //save percent improvement for main file
@@ -475,19 +581,25 @@ class ShortPixelAPI {
                 } else { //count thumbnails only
                     $this->_settings->thumbsCount = $this->_settings->thumbsCount + 1;
                 }
-                $downloadResult = $this->handleDownload($fileData,$compressionType);
-                
+                //TODO la sfarsit sa faca fallback la handleDownload
+                if($archive) {
+                    $downloadResult = $this->fromArchive($archive['Path'], $fileData->$fileType, $fileData->$fileSize, $fileData->OriginalSize, isset($fileData->$webpType) ? $fileData->$webpType : 'NA');
+                } else {
+                    $downloadResult = $this->handleDownload($fileData->$fileType, $fileData->$fileSize, $fileData->OriginalSize, isset($fileData->$webpType) ? $fileData->$webpType : 'NA');
+                }
+
+                $tempFiles[$counter] = $downloadResult;
                 if ( $downloadResult['Status'] == self::STATUS_SUCCESS ) {
-                    $tempFiles[$counter] = $downloadResult;
+                //nothing to do
                 } 
                 //when the status is STATUS_UNCHANGED we just skip the array line for that one
                 elseif( $downloadResult['Status'] == self::STATUS_UNCHANGED ) {
                     //this image is unchanged so won't be copied below, only the optimization stats need to be computed
                     $originalSpace += $fileData->OriginalSize;
-                    $optimizedSpace += $fileData->$fileType;
-                    $tempFiles[$counter] = $downloadResult;
+                    $optimizedSpace += $fileData->$fileSize;
                 }
-                else { 
+                else {
+                    self::cleanupTemporaryFiles($archive, $tempFiles);
                     return array("Status" => $downloadResult['Status'], "Code" => $downloadResult['Code'], "Message" => $downloadResult['Message']);
                 }
                 
@@ -497,7 +609,7 @@ class ShortPixelAPI {
             }
             $counter++;
         }
-        
+
         //figure out in what SubDir files should land
         $mainPath = $itemHandler->getMeta()->getPath();
 
@@ -507,7 +619,8 @@ class ShortPixelAPI {
             $backupStatus = self::backupImage($mainPath, $PATHs);
             if($backupStatus == self::STATUS_FAIL) {
                 $itemHandler->incrementRetries(1, self::ERR_SAVE_BKP, $backupStatus["Message"]);
-                return $backupStatus;
+                self::cleanupTemporaryFiles($archive, empty($tempFiles) ? array() : $tempFiles);
+                return array("Status" => self::STATUS_FAIL, "Code" =>"backup-fail", "Message" => "Failed to back the image up.");
             }
             $NoBackup = false;
         }//end backup section
@@ -518,8 +631,7 @@ class ShortPixelAPI {
         $retinas = 0;
         $thumbsOpt = 0;
         $thumbsOptList = array();
-        $webpSizes = array();
-        
+
         if ( !empty($tempFiles) )
         {
             //overwrite the original files with the optimized ones
@@ -529,7 +641,7 @@ class ShortPixelAPI {
                 
                 $targetFile = $PATHs[$tempFileID];
                 $isRetina = ShortPixelMetaFacade::isRetina($targetFile);
-                
+
                 if(   ($tempFile['Status'] == self::STATUS_UNCHANGED || $tempFile['Status'] == self::STATUS_SUCCESS) && !$isRetina
                    && $targetFile !== $mainPath) {
                     $thumbsOpt++;
@@ -538,7 +650,7 @@ class ShortPixelAPI {
                 
                 if($tempFile['Status'] == self::STATUS_SUCCESS) { //if it's unchanged it will still be in the array but only for WebP (handled below)
                     $tempFilePATH = $tempFile["Message"];
-                    if ( file_exists($tempFilePATH) && file_exists($PATHs[$tempFileID]) && is_writable($PATHs[$tempFileID]) ) {
+                    if ( file_exists($tempFilePATH) && file_exists($targetFile) && is_writable($targetFile) ) {
                         copy($tempFilePATH, $targetFile);
                         if(ShortPixelMetaFacade::isRetina($targetFile)) {
                             $retinas ++;
@@ -550,18 +662,27 @@ class ShortPixelAPI {
                         }
                         //Calculate the saved space
                         $fileData = $APIresponse[$tempFileID];
-                        $savedSpace += $fileData->OriginalSize - $fileData->$fileType;
+                        $savedSpace += $fileData->OriginalSize - $fileData->$fileSize;
                         $originalSpace += $fileData->OriginalSize;
-                        $optimizedSpace += $fileData->$fileType;
+                        $optimizedSpace += $fileData->$fileSize;
                         $averageCompression += $fileData->PercentImprovement;
-                        WPShortPixel::log("HANDLE SUCCESS: Image " . $PATHs[$tempFileID] . " original size: ".$fileData->OriginalSize . " optimized: " . $fileData->$fileType);
+                        WPShortPixel::log("HANDLE SUCCESS: Image " . $PATHs[$tempFileID] . " original size: ".$fileData->OriginalSize . " optimized: " . $fileData->$fileSize);
 
                         //add the number of files with < 5% optimization
-                        if ( ( ( 1 - $APIresponse[$tempFileID]->$fileType/$APIresponse[$tempFileID]->OriginalSize ) * 100 ) < 5 ) {
+                        if ( ( ( 1 - $APIresponse[$tempFileID]->$fileSize/$APIresponse[$tempFileID]->OriginalSize ) * 100 ) < 5 ) {
                             $this->_settings->under5Percent++; 
                         }
                     } 
                     else {
+                        if($archive &&  SHORTPIXEL_DEBUG === true) {
+                            if(!file_exists($tempFilePATH)) {
+                                WPShortPixel::log("MISSING FROM ARCHIVE. tempFilePath: $tempFilePATH with ID: $tempFileID");
+                            } elseif(!file_exists($targetFile)){
+                                WPShortPixel::log("MISSING TARGET: $targetFile");
+                            } elseif(!is_writable($targetFile)){
+                                WPShortPixel::log("TARGET NOT WRITABLE: $targetFile");
+                            }
+                        }
                         $writeFailed++;
                     }
                     @unlink($tempFilePATH);
@@ -574,9 +695,16 @@ class ShortPixelAPI {
                     @unlink($tempWebpFilePATH);
                 }
             }
-            
+            self::cleanupTemporaryFiles($archive, $tempFiles);
+
             if ( $writeFailed > 0 )//there was an error
             {
+                if($archive && SHORTPIXEL_DEBUG === true) {
+                    WPShortPixel::log("ARCHIVE HAS MISSING FILES. EXPECTED: " . json_encode($PATHs)
+                                    . " AND: " . json_encode($APIresponse)
+                                    . " GOT ARCHIVE: " . $APIresponse[count($APIresponse) - 1]->ArchiveURL . " LOSSLESS: " . $APIresponse[count($APIresponse) - 1]->ArchiveLosslessURL
+                                    . " CONTAINING: " . json_encode(scandir($archive['Path'])));
+                }
                 $msg = sprintf(__('Optimized version of %s file(s) couldn\'t be updated.','shortpixel-image-optimiser'),$writeFailed);
                 $itemHandler->incrementRetries(1, self::ERR_SAVE, $msg);
                 $this->_settings->bulkProcessingStatus = "error";
@@ -628,7 +756,8 @@ class ShortPixelAPI {
         
         $itemHandler->updateMeta($meta);
         $itemHandler->optimizationSucceeded();
-        
+        WPShortPixel::log("HANDLE SUCCESS: Metadata saved.");
+
         if(!$originalSpace) { //das kann nicht sein, alles klar?!
             throw new Exception("OriginalSpace = 0. APIResponse" . json_encode($APIresponse));
         }
@@ -641,7 +770,24 @@ class ShortPixelAPI {
             ? number_format(100.0 * (1.0 - (1.0 - $png2jpg / 100.0) * $optimizedSpace / $originalSpace), 2)
             : "Couldn't compute thumbs optimization percent. Main image: " . $percentImprovement);
     }//end handleSuccess
-        
+
+    /**
+     * @param $archive
+     * @param $tempFiles
+     */
+    protected static function cleanupTemporaryFiles($archive, $tempFiles)
+    {
+        if ($archive) {
+            ShortpixelFolder::deleteFolder($archive['Path']);
+        } else {
+            if (!empty($tempFiles) && is_array($tempFiles)) {
+                foreach ($tempFiles as $tmpFile) {
+                    @unlink($tmpFile["Message"]);
+                }
+            }
+        }
+    }
+
     /**
      * a basename alternative that deals OK with multibyte charsets (e.g. Arabic)
      * @param string $Path
@@ -666,7 +812,7 @@ class ShortPixelAPI {
     
     /**
      * sometimes, the paths to the files as defined in metadata are wrong, we try to automatically correct them
-     * @param type $PATHs
+     * @param array $PATHs
      * @return boolean|string
      */
     static public function CheckAndFixImagePaths($PATHs){

@@ -81,6 +81,9 @@ div.fb-like  {
 .sp-notice-success {
     border-left-color: #46b450;
 }
+.sp-notice-warning {
+    border-left-color: #f1e02a;
+}
 li.sp-conflict-plugins-list {
     line-height: 28px;
     list-style: disc;
@@ -160,6 +163,24 @@ div.wrap.short-pixel-bulk-page .bulk-notice-msg img {
 div.sp-bulk-summary {
     float:right;
     margin:8px 5px 3px 20px;
+}
+.sp-notice .bulk-error-show {
+    cursor: pointer;
+}
+.sp-notice div.bulk-error-list {
+    background-color: #f1f1f1;
+    padding: 0 10px;
+    display: none;
+    max-height: 200px;
+    overflow-y: scroll;
+}
+.sp-notice div.bulk-error-list ul {
+    padding: 3px 0 0;
+    margin-top: 5px;
+}
+.sp-notice div.bulk-error-list ul > li:not(:last-child) {
+    border-bottom: 1px solid white;
+    padding-bottom: 4px;
 }
 input.dial {
     box-shadow: none;
@@ -442,13 +463,14 @@ th.sorted.column-wp-shortPixel a {
     width: 80px;
     text-align: right;
 }
-.progress {
+.short-pixel-bulk-page .progress {
     background-color: #ecedee;
     height: 30px;
     position: relative;
     width: 60%;
     display: inline-block;
     margin-right: 28px;
+    overflow: visible;
 }
 .progress .progress-img {
     position: absolute;

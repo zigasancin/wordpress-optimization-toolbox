@@ -2,9 +2,9 @@
 Contributors: ShortPixel 
 Tags: compressor, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
 Requires at least: 3.2.0
-Tested up to: 4.9
+Tested up to: 5.0
 Requires PHP: 5.2
-Stable tag: 4.11.3
+Stable tag: 4.12.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,7 +63,7 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 * **free optimization credits for non-profits**, <a href="https://shortpixel.com/contact" target="_blank">contact us</a> for details
     
 **How much does it cost?**
-ShortPixel comes with 100 free credits/month and additional credits can be bought with as little as $4.99 for 5,000 image credits.
+ShortPixel comes with 100 free credits/month and additional credits can be bought for as little as $4.99 for 5,000 image credits.
 Check out <a href="https://shortpixel.com/pricing" target="_blank">our prices</a>.
 
 > **Testimonials:**  
@@ -241,6 +241,22 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 
 == Changelog ==
 
+= 4.12.0 =
+
+Release date: 31st October 2018
+
+* Generate WebP &lt;picture&gt; tags - use the output buffer instead of the_content which is not triggered by some themes on all content.
+* compatibility of the WebP &lt;picture&gt; tag with lazy loading plugins (that support &lt;picture&gt;)
+* Compatibility with Polylang.
+* hooks to be used by thumbnail regeneration plugins: 'shortpixel-thumbnails-before-regenerate' and 'shortpixel-thumbnails-regenerated'
+* Proper error message when the custom tables cannot be created.
+* exclude the PNGs from conversion to JPEG when they match the exclude patterns.
+* properly warn when cURL is not enabled that Cloudflare integration won't work.
+* send only one url for metadata thumbnails which correspond to the same physical file.
+* JavaScript delayed init for cases when some plugins deffer the load of javascript files.
+* fix identifying filenames with basename length == 3 as retina
+* display improvements for the bulk errors list
+
 = 4.11.3 =
 
 Release date: 27th September 2018
@@ -250,7 +266,7 @@ Release date: 27th September 2018
 
 = 4.11.2 =
 
-Release date: 20th August 2018
+Release date: 30th August 2018
 
 * Fix "Image files are missing" warning when thumbails optimization is activated but all the thumbnails are excepted from optimization and the bulk is ran a second time.
 * Fix not saving properly the metadata on some situations

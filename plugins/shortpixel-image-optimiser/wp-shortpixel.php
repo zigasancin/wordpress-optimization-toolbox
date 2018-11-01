@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.11.3
+ * Version: 4.12.0
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.11.2");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.12.0");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -80,8 +80,14 @@ function shortpixelInit() {
         require_once('wp-shortpixel-req.php');
         $shortPixelPluginInstance = new WPShortPixel;
     }
-} 
+}
 
+/**
+ * this is hooked into wp_generate_attachment_metadata
+ * @param $meta
+ * @param null $ID
+ * @return WPShortPixel the instance
+ */
 function shortPixelHandleImageUploadHook($meta, $ID = null) {
     global $shortPixelPluginInstance;
     if(!isset($shortPixelPluginInstance)) {
@@ -174,8 +180,9 @@ function shortPixelGravityForms( $value, $lead, $field, $form ) {
 }
 
 if ( get_option('wp-short-pixel-create-webp-markup')) { 
-    add_filter( 'the_content', 'shortPixelConvertImgToPictureAddWebp', 10000 ); // priority big, so it will be executed last
-    add_filter( 'post_thumbnail_html', 'shortPixelConvertImgToPictureAddWebp');
+    //add_filter( 'the_content', 'shortPixelConvertImgToPictureAddWebp', 10000 ); // priority big, so it will be executed last
+    //add_filter( 'post_thumbnail_html', 'shortPixelConvertImgToPictureAddWebp');
+    ob_start( 'shortPixelConvertImgToPictureAddWebp');
     add_action( 'wp_head', 'shortPixelAddPictureJs');
 //    add_action( 'wp_enqueue_scripts', 'spAddPicturefillJs' );
 }
@@ -185,12 +192,12 @@ if ( !function_exists( 'vc_action' ) || vc_action() !== 'vc_inline' ) { //handle
     add_action('ngg_added_new_image', 'shortPixelNggAdd');
     
     $autoPng2Jpg = get_option('wp-short-pixel-png2jpg');
-    if($autoPng2Jpg) {
+    $autoMediaLibrary = get_option('wp-short-pixel-auto-media-library');
+    if($autoPng2Jpg && $autoMediaLibrary) {
         add_action( 'wp_handle_upload', 'shortPixelPng2JpgHook');
         add_action( 'mpp_handle_upload', 'shortPixelPng2JpgHook');
     }
     add_action('wp_handle_replace', 'shortPixelReplaceHook');
-    $autoMediaLibrary = get_option('wp-short-pixel-auto-media-library');
     if($autoMediaLibrary) {
         add_filter( 'wp_generate_attachment_metadata', 'shortPixelHandleImageUploadHook', 10, 2 );
         add_filter( 'mpp_generate_metadata', 'shortPixelHandleImageUploadHook', 10, 2 );

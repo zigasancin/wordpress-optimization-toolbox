@@ -5,84 +5,113 @@
  */
 
 class ShortPixelImgToPictureWebp {
+
+    public static function lazyGet($img, $type) {
+        return array(
+            'value' =>
+                (isset($img[$type]) && strlen($img[$type])) ?
+                    $img[$type]
+                    : (isset($img['data-' . $type]) && strlen($img['data-' . $type]) ?
+                        $img['data-' . $type]
+                        : (isset($img['data-lazy-' . $type]) && strlen($img['data-lazy-' . $type]) ? $img['data-lazy-' . $type] : false)),
+            'prefix' =>
+                (isset($img[$type]) && strlen($img[$type])) ? ''
+                    : (isset($img['data-' . $type]) && strlen($img['data-' . $type]) ? 'data-'
+                        : (isset($img['data-lazy-' . $type]) && strlen($img['data-lazy-' . $type]) ? 'data-lazy-' : false))
+        );
+    }
  
     public static function convert($content) {
         // Don't do anything with the RSS feed.
         if ( is_feed() || is_admin() ) { return $content; }
 
-        $thisClass = __CLASS__; // hack for PHP 5.3 which doesn't accept self:: in closures
-        return preg_replace_callback('/<img[^>]*>/', function ($match) use ($thisClass) {
-            // Do nothing with images that have the 'sp-no-webp' class.
-            if ( strpos($match[0], 'sp-no-webp') ) { return $match[0]; }
-            
-            $img = $thisClass::get_attributes($match[0]);
+        return preg_replace_callback('/<img[^>]*>/', array('ShortPixelImgToPictureWebp', 'convertImage'), $content);
+    }
 
-            $src = (isset($img['src'])) ? $img['src'] : false;
-            $srcset = (isset($img['srcset'])) ? $img['srcset'] : false;
-            $sizes = (isset($img['sizes'])) ? $img['sizes'] : false;
-            
-            //check if there are webps
-            /*$id = $thisClass::url_to_attachment_id( $src );
-            if(!$id) { 
-                return $match[0]; 
-            }
-            $imageBase = dirname(get_attached_file($id)) . '/';
-            */
-            $updir = wp_upload_dir();
-            $proto = explode("://", $src);
+    public static function convertImage($match) {
+        // Do nothing with images that have the 'sp-no-webp' class.
+        if ( strpos($match[0], 'sp-no-webp') ) { return $match[0]; }
+
+        $img = self::get_attributes($match[0]);
+
+        $srcInfo = self::lazyGet($img, 'src');
+        $src = $srcInfo['value'];
+        $srcPrefix = $srcInfo['prefix'];
+
+        $srcsetInfo = self::lazyGet($img, 'srcset');
+        $srcset = $srcsetInfo['value'];
+        $srcsetPrefix = $srcsetInfo['prefix'];
+
+        $sizesInfo = self::lazyGet($img, 'sizes');
+        $sizes = $sizesInfo['value'];
+        $sizesPrefix = $sizesInfo['prefix'];
+
+        //check if there are webps
+        /*$id = $thisClass::url_to_attachment_id( $src );
+        if(!$id) {
+            return $match[0];
+        }
+        $imageBase = dirname(get_attached_file($id)) . '/';
+        */
+        $updir = wp_upload_dir();
+        $proto = explode("://", $src);
+        if(count($proto) > 1) {
+            //check that baseurl uses the same http/https proto and if not, change
             $proto = $proto[0];
             if(strpos($updir['baseurl'], $proto."://") === false) {
                 $base = explode("://", $updir['baseurl']);
-                $updir['baseurl'] = $proto . "://" . $base[1];
-            }
-            $imageBase = str_replace($updir['baseurl'], SHORTPIXEL_UPLOADS_BASE, $src);
-            if($imageBase == $src) {
-                return $match[0];
-            }
-            $imageBase = dirname($imageBase) . '/';
-
-            // We don't wanna have an src attribute on the <img>
-            unset($img['src']);
-            //unset($img['srcset']);
-            //unset($img['sizes']);
-            
-            $srcsetWebP = '';
-            if($srcset) {
-                $defs = explode(",", $srcset);                
-                foreach($defs as $item) {
-                    $parts = preg_split('/\s+/', trim($item));
-                    
-                    //echo(" file: " . $parts[0] . " ext: " . pathinfo($parts[0], PATHINFO_EXTENSION) . " basename: " . wp_basename($parts[0], '.' . pathinfo($parts[0], PATHINFO_EXTENSION)));
-                    
-                    $fileWebP = $imageBase . wp_basename($parts[0], '.' . pathinfo($parts[0], PATHINFO_EXTENSION)) . '.webp';
-                    if(file_exists($fileWebP)) {
-                        $srcsetWebP .= (strlen($srcsetWebP) ? ',': '') 
-                                    . preg_replace('/\.[a-zA-Z0-9]+$/', '.webp', $parts[0]) 
-                                    . (isset($parts[1]) ? ' ' . $parts[1] : '');
-                    }
+                if(count($base) > 1) {
+                    $updir['baseurl'] = $proto . "://" . $base[1];
                 }
-                //$srcsetWebP = preg_replace('/\.[a-zA-Z0-9]+\s+/', '.webp ', $srcset);
-            } else {
-                $srcset = trim($src);
-                
-//                die(var_dump($match));
-                
-                $fileWebP = $imageBase . wp_basename($srcset, '.' . pathinfo($srcset, PATHINFO_EXTENSION)) . '.webp';
+            }
+        }
+        $imageBase = str_replace($updir['baseurl'], SHORTPIXEL_UPLOADS_BASE, $src);
+        if($imageBase == $src) {
+            return $match[0];
+        }
+        $imageBase = dirname($imageBase) . '/';
+
+        // We don't wanna have an src attribute on the <img>
+        unset($img['src']);
+        //unset($img['srcset']);
+        //unset($img['sizes']);
+
+        $srcsetWebP = '';
+        if($srcset) {
+            $defs = explode(",", $srcset);
+            foreach($defs as $item) {
+                $parts = preg_split('/\s+/', trim($item));
+
+                //echo(" file: " . $parts[0] . " ext: " . pathinfo($parts[0], PATHINFO_EXTENSION) . " basename: " . wp_basename($parts[0], '.' . pathinfo($parts[0], PATHINFO_EXTENSION)));
+
+                $fileWebP = $imageBase . wp_basename($parts[0], '.' . pathinfo($parts[0], PATHINFO_EXTENSION)) . '.webp';
                 if(file_exists($fileWebP)) {
-                    $srcsetWebP = preg_replace('/\.[a-zA-Z0-9]+$/', '.webp', $srcset);
+                    $srcsetWebP .= (strlen($srcsetWebP) ? ',': '')
+                        . preg_replace('/\.[a-zA-Z0-9]+$/', '.webp', $parts[0])
+                        . (isset($parts[1]) ? ' ' . $parts[1] : '');
                 }
             }
-            if(!strlen($srcsetWebP))  { return $match[0]; }
+            //$srcsetWebP = preg_replace('/\.[a-zA-Z0-9]+\s+/', '.webp ', $srcset);
+        } else {
+            $srcset = trim($src);
 
-            //add the exclude class so if this content is processed again in other filter, the img is not converted again in picture
-            $img['class'] = (isset($img['class']) ? $img['class'] . " " : "") . "sp-no-webp";
-            
-            return '<picture ' . $thisClass::create_attributes($img) . '>'
-                      .'<source srcset="' . $srcsetWebP . '"' . ($sizes ? ' sizes="' . $sizes . '"' : '') . ' type="image/webp">'
-                      .'<source srcset="' . $srcset . '"' . ($sizes ? ' sizes="' . $sizes . '"' : '') . '>'
-                      .'<img src="' . $src . '" ' . $thisClass::create_attributes($img) . '>'
-                  .'</picture>';
-        }, $content);
+//                die(var_dump($match));
+
+            $fileWebP = $imageBase . wp_basename($srcset, '.' . pathinfo($srcset, PATHINFO_EXTENSION)) . '.webp';
+            if(file_exists($fileWebP)) {
+                $srcsetWebP = preg_replace('/\.[a-zA-Z0-9]+$/', '.webp', $srcset);
+            }
+        }
+        if(!strlen($srcsetWebP))  { return $match[0]; }
+
+        //add the exclude class so if this content is processed again in other filter, the img is not converted again in picture
+        $img['class'] = (isset($img['class']) ? $img['class'] . " " : "") . "sp-no-webp";
+
+        return '<picture ' . self::create_attributes($img) . '>'
+        .'<source ' . $srcsetPrefix . 'srcset="' . $srcsetWebP . '"' . ($sizes ? ' ' . $sizesPrefix . 'sizes="' . $sizes . '"' : '') . ' type="image/webp">'
+        .'<source ' . $srcsetPrefix . 'srcset="' . $srcset . '"' . ($sizes ? ' ' . $sizesPrefix . 'sizes="' . $sizes . '"' : '') . '>'
+        .'<img ' . $srcPrefix . 'src="' . $src . '" ' . self::create_attributes($img) . '>'
+        .'</picture>';
     }
     
     public static function get_attributes( $image_node )

@@ -393,7 +393,7 @@ class ShortPixelView {
             <?php 
             $failed = $this->ctrl->getPrioQ()->getFailed();
             if(count($failed)) { ?>
-                <div class="bulk-progress" style="margin-bottom: 15px">
+                <div class="bulk-progress sp-notice sp-notice-warning sp-floating-block sp-double-width" style="margin-bottom: 15px">
                     <p>
                         <?php _e('The following images could not be processed because of their limited write rights. This usually happens if you have changed your hosting provider. Please restart the optimization process after you granted write rights to all the files below.','shortpixel-image-optimiser');?>
                     </p>
@@ -421,23 +421,36 @@ class ShortPixelView {
                         _e('','shortpixel-image-optimiser');
                         if (count($quotaData['filesWithErrors'])) {
                             echo('&nbsp;');
-                            _e('Some have errors:','shortpixel-image-optimiser'); echo(' ');
-                            $first = true;
+                            echo('<strong class="bulk-error-show closed">');_e('Some have errors','shortpixel-image-optimiser'); echo(' <a <span class="dashicons dashicons-arrow-down"></span></strong>');
+                            ?><div class="bulk-error-list"><ul><?php
                             foreach($quotaData['filesWithErrors'] as $id => $data) {
-                                if(!$first) {
-                                    echo(",&nbsp;");
-                                }
-                                $first = false;
                                 if(ShortPixelMetaFacade::isCustomQueuedId($id)) {
-                                    echo('<a href="'. ShortPixelMetaFacade::getHomeUrl() . ShortPixelMetaFacade::filenameToRootRelative($data['Path']).'" title="'.$data['Message'].'" target="_blank">'.$data['Name'].'</a>');
+                                    echo('<li><a href="'. ShortPixelMetaFacade::getHomeUrl() . ShortPixelMetaFacade::filenameToRootRelative($data['Path']).'" target="_blank">'.$data['Name'].'</a> -  '.$data['Message'].'</li>');
                                 } else {
-                                    echo('<a href="post.php?post='.$data['Id'].'&action=edit" title="'.$data['Message'].'">'.$data['Name'].'</a>');
+                                    echo('<li><a href="post.php?post='.$data['Id'].'&action=edit">'.$data['Name'].'</a> - '.$data['Message'].'</li>');
                                 }
                             }
                             if(isset($quotaData['moreFilesWithErrors']) && $quotaData['moreFilesWithErrors']) {
-                                echo('&nbsp;');printf(__("(%s more)",'shortpixel-image-optimiser'), $quotaData['moreFilesWithErrors']);
+                                echo('<li>');printf(__("(%s more)",'shortpixel-image-optimiser'), $quotaData['moreFilesWithErrors']); echo('</li>');
                             }
-                        } ?>
+                            ?></ul></div>
+                            <script>
+                                jQuery(function(){
+                                    jQuery(".sp-notice .bulk-error-show").click(function(e){
+                                        var elm = e.target;
+                                        if(jQuery(elm).hasClass("closed")){
+                                            jQuery(".sp-notice .bulk-error-list").show(400);
+                                            jQuery(elm).removeClass("closed").addClass("open");
+                                            jQuery("a.dashicons", elm).removeClass("dashicons-arrow-down").addClass("dashicons-arrow-up");
+                                        } else {
+                                            jQuery(".sp-notice .bulk-error-list").hide(400);
+                                            jQuery(elm).removeClass("open").addClass("closed");
+                                            jQuery("a.dashicons", elm).removeClass("dashicons-arrow-up").addClass("dashicons-arrow-down");
+                                        }
+                                    });
+                                });
+                            </script>
+                        <?php } ?>
                     </p>
                 <?php }
                 $settings = $this->ctrl->getSettings();
@@ -680,7 +693,7 @@ class ShortPixelView {
      
     public function displayFailed($failed) {
         ?>
-            <div class="bulk-progress bulk-stats">
+            <div class="bulk-progress bulk-stats" style="padding-top:5px;">
                 <?php foreach($failed as $fail) { 
                     if($fail->type == ShortPixelMetaFacade::CUSTOM_TYPE) {
                         $meta = $fail->meta;
@@ -1145,7 +1158,7 @@ class ShortPixelView {
                         if(!$gdInstalled) {echo("&nbsp;<span style='color:red;'>" . __('You need PHP GD for this. Please ask your hosting to install it.','shortpixel-image-optimiser') . "</span>");}
                         ?>
                         <p class="settings-info">
-                            <?php _e('Converts all PNGs that don\'t have transparent pixels to JPEG. This can dramatically reduce the file size, especially if you have camera pictures that are saved in PNG format. <strong>PNGs with transparency will not be converted.</strong> The plugin will also search for references of the image in posts and will replace them.','shortpixel-image-optimiser');?>
+                            <?php _e('Converts all PNGs that don\'t have transparent pixels to JPEG. This can dramatically reduce the file size, especially if you have camera pictures that are saved in PNG format. The plugin will also search for references of the image in posts and will replace them.','shortpixel-image-optimiser');?>
                         </p>
                     </td>
                 </tr>
@@ -1289,6 +1302,10 @@ class ShortPixelView {
 	 */
     function display_cloudflare_settings_form()
     {
+        $noCurl = !function_exists('curl_init');
+        if($noCurl) {
+            echo('<p style="font-weight:bold;color:red">' . __("Please enable PHP cURL extension for the Cloudflare integration to work.", 'shortpixel-image-optimiser') . '</p>' );
+        }
         ?>
         <p><?php _e("If you're using Cloudflare on your site then we advise you to fill in the details below. This will allow ShortPixel to work seamlessly with Cloudflare so that any image optimized/restored by ShortPixel will be automatically updated on Cloudflare as well.",'shortpixel-image-optimiser');?></p>
         <form name='wp_shortpixel_cloudflareAPI' action='options-general.php?page=wp-shortpixel&noheader=true'
@@ -1300,7 +1317,7 @@ class ShortPixelView {
                         <label for="cloudflare-email"><?php _e('Cloudflare E-mail:', 'shortpixel-image-optimiser'); ?></label>
                     </th>
                     <td>
-                        <input name="cloudflare-email" type="text" id="cloudflare-email"
+                        <input name="cloudflare-email" type="text" id="cloudflare-email" <?php echo($noCurl ? 'disabled' : '');?>
                                value="<?php echo($this->ctrl->fetch_cloudflare_api_email()); ?>" class="regular-text">
                         <p class="settings-info">
                             <?php _e('The e-mail address you use to login to CloudFlare.','shortpixel-image-optimiser');?>
@@ -1312,7 +1329,7 @@ class ShortPixelView {
                                 for="cloudflare-auth-key"><?php _e('Global API Key:', 'shortpixel-image-optimiser'); ?></label>
                     </th>
                     <td>
-                        <input name="cloudflare-auth-key" type="text" id="cloudflare-auth-key"
+                        <input name="cloudflare-auth-key" type="text" id="cloudflare-auth-key" <?php echo($noCurl ? 'disabled' : '');?>
                                value="<?php echo($this->ctrl->fetch_cloudflare_api_key()); ?>" class="regular-text">
                         <p class="settings-info">
                             <?php _e("This can be found when you're logged into your account, on the My Profile page:",'shortpixel-image-optimiser');?> <a href='https://www.cloudflare.com/a/profile' target='_blank'>https://www.cloudflare.com/a/profile</a>
@@ -1324,7 +1341,7 @@ class ShortPixelView {
                                 for="cloudflare-zone-id"><?php _e('Zone ID:', 'shortpixel-image-optimiser'); ?></label>
                     </th>
                     <td>
-                        <input name="cloudflare-zone-id" type="text" id="cloudflare-zone-id"
+                        <input name="cloudflare-zone-id" type="text" id="cloudflare-zone-id" <?php echo($noCurl ? 'disabled' : '');?>
                                value="<?php echo($this->ctrl->fetch_cloudflare_api_zoneid()); ?>" class="regular-text">
                         <p class="settings-info">
                             <?php _e('This can be found in your Cloudflare account in the "Overview" section for your domain.','shortpixel-image-optimiser');?>

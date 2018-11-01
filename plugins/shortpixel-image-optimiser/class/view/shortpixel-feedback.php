@@ -62,7 +62,7 @@ class ShortPixelFeedback {
                   . esc_html__( 'Remove the ShortPixel settings on plugin delete.', $this->plugin_name ) . '</label></span><br>';
             $html .= '<p><strong>' . esc_html( $form['body'] ) . '</strong></p><p>';
             foreach( $form['options'] as $key => $option ) {
-                $html .= '<input type="radio" name="shortpixel-deactivate-reason"'.('features' == $key ? ' checked="checked"' : '').' id="' . esc_attr( $key ) . '" value="' . esc_attr( $key ) . '"> <label for="' . esc_attr( $key ) . '">' . esc_attr( $option ) . '</label><br>';
+                $html .= '<input type="radio" name="shortpixel-deactivate-reason" id="' . esc_attr( $key ) . '" value="' . esc_attr( $key ) . '"> <label for="' . esc_attr( $key ) . '">' . esc_attr( $option ) . '</label><br>';
             }
             $html .= '</p><label id="shortpixel-deactivate-details-label" for="shortpixel-deactivate-reasons"><strong>' . esc_html( $form['details'] ) .'</strong></label><textarea name="shortpixel-deactivate-details" id="shortpixel-deactivate-details" rows="2" style="width:100%"></textarea>';
             $html .= '<label for="anonymous" title="'
@@ -72,7 +72,7 @@ class ShortPixelFeedback {
         }
         $html .= '</div><!-- .shortpixel-deactivate-form-body -->';
         $html .= '<p class="deactivating-spinner"><span class="spinner"></span> ' . __( 'Submitting form', $this->plugin_name ) . '</p>';
-        $html .= '<div class="shortpixel-deactivate-form-footer"><p><a id="shortpixel-deactivate-plugin" href="#">' . __( 'Just Deactivate', $this->plugin_name ) . '</a><a id="shortpixel-deactivate-submit-form" class="button button-primary" href="#">' . __( 'Submit and Deactivate', $this->plugin_name ) . '</a></p></div>'
+        $html .= '<div class="shortpixel-deactivate-form-footer"><p><a id="shortpixel-deactivate-plugin" href="#">' . __( 'Just Deactivate', $this->plugin_name ) . '</a><a id="shortpixel-deactivate-submit-form" class="button button-primary" href="#" disabled>' . __( 'Submit and Deactivate', $this->plugin_name ) . '</a></p></div>'
         ?>
         <div class="shortpixel-deactivate-form-bg"></div>
         <style type="text/css">
@@ -150,9 +150,10 @@ class ShortPixelFeedback {
             jQuery(document).ready(function($){
                 var deactivateURL = $("#shortpixel-deactivate-link-<?php echo esc_attr( $this->plugin_name ); ?>"),
                     formContainer = $('#shortpixel-deactivate-form-<?php echo esc_attr( $this->plugin_name ); ?>'),
+                    deactivated = true,
                     detailsStrings = {
                         'setup' : '<?php echo __( 'What was the dificult part ?', $this->plugin_name ) ?>',
-                        'documentation' : '<?php echo __( 'What can we describe more ?', $this->plugin_name ) ?>',
+                        'docs' : '<?php echo __( 'What can we describe more ?', $this->plugin_name ) ?>',
                         'features' : '<?php echo __( 'How could we improve ?', $this->plugin_name ) ?>',
                         'better-plugin' : '<?php echo __( 'Can you mention it ?', $this->plugin_name ) ?>',
                         'incompatibility' : '<?php echo __( 'With what plugin or theme is incompatible ?', $this->plugin_name ) ?>',
@@ -176,35 +177,40 @@ class ShortPixelFeedback {
                         var detailsLabel = formContainer.find( '#shortpixel-deactivate-details-label strong' );
                         var value = formContainer.find( 'input[name="shortpixel-deactivate-reason"]:checked' ).val();
                         detailsLabel.text( detailsStrings[ value ] );
+                        if(deactivated) {
+                            deactivated = false;
+                            $('#shortpixel-deactivate-submit-form').removeAttr("disabled");
+                            formContainer.on('click', '#shortpixel-deactivate-submit-form', function(e){
+                                var data = {
+                                    'action': 'shortpixel_deactivate_plugin',
+                                    'security': "<?php echo wp_create_nonce ( 'shortpixel_deactivate_plugin' ); ?>",
+                                    'dataType': "json"
+                                };
+                                e.preventDefault();
+                                // As soon as we click, the body of the form should disappear
+                                formContainer.addClass( 'process-response' );
+                                // Fade in spinner
+                                formContainer.find(".deactivating-spinner").fadeIn();
+
+                                data['reason']   = formContainer.find( 'input[name="shortpixel-deactivate-reason"]:checked' ).val();
+                                data['details']  = formContainer.find('#shortpixel-deactivate-details').val();
+                                data['anonymous'] = formContainer.find( '#anonymous:checked' ).length;
+                                data['remove-settings'] = formContainer.find( '#shortpixel-remove-settings:checked').length;
+
+                                $.post(
+                                    ajaxurl,
+                                    data,
+                                    function(response){
+                                        // Redirect to original deactivation URL
+                                        window.location.href = url;
+                                    }
+                                );
+                            });
+                        }
                     });
 
                     formContainer.on('click', '#shortpixel-deactivate-submit-form', function(e){
-                        debugger;
-                        var data = {
-                            'action': 'shortpixel_deactivate_plugin',
-                            'security': "<?php echo wp_create_nonce ( 'shortpixel_deactivate_plugin' ); ?>",
-                            'dataType': "json"
-                        };
                         e.preventDefault();
-                        // As soon as we click, the body of the form should disappear
-                        formContainer.addClass( 'process-response' );
-                        // Fade in spinner
-                        formContainer.find(".deactivating-spinner").fadeIn();
-
-                        data['reason']   = formContainer.find( 'input[name="shortpixel-deactivate-reason"]:checked' ).val();
-                        data['details']  = formContainer.find('#shortpixel-deactivate-details').val();
-                        data['anonymous'] = formContainer.find( '#anonymous:checked' ).length;
-                        data['remove-settings'] = formContainer.find( '#shortpixel-remove-settings:checked').length;
-
-                        $.post(
-                            ajaxurl,
-                            data,
-                            function(response){
-                                // Redirect to original deactivation URL
-                                debugger;
-                                window.location.href = url;
-                            }
-                        );
                     });
 
                     formContainer.on('click', '#shortpixel-deactivate-plugin', function(e){
@@ -233,7 +239,7 @@ class ShortPixelFeedback {
         $form['body'] = __( 'Before you deactivate the plugin, would you quickly give us your reason for doing so?', $this->plugin_name );
         $form['options'] = array(
             'setup'           => __( 'Set up is too difficult', $this->plugin_name ),
-            'documentation'   => __( 'Lack of documentation', $this->plugin_name ),
+            'docs'            => __( 'Lack of documentation', $this->plugin_name ),
             'features'        => __( 'Not the features I wanted', $this->plugin_name ),
             'better-plugin'   => __( 'Found a better plugin', $this->plugin_name ),
             'incompatibility' => __( 'Incompatible with theme or plugin', $this->plugin_name ),

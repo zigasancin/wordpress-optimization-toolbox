@@ -86,7 +86,7 @@ class WpShortPixelMediaLbraryAdapter {
                         {
                             $foundThumbs = WpShortPixelMediaLbraryAdapter::findThumbs($filePath);
                             $foundCount = count($foundThumbs);
-                            //echo("   <br>&gt; $counter  CHECKING FILE THUMBS: FOUND $foundCount " 
+                            //echo("   <br>&gt; $counter  CHECKING FILE THUMBS: FOUND $foundCount "
                             //     . ($foundCount > $sizesCount ? " DIFFERENT ($sizesCount)!" : ""));
                             if(count($foundThumbs) > $sizesCount) {
                                 $unlisted = array();
@@ -248,6 +248,7 @@ class WpShortPixelMediaLbraryAdapter {
         foreach($sizes as $key => $val) {
             if (strpos($key, ShortPixelMeta::WEBP_THUMB_PREFIX) === 0) continue;
             if (isset($val['mime-type']) && $val['mime-type'] == "image/webp") continue;
+            if(!isset($val['file'])) continue;
             if (in_array($key, $exclude)) continue;
             $uniq[$val['file']] = $key;
         }
@@ -262,6 +263,7 @@ class WpShortPixelMediaLbraryAdapter {
         foreach($sizesAll as $key => $size) {
            if(strpos($key, ShortPixelMeta::FOUND_THUMB_PREFIX) === 0) continue;
            if(in_array($size['file'], $files)) continue;
+           if(!isset($size['file'])) continue;
            $sizes[$key] = $size;
            $files[] = $size['file'];
         }

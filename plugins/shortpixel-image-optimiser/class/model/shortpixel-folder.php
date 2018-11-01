@@ -31,11 +31,29 @@ class ShortPixelFolder extends ShortPixelEntity{
         }
         return false;
     }
+
+    public static function deleteFolder($dirname) {
+        if (is_dir($dirname))
+            $dir_handle = opendir($dirname);
+        if (!$dir_handle)
+            return false;
+        while($file = @readdir($dir_handle)) {
+            if ($file != "." && $file != "..") {
+                if (!is_dir($dirname."/".$file))
+                    @unlink($dirname."/".$file);
+                else
+                    self::deleteFolder($dirname.'/'.$file);
+            }
+        }
+        closedir($dir_handle);
+        @rmdir($dirname);
+        return true;
+    }
     
     /**
      * returns the first from parents that is a parent folder of $folder
-     * @param type $folder
-     * @param type $parents
+     * @param string $folder
+     * @param array $parents
      * @return parent if found, false otherwise
      */
     public static function checkFolderIsSubfolder($folder, $parents) {
@@ -52,9 +70,9 @@ class ShortPixelFolder extends ShortPixelEntity{
     
     /**
      * finds the first from the subfolders that has the folder as parent
-     * @param type $folder
-     * @param type $subfolders
-     * @return subfolder if found, false otherwise
+     * @param string $folder
+     * @param array $subfolders
+     * @return string subfolder if found, false otherwise
      */
     public static function checkFolderIsParent($folder, $subfolders) {
         if(!is_array($subfolders)) {
@@ -133,7 +151,7 @@ class ShortPixelFolder extends ShortPixelEntity{
             if(in_array($t, $ignore)) continue;
             $tpath = trailingslashit($path) . $t;
             if (is_dir($tpath)) {
-                self::checkFolderContentsRecursive($tpath, $callback);
+                self::checkFolderContentsRecursive($tpath, $changed, $callback);
             } elseif(   WPShortPixel::_isProcessablePath($tpath, array(), WPShortPixelSettings::getOpt('excludePatterns'))
                      && !(in_array($tpath, $reference) && $reference[$tpath]->compressedSize == filesize($tpath))) {
                 $changed[] = $tpath;
@@ -142,7 +160,7 @@ class ShortPixelFolder extends ShortPixelEntity{
     }
     
     public function getFolderContentsChangeDate() {
-        return self::getFolderContentsChangeDateRecursive($this->getPath(), 0, time($this->getTsUpdated()));
+        return self::getFolderContentsChangeDateRecursive($this->getPath(), 0, strtotime($this->getTsUpdated()));
     }
     
     protected static function getFolderContentsChangeDateRecursive($path, $mtime, $refMtime) {
@@ -221,7 +239,7 @@ class ShortPixelFolder extends ShortPixelEntity{
     
     /**
      * needed as callback
-     * @param type $item
+     * @param ShortPixelFolder $item
      */
     public static function path($item) {
         return $item->getPath();

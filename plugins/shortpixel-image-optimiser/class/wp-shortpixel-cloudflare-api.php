@@ -142,6 +142,8 @@ class ShortPixelCloudFlareApi {
      * @return array|mixed|object - Request response as decoded JSON
      */
     private function delete_url_cache_request_action( $request_url = '', $parameters_as_json = '', $request_headers = array() ) {
+        if(!function_exists('curl_init')) return false;
+
         $curl_connection = curl_init();
         curl_setopt( $curl_connection, CURLOPT_URL, $request_url );
         curl_setopt( $curl_connection, CURLOPT_CUSTOMREQUEST, "DELETE" );

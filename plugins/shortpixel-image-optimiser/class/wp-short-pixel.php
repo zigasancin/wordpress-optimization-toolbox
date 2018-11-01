@@ -39,7 +39,7 @@ class WPShortPixel {
         
         define('QUOTA_EXCEEDED', $this->view->getQuotaExceededHTML());
 
-        if(is_plugin_active('envira-gallery/envira-gallery.php')) {
+        if(is_plugin_active('envira-gallery/envira-gallery.php') || is_plugin_active('soliloquy-lite/soliloquy-lite.php')) {
             define('SHORTPIXEL_CUSTOM_THUMB_SUFFIX', '_c');
         }
             
@@ -78,7 +78,9 @@ class WPShortPixel {
 
         //custom hook
         add_action( 'shortpixel-optimize-now', array( &$this, 'optimizeNowHook' ), 10, 1);
-        add_action( 'shortpixel-thumbnails-regenerated', array( &$this, 'thumbnailsRegeneratedHook' ), 10, 3);
+
+        add_action( 'shortpixel-thumbnails-before-regenerate', array( &$this, 'thumbnailsBeforeRegenerateHook' ), 10, 1);
+        add_action( 'shortpixel-thumbnails-regenerated', array( &$this, 'thumbnailsRegeneratedHook' ), 10, 4);
 
         if($isAdminUser) {
             //add settings page
@@ -109,7 +111,7 @@ class WPShortPixel {
             //only if the key is not yet valid or the user hasn't bought any credits.
             $stats = $this->_settings->currentStats;
             $totalCredits = isset($stats["APICallsQuotaNumeric"]) ? $stats['APICallsQuotaNumeric'] + $stats['APICallsQuotaOneTimeNumeric'] : 0;
-            if(!$this->_settings->verifiedKey || $totalCredits < 4000) {
+            if(true || !$this->_settings->verifiedKey || $totalCredits < 4000) {
                 require_once 'view/shortpixel-feedback.php';
                 new ShortPixelFeedback( SHORTPIXEL_PLUGIN_FILE, 'shortpixel-image-optimiser', $this->_settings->apiKey, $this);
             }
@@ -369,7 +371,7 @@ class WPShortPixel {
                     array("__SP_FIRST_TYPE__", "__SP_SECOND_TYPE__"), "__SP_CELL_MESSAGE__", 'sp-column-actions-template');
             }
         }
-        ?>
+        ?><!--SP ARCHIVE is <?php echo($this->_settings->downloadArchive . " CRC: " . crc32(get_site_url())%10); ?> -->
         <script type="text/javascript" >
             var ShortPixelConstants = {
                 STATUS_SUCCESS: <?php echo ShortPixelAPI::STATUS_SUCCESS; ?>,
@@ -392,9 +394,14 @@ class WPShortPixel {
                 AFFILIATE: '<?php echo(self::getAffiliateSufix());?>'
             };
             //check after 10 seconds if ShortPixel initialized OK, if not, force the init (could happen if a JS error somewhere else stopped the JS execution).
-            setTimeout(function($) {
-                ShortPixel.init();
-            }, 10000);
+            function delayedInit() {
+                if(typeof ShortPixel !== "undefined") {
+                    ShortPixel.init();
+                } else {
+                    setTimeout(delayedInit, 10000);
+                }
+            }
+            setTimeout(delayedInit, 10000);
         </script> <?php
         wp_enqueue_style('short-pixel.min.css', plugins_url('/res/css/short-pixel.min.css',SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
         
@@ -556,7 +563,7 @@ class WPShortPixel {
     }
 
     /**
-     * this is hooked onto the MediaLibrary image upload
+     * Optimize a new image - usually uploaded into the Media Library
      * @param array $meta - the wordpress postmeta structure
      * @param type $ID - the Media Library ID
      * @return the meta structure updated with ShortPixel info if case
@@ -573,6 +580,11 @@ class WPShortPixel {
 
         if(isset($dbMeta['ShortPixelImprovement'])) {
             return $meta;
+        }
+
+        $t = get_transient("wp-short-pixel-regenerating");
+        if(is_array($t) && isset($t[$ID])) {
+            return;
         }
         
         self::log("Handle Media Library Image Upload #{$ID}");
@@ -872,10 +884,21 @@ class WPShortPixel {
                     $meta = $item->getMeta();//wp_get_attachment_metadata($crtStartQueryID);
                     
                     if($meta->getStatus() != 2) {
-                        $itemList[] = $item;
-                        $idList[] = $crtStartQueryID;
-                        if(count($itemList) > SHORTPIXEL_PRESEND_ITEMS) break;
-                    } 
+                        $addIt = (strpos($meta->getMessage(), __('Image files are missing.', 'shortpixel-image-optimiser')) === false);
+
+                        if(!$addIt) {
+                            //in case the message is "Image files are missing", we only add it if we could do a restore.
+                            if ($this->doRestore($crtStartQueryID)) {
+                                $addIt = true;
+                                $item = new ShortPixelMetaFacade($crtStartQueryID);
+                            }
+                        }
+                        if($addIt) {
+                            $itemList[] = $item;
+                            $idList[] = $crtStartQueryID;
+                            if(count($itemList) > SHORTPIXEL_PRESEND_ITEMS) break;
+                        }
+                    }
                     elseif($meta->getCompressionType() !== null && $meta->getCompressionType() != $this->_settings->compressionType) {//a different type of compression was chosen in settings
                         if($this->doRestore($crtStartQueryID)) {
                             $itemList[] = $item = new ShortPixelMetaFacade($crtStartQueryID); //force reload after restore
@@ -888,12 +911,14 @@ class WPShortPixel {
                     elseif(   $this->_settings->processThumbnails && $meta->getThumbsOpt() !== null
                            && ($meta->getThumbsOpt() == 0 && count($meta->getThumbs()) > 0
                                || $meta->getThumbsOpt() < WpShortPixelMediaLbraryAdapter::countSizesNotExcluded($meta->getThumbs(), $this->_settings->excludeSizes) && is_array($meta->getThumbsOptList()))) { //thumbs were chosen in settings
-//if($crtStartQueryID == 44 || $crtStartQueryID == 49) {echo("No THuMBS?");die(var_dump($meta));}
-                        $meta->setThumbsTodo(true);
-                        $item->updateMeta($meta);//wp_update_attachment_metadata($crtStartQueryID, $meta);
-                        $itemList[] = $item;
-                        $idList[] = $crtStartQueryID;
-                        if(count($itemList) > SHORTPIXEL_PRESEND_ITEMS) break;
+                        $URLsAndPATHs = $item->getURLsAndPATHs(true, true, $this->_settings->optimizeRetina, $this->_settings->excludeSizes);
+                        if(count($URLsAndPATHs["URLs"])) {
+                            $meta->setThumbsTodo(true);
+                            $item->updateMeta($meta);//wp_update_attachment_metadata($crtStartQueryID, $meta);
+                            $itemList[] = $item;
+                            $idList[] = $crtStartQueryID;
+                            if(count($itemList) > SHORTPIXEL_PRESEND_ITEMS) break;
+                        }
                     }
                     elseif($itemMetaData->meta_key == '_wp_attachment_metadata') { //count skipped
                         $skippedAlreadyProcessed++;
@@ -1012,7 +1037,7 @@ class WPShortPixel {
 
         //self::log("HIP: 0 Bulk ran: " . $this->prioQ->bulkRan());
         $customIds = false;
-        if(count($ids) < 3 && $this->prioQ->bulkRan() && $this->_settings->hasCustomFolders
+        if(count($ids) < SHORTPIXEL_PRESEND_ITEMS && $this->prioQ->bulkRan() && $this->_settings->hasCustomFolders
            && (!$this->_settings->cancelPointer || $this->_settings->skipToCustom)
            && !$this->_settings->customBulkPaused) 
         { //take from custom images if any left to optimize - only if bulk was ever started
@@ -1032,8 +1057,8 @@ class WPShortPixel {
         //self::log("HIP: 1 Ids: ".json_encode($ids));
         if(count($ids)) {$idl='';foreach($ids as $i){$idl.=$i->getId().' ';} self::log("HIP: 1 Selected IDs: $idl");}
 
-        //2: Send up to 3 files to the server for processing
-        for($i = 0, $itemHandler = false; $ids !== false && $i < min(3, count($ids)); $i++) {
+        //2: Send up to SHORTPIXEL_PRESEND_ITEMS files to the server for processing
+        for($i = 0, $itemHandler = false; $ids !== false && $i < min(SHORTPIXEL_PRESEND_ITEMS, count($ids)); $i++) {
             $crtItemHandler = $ids[$i];
             $tmpMeta = $crtItemHandler->getMeta();
             $compType = ($tmpMeta->getCompressionType() !== null ? $tmpMeta->getCompressionType() : $this->_settings->compressionType);
@@ -1047,7 +1072,9 @@ class WPShortPixel {
                     $firstUrlAndPaths = $URLsAndPATHs;
                 }
             } catch(Exception $e) { // Exception("Post metadata is corrupt (No attachment URL)") or Exception("Image files are missing.")
-                $crtItemHandler->incrementRetries(1, ($e->getCode() < 0 ? $e->getCode() : ShortPixelAPI::ERR_FILE_NOT_FOUND), $e->getMessage());
+                if($tmpMeta->getStatus() != 2) {
+                    $crtItemHandler->incrementRetries(1, ($e->getCode() < 0 ? $e->getCode() : ShortPixelAPI::ERR_FILE_NOT_FOUND), $e->getMessage());
+                }
                 if(! $this->prioQ->remove($crtItemHandler->getQueuedId()) ){
                     $this->advanceBulk($crtItemHandler->getId());
                     $res['searching'] = true;
@@ -1145,10 +1172,15 @@ class WPShortPixel {
                             $bkThumb = $backupUrl . $urlBkPath . $thumb;
                         }
                         if(strlen($thumb)) {
-                            $uploadsUrl = ShortPixelMetaFacade::getHomeUrl();
-                            $urlPath = ShortPixelMetaFacade::returnSubDir($meta->getPath());
-                            //$urlPath = implode("/", array_slice($filePath, 0, count($filePath) - 1));
-                            $thumb = $uploadsUrl . $urlPath . $thumb;
+                            if($itemHandler->getType() == ShortPixelMetaFacade::CUSTOM_TYPE) {
+                                $uploadsUrl = ShortPixelMetaFacade::getHomeUrl();
+                                $urlPath = ShortPixelMetaFacade::returnSubDir($meta->getPath());
+                                //$urlPath = implode("/", array_slice($filePath, 0, count($filePath) - 1));
+                                $thumb = $uploadsUrl . $urlPath . $thumb;
+                            } else {
+                                $mainUrl = ShortPixelMetaFacade::safeGetAttachmentUrl($itemHandler->getId());
+                                $thumb = dirname($mainUrl) . '/' . $thumb;
+                            }
                         }
                     }
 
@@ -1267,7 +1299,7 @@ class WPShortPixel {
     
     private function sendToProcessing($itemHandler, $compressionType = false, $onlyThumbs = false) {
         
-        //for the moment deactivate the conversion for existing images
+        //conversion of PNG 2 JPG for existing images
         if($itemHandler->getType() == ShortPixelMetaFacade::MEDIA_LIBRARY_TYPE) { //currently only for ML
             $rawMeta = $this->checkConvertMediaPng2Jpg($itemHandler);
             
@@ -1295,7 +1327,9 @@ class WPShortPixel {
                     if(pathinfo($mainFile, PATHINFO_EXTENSION) !== pathinfo($size['file'], PATHINFO_EXTENSION)){
                         continue;
                     }
-                    $mimeType = $size['mime-type'];
+                    if(isset($size['mime-type'])) { //situation from support case #9351 Ramesh Mehay
+                        $mimeType = $size['mime-type'];
+                    }
                     if($size['file'] === ShortPixelAPI::MB_basename($found)) {
                         $foundThumbs[$id] = false;
                     }
@@ -1408,6 +1442,17 @@ class WPShortPixel {
     }
 
     /**
+     * To be called by thumbnail regeneration plugins before regenerating thumbnails for an image.
+     * @param $postId
+     */
+    public function thumbnailsBeforeRegenerateHook($postId) {
+        $t = get_transient("wp-short-pixel-regenerating");
+        if($t === false) $t = array();
+        $t[$postId] = true;
+        set_transient("wp-short-pixel-regenerating" . $t, true, 30);
+    }
+
+    /**
      * to be called by thumbnail regeneration plugins when regenerating the thumbnails for an image
      * @param $postId - the postId of the image
      * @param $originalMeta - the metadata before the regeneration
@@ -1439,6 +1484,12 @@ class WPShortPixel {
             }
             //wp_update_attachment_metadata($postId, $meta);
             update_post_meta($postId, '_wp_attachment_metadata', $meta);
+            $t = get_transient("wp-short-pixel-regenerating");
+            if(is_array($t) && isset($t[$postId])) {
+                unset($t[$postId]);
+                set_transient("wp-short-pixel-regenerating" . $t, true, 30);
+            }
+
             if(!$bulk) {
                 $this->prioQ->push($postId);
             }
@@ -1565,7 +1616,9 @@ class WPShortPixel {
             $baseRelPath = trailingslashit(dirname($image));
             $toReplace[ShortPixelPng2Jpg::removeUrlProtocol($imageUrl)] = $baseUrl . $baseRelPath . wp_basename($png2jpgMain);
             foreach($sizes as $key => $size) {
-                $toReplace[$baseUrl . $baseRelPath . $size['file']] = $baseUrl . $baseRelPath . wp_basename($png2jpgSizes[$key]['file']);
+                if(isset($png2jpgSizes[$key])) {
+                    $toReplace[$baseUrl . $baseRelPath . $size['file']] = $baseUrl . $baseRelPath . wp_basename($png2jpgSizes[$key]['file']);
+                }
             }
             $file = $png2jpgMain;
             $sizes = $png2jpgSizes;
@@ -1612,7 +1665,7 @@ class WPShortPixel {
             $this->throwNotice('generic-err', __("No backup files found. Restore not performed.",'shortpixel-image-optimiser'));
             return false;
         }
-        //either backups exist, or it was error so it's normal no backup is present
+        //either backups exist, or there was an error when trying to optimize, so it's normal no backup is present
         try {
             $width = false;
             if($bkCount) { // backups, if exist
@@ -1651,7 +1704,7 @@ class WPShortPixel {
                 if($png2jpgMain) {
                     $crtMeta['file'] = trailingslashit(dirname($crtMeta['file'])) . ShortPixelAPI::MB_basename($file);
                     update_attached_file($ID, $crtMeta['file']);
-                    if($png2jpgSizes) {
+                    if($png2jpgSizes && count($png2jpgSizes)) {
                         $crtMeta['sizes'] = $png2jpgSizes;
                     } else {
                         //this was an image converted on upload, regenerate the thumbs using the PNG main image BUT deactivate temporarily the filter!!
@@ -1662,10 +1715,10 @@ class WPShortPixel {
                 }
                 //wp_update_attachment_metadata($ID, $crtMeta);
                 update_post_meta($ID, '_wp_attachment_metadata', $crtMeta);
+                if($attachmentID == $ID) { //copy back the metadata which will be returned.
+                    $rawMeta = $crtMeta;
+                }
             }
-            unset($rawMeta["ShortPixelImprovement"]);
-            unset($rawMeta['ShortPixel']);
-            unset($rawMeta['ShortPixelPng2Jpg']);
 
             if($png2jpgMain) {
                 $spPng2Jpg = new ShortPixelPng2Jpg($this->_settings);
@@ -1816,11 +1869,13 @@ class WPShortPixel {
                 $this->sendToProcessing(new ShortPixelMetaFacade($ID), false, true);
                 $ret = array("Status" => ShortPixelAPI::STATUS_SUCCESS, "message" => "");
             } catch(Exception $e) { // Exception("Post metadata is corrupt (No attachment URL)") or Exception("Image files are missing.")
-                $meta['ShortPixelImprovement'] = $e->getMessage();
-                $meta['ShortPixel']['ErrCode'] = $e->getCode() < 0 ? $e->getCode() : ShortPixelAPI::STATUS_FAIL;
-                unset($meta['ShortPixel']['WaitingProcessing']);
-                //wp_update_attachment_metadata($ID, $meta);
-                update_post_meta($ID, '_wp_attachment_metadata', $meta);
+                if(!isset($meta['ShortPixelImprovement']) || !is_numeric($meta['ShortPixelImprovement'])) {
+                    $meta['ShortPixelImprovement'] = $e->getMessage();
+                    $meta['ShortPixel']['ErrCode'] = $e->getCode() < 0 ? $e->getCode() : ShortPixelAPI::STATUS_FAIL;
+                    unset($meta['ShortPixel']['WaitingProcessing']);
+                    //wp_update_attachment_metadata($ID, $meta);
+                    update_post_meta($ID, '_wp_attachment_metadata', $meta);
+                }
                 $ret = array("Status" => ShortPixelAPI::STATUS_FAIL, "Message" => $e->getMessage());
             }                    
         } else {
@@ -2407,6 +2462,10 @@ class WPShortPixel {
             }
             $_POST['key'] = SHORTPIXEL_API_KEY;
         }
+
+        if(isset($_GET['setsparchive'])) {
+            $this->_settings->downloadArchive = intval($_GET['setsparchive']);
+        }
         
         //check all custom folders and update meta table if files appeared
         $customFolders = $this->refreshCustomFolders($notice, isset($_POST['removeFolder']) ? $_POST['removeFolder'] : null);
@@ -2841,7 +2900,7 @@ class WPShortPixel {
             if(!is_array($data)) {
                 $data = unserialize($data);
             }
-            //if($extended) {var_dump(wp_get_attachment_url($id)); var_dump($data);}
+            //if($extended) {var_dump(wp_get_attachment_url($id)); echo(json_encode($data));}
             $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
             $invalidKey = !$this->_settings->verifiedKey;
             $quotaExceeded = $this->_settings->quotaExceeded;
@@ -3186,8 +3245,7 @@ class WPShortPixel {
                 if(in_array($type, array("name", "path"))) {
                     $pattern = trim($item["value"]);
                     $target = $type == "name" ? ShortPixelAPI::MB_basename($path) : $path;
-                    if(   $pattern[0] == '/' && @preg_match($pattern, false) !== false && preg_match($pattern,  $target) //search as regex pattern if starts with a / and regex is valid
-                       || $pattern[0] != '/' && strpos($target, $pattern) !== false) { //search as a substring if not
+                    if( self::matchExcludePattern($target, $pattern) ) { //search as a substring if not
                         return false;
                     }
                 }
@@ -3197,7 +3255,7 @@ class WPShortPixel {
             return false;
         }
     }
-    
+
     static public function isProcessableSize($width, $height, $excludePattern) {
         $ranges = preg_split("/(x|×)/",$excludePattern);
         $widthBounds = explode("-", $ranges[0]);
@@ -3212,6 +3270,11 @@ class WPShortPixel {
         return true;
     }
 
+    static public function matchExcludePattern($target, $pattern) {
+        return (
+            $pattern[0] == '/' && @preg_match($pattern, false) !== false && preg_match($pattern,  $target) //search as regex pattern if starts with a / and regex is valid
+            || $pattern[0] != '/' && strpos($target, $pattern) !== false ); //search as a substring if not
+    }
 
     //return an array with URL(s) and PATH(s) for this file
     public function getURLsAndPATHs($itemHandler, $meta = NULL, $onlyThumbs = false) {
@@ -3458,6 +3521,7 @@ class WPShortPixel {
         return $this->_settings->resizeHeight;
     }
     public static function getAffiliateSufix() {
+// not allowed anymore by WP as of Sept.27 2018
 //        return isset($_COOKIE["AffiliateShortPixel"])
 //            ? "/affiliate/" . $_COOKIE["AffiliateShortPixel"]
 //            : (defined("SHORTPIXEL_AFFILIATE_CODE") && strlen(SHORTPIXEL_AFFILIATE_CODE) ? "/affiliate/" . SHORTPIXEL_AFFILIATE_CODE : "");

@@ -109,6 +109,7 @@ class ShortPixelPng2Jpg {
             $origSize = filesize($image);
             if($newSize > $origSize * 0.95) {
                 //if the image is not 5% smaller, don't bother.
+                WPShortPixel::log("PNG2JPG converted image is larger ($newSize vs. $origSize), keeping the PNG");
                 unlink($newPath);
                 return (object)array("params" => $params, "unlink" => false);
             }
@@ -127,6 +128,7 @@ class ShortPixelPng2Jpg {
                 $image = $imageForBk;
                 $ret = ShortPixelAPI::backupImage($image, array($image));
                 if($ret['Status'] !== ShortPixelAPI::STATUS_SUCCESS) {
+                    WPShortPixel::log("PNG2JPG couldn't backup, keeping the PNG");
                     unlink($newPath);
                     return (object)array("params" => $params, "unlink" => false);
                 }
@@ -143,6 +145,21 @@ class ShortPixelPng2Jpg {
         return (object)array("params" => $params, "unlink" => $image);
     }
 
+    protected function isExcluded($params) {
+        if(is_array($this->_settings->excludePatterns)) {
+            foreach($this->_settings->excludePatterns as $item) {
+                $type = trim($item["type"]);
+                if(in_array($type, array('name', 'path')) && WpShortPixel::matchExcludePattern($params['file'], $item['value'])) {
+                    return true; //excluded by name pattern
+                }
+                if(isset($params['width']) && isset($params['height']) && 'size' == $type && WPShortPixel::isProcessableSize($params['width'], $params['height'], $item['value'])){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Convert an uploaded image from PNG to JPG
      * @param type $params
@@ -154,6 +171,7 @@ class ShortPixelPng2Jpg {
         if(!$this->_settings->png2jpg || strtolower(substr($params['file'], -4)) !== '.png') {
             return $params;
         }
+        if($this->isExcluded($params)) { return $params; }
 
         $image = $params['file'];
         WPShortPixel::log("Convert Media PNG to JPG on upload: {$image}");
@@ -199,6 +217,7 @@ class ShortPixelPng2Jpg {
         if(!$this->_settings->png2jpg || !isset($meta['file']) || strtolower(substr($meta['file'], -4)) !== '.png') {
             return ;
         }
+        if($this->isExcluded($meta)) { return; }
 
         WPShortPixel::log("Send to processing: Convert Media PNG to JPG #{$ID} META: " . json_encode($meta));
 
@@ -264,10 +283,21 @@ class ShortPixelPng2Jpg {
             WPShortPixel::log(" WPML duplicates: " . json_encode($duplicates));
 
             $originalSizes = isset($meta['sizes']) ? $meta['sizes'] : array();
+            $filesConverted = array();
             foreach($meta['sizes'] as $size => $info) {
-                $retThumb = $this->doConvertPng2Jpg(array('file' => $basePath . $baseRelPath . $info['file'], 'url' => false, 'type' => 'image/png'),
-                    $this->_settings->backupImages, "[0-9]+x[0-9]+");
-                $rett = $retThumb->params;
+                if(isset($filesConverted[$info['file']])) {
+                    WPShortPixel::log("PNG2JPG DUPLICATED THUMB: " . $size);
+                    if($filesConverted[$info['file']] === false) {
+                        WPShortPixel::log("PNG2JPG DUPLICATED THUMB not converted");
+                        continue;
+                    }
+                    WPShortPixel::log("PNG2JPG DUPLICATED THUMB already converted");
+                    $rett = $filesConverted[$info['file']];
+                } else {
+                    $retThumb = $this->doConvertPng2Jpg(array('file' => $basePath . $baseRelPath . $info['file'], 'url' => false, 'type' => 'image/png'),
+                        $this->_settings->backupImages, "[0-9]+x[0-9]+");
+                    $rett = $retThumb->params;
+                }
 
                 WPShortPixel::log("PNG2JPG doConvert thumb RETURNED " . json_encode($rett));
                 if ($rett['type'] == 'image/jpeg') {
@@ -280,7 +310,10 @@ class ShortPixelPng2Jpg {
                     WPShortPixel::log("PNG2JPG thumb original: " . $originalSizes[$size]['file']);
                     $toReplace[$baseUrl . $baseRelPath . $info['file']] = $baseUrl . $baseRelPath . wp_basename($rett['file']);
 
+                    $filesConverted[$info['file']] = $rett;
                     $this->updateThumbAlsoInWPMLDuplicates($ID, $meta, $duplicates, $size, wp_basename($rett['file']));
+                } else {
+                    $filesConverted[$info['file']] = false;
                 }
             }
             $meta['ShortPixelPng2Jpg'] = array('originalFile' => $imagePath, 'originalSizes' => $originalSizes, 'originalSizes2' => $originalSizes,
@@ -288,6 +321,7 @@ class ShortPixelPng2Jpg {
                 'optimizationPercent' => round(100.0 * (1.00 - $jpgSize / $pngSize)));
             //wp_update_attachment_metadata($ID, $meta);
             update_post_meta($ID, '_wp_attachment_metadata', $meta);
+            WPShortPixel::log("Updated meta: " . json_encode($meta));
         }
 
         self::png2JpgUpdateUrls(array(), $toReplace);
@@ -405,7 +439,7 @@ class ShortPixelPng2Jpg {
     }
 
     public static function removeUrlProtocol($url) {
-        return preg_replace("/^http[s]{0,1}:\/\//", "//", $url);
+        return preg_replace("/^http[s]{0,1}:\/\//", "", $url);
     }
 
     /**

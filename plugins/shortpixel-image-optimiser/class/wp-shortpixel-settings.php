@@ -68,6 +68,8 @@ class WPShortPixelSettings {
         'quotaExceeded' => array('key' => 'wp-short-pixel-quota-exceeded', 'default' => 0, 'group' => 'state'),
         'httpProto' => array('key' => 'wp-short-pixel-protocol', 'default' => 'https', 'group' => 'state'),
         'downloadProto' => array('key' => 'wp-short-pixel-download-protocol', 'default' => null, 'group' => 'state'),
+        //TODO downloadArchive initial sa fie 10% - hash pe numele de domeniu
+        'downloadArchive' => array('key' => 'wp-short-pixel-download-archive', 'default' => -1, 'group' => 'state'),
         'mediaAlert' => array('key' => 'wp-short-pixel-media-alert', 'default' => null, 'group' => 'state'),
         'dismissedNotices' => array('key' => 'wp-short-pixel-dismissed-notices', 'default' => array(), 'group' => 'state'),
         'activationDate' => array('key' => 'wp-short-pixel-activation-date', 'default' => null, 'group' => 'state'),
@@ -120,6 +122,10 @@ class WPShortPixelSettings {
         // the following lines practically set defaults for options if they're not set
         foreach(self::$_optionsMap as $opt) {
             self::getOpt($opt['key'], $opt['default']);
+        }
+
+        if(self::getOpt("downloadArchive") == -1) {
+            self::setOpt(self::$_optionsMap["downloadArchive"]['key'], crc32(get_site_url())%10);
         }
     }
     

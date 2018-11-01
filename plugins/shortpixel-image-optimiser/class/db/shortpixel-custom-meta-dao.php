@@ -216,7 +216,13 @@ class ShortPixelCustomMetaDao {
         }
         $folderMsg = $this->saveFolder($folder);
         if(!$folder->getId()) {
-            throw new Exception(__('Inserted folder doesn\'t have an ID!','shortpixel-image-optimiser'));
+            //try again creating the tables first.
+            $this->createUpdateShortPixelTables();
+            $folderMsg = $this->saveFolder($folder);
+            //still no luck - complain... :)
+            if(!$folder->getId()) {
+                return __('The folder could not be saved to the database. Please check that the plugin can create its database tables.', 'shortpixel-image-optimiser') . $folderMsg;
+            }
         }
         //die(var_dump($folder));
         if(!$folderMsg) {
