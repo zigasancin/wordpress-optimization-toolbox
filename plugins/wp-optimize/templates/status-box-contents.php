@@ -122,6 +122,16 @@ $total_cleaned = $options->get_option('total-cleaned');
 ?>
 </p>
 
+<?php
+$corrupted_tables_count = $options->get_option('corrupted-tables-count', 0);
+
+if ($corrupted_tables_count > 0) {
+?>
+<p>
+	<span style="color: #9B0000;"><?php printf(_n('Your database has %s corrupted table.', 'Your database has %s corrupted tables.', $corrupted_tables_count, 'wp-optimize'), $corrupted_tables_count); ?></span><br>
+	<a href="<?php esc_attr($admin_page_url); ?>?page=WP-Optimize&tab=wp_optimize_tables" onclick="jQuery('#wp-optimize-nav-tab-tables').trigger('click'); return false;"><?php _e('Repair corrupted tables here.', 'wp-optimize'); ?></a>
+</p>
+<?php } ?>
 
 <h3><?php _e('Support and feedback', 'wp-optimize'); ?></h3>
 <p>

@@ -111,6 +111,12 @@ class WP_Optimize_Commands {
 		return $translations;
 	}
 
+	/**
+	 * Save settings command.
+	 *
+	 * @param string $data
+	 * @return array
+	 */
 	public function save_settings($data) {
 		
 		parse_str(stripslashes($data), $posted_settings);
@@ -120,6 +126,20 @@ class WP_Optimize_Commands {
 			'save_results' => $this->options->save_settings($posted_settings),
 			'status_box_contents' => $this->get_status_box_contents(),
 			'optimizations_table' => $this->get_optimizations_table(),
+		);
+	}
+
+	/**
+	 * Save lazy load settings.
+	 *
+	 * @param string $data
+	 * @return array
+	 */
+	public function save_lazy_load_settings($data) {
+		parse_str(stripslashes($data), $posted_settings);
+
+		return array(
+			'save_result' => $this->options->save_lazy_load_settings($posted_settings)
 		);
 	}
 
@@ -189,6 +209,49 @@ class WP_Optimize_Commands {
 	}
 
 	/**
+	 * Preview command, used to show information about data should be optimized in popup tool.
+	 *
+	 * @param array $params Should have keys 'optimization_id', 'offset' and 'limit'.
+	 *
+	 * @return array
+	 */
+	public function preview($params) {
+		if (!isset($params['optimization_id'])) {
+			$results = array(
+				'result' => false,
+				'messages' => array(),
+				'errors' => array(
+					__('No optimization was indicated.', 'wp-optimize')
+				)
+			);
+		} else {
+			$optimization_id = $params['optimization_id'];
+			$data = isset($params['data']) ? $params['data'] : array();
+			$params['offset'] = isset($params['offset']) ? (int) $params['offset'] : 0;
+			$params['limit'] = isset($params['limit']) ? (int) $params['limit'] : 50;
+
+			$optimization = $this->optimizer->get_optimization($optimization_id, $data);
+
+			if (is_a($optimization, 'WP_Optimization')) {
+				if (isset($params['site_id'])) {
+					$optimization->switch_to_blog((int) $params['site_id']);
+				}
+				$result = $optimization->preview($params);
+			} else {
+				$result = null;
+			}
+
+			$results = array(
+				'result' => $result,
+				'messages' => array(),
+				'errors' => array()
+			);
+		}
+
+		return $results;
+	}
+
+	/**
 	 * Get information about requested optimization.
 	 *
 	 * @param array $params Should have keys 'optimization_id' and 'data'.
@@ -239,6 +302,7 @@ class WP_Optimize_Commands {
 	 */
 	public function optimizations_done() {
 
+		$this->options->update_option('total-cleaned', 0);
 		// Run action after all optimizations completed.
 		do_action('wp_optimize_after_optimizations');
 

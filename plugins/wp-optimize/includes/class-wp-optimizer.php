@@ -438,7 +438,6 @@ class WP_Optimizer {
 		$total_now = strval($previously_saved + $converted_current);
 
 		$options->update_option('total-cleaned', $total_now);
-		$options->update_option('current-cleaned', $current);
 
 		return $total_now;
 	}

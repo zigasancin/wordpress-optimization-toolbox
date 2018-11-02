@@ -122,6 +122,15 @@ class WP_Optimize_Database_Information {
 			$tables_info = $wpdb->get_results('SHOW TABLE STATUS');
 		}
 
+		// If option innodb_file_per_table is disabled then Data_free column will have summary overhead value for all table.
+		if (!empty($tables_info)) {
+			foreach ($tables_info as $i => $table) {
+				if (self::INNODB_ENGINE == $table->Engine && false == $this->is_option_enabled('innodb_file_per_table')) {
+					$tables_info[$i]->Data_free = 0;
+				}
+			}
+		}
+
 		return $tables_info;
 	}
 

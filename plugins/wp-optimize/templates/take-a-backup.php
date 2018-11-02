@@ -68,14 +68,26 @@ $wpo_take_backup_checkbox_dom_id = 'enable-auto-backup'.($wpo_take_backup_checkb
 	<?php
 	// UpdraftPlus is not installed.
 	if ('disabled' == $disabled_backup && !$updraftplus_status['installed']) {
-		echo '<a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&plugin=updraftplus'), 'install-plugin_updraftplus').'"> '.__('Follow this link to install UpdraftPlus, to take a backup before optimization', 'wp-optimize').' </a>';
+		echo '<small><a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&plugin=updraftplus'), 'install-plugin_updraftplus').'"> '.__('Follow this link to install UpdraftPlus, to take a backup before optimization', 'wp-optimize').' </a></small>';
 	} else {
+		// Build activate url.
+		$activate_url = add_query_arg(array(
+			'_wpnonce'    => wp_create_nonce('activate-plugin_updraftplus/updraftplus.php'),
+			'action'      => 'activate',
+			'plugin'      => 'updraftplus/updraftplus.php'
+		), network_admin_url('plugins.php'));
+
+		// If is network admin then add to link newtwork activation.
+		if (is_network_admin()) {
+			$activate_url = add_query_arg(array('networkwide' => 1), $activate_url);
+		}
+
 		// Check updraftplus version first.
 		if (!empty($updraftplus_version_check)) {
 			echo '<small>'.__('UpdraftPlus needs to be updated to 1.12.33 or higher in order to backup the database before optimization.', 'wp-optimize').' <a href="'.admin_url('update-core.php').'">'.__('Please update UpdraftPlus to the latest version.', 'wp-optimize').'</a></small>';
 		} else {
 			if ($updraftplus_status['installed'] && !$updraftplus_status['active']) {
-				echo '<small>'.__('UpdraftPlus is installed but currently not active. Please activate UpdraftPlus to backup the database before optimization.').'</small>';
+				echo '<small><a href="'.$activate_url.'"> '.__('UpdraftPlus is installed but currently not active. Follow this link to activate UpdraftPlus, to take a backup before optimization.', 'wp-optimize').' </a></small>';
 			}
 		}
 	}

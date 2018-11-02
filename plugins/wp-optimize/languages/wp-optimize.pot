@@ -17,11 +17,11 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/includes/class-commands.php:160, src/includes/class-commands.php:203
+#: src/includes/class-commands.php:180, src/includes/class-commands.php:224, src/includes/class-commands.php:266
 msgid "No optimization was indicated."
 msgstr ""
 
-#: src/includes/class-commands.php:312, src/includes/class-commands.php:321
+#: src/includes/class-commands.php:376, src/includes/class-commands.php:385
 msgid "Please upload a valid settings file."
 msgstr ""
 
@@ -37,6 +37,10 @@ msgstr ""
 msgid "Enter email for logs here"
 msgstr ""
 
+#: src/includes/class-updraft-file-logger.php:32
+msgid "Log events into a log file"
+msgstr ""
+
 #: src/includes/class-updraft-php-logger.php:24
 msgid "Log events into the PHP error log"
 msgstr ""
@@ -47,6 +51,122 @@ msgstr ""
 
 #: src/includes/class-updraft-ring-logger.php:34
 msgid "How many last records store?"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:111
+msgid "Image restored successfully"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:142
+msgid "A total of %d image(s) were compressed on this site, saving appoximately %s of space at an average of %02d percent per image."
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:143
+msgid "%d image(s) could not be compressed. Please see the logs for more information or try again later."
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:144
+msgid "%d image(s) images were selected for compressing previously, but were not all processed. You can either complete them now or cancel and retry later."
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:168
+msgid "Options could not be updated"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:172
+msgid "Options updated successfully"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:187
+msgid "Stats could not be cleared"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:191
+msgid "Stats cleared successfully"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:225
+msgid "Pending tasks could not be cleared"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:229
+msgid "Pending tasks cleared successfully"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager-commands.php:255
+msgid "Log file does not exist or cant be read"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:212
+msgid "Backup not found, it may have been deleted or already restored"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:216
+msgid "The destination could not be written to, please check your folder permissions"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:222
+msgid "Could not copy file, check your PHP error logs for details"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:434
+msgid "All valid images are compresed now"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:435
+msgid "An unexpected response was received from the server."
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:436
+msgid "Please wait. Compressing the selected image."
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:437
+msgid "Please try again later."
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:438
+msgid "Connecting to the Smush API server, please wait"
+msgstr ""
+
+#: src/includes/class-updraft-smush-manager.php:439
+msgid "There was an error connecting to the Smush API server, please try later"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:187
+msgid "The file was compressed from %s to %s saving %s percent using WP-Optimize"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:215
+msgid "Failed with error code %s - %s"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:233
+msgid "Initialised"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:234
+msgid "Connecting to API server"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:235
+msgid "Processing response"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:236
+msgid "Backing up original image"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:237
+msgid "Saving optimised image"
+msgstr ""
+
+#: src/includes/class-updraft-smush-task.php:238
+msgid "Successful"
+msgstr ""
+
+#: src/includes/class-wp-optimization.php:452
+msgid "Preview found items"
 msgstr ""
 
 #: src/includes/class-wp-optimize-options.php:142
@@ -61,19 +181,19 @@ msgstr ""
 msgid "No such optimization"
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:454
+#: src/includes/class-wp-optimizer.php:453
 msgid "Comments have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:457
+#: src/includes/class-wp-optimizer.php:456
 msgid "Comments have now been enabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:464
+#: src/includes/class-wp-optimizer.php:463
 msgid "Trackbacks have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:467
+#: src/includes/class-wp-optimizer.php:466
 msgid "Trackbacks have now been enabled on all current and previously published posts."
 msgstr ""
 
@@ -167,7 +287,7 @@ msgid_plural "%s orphaned attachments deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/attachments.php:33, src/optimizations/attachments.php:73, src/optimizations/autodraft.php:28, src/optimizations/autodraft.php:63, src/optimizations/commentmeta.php:33, src/optimizations/commentmeta.php:90, src/optimizations/orphandata.php:16, src/optimizations/orphandata.php:45, src/optimizations/pingbacks.php:16, src/optimizations/pingbacks.php:44, src/optimizations/postmeta.php:20, src/optimizations/postmeta.php:48, src/optimizations/revisions.php:24, src/optimizations/revisions.php:59, src/optimizations/spam.php:48, src/optimizations/spam.php:117, src/optimizations/trackbacks.php:16, src/optimizations/trackbacks.php:44, src/optimizations/transient.php:30, src/optimizations/transient.php:160, src/optimizations/trash.php:31, src/optimizations/trash.php:94, src/optimizations/unapproved.php:24, src/optimizations/unapproved.php:65
+#: src/optimizations/attachments.php:33, src/optimizations/attachments.php:73, src/optimizations/autodraft.php:85, src/optimizations/autodraft.php:130, src/optimizations/commentmeta.php:101, src/optimizations/commentmeta.php:170, src/optimizations/orphandata.php:18, src/optimizations/orphandata.php:46, src/optimizations/pingbacks.php:68, src/optimizations/pingbacks.php:107, src/optimizations/postmeta.php:63, src/optimizations/postmeta.php:98, src/optimizations/revisions.php:81, src/optimizations/revisions.php:125, src/optimizations/spam.php:111, src/optimizations/spam.php:198, src/optimizations/trackbacks.php:69, src/optimizations/trackbacks.php:109, src/optimizations/transient.php:178, src/optimizations/trash.php:96, src/optimizations/trash.php:169, src/optimizations/unapproved.php:84, src/optimizations/unapproved.php:130
 msgid "across %s site"
 msgid_plural "across %s sites"
 msgstr[0] ""
@@ -187,67 +307,95 @@ msgstr ""
 msgid "Remove orphaned attachments"
 msgstr ""
 
-#: src/optimizations/autodraft.php:25
+#: src/optimizations/autodraft.php:54, src/optimizations/commentmeta.php:49, src/optimizations/pingbacks.php:35, src/optimizations/revisions.php:50, src/optimizations/spam.php:68, src/optimizations/trackbacks.php:36, src/optimizations/trash.php:58, src/optimizations/unapproved.php:51
+msgid "no title"
+msgstr ""
+
+#: src/optimizations/autodraft.php:66, src/optimizations/commentmeta.php:72, src/optimizations/pingbacks.php:49, src/optimizations/postmeta.php:43, src/optimizations/revisions.php:62, src/optimizations/spam.php:82, src/optimizations/trackbacks.php:50, src/optimizations/transient.php:140, src/optimizations/transient.php:146, src/optimizations/trash.php:77, src/optimizations/unapproved.php:65
+msgid "ID"
+msgstr ""
+
+#: src/optimizations/autodraft.php:67, src/optimizations/revisions.php:63, src/optimizations/trash.php:78
+msgid "Title"
+msgstr ""
+
+#: src/optimizations/autodraft.php:68, src/optimizations/revisions.php:64, src/optimizations/trash.php:79, src/optimizations/unapproved.php:67
+msgid "Date"
+msgstr ""
+
+#: src/optimizations/autodraft.php:74, src/optimizations/autodraft.php:126
+msgid "No auto draft posts found"
+msgstr ""
+
+#: src/optimizations/autodraft.php:82
 msgid "%s auto draft deleted"
 msgid_plural "%s auto drafts deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/autodraft.php:57
+#: src/optimizations/autodraft.php:124
 msgid "%s auto draft post in your database"
 msgid_plural "%s auto draft posts in your database"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/autodraft.php:59
-msgid "No auto draft posts found"
-msgstr ""
-
-#: src/optimizations/autodraft.php:92
+#: src/optimizations/autodraft.php:164
 msgid "Clean auto draft posts which are older than %s weeks"
 msgstr ""
 
-#: src/optimizations/autodraft.php:94
+#: src/optimizations/autodraft.php:166
 msgid "Clean all auto-draft posts"
 msgstr ""
 
-#: src/optimizations/autodraft.php:105
+#: src/optimizations/autodraft.php:177
 msgid "Remove auto-draft posts"
 msgstr ""
 
-#: src/optimizations/commentmeta.php:29
+#: src/optimizations/commentmeta.php:73
+msgid "Comment ID"
+msgstr ""
+
+#: src/optimizations/commentmeta.php:74, src/optimizations/postmeta.php:45
+msgid "Meta Key"
+msgstr ""
+
+#: src/optimizations/commentmeta.php:75, src/optimizations/postmeta.php:46
+msgid "Meta Value"
+msgstr ""
+
+#: src/optimizations/commentmeta.php:81, src/optimizations/commentmeta.php:160
+msgid "No orphaned comment meta data in your database"
+msgstr ""
+
+#: src/optimizations/commentmeta.php:97
 msgid "%s unused comment metadata item removed"
 msgid_plural "%s unused comment metadata items removed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/commentmeta.php:30
+#: src/optimizations/commentmeta.php:98
 msgid "%s unused akismet comment metadata item removed"
 msgid_plural "%s unused akismet comment metadata items removed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/commentmeta.php:78
+#: src/optimizations/commentmeta.php:158
 msgid "%s orphaned comment meta data in your database"
 msgid_plural "%s orphaned comment meta data in your database"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/commentmeta.php:80
-msgid "No orphaned comment meta data in your database"
-msgstr ""
-
-#: src/optimizations/commentmeta.php:84
+#: src/optimizations/commentmeta.php:164
 msgid "%s unused Akismet comment meta rows in your database"
 msgid_plural "%s unused Akismet meta rows in your database"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/commentmeta.php:86
+#: src/optimizations/commentmeta.php:166
 msgid "No Akismet comment meta rows in your database"
 msgstr ""
 
-#: src/optimizations/commentmeta.php:116, src/optimizations/commentmeta.php:120
+#: src/optimizations/commentmeta.php:204, src/optimizations/commentmeta.php:208
 msgid "Clean comment meta data"
 msgstr ""
 
@@ -255,283 +403,317 @@ msgstr ""
 msgid "Remove unused tags"
 msgstr ""
 
-#: src/optimizations/optimizetables.php:65
+#: src/optimizations/optimizetables.php:70
 msgid "Optimizing Table:"
 msgstr ""
 
-#: src/optimizations/optimizetables.php:80
+#: src/optimizations/optimizetables.php:85
 msgid "Total gain:"
 msgstr ""
 
-#: src/optimizations/optimizetables.php:88
+#: src/optimizations/optimizetables.php:93
 msgid "Other tables will be optimized (%s)."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:93
+#: src/optimizations/optimizetables.php:98
 msgid "Optimize InnoDB tables anyway."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:93
+#: src/optimizations/optimizetables.php:98
 msgid "Warning: you should read the FAQ on the risks of this operation first."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:96
+#: src/optimizations/optimizetables.php:101
 msgid "Tables will be optimized (%s)."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:101, src/optimizations/optimizetables.php:105
+#: src/optimizations/optimizetables.php:106, src/optimizations/optimizetables.php:110
 msgid "Optimize database tables"
 msgstr ""
 
-#: src/optimizations/orphandata.php:13
+#: src/optimizations/orphandata.php:15
 msgid "%s orphaned meta data deleted"
 msgid_plural "%s orphaned meta data deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/orphandata.php:39
+#: src/optimizations/orphandata.php:40
 msgid "%s orphaned relationship data in your database"
 msgid_plural "%s orphaned relationship data in your database"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/orphandata.php:41
+#: src/optimizations/orphandata.php:42
 msgid "No orphaned relationship data in your database"
 msgstr ""
 
-#: src/optimizations/orphandata.php:62
+#: src/optimizations/orphandata.php:63
 msgid "Clean orphaned relationship data"
 msgstr ""
 
-#: src/optimizations/pingbacks.php:13
+#: src/optimizations/pingbacks.php:50, src/optimizations/spam.php:83, src/optimizations/trackbacks.php:51, src/optimizations/unapproved.php:66
+msgid "Author"
+msgstr ""
+
+#: src/optimizations/pingbacks.php:51, src/optimizations/spam.php:84, src/optimizations/trackbacks.php:52
+msgid "Comment"
+msgstr ""
+
+#: src/optimizations/pingbacks.php:57, src/optimizations/pingbacks.php:103
+msgid "No pingbacks found"
+msgstr ""
+
+#: src/optimizations/pingbacks.php:65
 msgid "%s pingback deleted"
 msgid_plural "%s pingbacks deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/pingbacks.php:38
+#: src/optimizations/pingbacks.php:101
 msgid "%s pingback found"
 msgid_plural "%s pingbacks found"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/pingbacks.php:40
-msgid "No pingbacks found"
-msgstr ""
-
-#: src/optimizations/pingbacks.php:61
+#: src/optimizations/pingbacks.php:129
 msgid "Remove pingbacks"
 msgstr ""
 
-#: src/optimizations/postmeta.php:17
+#: src/optimizations/postmeta.php:44
+msgid "Post ID"
+msgstr ""
+
+#: src/optimizations/postmeta.php:52, src/optimizations/postmeta.php:94
+msgid "No orphaned post meta data in your database"
+msgstr ""
+
+#: src/optimizations/postmeta.php:60
 msgid "%s orphaned post meta data deleted"
 msgid_plural "%s orphaned post meta data deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/postmeta.php:42
+#: src/optimizations/postmeta.php:92
 msgid "%s orphaned post meta data in your database"
 msgid_plural "%s orphaned post meta data in your database"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/postmeta.php:44
-msgid "No orphaned post meta data in your database"
-msgstr ""
-
-#: src/optimizations/postmeta.php:65
+#: src/optimizations/postmeta.php:120
 msgid "Clean post meta data"
 msgstr ""
 
-#: src/optimizations/postmeta.php:74
+#: src/optimizations/postmeta.php:129
 msgid "Remove orphaned post meta"
 msgstr ""
 
-#: src/optimizations/repairtables.php:123
+#: src/optimizations/repairtables.php:142
 msgid "No corrupted tables found"
 msgstr ""
 
-#: src/optimizations/repairtables.php:135
+#: src/optimizations/repairtables.php:154
 msgid "Repair database tables"
 msgstr ""
 
-#: src/optimizations/revisions.php:21
+#: src/optimizations/revisions.php:70, src/optimizations/revisions.php:121
+msgid "No post revisions found"
+msgstr ""
+
+#: src/optimizations/revisions.php:78
 msgid "%s post revision deleted"
 msgid_plural "%s post revisions deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/revisions.php:53
+#: src/optimizations/revisions.php:119
 msgid "%s post revision in your database"
 msgid_plural "%s post revisions in your database"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/revisions.php:55
-msgid "No post revisions found"
-msgstr ""
-
-#: src/optimizations/revisions.php:81
+#: src/optimizations/revisions.php:152
 msgid "Clean post revisions which are older than %d weeks"
 msgstr ""
 
-#: src/optimizations/revisions.php:83
+#: src/optimizations/revisions.php:154
 msgid "Clean all post revisions"
 msgstr ""
 
-#: src/optimizations/revisions.php:88
+#: src/optimizations/revisions.php:159
 msgid "Remove auto revisions"
 msgstr ""
 
-#: src/optimizations/spam.php:43
+#: src/optimizations/spam.php:90
+msgid "No spam or trashed comments found"
+msgstr ""
+
+#: src/optimizations/spam.php:106
 msgid "%s spam comment deleted"
 msgid_plural "%s spam comments deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/spam.php:44
+#: src/optimizations/spam.php:107
 msgid "%s comment removed from Trash"
 msgid_plural "%s comments removed from Trash"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/spam.php:105
+#: src/optimizations/spam.php:173
 msgid "%s spam comment found"
 msgid_plural "%s spam comments found"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/spam.php:105, src/optimizations/spam.php:111
+#: src/optimizations/spam.php:178, src/optimizations/spam.php:191
 msgid "Review"
 msgstr ""
 
-#: src/optimizations/spam.php:107
+#: src/optimizations/spam.php:182
 msgid "No spam comments found"
 msgstr ""
 
-#: src/optimizations/spam.php:111
+#: src/optimizations/spam.php:186
 msgid "%s trashed comment found"
 msgid_plural "%s trashed comments found"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/spam.php:113
+#: src/optimizations/spam.php:194
 msgid "No trashed comments found"
 msgstr ""
 
-#: src/optimizations/spam.php:157
+#: src/optimizations/spam.php:248
 msgid "Remove spam and trashed comments which are older than %d weeks"
 msgstr ""
 
-#: src/optimizations/spam.php:159, src/optimizations/spam.php:164
+#: src/optimizations/spam.php:250, src/optimizations/spam.php:255
 msgid "Remove spam and trashed comments"
 msgstr ""
 
-#: src/optimizations/trackbacks.php:13
+#: src/optimizations/trackbacks.php:58, src/optimizations/trackbacks.php:105
+msgid "No trackbacks found"
+msgstr ""
+
+#: src/optimizations/trackbacks.php:66
 msgid "%s trackback deleted"
 msgid_plural "%s trackbacks deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/trackbacks.php:38
+#: src/optimizations/trackbacks.php:103
 msgid "%s Trackback found"
 msgid_plural "%s Trackbacks found"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/trackbacks.php:40
-msgid "No trackbacks found"
-msgstr ""
-
-#: src/optimizations/trackbacks.php:58
+#: src/optimizations/trackbacks.php:123
 msgid "Remove trackbacks"
 msgstr ""
 
-#: src/optimizations/transient.php:27
+#: src/optimizations/transient.php:141, src/optimizations/transient.php:147
+msgid "Name"
+msgstr ""
+
+#: src/optimizations/transient.php:142, src/optimizations/transient.php:148
+msgid "Value"
+msgstr ""
+
+#: src/optimizations/transient.php:159, src/optimizations/transient.php:386
+msgid "No transient options found"
+msgstr ""
+
+#: src/optimizations/transient.php:175
 msgid "%s transient option deleted"
 msgid_plural "%s transient options deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/transient.php:70
+#: src/optimizations/transient.php:252
 msgid "%s network-wide transient option deleted"
 msgid_plural "%s network-wide transient options deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/transient.php:154
-msgid "%s transient option found"
-msgid_plural "%s transient options found"
+#: src/optimizations/transient.php:384
+msgid "%1$d of %2$d transient option expired"
+msgid_plural "%1$d of %2$d transient options expired"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/transient.php:156
-msgid "No transient options found"
-msgstr ""
-
-#: src/optimizations/transient.php:167
-msgid "%d network-wide transient option found"
-msgid_plural "%d network-wide transient options found"
+#: src/optimizations/transient.php:390
+msgid "across %d site"
+msgid_plural "across %d sites"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/transient.php:169
+#: src/optimizations/transient.php:402
+msgid "%1$d of %2$d network-wide transient option found"
+msgid_plural "%1$d of %2$d network-wide transient options found"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/optimizations/transient.php:405
 msgid "No site-wide transient options found"
 msgstr ""
 
-#: src/optimizations/transient.php:211, src/optimizations/transient.php:215
+#: src/optimizations/transient.php:414
+msgid "Remove all transient options (not only expired)"
+msgstr ""
+
+#: src/optimizations/transient.php:463, src/optimizations/transient.php:467
 msgid "Remove expired transient options"
 msgstr ""
 
-#: src/optimizations/trash.php:28
+#: src/optimizations/trash.php:85, src/optimizations/trash.php:165
+msgid "No trashed posts found"
+msgstr ""
+
+#: src/optimizations/trash.php:93
 msgid "%s post removed from Trash"
 msgid_plural "%s posts removed from Trash"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/trash.php:88
+#: src/optimizations/trash.php:163
 msgid "%s trashed post in your database"
 msgid_plural "%s trashed posts in your database"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/trash.php:90
-msgid "No trashed posts found"
-msgstr ""
-
-#: src/optimizations/trash.php:124
+#: src/optimizations/trash.php:204
 msgid "Clean trashed posts which are older than %d weeks"
 msgstr ""
 
-#: src/optimizations/trash.php:126
+#: src/optimizations/trash.php:206
 msgid "Clean all trashed posts"
 msgstr ""
 
-#: src/optimizations/trash.php:136
+#: src/optimizations/trash.php:216
 msgid "Remove trashed posts"
 msgstr ""
 
-#: src/optimizations/unapproved.php:21
+#: src/optimizations/unapproved.php:73, src/optimizations/unapproved.php:126
+msgid "No unapproved comments found"
+msgstr ""
+
+#: src/optimizations/unapproved.php:81
 msgid "%s unapproved comment deleted"
 msgid_plural "%s unapproved comments deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/unapproved.php:59
+#: src/optimizations/unapproved.php:124
 msgid "%s unapproved comment found"
 msgid_plural "%s unapproved comments found"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/optimizations/unapproved.php:61
-msgid "No unapproved comments found"
-msgstr ""
-
-#: src/optimizations/unapproved.php:88
+#: src/optimizations/unapproved.php:158
 msgid "Remove unapproved comments which are older than %d weeks"
 msgstr ""
 
-#: src/optimizations/unapproved.php:90, src/optimizations/unapproved.php:95
+#: src/optimizations/unapproved.php:160, src/optimizations/unapproved.php:165
 msgid "Remove unapproved comments"
 msgstr ""
 
@@ -1125,27 +1307,37 @@ msgstr ""
 msgid "Total clean up overall:"
 msgstr ""
 
-#: src/templates/status-box-contents.php:126
+#: src/templates/status-box-contents.php:131
+msgid "Your database has %s corrupted table."
+msgid_plural "Your database has %s corrupted tables."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/templates/status-box-contents.php:132
+msgid "Repair corrupted tables here."
+msgstr ""
+
+#: src/templates/status-box-contents.php:136
 msgid "Support and feedback"
 msgstr ""
 
-#: src/templates/status-box-contents.php:128
+#: src/templates/status-box-contents.php:138
 msgid "If you like WP-Optimize,"
 msgstr ""
 
-#: src/templates/status-box-contents.php:128
+#: src/templates/status-box-contents.php:138
 msgid "please give us a positive review, here."
 msgstr ""
 
-#: src/templates/status-box-contents.php:128
+#: src/templates/status-box-contents.php:138
 msgid "Or, if you did not like it,"
 msgstr ""
 
-#: src/templates/status-box-contents.php:128
+#: src/templates/status-box-contents.php:138
 msgid "please tell us why at this link."
 msgstr ""
 
-#: src/templates/status-box-contents.php:129
+#: src/templates/status-box-contents.php:139
 msgid "Support is available here."
 msgstr ""
 
@@ -1227,142 +1419,154 @@ msgstr ""
 msgid "Follow this link to install UpdraftPlus, to take a backup before optimization"
 msgstr ""
 
-#: src/templates/take-a-backup.php:75
+#: src/templates/take-a-backup.php:87
 msgid "UpdraftPlus needs to be updated to 1.12.33 or higher in order to backup the database before optimization."
 msgstr ""
 
-#: src/templates/take-a-backup.php:75
+#: src/templates/take-a-backup.php:87
 msgid "Please update UpdraftPlus to the latest version."
 msgstr ""
 
-#: src/wp-optimize.php:268
+#: src/templates/take-a-backup.php:90
+msgid "UpdraftPlus is installed but currently not active. Follow this link to activate UpdraftPlus, to take a backup before optimization."
+msgstr ""
+
+#: src/wp-optimize.php:269
 msgid "WP-Optimize (Free) has been de-activated, because WP-Optimize Premium is active."
 msgstr ""
 
-#: src/wp-optimize.php:278
+#: src/wp-optimize.php:279
 msgid "New feature: WP-Optimize Premium can now optimize all sites within a multisite install, not just the main one."
 msgstr ""
 
-#: src/wp-optimize.php:393
+#: src/wp-optimize.php:394
 msgid "Table information"
 msgstr ""
 
-#: src/wp-optimize.php:393, src/wp-optimize.php:579
+#: src/wp-optimize.php:394, src/wp-optimize.php:595
 msgid "Settings"
 msgstr ""
 
-#: src/wp-optimize.php:393
+#: src/wp-optimize.php:394
 msgid "Premium / Plugin family"
 msgstr ""
 
-#: src/wp-optimize.php:522
+#: src/wp-optimize.php:536
 msgid "Automatic backup before optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:523
+#: src/wp-optimize.php:537
 msgid "An unexpected response was received."
 msgstr ""
 
-#: src/wp-optimize.php:524
+#: src/wp-optimize.php:538
 msgid "Optimization complete"
 msgstr ""
 
-#: src/wp-optimize.php:525
+#: src/wp-optimize.php:539
 msgid "Run optimizations"
 msgstr ""
 
-#: src/wp-optimize.php:526
+#: src/wp-optimize.php:540
 msgid "Cancel"
 msgstr ""
 
-#: src/wp-optimize.php:527
+#: src/wp-optimize.php:541
 msgid "Please, select settings file."
 msgstr ""
 
-#: src/wp-optimize.php:528
+#: src/wp-optimize.php:542
 msgid "Are you sure you want to remove this logging destination?"
 msgstr ""
 
-#: src/wp-optimize.php:529
+#: src/wp-optimize.php:543
 msgid "Before saving, you need to complete the currently incomplete settings (or remove them)."
 msgstr ""
 
-#: src/wp-optimize.php:530
+#: src/wp-optimize.php:544
 msgid "%s was not repaired. For more details, please check your logs configured in logging destinations settings."
 msgstr ""
 
-#: src/wp-optimize.php:560
+#: src/wp-optimize.php:576
 msgid "Optimize"
 msgstr ""
 
-#: src/wp-optimize.php:582
+#: src/wp-optimize.php:598
 msgid "Optimizer"
 msgstr ""
 
-#: src/wp-optimize.php:598
+#: src/wp-optimize.php:614
 msgid "Repair"
 msgstr ""
 
-#: src/wp-optimize.php:705
+#: src/wp-optimize.php:720
 msgid "Warning"
 msgstr ""
 
-#: src/wp-optimize.php:705
+#: src/wp-optimize.php:720
 msgid "WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working."
 msgstr ""
 
-#: src/wp-optimize.php:705
+#: src/wp-optimize.php:720
 msgid "Read this page for a guide to possible causes and how to fix it."
 msgstr ""
 
-#: src/wp-optimize.php:772
+#: src/wp-optimize.php:787
 msgid "Error:"
 msgstr ""
 
-#: src/wp-optimize.php:772
+#: src/wp-optimize.php:787
 msgid "template not found"
 msgstr ""
 
-#: src/wp-optimize.php:824
+#: src/wp-optimize.php:839
 msgid "Automatic Operation Completed"
 msgstr ""
 
-#: src/wp-optimize.php:826
+#: src/wp-optimize.php:841
 msgid "Scheduled optimization was executed at"
 msgstr ""
 
-#: src/wp-optimize.php:827
+#: src/wp-optimize.php:842
 msgid "You can safely delete this email."
 msgstr ""
 
-#: src/wp-optimize.php:829
+#: src/wp-optimize.php:844
 msgid "Regards,"
 msgstr ""
 
-#: src/wp-optimize.php:830
+#: src/wp-optimize.php:845
 msgid "WP-Optimize Plugin"
 msgstr ""
 
-#: src/wp-optimize.php:852
+#: src/wp-optimize.php:867
 msgid "GB"
 msgstr ""
 
-#: src/wp-optimize.php:854
+#: src/wp-optimize.php:869
 msgid "MB"
 msgstr ""
 
-#: src/wp-optimize.php:856
+#: src/wp-optimize.php:871
 msgid "KB"
 msgstr ""
 
-#: src/wp-optimize.php:858
+#: src/wp-optimize.php:873
 msgid "bytes"
 msgstr ""
 
-#: src/wp-optimize.php:1250
+#: src/wp-optimize.php:1192
+msgid "You have no permissions to run optimizations."
+msgstr ""
+
+#: src/wp-optimize.php:1199
+msgid "You have no permissions to manage WP-Optimize settings."
+msgstr ""
+
+#: src/wp-optimize.php:1349
 msgid "Only Network Administrator can activate WP-Optimize plugin."
 msgstr ""
 
-#: src/wp-optimize.php:1251
+#: src/wp-optimize.php:1350
 msgid "go back"
 msgstr ""

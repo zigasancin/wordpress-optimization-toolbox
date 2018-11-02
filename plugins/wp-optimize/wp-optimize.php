@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: https://getwpo.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.2.4
+Version: 2.2.6
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '2.2.4');
+define('WPO_VERSION', '2.2.6');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -73,6 +73,7 @@ class WP_Optimize {
 
 		register_shutdown_function(array($this, 'log_fatal_errors'));
 
+		$this->schedule_plugin_cron_tasks();
 	}
 
 	public static function instance() {
@@ -396,7 +397,7 @@ class WP_Optimize {
 	public function wp_optimize_menu() {
 		$capability_required = $this->capability_required();
 
-		if (!current_user_can($capability_required)) {
+		if (!current_user_can($capability_required) || (!$this->can_run_optimizations() && !$this->can_manage_options())) {
 			echo "Permission denied.";
 			return;
 		}
@@ -471,11 +472,19 @@ class WP_Optimize {
 						echo '</strong></div>';
 					}
 
-					$this->include_template('optimize-table.php', false, array('optimize_db' => $optimize_db));
+					if ($this->can_run_optimizations()) {
+						$this->include_template('optimize-table.php', false, array('optimize_db' => $optimize_db));
+					} else {
+						$this->prevent_run_optimizations_message();
+					}
 					break;
 
 				case 'tables':
-					$this->include_template('tables.php', false, array('optimize_db' => $optimize_db));
+					if ($this->can_run_optimizations()) {
+						$this->include_template('tables.php', false, array('optimize_db' => $optimize_db));
+					} else {
+						$this->prevent_run_optimizations_message();
+					}
 					break;
 
 				case 'settings':
@@ -492,10 +501,15 @@ class WP_Optimize {
 
 						$this->wpo_render_output_messages($output);
 					}
-					$this->include_template('admin-settings-general.php');
-					$this->include_template('admin-settings-auto-cleanup.php');
-					$this->include_template('admin-settings-logging.php');
-					$this->include_template('admin-settings-sidebar.php');
+
+					if ($this->can_manage_options()) {
+						$this->include_template('admin-settings-general.php');
+						$this->include_template('admin-settings-auto-cleanup.php');
+						$this->include_template('admin-settings-logging.php');
+						$this->include_template('admin-settings-sidebar.php');
+					} else {
+						$this->prevent_manage_options_info();
+					}
 					break;
 
 				case 'may_also':
@@ -528,6 +542,8 @@ class WP_Optimize {
 			'are_you_sure_you_want_to_remove_logging_destination' => __('Are you sure you want to remove this logging destination?', 'wp-optimize'),
 			'fill_all_settings_fields' => __('Before saving, you need to complete the currently incomplete settings (or remove them).', 'wp-optimize'),
 			'table_was_not_repaired' => __('%s was not repaired. For more details, please check your logs configured in logging destinations settings.', 'wp-optimize'),
+			'spinner_src' => esc_attr(admin_url('images/spinner-2x.gif')),
+			'sites' => $this->get_sites(),
 		));
 	}
 
@@ -610,7 +626,7 @@ class WP_Optimize {
 	 * @return void
 	 */
 	public function cron_activate() {
-		$gmtoffset = (int) (3600 * ((double) get_option('gmt_offset')));
+		$gmt_offset = (int) (3600 * get_option('gmt_offset'));
 
 		$options = $this->get_options();
 
@@ -642,7 +658,7 @@ class WP_Optimize {
 					}
 
 					add_action('wpo_cron_event2', array($this, 'cron_action'));
-					wp_schedule_event((current_time("timestamp", 0) + $this_time), $schedule_type, 'wpo_cron_event2');
+					wp_schedule_event((current_time("timestamp", 0) + $this_time - $gmt_offset), $schedule_type, 'wpo_cron_event2');
 					WP_Optimize()->log('running wp_schedule_event()');
 				}
 			}
@@ -701,8 +717,7 @@ class WP_Optimize {
 	 */
 	public function show_admin_warning_overdue_crons($howmany) {
 		$ret = '<div class="updated"><p>';
-		// todo: update link to wp-optimize
-		$ret .= '<strong>'.__('Warning', 'wp-optimize').':</strong> '.sprintf(__('WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working.', 'wp-optimize'), $howmany).' <a href="'.apply_filters('wpoptimize_com_link', "https://updraftplus.com/faqs/scheduler-wordpress-installation-working/").'">'.__('Read this page for a guide to possible causes and how to fix it.', 'wp-optimize').'</a>';
+		$ret .= '<strong>'.__('Warning', 'wp-optimize').':</strong> '.sprintf(__('WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working.', 'wp-optimize'), $howmany).' <a href="'.apply_filters('wpoptimize_com_link', "https://getwpo.com/faqs/the-scheduler-in-my-wordpress-installation-is-not-working-what-should-i-do/").'">'.__('Read this page for a guide to possible causes and how to fix it.', 'wp-optimize').'</a>';
 		$ret .= '</p></div>';
 		return $ret;
 	}
@@ -711,7 +726,7 @@ class WP_Optimize {
 
 		$capability_required = $this->capability_required();
 
-		if (!current_user_can($capability_required)) return;
+		if (!current_user_can($capability_required) || (!$this->can_run_optimizations() && !$this->can_manage_options())) return;
 
 		$icon_svg = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgdmlld0JveD0iMCAwIDE2IDE2IgogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmc0MzE2IgogICBoZWlnaHQ9IjE2IgogICB3aWR0aD0iMTYiPgogIDxkZWZzCiAgICAgaWQ9ImRlZnM0MzE4IiAvPgogIDxtZXRhZGF0YQogICAgIGlkPSJtZXRhZGF0YTQzMjEiPgogICAgPHJkZjpSREY+CiAgICAgIDxjYzpXb3JrCiAgICAgICAgIHJkZjphYm91dD0iIj4KICAgICAgICA8ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD4KICAgICAgICA8ZGM6dHlwZQogICAgICAgICAgIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiIC8+CiAgICAgICAgPGRjOnRpdGxlPjwvZGM6dGl0bGU+CiAgICAgIDwvY2M6V29yaz4KICAgIDwvcmRmOlJERj4KICA8L21ldGFkYXRhPgogIDxnCiAgICAgaWQ9ImxheWVyMSI+CiAgICA8cGF0aAogICAgICAgc3R5bGU9ImZpbGw6I2EwYTVhYTtmaWxsLW9wYWNpdHk6MSIKICAgICAgIGlkPSJwYXRoNTciCiAgICAgICBkPSJtIDEwLjc2ODgwOSw2Ljc2MTYwNTEgMCwwIGMgLTAuMDE2ODgsLTAuMDE2ODc4IC0wLjAyNTMxLC0wLjA0MjE4MSAtMC4wMzM3NCwtMC4wNjc0OTkgLTAuMDA4NCwtMC4wMDgzOSAtMC4wMDg0LC0wLjAxNjg3OCAtMC4wMTY4OCwtMC4wMzM3NDMgQyA5Ljk5MjYxMTIsNS4xOTIzMzY2IDguMjIwODU1Nyw0LjU4NDg3ODEgNi43NDQzOTEyLDUuMjkzNTc5NyA1LjY3MjkwMDUsNS44MDgyMzI4IDUuMDU3MDA0Myw2Ljg4ODE2MTMgNS4wNjU0NDIsOC4wMDE4MzY1IDQuNDU3OTgyMiw3LjMxMDAwNzYgMy42OTg2NTg0LDYuNzk1MzU0NSAyLjg1NDk2NDIsNi40OTE2MjUzIDMuMjY4Mzc0Myw1LjA2NTc4MzEgNC4yNTU0OTYsMy44MTcxMTY2IDUuNjg5Nzc0NiwzLjEyNTI4NzggOC4zNjQyODMyLDEuODM0NDM2OCAxMS41NzAzMTksMi45Mzk2NzQ0IDEyLjg4NjQ4MSw1LjU4ODg3MjYgMTMuNDUxNzU1LDYuNzI3ODU5NiAxNC42NDk4MDEsNy4zNTIxOTIxIDE1Ljg0Nzg0Niw3LjIzNDA3NSAxNS43NjM0ODIsNi4zMzk3NiAxNS41MTg4MDUsNS40MzcwMDg2IDE1LjEwNTM5Niw0LjU3NjQ0MDQgMTMuMjE1NTIxLDAuNjg3MDEzNCA4LjUzMzAyMjYsLTAuOTQxMzE2MjcgNC42NDM1OTQzLDAuOTQwMTIxNzkgMi4zMjM0MzcsMi4wNjIyMzM0IDAuODA0Nzg4MTQsNC4xNzk5MDQ0IDAuMzU3NjMxMzIsNi41MzM4MDk4IDIuNDE2MjQzOCw2LjQyNDEyOSA0LjQzMjY3MTcsNy41MDQwNTc0IDUuNDM2NjY2Miw5LjQzNjExNjcgbCAwLjAwODM5LDAgYyAwLjc1OTMxOTIsMS4zNzUyMjAzIDIuNDcyMDE3OCwxLjk0MDQ5NTMgMy45MDYyOTYsMS4yNDg2NjczIDEuMDQ2MTc5OCwtMC41MDYyMTggMS42NTM2NDA4LC0xLjUzNTUyMzggMS42Nzg5NTA4LC0yLjYxNTQ1MTIgMC41ODIxNDgsMC43MDg3MDE4IDEuMzMzMDM1LDEuMjQ4NjY2OCAyLjE1OTg1NiwxLjU3NzcwNjQgLTAuNDM4NzIxLDEuMzU4MzQ3OCAtMS40MDA1MzMsMi41NDc5NTQ4IC0yLjc5MjYyNywzLjIxNDQ3ODggLTIuNTkwMTM4NywxLjI0ODY1OCAtNS42NzgwNTc0LDAuMjUzMTA0IC03LjA2MTcxNTEsLTIuMjI3MzU3IGwgMCwwIEMgMi43NjIxMDQ4LDkuNDUyOTg5NCAxLjUxMzQzODMsOC44MjAyMTkxIDAuMjgxNjQ1OTIsOC45NzIwODQ0IDAuMzgyODg3NjUsOS43OTg5MDQ2IDAuNjE5MTIzMzEsMTAuNjE3Mjg3IDAuOTk4Nzg1MiwxMS40MDE5MjIgYyAxLjg4MTQzNjgsMy44OTc4NjQgNi41NjM5MzcsNS41MjYxOTggMTAuNDYxODAwOCwzLjY0NDc2IDIuMjQ0MjI2LC0xLjA4ODM2OSAzLjczNzU2MiwtMy4xMDQ3OTYgNC4yMzUzNDIsLTUuMzc0MzMyMyAtMS45OTk1NTQsMC4wNDIxODEgLTMuOTQ4NDg2LC0xLjAyOTMwNjMgLTQuOTI3MTcsLTIuOTEwNzQzMyB6IgogICAgICAgY2xhc3M9InN0MTciIC8+CiAgPC9nPgo8L3N2Zz4K';
 
@@ -861,6 +876,8 @@ class WP_Optimize {
 
 	/**
 	 * Executed this function on cron event.
+	 *
+	 * @return void
 	 */
 	public function cron_action() {
 
@@ -878,6 +895,51 @@ class WP_Optimize {
 			$results = $optimizer->do_optimizations($this_options, 'auto');
 		}
 
+	}
+
+	/**
+	 * Schedule cron tasks used by plugin.
+	 *
+	 * @return void
+	 */
+	public function schedule_plugin_cron_tasks() {
+		if (!wp_next_scheduled('wpo_plugin_cron_tasks')) {
+			wp_schedule_event(current_time("timestamp", 0), 'twicedaily', 'wpo_plugin_cron_tasks');
+		}
+
+		add_action('wpo_plugin_cron_tasks', array($this, 'do_plugin_cron_tasks'));
+	}
+
+	/**
+	 * Do plugin background tasks.
+	 *
+	 * @return void
+	 */
+	public function do_plugin_cron_tasks() {
+		// get information about corrupted tables.
+		$this->update_corrupted_tables_count();
+	}
+
+	/**
+	 * Update corrupted tables count used with wp_optimize_get_tables filter.
+
+	 * @return void
+	 */
+	public function update_corrupted_tables_count() {
+		$tables = $this->get_optimizer()->get_tables();
+
+		$corrupted_tables_count = 0;
+
+		if (!empty($tables)) {
+			foreach ($tables as $table) {
+				if ($table->is_needing_repair) {
+					$corrupted_tables_count++;
+				}
+			}
+		}
+
+		// save results to options table and use it to notify user about corrupted tables.
+		$this->get_options()->update_option('corrupted-tables-count', $corrupted_tables_count);
 	}
 
 	/**
@@ -1101,6 +1163,43 @@ class WP_Optimize {
 	}
 
 	/**
+	 * Returns true if current user can run optimizations.
+	 *
+	 * @return bool
+	 */
+	public function can_run_optimizations() {
+		// we don't check permissions for cron jobs.
+		if (defined('DOING_CRON') && DOING_CRON) return true;
+
+		if (self::is_premium() && false == user_can(get_current_user_id(), 'wpo_run_optimizations')) return false;
+		return true;
+	}
+
+	/**
+	 * Returns true if current user can manage plugin options.
+	 *
+	 * @return bool
+	 */
+	public function can_manage_options() {
+		if (self::is_premium() && false == user_can(get_current_user_id(), 'wpo_manage_settings')) return false;
+		return true;
+	}
+
+	/**
+	 * Output information message for users who have no permissions to run optimizations.
+	 */
+	public function prevent_run_optimizations_message() {
+		$this->include_template('info-message.php', false, array('message' => __('You have no permissions to run optimizations.', 'wp-optimize')));
+	}
+
+	/**
+	 * Output information message for users who have no permissions to manage settings.
+	 */
+	public function prevent_manage_options_info() {
+		$this->include_template('info-message.php', false, array('message' => __('You have no permissions to manage WP-Optimize settings.', 'wp-optimize')));
+	}
+
+	/**
 	 * Returns list of all sites in multisite
 	 *
 	 * @return array
@@ -1109,10 +1208,10 @@ class WP_Optimize {
 		$sites = array();
 		// check if function get_sites exists (since 4.6.0) else use wp_get_sites.
 		if (function_exists('get_sites')) {
-			$sites = get_sites(array('network_id' => null));
+			$sites = get_sites(array('network_id' => null, 'number' => 99999));
 		} elseif (function_exists('wp_get_sites')) {
 			// @codingStandardsIgnoreLine
-			$sites = wp_get_sites(array('network_id' => null));
+			$sites = wp_get_sites(array('network_id' => null, 'limit' => 99999));
 		}
 		return $sites;
 	}
@@ -1271,6 +1370,7 @@ function wpo_cron_deactivate() {
  */
 function wpo_uninstall_actions() {
 	WP_Optimize()->get_options()->delete_all_options();
+	wp_clear_scheduled_hook('wpo_cron_plugin');
 }
 
 function WP_Optimize() {

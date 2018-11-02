@@ -2,6 +2,16 @@
 	display: none;
 }
 
+.wpo_info {
+	background: #FFF;
+	color: #444;
+	font-family: -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
+	margin: 2em auto;
+	padding: 1em 2em;
+	max-width: 700px;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.13);
+}
+
 /* big button */
 .wpo_primary_big {
 	padding: 4px 6px !important;
@@ -112,6 +122,10 @@
 
 }
 
+#select_all_optimizations {
+	margin-left: -5px;
+}
+
 .wp-optimize-settings-clean-transient label, .wp-optimize-settings-clean-pingbacks label, .wp-optimize-settings-clean-trackbacks label, .wp-optimize-settings-clean-postmeta label, .wp-optimize-settings-clean-orphandata label, .wp-optimize-settings-clean-commentmeta label {
 	color: #9B0000;
 }
@@ -179,7 +193,7 @@ img.addons {
 	margin: 1%;
 }
 
-#save_done {
+#save_done, .save-done {
 	color: #D94F00;
 	font-size: 250%;
 }
@@ -242,7 +256,7 @@ img.addons {
 	letter-spacing: 1px;
 }
 
-.wpo_unused_image {
+.wpo_unused_image, .wpo_smush_image {
 	position: relative;
 	float: left;
 	margin: .5%;
@@ -253,7 +267,7 @@ img.addons {
 	min-height: 200px;
 }
 
-.wpo_unused_image img {
+.wpo_unused_image img, .wpo_smush_image img {
 	max-height: 80%;
 	max-width: 90%;
 	margin: 10px 5px;
@@ -512,7 +526,7 @@ img.addons {
 	min-width: 150px;
 }
 
-#wpo_unused_images {
+#wpo_unused_images, #wpo_smush_images_grid {
 	max-height: 500px;
 	overflow-y: auto;
 }

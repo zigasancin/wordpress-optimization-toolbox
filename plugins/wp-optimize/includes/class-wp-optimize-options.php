@@ -283,6 +283,23 @@ class WP_Optimize_Options {
 	}
 
 	/**
+	 * Save lazy load settings
+	 *
+	 * @param array $settings
+	 * @return bool
+	 */
+	public function save_lazy_load_settings($settings) {
+		/** Save Lazy Load settings */
+		if (isset($settings['lazyload'])) {
+			$this->update_option('lazyload', $settings['lazyload']);
+		} else {
+			$this->update_option('lazyload', array());
+		}
+
+		return true;
+	}
+
+	/**
 	 * The $use_dom_id parameter is legacy, for when saving options not with AJAX (in which case the dom ID comes via the $_POST array)
 	 *
 	 * @param  array   $sent_options 			  Options sent from Ajax.

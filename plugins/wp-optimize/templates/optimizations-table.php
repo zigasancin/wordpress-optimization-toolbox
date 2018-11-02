@@ -3,7 +3,7 @@
 <table id="optimizations_list" class="widefat">
 	<thead>
 		<tr>
-			<th></th>
+			<th><input id="select_all_optimizations" type="checkbox" /></th>
 			<th><?php _e('Optimization', 'wp-optimize'); ?></th>
 			<th><?php _e('Notes', 'wp-optimize'); ?></th>
 			<th></th>

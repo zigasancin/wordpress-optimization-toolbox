@@ -19,7 +19,7 @@ wp_optimize_send_command_admin_ajax = function (action, data, callback, json_par
 		data: data
 	};
 
-	jQuery.post(ajaxurl, ajax_data, function (response) {
+	return jQuery.post(ajaxurl, ajax_data, function (response) {
 
 		if (json_parse) {
 			try {
@@ -52,6 +52,11 @@ var WP_Optimize = function (send_command) {
 	var $ = jQuery;
 	var debug_level = 0;
 	var queue = new Updraft_Queue();
+
+	/**
+	 * Enable select all checkbox for optimizations list.
+	 */
+	define_select_all_checkbox($('#select_all_optimizations'), $('#optimizations_list .optimization_checkbox'));
 	
 	/**
 	 * Either display normally, or grey-out, the scheduling options, depending on whether any schedule has been selected.
@@ -92,6 +97,9 @@ var WP_Optimize = function (send_command) {
 			cssInfoBlock: "tablesorter-no-sort",
 			// This option is to specify with colums will be disabled for sorting
 			headers: {
+				2: {sorter: 'digit'},
+				3: {sorter: 'digit'},
+				4: {sorter: 'digit'},
 				// For Column Action
 				7: {sorter: false }
 			},
@@ -187,22 +195,25 @@ var WP_Optimize = function (send_command) {
 	$('#wp-optimize-disable-enable-comments-disable').click(function () {
 		enable_or_disable_feature('comments', false);
 	});
-	
-	$('#wp-optimize-nav-tab-wrapper .nav-tab').click(function (e) {
-		
-		var clicked_tab_id = $(this).attr('id');
+
+	$('#wp-optimize-nav-tab-wrapper .nav-tab, #wp-optimize-images-nav-tab-wrapper .nav-tab').click(function (e) {
+
+		var clicked_tab_id = $(this).attr('id'),
+			container_id = $(this).closest('.nav-tab-wrapper').attr('id'),
+			container_prefix_id = container_id.substring(0, container_id.length - 7);
+
 		if (!clicked_tab_id) { return; }
-		if ('wp-optimize-nav-tab-' != clicked_tab_id.substring(0, 20)) { return; }
-		
-		var clicked_tab_id = clicked_tab_id.substring(20);
-		
+		if (container_prefix_id != clicked_tab_id.substring(0, container_prefix_id.length)) { return; }
+
+		var clicked_tab_id = clicked_tab_id.substring(container_prefix_id.length);
+
 		e.preventDefault();
-		
-		$('#wp-optimize-nav-tab-wrapper .nav-tab:not(#wp-optimize-nav-tab-' + clicked_tab_id + ')').removeClass('nav-tab-active');
+
+		$('#' + container_id + ' .nav-tab:not(#wp-optimize-nav-tab-' + clicked_tab_id + ')').removeClass('nav-tab-active');
 		$(this).addClass('nav-tab-active');
-		
-		$('#wp-optimize-wrap .wp-optimize-nav-tab-contents:not(#wp-optimize-nav-tab-contents-' + clicked_tab_id + ')').hide();
-		$('#wp-optimize-nav-tab-contents-' + clicked_tab_id).show();
+
+		$('#wp-optimize-wrap .' + container_prefix_id + 'contents:not(#' + container_prefix_id + 'contents-' + clicked_tab_id + ')').hide();
+		$('#' + container_prefix_id + 'contents-' + clicked_tab_id).show();
 
 		// tablesorter fix.
 		// At any time, there is a display none as 2 of the 3 tabs will be hidden.
@@ -213,6 +224,7 @@ var WP_Optimize = function (send_command) {
 			$("#wpoptimize_table_list").trigger('applyWidgets');
 		}
 	});
+
 	
 	/**
 	 * Gathers the settings from the settings tab and return in selected format.
@@ -367,9 +379,23 @@ var WP_Optimize = function (send_command) {
 	 */
 	function do_optimization(id) {
 		var $optimization_row = $('#wp-optimize-nav-tab-contents-optimize .wp-optimize-settings-' + id);
+
 		if (!$optimization_row) {
 			console.log("do_optimization: row corresponding to this optimization (" + id + ") not found");
 		}
+
+		// check if there any additional inputs checkboxes.
+		var additional_data = {},
+			additional_data_length = 0;
+
+		$('input[type="checkbox"]', $('#optimization_info_' + id)).each(function() {
+			var checkbox = $(this);
+
+			if (checkbox.is(':checked')) {
+				additional_data[checkbox.attr('name')] = checkbox.val();
+				additional_data_length++;
+			}
+		});
 
 		// don't run optimization if optimization active.
 		if (true == $('.optimization_button_' + id).prop('disabled')) return;
@@ -408,6 +434,18 @@ var WP_Optimize = function (send_command) {
 					}
 				}
 			});
+		} else if (additional_data_length > 0) {
+			// check if additional data passed for optimization.
+			data = {
+				optimization_id: id,
+			};
+
+			for (var i in additional_data) {
+				if (!additional_data.hasOwnProperty(i)) continue;
+				data[i] = additional_data[i];
+			}
+
+			queue.enqueue(data);
 		} else {
 			queue.enqueue(id);
 		}
@@ -610,6 +648,20 @@ var WP_Optimize = function (send_command) {
 		});
 
 		// if "all items" checked/unchecked then check/uncheck items in the list.
+		define_select_all_checkbox(all_items_checkbox, items_list);
+	}
+
+	/**
+	 * Defines "select all" check box, where all_items_checkbox is a select all check box jQuery object
+	 * and items_list is a list of checkboxes assigned with all_items_checkbox.
+	 *
+	 * @param {Object} all_items_checkbox
+	 * @param {Object} items_list
+	 *
+	 * @return void
+	 */
+	function define_select_all_checkbox(all_items_checkbox, items_list) {
+		// if "all items" checked/unchecked then check/uncheck items in the list.
 		all_items_checkbox.on('change', function () {
 			if (all_items_checkbox.is(':checked')) {
 				items_list.prop('checked', true);
@@ -625,6 +677,7 @@ var WP_Optimize = function (send_command) {
 		});
 
 		update_wpo_all_items_checkbox_state(all_items_checkbox, items_list);
+
 	}
 
 	/**
@@ -1017,7 +1070,7 @@ var WP_Optimize = function (send_command) {
 	 * @return void
 	 */
 	var optimization_get_info = function(optimization_info_container, optimization_id, params) {
-		send_command('get_optimization_info', {optimization_id: optimization_id, data: params}, function(resp) {
+		return send_command('get_optimization_info', {optimization_id: optimization_id, data: params}, function(resp) {
 			var meta = (resp && resp.result && resp.result.meta) ? resp.result.meta : {},
 				message = (resp && resp.result && resp.result.output) ? resp.result.output.join('<br>') : '...';
 
