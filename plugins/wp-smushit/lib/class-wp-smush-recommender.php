@@ -77,7 +77,7 @@ if ( ! class_exists( 'WpSmushRecommender' ) ) {
 						array(
 							'utm_source'   => 'smush',
 							'utm_medium'   => 'plugin',
-							'utm_campaign' => 'smush_footer_upsell_notice'
+							'utm_campaign' => 'smush_footer_upsell_notice',
 						),
 						$site_url
 					);
@@ -88,7 +88,8 @@ if ( ! class_exists( 'WpSmushRecommender' ) ) {
 					<p><?php esc_html_e( 'Pretty much everything you need for developing and managing WordPress based websites, and then some.', 'wp-smushit' ); ?></p>
 					<a class="sui-button sui-button-green" href="<?php echo $site_url; ?>" id="dash-uptime-update-membership" target="_blank"><?php esc_html_e( 'Learn more', 'wp-smushit' ); ?></a>
 					<img class="sui-image" src="<?php echo WP_SMUSH_URL . 'assets/images/dev-team.png'; ?>" srcset="<?php echo WP_SMUSH_URL . 'assets/images/dev-team@2x.png'; ?> 2x" alt="<?php esc_html_e( 'Try pro features for free!', 'wp-smushit' ); ?>">
-				</div><?php
+				</div>
+				<?php
 			}
 			?>
 			<div class="sui-footer"><?php esc_html_e( 'Made with', 'wp-smushit' ); ?> <i class="sui-icon-heart" aria-hidden="true"></i> <?php esc_html_e( 'by WPMU DEV', 'wp-smushit' ); ?></div>
@@ -106,7 +107,8 @@ if ( ! class_exists( 'WpSmushRecommender' ) ) {
 		 * @return void
 		 */
 		public function recommendation_box( $title, $content, $link, $plugin_class, $seq ) {
-			// Put bg to box parent div ?>
+			// Put bg to box parent div
+			?>
 			<div class="sui-col-md-4">
 			<div class="sui-cross-<?php echo $seq; ?> sui-cross-<?php echo $plugin_class; ?>"><span></span></div>
 			<div class="sui-box">

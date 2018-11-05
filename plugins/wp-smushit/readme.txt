@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 2.8.1
+Version: 2.9.1
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
 Tags: image, resize, optimize, optimise, compress, performance, optimisation, optimise JPG, photo, pictures, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
 Tested up to: 4.9.8
-Stable tag: 2.8.1
+Stable tag: 2.9.1
 Requires PHP: 5.2.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -61,7 +61,7 @@ No matter what plugins you use to better manage your WordPress media library, Sm
 
 *What about Multisite?* Smush can be used to optimize all the images across your entire network! Use global settings or configure each site individually.
 
-Smush is super easy to use – no confusing compression software settings! Smush images in your library one at a time or bulk smush up to 50 images at a time.  Plus, configure auto-smush to asyncronously scale and compress some or all of your images as they are being uploaded – it's incredibly fast.
+Smush is super easy to use – no confusing compression software settings! Smush images in your library one at a time or bulk smush up to 50 images at a time.  Plus, configure auto-smush to asynchronously scale and compress some or all of your images as they are being uploaded – it's incredibly fast.
 
 The faster your site loads, the more Google, Bing, Yahoo and other search engines will like it. Your site will load faster and rank higher.
 
@@ -78,7 +78,7 @@ The faster your site loads, the more Google, Bing, Yahoo and other search engine
 > - Global and individual settings for Multisite.
 > - View advanced compression stats per-attachment and library totals.
 >
-> Install Smush now and find out why it's the most popular image optimization plugin for WordPress available today with over 2.7 million downloads.
+> Install Smush now and find out why it's the most popular image optimization plugin for WordPress available today with over 11 million downloads.
 
 ### Shameless Plug(ins)
 
@@ -152,6 +152,31 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 3. Smush will find and optimize images for you.
 
 == Changelog ==
+
+= 2.9.1 =
+
+* Fix: Errors during update from Free to Pro
+
+= 2.9.0 =
+
+* New: Incorrect image size detection
+* New: Pointers for new installs
+* New: Show a list of errors (if present) after bulk Smush
+* Enhance: Remove activation redirection
+* Fix: Compatibility with Enhanced Media Library
+* Fix: Layout inconsistencies
+* Fix: Remove duplicate queries
+* Fix: User profile languages not properly applying to Smush
+* Fix: Translation strings
+* Fix: Smush full sized images when image dimensions are smaller than the largest thumbnail
+* Fix: Directory Smush will not get stuck when an image encounters an error during compression
+* Fix: Support for the latest Gutenberg version
+* Fix: Allow blog admins in network installs to manage site Smush options
+* Fix: Stats not showing after Smushing in media library
+
+= 2.8.2 =
+
+Fix: Compatibility issues with latest WP Offload Media (WP Offload S3) update
 
 = 2.8.1 =
 

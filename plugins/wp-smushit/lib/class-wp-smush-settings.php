@@ -60,13 +60,13 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 
 		function __construct() {
 
-			//Do not initialize if not in admin area
-			#wp_head runs specifically in the frontend, good check to make sure we're accidentally not loading settings on required pages
-			if ( ! is_admin() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) && did_action('wp_head') ) {
+			// Do not initialize if not in admin area
+			// wp_head runs specifically in the frontend, good check to make sure we're accidentally not loading settings on required pages
+			if ( ! is_admin() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) && did_action( 'wp_head' ) ) {
 				return null;
 			}
 
-			//Save Settings
+			// Save Settings
 			add_action( 'wp_ajax_save_settings', array( $this, 'save_settings' ) );
 
 			$this->init_settings();
@@ -78,22 +78,21 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 * @return array|mixed
 		 */
 		function init_settings() {
-
 			#See if we've got serialised settings stored already
 			$last_settings = $this->get_setting( WP_SMUSH_PREFIX . 'last_settings', array() );
 			if ( empty( $last_settings ) ) {
-				#Nope - No serialised settings, We populate it and store it in db
+				// Nope - No serialised settings, We populate it and store it in db
 				$last_settings = $this->get_serialised_settings();
 				if ( ! empty( $last_settings ) ) {
-					//Store Last Settings in db
+					// Store Last Settings in db
 					$this->update_setting( WP_SMUSH_PREFIX . 'last_settings', $last_settings );
 				}
 			}
 
-			#Store it in class variable
+			// Store it in class variable
 			$last_settings = maybe_unserialize( $last_settings );
 			if ( ! empty( $last_settings ) && is_array( $last_settings ) ) {
-				//Merge with the existing settings
+				// Merge with the existing settings
 				$this->settings = array_merge( $this->settings, $last_settings );
 			}
 
@@ -104,10 +103,10 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 * Save settings, Used for networkwide option
 		 */
 		function save_settings() {
-			//Validate Ajax request
+			// Validate Ajax request
 			check_ajax_referer( 'save_wp_smush_options', 'nonce' );
 
-			//Save Settings
+			// Save Settings
 			$this->process_options();
 			wp_send_json_success();
 
@@ -117,7 +116,6 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 * Returns a serialised string of current settings
 		 *
 		 * @return Serialised string of settings
-		 *
 		 */
 		function get_serialised_settings() {
 			$settings = array();
@@ -139,10 +137,9 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 *
 		 * No need to store the serialised settings, if network wide settings is disabled
 		 * because the site would run the scan when settings are saved
-		 *
 		 */
 		function save_serialized_settings() {
-			//Return -> Single Site | If network settings page | Networkwide Settings Disabled
+			// Return -> Single Site | If network settings page | Networkwide Settings Disabled
 			if ( ! is_multisite() || is_network_admin() || ! $this->settings['networkwide'] ) {
 				return;
 			}
@@ -184,7 +181,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 				$settings = $this->get_serialised_settings();
 			}
 
-			$settings = ! is_array( $settings ) ? maybe_unserialize( $settings ) : $settings ;
+			$settings = ! is_array( $settings ) ? maybe_unserialize( $settings ) : $settings;
 
 			// Save whether to use the settings networkwide or not ( Only if in network admin ).
 			if ( isset( $_POST['action'] ) && 'save_settings' === $_POST['action'] ) { // Input var ok.
@@ -206,7 +203,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 
 			// Current form fields.
 			$setting_form = $_POST['setting_form'] . '_fields';
-			$form_fields = $this->{$setting_form};
+			$form_fields  = $this->{$setting_form};
 
 			// Process each setting and update options.
 			foreach ( $wpsmushit_admin->settings as $name => $text ) {
@@ -260,22 +257,23 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 
 			// Delete show resmush option.
 			if ( isset( $_POST['wp-smush-strip_exif'] ) && ! isset( $_POST['wp-smush-original'] ) && ! isset( $_POST['wp-smush-lossy'] ) ) {
-				//@todo: Update Resmush ids
+				// @todo: Update Resmush ids
 			}
 		}
 
 		/**
 		 * Checks whether the settings are applicable for the whole network/site or Sitewise ( Multisite )
+		 *
 		 * @todo: Check in subdirectory installation as well
 		 */
 		function is_network_enabled() {
-			//If Single site return true
+			// If Single site return true
 			if ( ! is_multisite() ) {
 				return true;
 			}
 
-			//Get directly from db
-			return get_site_option(WP_SMUSH_PREFIX . 'networkwide' );
+			// Get directly from db
+			return get_site_option( WP_SMUSH_PREFIX . 'networkwide' );
 		}
 
 		/**
@@ -285,11 +283,10 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 * @param string $default Default Value
 		 *
 		 * @return bool|mixed|void
-		 *
 		 */
 		function get_setting( $name = '', $default = false ) {
 
-			if( empty( $name ) ) {
+			if ( empty( $name ) ) {
 				return false;
 			}
 
@@ -305,7 +302,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 * @return bool If the setting was updated or not
 		 */
 		function update_setting( $name = '', $value = '' ) {
-			if( empty( $name ) ) {
+			if ( empty( $name ) ) {
 				return false;
 			}
 
@@ -321,7 +318,7 @@ if ( ! class_exists( 'WpSmushSettings' ) ) {
 		 */
 		function delete_setting( $name = '' ) {
 
-			if( empty( $name ) ) {
+			if ( empty( $name ) ) {
 				return false;
 			}
 

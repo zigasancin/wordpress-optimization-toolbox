@@ -65,8 +65,10 @@ class WP_Smush_Gutenberg {
 		$settings[ $this->module ] = array(
 			'label'       => esc_html__( 'Show Smush stats in Gutenberg blocks', 'wp-smushit' ),
 			'short_label' => esc_html__( 'Gutenberg Support', 'wp-smushit' ),
-			'desc'        => esc_html__( 'Add statistics and the manual smush button to Gutenberg blocks that
-							display images.', 'wp-smushit' ),
+			'desc'        => esc_html__(
+				'Add statistics and the manual smush button to Gutenberg blocks that
+							display images.', 'wp-smushit'
+			),
 		);
 
 		return $settings;
@@ -185,7 +187,8 @@ class WP_Smush_Gutenberg {
 			'smush-gutenberg',
 			WP_SMUSH_URL . 'assets/js/blocks.min.js',
 			array( 'wp-blocks', 'wp-i18n', 'wp-element' ),
-			WP_SMUSH_VERSION
+			WP_SMUSH_VERSION,
+			true
 		);
 	}
 

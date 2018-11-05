@@ -3,8 +3,7 @@ jQuery(function() {
 		type = el_notice.find( "input[name=type]" ).val(),
 		plugin_id = el_notice.find( "input[name=plugin_id]" ).val(),
 		url_wp = el_notice.find( "input[name=url_wp]" ).val(),
-		drip_plugin = el_notice.find( "input[name=drip_plugin]" ).val(),
-		inp_email = el_notice.find( "input[name=email]" ),
+		inp_email = el_notice.find( "input[name=EMAIL]" ),
 		btn_act = el_notice.find( ".frash-notice-act" ),
 		btn_dismiss = el_notice.find( ".frash-notice-dismiss" ),
 		ajax_data = {};
@@ -65,22 +64,22 @@ jQuery(function() {
 	}
 
 	// Submit the user to our email list.
-	function act_email() {
-		var email = inp_email.val();
+    function act_email() {
 
-		// First create a new subscriber.
-		_dcq.push([
-			"identify",
-			{ email: email }
-		]);
-
-		// Then trigger the specified rule.
-		_dcq.push([
-			"track",
-			"Free plugin email course",
-			{"Plugin": drip_plugin}
-		]);
-	}
+        var form = inp_email.parent('form');
+		//Submit email to mailing list
+		jQuery.ajax({
+			type: form.attr('method'),
+			url: form.attr('action'),
+			data: form.serialize(),
+			cache: false,
+			dataType: 'json',
+			contentType: 'application/json; charset=utf-8',
+			success: function (data) {
+				console.log(data.msg);
+			}
+		});
+    }
 
 	// Notify WordPress about the users choice and close the message.
 	function notify_wordpress( action, message ) {
@@ -100,6 +99,12 @@ jQuery(function() {
 	btn_act.click(function( ev ) {
 		ev.preventDefault();
 
+		//Do not submit form if the value is not set
+		var email_inpt = btn_act.parent().find('input[type="email"]');
+		if( !email_inpt.length || !email_inpt.val() ) {
+			return;
+		}
+
 		switch ( type ) {
 			case 'rate': act_rate(); break;
 			case 'email': act_email(); break;
@@ -117,15 +122,3 @@ jQuery(function() {
 
 	window.setTimeout( initialize, 500 );
 });
-
-// Drip integration
-var _dcq = _dcq || [];
-var _dcs = _dcs || {};
-
-_dcs.account = '6994213';
-var dc = document.createElement( 'script' );
-dc.type = 'text/javascript'; dc.async = true;
-dc.src = '//tag.getdrip.com/6994213.js';
-var s = document.getElementsByTagName('script')[0];
-s.parentNode.insertBefore(dc, s);
-// End of drip integration

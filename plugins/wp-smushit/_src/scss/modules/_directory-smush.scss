@@ -38,7 +38,7 @@
         span.fancytree-expander {
             cursor: pointer;
             font-size: 12px;
-            margin-left: 10px;
+            margin-left: 13px;
             width: 15px;
 
             &:before {
@@ -155,12 +155,40 @@
 
         // Unselectable is dimmed, without hover effects
         .fancytree-unselectable {
+            background-color: transparent !important;
+
+            // Fix for bug in library.
+            &.fancytree-selected {
+                margin-left: -9px;
+
+                span.fancytree-expander {
+                    margin-left: 10px;
+                }
+
+                span.fancytree-checkbox {
+                    border: 1px solid #ddd;
+                    background-color: #e6e6e6;
+
+                    &:before {
+                        color: #e6e6e6 !important;
+                    }
+                }
+
+                span.fancytree-title {
+                    color: #666;
+                }
+            }
+
             span.fancytree-expander,
             span.fancytree-icon,
             span.fancytree-checkbox,
             span.fancytree-title {
                 opacity: 0.4;
                 filter: alpha(opacity=40);
+
+                &:before {
+                    color: #666 !important;
+                }
             }
         }
 

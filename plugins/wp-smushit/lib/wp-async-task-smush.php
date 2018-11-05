@@ -49,11 +49,15 @@ if ( ! class_exists( 'WP_Async_Task_Smush' ) ) {
 		protected $priority = 10;
 
 		/**
+		 * Action name.
+		 *
 		 * @var string
 		 */
 		protected $action;
 
 		/**
+		 * Request body data.
+		 *
 		 * @var array
 		 */
 		protected $_body_data;
@@ -78,7 +82,7 @@ if ( ! class_exists( 'WP_Async_Task_Smush' ) ) {
 			if ( empty( $this->action ) ) {
 				throw new Exception( 'Action not defined for class ' . __CLASS__ );
 			}
-			//Handle the actual action
+			// Handle the actual action
 			add_action( $this->action, array( $this, 'launch' ), (int) $this->priority, (int) $this->argument_count );
 
 			add_action( "admin_post_wp_async_$this->action", array( $this, 'handle_postback' ) );
@@ -95,7 +99,7 @@ if ( ! class_exists( 'WP_Async_Task_Smush' ) ) {
 			try {
 				$data = $this->prepare_data( $data );
 			} catch ( Exception $e ) {
-				error_log( sprintf( "Async Smush: Error in prepare_data function in %s at line %s: %s", __FILE__, __LINE__, $e->getMessage() ) );
+				error_log( sprintf( 'Async Smush: Error in prepare_data function in %s at line %s: %s', __FILE__, __LINE__, $e->getMessage() ) );
 				return;
 			}
 
@@ -106,18 +110,18 @@ if ( ! class_exists( 'WP_Async_Task_Smush' ) ) {
 
 			$shutdown_action = has_action( 'shutdown', array( $this, 'process_request' ) );
 
-			//Do not use this, as in case of importing, only the last image gets processed
-			//It's very important that all the Media uploads, are handled via shutdown action, else, sometimes the image meta updated
+			// Do not use this, as in case of importing, only the last image gets processed
+			// It's very important that all the Media uploads, are handled via shutdown action, else, sometimes the image meta updated
 			// by smush is earlier, and then original meta update causes discrepancy
-			if ( ( ( !empty( $_POST['action'] ) && 'upload-attachment' == $_POST['action']  ) || ( ! empty( $_POST ) && isset( $_POST['post_id'] ) ) ) && ! $shutdown_action ) {
+			if ( ( ( ! empty( $_POST['action'] ) && 'upload-attachment' == $_POST['action'] ) || ( ! empty( $_POST ) && isset( $_POST['post_id'] ) ) ) && ! $shutdown_action ) {
 				add_action( 'shutdown', array( $this, 'process_request' ) );
 			} else {
-				//Send a ajax request to process image and return image metadata, added for compatibility with plugins like
+				// Send a ajax request to process image and return image metadata, added for compatibility with plugins like
 				// WP All Import, and RSS aggregator, which upload multiple images at once
 				$this->process_request();
 			}
 
-			//If we have image metadata return it
+			// If we have image metadata return it
 			if ( ! empty( $data['metadata'] ) ) {
 				return $data['metadata'];
 			}
@@ -145,7 +149,7 @@ if ( ! class_exists( 'WP_Async_Task_Smush' ) ) {
 					$cookies[] = "$name=" . urlencode( is_array( $value ) ? serialize( $value ) : $value );
 				}
 
-				//@todo: We've set sslverify to false
+				// @todo: We've set sslverify to false
 				$request_args = array(
 					'timeout'   => apply_filters( 'smush_async_time_out', 0 ),
 					'blocking'  => false,

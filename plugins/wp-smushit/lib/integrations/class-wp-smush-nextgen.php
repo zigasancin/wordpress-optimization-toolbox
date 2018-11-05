@@ -132,9 +132,9 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		 */
 		function register( $settings ) {
 			$settings[ $this->module ] = array(
-				'label' => esc_html__( 'Enable NextGen Gallery integration', 'wp-smushit' ),
+				'label'       => esc_html__( 'Enable NextGen Gallery integration', 'wp-smushit' ),
 				'short_label' => esc_html__( 'NextGen Gallery', 'wp-smushit' ),
-				'desc'  => esc_html__( 'Allow smushing images directly through NextGen Gallery settings.', 'wp-smushit' ),
+				'desc'        => esc_html__( 'Allow smushing images directly through NextGen Gallery settings.', 'wp-smushit' ),
 			);
 
 			return $settings;
@@ -252,7 +252,8 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 
 			$errors = new WP_Error();
 			$stats  = array(
-				'stats' => array_merge( $wp_smush->_get_size_signature(),
+				'stats' => array_merge(
+					$wp_smush->_get_size_signature(),
 					array(
 						'api_version' => - 1,
 						'lossy'       => - 1,
@@ -419,14 +420,14 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		 *
 		 * @usedby: `manual_nextgen`, `auto_smush`, `smush_bulk`
 		 *
-		 * @param string $pid NextGen Gallery Image id
-		 * @param string $image Nextgen gallery image object
-		 * @param bool $echo Whether to echo the stats or not, false for auto smush
-		 * @param bool $is_bulk Whether it's called by bulk smush or not
+		 * @param string $pid      NextGen Gallery Image id.
+		 * @param string $image    Nextgen gallery image object.
+		 * @param bool   $echo     Whether to echo the stats or not, false for auto smush.
+		 * @param bool   $is_bulk  Whether it's called by bulk smush or not.
 		 *
 		 * @return mixed Stats / Status / Error
 		 */
-		function smush_image( $pid = '', $image = '', $echo = true, $is_bulk = false ) {
+		public function smush_image( $pid = '', $image = '', $echo = true, $is_bulk = false ) {
 			global $wpsmushnextgenstats, $wp_smush;
 
 			$wp_smush->initialise();
@@ -441,7 +442,16 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 			$metadata = ! empty( $image ) ? $image->meta_data : '';
 
 			if ( empty( $metadata ) ) {
-				wp_send_json_error( array( 'error_msg' => '<p class="wp-smush-error-message">' . esc_html__( "We couldn't find the metadata for the image, possibly the image has been deleted.", "wp-smushit" ) . '</p>' ) );
+				/**
+				 * We use error_msg for single images to append to the div and error_message to
+				 * append to bulk smush errors list.
+				 */
+				wp_send_json_error( array(
+					'error'         => 'no_metadata',
+					'error_msg'     => '<p class="wp-smush-error-message">' . esc_html__( "We couldn't find the metadata for the image, possibly the image has been deleted.", 'wp-smushit' ) . '</p>',
+					'error_message' => esc_html__( "We couldn't find the metadata for the image, possibly the image has been deleted.", 'wp-smushit' ),
+					'file_name'     => isset( $image->filename ) ? $image->filename : 'undefined',
+				) );
 			}
 
 			$registry = C_Component_Registry::get_instance();
@@ -466,6 +476,8 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 				// Send stats.
 				if ( is_wp_error( $smush ) ) {
 					/**
+					 * Not used for bulk smush.
+					 *
 					 * @param WP_Error $smush
 					 */
 					wp_send_json_error( $smush->get_error_message() );
@@ -495,7 +507,9 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 
 			// Verify Nonce.
 			if ( ! wp_verify_nonce( $nonce, 'wp_smush_nextgen' ) ) {
-				wp_send_json_error( array( 'error' => 'nonce_verification_failed' ) );
+				wp_send_json_error( array(
+					'error' => 'nonce_verification_failed'
+				) );
 			}
 
 			// Check for media upload permission.
@@ -508,7 +522,6 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 			}
 
 			$this->smush_image( $pid, '' );
-
 		}
 
 		/**
@@ -585,18 +598,22 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 
 			// Check Empty fields.
 			if ( empty( $_POST['attachment_id'] ) || empty( $_POST['_nonce'] ) ) {
-				wp_send_json_error( array(
-					'error'   => 'empty_fields',
-					'message' => esc_html__( "Error in processing restore action, Fields empty.", "wp-smushit" ),
-				) );
+				wp_send_json_error(
+					array(
+						'error'   => 'empty_fields',
+						'message' => esc_html__( 'Error in processing restore action, Fields empty.', 'wp-smushit' ),
+					)
+				);
 			}
 
 			// Check Nonce.
-			if ( ! wp_verify_nonce( $_POST['_nonce'], "wp-smush-restore-" . $_POST['attachment_id'] ) ) {
-				wp_send_json_error( array(
-					'error'   => 'empty_fields',
-					'message' => esc_html__( "Image not restored, Nonce verification failed.", "wp-smushit" ),
-				) );
+			if ( ! wp_verify_nonce( $_POST['_nonce'], 'wp-smush-restore-' . $_POST['attachment_id'] ) ) {
+				wp_send_json_error(
+					array(
+						'error'   => 'empty_fields',
+						'message' => esc_html__( 'Image not restored, Nonce verification failed.', 'wp-smushit' ),
+					)
+				);
 			}
 
 			// Store the restore success/failure for all the sizes.
@@ -690,17 +707,21 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		function resmush_image() {
 			// Check Empty fields.
 			if ( empty( $_POST['attachment_id'] ) || empty( $_POST['_nonce'] ) ) {
-				wp_send_json_error( array(
-					'error'   => 'empty_fields',
-					'message' => '<div class="wp-smush-error">' . esc_html__( "We couldn't process the image, fields empty.", "wp-smushit" ) . '</div>',
-				) );
+				wp_send_json_error(
+					array(
+						'error'   => 'empty_fields',
+						'message' => '<div class="wp-smush-error">' . esc_html__( "We couldn't process the image, fields empty.", 'wp-smushit' ) . '</div>',
+					)
+				);
 			}
 			// Check Nonce.
-			if ( ! wp_verify_nonce( $_POST['_nonce'], "wp-smush-resmush-" . $_POST['attachment_id'] ) ) {
-				wp_send_json_error( array(
-					'error'   => 'empty_fields',
-					'message' => '<div class="wp-smush-error">' . esc_html__( "Image couldn't be smushed as the nonce verification failed, try reloading the page.", "wp-smushit" ) . '</div>',
-				) );
+			if ( ! wp_verify_nonce( $_POST['_nonce'], 'wp-smush-resmush-' . $_POST['attachment_id'] ) ) {
+				wp_send_json_error(
+					array(
+						'error'   => 'empty_fields',
+						'message' => '<div class="wp-smush-error">' . esc_html__( "Image couldn't be smushed as the nonce verification failed, try reloading the page.", 'wp-smushit' ) . '</div>',
+					)
+				);
 			}
 
 			$image_id = intval( $_POST['attachment_id'] );
@@ -722,7 +743,7 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 				// Send Error Message.
 				wp_send_json_error(
 					array(
-						'message' => sprintf( '<div class="wp-smush-error">' . __( "Unable to smush image, %s", "wp-smushit" ) . '</div>', $smushed->get_error_message()	),
+						'message' => sprintf( '<div class="wp-smush-error">' . __( 'Unable to smush image, %s', 'wp-smushit' ) . '</div>', $smushed->get_error_message() ),
 					)
 				);
 
@@ -865,7 +886,8 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 				 * Called after the image has been successfully resized
 				 * Can be used to update the stored stats
 				 */
-				do_action( 'wp_smush_image_nextgen_resized', $attachment_id,
+				do_action(
+					'wp_smush_image_nextgen_resized', $attachment_id,
 					array(
 						'stats' => $savings,
 					)
@@ -891,7 +913,6 @@ if ( ! class_exists( 'WpSmushNextGen' ) ) {
 		 * @param $storage Gallery storage object
 		 *
 		 * @return bool Whether the file was unlinked or not
-		 *
 		 */
 		function maybe_unlink( $path, $sizes, $image, $storage ) {
 			if ( empty( $path ) || ! is_object( $storage ) || ! is_object( $image ) ) {
@@ -986,8 +1007,8 @@ if ( class_exists( 'WpSmushNextGen' ) ) {
 			 *
 			 * @param C_Image|int|stdClass $image
 			 * @param $size
-			 * @param null $params
-			 * @param bool|false $skip_defaults
+			 * @param null                 $params
+			 * @param bool|false           $skip_defaults
 			 *
 			 * @return bool|object
 			 */
@@ -1021,7 +1042,7 @@ if ( class_exists( 'WpSmushNextGen' ) ) {
 							} else {
 								// Initialize stats array.
 								$stats                = array(
-									"stats" => array_merge(
+									'stats' => array_merge(
 										$wp_smush->_get_size_signature(),
 										array(
 											'api_version' => - 1,
@@ -1029,7 +1050,7 @@ if ( class_exists( 'WpSmushNextGen' ) ) {
 											'keep_exif'   => false,
 										)
 									),
-									'sizes' => array()
+									'sizes' => array(),
 								);
 								$stats['bytes']       = $response['data']->bytes_saved;
 								$stats['percent']     = $response['data']->compression;

@@ -1,5 +1,7 @@
 <?php
 /**
+ * Smush resize functionality: WpSmushResize class
+ *
  * @package WP_Smush
  * @subpackage Admin
  * @version 2.3
@@ -148,12 +150,12 @@ if ( ! class_exists( 'WpSmushResize' ) ) {
 			$meta = empty( $meta ) ? wp_get_attachment_metadata( $id ) : $meta;
 
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$old_width = $meta['width'];
+				$old_width  = $meta['width'];
 				$old_height = $meta['height'];
 
 				$resize_dim = $wpsmush_settings->get_setting( WP_SMUSH_PREFIX . 'resize_sizes' );
 
-				$max_width = ! empty( $resize_dim['width'] ) ? $resize_dim['width'] : 0;
+				$max_width  = ! empty( $resize_dim['width'] ) ? $resize_dim['width'] : 0;
 				$max_height = ! empty( $resize_dim['height'] ) ? $resize_dim['height'] : 0;
 
 				if ( ( $old_width > $max_width && $max_width > 0 ) || ( $old_height > $max_height && $max_height > 0 ) ) {
@@ -299,10 +301,12 @@ if ( ! class_exists( 'WpSmushResize' ) ) {
 			 * @type string $type File type.
 			 * }
 			 */
-			$sizes = apply_filters( 'wp_smush_resize_sizes', array(
-				'width'  => $this->max_w,
-				'height' => $this->max_h,
-			), $file_path, $id );
+			$sizes = apply_filters(
+				'wp_smush_resize_sizes', array(
+					'width'  => $this->max_w,
+					'height' => $this->max_h,
+				), $file_path, $id
+			);
 
 			$data = image_make_intermediate_size( $file_path, $sizes['width'], $sizes['height'] );
 
@@ -413,17 +417,17 @@ if ( ! class_exists( 'WpSmushResize' ) ) {
 			$filecontents = file_get_contents( $file_path );
 
 			$str_loc = 0;
-			$count = 0;
+			$count   = 0;
 
 			// There is no point in continuing after we find a 2nd frame.
 			while ( $count < 2 ) {
 
-				$where1 = strpos( $filecontents,"\x00\x21\xF9\x04", $str_loc );
+				$where1 = strpos( $filecontents, "\x00\x21\xF9\x04", $str_loc );
 				if ( false === $where1 ) {
 					break;
 				} else {
 					$str_loc = $where1 + 1;
-					$where2 = strpos( $filecontents,"\x00\x2C", $str_loc );
+					$where2  = strpos( $filecontents, "\x00\x2C", $str_loc );
 					if ( false === $where2 ) {
 						break;
 					} else {

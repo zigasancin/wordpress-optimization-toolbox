@@ -10,9 +10,11 @@
  */
 
 const DirectoryScanner = ( totalSteps, currentStep ) => {
-	totalSteps = parseInt( totalSteps );
+	totalSteps  = parseInt( totalSteps );
 	currentStep = parseInt( currentStep );
-	let cancelling = false;
+
+	let cancelling  = false,
+		failedItems = 0;
 
 	let obj = {
 		scan: function() {
@@ -40,7 +42,7 @@ const DirectoryScanner = ( totalSteps, currentStep ) => {
 		},
 
 		onFinishStep: function( progress ) {
-			$( '.wp-smush-progress-dialog .sui-progress-state-text' ).html( currentStep + '/' + totalSteps + ' ' + wp_smush_msgs.progress_smushed );
+			$( '.wp-smush-progress-dialog .sui-progress-state-text' ).html( ( currentStep - failedItems ) + '/' + totalSteps + ' ' + wp_smush_msgs.progress_smushed );
 			WP_Smush.directory.updateProgressBar( progress );
 		},
 
@@ -62,7 +64,7 @@ const DirectoryScanner = ( totalSteps, currentStep ) => {
 
 			dialog.removeClass( 'wp-smush-exceed-limit' );
 			dialog.find( '#cancel-directory-smush' ).attr( 'data-tooltip', 'Cancel' );
-			dialog.find( '.sui-icon-close' ).removeClass( 'sui-icon-play' ).addClass( 'sui-icon-close' );
+			dialog.find( '.sui-icon-play' ).removeClass( 'sui-icon-play' ).addClass( 'sui-icon-close' );
 
 			obj.scan();
 		}
@@ -91,11 +93,21 @@ const DirectoryScanner = ( totalSteps, currentStep ) => {
 				} else if ( 'undefined' !== typeof response.data.error && 'dir_smush_limit_exceeded' === response.data.error ) {
 					// Limit reached. Stop.
 					obj.limitReached();
+				} else {
+					// Error? never mind, continue, but count them.
+					failedItems++;
+					currentStep++;
+					remainingSteps = remainingSteps - 1;
+					obj.onFinishStep( obj.getProgress() );
+					step( remainingSteps );
 				}
 			} );
 		} else {
-			$.post( ajaxurl, { action: 'directory_smush_finish', items: totalSteps },
-				( response ) => obj.onFinish( response ) );
+			$.post( ajaxurl, {
+				action: 'directory_smush_finish',
+				items: ( totalSteps - failedItems ),
+				failed: failedItems,
+			}, ( response ) => obj.onFinish( response ) );
 		}
 	};
 

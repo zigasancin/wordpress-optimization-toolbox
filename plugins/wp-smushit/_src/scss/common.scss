@@ -157,13 +157,19 @@ label.setting.smush-stats .smush-wrap,
 	font-size: 11px;
 }
 
+.smush-skipped {
+	display: flex;
+	align-items: center;
+	align-content: center;
+}
+
 .smush-skipped.error {
 	color: #C41921;
 }
 
 .smush-skipped .dashicons-editor-help {
 	cursor: pointer;
-	margin-top: -2px;
+	margin-top: -3px;
 }
 
 /** Help Tip **/
@@ -247,9 +253,14 @@ label.setting.smush-stats .smush-wrap,
 	}
 }
 
+.column-smushit div.smush-status-links,
 .attachment-details .setting div.smush-status-links {
-	float: none;
+	float: left;
 	text-align: left;
+
+	.wp-smush-action {
+		margin-right: 5px;
+	}
 }
 
 div.attachment-details .setting div.smush-status-links.smush-status-links div.smush-stats-wrapper {
@@ -375,11 +386,6 @@ div.wp-smush-dir-limit {
 
 .wp-smush-sep {
 	margin: 20px 0;
-}
-
-.smush-final-log {
-	margin-left: 0;
-	padding: 10px;
 }
 
 .wp-smush-ajax-error {
@@ -611,11 +617,6 @@ div.wp-smush-resize-note {
 	font-weight: 400;
 }
 
-.smush-final-log {
-	max-height: 200px;
-	overflow: auto;
-}
-
 /** Override WP Footer Styling, Hide it on WPMU pages only, if we really need to **/
 .wp-admin #wpfooter {
 	display: block;
@@ -685,7 +686,7 @@ div.wp-smush-info.notice {
 }
 
 /* Bulk Smush button*/
-button.wp-smush-all.wp-smush-button {
+button.wp-smush-all {
 	float: right;
 }
 

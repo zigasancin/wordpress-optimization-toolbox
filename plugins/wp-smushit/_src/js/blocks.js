@@ -75,7 +75,7 @@ export function smushStats( stats ) {
  * Modify the block’s edit component.
  * Receives the original block BlockEdit component and returns a new wrapped component.
  */
-let smushStatsControl = wp.element.createHigherOrderComponent( function( BlockEdit ) {
+let smushStatsControl = wp.compose.createHigherOrderComponent( function( BlockEdit ) {
 	/**
 	 * Fetch image data. If image is Smushing, update in 3 seconds.
 	 *

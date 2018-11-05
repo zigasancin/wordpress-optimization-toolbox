@@ -1,6 +1,11 @@
 /**
  * Admin modules
  */
+
+let WP_Smush = WP_Smush || {};
+window.WP_Smush = WP_Smush;
+
+require( './modules/helpers' );
 require( './modules/admin' );
 require( './modules/bulk-smush' );
 require( './modules/modals' );

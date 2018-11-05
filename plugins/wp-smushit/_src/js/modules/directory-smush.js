@@ -5,7 +5,7 @@
  */
 
 import { createTree } from 'jquery.fancytree';
-import Scanner from './directory-scanner';
+import Scanner from '../smush/directory-scanner';
 
 ( function( $ ) {
 	'use strict';
@@ -18,10 +18,18 @@ import Scanner from './directory-scanner';
 		init: function () {
 			const self = this;
 
-			let progress_dialog = $( '#wp-smush-progress-dialog');
+			let progress_dialog = $( '#wp-smush-progress-dialog'),
+				totalSteps = 0,
+				currentScanStep = 0;
+
+			// Make sure directory smush vars are set.
+			if ( typeof wp_smushit_data.dir_smush !== 'undefined' ) {
+				totalSteps = wp_smushit_data.dir_smush.totalSteps;
+				currentScanStep = wp_smushit_data.dir_smush.currentScanStep;
+			}
 
 			// Init image scanner.
-			this.scanner = new Scanner( wp_smushit_data.dir_smush.totalSteps, wp_smushit_data.dir_smush.currentScanStep );
+			this.scanner = new Scanner( totalSteps, currentScanStep );
 
 			/**
 			 * Smush translation strings.

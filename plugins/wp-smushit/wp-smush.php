@@ -13,13 +13,13 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/extend/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
- * Version:           2.8.1
+ * Version:           2.9.1
  * Author:            WPMU DEV
  * Author URI:        https://premium.wpmudev.org/
  * License:           GPLv2
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-smushit
- * Domain Path:       /languages
+ * Domain Path:       /languages/
  */
 
 /*
@@ -47,11 +47,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '2.8.1' );
+	define( 'WP_SMUSH_VERSION', '2.9.1' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
-	define( 'WP_SHARED_UI_VERSION', 'sui-2-2-7' );
+	define( 'WP_SHARED_UI_VERSION', 'sui-2-2-9' );
 }
 if ( ! defined( 'WP_SMUSH_BASENAME' ) ) {
 	define( 'WP_SMUSH_BASENAME', plugin_basename( __FILE__ ) );
@@ -93,24 +93,36 @@ if ( ! defined( 'WP_SMUSH_ASYNC' ) && ! empty( $_SERVER['SERVER_NAME'] ) && ( 0 
 	define( 'WP_SMUSH_ASYNC', true );
 }
 
-add_action( 'admin_init', 'deactivate_smush_org' );
-if ( ! function_exists( 'deactivate_smush_org' ) ) {
-	/**
-	 * Deactivate the .org version, if pro version is active.
-	 */
-	function deactivate_smush_org() {
-		if ( is_plugin_active( 'wp-smush-pro/wp-smush.php' ) && is_plugin_active( 'wp-smushit/wp-smush.php' ) ) {
-			deactivate_plugins( 'wp-smushit/wp-smush.php' );
-			// Store in database, in order to show a notice on page load.
-			update_site_option( 'smush_deactivated', 1 );
-		}
+/**
+ * If we are activating a version, while having another present and activated.
+ * Leave in the Pro version, if it is available.
+ *
+ * @since 2.9.1
+ */
+if ( WP_SMUSH_BASENAME !== plugin_basename( __FILE__ ) ) {
+	$pro_installed = false;
+	if ( file_exists( WP_PLUGIN_DIR . '/wp-smush-pro/wp-smush.php' ) ) {
+		$pro_installed = true;
+	}
+
+	if ( ! function_exists( 'is_plugin_active' ) ) {
+		include_once ABSPATH . 'wp-admin/includes/plugin.php';
+	}
+
+	if ( is_plugin_active( 'wp-smush-pro/wp-smush.php' ) ) {
+		deactivate_plugins( plugin_basename( __FILE__ ) );
+		update_site_option( 'smush_deactivated', 1 );
+		return; // Return to avoid errors with free-dashboard module.
+	} elseif ( $pro_installed && is_plugin_active( WP_SMUSH_BASENAME ) ) {
+		deactivate_plugins( WP_SMUSH_BASENAME );
+		activate_plugin( plugin_basename( __FILE__ ) );
 	}
 }
 
 // Include core class.
 if ( ! class_exists( 'WP_Smush' ) ) {
 	/* @noinspection PhpIncludeInspection */
-	require_once plugin_dir_path( __FILE__ ) . 'lib/class-wp-smush.php';
+	require_once WP_SMUSH_DIR . 'lib/class-wp-smush.php';
 }
 
 global $wp_smush;
@@ -167,57 +179,49 @@ if ( ! function_exists( 'wp_smush_email_message' ) ) {
 	}
 }
 
-if ( ! function_exists( 'get_plugin_dir' ) ) {
+add_action( 'admin_init', 'register_free_modules' );
+if ( ! function_exists( 'register_free_modules' ) ) {
 	/**
-	 * Returns the dir path for the plugin
-	 *
-	 * @return string
+	 * Register sub-modules.
+	 * Only for wordpress.org members.
 	 */
-	function get_plugin_dir() {
-		$dir_path = plugin_dir_path( __FILE__ );
-
-		return $dir_path;
-	}
-}
-
-if ( is_admin() ) {
-	$dir_path = get_plugin_dir();
-
-	// Only for wordpress.org members.
-	if ( strpos( $dir_path, 'wp-smushit' ) !== false ) {
+	function register_free_modules() {
+		if ( false === strpos( WP_SMUSH_DIR, 'wp-smushit' ) ) {
+			return;
+		}
 		/* @noinspection PhpIncludeInspection */
-		require_once( WP_SMUSH_DIR . 'extras/free-dashboard/module.php' );
+		require_once WP_SMUSH_DIR . 'extras/free-dashboard/module.php';
 
 		// Register the current plugin.
 		do_action(
 			'wdev-register-plugin',
-			/* 1             Plugin ID */
-			plugin_basename( __FILE__ ),
-			/* 2          Plugin Title */
-			'WP Smush',
-			/* 3 https://wordpress.org */
-			'/plugins/wp-smushit/',
-			/* 4      Email Button CTA */
-			__( 'Get Fast', 'wp-smushit' ),
-			/* 5  getdrip Plugin param */
-			'Smush'
+			/* 1             Plugin ID */ WP_SMUSH_BASENAME,
+			/* 2          Plugin Title */ 'Smush',
+			/* 3 https://wordpress.org */ '/plugins/wp-smushit/',
+			/* 4      Email Button CTA */ __( 'Get Fast!', 'wp-smushit' ),
+			/* 5  Mailchimp List id for the plugin - e.g. 4b14b58816 is list id for Smush */ '4b14b58816'
 		);
 
 		// The rating message contains 2 variables: user-name, plugin-name.
-		add_filter(
-			'wdev-rating-message-' . plugin_basename( __FILE__ ),
-			'wp_smush_rating_message'
-		);
-
+		add_filter( 'wdev-rating-message-' . WP_SMUSH_BASENAME, 'wp_smush_rating_message' );
 		// The email message contains 1 variable: plugin-name.
-		add_filter(
-			'wdev-email-message-' . plugin_basename( __FILE__ ),
-			'wp_smush_email_message'
-		);
-	} elseif ( strpos( $dir_path, 'wp-smush-pro' ) !== false && file_exists( WP_SMUSH_DIR . 'extras/dash-notice/wpmudev-dash-notification.php' ) ) {
-		// Only for WPMU DEV Members.
+		add_filter( 'wdev-email-message-' . WP_SMUSH_BASENAME, 'wp_smush_email_message' );
+	}
+}
+
+add_action( 'admin_init', 'register_pro_modules' );
+if ( ! function_exists( 'register_pro_modules' ) ) {
+	/**
+	 * Register sub-modules.
+	 * Only for WPMU DEV Members.
+	 */
+	function register_pro_modules() {
+		if ( false === strpos( WP_SMUSH_DIR, 'wp-smush-pro' ) || ! file_exists( WP_SMUSH_DIR . 'extras/dash-notice/wpmudev-dash-notification.php' ) ) {
+			return;
+		}
+
 		/* @noinspection PhpIncludeInspection */
-		require_once( WP_SMUSH_DIR . 'extras/dash-notice/wpmudev-dash-notification.php' );
+		require_once WP_SMUSH_DIR . 'extras/dash-notice/wpmudev-dash-notification.php';
 
 		// Register items for the dashboard plugin.
 		global $wpmudev_notices;
@@ -230,13 +234,12 @@ if ( is_admin() ) {
 				'toplevel_page_smush-network',
 			),
 		);
-	} // End if().
-} // End if().
+	}
+}
 
 // Show the required notice.
 add_action( 'network_admin_notices', 'smush_deactivated' );
 add_action( 'admin_notices', 'smush_deactivated' );
-
 if ( ! function_exists( 'smush_deactivated' ) ) {
 	/**
 	 * Display a admin Notice about plugin deactivation.
@@ -246,67 +249,29 @@ if ( ! function_exists( 'smush_deactivated' ) ) {
 		if ( is_admin() && is_super_admin() && get_site_option( 'smush_deactivated' ) ) { ?>
 			<div class="updated">
 				<p><?php esc_html_e( 'Smush Free was deactivated. You have Smush Pro active!', 'wp-smushit' ); ?></p>
-			</div> <?php
+			</div>
+			<?php
 			delete_site_option( 'smush_deactivated' );
 		}
 	}
 }
 
-if ( ! function_exists( 'smush_sanitize_hex_color' ) ) {
-	/**
-	 * Sanitizes a hex color.
-	 *
-	 * @param string $color  HEX color code.
-	 *
-	 * @return string Returns either '', a 3 or 6 digit hex color (with #), or nothing
-	 */
-	function smush_sanitize_hex_color( $color ) {
-		if ( '' === $color ) {
-			return '';
-		}
-
-		// 3 or 6 hex digits, or the empty string.
-		if ( preg_match( '|^#([A-Fa-f0-9]{3}){1,2}$|', $color ) ) {
-			return $color;
-		}
-
-		return false;
-	}
-}
-
-if ( ! function_exists( 'smush_sanitize_hex_color_no_hash' ) ) {
-	/**
-	 * Sanitizes a hex color without hash
-	 *
-	 * @param string $color  HEX color code with hash.
-	 *
-	 * @return string Returns either '', a 3 or 6 digit hex color (with #), or nothing
-	 */
-	function smush_sanitize_hex_color_no_hash( $color ) {
-		$color = ltrim( $color, '#' );
-
-		if ( '' === $color ) {
-			return '';
-		}
-
-		return smush_sanitize_hex_color( '#' . $color ) ? $color : null;
-	}
-}
-
-add_action( 'plugins_loaded', 'smush_i18n' );
+add_action( 'admin_init', 'smush_i18n' );
 if ( ! function_exists( 'smush_i18n' ) ) {
 	/**
 	 * Load translation files.
 	 */
 	function smush_i18n() {
-		$path = path_join( dirname( plugin_basename( __FILE__ ) ), 'languages/' );
-		load_plugin_textdomain( 'wp-smushit', false, $path );
+		load_plugin_textdomain(
+			'wp-smushit',
+			false,
+			dirname( WP_SMUSH_BASENAME ) . '/languages'
+		);
 	}
 }
 
 // Add Share UI Class.
 add_filter( 'admin_body_class', 'smush_body_classes', 99 );
-
 if ( ! function_exists( 'smush_body_classes' ) ) {
 	/**
 	 * Add Share UI Class.

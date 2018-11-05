@@ -1,5 +1,6 @@
 <?php
 /**
+ *
  * @package WP_Smush
  * @subpackage Admin
  * @version 1.0
@@ -50,29 +51,29 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 		 * @return array|bool
 		 */
 		function get_pngjpg_savings( $attachment_id = '' ) {
-			//Initialize empty array
+			// Initialize empty array
 			$savings = array(
 				'bytes'       => 0,
 				'size_before' => 0,
-				'size_after'  => 0
+				'size_after'  => 0,
 			);
 
-			//Return empty array if attaachment id not provided
-			if( empty( $attachment_id ) ) {
+			// Return empty array if attaachment id not provided
+			if ( empty( $attachment_id ) ) {
 				return $savings;
 			}
 
 			$pngjpg_savings = get_post_meta( $attachment_id, WP_SMUSH_PREFIX . 'pngjpg_savings', true );
-			if( empty( $pngjpg_savings ) || !is_array( $pngjpg_savings )) {
+			if ( empty( $pngjpg_savings ) || ! is_array( $pngjpg_savings ) ) {
 				return $savings;
 			}
 
 			foreach ( $pngjpg_savings as $size => $s_savings ) {
-				if( empty( $s_savings ) ) {
+				if ( empty( $s_savings ) ) {
 					continue;
 				}
 				$savings['size_before'] += $s_savings['size_before'];
-				$savings['size_after'] += $s_savings['size_after'];
+				$savings['size_after']  += $s_savings['size_after'];
 			}
 			$savings['bytes'] = $savings['size_before'] - $savings['size_after'];
 
@@ -84,7 +85,7 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 		 *
 		 * @param $haystack
 		 * @param $needle
-		 * @param int $offset
+		 * @param int      $offset
 		 *
 		 * @return bool
 		 */
@@ -112,19 +113,19 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 		 */
 		function file_exists( $id, $file_path ) {
 
-			//If not attachment id is given return false
+			// If not attachment id is given return false
 			if ( empty( $id ) ) {
 				return false;
 			}
 
-			//Get file path, if not provided
+			// Get file path, if not provided
 			if ( empty( $file_path ) ) {
 				$file_path = $this->get_attached_file( $id );
 			}
 
 			global $wpsmush_s3;
 
-			//If S3 is enabled
+			// If S3 is enabled
 			if ( is_object( $wpsmush_s3 ) && method_exists( $wpsmush_s3, 'is_image_on_s3' ) && $wpsmush_s3->is_image_on_s3( $id ) ) {
 				$file_exists = true;
 			} else {
@@ -142,15 +143,15 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 		 * @return string Truncated string
 		 */
 		function add_ellipsis( $string = '' ) {
-			if( empty( $string ) ){
+			if ( empty( $string ) ) {
 				return $string;
 			}
-			//Return if the character length is 120 or less, else add ellipsis in between
-			if( strlen( $string ) < 121 ) {
+			// Return if the character length is 120 or less, else add ellipsis in between
+			if ( strlen( $string ) < 121 ) {
 				return $string;
 			}
-			$start = substr( $string, 0, 60 );
-			$end = substr( $string, -40 );
+			$start  = substr( $string, 0, 60 );
+			$end    = substr( $string, -40 );
 			$string = $start . '...' . $end;
 
 			return $string;
@@ -160,10 +161,10 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 		 * Bump up the PHP memory limit temporarily
 		 */
 		function increase_memory_limit() {
-			$mlimit = ini_get('memory_limit');
-			$trim_limit = rtrim($mlimit,"M");
-			if ($trim_limit < '256') {
-				@ini_set('memory_limit', '256M');
+			$mlimit     = ini_get( 'memory_limit' );
+			$trim_limit = rtrim( $mlimit, 'M' );
+			if ( $trim_limit < '256' ) {
+				@ini_set( 'memory_limit', '256M' );
 			}
 		}
 
@@ -180,10 +181,12 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 		 */
 		function table_column_exists( $table_name, $column_name ) {
 			global $wpdb;
-			$column = $wpdb->get_results( $wpdb->prepare(
-				"SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s ",
-				DB_NAME, $table_name, $column_name
-			) );
+			$column = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s ',
+					DB_NAME, $table_name, $column_name
+				)
+			);
 			if ( ! empty( $column ) ) {
 				return true;
 			}
@@ -201,11 +204,74 @@ if ( ! class_exists( 'WpSmushHelper' ) ) {
 		 * @param string $index Index name to drop.
 		 * @return true True, when finished.
 		 */
-		function drop_index($table, $index) {
+		function drop_index( $table, $index ) {
 			global $wpdb;
-			$wpdb->query("ALTER TABLE `$table` DROP INDEX `$index`");
+			$wpdb->query( "ALTER TABLE `$table` DROP INDEX `$index`" );
 			return true;
 		}
+
+		/**
+		 * Sanitizes a hex color.
+		 *
+		 * @since 2.9  Moved from wp-smushit.php file.
+		 *
+		 * @param string $color  HEX color code.
+		 *
+		 * @return string Returns either '', a 3 or 6 digit hex color (with #), or nothing
+		 */
+		private function smush_sanitize_hex_color( $color ) {
+			if ( '' === $color ) {
+				return '';
+			}
+
+			// 3 or 6 hex digits, or the empty string.
+			if ( preg_match( '|^#([A-Fa-f0-9]{3}){1,2}$|', $color ) ) {
+				return $color;
+			}
+
+			return false;
+		}
+
+		/**
+		 * Sanitizes a hex color without hash.
+		 *
+		 * @since 2.9  Moved from wp-smushit.php file.
+		 *
+		 * @param string $color  HEX color code with hash.
+		 *
+		 * @return string Returns either '', a 3 or 6 digit hex color (with #), or nothing
+		 */
+		public function smush_sanitize_hex_color_no_hash( $color ) {
+			$color = ltrim( $color, '#' );
+
+			if ( '' === $color ) {
+				return '';
+			}
+
+			return $this->smush_sanitize_hex_color( '#' . $color ) ? $color : null;
+		}
+
+		/**
+		 * Get the link to the media library page for the image.
+		 *
+		 * @since 2.9.0
+		 *
+		 * @param int    $id    Image ID.
+		 * @param string $name  Image file name.
+		 *
+		 * @return string
+		 */
+		public function get_image_media_link( $id, $name ) {
+			$mode = get_user_option( 'media_library_mode' );
+			if ( 'grid' === $mode ) {
+				$link = admin_url( "upload.php?item={$id}" );
+			} else {
+				$link = admin_url( "post.php?post={$id}&action=edit" );
+			}
+
+			return "<a href='{$link}'>{$name}</a>";
+		}
+
 	}
 
 	global $wpsmush_helper;

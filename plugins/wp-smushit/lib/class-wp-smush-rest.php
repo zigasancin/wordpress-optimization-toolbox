@@ -42,7 +42,7 @@ class WP_Smush_Rest {
 			return self::$_instance;
 		}
 
-		return new self;
+		return new self();
 	}
 
 	/**
@@ -61,13 +61,15 @@ class WP_Smush_Rest {
 	 * @since 2.8.0
 	 */
 	public function register_smush_meta() {
-		register_rest_field( 'attachment', 'smush', array(
-			'get_callback' => array( $this, 'register_image_stats' ),
-			'schema' => array(
-				'description' => __( 'Smush data.', 'wp-smushit' ),
-				'type'        => 'string',
-			),
-		) );
+		register_rest_field(
+			'attachment', 'smush', array(
+				'get_callback' => array( $this, 'register_image_stats' ),
+				'schema'       => array(
+					'description' => __( 'Smush data.', 'wp-smushit' ),
+					'type'        => 'string',
+				),
+			)
+		);
 	}
 
 	/**

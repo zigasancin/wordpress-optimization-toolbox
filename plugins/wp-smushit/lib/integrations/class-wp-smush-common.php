@@ -45,7 +45,7 @@ class WP_Smush_Common {
 			return self::$_instance;
 		}
 
-		return new self;
+		return new self();
 	}
 
 	/**

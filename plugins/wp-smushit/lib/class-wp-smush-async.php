@@ -1,5 +1,6 @@
 <?php
 /**
+ *
  * @package WP_Smush
  * @subpackage Admin
  * @since 2.5
@@ -133,8 +134,8 @@ if ( ! class_exists( 'WpSmushAsync' ) ) {
 			}
 
 			// Store the image path.
-			$data['filepath'] = !empty( $data[1] ) ? $data[1] : '';
-			$data['wp-action'] = !empty( $data['action'] ) ? $data['action'] : '';
+			$data['filepath']  = ! empty( $data[1] ) ? $data[1] : '';
+			$data['wp-action'] = ! empty( $data['action'] ) ? $data['action'] : '';
 			unset( $data['action'], $data[1] );
 
 			return $data;
@@ -149,9 +150,9 @@ if ( ! class_exists( 'WpSmushAsync' ) ) {
 		 */
 		protected function run_action() {
 			if ( isset( $_POST['wp-action'], $_POST['do'], $_POST['postid'] )
-			     && 'image-editor' === $_POST['wp-action']
-			     && check_ajax_referer( 'image_editor-' . $_POST['postid'] )
-			     && 'open' != $_POST['do']
+				 && 'image-editor' === $_POST['wp-action']
+				 && check_ajax_referer( 'image_editor-' . $_POST['postid'] )
+				 && 'open' != $_POST['do']
 			) {
 				$postid = ! empty( $_POST['postid'] ) ? $_POST['postid'] : '';
 				// Allow the Asynchronous task to run.

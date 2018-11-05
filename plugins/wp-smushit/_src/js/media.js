@@ -76,6 +76,7 @@
 	 */
 	smush_media.view.Attachment.Details = smushAttachmentDetails.extend( {
 		initialize: function () {
+			smushAttachmentDetails.prototype.initialize.apply( this, arguments );
 			this.listenTo( this.model, 'change:smush', this.render );
 		},
 
@@ -100,5 +101,51 @@
 			return this;
 		}
 	} );
+
+	/**
+	 * Create a new MediaLibraryTaxonomyFilter we later will instantiate
+	 *
+	 * @since 2.9.0
+	 */
+/*
+	const MediaLibraryTaxonomyFilter = wp.media.view.AttachmentFilters.extend({
+		id: 'media-attachment-smush-filter',
+
+		createFilters: function() {
+			this.filters = {
+				all: {
+					text: smush_vars.strings['filter_all'],
+					props: { stats: 'all' },
+					priority: 10
+				},
+
+				excluded: {
+					text: smush_vars.strings['filter_excl'],
+					props: { stats: 'null' },
+					priority: 20
+				}
+			};
+		}
+	});
+*/
+	/**
+	 * Extend and override wp.media.view.AttachmentsBrowser to include our new filter.
+	 *
+	 * @since 2.9.0
+	 */
+/*
+	let AttachmentsBrowser = wp.media.view.AttachmentsBrowser;
+	wp.media.view.AttachmentsBrowser = wp.media.view.AttachmentsBrowser.extend({
+		createToolbar: function() {
+			// Make sure to load the original toolbar
+			AttachmentsBrowser.prototype.createToolbar.call( this );
+			this.toolbar.set( 'MediaLibraryTaxonomyFilter', new MediaLibraryTaxonomyFilter({
+				controller: this.controller,
+				model:      this.collection.props,
+				priority: -75
+			}).render() );
+		}
+	});
+*/
 
 })( jQuery, _ );

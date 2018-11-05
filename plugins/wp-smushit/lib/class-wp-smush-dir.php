@@ -11,8 +11,8 @@
  * @copyright (c) 2016, Incsub (http://incsub.com)
  */
 
-include_once 'utils/class-wp-smush-directory-scanner.php';
-include_once 'ui/class-wp-smush-dir-ui.php';
+require_once 'utils/class-wp-smush-directory-scanner.php';
+require_once 'ui/class-wp-smush-dir-ui.php';
 
 if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 	/**
@@ -25,6 +25,13 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		 * @var $optimised_images
 		 */
 		public $optimised_images;
+
+		/**
+		 * Flag to check if dir smush table exist.
+		 *
+		 * @var $table_exist
+		 */
+		public $table_exist;
 
 		/**
 		 * Total Stats for the image optimisation.
@@ -67,6 +74,9 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 				$this->scanner->reset_scan();
 			}
 
+			// Check directory smush table after screen is set.
+			add_action( 'current_screen', array( $this, 'check_table' ) );
+
 			// Check to see if the scanner should be running.
 			add_action( 'admin_footer', array( $this, 'check_scan' ) );
 
@@ -78,9 +88,6 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 
 			// Handle Ajax Request to optimise images.
 			add_action( 'wp_ajax_optimise', array( $this, 'optimise' ) );
-
-			// Handle Ajax request for directory smush stats (stats meta box).
-			add_action( 'wp_ajax_get_dir_smush_stats', array( $this, 'get_dir_smush_stats' ) );
 
 			/**
 			 * Scanner ajax actions.
@@ -127,7 +134,7 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		 * @since 2.8.1
 		 */
 		public function directory_smush_check_step() {
-			$urls = $this->get_scanned_images();
+			$urls         = $this->get_scanned_images();
 			$current_step = absint( $_POST['step'] ); // Input var ok.
 
 			$this->scanner->update_current_step( $current_step );
@@ -146,6 +153,12 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		 */
 		public function directory_smush_finish() {
 			$items = isset( $_POST['items'] ) ? absint( $_POST['items'] ) : 0; // Input var ok.
+			$failed = isset( $_POST['failed'] ) ? absint( $_POST['failed'] ) : 0; // Input var ok.
+			// If any images failed to smush, store count.
+			if ( $failed > 0 ) {
+				set_transient( 'wp-smush-dir-scan-failed-items', $failed, 60 * 5 ); // 5 minutes max.
+			}
+			// Store optimized items count.
 			set_transient( 'wp-smush-show-dir-scan-notice', $items, 60 * 5 ); // 5 minutes max.
 			$this->scanner->reset_scan();
 			wp_send_json_success();
@@ -225,10 +238,12 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 
 			if ( ! empty( $error_msg ) ) {
 				// Store the error in DB. All good, Update the stats.
-				$wpdb->query( $wpdb->prepare(
-					"UPDATE {$wpdb->prefix}smush_dir_images SET error=%s WHERE id=%d LIMIT 1",
-					$error_msg, $id
-				) ); // Db call ok; no-cache ok.
+				$wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$wpdb->prefix}smush_dir_images SET error=%s WHERE id=%d LIMIT 1",
+						$error_msg, $id
+					)
+				); // Db call ok; no-cache ok.
 
 				wp_send_json_error(
 					array(
@@ -247,10 +262,12 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 			$lossy = $wp_smush->lossy_enabled ? 1 : 0;
 
 			// All good, Update the stats.
-			$wpdb->query( $wpdb->prepare(
-				"UPDATE {$wpdb->prefix}smush_dir_images SET image_size=%d, file_time=%d, lossy=%s WHERE id=%d LIMIT 1",
-				$smush_results['data']->after_size, $file_time, $lossy, $id
-			) ); // Db call ok; no-cache ok.
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->prefix}smush_dir_images SET image_size=%d, file_time=%d, lossy=%s WHERE id=%d LIMIT 1",
+					$smush_results['data']->after_size, $file_time, $lossy, $id
+				)
+			); // Db call ok; no-cache ok.
 
 			// Update bulk limit transient.
 			$wpsmushit_admin->update_smush_count( 'dir_sent_count' );
@@ -276,11 +293,6 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		public function create_table() {
 			global $wpdb;
 
-			// Run the query only on directory smush page.
-			if ( ! isset( $_GET['page'] ) || 'smush' !== $_GET['page'] ) {
-				return null;
-			}
-
 			$charset_collate = $wpdb->get_charset_collate();
 
 			/**
@@ -298,7 +310,7 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 			 *                  are from latest scan only and not the whole list from db
 			 * meta       -> For any future use
 			 */
-			$sql = "CREATE TABLE {$wpdb->prefix}smush_dir_images (
+			$sql = "CREATE TABLE {$wpdb->base_prefix}smush_dir_images (
 				id mediumint(9) NOT NULL AUTO_INCREMENT,
 				path text NOT NULL,
 				path_hash CHAR(32),
@@ -316,8 +328,44 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 			) $charset_collate;";
 
 			// Include the upgrade library to initialize a table.
-			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			dbDelta( $sql );
+
+			// Set flag.
+			$this->table_exist = true;
+		}
+
+		/**
+		 * Update path_hash, and store a flag if all the rows were updated
+		 *
+		 * @return null
+		 *
+		 * @todo, Stop running this function after 2-3 updates using version check
+		 */
+		public function update_dir_path_hash() {
+			// If we've already performed the update.
+			if ( get_option( 'smush-directory-path-hash-updated', false ) ) {
+				return null;
+			}
+
+			global $wpsmush_helper, $wpdb;
+
+			// Check if column exists.
+			if ( ! $wpsmush_helper->table_column_exists( $wpdb->prefix . 'smush_dir_images', 'path_hash' ) ) {
+				return null;
+			}
+
+			// Update the rows.
+			$wpdb->query( "UPDATE {$wpdb->prefix}smush_dir_images SET path_hash = MD5(path) WHERE path IS NOT NULL" );
+
+			// Check if there are any pending rows that needs to be updated.
+			$pending_rows = "SELECT count(*) FROM {$wpdb->prefix}smush_dir_images WHERE path_hash is NULL AND path IS NOT NULL";
+			$index_exists = "SHOW INDEX FROM {$wpdb->prefix}smush_dir_images WHERE KEY_NAME = 'path'";
+			// If all the rows are updated and Index exists.
+			if ( ! $wpdb->get_var( $pending_rows ) && $wpdb->get_var( $index_exists ) != null ) {
+				$wpsmush_helper->drop_index( $wpdb->prefix . 'smush_dir_images', 'path' );
+				update_option( 'smush-directory-path-hash-updated', 1 );
+			}
 		}
 
 		/**
@@ -332,7 +380,7 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 
 			// Return image ids.
 			if ( is_wp_error( $results ) ) {
-				error_log( sprintf( "WP Smush Query Error in %s at %s: %s", __FILE__, __LINE__, $results->get_error_message() ) );
+				error_log( sprintf( 'WP Smush Query Error in %s at %s: %s', __FILE__, __LINE__, $results->get_error_message() ) );
 				$results = array();
 			}
 
@@ -450,6 +498,7 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 				 * the installation sub directory. We need to make sure
 				 * we are selecting the root directory, not installation
 				 * directory.
+				 *
 				 * @see https://xnau.com/finding-the-wordpress-root-path-for-an-alternate-directory-structure/
 				 * @see https://app.asana.com/0/14491813218786/487682361460247/f
 				 */
@@ -457,8 +506,8 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 				// Get root path and explod.
 				$root_path = explode( '/', get_home_path() );
 				// Find the length of the shortest one.
-				$end = min( count( $content_path ), count( $root_path ) );
-				$i = 0;
+				$end         = min( count( $content_path ), count( $root_path ) );
+				$i           = 0;
 				$common_path = array();
 				// Add the component if they are the same in both paths.
 				while ( $content_path[ $i ] === $root_path[ $i ] && $i < $end ) {
@@ -488,9 +537,11 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 
 			// Error with directory tree.
 			if ( ! is_array( $paths ) ) {
-				wp_send_json_error( array(
-					'message' => __( 'There was a problem getting the selected directories', 'wp-smushit' ),
-				) );
+				wp_send_json_error(
+					array(
+						'message' => __( 'There was a problem getting the selected directories', 'wp-smushit' ),
+					)
+				);
 			}
 
 			$count     = 0;
@@ -544,9 +595,11 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 				$base_dir = realpath( rawurldecode( $path ) );
 
 				if ( ! $base_dir ) {
-					wp_send_json_error( array(
-						'message' => __( 'Unauthorized', 'wp-smushit' ),
-					) );
+					wp_send_json_error(
+						array(
+							'message' => __( 'Unauthorized', 'wp-smushit' ),
+						)
+					);
 				}
 
 				// Directory Iterator, Exclude . and ..
@@ -616,7 +669,7 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		private function store_images( $values, $images ) {
 			global $wpdb;
 
-			$query  = $this->build_query( $values, $images );
+			$query = $this->build_query( $values, $images );
 			$wpdb->query( $query ); // Db call ok; no-cache ok.
 		}
 
@@ -648,9 +701,11 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		 */
 		private function send_error() {
 			$message = sprintf( "<div class='sui-notice sui-notice-info'><p>%s</p></div>", esc_html__( 'We could not find any images in the selected directory.', 'wp-smushit' ) );
-			wp_send_json_error( array(
-				'message' => $message,
-			) );
+			wp_send_json_error(
+				array(
+					'message' => $message,
+				)
+			);
 		}
 
 		/**
@@ -1024,14 +1079,14 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 			if ( isset( $_GET['get_stats'] ) && 1 == $_GET['get_stats'] ) {
 				// This will setup directory smush stats too.
 				$wpsmushit_admin->setup_global_stats();
-				$stats          = $wpsmushit_admin->stats;
-				$stats['total'] = $wpsmushit_admin->total_count;
+				$stats            = $wpsmushit_admin->stats;
+				$stats['total']   = $wpsmushit_admin->total_count;
 				$stats['smushed'] = $wpsmushit_admin->smushed_count;
 				if ( 1 === $lossy ) {
 					$stats['super_smushed'] = $wpsmushit_admin->super_smushed;
 				}
 				// Set tootltip text to update.
-				$stats['tooltip_text'] = ! empty( $stats['total_images'] ) ? sprintf( __( "You've smushed %d images in total.", "wp-smushit" ), $stats['total_images'] ) : '';
+				$stats['tooltip_text'] = ! empty( $stats['total_images'] ) ? sprintf( __( "You've smushed %d images in total.", 'wp-smushit' ), $stats['total_images'] ) : '';
 				// Get the total dir smush stats.
 				$total = $wpsmushit_admin->dir_stats;
 			} else {
@@ -1073,7 +1128,7 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		 *
 		 * @return array Combined array of stats.
 		 */
-		private function combined_stats( $stats ) {
+		public function combined_stats( $stats ) {
 			if ( empty( $stats ) || empty( $stats['percent'] ) || empty( $stats['bytes'] ) ) {
 				return array();
 			}
@@ -1111,36 +1166,13 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 		}
 
 		/**
-		 * Returns Directory Smush stats and Cumulative stats
-		 */
-		public function get_dir_smush_stats() {
-			$result = array();
-
-			// Store the Total/Smushed count.
-			$stats = $this->total_stats();
-
-			$result['dir_smush'] = $stats;
-
-			// Cumulative Stats.
-			$result['combined_stats'] = $this->combined_stats( $stats );
-
-			// Store the stats in options table.
-			update_option( 'dir_smush_stats', $result, false );
-
-			// Send ajax response.
-			wp_send_json_success( $result );
-		}
-
-		/**
 		 * Display a admin notice on smush screen if the custom table wasn't created
 		 *
 		 * @return string $notice  Notice if table doesn't exists.
 		 *
 		 * @todo: Update text
 		 */
-		public function check_for_table_error() {
-			global $wpdb;
-
+		public function show_table_error() {
 			$notice = '';
 
 			$current_screen = get_current_screen();
@@ -1148,15 +1180,61 @@ if ( ! class_exists( 'WP_Smush_Dir' ) ) {
 				return $notice;
 			}
 
-			$smush_table = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix . 'smush_dir_images' ) ) ); // Db call ok; no-cache ok.
-			if ( ! $smush_table ) {
+			if ( ! $this->table_exist() ) {
 				// Display a notice.
-				$notice = '<div class="sui-notice sui-notice-warning missing_table"><p>';
+				$notice  = '<div class="sui-notice sui-notice-warning missing_table"><p>';
 				$notice .= esc_html__( 'Directory smushing requires custom tables and it seems there was an error creating tables. For help, please contact our team on the support forums', 'wp-smushit' );
 				$notice .= '</p></div>';
 			}
 
 			return $notice;
+		}
+
+		/**
+		 * Check and create dir smush table if required.
+		 *
+		 * @since 2.9.0
+		 */
+		public function check_table() {
+			global $wpsmushit_admin;
+
+			// Get current screen.
+			$current_screen = get_current_screen();
+
+			// Only run on required pages.
+			if ( ! empty( $current_screen ) && ! in_array( $current_screen->id, $wpsmushit_admin->pages, true ) ) {
+				return;
+			}
+
+			// Create custom table for directory smush.
+			if ( ! $this->table_exist() ) {
+				WP_Smush_Installer::directory_smush_table();
+			}
+		}
+
+		/**
+		 * Check if required directory smush table exist.
+		 *
+		 * @param bool $force Should force check?.
+		 *
+		 * @since 2.9.0
+		 *
+		 * @return bool
+		 */
+		public function table_exist( $force = false ) {
+			global $wpdb;
+
+			// If not forced, try to get from cache.
+			if ( ! $force && isset( $this->table_exist ) ) {
+				return $this->table_exist;
+			}
+
+			// If not already checked, check.
+			$table_exist = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->base_prefix . 'smush_dir_images' ) ) ); // Db call ok; no-cache ok.
+
+			$this->table_exist = $table_exist ? true : false;
+
+			return $this->table_exist;
 		}
 
 		/**
