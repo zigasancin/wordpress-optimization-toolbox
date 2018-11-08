@@ -10,7 +10,6 @@
  * @package EWWW_Image_Optimizer
  */
 
-// TODO: attempt lazy load support with a3 plugin and one from automattic for alt webp. or are we back here: https://developers.google.com/web/fundamentals/performance/lazy-loading-guidance/images-and-video/
 // TODO: might be able to use the Custom Bulk Actions in 4.7 to support the bulk optimize drop-down menu.
 // TODO: need to make the scheduler so it can resume without having to re-run the queue population, and then we can probably also flush the queue when scheduled opt starts, but later it would be nice to implement the bulk_loop as the aux_loop so that it could handle media properly.
 // TODO: Add a custom async function for parallel mode to store image as pending and use the row ID instead of relative path.
@@ -18,14 +17,13 @@
 // TODO: write some conversion tests.
 // TODO: check this patch, to see if the use of 'full' causes any issues: https://core.trac.wordpress.org/ticket/37840 .
 // TODO: use this: https://codex.wordpress.org/AJAX_in_Plugins#The_post-load_JavaScript_Event .
-// TODO: relative urls with ExactDN: https://github.com/nosilver4u/ewww-image-optimizer/issues/17 .
-// TODO: avoid ExactDN + SVG issues in <use> tags: https://github.com/nosilver4u/ewww-image-optimizer/issues/18 .
 // TODO: can some of the bulk "fallbacks" be implemented for async processing?
+// TODO: check to see if we can use PHP and WP core is_iterable and is_countable functions.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '442.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '450.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
@@ -819,6 +817,13 @@ function ewww_image_optimizer_ajax_compat_check() {
 			ewww_image_optimizer_image_sizes( false );
 			return;
 		}
+		if ( 'mic_crop_image' == $_REQUEST['action'] ) {
+			ewwwio_debug_message( 'doing Manual Image Crop' );
+			if ( ! defined( 'EWWWIO_EDITOR_OVERWRITE' ) ) {
+				define( 'EWWWIO_EDITOR_OVERWRITE', true );
+			}
+			return;
+		}
 	}
 	// Check for Image Watermark plugin.
 	if ( ! empty( $_POST['iw-action'] ) ) {
@@ -1320,7 +1325,7 @@ function ewww_image_optimizer_pngout_installed() {
  * Display a notice that PHP version 5.5 support is going away.
  */
 function ewww_image_optimizer_php55_warning() {
-	echo '<div id="ewww-image-optimizer-notice-php55" class="notice notice-info"><p><a href="https://docs.ewww.io/article/55-upgrading-php" target="_blank" data-beacon-article="5ab2baa6042863478ea7c2ae">' . esc_html__( 'The next major release of EWWW Image Optimizer will require PHP 5.6 or greater. Newer versions of PHP, like 5.6, 7.0 and 7.1, are significantly faster and much more secure. If you are unsure how to upgrade to a supported version, ask your webhost for instructions.', 'ewww-image-optimizer' ) . '</a></p></div>';
+	echo '<div id="ewww-image-optimizer-notice-php55" class="notice notice-info"><p><a href="https://docs.ewww.io/article/55-upgrading-php" target="_blank" data-beacon-article="5ab2baa6042863478ea7c2ae">' . esc_html__( 'The next major release of EWWW Image Optimizer will require PHP 5.6 or greater. Newer versions of PHP, like 7.1 and 7.2, are significantly faster and much more secure. If you are unsure how to upgrade to a supported version, ask your webhost for instructions.', 'ewww-image-optimizer' ) . '</a></p></div>';
 }
 
 /**
@@ -5629,7 +5634,7 @@ function ewww_image_optimizer_detect_wpsf_location_lock() {
 function ewww_image_optimizer_as3cf_attachment_file_paths( $paths, $id ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	foreach ( $paths as $size => $path ) {
-		if ( is_string( $path ) ) {
+		if ( is_string( $path ) && is_file( $path . '.webp' ) ) {
 			$paths[ $size . '-webp' ] = $path . '.webp';
 			ewwwio_debug_message( "added $path.webp to as3cf queue" );
 		}
@@ -7441,6 +7446,8 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 		ewww_image_optimizer_get_option( 'ewww_image_optimizer_maxotherheight' )
 	) {
 		$resize_score += 30;
+	} elseif ( defined( 'IMSANITY_VERSION' ) ) {
+		$resize_score += 30;
 	} else {
 		$resize_recommendations[] = esc_html__( 'Configure maximum image dimensions in Resize settings.', 'ewww-image-optimizer' ) . ewwwio_help_link( 'https://docs.ewww.io/article/41-resize-settings', '59849911042863033a1ba5f9' );
 	}
@@ -7964,7 +7971,7 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 	$output[] = "</table>\n</div>\n";
 	$output[] = "<div id='ewww-webp-settings'>\n";
 	$output[] = "<table class='form-table'>\n";
-	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) ) {
+	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) || ewww_image_optimizer_get_option( 'ewww_image_optimizer_webp' ) ) {
 		$output[] = "<tr class='$network_class'><th scope='row'><label for='ewww_image_optimizer_webp'>" . esc_html__( 'JPG/PNG to WebP', 'ewww-image-optimizer' ) . '</label>' .
 			ewwwio_help_link( 'https://docs.ewww.io/article/16-ewww-io-and-webp-images', '5854745ac697912ffd6c1c89' ) .
 			"</th><td><span><input type='checkbox' id='ewww_image_optimizer_webp' name='ewww_image_optimizer_webp' value='true' " .
