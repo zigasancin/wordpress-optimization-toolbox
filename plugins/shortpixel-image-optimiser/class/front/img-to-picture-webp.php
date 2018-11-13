@@ -9,15 +9,15 @@ class ShortPixelImgToPictureWebp {
     public static function lazyGet($img, $type) {
         return array(
             'value' =>
-                (isset($img[$type]) && strlen($img[$type])) ?
-                    $img[$type]
+                (isset($img['data-lazy-' . $type]) && strlen('data-lazy-' . $img[$type])) ?
+                    $img['data-lazy-' . $type]
                     : (isset($img['data-' . $type]) && strlen($img['data-' . $type]) ?
                         $img['data-' . $type]
-                        : (isset($img['data-lazy-' . $type]) && strlen($img['data-lazy-' . $type]) ? $img['data-lazy-' . $type] : false)),
+                        : (isset($img[$type]) && strlen($img[$type]) ? $img[$type] : false)),
             'prefix' =>
-                (isset($img[$type]) && strlen($img[$type])) ? ''
+                (isset($img['data-lazy-' . $type]) && strlen('data-lazy-' . $img[$type])) ? 'data-lazy-'
                     : (isset($img['data-' . $type]) && strlen($img['data-' . $type]) ? 'data-'
-                        : (isset($img['data-lazy-' . $type]) && strlen($img['data-lazy-' . $type]) ? 'data-lazy-' : false))
+                        : (isset($img[$type]) && strlen($img[$type]) ? '' : false))
         );
     }
  
@@ -40,7 +40,7 @@ class ShortPixelImgToPictureWebp {
 
         $srcsetInfo = self::lazyGet($img, 'srcset');
         $srcset = $srcsetInfo['value'];
-        $srcsetPrefix = $srcsetInfo['prefix'];
+        $srcsetPrefix = $srcset ? $srcsetInfo['prefix'] : $srcInfo['prefix'];
 
         $sizesInfo = self::lazyGet($img, 'sizes');
         $sizes = $sizesInfo['value'];
@@ -71,8 +71,10 @@ class ShortPixelImgToPictureWebp {
         }
         $imageBase = dirname($imageBase) . '/';
 
-        // We don't wanna have an src attribute on the <img>
+        // We don't wanna have src-ish attributes on the <picture>
         unset($img['src']);
+        unset($img['data-src']);
+        unset($img['data-lazy-src']);
         //unset($img['srcset']);
         //unset($img['sizes']);
 

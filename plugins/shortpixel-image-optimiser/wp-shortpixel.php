@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.12.0
+ * Version: 4.12.1
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.12.0");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.12.1");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -179,11 +179,18 @@ function shortPixelGravityForms( $value, $lead, $field, $form ) {
     return $value;
 }
 
+function shortPixelInitOB() {
+    if(!is_admin() || (function_exists("wp_doing_ajax") && wp_doing_ajax()) || (defined( 'DOING_AJAX' ) && DOING_AJAX)) {
+        ob_start('shortPixelConvertImgToPictureAddWebp');
+    }
+}
+
 if ( get_option('wp-short-pixel-create-webp-markup')) { 
     //add_filter( 'the_content', 'shortPixelConvertImgToPictureAddWebp', 10000 ); // priority big, so it will be executed last
+    //add_filter( 'the_excerpt', 'shortPixelConvertImgToPictureAddWebp', 10000 );
     //add_filter( 'post_thumbnail_html', 'shortPixelConvertImgToPictureAddWebp');
-    ob_start( 'shortPixelConvertImgToPictureAddWebp');
     add_action( 'wp_head', 'shortPixelAddPictureJs');
+    add_action( 'init', 'shortPixelInitOB', 1 );
 //    add_action( 'wp_enqueue_scripts', 'spAddPicturefillJs' );
 }
 
