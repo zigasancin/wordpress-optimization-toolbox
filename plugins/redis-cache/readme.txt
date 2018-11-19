@@ -3,8 +3,8 @@ Contributors: tillkruess
 Donate link: https://www.paypal.me/tillkruss
 Tags: redis, predis, phpredis, hhvm, pecl, caching, cache, object cache, performance, replication, clustering
 Requires at least: 3.3
-Tested up to: 4.9
-Stable tag: 1.3.8
+Tested up to: 5.0
+Stable tag: 1.3.9
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -42,10 +42,6 @@ To adjust the connection parameters, define any of the following constants in yo
 
       Specifies the client used to communicate with Redis. Supports `hhvm`, `pecl` and `predis`.
 
-  * `WP_REDIS_SCHEME` (default: `tcp`)
-
-      Specifies the protocol used to communicate with an instance of Redis. Internally the client uses the connection class associated to the specified connection scheme. Supports `tcp` (TCP/IP), `unix` (UNIX domain sockets), `tls` (transport layer security) or `http` (HTTP protocol through Webdis).
-
   * `WP_REDIS_HOST` (default: `127.0.0.1`)
 
       IP or hostname of the target server. This is ignored when connecting to Redis using UNIX domain sockets.
@@ -53,10 +49,6 @@ To adjust the connection parameters, define any of the following constants in yo
   * `WP_REDIS_PORT` (default: `6379`)
 
       TCP/IP port of the target server. This is ignored when connecting to Redis using UNIX domain sockets.
-
-  * `WP_REDIS_PATH` (default: _not set_)
-
-      Path of the UNIX domain socket file used when connecting to Redis using UNIX domain sockets.
 
   * `WP_REDIS_DATABASE` (default: `0`)
 
@@ -170,6 +162,12 @@ The following commands are supported:
 
 
 == Changelog ==
+
+= 1.3.9 =
+
+  * Fixed `WP_REDIS_SHARDS` not showing up in server list
+  * Fixed `WP_REDIS_SHARDS` not working when using PECL extension
+  * Removed `WP_REDIS_SCHEME` and `WP_REDIS_PATH` leftovers
 
 = 1.3.8 =
 
@@ -304,7 +302,11 @@ The following commands are supported:
 
 == Upgrade Notice ==
 
-= 1.3.7 =
+= 1.3.9 =
+
+This update contains fixes for sharding.
+
+= 1.3.8 =
 
 This update contains a critical fix for Predis.
 
