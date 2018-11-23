@@ -5,7 +5,7 @@ Tags: image, compress, resize, optimize, optimization, lossless, lossy, seo, web
 Requires at least: 4.9
 Tested up to: 5.0
 Requires PHP: 5.6
-Stable tag: 4.5.0
+Stable tag: 4.5.1
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -171,8 +171,19 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 
 == Changelog ==
 
-* Feature requests can be submitted via https://ewww.io/contact-us/ and commented on here: https://trello.com/b/Fp81dWof/ewww-image-optimizer
+* Feature requests can be viewed and submitted at https://github.com/nosilver4u/ewww-image-optimizer/labels/enhancement
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
+
+= 4.5.1 =
+* changed: optimization results are tracked by relative urls instead of absolute ones for better portability, migration tool coming soon
+* changed: ExactDN defaults to crop when explicit dimensions are given to image_downsize(), revert to scaling with EXACTDN_IMAGE_DOWNSIZE_SCALE
+* fixed: WooCommerce thumbnail regeneration triggers excessive admin-ajax requests within EWWW IO
+* fixed: ExactDN filtering REST API media endpoint for Gutenberg editor requests
+* fixed: ExactDN adding unneeded resize parameters to full-size image urls
+* fixed: Alt WebP skipping images with query strings
+* fixed: Alt WebP not working with Jetpack Lazy Load for images missing srcset
+* fixed: Show Optimized Images table does not display images saved to ewwwio_images table with relative path matching
+* fixed: Show Optimized Images table has broken thumbs when WP_CONTENT_DIR is outside of ABSPATH
 
 = 4.5.0 =
 * added: Alt WebP supports BJ Lazy Load, a3 Lazy Load, WP Rocket Lazy Load, Jetpack Lazy Load, and WP Retina Lazy Load
