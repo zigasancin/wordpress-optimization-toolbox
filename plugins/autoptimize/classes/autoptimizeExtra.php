@@ -153,8 +153,18 @@ class autoptimizeExtra
             add_filter( 'wp_resource_hints', array( $this, 'filter_preconnect' ), 10, 2 );
         }
 
-        // Optimize Images!
-        if ( ! empty( $options['autoptimize_extra_checkbox_field_5'] ) && 'down' !== $options['availabilities']['extra_imgopt']['status'] && ( 'launch' !== $options['availabilities']['extra_imgopt']['status'] || $this->imgopt_launch_ok() ) ) {
+        // Optimize Images kicks in if;
+        // * the option is activated by user.
+        // * imgopt user stats does not have status -2.
+        // * imgopt status is not "down".
+        // * imgopt status is not "launch" or imgopt_launch_ok() returns be true.
+        $_do_cdn     = true;
+        $_userstatus = $this->get_imgopt_provider_userstatus();
+        if ( -2 == $_userstatus['Status'] ) {
+            $_do_cdn = false;
+        }
+
+        if ( ! empty( $options['autoptimize_extra_checkbox_field_5'] ) && $_do_cdn && 'down' !== $options['availabilities']['extra_imgopt']['status'] && ( 'launch' !== $options['availabilities']['extra_imgopt']['status'] || $this->imgopt_launch_ok() ) ) {
             if ( apply_filters( 'autoptimize_filter_extra_imgopt_do', true ) ) {
                 add_filter( 'autoptimize_html_after_minify', array( $this, 'filter_optimize_images' ), 10, 1 );
                 $_imgopt_active = true;
@@ -222,6 +232,7 @@ class autoptimizeExtra
                     // And add subset if any!
                     $subset = ( is_array( $font ) ) ? end( $font ) : '';
                     if ( false !== strpos( $subset, 'subset=' ) ) {
+                        $subset                            = str_replace( array( '%2C', '%2c' ), ',', $subset );
                         $subset                            = explode( 'subset=', $subset );
                         $fonts_collection[ $i ]['subsets'] = explode( ',', $subset[1] );
                     }
@@ -245,12 +256,13 @@ class autoptimizeExtra
             foreach ( $fonts_collection as $font ) {
                 $fonts_string .= '|' . trim( implode( '|', $font['fonts'] ), '|' );
                 if ( ! empty( $font['subsets'] ) ) {
-                    $subset_string .= implode( ',', $font['subsets'] );
+                    $subset_string .= ',' . trim( implode( ',', $font['subsets'] ), ',' );
                 }
             }
 
             if ( ! empty( $subset_string ) ) {
-                $fonts_string = $fonts_string . '&#038;subset=' . $subset_string;
+                $subset_string = str_replace( ',', '%2C', ltrim( $subset_string, ',' ) );
+                $fonts_string  = $fonts_string . '&#038;subset=' . $subset_string;
             }
 
             $fonts_string = str_replace( '|', '%7C', ltrim( $fonts_string, '|' ) );
@@ -277,12 +289,10 @@ class autoptimizeExtra
                 $fonts_array = array_merge( $fonts_array, $_fonts['fonts'] );
             }
 
-            $fonts_markup = '<script data-cfasync="false" id="ao_optimized_gfonts" type="text/javascript">WebFontConfig={google:{families:[\'';
-            foreach ( $fonts_array as $fnt ) {
-                $fonts_markup .= $fnt . "','";
-            }
-            $fonts_markup  = trim( trim( $fonts_markup, "'" ), ',' );
-            $fonts_markup .= '] },classes:false, events:false, timeout:1500};(function() {var wf = document.createElement(\'script\');wf.src=\'https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js\';wf.type=\'text/javascript\';wf.async=\'true\';var s=document.getElementsByTagName(\'script\')[0];s.parentNode.insertBefore(wf, s);})();</script>';
+            $fonts_array          = array_map( 'urldecode', $fonts_array );
+            $fonts_markup         = '<script data-cfasync="false" id="ao_optimized_gfonts_config" type="text/javascript">WebFontConfig={google:{families:' . wp_json_encode( $fonts_array ) . ' },classes:false, events:false, timeout:1500};</script>';
+            $fonts_library_markup = '<script data-cfasync="false" id="ao_optimized_gfonts_webfontloader" type="text/javascript">(function() {var wf = document.createElement(\'script\');wf.src=\'https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js\';wf.type=\'text/javascript\';wf.async=\'true\';var s=document.getElementsByTagName(\'script\')[0];s.parentNode.insertBefore(wf, s);})();</script>';
+            $in                   = substr_replace( $in, $fonts_library_markup . '</head>', strpos( $in, '</head>' ), strlen( '</head>' ) );
         }
 
         // Replace back in markup.
@@ -473,13 +483,13 @@ class autoptimizeExtra
         $site_host       = AUTOPTIMIZE_SITE_DOMAIN;
         $url_parsed      = parse_url( $url );
 
-        if ( $url_parsed['host'] !== $site_host && empty( $cdn_url ) ) {
+        if ( array_key_exists( 'host', $url_parsed ) && $url_parsed['host'] !== $site_host && empty( $cdn_url ) ) {
             return false;
-        } elseif ( ! empty( $cdn_url ) && strpos( $url, $cdn_url ) === false && $url_parsed['host'] !== $site_host ) {
+        } elseif ( ! empty( $cdn_url ) && strpos( $url, $cdn_url ) === false && array_key_exists( 'host', $url_parsed ) && $url_parsed['host'] !== $site_host ) {
             return false;
         } elseif ( strpos( $url, '.php' ) !== false ) {
             return false;
-        } elseif ( str_ireplace( array( '.png', '.gif', '.jpg', '.jpeg' ), '', $url_parsed['path'] ) === $url_parsed['path'] ) {
+        } elseif ( str_ireplace( array( '.png', '.gif', '.jpg', '.jpeg', '.webp' ), '', $url_parsed['path'] ) === $url_parsed['path'] ) {
             // fixme: better check against end of string.
             return false;
         } elseif ( ! empty( $nopti_images ) ) {
@@ -495,6 +505,16 @@ class autoptimizeExtra
 
     private function build_imgopt_url( $orig_url, $width = 0, $height = 0 )
     {
+        // sanitize width and height.
+        if ( strpos( $width, '%' ) !== false ) {
+            $width = 0;
+        }
+        if ( strpos( $height, '%' ) !== false ) {
+            $height = 0;
+        }
+        $width  = (int) $width;
+        $height = (int) $height;
+
         $filtered_url = apply_filters( 'autoptimize_filter_extra_imgopt_build_url', $orig_url, $width, $height );
 
         if ( $filtered_url !== $orig_url ) {
@@ -537,12 +557,24 @@ class autoptimizeExtra
 
     private function normalize_img_urls( $in )
     {
+        static $cdn_domain = null;
+        if ( is_null( $cdn_domain ) ) {
+            $cdn_url = apply_filters( 'autoptimize_filter_base_cdnurl', get_option( 'autoptimize_cdn_url', '' ) );
+            if ( ! empty( $cdn_url ) ) {
+                $cdn_domain = parse_url( $cdn_url, PHP_URL_HOST );
+            } else {
+                $cdn_domain = '';
+            }
+        }
+
         $parsed_site_url = parse_url( site_url() );
 
         if ( strpos( $in, 'http' ) !== 0 && strpos( $in, '//' ) === 0 ) {
             $in = $parsed_site_url['scheme'] . ':' . $in;
         } elseif ( strpos( $in, '/' ) === 0 ) {
             $in = $parsed_site_url['scheme'] . '://' . $parsed_site_url['host'] . $in;
+        } elseif ( ! empty( $cdn_domain ) && strpos( $in, $cdn_domain ) !== 0 ) {
+            $in = str_replace( $cdn_domain, $parsed_site_url['host'], $in );
         }
 
         return apply_filters( 'autoptimize_filter_extra_imgopt_normalized_url', $in );
@@ -569,9 +601,11 @@ class autoptimizeExtra
         static $_img_q = null;
 
         if ( is_null( $_img_q ) ) {
-            $_setting = $this->options['autoptimize_extra_select_field_6'];
+            if ( is_array( $this->options ) && array_key_exists( 'autoptimize_extra_select_field_6', $this->options ) ) {
+                $_setting = $this->options['autoptimize_extra_select_field_6'];
+            }
 
-            if ( ! $_setting || empty( $_setting ) || ( '1' !== $_setting && '3' !== $_setting ) ) {
+            if ( ! isset( $_setting ) || empty( $_setting ) || ( '1' !== $_setting && '3' !== $_setting ) ) {
                 // default image opt. value is 2 ("glossy").
                 $_img_q = '2';
             } else {
@@ -621,7 +655,8 @@ class autoptimizeExtra
                 $_img_stat_resp = wp_remote_get( $_img_provider_stat_url );
                 if ( ! is_wp_error( $_img_stat_resp ) ) {
                     if ( '200' == wp_remote_retrieve_response_code( $_img_stat_resp ) ) {
-                        $_img_provider_stat = json_decode( wp_remote_retrieve_body( $_img_stat_resp ), true );
+                        $_img_provider_stat              = json_decode( wp_remote_retrieve_body( $_img_stat_resp ), true );
+                        $_img_provider_stat['timestamp'] = time();
                         update_option( 'autoptimize_imgopt_provider_stat', $_img_provider_stat );
                     }
                 }
@@ -637,7 +672,7 @@ class autoptimizeExtra
             $avail_imgopt = $this->options['availabilities']['extra_imgopt'];
             $magic_number = intval( substr( md5( parse_url( AUTOPTIMIZE_WP_SITE_URL, PHP_URL_HOST ) ), 0, 3 ), 16 );
             $has_launched = get_option( 'autoptimize_imgopt_launched', '' );
-            if ( $has_launched || ( array_key_exists( 'launch-threshold', $avail_imgopt ) && $magic_number < $avail_imgopt['launch-threshold'] ) ) {
+            if ( $has_launched || ( is_array( $avail_imgopt ) && array_key_exists( 'launch-threshold', $avail_imgopt ) && $magic_number < $avail_imgopt['launch-threshold'] ) ) {
                 $launch_status = true;
                 if ( ! $has_launched ) {
                     update_option( 'autoptimize_imgopt_launched', 'on' );
@@ -684,7 +719,7 @@ class autoptimizeExtra
         $_extra_options = $this->options;
         if ( ! empty( $_extra_options ) && is_array( $_extra_options ) && array_key_exists( 'autoptimize_extra_checkbox_field_5', $_extra_options ) && ! empty( $_extra_options['autoptimize_extra_checkbox_field_5'] ) ) {
             $_imgopt_notice = '';
-            $_stat          = get_option( 'autoptimize_imgopt_provider_stat', '' );
+            $_stat          = $this->get_imgopt_provider_userstatus();
             $_site_host     = AUTOPTIMIZE_SITE_DOMAIN;
             $_imgopt_upsell = 'https://shortpixel.com/aospai/af/GWRGFLW109483/' . $_site_host;
 
@@ -692,9 +727,21 @@ class autoptimizeExtra
                 if ( 1 == $_stat['Status'] ) {
                     // translators: "add more credits" will appear in a "a href".
                     $_imgopt_notice = sprintf( __( 'Your ShortPixel image optimization and CDN quota is almost used, make sure you %1$sadd more credits%2$s to avoid slowing down your website.', 'autoptimize' ), '<a href="' . $_imgopt_upsell . '" target="_blank">', '</a>' );
-                } elseif ( -1 == $_stat['Status'] ) {
+                } elseif ( -1 == $_stat['Status'] || -2 == $_stat['Status'] ) {
                     // translators: "add more credits" will appear in a "a href".
-                    $_imgopt_notice = sprintf( __( 'Your ShortPixel image optimization and CDN quota was used, %1$sadd more credits%2$s to keep fast serving optimized images on your site.', 'autoptimize' ), '<a href="' . $_imgopt_upsell . '" target="_blank">', '</a>' );
+                    $_imgopt_notice            = sprintf( __( 'Your ShortPixel image optimization and CDN quota was used, %1$sadd more credits%2$s to keep fast serving optimized images on your site', 'autoptimize' ), '<a href="' . $_imgopt_upsell . '" target="_blank">', '</a>' );
+                    $_imgopt_stats_refresh_url = add_query_arg( array(
+                        'page'                => 'autoptimize_extra',
+                        'refreshImgProvStats' => '1',
+                    ), admin_url( 'options-general.php' ) );
+                    if ( $_stat && array_key_exists( 'timestamp', $_stat ) && ! empty( $_stat['timestamp'] ) ) {
+                        $_imgopt_stats_last_run = __( 'based on status at ', 'autoptimize' ) . date_i18n( get_option( 'time_format' ), $_stat['timestamp'] );
+                    } else {
+                        $_imgopt_stats_last_run = __( 'based on previously fetched data', 'autoptimize' );
+                    }
+                    $_imgopt_notice .= ' (' . $_imgopt_stats_last_run . ', ';
+                    // translators: "here to refresh" links to the Autoptimize Extra page and forces a refresh of the img opt stats.
+                    $_imgopt_notice .= sprintf( __( 'click %1$shere to refresh%2$s', 'autoptimize' ), '<a href="' . $_imgopt_stats_refresh_url . '">', '</a>).' );
                 } else {
                     $_imgopt_upsell = 'https://shortpixel.com/g/af/GWRGFLW109483';
                     // translators: "log in to check your account" will appear in a "a href".
@@ -717,6 +764,30 @@ class autoptimizeExtra
         return $self->get_imgopt_status_notice();
     }
 
+    public function get_imgopt_provider_userstatus() {
+        static $_provider_userstatus = null;
+
+        if ( is_null( $_provider_userstatus ) ) {
+            $_stat = get_option( 'autoptimize_imgopt_provider_stat', '' );
+            if ( is_array( $_stat ) ) {
+                if ( array_key_exists( 'Status', $_stat ) ) {
+                    $_provider_userstatus['Status'] = $_stat['Status'];
+                } else {
+                    // if no stats then we assume all is well.
+                    $_provider_userstatus['Status'] = 2;
+                }
+                if ( array_key_exists( 'timestamp', $_stat ) ) {
+                    $_provider_userstatus['timestamp'] = $_stat['timestamp'];
+                } else {
+                    // if no timestamp then we return "".
+                    $_provider_userstatus['timestamp'] = '';
+                }
+            }
+        }
+
+        return $_provider_userstatus;
+    }
+
     public function admin_menu()
     {
         add_submenu_page( null, 'autoptimize_extra', 'autoptimize_extra', 'manage_options', 'autoptimize_extra', array( $this, 'options_page' ) );
@@ -732,6 +803,11 @@ class autoptimizeExtra
 
     public function options_page()
     {
+        // Check querystring for "refreshCacheChecker" and call cachechecker if so.
+        if ( array_key_exists( 'refreshImgProvStats', $_GET ) && 1 == $_GET['refreshImgProvStats'] ) {
+            $this->query_img_provider_stats();
+        }
+
         // Working with actual option values from the database here.
         // That way any saves are still processed as expected, but we can still
         // override behavior by using `new autoptimizeExtra($custom_options)` and not have that custom
@@ -814,6 +890,9 @@ class autoptimizeExtra
                             case -1:
                                 $_notice_color = 'red';
                                 break;
+                            case -2:
+                                $_notice_color = 'red';
+                                break;
                             default:
                                 $_notice_color = 'green';
                         }
@@ -822,9 +901,10 @@ class autoptimizeExtra
                         // translators: link points to shortpixel.
                         $upsell_msg_1 = '<p>' . sprintf( __( 'Get more Google love and improve your website\'s loading speed by having the images optimized on the fly by %1$sShortPixel%2$s and then cached and served fast from a CDN.', 'autoptimize' ), '<a href="https://shortpixel.com/aospai' . $sp_url_suffix . '" target="_blank">', '</a>' );
                         if ( 'launch' === $options['availabilities']['extra_imgopt']['status'] ) {
-                            $upsell_msg_2 = __( 'For a limited time only, this service is offered free-for-all, <b>don\'t miss the chance to test it</b> and see how much it could improve your site\'s speed.', 'autoptimize' );
+                            $upsell_msg_2 = __( 'For a limited time only, this service is offered free for all Autoptimize users, <b>don\'t miss the chance to test it</b> and see how much it could improve your site\'s speed.', 'autoptimize' );
                         } else {
-                            $upsell_msg_2 = __( 'The service is offered for free for 100 images/month regardless of the traffic used. More image optimizations can be purchased starting with $4.99.', 'autoptimize' );
+                            // translators: link points to shortpixel.
+                            $upsell_msg_2 = sprintf( __( '%1$sSign-up now%2$s to receive a 1 000 bonus + 50&#37; more image optimization credits regardless of the traffic used. More image optimizations can be purchased starting with $4.99.', 'autoptimize' ), '<a href="https://shortpixel.com/aospai' . $sp_url_suffix . '" target="_blank">', '</a>' );
                         }
                         echo apply_filters( 'autoptimize_extra_imgopt_settings_copy', $upsell_msg_1 . ' ' . $upsell_msg_2 . '</p>' );
                     }
@@ -879,7 +959,7 @@ class autoptimizeExtra
             <tr>
                 <th scope="row"><?php _e( 'Preconnect to 3rd party domains <em>(advanced users)</em>', 'autoptimize' ); ?></th>
                 <td>
-                    <label><input type='text' style='width:80%' name='autoptimize_extra_settings[autoptimize_extra_text_field_2]' value='<?php echo esc_attr( $options['autoptimize_extra_text_field_2'] ); ?>'><br /><?php _e( 'Add 3rd party domains you want the browser to <a href="https://www.keycdn.com/support/preconnect/#primary" target="_blank">preconnect</a> to, separated by comma\'s. Make sure to include the correct protocol (HTTP or HTTPS).', 'autoptimize' ); ?></label>
+                    <label><input type='text' style='width:80%' name='autoptimize_extra_settings[autoptimize_extra_text_field_2]' value='<?php if ( array_key_exists( 'autoptimize_extra_text_field_2', $options ) ) { echo esc_attr( $options['autoptimize_extra_text_field_2'] ); } ?>'><br /><?php _e( 'Add 3rd party domains you want the browser to <a href="https://www.keycdn.com/support/preconnect/#primary" target="_blank">preconnect</a> to, separated by comma\'s. Make sure to include the correct protocol (HTTP or HTTPS).', 'autoptimize' ); ?></label>
                 </td>
             </tr>
             <tr>
@@ -891,7 +971,7 @@ class autoptimizeExtra
                         printf( __( 'You have "Async JavaScript" installed, %1$sconfiguration of async javascript is best done there%2$s.', 'autoptimize' ), '<a href="' . 'options-general.php?page=async-javascript' . '">', '</a>' );
                     } else {
                     ?>
-                        <input type='text' style='width:80%' name='autoptimize_extra_settings[autoptimize_extra_text_field_3]' value='<?php echo esc_attr( $options['autoptimize_extra_text_field_3'] ); ?>'>
+                        <input type='text' style='width:80%' name='autoptimize_extra_settings[autoptimize_extra_text_field_3]' value='<?php if ( array_key_exists( 'autoptimize_extra_text_field_3', $options ) ) { echo esc_attr( $options['autoptimize_extra_text_field_3'] ); } ?>'>
                         <br />
                         <?php
                             _e( 'Comma-separated list of local or 3rd party JS-files that should loaded with the <code>async</code> flag. JS-files from your own site will be automatically excluded if added here. ', 'autoptimize' );

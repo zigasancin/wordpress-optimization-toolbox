@@ -351,7 +351,7 @@ class autoptimizeMain
 
         $has_no_html_tag    = ( false === stripos( $content, '<html' ) );
         $has_xsl_stylesheet = ( false !== stripos( $content, '<xsl:stylesheet' ) );
-        $has_html5_doctype  = ( preg_match( '/^<!DOCTYPE.+html>/i', $content ) > 0 );
+        $has_html5_doctype  = ( preg_match( '/^<!DOCTYPE.+html>/i', ltrim( $content ) ) > 0 );
 
         if ( $has_no_html_tag ) {
             // Can't be valid amp markup without an html tag preceding it.
@@ -553,7 +553,7 @@ class autoptimizeMain
             $_ao_imgopt_active = true;
         }
 
-        if ( '' !== $_ao_imgopt_plug_notice && ! $_ao_imgopt_active && $_ao_imgopt_launch_ok && PAnD::is_admin_notice_active( $_ao_imgopt_plug_dismissible ) ) {
+        if ( current_user_can( 'manage_options' ) && '' !== $_ao_imgopt_plug_notice && ! $_ao_imgopt_active && $_ao_imgopt_launch_ok && PAnD::is_admin_notice_active( $_ao_imgopt_plug_dismissible ) ) {
             echo '<div class="notice notice-info is-dismissible" data-dismissible="' . $_ao_imgopt_plug_dismissible . '"><p>';
             echo $_ao_imgopt_plug_notice;
             echo '</p></div>';

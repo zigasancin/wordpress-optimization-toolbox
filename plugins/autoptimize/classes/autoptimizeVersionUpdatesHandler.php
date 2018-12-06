@@ -46,6 +46,12 @@ class autoptimizeVersionUpdatesHandler
                 $this->upgrade_from_2_2();
                 $major_update = true;
                 // No break, intentionally, so all upgrades are ran during a single request...
+            case '2.4':
+                if ( get_option( 'autoptimize_version', 'none' ) == '2.4.2' ) {
+                    $this->upgrade_from_2_4_2();
+                }
+                $major_update = false;
+                // No break, intentionally, so all upgrades are ran during a single request...
         }
 
         if ( true === $major_update ) {
@@ -202,5 +208,26 @@ class autoptimizeVersionUpdatesHandler
             update_option( 'autoptimize_extra_settings', autoptimizeConfig::get_ao_extra_default_options() );
         }
         delete_option( 'autoptimize_css_nogooglefont' );
+    }
+
+    /**
+     * 2.4.2 introduced too many cronned ao_cachecheckers, make this right
+     */
+    private function upgrade_from_2_4_2() {
+        // below code by Thomas Sjolshagen (http://eighty20results.com/)
+        // as found on https://www.paidmembershipspro.com/deleting-oldextra-cron-events/.
+        $jobs = _get_cron_array();
+
+        // Remove all ao_cachechecker cron jobs (for now).
+        foreach ( $jobs as $when => $job ) {
+            $name = key( $job );
+
+            if ( false !== strpos( $name, 'ao_cachechecker' ) ) {
+                unset( $jobs[ $when ] );
+            }
+        }
+
+        // Save the data.
+        _set_cron_array( $jobs );
     }
 }
