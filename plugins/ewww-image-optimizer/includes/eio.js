@@ -355,6 +355,7 @@ jQuery(document).ready(function($) {
 		var ewww_total_pages = Math.ceil(ewww_vars.image_count / 50);
 		$('.ewww-aux-table').show();
 		$('#ewww-show-table').hide();
+		$('#ewww-table-info').hide();
 		if (ewww_vars.image_count >= 50) {
 			$('.tablenav').show();
 			$('#next-images').show();
@@ -487,6 +488,7 @@ jQuery(document).ready(function($) {
 		$('#ewww-bulk-stop').show();
 		$('.ewww-bulk-form').hide();
 		$('.ewww-bulk-info').hide();
+		$('#ewww-bulk-forms').hide();
 		$('h2').hide();
 	        $.post(ajaxurl, ewww_init_data, function(response) {
 			var is_json = true;

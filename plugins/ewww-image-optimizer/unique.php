@@ -2098,16 +2098,8 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 					// Set the background flag for 'convert'.
 					$background = '-background ' . '"' . "#$background" . '"';
 				}
-				$cquality = '';
-				$gquality = '92';
-				// If the user manually set the JPG quality.
-				$quality = ewww_image_optimizer_jpg_quality();
-				if ( $quality ) {
-					// Set the quality for GD.
-					$gquality = $quality;
-					// Set the quality flag for 'convert'.
-					$cquality = "-quality $quality";
-				}
+				$gquality = ewww_image_optimizer_jpg_quality();
+				$gquality = $gquality ? $gquality : '82';
 				// If this is a resize version.
 				if ( $converted ) {
 					// Just replace the file extension with a .jpg.
@@ -2479,7 +2471,7 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 			if ( $optimize ) {
 				$tempfile = $file . '.tmp'; // temporary GIF output.
 				// Run gifsicle on the GIF.
-				exec( "$nice " . $tools['GIFSICLE'] . " -O3 --careful -o $tempfile " . ewww_image_optimizer_escapeshellarg( $file ) );
+				exec( "$nice " . $tools['GIFSICLE'] . ' -O3 --careful -o ' . ewww_image_optimizer_escapeshellarg( $tempfile ) . ' ' . ewww_image_optimizer_escapeshellarg( $file ) );
 				// Retrieve the filesize of the temporary GIF.
 				$new_size = ewww_image_optimizer_filesize( $tempfile );
 				// If the new GIF is smaller.

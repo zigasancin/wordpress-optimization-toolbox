@@ -173,12 +173,12 @@ class EWWW_Image {
 			ewwwio_debug_message( print_r( $new_image, true ) );
 		}
 		$this->id            = $new_image['id'];
-		$this->file          = ewww_image_optimizer_relative_path_replace( $new_image['path'] );
+		$this->file          = ewww_image_optimizer_absolutize_path( $new_image['path'] );
 		$this->attachment_id = $new_image['attachment_id'];
 		$this->opt_size      = $new_image['image_size'];
 		$this->orig_size     = $new_image['orig_size'];
 		$this->resize        = $new_image['resize'];
-		$this->converted     = ewww_image_optimizer_relative_path_replace( $new_image['converted'] );
+		$this->converted     = ewww_image_optimizer_absolutize_path( $new_image['converted'] );
 		$this->gallery       = ( empty( $gallery ) ? $new_image['gallery'] : $gallery );
 		$this->backup        = $new_image['backup'];
 		$this->record        = $new_image;
@@ -251,7 +251,7 @@ class EWWW_Image {
 		}
 		/* ewwwio_debug_message( 'about to process db results' ); */
 		foreach ( $sizes_queried as $size_queried ) {
-			$size_queried['path'] = ewww_image_optimizer_relative_path_replace( $size_queried['path'] );
+			$size_queried['path'] = ewww_image_optimizer_absolutize_path( $size_queried['path'] );
 
 			$sizes[ $size_queried['resize'] ] = $size_queried;
 			// Convert here.
@@ -418,8 +418,8 @@ class EWWW_Image {
 			if ( empty( $size_queried['converted'] ) ) {
 				continue;
 			}
-			$size_queried['path']      = ewww_image_optimizer_relative_path_replace( $size_queried['path'] );
-			$size_queried['converted'] = ewww_image_optimizer_relative_path_replace( $size_queried['converted'] );
+			$size_queried['path']      = ewww_image_optimizer_absolutize_path( $size_queried['path'] );
+			$size_queried['converted'] = ewww_image_optimizer_absolutize_path( $size_queried['converted'] );
 
 			$new_name = ( empty( $size_queried['converted'] ) ? '' : $size_queried['converted'] );
 			if ( $new_name && is_file( $size_queried['path'] ) && is_file( $new_name ) ) {
@@ -478,9 +478,10 @@ class EWWW_Image {
 	 *
 	 * @param string $file The name of the file to convert.
 	 * @param bool   $replace_url Default true. Run function to update database with new url.
+	 * @param bool   $check_size Default false. Whether the converted filesize be compared to the original.
 	 * @return string The name of the new file.
 	 */
-	public function convert( $file, $replace_url = true ) {
+	public function convert( $file, $replace_url = true, $check_size = false ) {
 		ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 		if ( empty( $file ) ) {
 			ewwwio_debug_message( 'no file provided to convert' );
@@ -538,8 +539,15 @@ class EWWW_Image {
 				}
 				ewwwio_debug_message( "converted PNG size: $png_size" );
 				// If the PNG exists, and we didn't end up with an empty file.
-				if ( $png_size && is_file( $newfile ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/png' ) {
+				if ( ! $check_size && $png_size && is_file( $newfile ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/png' ) {
 					ewwwio_debug_message( 'JPG to PNG successful' );
+					// Check to see if the user wants the originals deleted.
+					if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_delete_originals' ) == true ) {
+						// Delete the original JPG.
+						unlink( $file );
+					}
+				} elseif ( $check_size && is_file( $newfile ) && $png_size < ewww_image_optimizer_filesize( $file ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/png' ) {
+					ewwwio_debug_message( 'JPG to PNG successful, after comparing size' );
 					// Check to see if the user wants the originals deleted.
 					if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_delete_originals' ) == true ) {
 						// Delete the original JPG.
@@ -571,9 +579,8 @@ class EWWW_Image {
 				}
 				// If the user manually set the JPG quality.
 				$quality = ewww_image_optimizer_jpg_quality();
-				if ( empty( $quality ) ) {
-					$quality = '92';
-				}
+				$quality = $quality ? $quality : '82';
+
 				$magick_background = ewww_image_optimizer_jpg_background();
 				if ( empty( $magick_background ) ) {
 					$magick_background = '000000';
@@ -637,8 +644,15 @@ class EWWW_Image {
 				}
 				ewwwio_debug_message( "converted JPG size: $jpg_size" );
 				// If the new JPG is smaller than the original PNG.
-				if ( $jpg_size && is_file( $newfile ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/jpeg' ) {
+				if ( ! $check_size && $jpg_size && is_file( $newfile ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/jpeg' ) {
 					ewwwio_debug_message( 'JPG to PNG successful' );
+					// If the user wants originals delted after a conversion.
+					if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_delete_originals' ) == true ) {
+						// Delete the original PNG.
+						unlink( $file );
+					}
+				} elseif ( $check_size && is_file( $newfile ) && $jpg_size < ewww_image_optimizer_filesize( $file ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/jpeg' ) {
+					ewwwio_debug_message( 'PNG to JPG successful, after comparing size' );
 					// If the user wants originals delted after a conversion.
 					if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_delete_originals' ) == true ) {
 						// Delete the original PNG.
@@ -686,8 +700,15 @@ class EWWW_Image {
 				}
 				ewwwio_debug_message( "converted PNG size: $png_size" );
 				// If the PNG exists, and we didn't end up with an empty file.
-				if ( $png_size && is_file( $newfile ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/png' ) {
+				if ( ! $check_size && $png_size && is_file( $newfile ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/png' ) {
 					ewwwio_debug_message( 'GIF to PNG successful' );
+					// Check to see if the user wants the originals deleted.
+					if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_delete_originals' ) == true ) {
+						// Delete the original JPG.
+						unlink( $file );
+					}
+				} elseif ( $check_size && is_file( $newfile ) && $png_size < ewww_image_optimizer_filesize( $file ) && ewww_image_optimizer_mimetype( $newfile, 'i' ) == 'image/png' ) {
+					ewwwio_debug_message( 'GIF to PNG successful, after comparing size' );
 					// Check to see if the user wants the originals deleted.
 					if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_delete_originals' ) == true ) {
 						// Delete the original JPG.
@@ -839,8 +860,8 @@ class EWWW_Image {
 				$ewwwdb->insert(
 					$ewwwdb->ewwwio_images,
 					array(
-						'path'          => ewww_image_optimizer_relative_path_remove( $new_path ),
-						'converted'     => ewww_image_optimizer_relative_path_remove( $path ),
+						'path'          => ewww_image_optimizer_relativize_path( $new_path ),
+						'converted'     => ewww_image_optimizer_relativize_path( $path ),
 						'orig_size'     => filesize( $new_path ),
 						'attachment_id' => $this->attachment_id,
 						'results'       => __( 'No savings', 'ewww-image-optimizer' ),
@@ -854,8 +875,8 @@ class EWWW_Image {
 		$ewwwdb->update(
 			$ewwwdb->ewwwio_images,
 			array(
-				'path'      => ewww_image_optimizer_relative_path_remove( $new_path ),
-				'converted' => ewww_image_optimizer_relative_path_remove( $path ),
+				'path'      => ewww_image_optimizer_relativize_path( $new_path ),
+				'converted' => ewww_image_optimizer_relativize_path( $path ),
 				'results'   => ewww_image_optimizer_image_results( $image_record['orig_size'], filesize( $new_path ) ),
 				'updates'   => 0,
 				'trace'     => '',
@@ -898,7 +919,7 @@ class EWWW_Image {
 		$ewwwdb->update(
 			$ewwwdb->ewwwio_images,
 			array(
-				'path'       => ewww_image_optimizer_relative_path_remove( $new_path ),
+				'path'       => ewww_image_optimizer_relativize_path( $new_path ),
 				'converted'  => '',
 				'image_size' => 0,
 				'results'    => __( 'Original Restored', 'ewww-image-optimizer' ),

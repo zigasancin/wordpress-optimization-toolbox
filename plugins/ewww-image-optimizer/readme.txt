@@ -5,7 +5,7 @@ Tags: image, compress, resize, optimize, optimization, lossless, lossy, seo, web
 Requires at least: 4.9
 Tested up to: 5.0
 Requires PHP: 5.6
-Stable tag: 4.5.1
+Stable tag: 4.5.3
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -174,6 +174,16 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 * Feature requests can be viewed and submitted at https://github.com/nosilver4u/ewww-image-optimizer/labels/enhancement
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
 
+= 4.5.3 =
+* fixed: ExactDN duplicates srcset instead of replacing it
+* security: remote code execution, low exposure
+
+= 4.5.2 =
+* added: automatic migration to move image paths from absolute to relative
+* changed: default quality for PNG to JPG did not match WordPress default
+* fixed: legacy absolute paths not matched during bulk scanner when relative matching is enabled
+* fixed: PNG to JPG auto-convert produces larger JPG images in some cases
+
 = 4.5.1 =
 * changed: optimization results are tracked by relative urls instead of absolute ones for better portability, migration tool coming soon
 * changed: ExactDN defaults to crop when explicit dimensions are given to image_downsize(), revert to scaling with EXACTDN_IMAGE_DOWNSIZE_SCALE
@@ -196,35 +206,6 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 * fixed: unable to modify WebP conversion option when ExactDN is enabled
 * fixed: ExactDN inserts full-size image without arguments
 * removed: PHP 5.5 no longer supported
-
-= 4.4.2 =
-* added: notice for Pantheon users that an API key is required
-* added: ExactDN fully supports protocol-relative urls for non-image resources
-* changed: better lazy load support in ExactDN
-* fixed: optimization failure produces rename() errors
-* fixed: folder scanner ignores files with no extension
-* fixed: Alt WebP blocks on Facebook tracking pixel
-* fixed: ExactDN srcset functions cause duplicate image requests with zoom=1
-* fixed: ExactDN srcset fill adds double arguments to urls
-* fixed: srcset fill generates notices with non-numeric widths
-* fixed: bulk scanner stuck in resume mode with nothing to do
-
-= 4.4.1 =
-* fixed: ExactDN srcset fill replaces images with first image on page
-
-= 4.4.0 =
-* added: preserve animations in GIF images during resize operations
-* added: ExactDN will fill in srcset/sizes attributes for all images based on detected width for better mobile support
-* added: configuration options in the settings page for several "hidden" ExactDN options
-* changed: Alt WebP still depends on jQuery, but jQuery can be loaded in async or defer mode
-* changed: Remove Metadata option has been renamed, if you previously had it configured as an override (JPEGTRAN_COPY), please use the new name: EWWW_IMAGE_OPTIMIZER_METADATA_REMOVE
-* changed: ExactDN uses premium compression by default
-* fixed: regression with ExactDN and max-width style attributes
-* fixed: WP esc_url mangles ExactDN urls
-* fixed: WebP images missing from S3 when using WP Offload S3
-* fixed: PDF uploads with S3 Uploads plugin
-* deprecated: PHP 5.5 support will be removed in the next major release (version 4.5)
-* removed: PHP 5.4 no longer supported
 
 = Earlier versions =
 Please refer to the separate changelog.txt file.
