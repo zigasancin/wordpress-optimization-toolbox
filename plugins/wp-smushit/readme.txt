@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 2.9.1
+Version: 3.0.1
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
 Tags: image, resize, optimize, optimise, compress, performance, optimisation, optimise JPG, photo, pictures, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
-Tested up to: 4.9.8
-Stable tag: 2.9.1
+Tested up to: 5.0.0
+Stable tag: 3.0.1
 Requires PHP: 5.2.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -152,6 +152,33 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 3. Smush will find and optimize images for you.
 
 == Changelog ==
+
+= 3.0.1 =
+
+* Security: Remove support for Upfront theme functions
+
+= 3.0.0 =
+
+* New: Smush CDN
+* New: Webp support with CDN
+* New: Auto image resize when using CDN
+* New: Plugin structure (Important: plugin globals have been removed)
+* New: Show failure reason during directory Smush
+* New: Settings page with language translation links
+* Security: Fix XSS and phar deserialization vulnerabilities
+* Enhance: Better handling of animated GIFs. Improve performance.
+* Enhance: Update translation strings
+* Enhance: Clean out all the leftover data on plugin uninstall
+* Enhance: Directory Smush modal: support keyboard navigation
+* Enhance: Directory Smush modal: navigate to next node by typing the first letters
+* Enhance: [WPML] PNG to JPEG conversion in media translations
+* Fix: Directory Smush resume button only working when clicked on icon
+* Fix: Errors during image re-check
+* Fix: Meta values are deleted when an image is skipped using wp_smush_image filter.
+* Fix: [WP Offload Media] Backward compatibility errors
+* Fix: [WP Offload Media] Warnings when certain attachment sizes are excluded from compression
+* Fix: [WP Offload Media] Errors during is_animated check with images stored on S3
+* Fix: [WooCommerce] Compatibility issue with WooCommerce 3.5
 
 = 2.9.1 =
 
@@ -628,6 +655,7 @@ Fix: Compatibility issues with latest WP Offload Media (WP Offload S3) update
 1.0 - 2014-11-24 - Saurabh Shukla, Umesh Kumar
 ----------------------------------------------------------------------
 - First release
+
 
 == About Us ==
 WPMU DEV is a premium supplier of quality WordPress plugins, services and support. Learn more here:

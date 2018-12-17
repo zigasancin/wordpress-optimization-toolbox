@@ -3,10 +3,21 @@
 @include body-class {
 
 	.sui-wrap {
-		// Overwrite iOS styles;
-		input[type="submit"] {
-			-webkit-appearance: none !important;
-			border-radius: 0 !important;
+
+		.smush-quick-setup-settings {
+			.sui-box-settings-row {
+				display: table;
+			}
+
+			.sui-box-settings-col-1 {
+				max-width: 85%;
+			}
+
+			.sui-box-settings-col-1,
+			.sui-box-settings-col-2 {
+				display: table-cell;
+				flex: none;
+			}
 		}
 
 		// Overwrite extra padding on progress bars in modals.
@@ -131,7 +142,7 @@
 						line-height: 15px;
 						font-weight: 500;
 						margin-right: 10px;
-						white-space: nowrap
+						word-break: break-all;
 					}
 
 					.smush-image-error {
@@ -203,32 +214,6 @@
 			}
 		}
 
-		.smush-sidenav {
-
-			.smush-nav-icon {
-
-				position: absolute;
-				right: 4px;
-				top: 4px;
-				display: inline-block;
-				&.bulk:not(.sui-tag) {
-					@include icon(before, check-tick);
-					&:before {
-						color: $notice-default-icon-color;
-						font-size: 21px;
-					}
-				}
-			}
-
-			.current {
-				.bulk:not(.sui-tag) {
-					&:before {
-						color: $notice-success-icon-color;
-					}
-				}
-			}
-		}
-
 		.sui-actions-right {
 			float: right;
 			display: inline-block;
@@ -258,11 +243,9 @@
 		}
 
 		.sui-summary-smush {
-			background-image: url('#{$img--path}/smush-graphic-dashboard-summary.svg');
 			background-size: 180px;
 		}
 		.sui-summary-smush-nextgen {
-			background-image: url('#{$img--path}/smush-graphic-dashboard-summary.svg');
 			background-size: 170px;
 		}
 
@@ -387,28 +370,6 @@
 					&.sui-notice {
 						margin-bottom: 0;
 					}
-				}
-			}
-		}
-
-		.sui-cross-sell-modules {
-			.sui-cross-1 {
-				background: url("#{$img--path}/plugins-hummingbird.jpg") center;
-				background-size: cover;
-
-				> span {
-					@include background-2x("#{$img--path}/plugins-hummingbird-icon", 'png', 50px, 50px, center center, no-repeat);
-				}
-			}
-		}
-
-		.sui-cross-sell-modules {
-			.sui-cross-1 {
-				background: url("#{$img--path}/plugins-hummingbird.jpg") center;
-				background-size: cover;
-
-				> span {
-					@include background-2x("#{$img--path}/plugins-hummingbird-icon", 'png', 50px, 50px, center center, no-repeat);
 				}
 			}
 		}

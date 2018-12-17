@@ -29,11 +29,11 @@
 
 	#smush-image-bar-toggle {
 		position: fixed;
-		top: 82px;
+		top: 50px;
 		right: 330px;
 		height: 50px;
 		width: 60px;
-		z-index: 20;
+		z-index: 999999;
 		border-radius: 4px 0 0 4px;
 		background-color: #FFF;
 		box-shadow: inset 2px 0 0 0 #FECF2F, -13px 5px 20px 0 rgba(0, 0, 0, 0.1);
@@ -47,15 +47,49 @@
 			right: 0;
 		}
 
-		i.sui-icon-info {
+		i.sui-icon-info,
+		i.sui-icon-loader {
 			font-family: "wpmudev-plugin-icons" !important;
 			font-style: normal;
 			font-size: 16px;
 			line-height: 50px;
 			color: #FECF2F;
+		}
 
+		i.sui-icon-info {
 			&:before {
 				content: "I";
+			}
+		}
+
+		i.sui-icon-loader {
+			&:before {
+				display: block;
+				content: "N";
+				-webkit-animation: spin 1.3s linear infinite;
+						animation: spin 1.3s linear infinite;
+			}
+		}
+
+		@-webkit-keyframes spin {
+			0% {
+				-webkit-transform: rotate(0deg);
+				transform: rotate(0deg);
+			}
+			100% {
+				-webkit-transform: rotate(360deg);
+				transform: rotate(360deg);
+			}
+		}
+
+		@keyframes spin {
+			0% {
+				-webkit-transform: rotate(0deg);
+				transform: rotate(0deg);
+			}
+			100% {
+				-webkit-transform: rotate(360deg);
+				transform: rotate(360deg);
 			}
 		}
 	}
@@ -68,9 +102,10 @@
 		height: 100%;
 		background-color: #FFF;
 		box-shadow: 0 0 40px 0 rgba(0,0,0,0.1);
-		z-index: 10;
-		padding: 32px 0 20px;
-		overflow-y: scroll;
+		z-index: 999999;
+		padding: 0 0 20px;
+		overflow-y: auto;
+		overflow-x: hidden;
 		max-width: 330px;
 		transition-property: all;
 		transition-duration: .5s;
@@ -78,6 +113,7 @@
 
 		&.closed {
 			max-width: 0;
+			overflow-y: hidden;
 		}
 
 		h3, p, strong, span {

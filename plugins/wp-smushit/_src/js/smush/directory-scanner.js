@@ -48,7 +48,7 @@ const DirectoryScanner = ( totalSteps, currentStep ) => {
 
 		onFinish: function() {
 			WP_Smush.directory.updateProgressBar( 100 );
-			window.location.href = wp_smush_msgs.directory_url;
+			window.location.href = wp_smush_msgs.directory_url + '&scan=done';
 		},
 
 		limitReached: function() {

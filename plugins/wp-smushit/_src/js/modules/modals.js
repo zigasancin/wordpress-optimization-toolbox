@@ -59,7 +59,10 @@
 		$.ajax( {
 			type: 'POST',
 			url: ajaxurl,
-			data: form.serialize(),
+			data: {
+				action: 'skip_smush_setup',
+				_wpnonce: $('#_wpnonce').attr('value')
+			},
 			beforeSend: function () {
 				form.find( '.button' ).attr( 'disabled', 'disabled' );
 			}

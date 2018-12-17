@@ -4,6 +4,14 @@
 
 @include body-class {
 
+    .sui-meta-boxes-directory .smush-final-log {
+        margin-top: 30px;
+
+        .sui-description {
+            margin-top: 10px;
+        }
+    }
+
     ul.fancytree-container {
 
         color: #666;
@@ -290,6 +298,10 @@
             span.fancytree-title {
                 color: #17A8E3;
             }
+        }
+
+        span.fancytree-focused {
+            background-color: #e1e1e1 !important;
         }
     }
 
