@@ -2,7 +2,7 @@
  * Short Pixel WordPress Plugin javascript
  */
 
-jQuery(document).ready(function($){ShortPixel.init();});
+jQuery(document).ready(function(){ShortPixel.init();});
 
 
 var ShortPixel = function() {
@@ -20,7 +20,8 @@ var ShortPixel = function() {
                 + '</option>');
         }
 
-        ShortPixel.setOptions(ShortPixelConstants);
+        // Extracting the protected Array from within the 0 element of the parent array
+        ShortPixel.setOptions(ShortPixelConstants[0]);
 
         if(jQuery('#backup-folder-size').length) {
             jQuery('#backup-folder-size').html(ShortPixel.getBackupSize());
@@ -161,12 +162,68 @@ var ShortPixel = function() {
         jQuery("div.bulk-play span.total").text(total);
         jQuery("#displayTotal").text(total);
     }
+
+    function initSettings() {
+        ShortPixel.adjustSettingsTabs();
+        jQuery( window ).resize(function() {
+            ShortPixel.adjustSettingsTabs();
+        });
+        if(window.location.hash) {
+            var target = ('tab-' + window.location.hash.substring(window.location.hash.indexOf("#")+1)).replace(/\//, '');
+            if(jQuery("section#" + target).length) {
+                ShortPixel.switchSettingsTab( target );
+            }
+        }
+        jQuery("article.sp-tabs a.tab-link").click(function(){
+            var theID = jQuery(this).data("id");
+            ShortPixel.switchSettingsTab( theID );
+        });
+
+        jQuery('input[type=radio][name=deliverWebpType]').change(function() {
+            if (this.value == 'deliverWebpAltered') {
+                if(window.confirm("Warning: Using this method alters the structure of the HTML code (IMG tags get included in PICTURE tags),\nwhich can lead to CSS/JS inconsistencies with the existing code.\n\nPlease test this functionality thoroughly before using it!")){
+                    var selectedItems = jQuery('input[type=radio][name=deliverWebpAlteringType]:checked').length;
+                    if (selectedItems == 0) {
+                        jQuery('#deliverWebpAlteredWP').prop('checked',true);
+                    }
+                } else {
+                    jQuery(this).prop('checked', false);
+                }
+            }
+        });
+    }
     
     function switchSettingsTab(target){
-        var section = jQuery("section#" +target);
+        var tab = target.replace("tab-",""),
+            beacon = "",
+            section = jQuery("section#" +target),
+            url = location.href.replace(location.hash,"") + '#' + tab;
+        if(history.pushState) {
+            history.pushState(null, null, url);
+        }
+        else {
+            location.hash = url;
+        }
         if(section.length > 0){
             jQuery("section").removeClass("sel-tab");
             jQuery("section#" +target).addClass("sel-tab");
+        }
+        if(typeof HS.beacon.suggest !== 'undefined' ){
+            switch(tab){
+                case "settings":
+                    beacon = shortpixel_suggestions_settings;
+                    break;
+                case "adv-settings":
+                    beacon = shortpixel_suggestions_adv_settings;
+                    break;
+                case "cloudflare":
+                case "stats":
+                    beacon = shortpixel_suggestions_cloudflare;
+                    break;
+                default:
+                    break;
+            }
+            HS.beacon.suggest(beacon);
         }
     }
     
@@ -175,7 +232,7 @@ var ShortPixel = function() {
         sectionHeight = Math.max(sectionHeight, jQuery('section#tab-adv-settings .wp-shortpixel-options').height() + 20);
         sectionHeight = Math.max(sectionHeight, jQuery('section#tab-resources .area1').height() + 60);
         jQuery('#shortpixel-settings-tabs').css('height', sectionHeight);
-        jQuery('#shortpixel-settings-tabs section').css('height', sectionHeight);
+        //jQuery('#shortpixel-settings-tabs section').css('height', sectionHeight);
     }
 
     function dismissMediaAlert() {
@@ -621,6 +678,7 @@ var ShortPixel = function() {
         apiKeyChanged       : apiKeyChanged,
         setupAdvancedTab    : setupAdvancedTab,
         checkThumbsUpdTotal : checkThumbsUpdTotal,
+        initSettings        : initSettings,
         switchSettingsTab   : switchSettingsTab,
         adjustSettingsTabs  : adjustSettingsTabsHeight,
         onBulkThumbsCheck   : onBulkThumbsCheck,
@@ -1130,7 +1188,6 @@ function sliderUpdate(id, thumb, bkThumb, percent, filename){
     }
     jQuery(".bulk-opt-percent", newSlide).html('<input type="text" class="dial" value="' + percent + '"/>');
     
-    //debugger;
     jQuery(".bulk-slider").append(newSlide);
     ShortPixel.percentDial("#" + newSlide.attr("id") + " .dial", 100);
     

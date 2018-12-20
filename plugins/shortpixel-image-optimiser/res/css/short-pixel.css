@@ -1,3 +1,19 @@
+.reset {
+    font-weight: normal;
+    font-style: normal;
+}
+
+.clearfix:before, .clearfix:after { content: " "; /* 1 */ display: table; /* 2 */}
+.clearfix:after { clear: both; }
+.clearfix { zoom: 1; }
+
+.resumeLabel {
+    float: right;
+    line-height: 30px;
+    margin-right: 20px;
+    font-size: 16px;
+}
+
 /* Dropdown Button */
 .sp-dropbtn.button {
     padding: 1px 24px 20px 5px;
@@ -84,6 +100,19 @@ div.fb-like  {
 .sp-notice-warning {
     border-left-color: #f1e02a;
 }
+
+.sp-conflict-plugins {
+    display: table;
+    border-spacing: 10px;
+    border-collapse: separate;
+}
+.sp-conflict-plugins li {
+    display: table-row;
+}
+.sp-conflict-plugins li > * {
+    display: table-cell;
+}
+
 li.sp-conflict-plugins-list {
     line-height: 28px;
     list-style: disc;
@@ -206,6 +235,12 @@ input.dial {
     width: 15%;
 }
 
+.form-table th {
+    width: 220px;
+}
+.form-table td {
+    position: relative;
+}
 .form-table table.shortpixel-folders-list tr {
    background-color: #eee;
 }
@@ -629,7 +664,7 @@ article.sp-tabs {
     position: relative;
     display: block;
     width: 100%;
-    height: 1100px;
+    /*height: 1100px;*/
     margin: 2em auto;
 }
 article.sp-tabs section {
@@ -637,13 +672,23 @@ article.sp-tabs section {
     display: block;
     top: 1.8em;
     left: 0;
-    height: 1100px;
-    width:94%;
+    /*height: 1100px;*/
+    width:100%;
+    max-width:100%;
+    box-sizing: border-box;
     padding: 10px 20px;
-    background-color: #ddd;
+    /*background-color: #ddd;*/
     /* border-radius: 5px; */
-    box-shadow: 0 3px 3px rgba(0,0,0,0.1);
     z-index: 0;
+}
+article.sp-tabs section.sel-tab {
+    box-shadow: 0 3px 3px rgba(0,0,0,0.1);
+}
+article.sp-tabs section .wp-shortpixel-tab-content {
+visibility: hidden;
+}
+article.sp-tabs section.sel-tab .wp-shortpixel-tab-content {
+visibility: visible;
 }
 article.sp-tabs section:first-child {
     z-index: 1;
@@ -693,6 +738,34 @@ article.sp-tabs section.sel-tab h2 {
     color: #333;
     background-color: #fff;
     z-index: 2;
+}
+#tab-stats .sp-bulk-summary {
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 100;
+}
+
+.deliverWebpSettings, .deliverWebpTypes, .deliverWebpAlteringTypes {
+    display: none;
+}
+.deliverWebpTypes .sp-notice {
+    color: red;
+}
+.deliverWebpSettings {
+    margin: 16px 0;
+}
+.deliverWebpSettings input:disabled+label {
+    color: #818181;
+}
+.deliverWebpTypes, .deliverWebpAlteringTypes {
+    margin: 16px 0 16px 16px;
+}
+article.sp-tabs section #createWebp:checked ~ .deliverWebpSettings,
+article.sp-tabs section #deliverWebp:checked ~ .deliverWebpTypes,
+article.sp-tabs section #deliverWebpAltered:checked ~ .deliverWebpAlteringTypes
+{
+    display: block;
 }
 /*article.sp-tabs section,
 article.sp-tabs section h2 {
@@ -775,8 +848,12 @@ section#tab-resources p {
 }
 
 /*workaround for bad style inline css in the plugin <<WooCommerce Remove /product & /product-category>> that's causing conflict*/
-.sp-tabs h2:before{
+.sp-tabs h2:before {
     content:none;
+}
+
+.sp-column-actions-template + .sp-column-info {
+    display: none;
 }
 
 #wpadminbar .shortpixel-toolbar-processing .cssload-container {

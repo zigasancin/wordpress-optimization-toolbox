@@ -71,3 +71,7 @@ class ShortPixelTools {
         return false;
     }    
 }
+
+function ShortPixelVDD($v){
+    return highlight_string("<?php\n\$data =\n" . var_export($v, true) . ";\n?>");
+}

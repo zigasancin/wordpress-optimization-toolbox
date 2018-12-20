@@ -250,7 +250,9 @@ class WpShortPixelMediaLbraryAdapter {
             if (isset($val['mime-type']) && $val['mime-type'] == "image/webp") continue;
             if(!isset($val['file'])) continue;
             if (in_array($key, $exclude)) continue;
-            $uniq[$val['file']] = $key;
+            $file = $val['file'];
+            if(is_array($file)) { $file = $file[0];} // HelpScout case 709692915
+            $uniq[$file] = $key;
         }
         return count($uniq);
     }
@@ -261,11 +263,13 @@ class WpShortPixelMediaLbraryAdapter {
         $sizes = array();
         $files = array();
         foreach($sizesAll as $key => $size) {
-           if(strpos($key, ShortPixelMeta::FOUND_THUMB_PREFIX) === 0) continue;
-           if(in_array($size['file'], $files)) continue;
-           if(!isset($size['file'])) continue;
-           $sizes[$key] = $size;
-           $files[] = $size['file'];
+            if(strpos($key, ShortPixelMeta::FOUND_THUMB_PREFIX) === 0) continue;
+            if(!isset($size['file'])) continue;
+            $sizes[$key] = $size;
+            $file = $size['file'];
+            if(is_array($file)) { $file = $file[0];} // HelpScout case 709692915
+            if(in_array($file, $files)) continue;
+            $files[] = $file;
         }
         $meta->setThumbs($sizes);
         $itemHandler->updateMeta($meta, true);
@@ -284,14 +288,20 @@ class WpShortPixelMediaLbraryAdapter {
                 }
             }
         }
-        if(defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX')) {
-            $pattern = '/' . preg_quote($base, '/') . '-\d+x\d+'. SHORTPIXEL_CUSTOM_THUMB_SUFFIX . '\.'. $ext .'/';
+        if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX') || defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ){
             $thumbsCandidates = @glob($base . "-*." . $ext);
-            $thumbs = array();
             if(is_array($thumbsCandidates)) {
-                foreach($thumbsCandidates as $th) {
-                    if(preg_match($pattern, $th)) {
-                        $thumbs[]= $th;
+                $thumbs = array();
+                $suffixes = defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ? explode(',', SHORTPIXEL_CUSTOM_THUMB_SUFFIXES) : array();
+                if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX') ){
+                    $suffixes[] = SHORTPIXEL_CUSTOM_THUMB_SUFFIX;
+                }
+                foreach ($suffixes as $suffix){
+                    $pattern = '/' . preg_quote($base, '/') . '-\d+x\d+'. $suffix . '\.'. $ext .'/';
+                    foreach($thumbsCandidates as $th) {
+                        if(preg_match($pattern, $th)) {
+                            $thumbs[]= $th;
+                        }
                     }
                 }
             }

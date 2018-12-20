@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.12.1
+ * Version: 4.12.3
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.12.1");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.12.3");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -185,12 +185,16 @@ function shortPixelInitOB() {
     }
 }
 
-if ( get_option('wp-short-pixel-create-webp-markup')) { 
-    //add_filter( 'the_content', 'shortPixelConvertImgToPictureAddWebp', 10000 ); // priority big, so it will be executed last
-    //add_filter( 'the_excerpt', 'shortPixelConvertImgToPictureAddWebp', 10000 );
-    //add_filter( 'post_thumbnail_html', 'shortPixelConvertImgToPictureAddWebp');
-    add_action( 'wp_head', 'shortPixelAddPictureJs');
-    add_action( 'init', 'shortPixelInitOB', 1 );
+if ( get_option('wp-short-pixel-create-webp-markup') ) {
+    $option = get_option('wp-short-pixel-create-webp-markup');
+    if( $option == 1 ){
+        add_action( 'wp_head', 'shortPixelAddPictureJs');
+        add_action( 'init', 'shortPixelInitOB', 1 );
+    } elseif ($option == 2){
+        add_filter( 'the_content', 'shortPixelConvertImgToPictureAddWebp', 10000 ); // priority big, so it will be executed last
+        add_filter( 'the_excerpt', 'shortPixelConvertImgToPictureAddWebp', 10000 );
+        add_filter( 'post_thumbnail_html', 'shortPixelConvertImgToPictureAddWebp');
+    }
 //    add_action( 'wp_enqueue_scripts', 'spAddPicturefillJs' );
 }
 

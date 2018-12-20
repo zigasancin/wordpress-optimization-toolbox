@@ -41,8 +41,9 @@ class WPShortPixel {
 
         if(is_plugin_active('envira-gallery/envira-gallery.php') || is_plugin_active('soliloquy-lite/soliloquy-lite.php')) {
             define('SHORTPIXEL_CUSTOM_THUMB_SUFFIX', '_c');
+            define('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES', '_tl,_tr,_br,_bl');
         }
-            
+
         $this->setDefaultViewModeList();//set default mode as list. only @ first run
 
         //add hook for image upload processing
@@ -81,6 +82,7 @@ class WPShortPixel {
 
         add_action( 'shortpixel-thumbnails-before-regenerate', array( &$this, 'thumbnailsBeforeRegenerateHook' ), 10, 1);
         add_action( 'shortpixel-thumbnails-regenerated', array( &$this, 'thumbnailsRegeneratedHook' ), 10, 4);
+        add_filter( 'shortpixel_get_backup', array( &$this, 'shortpixelGetBackupFilter' ), 10, 1 );
 
         if($isAdminUser) {
             //add settings page
@@ -195,33 +197,118 @@ class WPShortPixel {
         $settings = new WPShortPixelSettings();
         if($settings->removeSettingsOnDeletePlugin == 1) {
             WPShortPixelSettings::debugResetOptions();
+            insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', '');
         }
     }
 
     public function getConflictingPlugins() {
         $conflictPlugins = array(
-            'WP Smush - Image Optimization' => 'wp-smushit/wp-smush.php',
-            'Imagify Image Optimizer' => 'imagify/imagify.php',
-            'Compress JPEG & PNG images (TinyPNG)' => 'tiny-compress-images/tiny-compress-images.php',
-            'Kraken.io Image Optimizer' => 'kraken-image-optimizer/kraken.php',
-            'Optimus - WordPress Image Optimizer' => 'optimus/optimus.php',
-            'EWWW Image Optimizer' => 'ewww-image-optimizer/ewww-image-optimizer.php',
-            'ImageRecycle pdf & image compression' => 'imagerecycle-pdf-image-compression/wp-image-recycle.php',
-            'CheetahO Image Optimizer' => 'cheetaho-image-optimizer/cheetaho.php',
-            'Zara 4 Image Compression' => 'zara-4/zara-4.php',
-            'Prizm Image' => 'prizm-image/wp-prizmimage.php',
-            'CW Image Optimizer' => 'cw-image-optimizer/cw-image-optimizer.php'
+            'WP Smush - Image Optimization'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'wp-smushit/wp-smush.php',
+                        'page'=>'wp-smush-bulk'
+                ),
+            'Imagify Image Optimizer'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'imagify/imagify.php',
+                        'page'=>'imagify'
+                ),
+            'Compress JPEG & PNG images (TinyPNG)'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'tiny-compress-images/tiny-compress-images.php',
+                        'page'=>'tinify'
+                ),
+            'Kraken.io Image Optimizer'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'kraken-image-optimizer/kraken.php',
+                        'page'=>'wp-krakenio'
+                ),
+            'Optimus - WordPress Image Optimizer'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'optimus/optimus.php',
+                        'page'=>'optimus'
+                ),
+            'EWWW Image Optimizer'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'ewww-image-optimizer/ewww-image-optimizer.php',
+                        'page'=>'ewww-image-optimizer%2F'
+                ),
+            'EWWW Image Optimizer Cloud'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'ewww-image-optimizer-cloud/ewww-image-optimizer-cloud.php',
+                        'page'=>'ewww-image-optimizer-cloud%2F'
+                ),
+            'ImageRecycle pdf & image compression'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'imagerecycle-pdf-image-compression/wp-image-recycle.php',
+                        'page'=>'option-image-recycle'
+                ),
+            'CheetahO Image Optimizer'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'cheetaho-image-optimizer/cheetaho.php',
+                        'page'=>'cheetaho'
+                ),
+            'Zara 4 Image Compression'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'zara-4/zara-4.php',
+                        'page'=>'zara-4'
+                ),
+            'CW Image Optimizer'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'cw-image-optimizer/cw-image-optimizer.php',
+                        'page'=>'cw-image-optimizer'
+                ),
+            'Simple Image Sizes'
+                => array(
+                        'action'=>'Deactivate',
+                        'data'=>'simple-image-sizes/simple_image_sizes.php'
+                ),
+            'Jetpack by WordPress.com - The Speed up image load times Option'
+                => array(
+                        'action'=>'Change Setting',
+                        'data'=>'jetpack/jetpack.php',
+                        'href'=>'admin.php?page=jetpack#/settings'
+                )
         );
         if($this->_settings->processThumbnails) {
             $conflictPlugins = array_merge($conflictPlugins, array(
-                'Regenerate Thumbnails: recreating image files may require re-optimization of the resulting thumbnails, even if they were previously optimized.' => 'regenerate-thumbnails/regenerate-thumbnails.php',
-                'Force Regenerate Thumbnails: recreating image files may require re-optimization of the resulting thumbnails, even if they were previously optimized.' => 'force-regenerate-thumbnails/force-regenerate-thumbnails.php'
+                'Regenerate Thumbnails: recreating image files may require re-optimization of the resulting thumbnails, even if they were previously optimized.'
+                    => array(
+                            'action'=>'Deactivate',
+                            'data'=>'regenerate-thumbnails/regenerate-thumbnails.php',
+                            'page'=>'regenerate-thumbnails'
+                    ),
+                'Force Regenerate Thumbnails: recreating image files may require re-optimization of the resulting thumbnails, even if they were previously optimized.'
+                    => array(
+                            'action'=>'Deactivate',
+                            'data'=>'force-regenerate-thumbnails/force-regenerate-thumbnails.php',
+                            'page'=>'force-regenerate-thumbnails'
+                    )
             ));
         }
         $found = array();
         foreach($conflictPlugins as $name => $path) {
-            if(is_plugin_active($path)) {
-                $found[] = array('name' => $name, 'path' => $path);
+            $action = ( isset($path['action']) ) ? $path['action'] : null;
+            $data = ( isset($path['data']) ) ? $path['data'] : null;
+            $href = ( isset($path['href']) ) ? $path['href'] : null;
+            $page = ( isset($path['page']) ) ? $path['page'] : null;
+            if(is_plugin_active($data)) {
+                if( $data == 'jetpack/jetpack.php' ){
+                    $jetPackPhoton = get_option('jetpack_active_modules') ? in_array('photon', get_option('jetpack_active_modules')) : false;
+                    if( !$jetPackPhoton ){ continue; }
+                }
+                $found[] = array( 'name' => $name, 'action'=> $action, 'path' => $data, 'href' => $href , 'page' => $page );
             }
         }
         return $found;
@@ -371,28 +458,8 @@ class WPShortPixel {
                     array("__SP_FIRST_TYPE__", "__SP_SECOND_TYPE__"), "__SP_CELL_MESSAGE__", 'sp-column-actions-template');
             }
         }
-        ?><!--SP ARCHIVE is <?php echo($this->_settings->downloadArchive . " CRC: " . crc32(get_site_url())%10); ?> -->
+        ?>
         <script type="text/javascript" >
-            var ShortPixelConstants = {
-                STATUS_SUCCESS: <?php echo ShortPixelAPI::STATUS_SUCCESS; ?>,
-                STATUS_EMPTY_QUEUE: <?php echo self::BULK_EMPTY_QUEUE; ?>,
-                STATUS_ERROR: <?php echo ShortPixelAPI::STATUS_ERROR; ?>,
-                STATUS_FAIL: <?php echo ShortPixelAPI::STATUS_FAIL; ?>,
-                STATUS_QUOTA_EXCEEDED: <?php echo ShortPixelAPI::STATUS_QUOTA_EXCEEDED; ?>,
-                STATUS_SKIP: <?php echo ShortPixelAPI::STATUS_SKIP; ?>,
-                STATUS_NO_KEY: <?php echo ShortPixelAPI::STATUS_NO_KEY; ?>,
-                STATUS_RETRY: <?php echo ShortPixelAPI::STATUS_RETRY; ?>,
-                STATUS_QUEUE_FULL: <?php echo ShortPixelAPI::STATUS_QUEUE_FULL; ?>,
-                STATUS_MAINTENANCE: <?php echo ShortPixelAPI::STATUS_MAINTENANCE; ?>,
-                WP_PLUGIN_URL: '<?php echo plugins_url( '', SHORTPIXEL_PLUGIN_FILE ); ?>',
-                WP_ADMIN_URL: '<?php echo admin_url(); ?>',
-                API_KEY: "<?php echo(defined("SHORTPIXEL_HIDE_API_KEY") ? '' : $this->_settings->apiKey); ?>",
-                DEFAULT_COMPRESSION: <?php echo(0 + $this->_settings->compressionType); ?>,
-                MEDIA_ALERT: '<?php echo $this->_settings->mediaAlert ? "done" : "todo"; ?>',
-                FRONT_BOOTSTRAP: <?php echo $this->_settings->frontBootstrap && (!isset($this->_settings->lastBackAction) || (time() - $this->_settings->lastBackAction > 600)) ? 1 : 0; ?>,
-                AJAX_URL: '<?php echo admin_url('admin-ajax.php'); ?>',
-                AFFILIATE: '<?php echo(self::getAffiliateSufix());?>'
-            };
             //check after 10 seconds if ShortPixel initialized OK, if not, force the init (could happen if a JS error somewhere else stopped the JS execution).
             function delayedInit() {
                 if(typeof ShortPixel !== "undefined") {
@@ -406,6 +473,29 @@ class WPShortPixel {
         wp_enqueue_style('short-pixel.min.css', plugins_url('/res/css/short-pixel.min.css',SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
         
         wp_register_script('short-pixel' . $this->jsSuffix, plugins_url('/res/js/short-pixel' . $this->jsSuffix,SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
+
+        // Using an Array within another Array to protect the primitive values from being cast to strings
+        $ShortPixelConstants = array(array(
+            'STATUS_SUCCESS'=>ShortPixelAPI::STATUS_SUCCESS,
+            'STATUS_EMPTY_QUEUE'=>self::BULK_EMPTY_QUEUE,
+            'STATUS_ERROR'=>ShortPixelAPI::STATUS_ERROR,
+            'STATUS_FAIL'=>ShortPixelAPI::STATUS_FAIL,
+            'STATUS_QUOTA_EXCEEDED'=>ShortPixelAPI::STATUS_QUOTA_EXCEEDED,
+            'STATUS_SKIP'=>ShortPixelAPI::STATUS_SKIP,
+            'STATUS_NO_KEY'=>ShortPixelAPI::STATUS_NO_KEY,
+            'STATUS_RETRY'=>ShortPixelAPI::STATUS_RETRY,
+            'STATUS_QUEUE_FULL'=>ShortPixelAPI::STATUS_QUEUE_FULL,
+            'STATUS_MAINTENANCE'=>ShortPixelAPI::STATUS_MAINTENANCE,
+            'WP_PLUGIN_URL'=>plugins_url( '', SHORTPIXEL_PLUGIN_FILE ),
+            'WP_ADMIN_URL'=>admin_url(),
+            'API_KEY'=> (defined("SHORTPIXEL_HIDE_API_KEY" )  || !is_admin() ) ? '' : $this->_settings->apiKey,
+            'DEFAULT_COMPRESSION'=>0 + $this->_settings->compressionType,
+            'MEDIA_ALERT'=>$this->_settings->mediaAlert ? "done" : "todo",
+            'FRONT_BOOTSTRAP'=>$this->_settings->frontBootstrap && (!isset($this->_settings->lastBackAction) || (time() - $this->_settings->lastBackAction > 600)) ? 1 : 0,
+            'AJAX_URL'=>admin_url('admin-ajax.php'),
+            'AFFILIATE'=>self::getAffiliateSufix()
+        ));
+
         $jsTranslation = array(
                 'optimizeWithSP' => __( 'Optimize with ShortPixel', 'shortpixel-image-optimiser' ),
                 'redoLossy' => __( 'Re-optimize Lossy', 'shortpixel-image-optimiser' ),
@@ -435,6 +525,7 @@ class WPShortPixel {
                 'confirmBulkCleanupPending' => __( "Are you sure you want to cleanup the pending metadata?", 'shortpixel-image-optimiser' )
             );
         wp_localize_script( 'short-pixel' . $this->jsSuffix, '_spTr', $jsTranslation );
+        wp_localize_script( 'short-pixel' . $this->jsSuffix, 'ShortPixelConstants', $ShortPixelConstants );
         wp_enqueue_script('short-pixel' . $this->jsSuffix);
         
         wp_enqueue_script('jquery.knob.min.js', plugins_url('/res/js/jquery.knob.min.js',SHORTPIXEL_PLUGIN_FILE) );
@@ -584,7 +675,7 @@ class WPShortPixel {
 
         $t = get_transient("wp-short-pixel-regenerating");
         if(is_array($t) && isset($t[$ID])) {
-            return;
+            return $meta;
         }
         
         self::log("Handle Media Library Image Upload #{$ID}");
@@ -1298,7 +1389,7 @@ class WPShortPixel {
     }
     
     private function sendToProcessing($itemHandler, $compressionType = false, $onlyThumbs = false) {
-        
+
         //conversion of PNG 2 JPG for existing images
         if($itemHandler->getType() == ShortPixelMetaFacade::MEDIA_LIBRARY_TYPE) { //currently only for ML
             $rawMeta = $this->checkConvertMediaPng2Jpg($itemHandler);
@@ -1495,7 +1586,12 @@ class WPShortPixel {
             }
         }
     }
-    
+
+    public function shortpixelGetBackupFilter($imagePath) {
+        $backup = str_replace(dirname(dirname(dirname(SHORTPIXEL_BACKUP_FOLDER))),SHORTPIXEL_BACKUP_FOLDER, $imagePath);
+        return file_exists($backup) ? $backup : false;
+    }
+
     //WP/LR Sync plugin integration
     public function onWpLrUpdateMedia($imageId, $galleryIdsUnused) {
         $meta = wp_get_attachment_metadata($imageId);
@@ -1932,9 +2028,26 @@ class WPShortPixel {
         if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'sp_deactivate_plugin_nonce' ) ) {
                 wp_nonce_ays( '' );
         }
+
+        $referrer_url = wp_get_referer();
+        $conflict = $this->getConflictingPlugins();
+        foreach($conflict as $c => $value) {
+            $conflictingString = $value['page'];
+            if($conflictingString != null && strpos($referrer_url, $conflictingString) !== false){
+                $this->deactivateAndRedirect(get_dashboard_url());
+                break;
+            }
+        }
+        $this->deactivateAndRedirect(wp_get_referer());
+
+    }
+
+    protected function deactivateAndRedirect($url){
+        //die(ShortPixelVDD($url));
         deactivate_plugins( $_GET['plugin'] );
-        wp_safe_redirect( wp_get_referer() );
+        wp_safe_redirect( $url );
         die();
+
     }
 
     public function countAllIfNeeded($quotaData, $time) {
@@ -2152,7 +2265,7 @@ class WPShortPixel {
             $this->view->displayBulkProcessingRunning($this->getPercent($quotaData), $msg, $quotaData['APICallsRemaining'], $this->getAverageCompression(), 
                      $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_RESTORE ? 0 : 
                     (   $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP
-                     || $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP_PENDING ? -1 : ($pendingMeta !== null ? ($this->prioQ->bulkRunning() ? 3 : 2) : 1)));
+                     || $this->prioQ->getBulkType() == ShortPixelQueue::BULK_TYPE_CLEANUP_PENDING ? -1 : ($pendingMeta !== null ? ($this->prioQ->bulkRunning() ? 3 : 2) : 1)), $quotaData);
 
         } else 
         {
@@ -2422,8 +2535,6 @@ class WPShortPixel {
                         $folder->setFileCount($folder->countFiles());
                         $this->spMetaDao->update($folder);
                     }
-                    //echo ("mt: " . $mt);
-                    //die(var_dump($folder));
                 } catch(ShortPixelFileRightsException $ex) {
                     if(is_array($notice)) {
                         if($notice['status'] == 'error') {
@@ -2437,7 +2548,30 @@ class WPShortPixel {
         }
         return $customFolders;
     }
-    
+
+    protected function alterHtaccess( $clear = false ){
+        if ( $clear ) {
+            insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', '');
+        } else {
+            insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', '
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_ACCEPT} image/webp
+  RewriteCond %{DOCUMENT_ROOT}/$1.webp -f
+  RewriteRule (.+)\.(jpe?g|png)$ $1.webp [T=image/webp,E=accept:1]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header append Vary Accept env=REDIRECT_accept
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+</IfModule>
+        ' );
+        }
+    }
+
     public function renderSettingsMenu() {
         if ( !current_user_can( 'manage_options' ) )  {
             wp_die(__('You do not have sufficient permissions to access this page.','shortpixel-image-optimiser'));
@@ -2453,7 +2587,24 @@ class WPShortPixel {
         $addedFolder = false;
 
         $this->_settings->redirectedSettings = 2;
-        
+
+        // Check if NGINX Server
+        $isNginx = strpos($_SERVER["SERVER_SOFTWARE"], 'nginx') !== false ? true : false;
+
+        // BEGIN: Verify .htaccess writeability
+        $htaccessWriteable = true;
+        if( !$isNginx ) {
+            $htaccessPath = get_home_path() . '.htaccess';
+            $htaccessExisted = file_exists( $htaccessPath );
+            //$htaccessWriteable = insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', '' );
+            $htaccessWriteable = @fopen($htaccessPath, "a+") ? true : false;
+            if( !$htaccessExisted ){
+                unlink( $htaccessPath );
+            }
+        }
+        // END: Verify .htaccess writeability
+
+
         //by default we try to fetch the API Key from wp-config.php (if defined)
         if ( defined("SHORTPIXEL_API_KEY") && strlen(SHORTPIXEL_API_KEY) == 20)
         {
@@ -2500,8 +2651,7 @@ class WPShortPixel {
             //handle API Key - common for save and validate.
             $_POST['key'] = trim(str_replace("*", "", isset($_POST['key']) ? $_POST['key'] : $this->_settings->apiKey)); //the API key might not be set if the editing is disabled.
             
-            if ( strlen($_POST['key']) <> 20 )
-            {
+            if ( strlen($_POST['key']) <> 20 ){
                 $KeyLength = strlen($_POST['key']);
     
                 $notice = array("status" => "error", 
@@ -2514,8 +2664,7 @@ class WPShortPixel {
                            . __(' or ','shortpixel-image-optimiser') 
                            . "<a href='https://shortpixel.com/contact' target='_blank'>" . __('here','shortpixel-image-optimiser') . "</a>.");
             }
-            else
-            {
+            else {
                 if(isset($_POST['save']) || isset($_POST['saveAdv'])) {
                     //these are needed for the call to api-status, set them first.
                     $this->_settings->siteAuthUser = (isset($_POST['siteAuthUser']) ? $_POST['siteAuthUser'] : $this->_settings->siteAuthUser);
@@ -2593,7 +2742,43 @@ class WPShortPixel {
                 }
                 
                 $this->_settings->createWebp = (isset($_POST['createWebp']) ? 1: 0);
-                $this->_settings->createWebpMarkup = (isset($_POST['createWebpMarkup']) ? 1: 0);
+
+
+
+                if( isset( $_POST['createWebp'] ) && $_POST['createWebp'] == 'on' ){
+                    if( isset( $_POST['deliverWebp'] ) && $_POST['deliverWebp'] == 'on' ){
+                        if( isset( $_POST['deliverWebpType'] ) ) {
+                            switch( $_POST['deliverWebpType'] ) {
+                                case 'deliverWebpUnaltered':
+                                    $this->_settings->deliverWebp = 3;
+                                    $this->alterHtaccess();
+                                    break;
+                                case 'deliverWebpAltered':
+                                    $this->alterHtaccess(true);
+                                    if( isset( $_POST['deliverWebpAlteringType'] ) ){
+                                        switch ($_POST['deliverWebpAlteringType']) {
+                                            case 'deliverWebpAlteredWP':
+                                                $this->_settings->deliverWebp = 2;
+                                                break;
+                                            case 'deliverWebpAlteredGlobal':
+                                                $this->_settings->deliverWebp = 1;
+                                                break;
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                    } else {
+                        $this->_settings->deliverWebp = 0;
+                    }
+                } else {
+                    $this->_settings->deliverWebp = 0;
+                }
+
+                //die(ShortPixelVDD($_POST));
+
+                //if(isset($_POST['optimizeRetina'])
+
                 $this->_settings->optimizeRetina = (isset($_POST['optimizeRetina']) ? 1: 0);
                 $this->_settings->optimizeUnlisted = (isset($_POST['optimizeUnlisted']) ? 1: 0);
                 $this->_settings->optimizePdfs = (isset($_POST['optimizePdfs']) ? 1: 0);
@@ -2673,7 +2858,7 @@ class WPShortPixel {
             }
             $remainingImages = $quotaData['APICallsRemaining'];
             $remainingImages = ( $remainingImages < 0 ) ? 0 : number_format($remainingImages);
-            $totalCallsMade = number_format($quotaData['APICallsMadeNumeric'] + $quotaData['APICallsMadeOneTimeNumeric']);
+            $totalCallsMade = array( 'plan'=>number_format( $quotaData['APICallsMadeNumeric'] ), 'oneTime'=>number_format( $quotaData['APICallsMadeOneTimeNumeric'] ) );
 
             $resources = wp_remote_post($this->_settings->httpProto . "://shortpixel.com/resources-frag");
             if(is_wp_error( $resources )) {
@@ -2681,10 +2866,11 @@ class WPShortPixel {
             }
 
             $cloudflareAPI = true;
+
             $this->view->displaySettings($showApiKey, $editApiKey,
                    $quotaData, $notice, $resources, $averageCompression, $savedSpace, $savedBandwidth, $remainingImages, 
                    $totalCallsMade, $fileCount, null /*folder size now on AJAX*/, $customFolders, 
-                   $folderMsg, $folderMsg ? $addedFolder : false, isset($_POST['saveAdv']), $cloudflareAPI);
+                   $folderMsg, $folderMsg ? $addedFolder : false, isset($_POST['saveAdv']), $cloudflareAPI, $htaccessWriteable, $isNginx );
         } else {
             $this->view->displaySettings($showApiKey, $editApiKey, $quotaData, $notice);        
         }
@@ -2900,7 +3086,7 @@ class WPShortPixel {
             if(!is_array($data)) {
                 $data = unserialize($data);
             }
-            //if($extended) {var_dump(wp_get_attachment_url($id)); echo(json_encode($data));}
+            //if($extended) {var_dump(wp_get_attachment_url($id)); echo('<br>BK: ' . apply_filters('shortpixel_get_backup', get_attached_file($id))); echo(json_encode($data));}
             $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
             $invalidKey = !$this->_settings->verifiedKey;
             $quotaExceeded = $this->_settings->quotaExceeded;
@@ -3407,8 +3593,29 @@ class WPShortPixel {
         return array_values(array_diff(array(0, 1, 2), array(0 + $compressionType)));
     }
 
-    function outputHSBeacon() {
-        ?><script>
+    function outputHSBeacon() { ?>
+        <script>
+            <?php
+            $screen = get_current_screen();
+            if($screen) {
+                switch($screen->id) {
+                    case 'media_page_wp-short-pixel-bulk':
+                        echo("var shortpixel_suggestions =              [ '5a5de2782c7d3a19436843af', '5a5de6902c7d3a19436843e9', '5a5de5c42c7d3a19436843d0', '5a9945e42c7d3a75495145d0', '5a5de1c2042863193801047c', '5a5de66f2c7d3a19436843e0', '5a9946e62c7d3a75495145d8', '5a5de4f02c7d3a19436843c8', '5a5de65f042863193801049f', '5a5de2df0428631938010485' ]; ");
+                        $suggestions = "shortpixel_suggestions";
+                        break;
+                    case 'settings_page_wp-shortpixel':
+                        echo("var shortpixel_suggestions_settings =     [ '5a5de1de2c7d3a19436843a8', '5a6612032c7d3a39e6263a1d', '5a5de1c2042863193801047c', '5a5de2782c7d3a19436843af', '5a6610c62c7d3a39e6263a02', '5a9945e42c7d3a75495145d0', '5a5de66f2c7d3a19436843e0', '5a6597e80428632faf620487', '5a5de5c42c7d3a19436843d0', '5a5de5642c7d3a19436843cc' ]; ");
+                        echo("var shortpixel_suggestions_adv_settings = [ '5a5de4f02c7d3a19436843c8', '5a8431f00428634376d01dc4', '5a5de58b0428631938010497', '5a5de65f042863193801049f', '5a9945e42c7d3a75495145d0', '5a9946e62c7d3a75495145d8', '5a5de57c0428631938010495', '5a5de2d22c7d3a19436843b1', '5a5de5c42c7d3a19436843d0', '5a5de5642c7d3a19436843cc' ]; ");
+                        echo("var shortpixel_suggestions_cloudflare =   [ '5a5de1f62c7d3a19436843a9', '5a5de58b0428631938010497', '5a5de66f2c7d3a19436843e0', '5a5de5c42c7d3a19436843d0', '5a5de6902c7d3a19436843e9', '5a5de51a2c7d3a19436843c9', '5a9946e62c7d3a75495145d8', '5a5de46c2c7d3a19436843c1', '5a5de1de2c7d3a19436843a8', '5a6597e80428632faf620487' ]; ");
+                        $suggestions = "shortpixel_suggestions_settings";
+                        break;
+                    case 'media_page_wp-short-pixel-custom':
+                        echo("var shortpixel_suggestions =              [ '5a9946e62c7d3a75495145d8', '5a5de1c2042863193801047c', '5a5de2782c7d3a19436843af', '5a5de6902c7d3a19436843e9', '5a5de4f02c7d3a19436843c8', '5a6610c62c7d3a39e6263a02', '5a9945e42c7d3a75495145d0', '5a5de46c2c7d3a19436843c1', '5a5de1de2c7d3a19436843a8', '5a5de25c2c7d3a19436843ad' ]; ");
+                        $suggestions = "shortpixel_suggestions";
+                        break;
+                }
+            }
+            ?>
             !function(e,o,n){ window.HSCW=o,window.HS=n,n.beacon=n.beacon||{};var t=n.beacon;t.userConfig={
                 color: "#1CBECB",
                 icon: "question",
@@ -3432,34 +3639,14 @@ class WPShortPixel {
                     email: "<?php $u = wp_get_current_user(); echo($u->user_email); ?>",
                     apiKey: "<?php echo($this->getApiKey());?>"
                 });
-                HS.beacon.suggest([<?php
-                    $screen = get_current_screen();
-                    if($screen) {
-                        switch($screen->id) {
-                            case 'media_page_wp-short-pixel-bulk':
-                                echo(" '5a5de2782c7d3a19436843af', '5a5de6902c7d3a19436843e9', '5a5de5c42c7d3a19436843d0', '5a9945e42c7d3a75495145d0', '5a5de1c2042863193801047c',
-                                       '5a5de66f2c7d3a19436843e0', '5a9946e62c7d3a75495145d8', '5a5de4f02c7d3a19436843c8', '5a5de65f042863193801049f', '5a5de2df0428631938010485' ");
-                                break;
-                            case 'settings_page_wp-shortpixel':
-                                echo(" '5a5de1de2c7d3a19436843a8', '5a6612032c7d3a39e6263a1d', '5a5de1c2042863193801047c', '5a5de2782c7d3a19436843af', '5a6610c62c7d3a39e6263a02',
-                                       '5a9945e42c7d3a75495145d0', '5a5de66f2c7d3a19436843e0',  '5a6597e80428632faf620487', '5a5de5c42c7d3a19436843d0', '5a5de5642c7d3a19436843cc' ");
-                                break;
-                            case 'media_page_wp-short-pixel-custom':
-                                echo(" '5a9946e62c7d3a75495145d8', '5a5de1c2042863193801047c', '5a5de2782c7d3a19436843af', '5a5de6902c7d3a19436843e9', '5a5de4f02c7d3a19436843c8',
-                                       '5a6610c62c7d3a39e6263a02', '5a9945e42c7d3a75495145d0', '5a5de46c2c7d3a19436843c1', '5a5de1de2c7d3a19436843a8', '5a5de25c2c7d3a19436843ad' ");
-                                break;
-                            default:
-                                die($screen->id);
-                        }
-                    }
-                ?>]);
+                HS.beacon.suggest( <?php echo( $suggestions ) ?> );
             });
         </script><?php
     }
 
     public function validateFeedback($params) {
-        if(isset($params['remove-settings'])) {
-            $this->_settings->removeSettingsOnDeletePlugin = $params['remove-settings'];
+        if(isset($params['keep-settings'])) {
+            $this->_settings->removeSettingsOnDeletePlugin = 1 - $params['keep-settings'];
         }
         return $params;
     }

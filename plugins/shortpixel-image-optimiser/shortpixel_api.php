@@ -85,9 +85,12 @@ class ShortPixelAPI {
         if(!count($URLs)) {
             $meta = $itemHandler->getMeta();
             if(count($meta->getThumbsMissing())) {
+                $added = array();
                 $files = " (";
                 foreach ($meta->getThumbsMissing() as $miss) {
+                    if(isset($added[$miss])) continue;
                     $files .= $miss . ", ";
+                    $added[$miss] = true;
                 }
                 if(strrpos($files, ', ')) {
                     $files = substr_replace($files , ')', strrpos($files , ', '));
@@ -383,23 +386,25 @@ class ShortPixelAPI {
      * @return array status /message array
      */
     private function handleDownload($optimizedUrl, $optimizedSize, $originalSize, $webpUrl){
+
         $downloadTimeout = max(ini_get('max_execution_time') - 10, 15);
-        
+
         $webpTempFile = "NA";
         if($webpUrl !== "NA") {
             $webpURL = $this->setPreferredProtocol(urldecode($webpUrl));
             $webpTempFile = download_url($webpURL, $downloadTimeout);
             $webpTempFile = is_wp_error( $webpTempFile ) ? "NA" : $webpTempFile;
-        } 
-        
+        }
+
         //if there is no improvement in size then we do not download this file
         if ( $originalSize == $optimizedSize )
             return array("Status" => self::STATUS_UNCHANGED, "Message" => "File wasn't optimized so we do not download it.", "WebP" => $webpTempFile);
-        
+
         $correctFileSize = $optimizedSize;
         $fileURL = $this->setPreferredProtocol(urldecode($optimizedUrl));
  
         $tempFile = download_url($fileURL, $downloadTimeout);
+        WPShortPixel::log('Downloading file: '.json_encode($tempFile));
         if(is_wp_error( $tempFile )) 
         { //try to switch the default protocol
             $fileURL = $this->setPreferredProtocol(urldecode($optimizedUrl), true); //force recheck of the protocol
@@ -550,6 +555,8 @@ class ShortPixelAPI {
      * @return array status/message
      */
     private function handleSuccess($APIresponse, $PATHs, $itemHandler, $compressionType) {
+        WPShortPixel::log('Handling Success!');
+
         $counter = $savedSpace =  $originalSpace =  $optimizedSpace =  $averageCompression = 0;
         $NoBackup = true;
 

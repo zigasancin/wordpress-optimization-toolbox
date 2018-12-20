@@ -9,13 +9,13 @@ class ShortPixelImgToPictureWebp {
     public static function lazyGet($img, $type) {
         return array(
             'value' =>
-                (isset($img['data-lazy-' . $type]) && strlen('data-lazy-' . $img[$type])) ?
+                (isset($img['data-lazy-' . $type]) && strlen($img['data-lazy-' . $type])) ?
                     $img['data-lazy-' . $type]
                     : (isset($img['data-' . $type]) && strlen($img['data-' . $type]) ?
                         $img['data-' . $type]
                         : (isset($img[$type]) && strlen($img[$type]) ? $img[$type] : false)),
             'prefix' =>
-                (isset($img['data-lazy-' . $type]) && strlen('data-lazy-' . $img[$type])) ? 'data-lazy-'
+                (isset($img['data-lazy-' . $type]) && strlen($img['data-lazy-' . $type])) ? 'data-lazy-'
                     : (isset($img['data-' . $type]) && strlen($img['data-' . $type]) ? 'data-'
                         : (isset($img[$type]) && strlen($img[$type]) ? '' : false))
         );
