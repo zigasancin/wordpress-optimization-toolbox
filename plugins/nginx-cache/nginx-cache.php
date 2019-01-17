@@ -3,7 +3,7 @@
 Plugin Name: Nginx Cache
 Plugin URI: http://wordpress.org/plugins/nginx-cache/
 Description: Purge the Nginx cache (FastCGI, Proxy, uWSGI) automatically when content changes or manually within WordPress.
-Version: 1.0.3
+Version: 1.0.4
 Text Domain: nginx-cache
 Domain Path: /languages
 Author: Till Krüss
@@ -28,12 +28,19 @@ class NginxCache {
 		add_filter( 'option_nginx_auto_purge', 'absint' );
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'add_plugin_actions_links' ) );
 
+		if ( get_option( 'nginx_auto_purge' ) ) {
+			add_action( 'init', array( $this, 'register_purge_actions' ), 20 );
+		}
+
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_menu', array( $this, 'add_admin_menu_page' ) );
 		add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_node' ), 100 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
 		add_action( 'load-' . $this->screen, array( $this, 'do_admin_actions' ) );
 		add_action( 'load-' . $this->screen, array( $this, 'add_settings_notices' ) );
+	}
+
+	public function register_purge_actions() {
 
 		// use `nginx_cache_purge_actions` filter to alter default purge actions
 		$purge_actions = (array) apply_filters(
@@ -46,7 +53,11 @@ class NginxCache {
 		);
 
 		foreach ( $purge_actions as $action ) {
-			add_action( $action, array( $this, 'purge_zone_once' ) );
+			if ( did_action( $action ) ) {
+				$this->purge_zone_once();
+			} else {
+				add_action( $action, array( $this, 'purge_zone_once' ) );
+			}
 		}
 
 	}
@@ -125,7 +136,7 @@ class NginxCache {
 		// add "Tools" sub-page
 		add_management_page(
 			__( 'Nginx Cache', 'nginx-cache' ),
-			__( 'Nginx', 'nginx-cache' ),
+			__( 'Nginx Cache', 'nginx-cache' ),
 			$this->capability,
 			'nginx-cache',
 			array( $this, 'show_settings_page' )
@@ -141,7 +152,7 @@ class NginxCache {
 
 		// add settings link to plugin actions
 		return array_merge(
-			array( '<a href="' . admin_url( $this->admin_page ) . '">Settings</a>' ),
+			array( '<a href="' . admin_url( $this->admin_page ) . '">' . __( 'Settings', 'nginx-cache' ) . '</a>' ),
 			$links
 		);
 
@@ -177,7 +188,8 @@ class NginxCache {
 			}
 
 			$list = $wp_filesystem->dirlist( $path, true, true );
-			if ( ! $this->validate_dirlist( $list ) ) {
+
+			if ( is_array( $list ) && ! $this->validate_dirlist( $list ) ) {
 				return new WP_Error( 'fs', __( '"Cache Zone Path" does not appear to be a Nginx cache zone directory.', 'nginx-cache' ) );
 			}
 
