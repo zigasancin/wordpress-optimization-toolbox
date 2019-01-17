@@ -3,7 +3,7 @@
  * Plugin Name: Proxy Cache Purge
  * Plugin URI: https://halfelf.org/plugins/varnish-http-purge/
  * Description: Automatically empty cached pages when content on your site is modified.
- * Version: 4.7.2
+ * Version: 4.7.3
  * Author: Mika Epstein
  * Author URI: https://halfelf.org/
  * License: http://www.apache.org/licenses/LICENSE-2.0
@@ -102,7 +102,7 @@ class VarnishPurger {
 	public function admin_init() {
 
 		// If WordPress.com Master Bar is active, show the activity box.
-		if ( is_plugin_active( 'jetpack/jetpack.php' ) && Jetpack::is_module_active( 'masterbar' ) ) {
+		if ( class_exists( 'Jetpack' ) && Jetpack::is_module_active( 'masterbar' ) ) {
 			add_action( 'activity_box_end', array( $this, 'varnish_rightnow' ), 100 );
 		}
 
