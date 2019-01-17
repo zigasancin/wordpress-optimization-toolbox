@@ -1066,6 +1066,11 @@ class ShortPixelView {
                 } else {
                     $deliverWebpUnalteredLabel = __('It looks like your .htaccess file cannot be written. Please fix this and then return to refresh this page to enable this option.','shortpixel-image-optimiser');
                 }
+            } elseif (strpos($_SERVER['HTTP_USER_AGENT'], 'Chrome') !== false) {
+                // Show a message about the risks and caveats of serving WEBP images via .htaccess
+                $deliverWebpUnalteredLabel = '<span style="color: initial;">'.__('Based on testing your particular hosting configuration, we determined that your server','shortpixel-image-optimiser').
+                    '<img src="'.str_replace("/class/view", "/res", plugins_url( 'img/test.jpg' , __FILE__ )).'">'.
+                    __('serve the WEBP versions of the JPEG files seamlessly, via .htaccess.','shortpixel-image-optimiser').' <a href="javascript:void(0)" data-beacon-article="5c1d050e04286304a71d9ce4">Open article to read more about this.</a></span>';
             }
         }
 
@@ -1200,13 +1205,15 @@ class ShortPixelView {
                     <td>
                         <input name="png2jpg" type="checkbox" id="png2jpg" <?php echo( $convertPng2Jpg );?> <?php echo($gdInstalled ? '' : 'disabled') ?>>
                         <label for="png2jpg"><?php _e('Automatically convert the PNG images to JPEG if possible.','shortpixel-image-optimiser');?></label>
-                        <input name="png2jpgForce" type="checkbox" id="png2jpgForce" <?php echo( $convertPng2JpgForce );?> <?php echo($gdInstalled ? '' : 'disabled') ?>>
-                        <label for="png2jpgForce"><?php _e('Force conversion of images with transparency.','shortpixel-image-optimiser');
-                        if(!$gdInstalled) {echo("&nbsp;<span style='color:red;'>" . __('You need PHP GD for this. Please ask your hosting to install it.','shortpixel-image-optimiser') . "</span>");}
-                        ?></label>
                         <p class="settings-info">
                             <?php _e('Converts all PNGs that don\'t have transparent pixels to JPEG. This can dramatically reduce the file size, especially if you have camera pictures that are saved in PNG format. The plugin will also search for references of the image in posts and will replace them.','shortpixel-image-optimiser');?>
-                        </p>
+                        </p><br>
+                        <input name="png2jpgForce" type="checkbox" id="png2jpgForce" <?php echo( $convertPng2JpgForce );?> <?php echo($gdInstalled ? '' : 'disabled') ?>>
+                        <label for="png2jpgForce">
+                            <?php _e('Also force the conversion of images with transparency.','shortpixel-image-optimiser');
+                            if(!$gdInstalled) {echo("&nbsp;<span style='color:red;'>" . __('You need PHP GD for this. Please ask your hosting to install it.','shortpixel-image-optimiser') . "</span>");}
+                            ?>
+                        </label>
                     </td>
                 </tr>
                 <tr>
@@ -1237,20 +1244,9 @@ class ShortPixelView {
                             </label>
                             <ul class="deliverWebpTypes">
                                 <li>
-                                    <input type="radio" name="deliverWebpType" id="deliverWebpUnaltered" <?php echo( $deliverWebpUnaltered );?> <?php echo( $deliverWebpUnalteredDisabled );?> value="deliverWebpUnaltered">
-                                    <label for="deliverWebpUnaltered">
-                                        <?php _e('Without altering the page code (via .htaccess)','shortpixel-image-optimiser')?>
-                                    </label>
-                                    <?php if($deliverWebpUnalteredLabel){ ?>
-                                        <p class="sp-notice">
-                                            <?php echo( $deliverWebpUnalteredLabel );?>
-                                        </p>
-                                    <?php } ?>
-                                </li>
-                                <li>
                                     <input type="radio" name="deliverWebpType" id="deliverWebpAltered" <?php echo( $deliverWebpAltered );?> <?php echo( $deliverWebpAlteredDisabled );?> value="deliverWebpAltered">
                                     <label for="deliverWebpAltered">
-                                        <?php _e('Altering the page code, using the &lt;PICTURE&gt; tag syntax (might break some third party plugins and/or styles that depend on &lt;IMG&gt; tags)','shortpixel-image-optimiser');?>
+                                        <?php _e('Using the &lt;PICTURE&gt; tag syntax','shortpixel-image-optimiser');?>
                                     </label>
                                     <?php if($deliverWebpAlteredDisabledNotice){ ?>
                                         <p class="sp-notice">
@@ -1274,6 +1270,17 @@ class ShortPixelView {
                                             </label>
                                         </li>
                                     </ul>
+                                </li>
+                                <li>
+                                    <input type="radio" name="deliverWebpType" id="deliverWebpUnaltered" <?php echo( $deliverWebpUnaltered );?> <?php echo( $deliverWebpUnalteredDisabled );?> value="deliverWebpUnaltered">
+                                    <label for="deliverWebpUnaltered">
+                                        <?php _e('Without altering the page code (via .htaccess)','shortpixel-image-optimiser')?>
+                                    </label>
+                                    <?php if($deliverWebpUnalteredLabel){ ?>
+                                        <p class="sp-notice">
+                                            <?php echo( $deliverWebpUnalteredLabel );?>
+                                        </p>
+                                    <?php } ?>
                                 </li>
                             </ul>
                         </div>

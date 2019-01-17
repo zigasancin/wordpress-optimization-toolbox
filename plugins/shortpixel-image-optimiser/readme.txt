@@ -4,7 +4,7 @@ Tags: compressor, image, compression, optimize, image optimizer, image optimiser
 Requires at least: 3.2.0
 Tested up to: 5.0
 Requires PHP: 5.2
-Stable tag: 4.12.3
+Stable tag: 4.12.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ Speed up your website and boost your SEO by compressing old & new images and PDF
 Increase your website's SEO ranking, number of visitors and ultimately your sales by optimizing any image or PDF document on your website.
 ShortPixel is an easy to use, lightweight, install-and-forget-about-it <a href="https://shortpixel.com" target="_blank">image optimization</a> plugin that can compress all your past images and PDF documents with a single click. New images are automatically resized/rescaled and optimized on the fly, in the background.
 
-**Ready for a quick DEMO? Test <a href="http://sandboxwordpress.com/?htmldata=http://shortpixel.com/sp.html&slug=shortpixel-image-optimiser&redirect=plugins.php&title=Test%20SHORTPIXEL%20Now!&ga=UA-55918546-1" target="_blank">here</a> or <a href="http://poopy.life/create?url=/wp-admin/admin.php?page=sandbox" target="_blank">here</a>.**
+**Ready for a quick DEMO? Test it <a href="http://poopy.life/create?url=/wp-admin/admin.php?page=sandbox" target="_blank">here</a>.**
 
 Short Pixel uses minimal resources and works well with any shared, cloud, VPS or dedicated web hosting. It can optimize any image you have on your website even the images that aren't listed in Media Library like those in galleries like <a href="https://wordpress.org/plugins/nextgen-gallery/" target="_blank">NextGEN</a>, <a href="https://wordpress.org/plugins/modula-best-grid-gallery/" target="_blank">Modula</a> or added directly via FTP!
 
@@ -240,6 +240,23 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.12.5 =
+
+Release date: 10th Ianuary 2019
+
+* change the JS name in order to circumveit cache problem on many WP installs
+* sorting the Media Library entries by ShortPixel optimization: also sort based on compression level
+* Fixed: case sensitive search for guid duplicates of image posts (needed for finding Polylang versions)
+* Fixed: the data-lazy-src/srcset detection for WebP
+* Improvements to the Deliver WebP options and especially messages with caveats
+* Load the ShortPixel CSS only on admin pages that need it
+
+= 4.12.4 =
+
+Release date: 27th December 2018
+
+* Fixed: shortpixel-thumbnails-regenerated action when not all the thumbnails were regenerated
 
 = 4.12.3 =
 

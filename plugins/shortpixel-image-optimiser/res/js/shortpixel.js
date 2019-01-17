@@ -181,7 +181,7 @@ var ShortPixel = function() {
 
         jQuery('input[type=radio][name=deliverWebpType]').change(function() {
             if (this.value == 'deliverWebpAltered') {
-                if(window.confirm("Warning: Using this method alters the structure of the HTML code (IMG tags get included in PICTURE tags),\nwhich can lead to CSS/JS inconsistencies with the existing code.\n\nPlease test this functionality thoroughly before using it!")){
+                if(window.confirm(_spTr.alertDeliverWebPAltered)){
                     var selectedItems = jQuery('input[type=radio][name=deliverWebpAlteringType]:checked').length;
                     if (selectedItems == 0) {
                         jQuery('#deliverWebpAlteredWP').prop('checked',true);
@@ -189,6 +189,8 @@ var ShortPixel = function() {
                 } else {
                     jQuery(this).prop('checked', false);
                 }
+            } else if(this.value == 'deliverWebpUnaltered') {
+                window.alert(_spTr.alertDeliverWebPUnaltered);
             }
         });
     }

@@ -37,7 +37,7 @@ class ShortPixelFeedback {
             $deactivation_link = str_replace( '<a ',
                 '<div class="shortpixel-deactivate-form-wrapper">
                      <span class="shortpixel-deactivate-form" id="shortpixel-deactivate-form-' . esc_attr( $this->plugin_name ) . '"></span>
-                 </div><a onclick="javascript:event.preventDefault();" id="shortpixel-deactivate-link-' . esc_attr( $this->plugin_name ) . '" ', $deactivation_link );
+                 </div><a id="shortpixel-deactivate-link-' . esc_attr( $this->plugin_name ) . '" ', $deactivation_link );
             $links['deactivate'] = $deactivation_link;
         }
         return $links;
@@ -177,6 +177,7 @@ class ShortPixelFeedback {
                         'maintenance' : '<?php echo __( 'Please specify', $this->plugin_name ) ?>',
                     };
 
+                $( deactivateURL).attr('onclick', "javascript:event.preventDefault();");
                 $( deactivateURL ).on("click", function(){
 
                     var SubmitFeedback = function(data, formContainer){

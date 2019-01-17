@@ -86,6 +86,9 @@ div.fb-like  {
     box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
     padding: 1px 12px;
 }
+.sp-notice img {
+    vertical-align: bottom;
+}
 @media(max-width: 1249px) {
     .sp-notice {
         margin: 5px 15px 2px;
@@ -434,7 +437,7 @@ div.shortpixel-modal .sptw-modal-spinner {
 .wp-core-ui .bulk-play a.button{
     height:60px;
     margin-top: 27px;
-    width: 290px;
+    /*width: 290px;*/
     overflow: hidden;
 }
 .wp-core-ui .column-wp-shortPixel .sp-column-actions  {
@@ -462,12 +465,12 @@ th.sorted.column-wp-shortPixel a {
     display: inline-block;
 }
 .wp-core-ui .bulk-play a.button .bulk-btn-img {
-    float:left;
+    /*float:left;*/
     display:inline-block;
     padding-top:6px;
 }
 .wp-core-ui .bulk-play a.button .bulk-btn-txt {
-    float:left;
+    /*float:left;*/
     display:inline-block;
     text-align: right;
     line-height: 1.3em;
@@ -486,7 +489,6 @@ th.sorted.column-wp-shortPixel a {
 .bulk-progress {
     padding: 20px 32px 17px;
     background-color: #ffffff;
-    /*border: 1px dotted #c4c2c2;*/
 }
 .bulk-progress.bulk-stats > div{
     display:inline-block;
@@ -546,7 +548,6 @@ th.sorted.column-wp-shortPixel a {
 .short-pixel-block-title {
     font-size: 22px;
     font-weight: bold;
-    margin-bottom: 15px;
     text-align: center;
     margin-bottom: 30px;
 }
@@ -761,6 +762,14 @@ article.sp-tabs section.sel-tab h2 {
 .deliverWebpTypes, .deliverWebpAlteringTypes {
     margin: 16px 0 16px 16px;
 }
+#png2jpg:not(:checked) ~ #png2jpgForce,
+#png2jpg:not(:checked) ~ label[for=png2jpgForce] {
+    /*pointer-events: none;
+    opacity: .5;*/
+    display: none;
+}
+
+
 article.sp-tabs section #createWebp:checked ~ .deliverWebpSettings,
 article.sp-tabs section #deliverWebp:checked ~ .deliverWebpTypes,
 article.sp-tabs section #deliverWebpAltered:checked ~ .deliverWebpAlteringTypes

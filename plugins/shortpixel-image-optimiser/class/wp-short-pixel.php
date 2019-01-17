@@ -274,12 +274,14 @@ class WPShortPixel {
                         'action'=>'Deactivate',
                         'data'=>'simple-image-sizes/simple_image_sizes.php'
                 ),
-            'Jetpack by WordPress.com - The Speed up image load times Option'
+               //DEACTIVATED TEMPORARILY - it seems that the customers get scared.
+            /* 'Jetpack by WordPress.com - The Speed up image load times Option'
                 => array(
                         'action'=>'Change Setting',
                         'data'=>'jetpack/jetpack.php',
                         'href'=>'admin.php?page=jetpack#/settings'
                 )
+            */
         );
         if($this->_settings->processThumbnails) {
             $conflictPlugins = array_merge($conflictPlugins, array(
@@ -345,7 +347,7 @@ class WPShortPixel {
             }
         }
         if(   !isset($dismissed['unlisted']) && !$this->_settings->optimizeUnlisted
-           && isset($this->_settings->currentStats['foundUnlistedThumbs']) && $this->_settings->currentStats['foundUnlistedThumbs']) {
+           && isset($this->_settings->currentStats['foundUnlistedThumbs']) && is_array($this->_settings->currentStats['foundUnlistedThumbs'])) {
             ShortPixelView::displayActivationNotice('unlisted', $this->_settings->currentStats['foundUnlistedThumbs']);
             return;
         }
@@ -450,12 +452,18 @@ class WPShortPixel {
         //require_once(ABSPATH . 'wp-admin/includes/screen.php');
         if(function_exists('get_current_screen')) {
             $screen = get_current_screen();
-            if(is_object($screen) && in_array($screen->id, array('attachment', 'upload'))) {
-                //output the comparer html
-                $this->view->outputComparerHTML();
-                //render a template of the list cell to be used by the JS
-                $this->view->renderListCell("__SP_ID__", 'imgOptimized', true, "__SP_THUMBS_TOTAL__", true, true,
-                    array("__SP_FIRST_TYPE__", "__SP_SECOND_TYPE__"), "__SP_CELL_MESSAGE__", 'sp-column-actions-template');
+            if(is_object($screen)) {
+                if( in_array($screen->id, array('attachment', 'upload'))) {
+                    //output the comparer html
+                    $this->view->outputComparerHTML();
+                    //render a template of the list cell to be used by the JS
+                    $this->view->renderListCell("__SP_ID__", 'imgOptimized', true, "__SP_THUMBS_TOTAL__", true, true,
+                        array("__SP_FIRST_TYPE__", "__SP_SECOND_TYPE__"), "__SP_CELL_MESSAGE__", 'sp-column-actions-template');
+                }
+
+                if( in_array($screen->id, array('attachment', 'upload', 'settings_page_wp-shortpixel', 'media_page_wp-short-pixel-bulk', 'media_page_wp-short-pixel-custom'))) {
+                    wp_enqueue_style('short-pixel.min.css', plugins_url('/res/css/short-pixel.min.css',SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
+                }
             }
         }
         ?>
@@ -470,9 +478,8 @@ class WPShortPixel {
             }
             setTimeout(delayedInit, 10000);
         </script> <?php
-        wp_enqueue_style('short-pixel.min.css', plugins_url('/res/css/short-pixel.min.css',SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
-        
-        wp_register_script('short-pixel' . $this->jsSuffix, plugins_url('/res/js/short-pixel' . $this->jsSuffix,SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
+
+        wp_register_script('shortpixel' . $this->jsSuffix, plugins_url('/res/js/shortpixel' . $this->jsSuffix,SHORTPIXEL_PLUGIN_FILE), array(), SHORTPIXEL_IMAGE_OPTIMISER_VERSION);
 
         // Using an Array within another Array to protect the primitive values from being cast to strings
         $ShortPixelConstants = array(array(
@@ -522,11 +529,13 @@ class WPShortPixel {
                 'pleaseDoNotSetLesser1024' => __( "Please do not set a {0} less than 1024, to be able to still regenerate all your thumbnails in case you'll ever need this.", 'shortpixel-image-optimiser' ),
                 'confirmBulkRestore' => __( "Are you sure you want to restore from backup all the images in your Media Library optimized with ShortPixel?", 'shortpixel-image-optimiser' ),
                 'confirmBulkCleanup' => __( "Are you sure you want to cleanup the ShortPixel metadata info for the images in your Media Library optimized with ShortPixel? This will make ShortPixel 'forget' that it optimized them and will optimize them again if you re-run the Bulk Optimization process.", 'shortpixel-image-optimiser' ),
-                'confirmBulkCleanupPending' => __( "Are you sure you want to cleanup the pending metadata?", 'shortpixel-image-optimiser' )
-            );
-        wp_localize_script( 'short-pixel' . $this->jsSuffix, '_spTr', $jsTranslation );
-        wp_localize_script( 'short-pixel' . $this->jsSuffix, 'ShortPixelConstants', $ShortPixelConstants );
-        wp_enqueue_script('short-pixel' . $this->jsSuffix);
+                'confirmBulkCleanupPending' => __( "Are you sure you want to cleanup the pending metadata?", 'shortpixel-image-optimiser' ),
+                'alertDeliverWebPAltered' => __( "Warning: Using this method alters the structure of the HTML code (IMG tags get included in PICTURE tags),\nwhich can lead to CSS/JS inconsistencies with the existing code.\n\nPlease test this functionality thoroughly before using it!", 'shortpixel-image-optimiser' ),
+                'alertDeliverWebPUnaltered' => __('This option will serve both WebP and the original image using the same URL, based on the web browser capabilities, please make sure you\'re serving the images from your server and not using a CDN which caches the images.', 'shortpixel-image-optimiser' ),
+                );
+        wp_localize_script( 'shortpixel' . $this->jsSuffix, '_spTr', $jsTranslation );
+        wp_localize_script( 'shortpixel' . $this->jsSuffix, 'ShortPixelConstants', $ShortPixelConstants );
+        wp_enqueue_script('shortpixel' . $this->jsSuffix);
         
         wp_enqueue_script('jquery.knob.min.js', plugins_url('/res/js/jquery.knob.min.js',SHORTPIXEL_PLUGIN_FILE) );
         wp_enqueue_script('jquery.tooltip.min.js', plugins_url('/res/js/jquery.tooltip.min.js',SHORTPIXEL_PLUGIN_FILE) );
@@ -978,11 +987,12 @@ class WPShortPixel {
                         $addIt = (strpos($meta->getMessage(), __('Image files are missing.', 'shortpixel-image-optimiser')) === false);
 
                         if(!$addIt) {
-                            //in case the message is "Image files are missing", we only add it if we could do a restore.
-                            if ($this->doRestore($crtStartQueryID)) {
-                                $addIt = true;
-                                $item = new ShortPixelMetaFacade($crtStartQueryID);
+                            //in case the message is "Image files are missing", we first try a restore.
+                            if (!$this->doRestore($crtStartQueryID)) {
+                                delete_transient("shortpixel_thrown_notice"); // no need to display the error that a restore could not be performed.
                             }
+                            $addIt = true;
+                            $item = new ShortPixelMetaFacade($crtStartQueryID);
                         }
                         if($addIt) {
                             $itemList[] = $item;
@@ -1559,13 +1569,15 @@ class WPShortPixel {
                 $shortPixelMeta["thumbsOptList"] = array();
                 $shortPixelMeta["retinasOpt"] = 0;
             } else {
+                $regeneratedThumbs = array();
                 foreach($regeneratedSizes as $size) {
-                    if(isset($shortPixelMeta["thumbsOptList"][$size])) {
-                        unset($shortPixelMeta["thumbsOptList"][$size]);
+                    if(isset($size['file']) && in_array($size['file'], $shortPixelMeta["thumbsOptList"] )) {
+                        $regeneratedThumbs[] = $size['file'];
                         $shortPixelMeta["thumbsOpt"] = max(0, $shortPixelMeta["thumbsOpt"] - 1);
                         $shortPixelMeta["retinasOpt"] = max(0, $shortPixelMeta["retinasOpt"] - 1);
                     }
                 }
+                $shortPixelMeta["thumbsOptList"] = array_diff($shortPixelMeta["thumbsOptList"], $regeneratedThumbs);
             }
             $meta = wp_get_attachment_metadata($postId);
             $meta["ShortPixel"] = $shortPixelMeta;
@@ -1784,7 +1796,9 @@ class WPShortPixel {
 
             $duplicates = ShortPixelMetaFacade::getWPMLDuplicates($attachmentID);
             foreach($duplicates as $ID) {
-                $crtMeta = $attachmentID == $ID ? $rawMeta : wp_get_attachment_metadata($ID);
+                //Added sanitizeMeta (improved with @unserialize) as per https://secure.helpscout.net/conversation/725053586/11656?folderId=1117588
+                $crtMeta = $attachmentID == $ID ? $rawMeta : ShortPixelMetaFacade::sanitizeMeta(wp_get_attachment_metadata($ID));
+                if(isset($crtMeta['previous_meta'])) continue;
                 if(   isset($crtMeta["ShortPixelImprovement"]) && is_numeric($crtMeta["ShortPixelImprovement"])
                    && 0 + $crtMeta["ShortPixelImprovement"] < 5 && $this->_settings->under5Percent > 0) {
                     $this->_settings->under5Percent = $this->_settings->under5Percent - 1; // - (isset($crtMeta["ShortPixel"]["thumbsOpt"]) ? $crtMeta["ShortPixel"]["thumbsOpt"] : 0);
@@ -2569,6 +2583,16 @@ class WPShortPixel {
   AddType image/webp .webp
 </IfModule>
         ' );
+           /* insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', '
+RewriteEngine On
+RewriteBase /
+RewriteCond %{HTTP_USER_AGENT} Chrome [OR]
+RewriteCond %{HTTP_USER_AGENT} "Google Page Speed Insights" [OR]
+RewriteCond %{HTTP_ACCEPT} image/webp [OR]
+RewriteCond %{DOCUMENT_ROOT}/$1\.webp -f
+RewriteRule (.+)\.(?:jpe?g|png)$ $1.webp [NC,T=image/webp,E=webp,L]
+Header append Vary Accept env=REDIRECT_webp
+' ); */
         }
     }
 
@@ -2751,7 +2775,7 @@ class WPShortPixel {
                             switch( $_POST['deliverWebpType'] ) {
                                 case 'deliverWebpUnaltered':
                                     $this->_settings->deliverWebp = 3;
-                                    $this->alterHtaccess();
+                                    if(!$isNginx) $this->alterHtaccess();
                                     break;
                                 case 'deliverWebpAltered':
                                     $this->alterHtaccess(true);
@@ -2769,9 +2793,11 @@ class WPShortPixel {
                             }
                         }
                     } else {
+                        if(!$isNginx) $this->alterHtaccess(true);
                         $this->_settings->deliverWebp = 0;
                     }
                 } else {
+                    if(!$isNginx) $this->alterHtaccess(true);
                     $this->_settings->deliverWebp = 0;
                 }
 
@@ -2947,6 +2973,7 @@ class WPShortPixel {
             $args['body']['Settings'] = $settings;
         }
 
+        $time = microtime(true);
         $comm = array();
 
         //Try first HTTPS post. add the sslverify = false if https
@@ -2955,7 +2982,7 @@ class WPShortPixel {
         }
         $response = wp_remote_post($requestURL, $args);
 
-        $comm[] = array("sent" => "POST: " . $requestURL, "args" => $args, "received" => $response);
+        $comm['A: ' . (number_format(microtime(true) - $time, 2))] = array("sent" => "POST: " . $requestURL, "args" => $args, "received" => $response);
             
         //some hosting providers won't allow https:// POST connections so we try http:// as well
         if(is_wp_error( $response )) {
@@ -2970,7 +2997,7 @@ class WPShortPixel {
                 unset($args['sslverify']);
             }
             $response = wp_remote_post($requestURL, $args);    
-            $comm[] = array("sent" => "POST: " . $requestURL, "args" => $args, "received" => $response);
+            $comm['B: ' . (number_format(microtime(true) - $time, 2))] = array("sent" => "POST: " . $requestURL, "args" => $args, "received" => $response);
             
             if(!is_wp_error( $response )){
                 $this->_settings->httpProto = ($this->_settings->httpProto == 'https' ? 'http' : 'https');
@@ -2984,7 +3011,7 @@ class WPShortPixel {
             $args['body'] = null;
             $requestURL .= $argsStr;
             $response = wp_remote_get($requestURL, $args);
-            $comm[] = array("sent" => "POST: " . $requestURL, "args" => $args, "received" => $response);
+            $comm['C: ' . (number_format(microtime(true) - $time, 2))] = array("sent" => "POST: " . $requestURL, "args" => $args, "received" => $response);
         }
         self::log("API STATUS COMM: " . json_encode($comm));
 
@@ -3082,11 +3109,9 @@ class WPShortPixel {
             }
 
             $file = get_attached_file($id);                        
-            $data = wp_get_attachment_metadata($id);
-            if(!is_array($data)) {
-                $data = unserialize($data);
-            }
-            //if($extended) {var_dump(wp_get_attachment_url($id)); echo('<br>BK: ' . apply_filters('shortpixel_get_backup', get_attached_file($id))); echo(json_encode($data));}
+            $data = ShortPixelMetaFacade::sanitizeMeta(wp_get_attachment_metadata($id));
+
+            //if($extended) {var_dump(wp_get_attachment_url($id)); echo(json_encode(ShortPixelMetaFacade::getWPMLDuplicates($id))); echo('<br>BK: ' . apply_filters('shortpixel_get_backup', get_attached_file($id))); echo(json_encode($data));}
             $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
             $invalidKey = !$this->_settings->verifiedKey;
             $quotaExceeded = $this->_settings->quotaExceeded;
@@ -3314,7 +3339,7 @@ class WPShortPixel {
     }
 
     public function columns( $defaults ) {
-        $defaults['wp-shortPixel'] = 'ShortPixel Compression';
+        $defaults['wp-shortPixel'] = __('ShortPixel Compression', 'shortpixel-image-optimiser');
         if(current_user_can( 'manage_options' )) {
             $defaults['wp-shortPixel'] .= 
                       '&nbsp;<a href="options-general.php?page=wp-shortpixel#stats" title="' 

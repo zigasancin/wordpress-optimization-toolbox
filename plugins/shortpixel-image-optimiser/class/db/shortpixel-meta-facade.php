@@ -86,10 +86,16 @@ class ShortPixelMetaFacade {
         }        
     }
     
-    function sanitizeMeta($rawMeta){
+    static function sanitizeMeta($rawMeta){
         if(!is_array($rawMeta)) {
             if($rawMeta == '') { return array('ShortPixel' => array()); }
-            else { return array("previous_meta" => $rawMeta, 'ShortPixel' => array()); }
+            else {
+                $meta = @unserialize($rawMeta);
+                if(is_array($meta)) {
+                    return $meta;
+                }
+                return array("previous_meta" => $rawMeta, 'ShortPixel' => array());
+            }
         }
         return $rawMeta;
     }
@@ -194,7 +200,12 @@ class ShortPixelMetaFacade {
 
                 update_post_meta($_ID, '_wp_attachment_metadata', $rawMeta);
                 //wp_update_attachment_metadata($_ID, $rawMeta);
-                update_post_meta($_ID, '_shortpixel_status', $this->meta->getStatus());
+                //status and optimization percent in the same time, for sorting purposes :)
+                $status = $this->meta->getStatus();
+                if($status == 2) {
+                    $status += 0.01 * $rawMeta['ShortPixelImprovement'];
+                }
+                update_post_meta($_ID, '_shortpixel_status', number_format($status, 4));
 
                 if($_ID == $this->ID) {
                     $this->rawMeta = $rawMeta;
@@ -471,13 +482,25 @@ class ShortPixelMetaFacade {
         ", $id ) );
 
         //Polylang
-        $moreDuplicates = $wpdb->get_col( $wpdb->prepare( "
-            SELECT p.ID FROM {$wpdb->posts} p
+        $moreDuplicates = $wpdb->get_results( $wpdb->prepare( "
+            SELECT p.ID, p.guid FROM {$wpdb->posts} p
             INNER JOIN {$wpdb->posts} pbase ON p.guid = pbase.guid
          WHERE pbase.ID = %s
         ", $id ) );
+        //MySQL is doing a CASE INSENSITIVE join on p.guid!! so double check the results.
+        $guid = false;
+        foreach($moreDuplicates as $duplicate) {
+            if($duplicate->ID == $id) {
+                $guid = $duplicate->guid;
+            }
+        }
+        foreach($moreDuplicates as $duplicate) {
+            if($duplicate->guid == $guid) {
+                $duplicates[] = $duplicate->ID;
+            }
+        }
 
-        $duplicates = array_unique(array_merge($duplicates, $moreDuplicates));
+        $duplicates = array_unique($duplicates);
 
         if(!in_array($id, $duplicates)) $duplicates[] = $id;
 

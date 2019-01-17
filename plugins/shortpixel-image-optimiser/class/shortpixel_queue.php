@@ -75,8 +75,8 @@ class ShortPixelQueue {
          $fp = @fopen($queueName, "r+");
         if(!$fp) {
             $fp = @fopen($queueName, "w");
+            if(!$fp) return false;
         }
-        if(!$fp) return false;
         flock($fp, $lock);
         return $fp;
     }
