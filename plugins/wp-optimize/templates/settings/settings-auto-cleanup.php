@@ -1,10 +1,12 @@
 <?php if (!defined('WPO_VERSION')) die('No direct access allowed'); ?>
 
-	<h3><?php _e('Scheduled clean-up settings', 'wp-optimize'); ?></h3>
+<h3><?php _e('Scheduled clean-up settings', 'wp-optimize'); ?></h3>
 
-	<p>
-		<a href="<?php echo WP_Optimize()->premium_version_link; ?>" target="_blank"><?php _e('Take control of clean-ups: Upgrade to Premium for a more powerful and flexible scheduler', 'wp-optimize'); ?></a>
-	</p>
+<p>
+	<a href="<?php echo WP_Optimize()->premium_version_link; ?>" target="_blank"><?php _e('Take control of clean-ups: Upgrade to Premium for a more powerful and flexible scheduler', 'wp-optimize'); ?></a>
+</p>
+
+<div class="wpo-fieldgroup">
 
 	<p>
 
@@ -75,4 +77,5 @@
 			</label>
 		</p> -->
 
-	</div>
+	</div><!-- END #wp-optimize-auto-options -->
+</div><!-- END .wpo-fieldgroup -->

@@ -88,9 +88,30 @@ var WP_Optimize = function (send_command) {
 		tables_not_found = $('#wpoptimize_table_list_tables_not_found');
 
 	// table sorter library.
+
 	// This calls the tablesorter library in order to sort the table information correctly.
 	// There is a fix below on line 172 to apply applyWidgets on load to avoid diplay hidden for tabs.
 	$(function() {
+		// add parser through the tablesorter addParser method
+		$.tablesorter.addParser({
+			// set a unique id
+			id: 'sizes',
+			is: function(s) {
+				// return false so this parser is not auto detected
+				return false;
+			},
+			format: function(s) {
+				// format your data for normalization
+				var kb = 1024,
+					mb = kb * 1024,
+					gb = mb * 1024;
+
+				return eval(s.toLowerCase().replace(/kb/,['* ', kb].join('')).replace(/mb/,['* ', mb].join('')).replace(/gb/,['* ', gb].join('')).replace(/[^0-9\.\*\s]/g, ''));
+			},
+			// set type, either numeric or text
+			type: 'numeric'
+		});
+
 		table_list.tablesorter({
 			theme: 'default',
 			widgets: ['zebra', 'rows', 'filter'],
@@ -98,8 +119,8 @@ var WP_Optimize = function (send_command) {
 			// This option is to specify with colums will be disabled for sorting
 			headers: {
 				2: {sorter: 'digit'},
-				3: {sorter: 'digit'},
-				4: {sorter: 'digit'},
+				3: {sorter: 'sizes'},
+				4: {sorter: 'sizes'},
 				// For Column Action
 				7: {sorter: false }
 			},
@@ -145,7 +166,7 @@ var WP_Optimize = function (send_command) {
 	function temporarily_display_notice(html_contents, where, delay) {
 		where = ('undefined' === typeof where) ? '#wp-optimize-wrap' : where;
 		delay = ('undefined' === typeof delay) ? 15 : delay;
-		$(html_contents).hide().prependTo(where).slideDown('slow').delay(delay * 1000).slideUp('slow', function () {
+		$(html_contents).hide().prependTo(where).slideDown('fast').delay(delay * 1000).slideUp('fast', function () {
 			$(this).remove();
 		});
 	}
@@ -173,8 +194,8 @@ var WP_Optimize = function (send_command) {
 			
 			if (resp && resp.hasOwnProperty('output')) {
 				for (var i = 0, len = resp.output.length; i < len; i++) {
-					var new_html = '<div class="updated">' + resp.output[i] + '</div>';
-					temporarily_display_notice(new_html, '#actions-results-area');
+					var new_html = '<div class="updated"><p>' + resp.output[i] + '</p></div>';
+					temporarily_display_notice(new_html, '#' + type + '_notice');
 				}
 			}
 		});
@@ -196,35 +217,65 @@ var WP_Optimize = function (send_command) {
 		enable_or_disable_feature('comments', false);
 	});
 
-	$('#wp-optimize-nav-tab-wrapper .nav-tab, #wp-optimize-images-nav-tab-wrapper .nav-tab').click(function (e) {
+	// Main menu
+	$('.wpo-pages-menu').on('click', 'a', function(e) {
+		e.preventDefault();
+		if (!$(this).is('.active')) {
+			$('.wpo-pages-menu a.active').removeClass('active');
+			$('.wpo-page.active').removeClass('active');
+			$(this).addClass('active');
+			$('.wpo-page[data-whichpage="' + $(this).data('menuslug') + '"]').addClass('active');
+			window.scroll(0, 0);
+		}
+		// Close the menu on mobile
+		$('#wp-optimize-nav-page-menu').trigger('click');
 
-		var clicked_tab_id = $(this).attr('id'),
-			container_id = $(this).closest('.nav-tab-wrapper').attr('id'),
-			container_prefix_id = container_id.substring(0, container_id.length - 7);
+	});
 
-		if (!clicked_tab_id) { return; }
-		if (container_prefix_id != clicked_tab_id.substring(0, container_prefix_id.length)) { return; }
-
-		var clicked_tab_id = clicked_tab_id.substring(container_prefix_id.length);
+	// Tabs menu
+	$('.nav-tab-wrapper .nav-tab').click(function (e) {
 
 		e.preventDefault();
 
-		$('#' + container_id + ' .nav-tab:not(#wp-optimize-nav-tab-' + clicked_tab_id + ')').removeClass('nav-tab-active');
-		$(this).addClass('nav-tab-active');
+		var clicked_tab_id = $(this).attr('id'),
+			container = $(this).closest('.nav-tab-wrapper');
 
-		$('#wp-optimize-wrap .' + container_prefix_id + 'contents:not(#' + container_prefix_id + 'contents-' + clicked_tab_id + ')').hide();
-		$('#' + container_prefix_id + 'contents-' + clicked_tab_id).show();
+		if (!clicked_tab_id) { return; }
 
-		// tablesorter fix.
-		// At any time, there is a display none as 2 of the 3 tabs will be hidden.
-		// tablesorter picks this up and then doesnt diplay "zebra" formatting until the user sorts
-		// This fix updates the tab to allow for "zebra" to be applied regardless if any tab is hiiden or not
-		// See Line 78 for .tablesorter
-		if ('tables' == clicked_tab_id) {
-			$("#wpoptimize_table_list").trigger('applyWidgets');
+		toggle_mobile_menu(false);
+		// Mobile menu TABS toggle
+		if ($(this).is('[role="toggle-menu"]')) {
+			toggle_mobile_menu(true);
+			return;
 		}
+
+		container.find('.nav-tab:not(#wp-optimize-nav-tab-' + clicked_tab_id + ')').removeClass('nav-tab-active');
+		
+		$(this).addClass('nav-tab-active');
+		$(this).closest('.wpo-page').find('.wp-optimize-nav-tab-contents').hide();
+		$('#' + clicked_tab_id + '-contents').show();
 	});
 
+	// Mobile menu toggle
+	$('#wp-optimize-nav-page-menu').on('click', function(e) {
+		e.preventDefault();
+		$(this).toggleClass('opened');
+	});
+
+	/**
+	 * Toggle Mobile menu
+	 *
+	 * @param {bool} open
+	 *
+	 * @return {void}
+	 */
+	function toggle_mobile_menu(open) {
+		if (open) {
+			$('#wp-optimize-wrap').addClass('wpo-mobile-menu-opened');
+		} else {
+			$('#wp-optimize-wrap').removeClass('wpo-mobile-menu-opened');
+		}
+	}
 	
 	/**
 	 * Gathers the settings from the settings tab and return in selected format.
@@ -238,13 +289,13 @@ var WP_Optimize = function (send_command) {
 			output_format = ('undefined' === typeof output_format) ? 'string' : output_format;
 
 		if ('object' == output_format) {
-			form_data = $("#wp-optimize-nav-tab-contents-settings form input[name!='action'], #wp-optimize-nav-tab-contents-settings form textarea, #wp-optimize-nav-tab-contents-settings form select, #wp-optimize-nav-tab-contents-optimize input[type='checkbox'], .wp-optimize-nav-tab-contents input[name^='enable-auto-backup-']").serializeJSON({useIntKeysAsArrayIndex: true});
+			form_data = $("#wp-optimize-general-settings form input[name!='action'], #wp-optimize-general-settings form textarea, #wp-optimize-general-settings form select, #wp-optimize-nav-tab-contents-optimize input[type='checkbox'], .wp-optimize-nav-tab-contents input[name^='enable-auto-backup-']").serializeJSON({useIntKeysAsArrayIndex: true});
 		} else {
 			// Excluding the unnecessary 'action' input avoids triggering a very mis-conceived mod_security rule seen on one user's site.
-			form_data = $("#wp-optimize-nav-tab-contents-settings form input[name!='action'], #wp-optimize-nav-tab-contents-settings form textarea, #wp-optimize-nav-tab-contents-settings form select, #wp-optimize-nav-tab-contents-optimize input[type='checkbox'], .wp-optimize-nav-tab-contents input[name^='enable-auto-backup-']").serialize();
+			form_data = $("#wp-optimize-general-settings form input[name!='action'], #wp-optimize-general-settings form textarea, #wp-optimize-general-settings form select, #wp-optimize-nav-tab-contents-optimize input[type='checkbox'], .wp-optimize-nav-tab-contents input[name^='enable-auto-backup-']").serialize();
 
 			// Include unchecked checkboxes. user filter to only include unchecked boxes.
-			$.each($('#wp-optimize-nav-tab-contents-settings form input[type=checkbox], .wp-optimize-nav-tab-contents input[name^="enable-auto-backup-"]')
+			$.each($('#wp-optimize-general-settings form input[type=checkbox], .wp-optimize-nav-tab-contents input[name^="enable-auto-backup-"]')
 					.filter(function (idx) {
 						return $(this).prop('checked') == false
 					}),
@@ -417,7 +468,7 @@ var WP_Optimize = function (send_command) {
 
 				// Get table type information.
 				table_type = $table_information.eq(5).text();
-				table = $table_information.eq(1).text();
+				table = $table_information.eq(1).data('tablename');
 				optimizable = $table_information.eq(5).data('optimizable');
 
 				// Make sure the table isnt blank.
@@ -426,7 +477,7 @@ var WP_Optimize = function (send_command) {
 					if ('1' == optimizable || optimization_force) {
 						var data = {
 							optimization_id: id,
-							optimization_table: $table_information.eq(1).text(),
+							optimization_table: table,
 							optimization_table_type: table_type,
 							optimization_force: optimization_force
 						};
@@ -495,7 +546,7 @@ var WP_Optimize = function (send_command) {
 	/**
 	 * Run single optimization click.
 	 */
-	$('#wp-optimize-nav-tab-contents-optimize').on('click', 'button.wp-optimize-settings-optimization-run-button', function () {
+	$('#wp-optimize-nav-tab-wpo_database-optimize-contents').on('click', 'button.wp-optimize-settings-optimization-run-button', function () {
 		var optimization_id = $(this).closest('.wp-optimize-settings').data('optimization_id');
 		if (!optimization_id) {
 			console.log("Optimization ID corresponding to pressed button not found");
@@ -515,7 +566,7 @@ var WP_Optimize = function (send_command) {
 	/**
 	 * Run all optimizations click.
 	 */
-	$('#wp-optimize-nav-tab-contents-optimize').on('click', '#wp-optimize', function (e) {
+	$('#wp-optimize-nav-tab-wpo_database-optimize-contents').on('click', '#wp-optimize', function (e) {
 		var run_btn = $(this);
 
 		e.preventDefault();
@@ -585,6 +636,135 @@ var WP_Optimize = function (send_command) {
 
 		send_command('save_auto_backup_option', options);
 	}
+
+	var browser_cache_enable_btn = $('#wp_optimize_browser_cache_enable');
+
+	/**
+	 * Trigger click Browser cache button if user push Enter and form start submitting.
+	 */
+	browser_cache_enable_btn.closest('form').submit(
+		function(e) {
+			e.preventDefault();
+			browser_cache_enable_btn.trigger('click');
+			return false;
+		}
+	);
+
+	/**
+	 * Handle Enable Gzip compression button click.
+	 */
+	$('#wp_optimize_gzip_compression_enable').on('click', function() {
+		var button = $(this),
+			loader = button.next();
+
+		loader.show();
+
+		send_command('enable_gzip_compression', {enable: button.data('enable')}, function(response) {
+			var gzip_status_message = $('#wpo_gzip_compression_status');
+			if (response) {
+				if (response.enabled) {
+					button.text(wpoptimize.disable);
+					button.data('enable', '0');
+					gzip_status_message.removeClass('wpo-disabled').addClass('wpo-enabled');
+				} else {
+					button.text(wpoptimize.enable);
+					button.data('enable', '1');
+					gzip_status_message.addClass('wpo-disabled').removeClass('wpo-enabled');
+				}
+
+				if (response.message) {
+					$('#wpo_gzip_compression_error_message').text(response.message).show();
+				} else {
+					$('#wpo_gzip_compression_error_message').hide();
+				}
+
+				if (response.output) {
+					$('#wpo_gzip_compression_output').html(response.output).show();
+				} else {
+					$('#wpo_gzip_compression_output').hide();
+				}
+
+			} else {
+				alert(wpoptimize.error_unexpected_response);
+			}
+
+			loader.hide();
+		}).fail(function() {
+			alert(wpoptimize.error_unexpected_response);
+			loader.hide();
+		});
+	});
+
+	/**
+	 * Handle Enable browser cache button click.
+	 */
+	browser_cache_enable_btn.on('click', function() {
+		var browser_cache_expire_days_el = $('#wpo_browser_cache_expire_days'),
+			browser_cache_expire_hours_el = $('#wpo_browser_cache_expire_hours'),
+			browser_cache_expire_days = parseInt(browser_cache_expire_days_el.val(), 10),
+			browser_cache_expire_hours = parseInt(browser_cache_expire_hours_el.val(), 10),
+			button = $(this),
+			loader = button.next();
+
+		// check for invalid integer.
+		if (isNaN(browser_cache_expire_days)) browser_cache_expire_days = 0;
+		if (isNaN(browser_cache_expire_hours)) browser_cache_expire_hours = 0;
+
+		if (browser_cache_expire_days < 0 || browser_cache_expire_hours < 0) {
+			$('#wpo_browser_cache_error_message').text(wpoptimize.please_use_positive_integers).show();
+			return false;
+		} else if (browser_cache_expire_hours > 23) {
+			$('#wpo_browser_cache_error_message').text(wpoptimize.please_use_valid_values).show();
+			return false;
+		} else {
+			$('#wpo_browser_cache_error_message').hide();
+		}
+
+		// set parsed values into input fields.
+		browser_cache_expire_days_el.val(browser_cache_expire_days);
+		browser_cache_expire_hours_el.val(browser_cache_expire_hours);
+
+		loader.show();
+
+		send_command('enable_browser_cache', {browser_cache_expire_days: browser_cache_expire_days, browser_cache_expire_hours: browser_cache_expire_hours}, function(response) {
+			var cache_status_message = $('#wpo_browser_cache_status');
+			if (response) {
+				if (response.enabled) {
+					button.text(wpoptimize.update);
+					cache_status_message.removeClass('wpo-disabled').addClass('wpo-enabled');
+				} else {
+					button.text(wpoptimize.enable);
+					cache_status_message.addClass('wpo-disabled').removeClass('wpo-enabled');
+				}
+
+				if (response.message) {
+					$('#wpo_browser_cache_message').text(response.message).show();
+				} else {
+					$('#wpo_browser_cache_message').hide();
+				}
+
+				if (response.error_message) {
+					$('#wpo_browser_cache_error_message').text(response.error_message).show();
+				} else {
+					$('#wpo_browser_cache_error_message').hide();
+				}
+
+				if (response.output) {
+					$('#wpo_browser_cache_output').html(response.output).show();
+				} else {
+					$('#wpo_browser_cache_output').hide();
+				}
+
+			} else {
+				alert(wpoptimize.error_unexpected_response);
+			}
+
+			loader.hide();
+		}).fail(function() {
+			alert(wpoptimize.error_unexpected_response);
+			loader.hide();
+		});
+	});
 
 	// Show/hide sites list for multi-site settings.
 	var wpo_settings_sites_list = $('#wpo_settings_sites_list'),
@@ -755,7 +935,9 @@ var WP_Optimize = function (send_command) {
 		send_command('save_manual_run_optimization_options', optimization_options);
 	}
 	
-	$('#wp_optimize_table_list_refresh').click(function () {
+	$('#wp_optimize_table_list_refresh').click(function (e) {
+
+		e.preventDefault();
 		
 		$('#wpoptimize_table_list tbody').css('opacity', '0.5');
 		send_command('get_table_list', false, function (response) {
@@ -778,11 +960,12 @@ var WP_Optimize = function (send_command) {
 	
 	$('#settings_form').on('click', '#wp-optimize-settings-save', function (e) {
 
+		e.preventDefault();
+
 		// validate logger settings.
 		if (!validate_logger_settings()) return false;
 
-		e.preventDefault();
-		
+		console.log('What?');
 		$('#save_spinner').show();
 
 		var form_data = gather_settings();
@@ -842,8 +1025,25 @@ var WP_Optimize = function (send_command) {
 
 	// Handle single optimization click.
 	$('#wpoptimize_table_list').on('click', '.run-single-table-optimization', function() {
-		var btn = $(this),
-			spinner = btn.next(),
+		var take_backup_checkbox = $('#enable-auto-backup-1');
+
+		// check if backup checkbox is checked for db tables
+		if (take_backup_checkbox.is(':checked')) {
+			take_a_backup_with_updraftplus(run_single_table_optimization($(this)));
+		} else {
+			run_single_table_optimization($(this));
+		}
+	});
+
+	/**
+	 * Run single table optimization. Handle click on Optimize button.
+	 *
+	 * @param {Object} btn jQuery object clicked Optimize button
+	 *
+	 * @return {void}
+	 */
+	function run_single_table_optimization(btn) {
+		var spinner = btn.next(),
 			action_done_icon = spinner.next(),
 			table_name = btn.data('table'),
 			table_type = btn.data('type'),
@@ -852,7 +1052,7 @@ var WP_Optimize = function (send_command) {
 				optimization_table: table_name,
 				optimization_table_type: table_type
 			};
-
+		btn.hide();
 		// if checked force button then send force value.
 		if (single_table_optimization_force.is(':checked')) {
 			data['optimization_force'] = true;
@@ -863,9 +1063,11 @@ var WP_Optimize = function (send_command) {
 		send_command('do_optimization', { optimization_id: 'optimizetables', data: data }, function () {
 			btn.prop('disabled', false);
 			spinner.addClass('visibility-hidden');
-			action_done_icon.show().removeClass('visibility-hidden').delay(3000).fadeOut('slow');
+			action_done_icon.show().removeClass('visibility-hidden').delay(2500).fadeOut('fast', function() {
+				btn.show();
+			});
 		});
-	});
+	}
 
 	// Handle force optimization checkbox on table list tab.
 	single_table_optimization_force.change(function() {
@@ -1166,6 +1368,63 @@ var WP_Optimize = function (send_command) {
 		});
 	});
 
+	// Handle delete table click
+	$('#wpoptimize_table_list').on('click', '.run-single-table-delete', function() {
+		if (!confirm(wpoptimize.are_you_sure_you_want_to_remove_this_table)) return false;
+
+		var take_backup_checkbox = $('#enable-auto-backup-1');
+
+		// check if backup checkbox is checked for db tables
+		if (take_backup_checkbox.is(':checked')) {
+			take_a_backup_with_updraftplus(remove_single_db_table($(this)));
+		} else {
+			take_backup_checkbox();
+		}
+	});
+
+	/**
+	 * Send ajax commant to remove single database table.
+	 *
+	 * @param {Object} btn jQuery object of clicked "Remove" button.
+	 *
+	 * @return void
+	 */
+	function remove_single_db_table(btn) {
+
+		var spinner = btn.next(),
+			action_done_icon = spinner.next(),
+			table_name = btn.data('table'),
+			data = {
+				optimization_id: 'orphanedtables',
+				optimization_table: table_name
+			};
+
+		spinner.removeClass('visibility-hidden');
+
+		send_command('do_optimization', { optimization_id: 'orphanedtables', data: data }, function (response) {
+			if (response.result.meta.success) {
+				var row = btn.closest('tr');
+
+				btn.prop('disabled', false);
+				spinner.addClass('visibility-hidden');
+				action_done_icon.show().removeClass('visibility-hidden');
+
+				// remove row for deleted table.
+				setTimeout(function() {
+					row.fadeOut('slow', function() {
+						row.remove();
+
+						change_actions_column_visibility();
+					});
+				}, 500);
+			} else {
+				btn.prop('disabled', false);
+				spinner.addClass('visibility-hidden');
+				alert(wpoptimize.table_was_not_deleted.replace('%s', table_name));
+			}
+		});
+	}
+
 	change_actions_column_visibility();
 
 	/**
@@ -1332,7 +1591,8 @@ jQuery(document).ready(function ($) {
 	/**
 	 * Handle add logging destination click.
 	 */
-	add_logging_btn.on('click', function() {
+	add_logging_btn.on('click', function(e) {
+		e.preventDefault();
 		$('#wp-optimize-logger-settings .save_settings_reminder').after(get_add_logging_form_html());
 
 		filter_select_destinations($('.wpo_logger_type').first());
@@ -1341,7 +1601,7 @@ jQuery(document).ready(function ($) {
 	/**
 	 * Handle logging destination select change.
 	 */
-	$('#wp-optimize-nav-tab-contents-settings').on('change', '.wpo_logger_type', function() {
+	$('#wp-optimize-general-settings').on('change', '.wpo_logger_type', function() {
 		var select = $(this),
 			logger_id = select.val(),
 			options_container = select.parent().find('.wpo_additional_logger_options');
@@ -1399,7 +1659,7 @@ jQuery(document).ready(function ($) {
 	/**
 	 * Handle delete logger destination click.
 	 */
-	$('#wp-optimize-nav-tab-contents-settings').on('click', '.wpo_delete_logger', function() {
+	$('#wp-optimize-general-settings').on('click', '.wpo_delete_logger', function() {
 
 		if (!confirm(wpoptimize.are_you_sure_you_want_to_remove_logging_destination)) {
 			return false;
@@ -1536,5 +1796,19 @@ jQuery(document).ready(function ($) {
 
 		return options_list.join('');
 	}
+
+	/**
+	 * Layout - Adds `is-scrolled` class to the body element when scrolled.
+	 */
+	var is_scrolled = false;
+	$(window).on('scroll', function(e) {
+		window.requestAnimationFrame(function() {
+			var threshold = $('.wpo-main-header').length ? $('.wpo-main-header')[0].offsetTop : 0;
+			if ((window.pageYOffset > threshold - 20) != is_scrolled) {
+				is_scrolled = !is_scrolled;
+				$('body').toggleClass('is-scrolled', is_scrolled);
+			}
+		});
+	});
 });
 

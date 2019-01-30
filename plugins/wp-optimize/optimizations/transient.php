@@ -6,6 +6,8 @@ class WP_Optimization_transient extends WP_Optimization {
 
 	public $available_for_auto = true;
 
+	public $available_for_saving = true;
+
 	public $auto_default = false;
 
 	public $ui_sort_order = 5000;

@@ -228,8 +228,11 @@ class WP_Optimize_Options {
 		}
 
 		/** Save logging options */
-		$this->update_option('logging', $settings['wpo-logger-type']);
-		$this->update_option('logging-additional', $settings['wpo-logger-options']);
+		$logger_type = isset($settings['wpo-logger-type']) ? $settings['wpo-logger-type'] : '';
+		$logger_options = isset($settings['wpo-logger-options']) ? $settings['wpo-logger-options'] : '';
+		
+		$this->update_option('logging', $logger_type);
+		$this->update_option('logging-additional', $logger_options);
 
 		// Save selected optimization settings.
 		$this->save_sent_manual_run_optimization_options($settings, true, false);

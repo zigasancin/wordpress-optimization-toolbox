@@ -6,6 +6,8 @@ class WP_Optimization_pingbacks extends WP_Optimization {
 
 	public $ui_sort_order = 6000;
 
+	public $available_for_saving = true;
+
 	/**
 	 * Prepare data for preview widget.
 	 *

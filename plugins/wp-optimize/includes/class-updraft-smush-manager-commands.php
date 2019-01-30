@@ -139,7 +139,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$ui_update['percent_saved'] = number_format($this->task_manager->options->get_option('total_percent_saved', 1), 2).'%';
 		$ui_update['failed_task_count'] = $this->task_manager->get_failed_task_count();
 
-		$ui_update['summary'] = sprintf(__("A total of %d image(s) were compressed on this site, saving appoximately %s of space at an average of %02d percent per image.", 'wp-optimize'), $ui_update['completed_task_count'], $ui_update['bytes_saved'], number_format($ui_update['percent_saved'], 2));
+		$ui_update['summary'] = sprintf(__("A total of %d image(s) were compressed on this site, saving approximately %s of space at an average of %02d percent per image.", 'wp-optimize'), $ui_update['completed_task_count'], $ui_update['bytes_saved'], number_format($ui_update['percent_saved'], 2));
 		$ui_update['failed'] = sprintf(__("%d image(s) could not be compressed. Please see the logs for more information or try again later.", 'wp-optimize'), $ui_update['failed_task_count']);
 		$ui_update['pending'] = sprintf(__("%d image(s) images were selected for compressing previously, but were not all processed. You can either complete them now or cancel and retry later.", 'wp-optimize'), $ui_update['pending_tasks']);
 		$ui_update['smush_complete'] = $this->task_manager->is_queue_processed();
@@ -252,7 +252,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 			readfile($logfile);
 			exit;
 		} else {
-			return new WP_Error('log_file_error', __('Log file does not exist or cant be read', 'wp-optimize'));
+			return new WP_Error('log_file_error', __('Log file does not exist or could not be read', 'wp-optimize'));
 		}
 		
 		return $response;

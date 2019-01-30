@@ -40,7 +40,7 @@ class WP_Optimization_trash extends WP_Optimization {
 		$sql = $this->wpdb->prepare(
 			"SELECT `ID`, `post_title`, `post_date`".
 			" FROM `" . $this->wpdb->posts . "`".
-			" WHERE post_type = 'trash'".
+			" WHERE post_status = 'trash'".
 			$retention_subquery.
 			" ORDER BY `ID` LIMIT %d, %d;",
 			array(
@@ -62,7 +62,7 @@ class WP_Optimization_trash extends WP_Optimization {
 		}
 
 		// get total count auto-draft for optimization.
-		$sql = "SELECT COUNT(*) FROM `" . $this->wpdb->posts . "` WHERE post_type = 'trash'";
+		$sql = "SELECT COUNT(*) FROM `" . $this->wpdb->posts . "` WHERE post_status = 'trash'";
 
 		if ('true' == $this->retention_enabled) {
 			$sql .= ' and post_modified < NOW() - INTERVAL ' . $this->retention_period . ' WEEK';

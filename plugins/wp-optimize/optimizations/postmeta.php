@@ -8,6 +8,8 @@ class WP_Optimization_postmeta extends WP_Optimization {
 
 	public $available_for_auto = false;
 
+	public $available_for_saving = true;
+
 	public $auto_default = false;
 
 	/**

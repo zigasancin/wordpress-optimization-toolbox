@@ -21,16 +21,34 @@
 	foreach ($tablesstatus as $tablestatus) {
 		$no++;
 		echo "<tr>\n";
-		echo '<td>'.number_format_i18n($no).'</td>'."\n";
-		echo "<td>".htmlspecialchars($tablestatus->Name)."</td>\n";
-		echo '<td>'.number_format_i18n($tablestatus->Rows).'</td>'."\n";
-		echo '<td>'.$wp_optimize->format_size($tablestatus->Data_length).'</td>'."\n";
-		echo '<td>'.$wp_optimize->format_size($tablestatus->Index_length).'</td>'."\n";
+		echo '<td data-colname="'.__('No.', 'wp-optimize').'">'.number_format_i18n($no).'</td>'."\n";
+		echo '<td data-tablename="'.esc_attr($tablestatus->Name).'" data-colname="'.__('Table', 'wp-optimize').'">'.htmlspecialchars($tablestatus->Name);
+
+		if ($tablestatus->plugin) {
+			echo "<br><span style='font-size: 11px;'>".__('Belongs to:', 'wp-optimize')."</span> ";
+			if (__('WordPress core', 'wp-optimize') == $tablestatus->plugin) {
+				echo "<span style='font-size: 11px;'>{$tablestatus->plugin}</span>";
+			} else {
+				echo " <a href='https://wordpress.org/plugins/{$tablestatus->plugin}/' target='_blank'><span style='font-size: 11px;'>{$tablestatus->plugin}</a>";
+
+				if (false == $tablestatus->plugin_status['installed']) {
+					echo " <span style='font-size: 11px; color: #9B0000; font-weight: bold;'>[".__('not installed', 'wp-optimize')."]</span>";
+				} elseif (false == $tablestatus->plugin_status['active']) {
+					echo " <span style='font-size: 11px; color: #9B0000; font-weight: bold;'>[".__('inactive', 'wp-optimize')."]</span>";
+				}
+			}
+		}
+
+		echo "</td>\n";
+
+		echo '<td data-colname="'.__('Records', 'wp-optimize').'">'.number_format_i18n($tablestatus->Rows).'</td>'."\n";
+		echo '<td data-colname="'.__('Data Size', 'wp-optimize').'">'.$wp_optimize->format_size($tablestatus->Data_length).'</td>'."\n";
+		echo '<td data-colname="'.__('Index Size', 'wp-optimize').'">'.$wp_optimize->format_size($tablestatus->Index_length).'</td>'."\n";
 
 		if ($tablestatus->is_optimizable) {
-			echo '<td data-optimizable="1">'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";
+			echo '<td data-colname="'.__('Type', 'wp-optimize').'" data-optimizable="1">'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";
 
-			echo '<td>';
+			echo '<td data-colname="'.__('Overhead', 'wp-optimize').'">';
 			$font_colour = (($optimize_db) ? (($tablestatus->Data_free > 0) ? '#0000FF' : '#004600') : (($tablestatus->Data_free > 0) ? '#9B0000' : '#004600'));
 			echo '<span style="color:'.$font_colour.';">';
 			echo $wp_optimize->format_size($tablestatus->Data_free);
@@ -41,15 +59,15 @@
 			$total_gain += $tablestatus->Data_free;
 			$non_inno_db_tables++;
 		} else {
-			echo '<td data-optimizable="0">'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";
-			echo '<td>';
+			echo '<td data-colname="'.__('Type', 'wp-optimize').'" data-optimizable="0">'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";
+			echo '<td data-colname="'.__('Overhead', 'wp-optimize').'">';
 			echo '<span style="color:#0000FF;">-</span>';
 			echo '</td>'."\n";
 
 			$inno_db_tables++;
 		}
 
-		echo '<td>'.apply_filters('wpo_tables_list_additional_column_data', '', $tablestatus).'</td>';
+		echo '<td data-colname="'.__('Actions', 'wp-optimize').'">'.apply_filters('wpo_tables_list_additional_column_data', '', $tablestatus).'</td>';
 
 		$row_usage += $tablestatus->Rows;
 		$data_usage += $tablestatus->Data_length;

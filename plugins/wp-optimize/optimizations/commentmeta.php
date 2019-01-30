@@ -6,6 +6,8 @@ class WP_Optimization_commentmeta extends WP_Optimization {
 
 	public $ui_sort_order = 9000;
 
+	public $available_for_saving = true;
+
 	private $processed_trash_count;
 
 	private $processed_akismet_count;

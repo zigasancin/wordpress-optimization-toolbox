@@ -31,7 +31,7 @@ class WP_Optimization_repairtables extends WP_Optimization {
 		if (isset($this->data['optimization_table']) && '' != $this->data['optimization_table']) {
 			$table = $this->optimizer->get_table($this->data['optimization_table']);
 
-			$result = $this->repair_table($table);
+			$result = (false === $table) ? false : $this->repair_table($table);
 
 			if ($result) {
 				$wp_optimize = WP_Optimize();

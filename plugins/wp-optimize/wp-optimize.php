@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: https://getwpo.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.2.6
+Version: 2.2.11
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '2.2.6');
+define('WPO_VERSION', '2.2.11');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -36,8 +36,17 @@ class WP_Optimize {
 
 	protected static $_logger_instance = null;
 
+	protected static $_browser_cache = null;
+
 	protected static $_db_info = null;
 
+	protected static $_cache = null;
+
+	protected static $_gzip_compression = null;
+
+	/**
+	 * Class constructor
+	 */
 	public function __construct() {
 
 		// Checks if premium is installed along with plugins needed.
@@ -108,6 +117,19 @@ class WP_Optimize {
 	}
 
 	/**
+	 * Create instance of WP_Optimize_Browser_Cache.
+	 *
+	 * @return WP_Optimize_Browser_Cache
+	 */
+	public static function get_browser_cache() {
+		if (empty(self::$_browser_cache)) {
+			if (!class_exists('WP_Optimize_Browser_Cache')) include_once(WPO_PLUGIN_MAIN_PATH.'/includes/class-wp-optimize-browser-cache.php');
+			self::$_browser_cache = new WP_Optimize_Browser_Cache();
+		}
+		return self::$_browser_cache;
+	}
+
+	/**
 	 * Returns WP_Optimize_Database_Information instance.
 	 *
 	 * @return WP_Optimize_Database_Information
@@ -118,6 +140,33 @@ class WP_Optimize {
 			self::$_db_info = new WP_Optimize_Database_Information();
 		}
 		return self::$_db_info;
+	}
+
+	/**
+	 * Returns instance of WP_Optimize_Gzip_Compression.
+	 *
+	 * @return WP_Optimize_Gzip_Compression
+	 */
+	static public function get_gzip_compression() {
+		if (empty(self::$_gzip_compression)) {
+			if (!class_exists('WP_Optimize_Gzip_Compression')) include_once(WPO_PLUGIN_MAIN_PATH.'/includes/class-wp-optimize-gzip-compression.php');
+			self::$_gzip_compression = new WP_Optimize_Gzip_Compression();
+		}
+		return self::$_gzip_compression;
+	}
+
+	/**
+	 * Create instance of WP_Optimize_Htaccess.
+	 *
+	 * @param string $htaccess_file absolute path to htaccess file, by default it use .htaccess in WordPress root directory.
+	 * @return WP_Optimize_Htaccess
+	 */
+	public static function get_htaccess($htaccess_file = '') {
+		if (!class_exists('WP_Optimize_Cache')) {
+			include_once(WPO_PLUGIN_MAIN_PATH . '/includes/class-wp-optimize-htaccess.php');
+		}
+
+		return new WP_Optimize_Htaccess($htaccess_file);
 	}
 
 	/**
@@ -157,6 +206,40 @@ class WP_Optimize {
 			if (is_a($wp_optimize_premium, 'WP_Optimize_Premium')) return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Check if script running on Apache web server.
+	 *
+	 * @return bool
+	 */
+	public function is_apache_server() {
+		return (preg_match('/apache/i', $_SERVER['SERVER_SOFTWARE']) || (function_exists('apache_get_version') && apache_get_version())) ? true : false;
+	}
+
+	/**
+	 * Check if Apache module or modules active.
+	 *
+	 * @param string|array $module single Apache module name or Apache module names.
+	 * @return bool
+	 */
+	public function is_apache_module_loaded($module) {
+		if (!$this->is_apache_server()) return false;
+
+		$module_loaded = true;
+
+		if (is_array($module)) {
+			foreach ($module as $single_module) {
+				if (!in_array($single_module, apache_get_modules())) {
+					$module_loaded = false;
+					break;
+				}
+			}
+		} else {
+			$module_loaded = in_array($module, apache_get_modules());
+		}
+
+		return $module_loaded;
 	}
 
 	/**
@@ -250,7 +333,7 @@ class WP_Optimize {
 		// Loops around each plugin available.
 		foreach ($get_plugins as $key => $value) {
 			// If the plugin name matches that of the specified name, it will gather details.
-			if ($value['Name'] != $name) continue;
+			if ($value['Name'] != $name && $value['TextDomain'] != $name) continue;
 			$plugin_info['installed'] = true;
 			$plugin_info['name'] = $key;
 			$plugin_info['version'] = $value['Version'];
@@ -366,7 +449,9 @@ class WP_Optimize {
 
 		$result = json_encode($results);
 
-		$json_last_error = json_last_error();
+		// Requires PHP 5.3+
+		// @codingStandardsIgnoreLine
+		$json_last_error = function_exists('json_last_error') ? json_last_error() : false;
 
 		// if json_encode returned error then return error.
 		if ($json_last_error) {
@@ -388,19 +473,42 @@ class WP_Optimize {
 	/**
 	 * Builds the Tabs that should be displayed
 	 *
-	 * @return String Returns all tabs specified
+	 * @return array Returns all tabs specified
 	 */
-	public function get_tabs() {
-		return apply_filters('wp_optimize_admin_page_tabs', array('optimize' => 'WP-Optimize', 'tables' => __('Table information', 'wp-optimize'), 'settings' => __('Settings', 'wp-optimize'), 'may_also' => __('Premium / Plugin family', 'wp-optimize')));
+	public function get_tabs($page) {
+		// define tabs for pages.
+		$pages_tabs = array(
+			'WP-Optimize' => array(
+				'settings' => array(
+					'title' => __('Settings', 'wp-optimize'),
+				),
+			),
+			'wpo_database' => array('optimize' => __('Optimizations', 'wp-optimize'), 'tables' => __('Tables', 'wp-optimize')),
+			'wpo_cache' => array(
+				'gzip' => __('Gzip compression', 'wp-optimize'), // Adds a GZIP tab
+				'settings' => __('Static file caching', 'wp-optimize')  // Adds a settings tab
+			),
+			'wpo_support' => array('support' => __('Support / FAQs', 'wp-optimize')),
+			'wpo_mayalso' => array('may_also' => __('Premium / Plugin family', 'wp-optimize')),
+		);
+
+		$tabs = (array_key_exists($page, $pages_tabs)) ? $pages_tabs[$page] : array();
+
+		return apply_filters('wp_optimize_admin_page_'.$page.'_tabs', $tabs);
 	}
 
-	public function wp_optimize_menu() {
+	/**
+	 * Main page structure.
+	 */
+	public function display_admin() {
 		$capability_required = $this->capability_required();
 
 		if (!current_user_can($capability_required) || (!$this->can_run_optimizations() && !$this->can_manage_options())) {
 			echo "Permission denied.";
 			return;
 		}
+
+		$this->register_admin_content();
 
 		$enqueue_version = (defined('WP_DEBUG') && WP_DEBUG) ? WPO_VERSION.'.'.time() : WPO_VERSION;
 		$min_or_not = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '.min';
@@ -409,14 +517,14 @@ class WP_Optimize {
 
 		wp_register_script('updraft-queue-js', WPO_PLUGIN_URL.'js/queue'.$min_or_not.'.js', array(), $enqueue_version);
 		wp_enqueue_script('wp-optimize-admin-js', WPO_PLUGIN_URL.'js/wpadmin'.$min_or_not.'.js', array('jquery', 'updraft-queue-js'), $enqueue_version);
-		wp_enqueue_style('wp-optimize-admin-css', WPO_PLUGIN_URL.'css/admin'.$min_or_not.'.css', array(), $enqueue_version);
+		wp_enqueue_style('wp-optimize-admin-css', WPO_PLUGIN_URL.'css/wp-optimize-admin'.$min_or_not.'.css', array(), $enqueue_version);
 		// Using tablesorter to help with organising the DB size on Table Information
 		// https://github.com/Mottie/tablesorter
 		wp_enqueue_script('tablesorter-js', WPO_PLUGIN_URL.'js/tablesorter/jquery.tablesorter'.$min_or_not.'.js', array('jquery'), $enqueue_version);
 
 		wp_enqueue_script('tablesorter-widgets-js', WPO_PLUGIN_URL.'js/tablesorter/jquery.tablesorter.widgets'.$min_or_not.'.js', array('jquery'), $enqueue_version);
 
-		wp_enqueue_style('tablesorter-css', WPO_PLUGIN_URL.'css/tablesorter/theme.default.min.css', array(), $enqueue_version);
+		// wp_enqueue_style('tablesorter-css', WPO_PLUGIN_URL.'css/tablesorter/theme.default.min.css', array(), $enqueue_version);
 
 		$js_variables = $this->wpo_js_translations();
 		$js_variables['loggers_classes_info'] = $this->get_loggers_classes_info();
@@ -425,105 +533,233 @@ class WP_Optimize {
 
 		do_action('wpo_premium_scripts_styles', $min_or_not, $enqueue_version);
 
-		do_action('wpo_premium_scripts_styles', $min_or_not, $enqueue_version);
+		echo '<div id="wp-optimize-wrap">';
+		
+		$this->include_template('admin-page-header.php', false);
 
+		echo '<div id="actions-results-area"></div>';
+		
+		$pages = $this->get_submenu_items();
+
+		foreach ($pages as $page) {
+			if (isset($page['menu_slug'])) {
+				$this->display_admin_page($page['menu_slug']);
+			}
+		}
+
+		// closes main plugin wrapper div. #wp-optimize-wrap
+		echo '</div><!-- END #wp-optimize-wrap -->';
+
+	}
+
+	/**
+	 * Prepare and display admin page with $page id.
+	 *
+	 * @param string $page wp-optimize page id i.e. dashboard, database, images, cache, ...
+	 */
+	public function display_admin_page($page) {
+
+		$active_page = !empty($_REQUEST['page']) ? $_REQUEST['page'] : '';
+
+		echo '<div class="wpo-page' . ($active_page == $page ? ' active' : '') . '" data-whichpage="'.$page.'">';
+
+		echo '<div class="wpo-main">';
+
+		// get defined tabs for $page.
+		$tabs = $this->get_tabs($page);
+
+		// if no tabs defined for $page then use $page as $active_tab for load template, doing related actions e t.c.
+		if (empty($tabs)) {
+			$active_tab = $page;
+		} else {
+			$tab_keys = array_keys($tabs);
+			$default_tab = apply_filters('wp_optimize_admin_'.$page.'_default_tab', $tab_keys[0]);
+			$active_tab = isset($_GET['tab']) ? substr($_GET['tab'], 12) : $default_tab;
+			if (!in_array($active_tab, array_keys($tabs))) $active_tab = $default_tab;
+		}
+
+		do_action('wp_optimize_admin_page_'.$page, $active_tab);
+
+		// if tabs defined then display
+		if (!empty($tabs)) {
+			$this->include_template('admin-page-header-tabs.php', false, array('page' => $page, 'active_tab' => $active_tab, 'tabs' => $tabs));
+		}
+
+		foreach ($tabs as $tab_id => $tab_description) {
+			// output wrap div for tab with id #wp-optimize-nav-tab-contents-'.$page.'-'.$tab_id
+			echo '<div class="wp-optimize-nav-tab-contents" id="wp-optimize-nav-tab-'.$page.'-'.$tab_id.'-contents" '.(($tab_id == $active_tab) ? '' : 'style="display:none;"').'>';
+			
+			echo '<div class="postbox wpo-tab-postbox">';
+			// call action for generate tab content.
+			
+			do_action('wp_optimize_admin_page_'.$page.'_'.$tab_id);
+
+			// closes postbox.
+			echo '</div><!-- END .postbox -->';
+			// closes tab wrapper.
+			echo '</div><!-- END .wp-optimize-nav-tab-contents -->';
+		}
+
+		echo '</div><!-- END .wpo-main -->';
+
+		do_action('wp_optimize_admin_after_page_'.$page, $active_tab);
+
+		echo '</div><!-- END .wpo-page -->';
+
+	}
+
+	/**
+	 * Define required actions for admin pages.
+	 */
+	public function register_admin_content() {
+		/**
+		 * SETTINGS
+		 */
+		add_action('wp_optimize_admin_page_WP-Optimize_settings', array($this, 'output_dashboard_settings_tab'), 20);
+
+		/**
+		 * Premium / other plugins
+		 */
+		add_action('wp_optimize_admin_page_wpo_mayalso_may_also', array($this, 'output_dashboard_other_plugins_tab'), 20);
+
+		/**
+		 * DATABSE
+		 */
+		add_action('wp_optimize_admin_page_wpo_database_optimize', array($this, 'output_database_optimize_tab'), 20);
+
+		add_action('wp_optimize_admin_page_wpo_database_tables', array($this, 'output_database_tables_tab'), 20);
+
+		/**
+		 * CACHE
+		 */
+		add_action('wp_optimize_admin_page_wpo_cache', array($this, 'output_dashboard_cache_tab'), 20);
+
+		/**
+		 * CACHE
+		 */
+		add_action('wp_optimize_admin_page_wpo_cache_gzip', array($this, 'output_cache_gzip_tab'), 20);
+		add_action('wp_optimize_admin_page_wpo_cache_settings', array($this, 'output_cache_settings_tab'), 20);
+
+		/**
+		 * SUPPORT
+		 */
+		add_action('wp_optimize_admin_page_wpo_support_support', array($this, 'output_dashboard_support_tab'), 20);
+		// Display Support page.
+
+	}
+
+	/**
+	 * Dashboard status
+	 */
+	public function output_status_column() {
+	?>
+		<div class="postbox wpo-tab-postbox right-col">
+			<?php WP_Optimize()->include_template('settings/status-box-contents.php', false, array('optimize_db' => false)); ?>
+		</div>
+	<?php
+	}
+
+	/**
+	 * Dashboard settings
+	 */
+	public function output_dashboard_settings_tab() {
 		$options = $this->get_options();
 
-		$tabs = $this->get_tabs();
+		if ('POST' == $_SERVER['REQUEST_METHOD']) {
+			// Nonce check.
+			check_admin_referer('wpo_settings');
 
-		$default_tab = apply_filters('wp_optimize_admin_default_tab', 'optimize');
+			$output = $options->save_settings($_POST);
 
-		$active_tab = isset($_GET['tab']) ? substr($_GET['tab'], 12) : $default_tab;
+			if (isset($_POST['wp-optimize-settings'])) {
+				// save settings request sent.
+				$output = $options->save_settings($_POST);
+			}
 
-		if (!in_array($active_tab, array_keys($tabs))) $active_tab = $default_tab;
+			$this->wpo_render_output_messages($output);
+		}
 
+		if ($this->can_manage_options()) {
+			$this->include_template('settings/settings.php');
+		} else {
+			$this->prevent_manage_options_info();
+		}
+	}
+
+	/**
+	 * Dashboard support tab
+	 */
+	public function output_dashboard_support_tab() {
+		WP_Optimize()->include_template('settings/support-and-faqs.php');
+	}
+
+	/**
+	 * Dashboard Other plugins / premium tab
+	 */
+	public function output_dashboard_other_plugins_tab() {
+		$this->include_template('settings/may-also-like.php');
+	}
+
+	/**
+	 * Cache tab
+	 */
+	public function output_cache_gzip_tab() {
+		WP_Optimize()->include_template('cache/gzip-compression.php');
+	}
+
+	/**
+	 * Cache tab
+	 */
+	public function output_cache_settings_tab() {
+		WP_Optimize()->include_template('cache/browser-cache.php');
+	}
+
+	/**
+	 * Outputs the DB optimize Tab
+	 */
+	public function output_database_optimize_tab() {
+		$optimizer = $this->get_optimizer();
+		$options = $this->get_options();
+
+		// check if nonce passed.
 		$nonce_passed = (!empty($_REQUEST['_wpnonce']) && wp_verify_nonce($_REQUEST['_wpnonce'], 'wpo_optimization')) ? true : false;
 
-		if ('optimize' == $active_tab && $nonce_passed && isset($_POST['wp-optimize'])) $options->save_sent_manual_run_optimization_options($_POST, true);
-
-		echo '<div id="wp-optimize-wrap" class="wrap">';
-
-		do_action('wp_optimize_admin_header');
-
-		$this->include_template('admin-page-header.php', false, array('active_tab' => $active_tab, 'tabs' => $tabs));
+		// save options.
+		if ($nonce_passed && isset($_POST['wp-optimize'])) $options->save_sent_manual_run_optimization_options($_POST, true);
 
 		$optimize_db = ($nonce_passed && isset($_POST["optimize-db"])) ? true : false;
 
-		$optimizer = $this->get_optimizer();
+		$optimization_results = (($nonce_passed) ? $optimizer->do_optimizations($_POST) : false);
 
-		foreach ($tabs as $tab_id => $tab_description) {
-			echo '<div class="wp-optimize-nav-tab-contents" id="wp-optimize-nav-tab-contents-'.$tab_id.'" '.(($tab_id == $active_tab) ? '' : 'style="display:none;"').'>';
-
-			do_action('wp_optimize_admin_tab_render_begin', $tab_id, $active_tab);
-
-			switch ($tab_id) {
-				case 'optimize':
-					$optimization_results = (($nonce_passed) ? $optimizer->do_optimizations($_POST) : false);
-
-					if (!empty($optimization_results)) {
-						echo '<div id="message" class="updated"><strong>';
-						foreach ($optimization_results as $optimization_result) {
-							if (!empty($optimization_result->output)) {
-								foreach ($optimization_result->output as $line) {
-									echo $line."<br>";
-								}
-							}
-						}
-						echo '</strong></div>';
-					}
-
-					if ($this->can_run_optimizations()) {
-						$this->include_template('optimize-table.php', false, array('optimize_db' => $optimize_db));
-					} else {
-						$this->prevent_run_optimizations_message();
-					}
-					break;
-
-				case 'tables':
-					if ($this->can_run_optimizations()) {
-						$this->include_template('tables.php', false, array('optimize_db' => $optimize_db));
-					} else {
-						$this->prevent_run_optimizations_message();
-					}
-					break;
-
-				case 'settings':
-					if ('POST' == $_SERVER['REQUEST_METHOD']) {
-						// Nonce check.
-						check_admin_referer('wpo_settings');
-
-						$output = $options->save_settings($_POST);
-
-						if (isset($_POST['wp-optimize-settings'])) {
-							// save settings request sent.
-							$output = $options->save_settings($_POST);
-						}
-
-						$this->wpo_render_output_messages($output);
-					}
-
-					if ($this->can_manage_options()) {
-						$this->include_template('admin-settings-general.php');
-						$this->include_template('admin-settings-auto-cleanup.php');
-						$this->include_template('admin-settings-logging.php');
-						$this->include_template('admin-settings-sidebar.php');
-					} else {
-						$this->prevent_manage_options_info();
-					}
-					break;
-
-				case 'may_also':
-					$this->include_template('may-also-like.php');
-					break;
-			}
-
-			do_action('wp_optimize_admin_tab_render_end', $tab_id, $active_tab);
-
-			echo '</div>';
+		// display optimizations table or restricted access message.
+		if ($this->can_run_optimizations()) {
+			$this->include_template('database/optimize-table.php', false, array('optimize_db' => $optimize_db, 'optimization_results' => $optimization_results ));
+		} else {
+			$this->prevent_run_optimizations_message();
 		}
+	}
 
-		echo '</div>';
+	/**
+	 * Outputs the DB Tables Tab
+	 */
+	public function output_database_tables_tab() {
+		// check if nonce passed.
+		$nonce_passed = (!empty($_REQUEST['_wpnonce']) && wp_verify_nonce($_REQUEST['_wpnonce'], 'wpo_optimization')) ? true : false;
 
+		$optimize_db = ($nonce_passed && isset($_POST["optimize-db"])) ? true : false;
+
+		if ($this->can_run_optimizations()) {
+			$this->include_template('database/tables.php', false, array('optimize_db' => $optimize_db));
+		} else {
+			$this->prevent_run_optimizations_message();
+		}
+	}
+
+	/**
+	 * Cache tab
+	 */
+	public function output_dashboard_cache_tab() {
+		WP_Optimize()->include_template('cache/cache.php');
 	}
 
 	/**
@@ -538,10 +774,18 @@ class WP_Optimize {
 			'optimization_complete' => __('Optimization complete', 'wp-optimize'),
 			'run_optimizations' => __('Run optimizations', 'wp-optimize'),
 			'cancel' => __('Cancel', 'wp-optimize'),
+			'enable' => __('Enable', 'wp-optimize'),
+			'disable' => __('Disable', 'wp-optimize'),
 			'please_select_settings_file' => __('Please, select settings file.', 'wp-optimize'),
 			'are_you_sure_you_want_to_remove_logging_destination' => __('Are you sure you want to remove this logging destination?', 'wp-optimize'),
 			'fill_all_settings_fields' => __('Before saving, you need to complete the currently incomplete settings (or remove them).', 'wp-optimize'),
-			'table_was_not_repaired' => __('%s was not repaired. For more details, please check your logs configured in logging destinations settings.', 'wp-optimize'),
+			'table_was_not_repaired' => __('%s was not repaired. For more details, please check the logs (configured in your logging destinations settings).', 'wp-optimize'),
+			'are_you_sure_you_want_to_remove_this_table' => __('Are you sure you want to remove this table?', 'wp-optimize'),
+			'table_was_not_deleted' => __('%s was not deleted. For more details, please check your logs configured in logging destinations settings.', 'wp-optimize'),
+			'please_use_positive_integers' => __('Please use positive integers.', 'wp-optimize'),
+			'please_use_valid_values' => __('Please use valid values.', 'wp-optimize'),
+			'enable' => __('Enable', 'wp-optimize'),
+			'update' => __('Update', 'wp-optimize'),
 			'spinner_src' => esc_attr(admin_url('images/spinner-2x.gif')),
 			'sites' => $this->get_sites(),
 		));
@@ -562,20 +806,37 @@ class WP_Optimize {
 		);
 		$wp_admin_bar->add_node($args);
 
-		$tabs = $this->get_tabs();
+		$pages = $this->get_submenu_items();
 
-		foreach ($tabs as $tab_id => $tab_title) {
-			$menu_page_url = menu_page_url('WP-Optimize', false). '&tab=wp_optimize_'.$tab_id;
+		foreach ($pages as $page_id => $page) {
+
+			if (!isset($page['create_submenu']) || !$page['create_submenu']) {
+				if (isset($page['icon']) && 'separator' == $page['icon']) {
+					$args = array(
+						'id' => 'wpo-separator-'.$page_id,
+						'parent' => 'wp-optimize-node',
+						'meta' => array(
+							'class' => 'separator',
+						),
+					);
+					$wp_admin_bar->add_node($args);
+				}
+				continue;
+			}
+
+			// 'menu_slug' => 'WP-Optimize',
+			
+			$menu_page_url = menu_page_url($page['menu_slug'], false);
 
 			if (is_multisite()) {
-				$menu_page_url = network_admin_url('admin.php?page=WP-Optimize&tab=wp_optimize_'.$tab_id);
+				$menu_page_url = network_admin_url('admin.php?page='.$page['menu_slug']);
 			}
 
 			$args = array(
-				'id' => 'wpoptimize_admin_node_'.$tab_id,
-				'title' => ('optimize' == $tab_id) ? __('Optimize', 'wp-optimize') : $tab_title,
+				'id' => 'wpoptimize_admin_node_'.$page_id,
+				'title' => $page['menu_title'],
 				'parent' => 'wp-optimize-node',
-				'href' => $menu_page_url
+				'href' => $menu_page_url,
 			);
 			$wp_admin_bar->add_node($args);
 		}
@@ -611,10 +872,22 @@ class WP_Optimize {
 	public function tables_list_additional_column_data($content, $table_info) {
 		if ($table_info->is_needing_repair) {
 			$content .= '<div class="wpo_button_wrap">'
-				.'<button class="button button-secondary run-single-table-repair" data-table="'.esc_attr($table_info->Name).'">'.__('Repair', 'wp-optimize').'</button>'
-				.'<img class="optimization_spinner visibility-hidden" src="'.esc_attr(admin_url('images/spinner-2x.gif')).'" width="20" height="20" alt="...">'
-				.'<span class="optimization_done_icon dashicons dashicons-yes visibility-hidden"></span>'
-				.'</div>';
+				. '<button class="button button-secondary run-single-table-repair" data-table="' . esc_attr($table_info->Name) . '">' . __('Repair', 'wp-optimize') . '</button>'
+				. '<img class="optimization_spinner visibility-hidden" src="' . esc_attr(admin_url('images/spinner-2x.gif')) . '" width="20" height="20" alt="...">'
+				. '<span class="optimization_done_icon dashicons dashicons-yes visibility-hidden"></span>'
+				. '</div>';
+		}
+
+		// table belongs to plugin.
+		if ($table_info->plugin && __('WordPress core', 'wp-optimize') !== $table_info->plugin) {
+			// and plugin not installed or not active then show Remove action button.
+			if (false == $table_info->plugin_status['installed'] || false == $table_info->plugin_status['active']) {
+				$content .= '<div>'
+					. '<button class="button button-secondary run-single-table-delete" data-table="' . esc_attr($table_info->Name) . '">' . __('Remove', 'wp-optimize') . '</button>'
+					. '<img class="optimization_spinner visibility-hidden" src="' . esc_attr(admin_url('images/spinner-2x.gif')) . '" width="20" height="20" alt="...">'
+					. '<span class="optimization_done_icon dashicons dashicons-yes visibility-hidden"></span>'
+					. '</div>';
+			}
 		}
 
 		return $content;
@@ -716,7 +989,7 @@ class WP_Optimize {
 	 * @return string
 	 */
 	public function show_admin_warning_overdue_crons($howmany) {
-		$ret = '<div class="updated"><p>';
+		$ret = '<div class="updated below-h2"><p>';
 		$ret .= '<strong>'.__('Warning', 'wp-optimize').':</strong> '.sprintf(__('WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working.', 'wp-optimize'), $howmany).' <a href="'.apply_filters('wpoptimize_com_link', "https://getwpo.com/faqs/the-scheduler-in-my-wordpress-installation-is-not-working-what-should-i-do/").'">'.__('Read this page for a guide to possible causes and how to fix it.', 'wp-optimize').'</a>';
 		$ret .= '</p></div>';
 		return $ret;
@@ -732,7 +1005,13 @@ class WP_Optimize {
 
 		// Removes the admin menu items on the left WP bar.
 		if (!is_multisite() || (is_multisite() && is_network_admin())) {
-			add_menu_page("WP-Optimize", "WP-Optimize", $capability_required, "WP-Optimize", array($this, "wp_optimize_menu"), $icon_svg);
+			add_menu_page("WP-Optimize", "WP-Optimize", $capability_required, "WP-Optimize", array($this, "display_admin"), $icon_svg);
+
+			$sub_menu_items = $this->get_submenu_items();
+
+			foreach ($sub_menu_items as $menu_item) {
+				if ($menu_item['create_submenu']) add_submenu_page('WP-Optimize', $menu_item['page_title'], $menu_item['menu_title'], $capability_required, $menu_item['menu_slug'], $menu_item['function']);
+			}
 		}
 
 		$options = $this->get_options();
@@ -743,6 +1022,86 @@ class WP_Optimize {
 
 	}
 
+	/**
+	 * Get the submenu items
+	 *
+	 * @return array
+	 */
+	public function get_submenu_items() {
+		$sub_menu_items = array(
+			array(
+				'page_title' => __('Settings', 'wp-optimize'),
+				'menu_title' => __('Settings', 'wp-optimize'),
+				'menu_slug' => 'WP-Optimize',
+				'function' => array($this, 'display_admin'),
+				'icon' => 'admin-settings',
+				'create_submenu' => true,
+				'order' => 10,
+			),
+			array(
+				'create_submenu' => false,
+				'order' => 15,
+				'icon' => 'separator',
+			),
+			array(
+				'page_title' => __('Database', 'wp-optimize'),
+				'menu_title' => __('Database', 'wp-optimize'),
+				'menu_slug' => 'wpo_database',
+				'function' => array($this, 'display_admin'),
+				'icon' => 'cloud',
+				'create_submenu' => true,
+				'order' => 20,
+			),
+			array(
+				'create_submenu' => false,
+				'order' => 45,
+				'icon' => 'separator',
+			),
+			array(
+				'page_title' => __('Support & FAQs', 'wp-optimize'),
+				'menu_title' => __('Help', 'wp-optimize'),
+				'menu_slug' => 'wpo_support',
+				'function' => array($this, 'display_admin'),
+				'icon' => 'sos',
+				'create_submenu' => true,
+				'order' => 50,
+			),
+			array(
+				'page_title' => __('More plugins', 'wp-optimize'),
+				'menu_title' => __('More plugins', 'wp-optimize'),
+				'menu_slug' => 'wpo_mayalso',
+				'function' => array($this, 'display_admin'),
+				'icon' => 'admin-plugins',
+				'create_submenu' => true,
+				'order' => 60,
+			),
+		);
+
+		// Hide the cache page while developping it
+		if (defined('WPO_SHOW_CACHE') && WPO_SHOW_CACHE) {
+			$sub_menu_items[] = array(
+				'page_title' => __('Cache', 'wp-optimize'),
+				'menu_title' => __('Cache', 'wp-optimize'),
+				'menu_slug' => 'wpo_cache',
+				'function' => array($this, 'display_admin'),
+				'icon' => 'archive',
+				'create_submenu' => true,
+				'order' => 40,
+			);
+		}
+
+		$sub_menu_items = apply_filters('wp_optimize_sub_menu_items', $sub_menu_items);
+
+		usort($sub_menu_items, array($this, 'order_sort'));
+
+		return $sub_menu_items;
+	}
+
+	public function order_sort($a, $b) {
+		if ($a['order'] == $b['order']) return 0;
+		return ($a['order'] > $b['order']) ? 1 : -1;
+	}
+	
 	private function wp_normalize_path($path) {
 		// Wp_normalize_path is not present before WP 3.9.
 		if (function_exists('wp_normalize_path')) return wp_normalize_path($path);
@@ -1022,8 +1381,10 @@ class WP_Optimize {
 			$loggers_classes_by_id[strtolower($logger_class)] = $logger_class;
 		}
 
-		$saved_loggers = $this->get_options()->get_option('logging');
-		$logger_additional_options = $this->get_options()->get_option('logging-additional');
+		$options = $this->get_options();
+		
+		$saved_loggers = $options->get_option('logging');
+		$logger_additional_options = $options->get_option('logging-additional');
 
 		// create loggers classes instances.
 		if (!empty($saved_loggers)) {
@@ -1223,11 +1584,11 @@ class WP_Optimize {
 	 */
 	private function wpo_render_output_messages($output) {
 		foreach ($output['messages'] as $item) {
-			echo '<div class="updated fade"><strong>'.$item.'</strong></div>';
+			echo '<div class="updated fade below-h2"><strong>'.$item.'</strong></div>';
 		}
 
 		foreach ($output['errors'] as $item) {
-			echo '<div class="error fade"><strong>'.$item.'</strong></div>';
+			echo '<div class="error fade below-h2"><strong>'.$item.'</strong></div>';
 		}
 	}
 

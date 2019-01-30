@@ -7,6 +7,7 @@
 .updraft_notice_container {
 	height: auto;
 	overflow: hidden;
+	padding: 7px;
 }
 
 .updraft_advert_content_left {
@@ -59,10 +60,24 @@ h4.updraft_advert_heading {
 	text-align: center;
 }
 
+.wpo-main-header + .updraft-ad-container,
+.wpo-main-header + .updated {
+	margin-bottom: 20px;
+}
+
 @media screen and (min-width: 560px) {
 
 	.updraft_advert_content_left {
 		float: left;
+	}
+
+}
+
+@media screen and (max-width: 768px) {
+
+	.wpo-main-header + .updraft-ad-container,
+	.wpo-main-header + .updated {
+		margin-right: 0;
 	}
 
 }

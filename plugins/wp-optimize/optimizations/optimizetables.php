@@ -37,7 +37,7 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 		if (isset($this->data['optimization_table']) && '' != $this->data['optimization_table']) {
 			$table = $this->optimizer->get_table($this->data['optimization_table']);
 
-			$this->optimize_table($table, $force);
+			if (false !== $table) $this->optimize_table($table, $force);
 		} else {
 			$tables = $this->optimizer->get_tables();
 

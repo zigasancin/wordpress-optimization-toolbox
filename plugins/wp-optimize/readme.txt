@@ -4,7 +4,7 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 5.0
-Stable tag: 2.2.6
+Stable tag: 2.2.11
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,11 @@ When you use this plugin for the first time or just updated to major version, ma
 <strong>Seamless Graphical User Interface:</strong> for superb clarity in scheduling and managing of multi-site optimizations.
 
 <strong>WP-CLI support:</strong> provides a way to manage optimizations from command-line interface.
+
+<strong>Lazy Loading:</strong> lazy loading is the technique of only loading parts of a web-page when it is visible to the user.
+
+
+<strong>Optimization Preview:</strong> gives users the ability to preview, select and remove data and records available for optimization from the database.
 
 = Translations =
 
@@ -138,10 +143,41 @@ Please check your database for corrupted tables. That can happen, usually your w
 
 == Changelog ==
 
+= 2.2.11 - 16/Jan/2019 =
+
+* FIX: A regression in the "identify table by owner" feature caused optimizing to silently fail on some tables
+* TWEAK: Added ability to exclude lazy load images by class
+
+= 2.2.10 - 11/Jan/2019 =
+
+* FEATURE: Added the ability to download unused images list (Premium version) as a CSV file
+* FIX: Load scripts and styles only on WP-Optimize pages
+* FIX: Fix a possible fatal error due to missing get_plugins() function
+* TWEAK: Remember selected optimizations on Database page
+* TWEAK: Prevent PHP notices when saving settings or optimizing in some circumstances
+
+= 2.2.9 - 03/Jan/2019 =
+
+* FIX: Change a newly-introduced fragment that was not compatible with PHP 5.2
+* TWEAK: Tweak some other code that had PHP 5.2 compatibility issues
+
+= 2.2.7 - 31/December/2018 =
+
+* RE-FACTOR: Refactoring and reorganisation of the UI
+* TWEAK: Added feature to view unused images as list
+* TWEAK: Fix sorting sizes columns in Tables information to take into account textual modifiers
+* FIX: MetaSlider images detected as unused
+* FIX: Preview for Trashed posts optimization doesn't work
+* FIX: Unselected optimizations could be run on a scheduled run
+
 = 2.2.6 - 30/October/2018 =
 
+* FEATURE: Added Gzip compression support
+* FIX: Unexpected content in the footer after preview popup closed
 * TWEAK: Mark as supporting WordPress 5.0
 * TWEAK: Update seasonal notices
+* TWEAK: Removed redundant checkbox for Lazy Loading settings
+* FEATURE: Remove orphaned database tables, and identify (many) known tables by plugin.
 
 = 2.2.5 - 24/August/2018 =
 
@@ -430,4 +466,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.2.6 : Various tweaks and fixes, and new Premium features; a recommended update for all.
+* 2.2.11 : Fix a silent failure in optimization for some tables. A recommended update for all.
