@@ -23,7 +23,7 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 		$this->module   = 's3';
 		$this->class    = 'pro';
 		$this->priority = 5;
-		$this->enabled  = function_exists( 'as3cf_init' );
+		$this->enabled  = function_exists( 'as3cf_init' ) || function_exists( 'as3cf_pro_init' );
 
 		parent::__construct();
 

@@ -28,11 +28,7 @@ class WP_Smush_Gutenberg extends WP_Smush_Integration {
 		$this->class    = 'free';
 		$this->priority = 3;
 
-		if ( ! function_exists( 'is_plugin_active' ) ) {
-			include_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		$this->enabled = is_plugin_active( 'gutenberg/gutenberg.php' );
+		$this->check_for_gutenberg();
 
 		parent::__construct();
 
@@ -100,9 +96,9 @@ class WP_Smush_Gutenberg extends WP_Smush_Integration {
 		}
 
 		?>
-		<div class="sui-notice smush-notice-sm">
-			<p><?php esc_html_e( 'To use this feature you need to install and activate the Gutenberg plugin.', 'wp-smushit' ); ?></p>
-		</div>
+        <div class="sui-notice smush-notice-sm">
+            <p><?php esc_html_e( 'To use this feature you need to install and activate the Gutenberg plugin.', 'wp-smushit' ); ?></p>
+        </div>
 		<?php
 	}
 
@@ -130,6 +126,36 @@ class WP_Smush_Gutenberg extends WP_Smush_Integration {
 			WP_SMUSH_VERSION,
 			true
 		);
+	}
+
+	/**************************************
+	 *
+	 * PRIVATE CLASSES
+	 */
+
+	/**
+	 * Make sure we only enqueue when Gutenberg is active.
+	 *
+	 * For WordPress pre 5.0 - only when Gutenberg plugin is installed.
+	 * For WordPress 5.0+ - only when Classic Editor is NOT installed.
+	 *
+	 * @since 3.0.1
+	 */
+	private function check_for_gutenberg() {
+		global $wp_version;
+
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			include_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		// Check if WordPress 5.0 or higher.
+		$is_wp5point0 = version_compare( $wp_version, '4.9.9', '>' );
+
+		if ( $is_wp5point0 ) {
+			$this->enabled = ! is_plugin_active( 'classic-editor/classic-editor.php' );
+		} else {
+			$this->enabled = is_plugin_active( 'gutenberg/gutenberg.php' );
+		}
 	}
 
 }

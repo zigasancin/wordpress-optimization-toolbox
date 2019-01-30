@@ -189,8 +189,15 @@ class WP_Smush_Installer {
 				$offset += $limit;
 			}
 		} else {
+			// last_settings will be an array if user had any custom settings.
 			$settings = get_site_option( WP_SMUSH_PREFIX . 'last_settings', array() );
-			$settings = array_merge( WP_Smush_Settings::get_instance()->get(), $settings );
+			if ( is_array( $settings ) ) {
+				$settings = array_merge( WP_Smush_Settings::get_instance()->get(), $settings );
+			} else {
+				// last_settings will be a string if the Smush page hasn't been visited => get the new defaults.
+				$settings = WP_Smush_Settings::get_instance()->get();
+			}
+
 			update_site_option( WP_SMUSH_PREFIX . 'settings', $settings );
 			// Remove previous data.
 			delete_site_option( WP_SMUSH_PREFIX . 'last_settings' );

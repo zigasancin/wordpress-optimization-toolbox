@@ -1,9 +1,11 @@
 /**
  * BLOCK: extend image block
  */
-
 const { __ } = wp.i18n,
- 	  el     = wp.element.createElement;
+	{ createHigherOrderComponent } = wp.compose,
+	{ Fragment } = wp.element,
+	{ InspectorControls } = wp.editor,
+	{ PanelBody } = wp.components;
 
 /**
  * Transform bytes to human readable format.
@@ -13,7 +15,7 @@ const { __ } = wp.i18n,
  */
 function humanFileSize( bytes ) {
 	const thresh = 1024,
-		units  = ['kB','MB','GB','TB','PB','EB','ZB','YB'];
+		units  = ['kB','MB','GB','TB'];
 
 	if ( Math.abs( bytes ) < thresh ) {
 		return bytes + ' B';
@@ -31,22 +33,15 @@ function humanFileSize( bytes ) {
 /**
  * Generate Smush stats table.
  *
+ * @param {int}    id
  * @param {object} stats
  * @returns {*}
  */
-export function smushStats( stats ) {
+export function smushStats( id, stats ) {
 	if ( 'undefined' === typeof stats ) {
-		return (
-			<div>
-				Select an image to view Smush stats.
-			</div>
-		);
+		return smush_vars.strings.gb.select_image;
 	} else if ( 'string' === typeof stats ) {
-		return (
-			<div>
-				{ stats }
-			</div>
-		);
+		return stats;
 	}
 
 	return (
@@ -54,8 +49,8 @@ export function smushStats( stats ) {
 			<table className="wp-smush-stats-holder">
 				<thead>
 				<tr>
-					<th className="smush-stats-header">Image size</th>
-					<th className="smush-stats-header">Savings</th>
+					<th className="smush-stats-header">{ smush_vars.strings.gb.size }</th>
+					<th className="smush-stats-header">{ smush_vars.strings.gb.savings }</th>
 				</tr>
 				</thead>
 				<tbody>
@@ -72,70 +67,55 @@ export function smushStats( stats ) {
 }
 
 /**
- * Modify the block’s edit component.
+ * Fetch image data. If image is Smushing, update in 3 seconds.
+ *
+ * @todo this could be optimized not to query so much.
+ */
+export function fetchProps( props ) {
+	let image = new wp.api.models.Media( { id: props.attributes.id } ),
+		smushData = props.attributes.smush;
+
+	image.fetch( { attribute: 'smush' } ).done( function ( img ) {
+		if ( 'string' === typeof img.smush ) {
+			props.setAttributes( { smush: img.smush } );
+			setTimeout( () => fetch( props ), 3000 );
+		} else if ( 'undefined' !== typeof img.smush && (
+			'undefined' === typeof smushData || JSON.stringify( smushData ) !== JSON.stringify( img.smush )
+		) ) {
+			props.setAttributes( { smush: img.smush } );
+		}
+	});
+}
+
+/**
+ * Modify the blocks edit component.
  * Receives the original block BlockEdit component and returns a new wrapped component.
  */
-let smushStatsControl = wp.compose.createHigherOrderComponent( function( BlockEdit ) {
-	/**
-	 * Fetch image data. If image is Smushing, update in 3 seconds.
-	 *
-	 * @todo this could be optimized not to query so much.
-	 */
-	function fetch( props ) {
-		let image = new wp.api.models.Media( { id: props.attributes.id } ),
-			smushData = props.attributes.smush;
-
-		image.fetch( { attribute: 'smush' } ).done( function ( img ) {
-			if ( 'string' === typeof img.smush ) {
-				props.setAttributes( { smush: img.smush } );
-				setTimeout( () => fetch( props ), 3000 );
-			} else if ( 'undefined' !== typeof img.smush && (
-				'undefined' === typeof smushData || JSON.stringify( smushData ) !== JSON.stringify( img.smush )
-			) ) {
-				props.setAttributes( { smush: img.smush } );
-			}
-		});
-	}
-
-	/**
-	 * Return block.
-	 */
-	return function( props ) {
+const smushStatsControl = createHigherOrderComponent( ( BlockEdit ) => {
+	return ( props ) => {
 		// If not image block or not selected, return unmodified block.
 		if ( 'core/image' !== props.name || ! props.isSelected || 'undefined' === typeof props.attributes.id ) {
-			return el(
-				wp.element.Fragment,
-				{},
-				el(
-					BlockEdit,
-					props
-				)
+			return (
+				<Fragment>
+					<BlockEdit { ...props } />
+				</Fragment>
 			);
 		}
 
 		let smushData = props.attributes.smush;
-		fetch( props );
+		fetchProps(props);
 
-		return el(
-			wp.element.Fragment,
-			{},
-			el(
-				BlockEdit,
-				props
-			),
-			el(
-				wp.editor.InspectorControls,
-				{},
-				el(
-					wp.components.PanelBody,
-					{
-						title: __( 'Smush Stats' )
-					},
-					smushStats( smushData )
-				),
-			)
+		return (
+			<Fragment>
+				<BlockEdit { ...props } />
+				<InspectorControls>
+					<PanelBody title={ smush_vars.strings.gb.stats }>
+						{ smushStats( props.attributes.id, smushData ) }
+					</PanelBody>
+				</InspectorControls>
+			</Fragment>
 		);
 	};
-}, 'withInspectorControls' );
+}, "withInspectorControl" );
 
-wp.hooks.addFilter( 'editor.BlockEdit', 'wp-smushit/smush-data-control', smushStatsControl );
+wp.hooks.addFilter( 'editor.BlockEdit', 'wp-smush/smush-data-control', smushStatsControl );

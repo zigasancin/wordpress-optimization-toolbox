@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 3.0.1
+Version: 3.0.2
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
-Tags: image, resize, optimize, optimise, compress, performance, optimisation, optimise JPG, photo, pictures, optimizer, Smush WordPress Compression, Smush.it
+Tags: image, resize, optimize, optimise, compress, performance, optimisation, optimise JPG, WebP, photography, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
-Tested up to: 5.0.0
-Stable tag: 3.0.1
+Tested up to: 5.0.1
+Stable tag: 3.0.2
 Requires PHP: 5.2.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -22,14 +22,25 @@ Compress and optimize (or optimise) image files, improve performance and boost y
 ### Award Winning Image Optimizer
 Smush has been benchmarked and tested number one for speed and quality and is the [award-winning](https://torquemag.io/2018/04/smush-image-compression-wins-2018-plugin-madness/), back-to-back proven crowd favorite image optimization plugin for WordPress.
 
-Now with image resizing! Set a max width and height and large images will scale down as they are being compressed.
+- Lossless Compression – Strip unused data without affecting image quality
+- Bulk Smush – Optimize up to 50 images with one click
+- Image Resizing – Set a max width and height and large images will scale down as they are being compressed
+- Incorrect Size Image Detection – Quickly locate images that are slowing down your site
+- Directory Smush – Optimize images even if they are not located in the media library
+- Automated Optimization – Asynchronously auto-smush your attachments for super fast compression on upload
+- Unlimited & Free – Optimize all of your images up to 1MB in size forever (no daily, monthly, or annual caps)
+- Gutenberg Block Integration – View all Smush stats directly in image blocks
+- Multisite Compatible – Both global and individual Multisite settings
+- Process All Your Files – Smush will process PNG, JPEG and GIF files for optimum results
+- Super Servers - Smush images with no slowdown using WPMU DEV's fast, reliable Smush API
+- And many, many, more!
 
-Our servers do all the heavy lifting. Strip hidden bulky information from your images and reduce file size without losing quality.
+###Preserve Image Quality
 
-Large image files may be slowing down your site without you even knowing it. WP Smush uses WPMU DEV’s super servers to quickly smush every single one of your images and cuts all the unnecessary data without slowing down your site.
+Some image compression tools destroy images with as much as a 30% loss in quality. Our servers strip hidden bulky information from your images and reduce file size without affecting the appearance.
 
 [youtube https://www.youtube.com/watch?v=BDtgVJZEajg&feature=youtu.be]
-
+ 
 Smush meticulously scans every image you upload – or have already added to your site – cuts all the unnecessary data and scales it for you before adding it to your media library.
 
 ### Compress any Image in any Directory
@@ -50,6 +61,9 @@ No matter what plugins you use to better manage your WordPress media library, Sm
 - [Styles](https://wordpress.org/plugins/styles/)
 - And many, many, more!
 
+### Incorrect Size Image Detection
+Smush now includes a wrong size image finder. Activate and your images will be highlighted with smart tips for scaling your images. Quickly locate the images that are keeping you from getting that perfect 100 on your Google PageSpeed test.
+
 ★★★★★
 > “I had no idea that my page load time was being dragged down by the images. The plugin nearly halved the time it took.” - [karlcw](http://profiles.wordpress.org/karlcw)
 
@@ -59,26 +73,13 @@ No matter what plugins you use to better manage your WordPress media library, Sm
 ★★★★★
 > “Smush helped reduce the total files size on my site and increased browsing speed. Well done guys!” - [pdci](https://wordpress.org/support/users/pdci/)
 
-*What about Multisite?* Smush can be used to optimize all the images across your entire network! Use global settings or configure each site individually.
+###What about Multisite?
 
-Smush is super easy to use – no confusing compression software settings! Smush images in your library one at a time or bulk smush up to 50 images at a time.  Plus, configure auto-smush to asynchronously scale and compress some or all of your images as they are being uploaded – it's incredibly fast.
+Smush can be used to optimize all the images across your entire network! Use global settings or configure each site individually.
+
+Smush is super easy to use – no confusing compression software settings. Smush images in your library one at a time or bulk smush up to 50 images at a time.  Plus, configure auto-smush to asynchronously scale and compress some or all of your images as they are being uploaded – it's incredibly fast.
 
 The faster your site loads, the more Google, Bing, Yahoo and other search engines will like it. Your site will load faster and rank higher.
-
-> ### Features available in Smush include:
->
-> - Optimize your images using advanced lossless compression techniques.
-> - Set maximum width and height and large images will automatically scale before being added to your media library.
-> - Process JPEG, GIF and PNG image files.
-> - Optimize any image in any directory.
-> - Asynchronously auto-smush your attachments for super fast compression on upload.
-> - Manually smush your attachments individually in the media library, or in bulk 50 attachments at a time.
-> - Smush all standard web-sized images 1MB or smaller.
-> - Smush images with no slowdown using WPMU DEV's fast, reliable Smush API.
-> - Global and individual settings for Multisite.
-> - View advanced compression stats per-attachment and library totals.
->
-> Install Smush now and find out why it's the most popular image optimization plugin for WordPress available today with over 11 million downloads.
 
 ### Shameless Plug(ins)
 
@@ -89,7 +90,7 @@ The faster your site loads, the more Google, Bing, Yahoo and other search engine
 
 Smush can take care of all your image compression needs, for free!
 
-However, if you'd like Super Smush lossy compression, the ability to optimize images up to 32MB, bulk smush optimization for all your images in just one-click, auto-convert PNG to JPEG, the ability to Smush and make a copy of your full-sized images (to restore them at any point) you can always take the next step with [WP Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme).
+However, if you’d like Super Smush lossy compression, fast CDN image delivery, WebP conversion, automatic resizing, the ability to optimize images up to 32MB, bulk smush optimization for all your images in just one-click, auto-convert PNG to JPEG, the ability to Smush and make a copy of your full-sized images (to restore them at any point) you can always take the next step with [WP Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme) along with her whole team of WordPress optimization hero friends (security, SEO, performance, support and maintenance automation) for unlimited sites – perfect for agencies and freelancers offering site maintenance services.
 
 ### Privacy
 
@@ -103,10 +104,10 @@ Smush sends images to the WPMU DEV servers to optimize them for web use. This in
 
 = I just finished running Smush and Google Pagespeed still says my images need compressing and resizing. How do I fix it? =
 
-This means your images were not properly scaled for where they are being displayed. Scaling images before uploading them can be time consuming but can save space and speedup load time. First, determine what size your image needs to be. You can use the built-in developer tools in Chrome or Firefox to find what height and width your image should be. Once you know how large the image should be, scale your images to the right size.
+This means your images were not properly scaled for where they are being displayed. Scaling images before uploading them can be time consuming but can save space and speedup load time. First, determine what size your image needs to be. You can use the built-in images size detector included in the free version of Smush to find what height and width your image should be. Once you know how large the image should be, scale your images to the right size.
 
 
-*Tip:* you may not need to scale each image individually. If the images are in your Media Library, you may be able to fix them with a plugin.
+*Tip:* If you're having any issues or want to save a tone of time, The Smush Pro CDN includes auto resizing.
 
 = Does Smush delete or replace my original full-size images? =
 
@@ -121,6 +122,8 @@ PNG is best for computer generated graphics (vectors, logos, fonts, etc.), image
 
 
 JPG should be used for photography or images with a lot of color variation.
+
+*Tip:* The Smush Pro CDN includes WebP compression - sharper images that are 25 to 30 percent smaller than JPEG and PNG files.
 
 = I’m a photographer can I keep all my EXIF data? =
 
@@ -153,6 +156,12 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 
 == Changelog ==
 
+= 3.0.2 =
+
+* Enhance: Support for WordPress 5.0 release and Gutenberg editor
+* Fix: [WP Offload Media] integration with Pro version
+* Fix: PHP warning on update from Smush version 2 to version 3
+
 = 3.0.1 =
 
 * Security: Remove support for Upfront theme functions
@@ -165,7 +174,8 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 * New: Plugin structure (Important: plugin globals have been removed)
 * New: Show failure reason during directory Smush
 * New: Settings page with language translation links
-* Security: Fix XSS and phar deserialization vulnerabilities
+* Security: Fix XSS vulnerability
+* Security: Fix phar deserialization vulnerability (thanks @ripstech)
 * Enhance: Better handling of animated GIFs. Improve performance.
 * Enhance: Update translation strings
 * Enhance: Clean out all the leftover data on plugin uninstall

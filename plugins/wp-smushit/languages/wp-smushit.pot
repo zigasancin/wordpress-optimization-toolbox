@@ -2,9 +2,9 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Smush 3.0.1\n"
+"Project-Id-Version: Smush 3.0.2\n"
 "Report-Msgid-Bugs-To: https://wpmudev.org\n"
-"POT-Creation-Date: 2018-12-10 14:24:10+00:00\n"
+"POT-Creation-Date: 2018-12-18 14:13:13+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -124,7 +124,7 @@ msgstr ""
 
 #: app/class-wp-smush-dashboard.php:89 app/class-wp-smush-dashboard.php:144
 #: app/class-wp-smush-dashboard.php:213 app/class-wp-smush-dashboard.php:275
-#: core/class-wp-smush-admin.php:211
+#: core/class-wp-smush-admin.php:219
 msgid "Settings"
 msgstr ""
 
@@ -449,7 +449,7 @@ msgstr ""
 
 #: app/views/meta-boxes/bulk/meta-box.php:147
 #: app/views/meta-boxes/directory/meta-box.php:46
-#: core/class-wp-smush-admin.php:242
+#: core/class-wp-smush-admin.php:250
 msgid "Smush Pro"
 msgstr ""
 
@@ -509,16 +509,15 @@ msgstr ""
 
 #: app/views/meta-boxes/cdn/disabled-meta-box.php:18
 msgid ""
-"Automatically compress and resize your images, then on WPMU DEV’s "
-"blazing-fast CDN with\n"
-"\t\tmulti-pass lossy compression. This is the ultimate tool for boosting "
-"your pagespeed by taking the load off\n"
-"\t\tyour server. All you need to do is activate the feature and we’ll serve "
-"your images from the CDN - no\n"
-"\t\tcoding required."
+"Automatically compress and resize your images with bulk Smush, or upload "
+"them to the WPMU DEV's\n"
+"\t\t\tblazing-fast CDN with multi-pass lossy compression and auto resize "
+"features. All you need to do is activate\n"
+"\t\t\tthe feature and we’ll serve your images from the CDN - no coding "
+"required."
 msgstr ""
 
-#: app/views/meta-boxes/cdn/disabled-meta-box.php:29
+#: app/views/meta-boxes/cdn/disabled-meta-box.php:28
 msgid "GET STARTED"
 msgstr ""
 
@@ -636,11 +635,12 @@ msgstr ""
 
 #: app/views/meta-boxes/cdn/upsell-meta-box.php:20
 msgid ""
-"Automatically compress and resize your images, then on WPMU DEV’s "
-"blazing-fast CDN with multi-pass\n"
-"\tlossy compression. This is the ultimate tool for boosting your pagespeed "
-"by taking the load off your server. Try it\n"
-"\ttoday with a WPMU DEV Membership!"
+"Automatically compress and resize your images with bulk Smush, or upload "
+"them to the WPMU DEV's\n"
+"\t\t\tblazing-fast CDN with multi-pass lossy compression and auto resize "
+"features.. This is the ultimate tool for\n"
+"\t\t\tboosting your pagespeed by taking the load off your server. Try it "
+"today with a WPMU DEV Membership!"
 msgstr ""
 
 #: app/views/meta-boxes/cdn/upsell-meta-box.php:30
@@ -1059,19 +1059,39 @@ msgstr ""
 msgid "Smush"
 msgstr ""
 
-#: core/class-wp-smush-admin.php:188
+#: core/class-wp-smush-admin.php:190
 msgid "Smush: All images"
 msgstr ""
 
-#: core/class-wp-smush-admin.php:189
+#: core/class-wp-smush-admin.php:191
 msgid "Smush: Bulk ignored"
 msgstr ""
 
-#: core/class-wp-smush-admin.php:262
+#: core/class-wp-smush-admin.php:193
+msgid "Smush Stats"
+msgstr ""
+
+#: core/class-wp-smush-admin.php:194
+msgid "Select an image to view Smush stats."
+msgstr ""
+
+#: core/class-wp-smush-admin.php:195
+#: core/integrations/nextgen/class-wp-smush-nextgen-stats.php:455
+#: core/modules/class-wp-smushit.php:569
+msgid "Image size"
+msgstr ""
+
+#: core/class-wp-smush-admin.php:196
+#: core/integrations/nextgen/class-wp-smush-nextgen-stats.php:456
+#: core/modules/class-wp-smushit.php:570
+msgid "Savings"
+msgstr ""
+
+#: core/class-wp-smush-admin.php:270
 msgid "Plugin: Smush"
 msgstr ""
 
-#: core/class-wp-smush-admin.php:264
+#: core/class-wp-smush-admin.php:272
 msgid ""
 "Note: Smush does not interact with end users on your website. The only "
 "input option Smush has is to a newsletter subscription for site admins "
@@ -1079,14 +1099,14 @@ msgid ""
 "policy, you can use the information below."
 msgstr ""
 
-#: core/class-wp-smush-admin.php:266
+#: core/class-wp-smush-admin.php:274
 msgid ""
 "Smush sends images to the WPMU DEV servers to optimize them for web use. "
 "This includes the transfer of EXIF data. The EXIF data will either be "
 "stripped or returned as it is. It is not stored on the WPMU DEV servers."
 msgstr ""
 
-#: core/class-wp-smush-admin.php:269
+#: core/class-wp-smush-admin.php:277
 msgid ""
 "Smush uses the Stackpath Content Delivery Network (CDN). Stackpath may "
 "store web log information of site visitors, including IPs, UA, referrer, "
@@ -1095,7 +1115,7 @@ msgid ""
 "Stackpath's privacy policy can be found %1$shere%2$s."
 msgstr ""
 
-#: core/class-wp-smush-admin.php:277
+#: core/class-wp-smush-admin.php:285
 msgid ""
 "Smush uses a third-party email service (Drip) to send informational emails "
 "to the site administrator. The administrator's email address is sent to "
@@ -1103,15 +1123,15 @@ msgid ""
 "collected by Drip."
 msgstr ""
 
-#: core/class-wp-smush-admin.php:281
+#: core/class-wp-smush-admin.php:289
 msgid "WP Smush"
 msgstr ""
 
-#: core/class-wp-smush-admin.php:317
+#: core/class-wp-smush-admin.php:325
 msgid "Validating.."
 msgstr ""
 
-#: core/class-wp-smush-admin.php:322
+#: core/class-wp-smush-admin.php:330
 #. translators: $1$s: recheck link, $2$s: closing a tag, %3$s; contact link,
 #. %4$s: closing a tag
 msgid ""
@@ -1122,15 +1142,15 @@ msgid ""
 "\t\t\t\t\twith our %3$ssupport team%4$s."
 msgstr ""
 
-#: core/class-wp-smush-admin.php:348
+#: core/class-wp-smush-admin.php:356
 msgid "Get Optimized"
 msgstr ""
 
-#: core/class-wp-smush-admin.php:349
+#: core/class-wp-smush-admin.php:357
 msgid "Resize, compress and optimize your images here."
 msgstr ""
 
-#: core/class-wp-smush-admin.php:549
+#: core/class-wp-smush-admin.php:557
 #. translators: %1$s: user name, %2$s: strong tag, %3$s: span tag, %4$d: number
 #. of remaining umages, %5$s: closing span tag, %6$s: closing strong tag
 msgid "%1$s, you have %2$s%3$s%4$d%5$s attachment%6$s that needs re-compressing!"
@@ -1346,21 +1366,21 @@ msgstr ""
 msgid "Resume scan"
 msgstr ""
 
-#: core/integrations/class-wp-smush-gutenberg.php:72
+#: core/integrations/class-wp-smush-gutenberg.php:68
 msgid "Show Smush stats in Gutenberg blocks"
 msgstr ""
 
-#: core/integrations/class-wp-smush-gutenberg.php:73
+#: core/integrations/class-wp-smush-gutenberg.php:69
 msgid "Gutenberg Support"
 msgstr ""
 
-#: core/integrations/class-wp-smush-gutenberg.php:74
+#: core/integrations/class-wp-smush-gutenberg.php:70
 msgid ""
 "Add statistics and the manual smush button to Gutenberg blocks that\n"
 "\t\t\t\t\t\t\tdisplay images."
 msgstr ""
 
-#: core/integrations/class-wp-smush-gutenberg.php:104
+#: core/integrations/class-wp-smush-gutenberg.php:100
 msgid "To use this feature you need to install and activate the Gutenberg plugin."
 msgstr ""
 
@@ -1506,16 +1526,6 @@ msgstr ""
 
 #: core/integrations/nextgen/class-wp-smush-nextgen-stats.php:235
 msgid "Smush stats"
-msgstr ""
-
-#: core/integrations/nextgen/class-wp-smush-nextgen-stats.php:455
-#: core/modules/class-wp-smushit.php:569
-msgid "Image size"
-msgstr ""
-
-#: core/integrations/nextgen/class-wp-smush-nextgen-stats.php:456
-#: core/modules/class-wp-smushit.php:570
-msgid "Savings"
 msgstr ""
 
 #: core/modules/class-wp-smush-ajax.php:267
