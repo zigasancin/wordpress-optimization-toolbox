@@ -274,7 +274,7 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 			$sizes = $storage->get_image_sizes();
 			global $ewwwngg;
 			$offset = 0;
-			while ( $attachments = $wpdb->get_col( "SELECT meta_data FROM $wpdb->nggpictures $attachment_query LIMIT $offset, $max_query" ) ) { // WPCS: unprepared SQL ok.
+			while ( $attachments = $wpdb->get_col( "SELECT meta_data FROM $wpdb->nggpictures $attachment_query LIMIT $offset, $max_query" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL
 				foreach ( $attachments as $attachment ) {
 					if ( class_exists( 'Ngg_Serializable' ) ) {
 						$serializer = new Ngg_Serializable();
@@ -326,7 +326,7 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 				$attachment_query = 'WHERE pid IN (' . substr( $attachment_query, 0, -1 ) . ')';
 			}
 			$offset = 0;
-			while ( $attachments = $wpdb->get_col( "SELECT meta_data FROM $wpdb->flagpictures $attachment_query LIMIT $offset, $max_query" ) ) { // WPCS: unprepared SQL ok.
+			while ( $attachments = $wpdb->get_col( "SELECT meta_data FROM $wpdb->flagpictures $attachment_query LIMIT $offset, $max_query" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL
 				foreach ( $attachments as $attachment ) {
 					$meta = unserialize( $attachment );
 					if ( ! is_array( $meta ) ) {
@@ -450,7 +450,7 @@ function ewww_image_optimizer_bulk_script( $hook ) {
 		} else {
 			ewwwio_debug_message( "validating requested ids: {$request_ids[0]}" );
 			// Retrieve post IDs correlating to the IDs submitted to make sure they are all valid.
-			$attachments = $wpdb->get_col( "SELECT ID FROM $wpdb->posts WHERE (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE '%%image%%' OR post_mime_type LIKE '%%pdf%%') AND ID IN ({$request_ids[0]}) ORDER BY ID DESC" ); // WPCS: unprepared SQL ok.
+			$attachments = $wpdb->get_col( "SELECT ID FROM $wpdb->posts WHERE (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE '%%image%%' OR post_mime_type LIKE '%%pdf%%') AND ID IN ({$request_ids[0]}) ORDER BY ID DESC" ); // phpcs:ignore WordPress.DB.PreparedSQL
 		}
 		// Unset the 'bulk resume' option since we were given specific IDs to optimize.
 		update_option( 'ewww_image_optimizer_bulk_resume', '' );
@@ -614,7 +614,7 @@ function ewww_image_optimizer_fetch_metadata_batch( $attachments_in ) {
 	ewwwio_debug_message( 'attachment query length: ' . strlen( $attachments_in ) );
 	global $wpdb;
 	// Retrieve image attachment metadata from the database (in batches).
-	$attachments = $wpdb->get_results( "SELECT metas.post_id,metas.meta_key,metas.meta_value,posts.post_mime_type FROM $wpdb->postmeta metas INNER JOIN $wpdb->posts posts ON posts.ID = metas.post_id WHERE (posts.post_mime_type LIKE '%%image%%' OR posts.post_mime_type LIKE '%%pdf%%') AND metas.post_id IN ($attachments_in)", ARRAY_A ); // WPCS: unprepared SQL ok.
+	$attachments = $wpdb->get_results( "SELECT metas.post_id,metas.meta_key,metas.meta_value,posts.post_mime_type FROM $wpdb->postmeta metas INNER JOIN $wpdb->posts posts ON posts.ID = metas.post_id WHERE (posts.post_mime_type LIKE '%%image%%' OR posts.post_mime_type LIKE '%%pdf%%') AND metas.post_id IN ($attachments_in)", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL
 	ewwwio_debug_message( 'fetched ' . count( $attachments ) . ' attachment meta items' );
 	$wpdb->flush();
 	$attachment_meta = array();
@@ -681,6 +681,7 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 	}
 	global $optimized_list;
 	/* $queued_ids            = array(); */
+	$tiny_notice           = '';
 	$image_count           = 0;
 	$attachments_processed = 0;
 	$attachment_query      = '';
@@ -817,8 +818,11 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 				ewww_image_optimizer_delete_queued_image( $selected_id );
 				continue;
 			}
-			if ( ! empty( $attachment_meta[ $selected_id ]['tinypng'] ) ) {
+			if ( ! empty( $attachment_meta[ $selected_id ]['tinypng'] ) && empty( $_REQUEST['ewww_force'] ) ) {
 				ewwwio_debug_message( "TinyPNG already compressed $selected_id" );
+				if ( ! $tiny_notice ) {
+					$tiny_notice = esc_html__( 'Images compressed by TinyJPG and TinyPNG have been skipped, refresh and use the Force Re-optimize option to override.', 'ewww-image-optimizer' );
+				}
 				ewww_image_optimizer_delete_queued_image( $selected_id );
 				continue;
 			}
@@ -1262,6 +1266,7 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 					'remaining'      => sprintf( esc_html__( 'Stage 1, %d images left to scan.', 'ewww-image-optimizer' ), $remaining ) . "&nbsp;<img src='$loading_image' />",
 					'notice'         => $notice,
 					'bad_attachment' => $bad_attachment,
+					'tiny_skip'      => $tiny_notice,
 				)
 			)
 		);
@@ -1273,6 +1278,7 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 					'remaining'      => esc_html__( 'Stage 2, please wait.', 'ewww-image-optimizer' ) . "&nbsp;<img src='$loading_image' />",
 					'notice'         => $notice,
 					'bad_attachment' => $bad_attachment,
+					'tiny_skip'      => $tiny_notice,
 				)
 			)
 		);
