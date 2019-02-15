@@ -251,21 +251,7 @@ class WP_Smush_Png2jpg extends WP_Smush_Module {
 
 		// Update File path, Attached File, GUID.
 		$meta = empty( $meta ) ? wp_get_attachment_metadata( $id ) : $meta;
-
-		// Get the File mime.
-		if ( class_exists( 'finfo' ) ) {
-			$finfo = new finfo( FILEINFO_MIME_TYPE );
-		} else {
-			$finfo = false;
-		}
-
-		if ( $finfo ) {
-			$mime = file_exists( $n_file_path ) ? $finfo->file( $n_file_path ) : '';
-		} elseif ( function_exists( 'mime_content_type' ) ) {
-			$mime = mime_content_type( $n_file_path );
-		} else {
-			$mime = false;
-		}
+		$mime = WP_Smush_Helper::get_mime_type( $n_file_path );
 
 		// Update File Path, Attached file, Mime Type for Image.
 		if ( 'full' === $size_k ) {

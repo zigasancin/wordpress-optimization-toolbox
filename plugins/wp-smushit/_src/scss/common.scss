@@ -409,24 +409,6 @@ li.smush-pro-feature-row {
 	margin-bottom: 20px;
 }
 
-div.smush-pro-feature-title,
-div.smush-pro-feature-desc {
-	padding-left: 30px;
-	position: relative;
-}
-
-div.smush-pro-feature-title {
-	font-size: 15px;
-	font-weight: 500;
-	line-height: 30px;
-}
-
-div.smush-pro-feature-desc {
-	color: #888888;
-	font-size: 13px;
-	line-height: 22px;
-}
-
 div.smush-pro-link-wrap {
 	text-align: center;
 }
@@ -651,31 +633,6 @@ div.wp-smush-scan-result div.wp-smush-notice {
 div.wp-smush-scan-result div.content {
 	overflow: hidden;
 	width: 100%;
-}
-
-.smush-pro-feature-title:before {
-	box-shadow: none;
-	content: url("../images/image.svg");
-	font-family: 'WPMU-DEV-App-Icons';
-	font-size: 20px;
-	font-style: normal;
-	font-variant: normal;
-	font-weight: normal;
-	height: 22px;
-	line-height: 22px;
-	margin-left: 1px;
-	margin-top: -11px;
-	opacity: 1;
-	position: absolute;
-	speak: none;
-	transition-duration: 0.2s;
-	transition-property: color, opacity;
-	text-transform: none;
-	top: 50%;
-	vertical-align: middle;
-	width: 22px;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
 }
 
 div.wp-smush-info.notice {

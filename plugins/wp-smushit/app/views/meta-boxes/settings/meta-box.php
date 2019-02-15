@@ -7,6 +7,9 @@
  *
  * @var string $site_language     Site language.
  * @var string $translation_link  Link to plugin translation page.
+ * @var array $settings           Settings values.
+ * @var array $settings_data      Settings labels and descriptions.
+ * @var array $settings_group     Settings group.
  */
 
 ?>
@@ -44,3 +47,30 @@
 		</div>
 	</div>
 </div>
+
+
+
+<form id="wp-smush-settings-form" method="post">
+	<input type="hidden" name="setting_form" id="setting_form" value="settings">
+<?php if ( is_multisite() && is_network_admin() ) : ?>
+	<input type="hidden" name="wp-smush-networkwide" id="wp-smush-networkwide" value="1">
+	<input type="hidden" name="setting-type" value="network">
+<?php endif; ?>
+
+<?php
+wp_nonce_field( 'save_wp_smush_options', 'wp_smush_options_nonce', '', true );
+if ( ! is_multisite() || ( ! $settings['networkwide'] && ! is_network_admin() ) || is_network_admin() ) {
+	foreach ( $settings_data as $name => $values ) {
+
+		if ( ! in_array( $name, $settings_group, true ) ) {
+			continue;
+		}
+
+		$label = ! empty( $settings_data[ $name ]['short_label'] ) ? $settings_data[ $name ]['short_label'] : $settings_data[ $name ]['label'];
+
+		// Show settings option.
+		$this->settings_row( WP_SMUSH_PREFIX . $name, $label, $name, $settings[ $name ] );
+	}
+}
+?>
+</form>

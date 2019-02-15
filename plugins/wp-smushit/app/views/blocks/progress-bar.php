@@ -25,17 +25,20 @@
 
 	<div class="sui-progress-block sui-progress-can-close">
 		<div class="sui-progress">
-			<div class="sui-progress-text sui-icon-loader sui-loading">
-				<span class="wp-smush-images-percent">0</span><span>%</span>
+			<span class="sui-progress-icon" aria-hidden="true">
+				<i class="sui-icon-loader sui-loading"></i>
+			</span>
+			<div class="sui-progress-text">
+				<span class="wp-smush-images-percent">0%</span>
 			</div>
 			<div class="sui-progress-bar">
 				<span class="wp-smush-progress-inner" style="width: 0%"></span>
 			</div>
 		</div>
-		<button class="sui-progress-close sui-tooltip wp-smush-cancel-bulk" type="button" data-tooltip="<?php esc_html_e( 'Stop current bulk smush process.', 'wp-smushit' ); ?>">
+		<button class="sui-progress-close sui-button-icon sui-tooltip wp-smush-cancel-bulk" type="button" data-tooltip="<?php esc_html_e( 'Stop current bulk smush process.', 'wp-smushit' ); ?>">
 			<i class="sui-icon-close"></i>
 		</button>
-		<button class="sui-progress-close sui-tooltip wp-smush-all sui-hidden" type="button" data-tooltip="<?php esc_html_e( 'Resume scan.', 'wp-smushit' ); ?>">
+		<button class="sui-progress-close sui-button-icon sui-tooltip wp-smush-all sui-hidden" type="button" data-tooltip="<?php esc_html_e( 'Resume scan.', 'wp-smushit' ); ?>">
 			<i class="sui-icon-close"></i>
 		</button>
 	</div>

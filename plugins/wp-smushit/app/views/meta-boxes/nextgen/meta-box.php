@@ -42,7 +42,7 @@ if ( 0 >= $total_count ) : ?>
 		?>
 	</p>
 	<span class="wp-smush-upload-images sui-no-padding-bottom tc">
-	<a class="sui-button sui-button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=ngg_addgallery' ) ); ?>">
+	<a class="sui-button sui-button-blue" href="<?php echo esc_url( admin_url( 'admin.php?page=ngg_addgallery' ) ); ?>">
 		<?php esc_html_e( 'UPLOAD IMAGES', 'wp-smushit' ); ?></a>
 	</span>
 <?php else : ?>
@@ -76,7 +76,7 @@ if ( 0 >= $total_count ) : ?>
 			</p>
 		</div>
 		<div class="sui-actions-right">
-			<button type="button" class="sui-button sui-button-primary wp-smush-nextgen-bulk">
+			<button type="button" class="sui-button sui-button-blue wp-smush-nextgen-bulk">
 				<?php esc_html_e( 'BULK SMUSH', 'wp-smushit' ); ?>
 			</button>
 		</div>

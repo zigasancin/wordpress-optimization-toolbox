@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 3.0.2
+Version: 3.1.1
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
 Tags: image, resize, optimize, optimise, compress, performance, optimisation, optimise JPG, WebP, photography, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
-Tested up to: 5.0.1
-Stable tag: 3.0.2
+Tested up to: 5.0.3
+Stable tag: 3.1.1
 Requires PHP: 5.2.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -40,7 +40,7 @@ Smush has been benchmarked and tested number one for speed and quality and is th
 Some image compression tools destroy images with as much as a 30% loss in quality. Our servers strip hidden bulky information from your images and reduce file size without affecting the appearance.
 
 [youtube https://www.youtube.com/watch?v=BDtgVJZEajg&feature=youtu.be]
- 
+
 Smush meticulously scans every image you upload – or have already added to your site – cuts all the unnecessary data and scales it for you before adding it to your media library.
 
 ### Compress any Image in any Directory
@@ -155,6 +155,30 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 3. Smush will find and optimize images for you.
 
 == Changelog ==
+
+= 3.1.1 =
+
+* Fix: Auto Smush in Gutenberg
+* Fix: Image backup in Gutenberg
+
+= 3.1.0 =
+
+* New: Onboarding experience for new installs
+* New: WP CLI support for bulk/single image Smush and bulk restore
+* New: Color accessibility settings
+* New: Compatibility with Beaver Builder
+* Enhance: CDN image detection
+* Enhance: Compatibility with Hustle
+* Enhance: Add upgrade link in Plugins section for the free version
+* Enhance: Remove activation tooltips
+* Enhance: CSS for highlighting incorrectly sized images
+* Enhance: Preserve stats during options updates
+* Enhance: CDN will now only accept JPG/PNG/GIF images - no more warnings in browser console
+* Enhance: Support for Edge browser (and some older browser versions)
+* Fix: Browser console errors with CDN auto resizing and webp images
+* Fix: Directory Smush errors on subsites in multisite environments
+* Fix: Fix CDN not enabling on subsites in multisite
+* Fix: JavaScript error during bulk Smush on free version of the plugin
 
 = 3.0.2 =
 

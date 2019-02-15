@@ -855,7 +855,7 @@ class WP_Smush_DB {
 			}
 
 			$stats['count_images'] += ! empty( $smush_stats['sizes'] ) && is_array( $smush_stats['sizes'] ) ? count( $smush_stats['sizes'] ) : 0;
-			$stats['count_supersmushed'] + ! empty( $smush_stats['stats'] ) && $smush_stats['stats']['lossy'] ? 1 : 0;
+			$stats['count_supersmushed'] += ! empty( $smush_stats['stats'] ) && $smush_stats['stats']['lossy'] ? 1 : 0;
 
 			// Add resize saving stats.
 			if ( ! empty( $resize_savings ) ) {

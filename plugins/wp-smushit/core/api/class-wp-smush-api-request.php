@@ -85,23 +85,11 @@ class WP_Smush_API_Request {
 	 * @return string
 	 */
 	public function get_this_site() {
-		if ( ! is_multisite() || is_main_site() ) {
-			if ( defined( 'WP_SMUSH_API_DOMAIN' ) && WP_SMUSH_API_DOMAIN ) {
-				return WP_SMUSH_API_DOMAIN;
-			}
-
-			if ( ! empty( $this->service->api_key ) ) {
-				return network_site_url();
-			}
-
-			return network_home_url();
+		if ( defined( 'WP_SMUSH_API_DOMAIN' ) && WP_SMUSH_API_DOMAIN ) {
+			return WP_SMUSH_API_DOMAIN;
 		}
 
-		if ( defined( 'WP_SMUSH_API_SUBDOMAIN' ) && WP_SMUSH_API_SUBDOMAIN ) {
-			return WP_SMUSH_API_SUBDOMAIN;
-		}
-
-		return get_site_url();
+		return network_site_url();
 	}
 
 	/**

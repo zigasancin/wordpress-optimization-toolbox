@@ -1,5 +1,5 @@
 /**
- * Image resize detection (IRS).
+ * Image resize detection (IRD).
  *
  * Show all wrongly scaled images with a highlighted border and resize box.
  *
@@ -28,12 +28,20 @@
 				this.strings = wp_smush_resize_vars;
 			}
 
+			/**
+			 * Make sure these are set, before we proceed.
+			 */
+			if ( ! this.bar )
+				this.bar = document.getElementById('smush-image-bar');
+			if ( ! this.toggle )
+				this.toggle = document.getElementById('smush-image-bar-toggle');
+
 			this.detectImages();
 			this.generateMarkup('bigger');
 			this.generateMarkup('smaller');
 			this.removeEmptyDivs();
 
-            this.toggle.querySelector('i').classList.add('sui-icon-info')
+            this.toggle.querySelector('i').classList.add('sui-icon-info');
             this.toggle.querySelector('i').classList.remove('sui-icon-loader');
 
 			// Register the event handler after everything is done.
@@ -143,7 +151,7 @@
 		/**
 		 * Handle click on the toggle item.
 		 */
-		handleToggleClick: function(e) {
+		handleToggleClick: function() {
 			this.bar.classList.toggle('closed');
 			this.toggle.classList.toggle('closed');
 			this.removeSelection();
@@ -168,7 +176,9 @@
 		detectImages: function() {
 			const images = document.getElementsByTagName('img');
 
-			Object.values(images).forEach(image => {
+            Object.keys(images).map( e => {
+            	const image = images[e];
+
 				if ( this.shouldSkipImage(image) ) {
 					return;
 				}
@@ -215,6 +225,6 @@
 	/**
 	 * After page load, initialize toggle event.
 	 */
-	window.onload = WP_Smush_IRS.init();
+    window.addEventListener('load', () => WP_Smush_IRS.init());
 
 }());

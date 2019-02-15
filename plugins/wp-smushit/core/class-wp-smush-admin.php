@@ -43,9 +43,6 @@ class WP_Smush_Admin {
 		add_filter( 'plugin_action_links_' . WP_SMUSH_BASENAME, array( $this, 'settings_link' ) );
 		add_filter( 'network_admin_plugin_action_links_' . WP_SMUSH_BASENAME, array( $this, 'settings_link' ) );
 
-		// Admin pointer for new Smush installation.
-		add_action( 'admin_enqueue_scripts', array( $this, 'admin_pointer' ) );
-
 		/**
 		 * Prints a membership validation issue notice in Media Library
 		 */
@@ -79,16 +76,16 @@ class WP_Smush_Admin {
 	 */
 	private function register_scripts() {
 		// Share UI JS.
-		wp_register_script( 'smush-wpmudev-sui', WP_SMUSH_URL . 'app/assets/js/shared-ui.min.js', array( 'jquery' ), WP_SHARED_UI_VERSION, true );
+		wp_register_script( 'smush-sui', WP_SMUSH_URL . 'app/assets/js/smush-sui.min.js', array( 'jquery' ), WP_SHARED_UI_VERSION, true );
 
 		// Main JS.
-		wp_register_script( 'smush-admin', WP_SMUSH_URL . 'app/assets/js/admin.min.js', array( 'jquery' ), WP_SMUSH_VERSION, true );
+		wp_register_script( 'smush-admin', WP_SMUSH_URL . 'app/assets/js/smush-admin.min.js', array( 'jquery', 'smush-sui', 'underscore' ), WP_SMUSH_VERSION, true );
 
 		// Main CSS.
-		wp_register_style( 'smush-admin', WP_SMUSH_URL . 'app/assets/css/admin.min.css', array(), WP_SMUSH_VERSION );
+		wp_register_style( 'smush-admin', WP_SMUSH_URL . 'app/assets/css/smush-admin.min.css', array(), WP_SMUSH_VERSION );
 
 		// Styles that can be used on all pages in the WP backend.
-		wp_register_style( 'smush-admin-common', WP_SMUSH_URL . 'app/assets/css/common.min.css', array(), WP_SMUSH_VERSION );
+		wp_register_style( 'smush-admin-common', WP_SMUSH_URL . 'app/assets/css/smush-common.min.css', array(), WP_SMUSH_VERSION );
 
 		// Dismiss update info.
 		WP_Smush::get_instance()->core()->mod->smush->dismiss_update_info();
@@ -168,7 +165,7 @@ class WP_Smush_Admin {
 
 		wp_enqueue_script(
 			'smush-backbone-extension',
-			WP_SMUSH_URL . 'app/assets/js/media.min.js',
+			WP_SMUSH_URL . 'app/assets/js/smush-media.min.js',
 			array(
 				'jquery',
 				'media-editor', // Used in image filters.
@@ -189,12 +186,12 @@ class WP_Smush_Admin {
 					'stats_label' => esc_html__( 'Smush', 'wp-smushit' ),
 					'filter_all'  => esc_html__( 'Smush: All images', 'wp-smushit' ),
 					'filter_excl' => esc_html__( 'Smush: Bulk ignored', 'wp-smushit' ),
-					'gb'          => array(
-						'stats'        => esc_html__( 'Smush Stats', 'wp-smushit' ),
-						'select_image' => esc_html__( 'Select an image to view Smush stats.', 'wp-smushit' ),
-						'size'         => esc_html__( 'Image size', 'wp-smushit' ),
-						'savings'      => esc_html__( 'Savings', 'wp-smushit' ),
-					),
+                    'gb'          => array(
+                        'stats'        => esc_html__( 'Smush Stats', 'wp-smushit' ),
+                        'select_image' => esc_html__( 'Select an image to view Smush stats.', 'wp-smushit' ),
+                        'size'         => esc_html__( 'Image size', 'wp-smushit' ),
+                        'savings'      => esc_html__( 'Savings', 'wp-smushit' ),
+                    )
 				),
 				'nonce'   => array(
 					'get_smush_status' => wp_create_nonce( 'get-smush-status' ),
@@ -230,6 +227,19 @@ class WP_Smush_Admin {
 			$links = array( $settings );
 		}
 
+        // Upgrade link.
+		if ( ! WP_Smush::is_pro() ) {
+			$upgrade_url = add_query_arg(
+				array(
+					'utm_source'   => 'smush',
+					'utm_medium'   => 'plugin',
+					'utm_campaign' => 'smush_pluginlist_upgrade',
+				),
+				esc_url( 'https://premium.wpmudev.org/project/wp-smush-pro/' )
+			);
+			$links['upgrade'] = '<a href="' . esc_url( $upgrade_url ) . '" aria-label="' . esc_attr( __( 'Upgrade to Smush Pro', 'wp-smushit' ) ) . '" target="_blank" style="color: #1ABC9C;">' . esc_html__( 'Upgrade', 'wp-smushit' ) . '</a>';
+		}
+
 		return $links;
 	}
 
@@ -252,7 +262,7 @@ class WP_Smush_Admin {
 		$this->pages['smush'] = new WP_Smush_Dashboard( $title, 'smush' );
 
 		// Add a bulk smush option for NextGen gallery.
-		if ( defined( 'NGGFOLDER' ) && WP_Smush::get_instance()->core()->nextgen->is_enabled() && WP_Smush::is_pro() ) {
+		if ( defined( 'NGGFOLDER' ) && WP_Smush::get_instance()->core()->nextgen->is_enabled() && WP_Smush::is_pro() && ! is_network_admin() ) {
 			$this->pages['nextgen'] = new WP_Smush_Nextgen_Page( $title, 'wp-smush-nextgen-bulk', true );
 		}
 	}
@@ -342,77 +352,6 @@ class WP_Smush_Admin {
 			</p>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Register smush custom pointer to wp-pointer.
-	 *
-	 * Use WordPress dismiss-wp-pointer action on pointer dismissal to store dismissal flag in meta via ajax.
-	 *
-	 * @since 2.9
-	 */
-	public function register_admin_pointer() {
-		// Pointer content.
-		$content  = '<h3>' . __( 'Get Optimized', 'wp-smushit' ) . '</h3>';
-		$content .= '<p>' . __( 'Resize, compress and optimize your images here.', 'wp-smushit' ) . '</p>';
-		?>
-
-		<script type="text/javascript">
-			//<![CDATA[
-			jQuery( document ).ready( function( $ ) {
-				// jQuery selector to point the message to.
-				$( '#toplevel_page_smush' ).pointer({
-					content: '<?php echo $content; ?>',
-					position: {
-						edge: 'left',
-						align: 'center'
-					},
-					close: function() {
-						$.post( ajaxurl, {
-							pointer: 'smush_pointer',
-							action: 'dismiss-wp-pointer'
-						});
-					}
-				}).pointer( 'open' );
-			});
-			//]]>
-		</script>
-		<?php
-	}
-
-	/**
-	 * Add custom admin pointer using wp-pointer.
-	 *
-	 * We have removed activation redirect to Smush settings
-	 * in new version to avoid interrupting bulk activations.
-	 * Show a pointer notice to Smush settings menu on new
-	 * activations.
-	 *
-	 * @since 2.9
-	 */
-	public function admin_pointer() {
-		// Get dismissed pointers meta.
-		$dismissed_pointers = get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true );
-
-		// Explode them by comma.
-		$dismissed_pointers = explode( ',', (string) $dismissed_pointers );
-
-		// If smush pointer is not found in dismissed pointers, show.
-		if ( in_array( 'smush_pointer', $dismissed_pointers, true ) ) {
-			return;
-		}
-
-		// We had a flag in old versions for activation redirect. Check that also.
-		if ( get_site_option( 'wp-smush-skip-redirect' ) ) {
-			return;
-		}
-
-		// Enqueue wp-pointer styles and scripts.
-		wp_enqueue_style( 'wp-pointer' );
-		wp_enqueue_script( 'wp-pointer' );
-
-		// Register our custom pointer.
-		add_action( 'admin_print_footer_scripts', array( $this, 'register_admin_pointer' ) );
 	}
 
 	/**

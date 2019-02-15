@@ -36,3 +36,7 @@
 @import "modules/admin";
 @import "modules/directory-smush";
 @import "modules/cdn";
+
+// SUI Color Accessibility
+@import "~@wpmudev/shared-ui/scss/color-accessibility";
+@import "accessibility/color-accessibility";

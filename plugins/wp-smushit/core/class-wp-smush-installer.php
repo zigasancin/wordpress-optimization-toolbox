@@ -17,6 +17,16 @@
  * @since 2.8.0
  */
 class WP_Smush_Installer {
+
+	/**
+	 * Triggered on Smush deactivation.
+	 *
+	 * @since 3.1.0
+	 */
+	public static function smush_deactivated() {
+		WP_Smush::get_instance()->core()->mod->cdn->unschedule_cron();
+	}
+
 	/**
 	 * Check if a existing install or new.
 	 *

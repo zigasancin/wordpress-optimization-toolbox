@@ -703,12 +703,6 @@ class WP_Smush_Nextgen extends WP_Smush_Integration {
 
 		// If images has other registered size, smush them first.
 		if ( ! empty( $sizes ) ) {
-			if ( class_exists( 'finfo' ) ) {
-				$finfo = new finfo( FILEINFO_MIME_TYPE );
-			} else {
-				$finfo = false;
-			}
-
 			foreach ( $sizes as $size ) {
 				// Skip Full size, if smush original is not checked.
 				if ( 'full' === $size && ! $smush->smush_original ) {
@@ -723,13 +717,7 @@ class WP_Smush_Nextgen extends WP_Smush_Integration {
 				// We take the original image. Get the absolute path using the storage object.
 				$attachment_file_path_size = $storage->get_image_abspath( $image, $size );
 
-				if ( $finfo ) {
-					$ext = file_exists( $attachment_file_path_size ) ? $finfo->file( $attachment_file_path_size ) : '';
-				} elseif ( function_exists( 'mime_content_type' ) ) {
-					$ext = mime_content_type( $attachment_file_path_size );
-				} else {
-					$ext = false;
-				}
+				$ext = WP_Smush_Helper::get_mime_type( $attachment_file_path_size );
 
 				if ( $ext ) {
 					$valid_mime = array_search(
@@ -855,21 +843,7 @@ class WP_Smush_Nextgen extends WP_Smush_Integration {
 			return '';
 		}
 
-		if ( class_exists( 'finfo' ) ) {
-			$finfo = new finfo( FILEINFO_MIME_TYPE );
-		} else {
-			$finfo = false;
-		}
-
-		if ( $finfo ) {
-			$ext = file_exists( $file_path ) ? $finfo->file( $file_path ) : '';
-		} elseif ( function_exists( 'mime_content_type' ) ) {
-			$ext = mime_content_type( $file_path );
-		} else {
-			$ext = '';
-		}
-
-		return $ext;
+		return WP_Smush_Helper::get_mime_type( $file_path );
 	}
 
 	/**

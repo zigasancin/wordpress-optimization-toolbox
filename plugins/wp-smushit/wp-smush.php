@@ -13,7 +13,7 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/extend/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
- * Version:           3.0.2
+ * Version:           3.1.1
  * Author:            WPMU DEV
  * Author URI:        https://premium.wpmudev.org/
  * License:           GPLv2
@@ -47,11 +47,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '3.0.2' );
+	define( 'WP_SMUSH_VERSION', '3.1.1' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
-	define( 'WP_SHARED_UI_VERSION', 'sui-2-3-6' );
+	define( 'WP_SHARED_UI_VERSION', 'sui-2-3-16' );
 }
 if ( ! defined( 'WP_SMUSH_BASENAME' ) ) {
 	define( 'WP_SMUSH_BASENAME', plugin_basename( __FILE__ ) );
@@ -120,6 +120,7 @@ if ( WP_SMUSH_BASENAME !== plugin_basename( __FILE__ ) ) {
 }
 
 register_activation_hook( 'core/class-wp-smush-installer.php', array( 'WP_Smush_Installer', 'smush_activated' ) );
+register_deactivation_hook( __FILE__, array( 'WP_Smush_Installer', 'smush_deactivated' ) );
 
 // Init the plugin and load the plugin instance for the first time.
 add_action( 'plugins_loaded', array( 'WP_Smush', 'get_instance' ) );
@@ -267,6 +268,11 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 
 			$this->core  = new WP_Smush_Core();
 			$this->admin = new WP_Smush_Admin();
+
+			if ( defined( 'WP_CLI' ) && WP_CLI ) {
+				/* @noinspection PhpIncludeInspection */
+				require_once WP_SMUSH_DIR . 'core/class-wp-smush-cli-command.php';
+			}
 		}
 
 		/**

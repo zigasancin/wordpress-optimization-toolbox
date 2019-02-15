@@ -16,7 +16,7 @@
 
 <?php if ( $cdn_enabled && ( ( ! is_network_admin() && ! $opt_networkwide_val ) || ( is_network_admin() && $opt_networkwide_val ) ) ) : ?>
 	<div class="sui-notice sui-notice-info">
-		<p><?php esc_html_e( 'Your images are currently being served via ther WPMU DEV CDN. Bulk smush will continue to operate as per your settings below and is treated completely separately in case you ever want to disable the CDN.', 'wp-smushit' ); ?></p>
+		<p><?php esc_html_e( 'Your images are currently being served via the WPMU DEV CDN. Bulk smush will continue to operate as per your settings below and is treated completely separately in case you ever want to disable the CDN.', 'wp-smushit' ); ?></p>
 	</div>
 <?php endif; ?>
 

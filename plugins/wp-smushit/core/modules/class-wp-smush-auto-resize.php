@@ -32,9 +32,6 @@ class WP_Smush_Auto_Resize extends WP_Smush_Module {
 		// Load js file that is required in public facing pages.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_resize_assets' ) );
 
-		// Set a flag to media library images.
-		add_action( 'smush_image_src_before_cdn', array( $this, 'set_image_flag' ), 99, 2 );
-
 		// Generate markup for the template engine.
 		add_action( 'wp_footer', array( $this, 'generate_markup' ) );
 	}
@@ -70,7 +67,7 @@ class WP_Smush_Auto_Resize extends WP_Smush_Module {
 		// Required scripts for front end.
 		wp_enqueue_script(
 			'smush-resize-detection',
-			WP_SMUSH_URL . 'app/assets/js/resize-detection.min.js',
+			WP_SMUSH_URL . 'app/assets/js/smush-rd.min.js',
 			array( 'jquery' ),
 			WP_SMUSH_VERSION,
 			true
@@ -79,7 +76,7 @@ class WP_Smush_Auto_Resize extends WP_Smush_Module {
 		// Required styles for front end.
 		wp_enqueue_style(
 			'smush-resize-detection',
-			WP_SMUSH_URL . 'app/assets/css/resize-detection.min.css',
+			WP_SMUSH_URL . 'app/assets/css/smush-rd.min.css',
 			array(),
 			WP_SMUSH_VERSION
 		);
@@ -97,29 +94,6 @@ class WP_Smush_Auto_Resize extends WP_Smush_Module {
 				'small_image' => sprintf( __( 'This image is too small for its container. Adjust the image dimensions to %1$s x %2$spx for optimal results.', 'wp-smushit' ), 'width', 'height' ),
 			)
 		);
-	}
-
-	/**
-	 * Set image flag attribute to img tag.
-	 *
-	 * In order to highlight images, let's set a flag to
-	 * image so that it can be easily detected in front end.
-	 *
-	 * @param string $src   Image src.
-	 * @param object $image Image tag object.
-	 *
-	 * @return mixed
-	 */
-	public function set_image_flag( $src, $image ) {
-		// No need to add attachment id if auto detection is not enabled.
-		if ( ! $this->can_auto_detect ) {
-			return $src;
-		}
-
-		// Set image flag attribute.
-		$image->setAttribute( 'data-smush-image', true );
-
-		return $src;
 	}
 
 	/**

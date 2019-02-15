@@ -772,7 +772,7 @@ class Smush {
 					self.log.show();
 
 					if ( self.errors.length > 5 ) {
-						$('.smush-bulk-errors-actions').removeClass('sui-hidden');
+						jQuery('.smush-bulk-errors-actions').removeClass('sui-hidden');
 					} else {
 						// Print the error on screen.
 						self.log.find( '.smush-bulk-errors' ).append( error_msg );

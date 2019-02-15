@@ -134,10 +134,9 @@
             position: relative;
             transition: .2s;
 
+            @include icon( before, check );
             &:before {
                 opacity: 0;
-                font-family: wpmudev-plugin-icons!important;
-                content: "(";
                 color: #fff;
                 font-size: 10px;
                 line-height: 14px;

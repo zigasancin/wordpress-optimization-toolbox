@@ -560,6 +560,16 @@ class WP_Smush_Core {
 				'short_label' => esc_html__( 'PNG to JPEG conversion', 'wp-smushit' ),
 				'desc'        => esc_html__( 'When you compress a PNG, Smush will check if converting it to JPEG could further reduce its size.', 'wp-smushit' ),
 			),
+			'accessible_colors'  => array(
+				'label'       => esc_html__( 'Enable high contrast mode', 'wp-smushit' ),
+				'short_label' => esc_html__( 'Color Accessibility', 'wp-smushit' ),
+				'desc'        => esc_html__( 'Increase the visibility and accessibility of elements and components to meet WCAG AAA requirements.', 'wp-smushit' ),
+			),
+			'usage'       => array(
+				'label'       => esc_html__( 'Help us make Smush better by allowing usage tracking', 'wp-smushit' ),
+				'short_label' => esc_html__( 'Usage Tracking', 'wp-smushit' ),
+				'desc'        => esc_html__( 'Help make Smush better by letting our designers learn how you’re using the plugin.', 'wp-smushit' ),
+			),
 		);
 
 		/**
@@ -857,8 +867,8 @@ class WP_Smush_Core {
 			$global_data = $wpdb->get_results( $wpdb->prepare( "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key=%s LIMIT $offset, $limit", WP_Smushit::$smushed_meta_key ) );
 			if ( ! empty( $global_data ) ) {
 				foreach ( $global_data as $data ) {
-					// Skip attachment, if in re-smush list, or not in attachment list.
-					if ( ( ! empty( $this->resmush_ids ) && in_array( $data->post_id, $this->resmush_ids ) ) || ! in_array( $data->post_id, $this->attachments ) ) {
+					// Skip attachment, if not in attachment list.
+					if ( ! in_array( $data->post_id, $this->attachments ) ) {
 						continue;
 					}
 

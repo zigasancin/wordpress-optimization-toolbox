@@ -65,6 +65,9 @@ class WP_Smush_Dir {
 			$this->scanner->reset_scan();
 		}
 
+		// Add stats to stats box.
+		add_action( 'stats_ui_after_resize_savings', array( $this, 'directory_stats_ui' ), 10 );
+
 		// Check directory smush table after screen is set.
 		add_action( 'current_screen', array( $this, 'check_table' ) );
 
@@ -1118,6 +1121,40 @@ class WP_Smush_Dir {
 		}
 
 		return $tabs;
+	}
+
+	/**
+	 * Set directory smush stats to stats box.
+	 *
+	 * @return void
+	 */
+	public function directory_stats_ui() {
+		$dir_smush_stats = get_option( 'dir_smush_stats' );
+		$human           = 0;
+		if ( ! empty( $dir_smush_stats ) && ! empty( $dir_smush_stats['dir_smush'] ) ) {
+			$human = ! empty( $dir_smush_stats['dir_smush']['bytes'] ) && $dir_smush_stats['dir_smush']['bytes'] > 0 ? $dir_smush_stats['dir_smush']['bytes'] : 0;
+		}
+		?>
+        <li class="smush-dir-savings">
+			<span class="sui-list-label"><?php esc_html_e( 'Directory Smush Savings', 'wp-smushit' ); ?>
+				<?php if ( $human <= 0 ) { ?>
+                    <p class="wp-smush-stats-label-message">
+						<?php esc_html_e( "Smush images that aren't located in your uploads folder.", 'wp-smushit' ); ?>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=smush&view=directory' ) ); ?>" class="wp-smush-dir-link"
+                           title="<?php esc_attr_e( "Select a directory you'd like to Smush.", 'wp-smushit' ); ?>">
+							<?php esc_html_e( 'Choose directory', 'wp-smushit' ); ?>
+						</a>
+					</p>
+				<?php } ?>
+			</span>
+            <span class="wp-smush-stats sui-list-detail">
+				<i class="sui-icon-loader sui-loading" aria-hidden="true" title="<?php esc_attr_e( 'Updating Stats', 'wp-smushit' ); ?>"></i>
+				<span class="wp-smush-stats-human"></span>
+				<span class="wp-smush-stats-sep sui-hidden">/</span>
+				<span class="wp-smush-stats-percent"></span>
+			</span>
+        </li>
+		<?php
 	}
 
 }

@@ -52,25 +52,22 @@
 		toggle_cdn: function ( enable ) {
 			const nonceField = document.getElementsByName('wp_smush_options_nonce');
 
-			fetch(ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-				},
-				body: 'action=smush_toggle_cdn&param=' + enable + '&_ajax_nonce=' + nonceField[0].value
-			})
-			.then(data => {
-				const response = data.json();
-				response.then(res => {
-					if ( 'undefined' !== typeof res.success && res.success ) {
-						location.reload();
-					} else if ( 'undefined' !== typeof res.data.message ) {
-						this.showNotice( res.data.message );
-					}
-				});
-
-			})
-			.catch( error => console.error(error) );
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', ajaxurl+'?action=smush_toggle_cdn', true);
+            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            xhr.onload = () => {
+                if (200 === xhr.status ) {
+                    const res = JSON.parse(xhr.response);
+                    if ( 'undefined' !== typeof res.success && res.success ) {
+                        location.reload();
+                    } else if ( 'undefined' !== typeof res.data.message ) {
+                        this.showNotice( res.data.message );
+                    }
+                } else {
+                    console.log('Request failed.  Returned status of ' + xhr.status);
+                }
+            };
+            xhr.send('param='+enable+'&_ajax_nonce='+nonceField[0].value);
 		},
 
 		/**
@@ -113,36 +110,44 @@
 				return;
 			}
 
-			const spinner = this.cdnStatsBox.querySelector('.sui-icon-loader');
-			const elements = this.cdnStatsBox.querySelectorAll('.wp-smush-stats > :not(.sui-icon-loader)');
+			this.toggleElements();
 
-			elements.forEach(element => element.classList.toggle('sui-hidden'));
-			spinner.classList.toggle('sui-hidden');
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', ajaxurl+'?action=get_cdn_stats', true);
+            xhr.onload = () => {
+                if (200 === xhr.status ) {
+                    const res = JSON.parse(xhr.response);
+                    if ( 'undefined' !== typeof res.success && res.success ) {
+                        /**
+                         * TODO: It's possible to parse the res variable and update the latest stats during the update,
+                         * but is it really needed?
+                         */
+                        this.toggleElements();
+                    } else if ( 'undefined' !== typeof res.data.message ) {
+                        this.showNotice( res.data.message );
+                    }
+                } else {
+                    console.log('Request failed.  Returned status of ' + xhr.status);
+                }
+            };
+            xhr.send();
+		},
 
-			fetch(ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-				},
-				body: 'action=get_cdn_stats'
-			})
-			.then(data => {
-				const response = data.json();
-				response.then(res => {
-					if ( 'undefined' !== typeof res.success && res.success ) {
-						/**
-						 * TODO: It's possible to parse the res variable and update the latest stats during the update,
-						 * but is it really needed?
-						 */
-						elements.forEach(element => element.classList.toggle('sui-hidden'));
-						spinner.classList.toggle('sui-hidden');
-					} else if ( 'undefined' !== typeof res.data.message ) {
-						this.showNotice( res.data.message );
-					}
-				});
-			})
-			.catch( error => console.error(error) );
-		}
+        /**
+		 * Show/hide elements during status update in the updateStatsBox()
+		 *
+		 * @since 3.1  Moved out from updateStatsBox()
+         */
+		toggleElements: function() {
+            const spinner = this.cdnStatsBox.querySelector('.sui-icon-loader');
+            const elements = this.cdnStatsBox.querySelectorAll('.wp-smush-stats > :not(.sui-icon-loader)');
+
+            for (let i = 0; i < elements.length; i++) {
+                elements[i].classList.toggle('sui-hidden');
+            }
+
+            spinner.classList.toggle('sui-hidden');
+        }
 
 	};
 

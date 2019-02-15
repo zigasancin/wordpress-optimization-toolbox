@@ -2,10 +2,10 @@
  * BLOCK: extend image block
  */
 const { __ } = wp.i18n,
-	{ createHigherOrderComponent } = wp.compose,
-	{ Fragment } = wp.element,
-	{ InspectorControls } = wp.editor,
-	{ PanelBody } = wp.components;
+	  { createHigherOrderComponent } = wp.compose,
+	  { Fragment } = wp.element,
+      { InspectorControls } = wp.editor,
+	  { PanelBody } = wp.components;
 
 /**
  * Transform bytes to human readable format.
@@ -41,7 +41,7 @@ export function smushStats( id, stats ) {
 	if ( 'undefined' === typeof stats ) {
 		return smush_vars.strings.gb.select_image;
 	} else if ( 'string' === typeof stats ) {
-		return stats;
+        return stats;
 	}
 
 	return (
@@ -72,50 +72,50 @@ export function smushStats( id, stats ) {
  * @todo this could be optimized not to query so much.
  */
 export function fetchProps( props ) {
-	let image = new wp.api.models.Media( { id: props.attributes.id } ),
-		smushData = props.attributes.smush;
+    let image = new wp.api.models.Media( { id: props.attributes.id } ),
+        smushData = props.attributes.smush;
 
-	image.fetch( { attribute: 'smush' } ).done( function ( img ) {
-		if ( 'string' === typeof img.smush ) {
-			props.setAttributes( { smush: img.smush } );
-			setTimeout( () => fetch( props ), 3000 );
-		} else if ( 'undefined' !== typeof img.smush && (
-			'undefined' === typeof smushData || JSON.stringify( smushData ) !== JSON.stringify( img.smush )
-		) ) {
-			props.setAttributes( { smush: img.smush } );
-		}
-	});
+    image.fetch( { attribute: 'smush' } ).done( function ( img ) {
+        if ( 'string' === typeof img.smush ) {
+            props.setAttributes( { smush: img.smush } );
+            setTimeout( () => fetch( props ), 3000 );
+        } else if ( 'undefined' !== typeof img.smush && (
+            'undefined' === typeof smushData || JSON.stringify( smushData ) !== JSON.stringify( img.smush )
+        ) ) {
+            props.setAttributes( { smush: img.smush } );
+        }
+    });
 }
 
 /**
- * Modify the blocks edit component.
+ * Modify the block’s edit component.
  * Receives the original block BlockEdit component and returns a new wrapped component.
  */
 const smushStatsControl = createHigherOrderComponent( ( BlockEdit ) => {
-	return ( props ) => {
-		// If not image block or not selected, return unmodified block.
-		if ( 'core/image' !== props.name || ! props.isSelected || 'undefined' === typeof props.attributes.id ) {
-			return (
-				<Fragment>
-					<BlockEdit { ...props } />
+    return ( props ) => {
+        // If not image block or not selected, return unmodified block.
+        if ( 'core/image' !== props.name || ! props.isSelected || 'undefined' === typeof props.attributes.id ) {
+        	return (
+                <Fragment>
+                    <BlockEdit { ...props } />
 				</Fragment>
 			);
-		}
+        }
 
-		let smushData = props.attributes.smush;
-		fetchProps(props);
+        let smushData = props.attributes.smush;
+        fetchProps(props);
 
-		return (
-			<Fragment>
-				<BlockEdit { ...props } />
-				<InspectorControls>
-					<PanelBody title={ smush_vars.strings.gb.stats }>
+        return (
+            <Fragment>
+                <BlockEdit { ...props } />
+                <InspectorControls>
+                    <PanelBody title={ smush_vars.strings.gb.stats }>
 						{ smushStats( props.attributes.id, smushData ) }
-					</PanelBody>
-				</InspectorControls>
-			</Fragment>
-		);
-	};
+                    </PanelBody>
+                </InspectorControls>
+            </Fragment>
+        );
+    };
 }, "withInspectorControl" );
 
 wp.hooks.addFilter( 'editor.BlockEdit', 'wp-smush/smush-data-control', smushStatsControl );

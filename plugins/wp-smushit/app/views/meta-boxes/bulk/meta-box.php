@@ -31,7 +31,7 @@ if ( 0 >= $core->total_count ) : ?>
 		<?php esc_html_e( 'Once you upload images, reload this page and start playing!', 'wp-smushit' ); ?>
 	</p>
 	<span class="wp-smush-upload-images sui-no-padding-bottom tc">
-		<a class="sui-button sui-button-primary tc" href="<?php echo esc_url( admin_url( 'media-new.php' ) ); ?>">
+		<a class="sui-button sui-button-blue tc" href="<?php echo esc_url( admin_url( 'media-new.php' ) ); ?>">
 			<?php esc_html_e( 'UPLOAD IMAGES', 'wp-smushit' ); ?>
 		</a>
 	</span>
@@ -153,7 +153,7 @@ $this->view(
 			</p>
 		</div>
 	<?php endif; ?>
-	<button type="button" class="wp-smush-all sui-button sui-button-primary" title="<?php esc_attr_e( 'Click to start Bulk Smushing images in Media Library', 'wp-smushit' ); ?>">
+	<button type="button" class="wp-smush-all sui-button sui-button-blue" title="<?php esc_attr_e( 'Click to start Bulk Smushing images in Media Library', 'wp-smushit' ); ?>">
 		<?php esc_html_e( 'BULK SMUSH NOW', 'wp-smushit' ); ?>
 	</button>
 </div>

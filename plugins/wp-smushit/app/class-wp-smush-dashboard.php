@@ -52,13 +52,13 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 		add_action( 'smush_setting_column_right_inside', array( $this, 'settings_desc' ), 10, 2 );
 		add_action( 'smush_setting_column_right_inside', array( $this, 'image_sizes' ), 15, 2 );
 		add_action( 'smush_setting_column_right_inside', array( $this, 'resize_settings' ), 20, 2 );
+		add_action( 'smush_setting_column_right_inside', array( $this, 'usage_settings' ), 25, 2 );
 		add_action( 'smush_setting_column_right_outside', array( $this, 'full_size_options' ), 20, 2 );
 		add_action( 'smush_setting_column_right_outside', array( $this, 'detect_size_options' ), 25, 2 );
 
 		// Add stats to stats box.
 		add_action( 'stats_ui_after_resize_savings', array( $this, 'pro_savings_stats' ), 15 );
 		add_action( 'stats_ui_after_resize_savings', array( $this, 'conversion_savings_stats' ), 15 );
-		add_action( 'stats_ui_after_resize_savings', array( $this, 'directory_stats_ui' ), 10 );
 
 		// Icons in the submenu.
 		add_filter( 'wp_smush_admin_after_tab_' . $this->get_slug(), array( $this, 'after_tab' ) );
@@ -404,6 +404,28 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 	}
 
 	/**
+	 * Display a description in Settings - Usage Tracking.
+     *
+     * @since 3.1.0
+     *
+     * @param string $name  Setting name.
+	 */
+	public function usage_settings( $name ) {
+		// Add only to full size settings.
+		if ( 'usage' !== $name ) {
+			return;
+		}
+		?>
+
+        <span class="sui-description sui-toggle-description">
+            <?php
+            esc_html_e( 'Note: Usage tracking is completely anonymous. We are only tracking what features you are/aren’t using to make our feature decisions more informed.', 'wp-smushit' );
+            ?>
+        </span>
+        <?php
+    }
+
+	/**
 	 * Show super smush stats in stats section.
 	 *
 	 * If a pro member and super smush is enabled, show super smushed
@@ -503,40 +525,6 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 			</li>
 			<?php
 		}
-	}
-
-	/**
-	 * Set directory smush stats to stats box.
-	 *
-	 * @return void
-	 */
-	public function directory_stats_ui() {
-		$dir_smush_stats = get_option( 'dir_smush_stats' );
-		$human           = 0;
-		if ( ! empty( $dir_smush_stats ) && ! empty( $dir_smush_stats['dir_smush'] ) ) {
-			$human = ! empty( $dir_smush_stats['dir_smush']['bytes'] ) && $dir_smush_stats['dir_smush']['bytes'] > 0 ? $dir_smush_stats['dir_smush']['bytes'] : 0;
-		}
-		?>
-		<li class="smush-dir-savings">
-			<span class="sui-list-label"><?php esc_html_e( 'Directory Smush Savings', 'wp-smushit' ); ?>
-				<?php if ( $human <= 0 ) { ?>
-					<p class="wp-smush-stats-label-message">
-						<?php esc_html_e( "Smush images that aren't located in your uploads folder.", 'wp-smushit' ); ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=smush&view=directory' ) ); ?>" class="wp-smush-dir-link"
-							title="<?php esc_attr_e( "Select a directory you'd like to Smush.", 'wp-smushit' ); ?>">
-							<?php esc_html_e( 'Choose directory', 'wp-smushit' ); ?>
-						</a>
-					</p>
-				<?php } ?>
-			</span>
-			<span class="wp-smush-stats sui-list-detail">
-				<i class="sui-icon-loader sui-loading" aria-hidden="true" title="<?php esc_attr_e( 'Updating Stats', 'wp-smushit' ); ?>"></i>
-				<span class="wp-smush-stats-human"></span>
-				<span class="wp-smush-stats-sep sui-hidden">/</span>
-				<span class="wp-smush-stats-percent"></span>
-			</span>
-		</li>
-		<?php
 	}
 
 	/**
@@ -706,7 +694,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 						continue;
 					}
 					?>
-					<label class="sui-checkbox sui-checkbox-stacked sui-checkbox-sm"">
+					<label class="sui-checkbox sui-checkbox-stacked sui-checkbox-sm">
 						<input type="checkbox" id="wp-smush-size-<?php echo esc_attr( $size_k ); ?>" <?php checked( $checked, true ); ?> name="wp-smush-image_sizes[]" value="<?php echo esc_attr( $size_k ); ?>" <?php echo esc_attr( $disabled ); ?>>
 						<span aria-hidden="true"></span>
 						<?php if ( isset( $size['width'], $size['height'] ) ) : ?>
@@ -974,7 +962,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 	 */
 	public function bulk_settings_metabox() {
 		// Get all grouped settings that can be skipped.
-		$grouped_settings = array_merge( $this->resize_group, $this->full_size_group, $this->integration_group, array( 'webp', 'auto_resize' ) );
+		$grouped_settings = array_merge( $this->resize_group, $this->full_size_group, $this->integration_group, array( 'webp', 'auto_resize', 'accessible_colors', 'usage' ) );
 
 		$this->view(
 			'meta-boxes/bulk-settings/meta-box',
@@ -1171,7 +1159,11 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				minutes to take effect but your images will continue to be served in the mean time, please be patient.',
 				'wp-smushit'
 			),
-			'info'    => __( 'Your media is currently being served from the WPMU DEV CDN.', 'wp-smushit' ),
+			'info'    => __(
+                'Your media is currently being served from the WPMU DEV CDN. Serving images from CDN is only possible
+                on publicly available domains.',
+                'wp-smushit'
+            ),
 			'error'   => __(
 				'CDN is inactive. You have gone over your 30 day cap so we’ve stopped serving your images.
 					Upgrade your plan now to reactivate this service.',
@@ -1182,8 +1174,8 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 		$cdn_status = 'warning';
 
 		$cdn = $this->settings->get_setting( WP_SMUSH_PREFIX . 'cdn_status' );
-		if ( $cdn->cdn_enabled && WP_Smush::get_instance()->core()->mod->cdn->get_status() ) {
-			// 1073741824 = 1024 (kb) * 1024 (mb) * 1024 (gb)
+		if ( isset( $cdn->cdn_enabled ) && $cdn->cdn_enabled && WP_Smush::get_instance()->core()->mod->cdn->get_status() ) {
+			// 1073741824 = 1024 (kb) * 1024 (mb) * 1024 (gb).
 			$cdn_status = $cdn->bandwidth / 1073741824 < $cdn->bandwidth_plan ? 'info' : 'error';
 		}
 
@@ -1242,6 +1234,12 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 			array(
 				'site_language'    => $site_language,
 				'translation_link' => $link,
+				'settings'         => $this->settings->get(),
+				'settings_data'    => WP_Smush::get_instance()->core()->settings,
+				'settings_group'   => array(
+					'accessible_colors',
+                    'usage',
+				),
 			)
 		);
 	}

@@ -14,7 +14,7 @@ $button_msg  = $enabled ? __( 'Updating settings...', 'wp-smushit' ) : __( 'Acti
 
 <div class="sui-actions-right">
 	<span class="wp-smush-submit-wrap">
-		<input type="submit" id="wp-smush-save-settings" class="sui-button sui-button-primary" data-msg="<?php echo esc_attr( $button_msg ); ?>" value="<?php echo esc_attr( $button_text ); ?>">
+		<input type="submit" id="wp-smush-save-settings" class="sui-button sui-button-blue" data-msg="<?php echo esc_attr( $button_msg ); ?>" value="<?php echo esc_attr( $button_text ); ?>">
 		<span class="sui-icon-loader sui-loading sui-hidden"></span>
 	</span>
 </div>

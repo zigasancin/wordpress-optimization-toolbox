@@ -16,6 +16,34 @@
 class WP_Smush_Helper {
 
 	/**
+	 * Get mime type for file.
+	 *
+	 * @since 3.1.0  Moved here as a helper function.
+	 *
+	 * @param $path
+	 *
+	 * @return bool|string
+	 */
+	public static function get_mime_type( $path ) {
+		// Get the File mime.
+		if ( class_exists( 'finfo' ) ) {
+			$finfo = new finfo( FILEINFO_MIME_TYPE );
+		} else {
+			$finfo = false;
+		}
+
+		if ( $finfo ) {
+			$mime = file_exists( $path ) ? $finfo->file( $path ) : '';
+		} elseif ( function_exists( 'mime_content_type' ) ) {
+			$mime = mime_content_type( $path );
+		} else {
+			$mime = false;
+		}
+
+		return $mime;
+	}
+
+	/**
 	 * Return unfiltered file path
 	 *
 	 * @param int $attachment_id  Attachment ID.
