@@ -14,7 +14,7 @@ class WP_Optimization_orphandata extends WP_Optimization {
 	 * Do actions after optimize() function.
 	 */
 	public function after_optimize() {
-		$message = sprintf(_n('%s orphaned meta data deleted', '%s orphaned meta data deleted', $this->processed_count, 'wp-optimize'), number_format_i18n($this->processed_count));
+		$message = sprintf(_n('%s orphaned relationship data deleted', '%s orphaned relationship data deleted', $this->processed_count, 'wp-optimize'), number_format_i18n($this->processed_count));
 
 		if ($this->is_multisite_mode()) {
 			$message .= ' ' . sprintf(_n('across %s site', 'across %s sites', count($this->blogs_ids), 'wp-optimize'), count($this->blogs_ids));
@@ -28,7 +28,7 @@ class WP_Optimization_orphandata extends WP_Optimization {
 	 * Do optimization.
 	 */
 	public function optimize() {
-		$clean = "DELETE FROM `" . $this->wpdb->term_relationships . "` WHERE term_taxonomy_id=1 AND object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
+		$clean = "DELETE FROM `" . $this->wpdb->term_relationships . "` WHERE object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
 
 		$orphandata = $this->query($clean);
 		$this->processed_count += $orphandata;
@@ -55,7 +55,7 @@ class WP_Optimization_orphandata extends WP_Optimization {
 	 * Get count of unoptimized items.
 	 */
 	public function get_info() {
-		$sql = "SELECT COUNT(*) FROM `" . $this->wpdb->term_relationships . "` WHERE term_taxonomy_id=1 AND object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
+		$sql = "SELECT COUNT(*) FROM `" . $this->wpdb->term_relationships . "` WHERE object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
 		$orphandata = $this->wpdb->get_var($sql);
 
 		$this->found_count += $orphandata;

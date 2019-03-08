@@ -60,7 +60,7 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 
 		if ($table_obj->is_type_supported) {
 			$this->logger->info('Optimizing: ' . $table_obj->Name);
-			$this->query('OPTIMIZE TABLE ' . $table_obj->Name);
+			$this->query('OPTIMIZE TABLE `' . $table_obj->Name . '`');
 
 			// For InnoDB Data_free doesn't contain free size.
 			if ('InnoDB' != $table_obj->Engine) {

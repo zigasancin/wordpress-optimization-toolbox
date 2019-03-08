@@ -314,14 +314,14 @@ class WP_Optimize_Database_Information {
 		global $wpdb;
 
 		if (is_array($table)) {
-			$table = join(',', $table);
+			$table = join('`,`', $table);
 		}
 
 		$result = array();
 
 		if (empty($table)) return $result;
 
-		$query_result = $wpdb->get_results('CHECK TABLE '.$table.';');
+		$query_result = $wpdb->get_results('CHECK TABLE `'.$table.'`;');
 
 		if (empty($query_result)) return $result;
 
@@ -518,6 +518,8 @@ class WP_Optimize_Database_Information {
 	 * @return array - ['installed' => true|false, 'active' => true|false]
 	 */
 	public function get_plugin_status($plugin) {
+	
+		if (!function_exists('get_plugins')) include_once(ABSPATH.'wp-admin/includes/plugin.php');
 		$plugins = get_plugins();
 
 		// return true for wp-optimize without checking.
@@ -532,12 +534,8 @@ class WP_Optimize_Database_Information {
 		$active = false;
 
 		foreach ($plugins as $plugin_file => $plugin_data) {
-			if ('' != $plugin_data['TextDomain']) {
-				$plugin_slug = $plugin_data['TextDomain'];
-			} else {
-				$plugin_file_parts = explode('/', $plugin_file);
-				$plugin_slug = $plugin_file_parts[0];
-			}
+			$plugin_file_parts = explode('/', $plugin_file);
+			$plugin_slug = $plugin_file_parts[0];
 
 			if ($plugin == $plugin_slug) {
 				$installed = true;

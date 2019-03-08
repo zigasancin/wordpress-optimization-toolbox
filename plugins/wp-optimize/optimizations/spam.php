@@ -188,7 +188,7 @@ class WP_Optimization_spam extends WP_Optimization {
 			// if current version is not premium and Preview feature not supported then
 			// add to message Review link to comments page
 			if (!WP_Optimize::is_premium()) {
-				$message .= ' | <a id="wp-optimize-edit-comments-trash" href="'.admin_url('edit-comments.php?comment_status=trash').'">'.' '.__('Review', 'wp-optimize').'</a>';
+				$message1 .= ' | <a id="wp-optimize-edit-comments-trash" href="'.admin_url('edit-comments.php?comment_status=trash').'">'.' '.__('Review', 'wp-optimize').'</a>';
 			}
 		} else {
 			$message1 = __('No trashed comments found', 'wp-optimize');
@@ -208,7 +208,7 @@ class WP_Optimization_spam extends WP_Optimization {
 
 		// add preview link to message.
 		if ($this->found_trash_count > 0) {
-			$message = $this->get_preview_link($message1, array('data-type' => 'trash'));
+			$message1 = $this->get_preview_link($message1, array('data-type' => 'trash'));
 		}
 
 		$this->register_output($message);

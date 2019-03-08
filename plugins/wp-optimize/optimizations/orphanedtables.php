@@ -12,6 +12,8 @@ class WP_Optimization_orphanedtables extends WP_Optimization {
 
 	public $run_multisite = false;
 
+	private $last_message;
+
 	/**
 	 * Display or hide optimization in optimizations list.
 	 *
@@ -32,6 +34,10 @@ class WP_Optimization_orphanedtables extends WP_Optimization {
 			$result = (false === $table) ? false : $this->delete_table($table);
 
 			$this->register_meta('success', $result);
+
+			if (false === $result) {
+				$this->register_meta('message', $this->last_message);
+			}
 		} else {
 			// delete all orphaned tables if table name was not selected.
 			$tables = $this->optimizer->get_tables();
@@ -63,10 +69,10 @@ class WP_Optimization_orphanedtables extends WP_Optimization {
 	private function delete_table($table_obj) {
 		global $wpdb;
 
-		// don't delete table if it in use.
-		if ($table_obj->is_using) return true;
+		// don't delete table if it in use and plugin active.
+		if ($table_obj->is_using && $table_obj->plugin_status['active']) return true;
 
-		$sql_query = $wpdb->prepare('DROP TABLE %s', $table_obj->Name);
+		$sql_query = "DROP TABLE `{$table_obj->Name}`";
 
 		$this->logger->info($sql_query);
 
@@ -74,6 +80,7 @@ class WP_Optimization_orphanedtables extends WP_Optimization {
 
 		// check if drop query finished successfully.
 		if ('' != $wpdb->last_error) {
+			$this->last_message = $wpdb->last_error;
 			$this->logger->info($wpdb->last_error);
 		}
 

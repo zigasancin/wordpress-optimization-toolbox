@@ -467,14 +467,14 @@ var WP_Optimize = function (send_command) {
 				var $table_information = $(this).find('td');
 
 				// Get table type information.
-				table_type = $table_information.eq(5).text();
-				table = $table_information.eq(1).data('tablename');
-				optimizable = $table_information.eq(5).data('optimizable');
+				var table_type = $(this).data('type');
+				var table = $(this).data('tablename');
+				var optimizable = $(this).data('optimizable');
 
 				// Make sure the table isnt blank.
 				if ('' != table) {
 					// Check if table is optimizable or optimization forced by user.
-					if ('1' == optimizable || optimization_force) {
+					if (1 == parseInt(optimizable) || optimization_force) {
 						var data = {
 							optimization_id: id,
 							optimization_table: table,
@@ -948,6 +948,11 @@ var WP_Optimize = function (send_command) {
 					callback = function(table) {
 						$('#wpoptimize_table_list tbody').css('opacity', '1');
 					};
+
+				// update body with new content.
+				$("#wpoptimize_table_list tbody").remove();
+				$("#wpoptimize_table_list thead").after(response.table_list);
+
 				$("#wpoptimize_table_list").trigger("updateAll", [resort, callback]);
 			}
 			if (response.hasOwnProperty('total_size')) {
@@ -1378,7 +1383,7 @@ var WP_Optimize = function (send_command) {
 		if (take_backup_checkbox.is(':checked')) {
 			take_a_backup_with_updraftplus(remove_single_db_table($(this)));
 		} else {
-			take_backup_checkbox();
+			remove_single_db_table($(this));
 		}
 	});
 
@@ -1405,8 +1410,6 @@ var WP_Optimize = function (send_command) {
 			if (response.result.meta.success) {
 				var row = btn.closest('tr');
 
-				btn.prop('disabled', false);
-				spinner.addClass('visibility-hidden');
 				action_done_icon.show().removeClass('visibility-hidden');
 
 				// remove row for deleted table.
@@ -1418,10 +1421,17 @@ var WP_Optimize = function (send_command) {
 					});
 				}, 500);
 			} else {
-				btn.prop('disabled', false);
-				spinner.addClass('visibility-hidden');
-				alert(wpoptimize.table_was_not_deleted.replace('%s', table_name));
+				var message = wpoptimize.table_was_not_deleted.replace('%s', table_name);
+
+				if (response.result.meta.message) {
+					message += '(' + response.result.meta.message + ')';
+				}
+
+				alert(message);
 			}
+		}).always(function() {
+			btn.prop('disabled', false);
+			spinner.addClass('visibility-hidden');
 		});
 	}
 

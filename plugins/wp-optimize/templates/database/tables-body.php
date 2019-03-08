@@ -20,7 +20,11 @@
 
 	foreach ($tablesstatus as $tablestatus) {
 		$no++;
-		echo "<tr>\n";
+		echo '<tr 
+			data-tablename="'.esc_attr($tablestatus->Name).'"
+			data-type="'.esc_attr($tablestatus->Engine).'"
+			data-optimizable="'.($tablestatus->is_optimizable ? 1 : 0).'"
+		>'."\n";
 		echo '<td data-colname="'.__('No.', 'wp-optimize').'">'.number_format_i18n($no).'</td>'."\n";
 		echo '<td data-tablename="'.esc_attr($tablestatus->Name).'" data-colname="'.__('Table', 'wp-optimize').'">'.htmlspecialchars($tablestatus->Name);
 

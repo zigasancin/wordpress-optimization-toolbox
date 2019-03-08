@@ -76,8 +76,8 @@
 	width: 32.1%;
 }
 
-.nav-tab-wrapper {
-	margin: 14px 0px;
+#wp-optimize-wrap .nav-tab-wrapper {
+	margin: 0;
 }
 
 @media screen and (min-width: 549px) {
@@ -465,7 +465,8 @@ div#wpoptimize_table_list_tables_not_found + h3 {
 }
 
 .wpo_unused_images_buttons_wrap {
-	display: none;
+	float: right;
+	margin-right: 20px;
 }
 
 .wpo_unused_images_container h3 {

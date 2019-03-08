@@ -3,8 +3,8 @@ Contributors: DavidAnderson, ruhanirabin, DNutbourne, aporter, snightingale
 Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
-Tested up to: 5.0
-Stable tag: 2.2.11
+Tested up to: 5.1
+Stable tag: 2.2.12
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -143,10 +143,25 @@ Please check your database for corrupted tables. That can happen, usually your w
 
 == Changelog ==
 
+= 2.2.12 - 07/Feb/2019 =
+
+* TWEAK: Updated information on More plugins tab
+* TWEAK: Fix header layout when a system or third party notification are shown
+* TWEAK: (Premium) Fix layout in unused images list mode
+* TWEAK: Improve data reliability in javascript
+* TWEAK: Improve orphaned relationships data optimization
+* TWEAK: Wrong message for "remove spam and trashed comments" optimization
+* TWEAK: Output additional information if table was not deleted
+* FIX: Added escaping for table names in database queries
+* FIX: Fix another possible fatal error due to missing get_plugins() function
+* FIX: Improve identification of installed/active plugins
+
 = 2.2.11 - 16/Jan/2019 =
 
 * FIX: A regression in the "identify table by owner" feature caused optimizing to silently fail on some tables
 * TWEAK: Added ability to exclude lazy load images by class
+* TWEAK: Added feature to select multiple unused images with Shift key pressed
+* FIX: Fixed DROP TABLE query for orphaned tables optimization
 
 = 2.2.10 - 11/Jan/2019 =
 
@@ -466,4 +481,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.2.11 : Fix a silent failure in optimization for some tables. A recommended update for all.
+* 2.2.12 : Improve orphaned relationships data optimization. Bug fixes. A recommended update for all.

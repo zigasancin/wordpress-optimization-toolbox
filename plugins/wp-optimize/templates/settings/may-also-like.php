@@ -180,6 +180,32 @@
 		</tr>
 		<tr>
 			<td>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/lazy-load.png';?>" alt="<?php esc_attr_e('Lazy Loading', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Lazy Loading', 'wp-optimize');?></h4>
+				<p><?php _e('Make your site run faster by only loading parts of a web-page when it is visible to the user', 'wp-optimize');?></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/optimization-preview.png';?>" alt="<?php esc_attr_e('Optimization Preview', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Optimization Preview', 'wp-optimize');?></h4>
+				<p><?php _e('Preview, select and remove data and records available for optimization from the database', 'wp-optimize');?></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/logging-n-reporting.png';?>" alt="<?php esc_attr_e('Enhanced logging and reporting', 'wp-optimize');?>" class="wpo-premium-image">
 				<h4><?php _e('Enhanced logging and reporting', 'wp-optimize');?></h4>
 				<p><?php _e('Send log messages to three additional locations: Slack, Syslog and Simple History', 'wp-optimize');?></p>

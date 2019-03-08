@@ -225,7 +225,7 @@ msgstr ""
 msgid "Trackbacks have now been enabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/wp-optimize-database-information.php:411, src/includes/wp-optimize-database-information.php:456, src/templates/database/tables-body.php:29, src/wp-optimize.php:882
+#: src/includes/wp-optimize-database-information.php:411, src/includes/wp-optimize-database-information.php:456, src/templates/database/tables-body.php:33, src/wp-optimize.php:882
 msgid "WordPress core"
 msgstr ""
 
@@ -464,8 +464,8 @@ msgid "Optimize database tables"
 msgstr ""
 
 #: src/optimizations/orphandata.php:17
-msgid "%s orphaned meta data deleted"
-msgid_plural "%s orphaned meta data deleted"
+msgid "%s orphaned relationship data deleted"
+msgid_plural "%s orphaned relationship data deleted"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -483,11 +483,11 @@ msgstr ""
 msgid "Clean orphaned relationship data"
 msgstr ""
 
-#: src/optimizations/orphanedtables.php:112, src/optimizations/repairtables.php:142
+#: src/optimizations/orphanedtables.php:119, src/optimizations/repairtables.php:142
 msgid "No corrupted tables found"
 msgstr ""
 
-#: src/optimizations/orphanedtables.php:124
+#: src/optimizations/orphanedtables.php:131
 msgid "Delete orphaned database tables"
 msgstr ""
 
@@ -901,55 +901,55 @@ msgstr ""
 msgid "You may wish to run a backup before optimizing."
 msgstr ""
 
-#: src/templates/database/tables-body.php:24, src/templates/database/tables.php:22
+#: src/templates/database/tables-body.php:28, src/templates/database/tables.php:22
 msgid "No."
 msgstr ""
 
-#: src/templates/database/tables-body.php:25, src/templates/database/tables.php:23
+#: src/templates/database/tables-body.php:29, src/templates/database/tables.php:23
 msgid "Table"
 msgstr ""
 
-#: src/templates/database/tables-body.php:28
+#: src/templates/database/tables-body.php:32
 msgid "Belongs to:"
 msgstr ""
 
-#: src/templates/database/tables-body.php:35
+#: src/templates/database/tables-body.php:39
 msgid "not installed"
 msgstr ""
 
-#: src/templates/database/tables-body.php:37
+#: src/templates/database/tables-body.php:41
 msgid "inactive"
 msgstr ""
 
-#: src/templates/database/tables-body.php:44, src/templates/database/tables.php:24
+#: src/templates/database/tables-body.php:48, src/templates/database/tables.php:24
 msgid "Records"
 msgstr ""
 
-#: src/templates/database/tables-body.php:45, src/templates/database/tables.php:25
+#: src/templates/database/tables-body.php:49, src/templates/database/tables.php:25
 msgid "Data Size"
 msgstr ""
 
-#: src/templates/database/tables-body.php:46, src/templates/database/tables.php:26
+#: src/templates/database/tables-body.php:50, src/templates/database/tables.php:26
 msgid "Index Size"
 msgstr ""
 
-#: src/templates/database/tables-body.php:49, src/templates/database/tables-body.php:62, src/templates/database/tables.php:27
+#: src/templates/database/tables-body.php:53, src/templates/database/tables-body.php:66, src/templates/database/tables.php:27
 msgid "Type"
 msgstr ""
 
-#: src/templates/database/tables-body.php:51, src/templates/database/tables-body.php:63, src/templates/database/tables.php:28
+#: src/templates/database/tables-body.php:55, src/templates/database/tables-body.php:67, src/templates/database/tables.php:28
 msgid "Overhead"
 msgstr ""
 
-#: src/templates/database/tables-body.php:70, src/templates/database/tables-body.php:99, src/templates/database/tables.php:29, src/templates/settings/settings-logging.php:25
+#: src/templates/database/tables-body.php:74, src/templates/database/tables-body.php:103, src/templates/database/tables.php:29, src/templates/settings/settings-logging.php:25
 msgid "Actions"
 msgstr ""
 
-#: src/templates/database/tables-body.php:85
+#: src/templates/database/tables-body.php:89
 msgid "Total:"
 msgstr ""
 
-#: src/templates/database/tables-body.php:86
+#: src/templates/database/tables-body.php:90
 msgid "%s Table"
 msgid_plural "%s Tables"
 msgstr[0] ""
@@ -1087,11 +1087,11 @@ msgstr ""
 msgid "WP-Optimize Premium"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:32, src/templates/settings/may-also-like.php:223
+#: src/templates/settings/may-also-like.php:32, src/templates/settings/may-also-like.php:249
 msgid "Installed"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:35, src/templates/settings/may-also-like.php:226
+#: src/templates/settings/may-also-like.php:35, src/templates/settings/may-also-like.php:252
 msgid "Upgrade now"
 msgstr ""
 
@@ -1103,7 +1103,7 @@ msgstr ""
 msgid "Optimizes without the need for manual queries"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:45, src/templates/settings/may-also-like.php:48, src/templates/settings/may-also-like.php:58, src/templates/settings/may-also-like.php:61, src/templates/settings/may-also-like.php:71, src/templates/settings/may-also-like.php:74, src/templates/settings/may-also-like.php:84, src/templates/settings/may-also-like.php:87, src/templates/settings/may-also-like.php:97, src/templates/settings/may-also-like.php:100, src/templates/settings/may-also-like.php:110, src/templates/settings/may-also-like.php:113, src/templates/settings/may-also-like.php:126, src/templates/settings/may-also-like.php:139, src/templates/settings/may-also-like.php:152, src/templates/settings/may-also-like.php:165, src/templates/settings/may-also-like.php:178, src/templates/settings/may-also-like.php:191, src/templates/settings/may-also-like.php:204, src/templates/settings/may-also-like.php:217
+#: src/templates/settings/may-also-like.php:45, src/templates/settings/may-also-like.php:48, src/templates/settings/may-also-like.php:58, src/templates/settings/may-also-like.php:61, src/templates/settings/may-also-like.php:71, src/templates/settings/may-also-like.php:74, src/templates/settings/may-also-like.php:84, src/templates/settings/may-also-like.php:87, src/templates/settings/may-also-like.php:97, src/templates/settings/may-also-like.php:100, src/templates/settings/may-also-like.php:110, src/templates/settings/may-also-like.php:113, src/templates/settings/may-also-like.php:126, src/templates/settings/may-also-like.php:139, src/templates/settings/may-also-like.php:152, src/templates/settings/may-also-like.php:165, src/templates/settings/may-also-like.php:178, src/templates/settings/may-also-like.php:191, src/templates/settings/may-also-like.php:204, src/templates/settings/may-also-like.php:217, src/templates/settings/may-also-like.php:230, src/templates/settings/may-also-like.php:243
 msgid "Yes"
 msgstr ""
 
@@ -1155,7 +1155,7 @@ msgstr ""
 msgid "Optimize any site (or combination of sites) on your WordPress Multisite or network"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:123, src/templates/settings/may-also-like.php:136, src/templates/settings/may-also-like.php:149, src/templates/settings/may-also-like.php:162, src/templates/settings/may-also-like.php:175, src/templates/settings/may-also-like.php:188, src/templates/settings/may-also-like.php:201, src/templates/settings/may-also-like.php:214
+#: src/templates/settings/may-also-like.php:123, src/templates/settings/may-also-like.php:136, src/templates/settings/may-also-like.php:149, src/templates/settings/may-also-like.php:162, src/templates/settings/may-also-like.php:175, src/templates/settings/may-also-like.php:188, src/templates/settings/may-also-like.php:201, src/templates/settings/may-also-like.php:214, src/templates/settings/may-also-like.php:227, src/templates/settings/may-also-like.php:240
 msgid "No"
 msgstr ""
 
@@ -1192,128 +1192,144 @@ msgid "Save time managing multiple sites from the WP command line"
 msgstr ""
 
 #: src/templates/settings/may-also-like.php:183, src/templates/settings/may-also-like.php:184
-msgid "Enhanced logging and reporting"
+msgid "Lazy Loading"
 msgstr ""
 
 #: src/templates/settings/may-also-like.php:185
-msgid "Send log messages to three additional locations: Slack, Syslog and Simple History"
+msgid "Make your site run faster by only loading parts of a web-page when it is visible to the user"
 msgstr ""
 
 #: src/templates/settings/may-also-like.php:196, src/templates/settings/may-also-like.php:197
-msgid "More choice and flexibility"
+msgid "Optimization Preview"
 msgstr ""
 
 #: src/templates/settings/may-also-like.php:198
-msgid "Choose from a number of advanced options, like the ability to optimize individual DB tables"
+msgid "Preview, select and remove data and records available for optimization from the database"
 msgstr ""
 
 #: src/templates/settings/may-also-like.php:209, src/templates/settings/may-also-like.php:210
-msgid "Premium support"
+msgid "Enhanced logging and reporting"
 msgstr ""
 
 #: src/templates/settings/may-also-like.php:211
+msgid "Send log messages to three additional locations: Slack, Syslog and Simple History"
+msgstr ""
+
+#: src/templates/settings/may-also-like.php:222, src/templates/settings/may-also-like.php:223
+msgid "More choice and flexibility"
+msgstr ""
+
+#: src/templates/settings/may-also-like.php:224
+msgid "Choose from a number of advanced options, like the ability to optimize individual DB tables"
+msgstr ""
+
+#: src/templates/settings/may-also-like.php:235, src/templates/settings/may-also-like.php:236
+msgid "Premium support"
+msgstr ""
+
+#: src/templates/settings/may-also-like.php:237
 msgid "Get your specific queries addressed directly by our experts"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:234
+#: src/templates/settings/may-also-like.php:260
 msgid "Our other plugins"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:250
+#: src/templates/settings/may-also-like.php:276
 msgid "UpdraftPlus"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:251
+#: src/templates/settings/may-also-like.php:277
 msgid "UpdraftPlus – the ultimate protection for your site, hard work and business"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:254
+#: src/templates/settings/may-also-like.php:280
 msgid "If you’ve got a WordPress website, you need a backup."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:257
+#: src/templates/settings/may-also-like.php:283
 msgid "Hacking, server crashes, dodgy updates or simple user error can ruin everything."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:260
+#: src/templates/settings/may-also-like.php:286
 msgid "With UpdraftPlus, you can rest assured that if the worst does happen, it's no big deal. rather than losing everything, you can simply restore the backup and be up and running again in no time at all."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:263
+#: src/templates/settings/may-also-like.php:289
 msgid "You can also migrate your website with few clicks without hassle."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:266
+#: src/templates/settings/may-also-like.php:292
 msgid "With a long-standing reputation for excellence and outstanding reviews, it’s no wonder that UpdraftPlus is the world’s most popular WordPress backup plugin."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:268, src/templates/settings/may-also-like.php:285, src/templates/settings/may-also-like.php:304, src/templates/settings/may-also-like.php:319
+#: src/templates/settings/may-also-like.php:294, src/templates/settings/may-also-like.php:311, src/templates/settings/may-also-like.php:330, src/templates/settings/may-also-like.php:345
 msgid "Try for free"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:272
+#: src/templates/settings/may-also-like.php:298
 msgid ""
 "UpdraftCentral Dashboard\n"
 ""
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:274
+#: src/templates/settings/may-also-like.php:300
 msgid "UpdraftCentral – save hours managing multiple WP sites from one place"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:277
+#: src/templates/settings/may-also-like.php:303
 msgid "If you manage a few WordPress sites, you need UpdraftCentral."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:280
+#: src/templates/settings/may-also-like.php:306
 msgid "UpdraftCentral is a powerful tool that allows you to efficiently manage, update, backup and even restore multiple websites from just one location. You can also manage users and comments on all the sites at once, and through its central login feature, you can access each WP-dashboard with a single click."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:283
+#: src/templates/settings/may-also-like.php:309
 msgid "With a wide range of useful features, including automated backup schedules and sophisticated one click updates, UpdraftCentral is sure to boost to your productivity and save you time."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:289
+#: src/templates/settings/may-also-like.php:315
 msgid "Meta Slider"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:290
+#: src/templates/settings/may-also-like.php:316
 msgid "MetaSlider - hold visitors’ attention to increase conversion and profits."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:293
+#: src/templates/settings/may-also-like.php:319
 msgid "With Metaslider, WordPress’ most popular slider plugin, you can add unique, SEO-optimizing slideshow to your blog or website in a matter of seconds!"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:296
+#: src/templates/settings/may-also-like.php:322
 msgid "Sliders instantly make a web-page more eye-catching and engaging."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:299
+#: src/templates/settings/may-also-like.php:325
 msgid "With Metaslider, creating them couldn’t be easier: simply select images from your WordPress Media Library, drag and drop them into place. You can then set the slide captions, links and SEO fields all from one page."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:302
+#: src/templates/settings/may-also-like.php:328
 msgid "Easily improve the look of your site, your conversion rate and bottom line."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:307
+#: src/templates/settings/may-also-like.php:333
 msgid "Keyy Two Factor Authentication"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:308
+#: src/templates/settings/may-also-like.php:334
 msgid "Keyy – instant &amp; secure logins with a wave of your phone"
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:311
+#: src/templates/settings/may-also-like.php:337
 msgid "Keyy is a unique 2-factor authentication plugin that allows you to log in to your website with just a wave of your smartphone. It represents the ultimate UX, doing away with the need for usernames, passwords and other 2FA tokens."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:314
+#: src/templates/settings/may-also-like.php:340
 msgid "Using innovative RSA public-key cryptography, Keyy is highly secure and prevents password-based hacking risks such as brute-forcing, key-logging, shoulder-surfing and connection sniffing."
 msgstr ""
 
-#: src/templates/settings/may-also-like.php:317
+#: src/templates/settings/may-also-like.php:343
 msgid "Logging in with Keyy is simple. Once users have installed the app onto their smartphone and secured it using a fingerprint or 4-number pin, they just open the app, point it at the moving on-screen barcode and voila!"
 msgstr ""
 

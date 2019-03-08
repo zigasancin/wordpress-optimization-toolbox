@@ -88,9 +88,9 @@ class WP_Optimization_repairtables extends WP_Optimization {
 
 		if (false == $table_obj->is_needing_repair) return true;
 
-		$this->logger->info('REPAIR TABLE '.$table_obj->Name);
+		$this->logger->info('REPAIR TABLE `'.$table_obj->Name. '`');
 
-		$results = $wpdb->get_results('REPAIR TABLE '.$table_obj->Name);
+		$results = $wpdb->get_results('REPAIR TABLE `'.$table_obj->Name . '`');
 
 		if (!empty($results)) {
 			foreach ($results as $row) {
