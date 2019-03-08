@@ -2,9 +2,9 @@
 Contributors: ShortPixel 
 Tags: compressor, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
 Requires at least: 3.2.0
-Tested up to: 5.0
+Tested up to: 5.1
 Requires PHP: 5.2
-Stable tag: 4.12.5
+Stable tag: 4.12.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ Speed up your website and boost your SEO by compressing old & new images and PDF
 Increase your website's SEO ranking, number of visitors and ultimately your sales by optimizing any image or PDF document on your website.
 ShortPixel is an easy to use, lightweight, install-and-forget-about-it <a href="https://shortpixel.com" target="_blank">image optimization</a> plugin that can compress all your past images and PDF documents with a single click. New images are automatically resized/rescaled and optimized on the fly, in the background.
 
-**Ready for a quick DEMO? Test it <a href="http://poopy.life/create?url=/wp-admin/admin.php?page=sandbox" target="_blank">here</a>.**
+**Ready for a quick DEMO? Test <a href="https://sandboxwordpress.com/?htmldata=https://shortpixel.com/sp.html&slug=shortpixel-image-optimiser&redirect=plugins.php&title=Test%20SHORTPIXEL%20Now!&ga=UA-55918546-1" target="_blank">here</a> or <a href="http://poopy.life/create?url=/wp-admin/admin.php?page=sandbox" target="_blank">here</a>.**
 
 Short Pixel uses minimal resources and works well with any shared, cloud, VPS or dedicated web hosting. It can optimize any image you have on your website even the images that aren't listed in Media Library like those in galleries like <a href="https://wordpress.org/plugins/nextgen-gallery/" target="_blank">NextGEN</a>, <a href="https://wordpress.org/plugins/modula-best-grid-gallery/" target="_blank">Modula</a> or added directly via FTP!
 
@@ -240,6 +240,33 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.12.8 =
+
+Release date: 25th February 2019
+
+* fix CSS for the top bar ShortPixel icon on post pages
+* i18n some text which was left out by mistake
+* include the green "CAN" WebP image which shows that the .htaccess works with WebP images having extensions like .jpg.webp
+* display notice if ShortPixel Adaptive Images is active and the Generate WebP markup option is checked. Do not generate the WebP markup in this case.
+
+= 4.12.7 =
+
+Release date: 12th February 2019
+
+* solved conflicting WebP file names when image.jpg and image.png exist in the same folder - use image.jpg.webp filename.
+* fixed .htaccess rules for some Apache versions which seemingly don't honour the RewriteRule backreferences in the RewriteCond's (Apache bug?)
+* remove the WebP .htaccess rules on plugin deactivation and add them back on plugin activation
+* fixed alt attribute for <picture> tags - now it is included properly only on the enclosed <img> tag.
+
+= 4.12.6 =
+
+Release date: 27th January 2019
+
+* Improvements to the .htaccess WebP method
+* Improve performance of backup deletion - get rid of unnecessary checks
+* Fixed: wrong calculation of remaining credits
+* Fixed: discrepancy between the description of the exclude size option and the behaviour for the exact size case.
 
 = 4.12.5 =
 

@@ -3,7 +3,7 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster. 
- * Version: 4.12.5
+ * Version: 4.12.8
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
@@ -18,7 +18,7 @@ define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.12.5-RC2");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.12.8");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -38,10 +38,15 @@ require_once(ABSPATH . 'wp-admin/includes/file.php');
 
 $sp__uploads = wp_upload_dir();
 define('SHORTPIXEL_UPLOADS_BASE', (file_exists($sp__uploads['basedir']) ? '' : ABSPATH) . $sp__uploads['basedir'] );
-define('SHORTPIXEL_UPLOADS_URL', is_main_site() ? $sp__uploads['baseurl'] : dirname(dirname($sp__uploads['baseurl'])));
+//define('SHORTPIXEL_UPLOADS_URL', is_main_site() ? $sp__uploads['baseurl'] : dirname(dirname($sp__uploads['baseurl'])));
 define('SHORTPIXEL_UPLOADS_NAME', basename(is_main_site() ? SHORTPIXEL_UPLOADS_BASE : dirname(dirname(SHORTPIXEL_UPLOADS_BASE))));
 $sp__backupBase = is_main_site() ? SHORTPIXEL_UPLOADS_BASE : dirname(dirname(SHORTPIXEL_UPLOADS_BASE));
 define('SHORTPIXEL_BACKUP_FOLDER', $sp__backupBase . '/' . SHORTPIXEL_BACKUP);
+define('SHORTPIXEL_BACKUP_URL',
+    ((is_main_site() || (defined( 'SUBDOMAIN_INSTALL' ) && SUBDOMAIN_INSTALL))
+        ? $sp__uploads['baseurl']
+        : dirname(dirname($sp__uploads['baseurl'])))
+    . '/' . SHORTPIXEL_BACKUP);
 
 /*
  if ( is_numeric(SHORTPIXEL_MAX_EXECUTION_TIME)  && SHORTPIXEL_MAX_EXECUTION_TIME > 10 )
@@ -185,9 +190,22 @@ function shortPixelInitOB() {
     }
 }
 
-if ( get_option('wp-short-pixel-create-webp-markup') ) {
-    $option = get_option('wp-short-pixel-create-webp-markup');
-    if( $option == 1 ){
+function shortPixelIsPluginActive($plugin) {
+    $activePlugins = apply_filters( 'active_plugins', get_option( 'active_plugins', array()));
+    if ( is_multisite() ) {
+        $activePlugins = array_merge($activePlugins, get_site_option( 'active_sitewide_plugins'));
+    }
+    return in_array( $plugin, $activePlugins);
+}
+
+$option = get_option('wp-short-pixel-create-webp-markup');
+if ( $option ) {
+    if(shortPixelIsPluginActive('shortpixel-adaptive-images/short-pixel-ai.php')) {
+        set_transient("shortpixel_thrown_notice", array('when' => 'spai', 'extra' => __('Please deactivate the ShortPixel Image Optimizer\'s 
+            <a href="options-general.php?page=wp-shortpixel#adv-settings">Deliver WebP using PICTURE tag</a>
+            option when the ShortPixel Adaptive Images plugin is active.','shortpixel-image-optimiser')), 1800);
+    }
+    elseif( $option == 1 ){
         add_action( 'wp_head', 'shortPixelAddPictureJs');
         add_action( 'init', 'shortPixelInitOB', 1 );
     } elseif ($option == 2){

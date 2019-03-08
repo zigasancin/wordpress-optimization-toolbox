@@ -86,6 +86,7 @@ class ShortPixelView {
             case 'unlisted': $icon = 'magnifier'; break;
             case 'upgmonth': 
             case 'upgbulk': $icon = 'notes'; $extraClass = 'notice-success'; break;
+            case 'spai':
             case 'generic-err': $extraClass = 'notice-error is-dismissible'; break;
             case 'activate': $icon = 'scared'; break;
         }
@@ -101,7 +102,7 @@ class ShortPixelView {
                 <a href="javascript:ShortPixel.includeUnlisted()" class="button button-primary" style="margin-top:10px;margin-left:10px;">
                     <strong><?php _e('Yes, include these thumbnails','shortpixel-image-optimiser');?></strong></a>
                 <?php }
-                if($when !== 'fileperms' && $when !== 'compat' && $when !== 'generic-err') { ?>
+                if($when !== 'fileperms' && $when !== 'compat' && $when !== 'generic-err' && $when !== 'spai') { ?>
                 <a href="javascript:dismissShortPixelNotice('<?php echo($when);?>')" class="button" style="margin-top:10px;"><?php _e('Dismiss','shortpixel-image-optimiser');?></a>
                 <?php }
                 if($when == 'compat') { ?>
@@ -110,7 +111,7 @@ class ShortPixelView {
             </div>
             <?php
             if($when == 'generic-err') {?>
-                <button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button>
+                <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php _e('Dismiss this notice.','shortpixel-image-optimiser');?></span></button>
             <?php }
             }
             if($icon){ ?>
@@ -174,6 +175,7 @@ class ShortPixelView {
                         <?php echo(implode(', ', $extra->unlisted)); ?>
                     </p><?php
                     break;
+                case 'spai' :
                 case 'generic' :
                 case 'generic-err' :
                     echo("<p>$extra</p>");
@@ -203,7 +205,7 @@ class ShortPixelView {
         $this->ctrl->outputHSBeacon();
         ?>
         <div class="wrap short-pixel-bulk-page">
-            <h1>Bulk Image Optimization by ShortPixel</h1>
+            <h1><?php _e('Bulk Image Optimization by ShortPixel','shortpixel-image-optimiser');?></h1>
         <?php
         if ( !$bulkRan ) {
             ?>
@@ -897,7 +899,7 @@ class ShortPixelView {
                                 <?php _e('Validate','shortpixel-image-optimiser');?>
                             </button>
                             <span class="shortpixel-key-valid" <?php echo $this->ctrl->getVerifiedKey() ? '' : 'style="display:none;"' ?>>
-                                <span class="dashicons dashicons-yes"></span>Your API key is valid.
+                                <span class="dashicons dashicons-yes"></span><?php _e('Your API key is valid.','shortpixel-image-optimiser');?>
                             </span>
                         <?php if($showApiKey && !$editApiKey) { ?>
                             <p class="settings-info"><?php _e('Key defined in wp-config.php.','shortpixel-image-optimiser');?></p>
@@ -918,14 +920,14 @@ class ShortPixelView {
 
                         <div class="shortpixel-compression">
                             <div class="shortpixel-compression-options">
-                                <label class="lossy" title="This is the recommended option in most cases, producing results that look the same as the original to the human eye.">
-                                    <input type="radio" class="shortpixel-radio-lossy" name="compressionType" value="1"  <?php echo( $this->ctrl->getCompressionType() == 1 ? "checked" : "" );?>><span>Lossy</span>
+                                <label class="lossy" title="<?php _e('This is the recommended option in most cases, producing results that look the same as the original to the human eye.','shortpixel-image-optimiser');?>">
+                                    <input type="radio" class="shortpixel-radio-lossy" name="compressionType" value="1"  <?php echo( $this->ctrl->getCompressionType() == 1 ? "checked" : "" );?>><span><?php _e('Lossy','shortpixel-image-optimiser');?></span>
                                 </label>
-                                <label class="glossy" title="Best option for photographers and other professionals that use very high quality images on their sites and want best compression while keeping the quality untouched.">
-                                    <input type="radio" class="shortpixel-radio-glossy" name="compressionType" value="2" <?php echo( $this->ctrl->getCompressionType() == 2 ? "checked" : "" );?>><span>Glossy</span>
+                                <label class="glossy" title="<?php _e('Best option for photographers and other professionals that use very high quality images on their sites and want best compression while keeping the quality untouched.','shortpixel-image-optimiser');?>">
+                                    <input type="radio" class="shortpixel-radio-glossy" name="compressionType" value="2" <?php echo( $this->ctrl->getCompressionType() == 2 ? "checked" : "" );?>><span><?php _e('Glossy','shortpixel-image-optimiser');?></span>
                                 </label>
-                                <label class="lossless" title="Make sure not a single pixel looks different in the optimized image compared with the original. In some rare cases you will need to use this type of compression. Some technical drawings or images from vector graphics are possible situations.">
-                                    <input type="radio" class="shortpixel-radio-lossless" name="compressionType" value="0" <?php echo( $this->ctrl->getCompressionType() == 0 ? "checked" : "" );?>><span>Lossless</span>
+                                <label class="lossless" title="<?php _e('Make sure not a single pixel looks different in the optimized image compared with the original. In some rare cases you will need to use this type of compression. Some technical drawings or images from vector graphics are possible situations.','shortpixel-image-optimiser');?>">
+                                    <input type="radio" class="shortpixel-radio-lossless" name="compressionType" value="0" <?php echo( $this->ctrl->getCompressionType() == 0 ? "checked" : "" );?>><span><?php _e('Lossless','shortpixel-image-optimiser');?></span>
                                 </label>
                                 <a href="https://shortpixel.com/online-image-compression" style="margin-left:20px;" target="_blank">Make a few tests</a> to help you decide.
                             </div>
@@ -1008,7 +1010,7 @@ class ShortPixelView {
                                  srcset='<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner.png' ));?> 1x, <?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner@2x.png' ));?> 2x'
                                  title="<?php _e('Sizes will be smaller or equal to the corresponding value. For example, if you set the resize dimensions at 1000x1200, an image of 2000x3000px will be resized to 800x1200px while an image of 3000x2000px will be resized to 1000x667px','shortpixel-image-optimiser');?>">
                             <div style="display:inline-block;margin-left: 20px;"><a href="https://blog.shortpixel.com/resize-images/" class="shortpixel-help-link" target="_blank">
-                                <span class="dashicons dashicons-editor-help"></span>What is this?</a>
+                                <span class="dashicons dashicons-editor-help"></span><?php _e('What is this?','shortpixel-image-optimiser');?></a>
                             </div>
                         </div>
                     </td>
@@ -1056,7 +1058,7 @@ class ShortPixelView {
         if( $isNginx ){
             $deliverWebpUnaltered = '';                         // Uncheck
             $deliverWebpUnalteredDisabled = 'disabled';         // Disable
-            $deliverWebpUnalteredLabel = __('It looks like you\'re running your site on an NginX server. This means that you can only achieve this functionality by directly configuring the server config files and .htaccess file. Please follow the following link for instructions on how to achieve this:','shortpixel-image-optimiser')." <a href=\"javascript:void(0)\" data-beacon-article=\"5bfeb9de2c7d3a31944e78ee\">Open article</a>";
+            $deliverWebpUnalteredLabel = __('It looks like you\'re running your site on an NginX server. This means that you can only achieve this functionality by directly configuring the server config files. Please follow this link for instructions on how to achieve this:','shortpixel-image-optimiser')." <a href=\"javascript:void(0)\" data-beacon-article=\"5bfeb9de2c7d3a31944e78ee\">Open article</a>";
         } else {
             if( !$htaccessWriteable ){
                 $deliverWebpUnalteredDisabled = 'disabled';     // Disable
@@ -1069,7 +1071,7 @@ class ShortPixelView {
             } elseif (strpos($_SERVER['HTTP_USER_AGENT'], 'Chrome') !== false) {
                 // Show a message about the risks and caveats of serving WEBP images via .htaccess
                 $deliverWebpUnalteredLabel = '<span style="color: initial;">'.__('Based on testing your particular hosting configuration, we determined that your server','shortpixel-image-optimiser').
-                    '<img src="'.str_replace("/class/view", "/res", plugins_url( 'img/test.jpg' , __FILE__ )).'">'.
+                    '&nbsp;<img src="'.str_replace("/class/view", "/res", plugins_url( 'img/test.jpg' , __FILE__ )).'">&nbsp;'.
                     __('serve the WEBP versions of the JPEG files seamlessly, via .htaccess.','shortpixel-image-optimiser').' <a href="javascript:void(0)" data-beacon-article="5c1d050e04286304a71d9ce4">Open article to read more about this.</a></span>';
             }
         }
@@ -1204,15 +1206,16 @@ class ShortPixelView {
                     <th scope="row"><?php _e('Convert PNG images to JPEG','shortpixel-image-optimiser');?></th>
                     <td>
                         <input name="png2jpg" type="checkbox" id="png2jpg" <?php echo( $convertPng2Jpg );?> <?php echo($gdInstalled ? '' : 'disabled') ?>>
-                        <label for="png2jpg"><?php _e('Automatically convert the PNG images to JPEG if possible.','shortpixel-image-optimiser');?></label>
+                        <label for="png2jpg"><?php _e('Automatically convert the PNG images to JPEG if possible.','shortpixel-image-optimiser');
+                            if(!$gdInstalled) {echo("&nbsp;<span style='color:red;'>" . __('You need PHP GD for this. Please ask your hosting to install it.','shortpixel-image-optimiser') . "</span>");}
+                        ?></label>
                         <p class="settings-info">
                             <?php _e('Converts all PNGs that don\'t have transparent pixels to JPEG. This can dramatically reduce the file size, especially if you have camera pictures that are saved in PNG format. The plugin will also search for references of the image in posts and will replace them.','shortpixel-image-optimiser');?>
+                            <strong><?php _e('The image will NOT be converted if the resulting JPEG is larger than the original PNG.','shortpixel-image-optimiser');?></strong>
                         </p><br>
                         <input name="png2jpgForce" type="checkbox" id="png2jpgForce" <?php echo( $convertPng2JpgForce );?> <?php echo($gdInstalled ? '' : 'disabled') ?>>
                         <label for="png2jpgForce">
-                            <?php _e('Also force the conversion of images with transparency.','shortpixel-image-optimiser');
-                            if(!$gdInstalled) {echo("&nbsp;<span style='color:red;'>" . __('You need PHP GD for this. Please ask your hosting to install it.','shortpixel-image-optimiser') . "</span>");}
-                            ?>
+                            <?php _e('Also force the conversion of images with transparency.','shortpixel-image-optimiser'); ?>
                         </label>
                     </td>
                 </tr>
@@ -1254,7 +1257,8 @@ class ShortPixelView {
                                         </p>
                                     <?php } ?>
                                     <p class="settings-info">
-                                        <?php _e('Each &lt;img&gt; will be replaced with a &lt;picture&gt; tag that will also provide the WebP image as a choice for browsers that support it. Also loads the picturefill.js for browsers that don\'t support the &lt;picture&gt; tag. You don\'t need to activate this if you\'re using the Cache Enabler plugin because your WebP images are already handled by this plugin. <strong>Please make a test before using this option</strong>, as if the styles that your theme is using rely on the position of your &lt;img&gt; tag, you might experience display problems.','shortpixel-image-optimiser');?>
+                                        <?php _e('Each &lt;img&gt; will be replaced with a &lt;picture&gt; tag that will also provide the WebP image as a choice for browsers that support it. Also loads the picturefill.js for browsers that don\'t support the &lt;picture&gt; tag. You don\'t need to activate this if you\'re using the Cache Enabler plugin because your WebP images are already handled by this plugin. <strong>Please make a test before using this option</strong>, as if the styles that your theme is using rely on the position of your &lt;img&gt; tag, you might experience display problems.','shortpixel-image-optimiser'); ?>
+                                        <strong><?php _e('You can revert anytime to the previous state by just deactivating the option.','shortpixel-image-optimiser'); ?></strong>
                                     </p>
                                     <ul class="deliverWebpAlteringTypes">
                                         <li>
@@ -1463,7 +1467,6 @@ class ShortPixelView {
     <?php }
 
     function displaySettingsStats($quotaData, $averageCompression, $savedSpace, $savedBandwidth,
-
                          $remainingImages, $totalCallsMade, $fileCount, $backupFolderSize) { ?>
         <div class="wp-shortpixel-tab-content">
             <a id="facts"></a>
@@ -1539,9 +1542,9 @@ class ShortPixelView {
                                     (defined("SHORTPIXEL_HIDE_API_KEY") ? '' : $this->ctrl->getApiKey()));?>
                             <br><br>
                             <?php _e('Consumed: ','shortpixel-image-optimiser'); ?>
-                            <strong><?php echo( $totalCallsMade['plan'] ); ?></strong>
+                            <strong><?php echo( number_format( $totalCallsMade['plan'] ) ); ?></strong>
                             <?php _e('; Remaining: ','shortpixel-image-optimiser'); ?>
-                            <strong><?php echo( $quotaData['APICallsQuota'] - $totalCallsMade['plan'] ); ?></strong>
+                            <strong><?php echo( number_format( $quotaData['APICallsQuotaNumeric'] - $totalCallsMade['plan'] ) ); ?></strong>
                         </td>
                     </tr>
                     <tr>
@@ -1553,9 +1556,9 @@ class ShortPixelView {
                             <strong><?php echo(  number_format($quotaData['APICallsQuotaOneTimeNumeric'])); ?></strong>
                             <br><br>
                             <?php _e('Consumed: ','shortpixel-image-optimiser'); ?>
-                            <strong><?php echo( $totalCallsMade['oneTime'] ); ?></strong>
+                            <strong><?php echo( number_format($totalCallsMade['oneTime']) ); ?></strong>
                             <?php _e('; Remaining: ','shortpixel-image-optimiser'); ?>
-                            <strong><?php echo( $remainingImages ); ?></strong>**
+                            <strong><?php echo( number_format( $quotaData['APICallsQuotaOneTimeNumeric'] - $totalCallsMade['oneTime'] ) ); ?></strong>**
                         </td>
                     </tr>
                     <tr>

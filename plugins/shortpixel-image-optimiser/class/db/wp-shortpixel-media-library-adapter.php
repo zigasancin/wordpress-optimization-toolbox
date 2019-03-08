@@ -287,11 +287,7 @@ class WpShortPixelMediaLbraryAdapter {
                     $thumbs[]= $th;
                 }
             }
-        }
-        if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX') || defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ){
-            $thumbsCandidates = @glob($base . "-*." . $ext);
-            if(is_array($thumbsCandidates)) {
-                $thumbs = array();
+            if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX') || defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ){
                 $suffixes = defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ? explode(',', SHORTPIXEL_CUSTOM_THUMB_SUFFIXES) : array();
                 if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX') ){
                     $suffixes[] = SHORTPIXEL_CUSTOM_THUMB_SUFFIX;

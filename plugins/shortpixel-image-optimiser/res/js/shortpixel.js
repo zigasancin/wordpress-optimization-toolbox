@@ -558,7 +558,8 @@ var ShortPixel = function() {
     }
     
     function recheckQuota() {
-        window.location.href=window.location.href+(window.location.href.indexOf('?')>0?'&':'?')+'checkquota=1';
+        var parts = window.location.href.split('#');
+        window.location.href=parts[0]+(parts[0].indexOf('?')>0?'&':'?')+'checkquota=1' + (typeof parts[1] === 'undefined' ? '' : '#' + parts[1]);
     }
     
     function openImageMenu(e) {

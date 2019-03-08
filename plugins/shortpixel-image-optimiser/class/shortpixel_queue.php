@@ -324,6 +324,9 @@ class ShortPixelQueue {
     }
     
     public function getBulkToProcess() {
+        //check numeric as per https://secure.helpscout.net/conversation/764815647/12934?folderId=1117588
+        if(!is_numeric($this->settings->bulkCount)) $this->settings->bulkCount = 0;
+        if(!is_numeric($this->settings->bulkAlreadyDoneCount)) $this->settings->bulkAlreadyDoneCount = 0;
         return $this->settings->bulkCount - $this->settings->bulkAlreadyDoneCount;
     }
     
