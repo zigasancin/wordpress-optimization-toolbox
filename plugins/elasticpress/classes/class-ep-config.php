@@ -120,6 +120,21 @@ class EP_Config {
 	}
 
 	/**
+	 * Retrieve bulk index settings
+	 *
+	 * @return Int The number of posts per cycle to index. Default 350.
+	 */
+	public function get_bulk_settings() {
+		if( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
+			$bulk_settings =  get_site_option( 'ep_bulk_setting', 350 );
+		} else {
+			$bulk_settings =  get_option( 'ep_bulk_setting', 350 );
+		}
+
+		return $bulk_settings;
+	}
+
+	/**
 	 * Retrieve the EPIO subscription credentials.
 	 *
 	 * @since 2.5
@@ -288,6 +303,10 @@ function ep_get_index_prefix() {
 	return EP_Config::factory()->get_index_prefix();
 }
 
+function ep_get_bulk_settings() {
+    return EP_Config::factory()->get_bulk_settings();
+}
+
 function ep_get_epio_credentials() {
 	return EP_Config::factory()->get_epio_credentials();
 }
@@ -345,6 +364,17 @@ function ep_sanitize_credentials( $credentials ) {
 		'username' => ( isset( $credentials['username'] ) ) ? sanitize_text_field( $credentials['username'] ) : '',
 		'token'    => ( isset( $credentials['token'] ) ) ? sanitize_text_field( $credentials['token'] ) : '',
 	];
+}
+
+/**
+ * Sanitize bulk settings.
+ *
+ * @param $bulk_settings
+ * @return int
+ */
+function ep_sanitize_bulk_settings( $bulk_settings = 350 ) {
+	$bulk_settings = absint( $bulk_settings );
+	return ( 0 === $bulk_settings ) ? 350 : $bulk_settings;
 }
 
 /**

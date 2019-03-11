@@ -863,6 +863,11 @@ class EP_API {
 		$meta = array();
 
 		foreach ( $post_meta as $meta_key => $meta_values ) {
+			// Skip if no meta key.
+			if ( ! $meta_key ) {
+				continue;
+			}
+
 			if ( ! is_array( $meta_values ) ) {
 				$meta_values = array( $meta_values );
 			}
@@ -1531,6 +1536,42 @@ class EP_API {
 		}
 
 		/**
+		 * Sticky posts support
+		 */
+		// Check first if there's sticky posts and show them only in the front page
+
+		$sticky_posts = get_option( 'sticky_posts' );
+		$sticky_posts = ( is_array( $sticky_posts ) && empty( $sticky_posts ) ) ? false : $sticky_posts;
+
+		if( false !== $sticky_posts
+			&& is_home()
+			&& in_array( $args['ignore_sticky_posts'], array( 'false', 0 ) ) ) {
+
+			$new_sort = array(
+				array(
+					'_score' => array(
+						'order' => 'desc',
+					),
+				)
+			);
+
+			$formatted_args['sort'] = array_merge( $new_sort, $formatted_args['sort'] );
+
+			$formatted_args_query = $formatted_args['query'];
+			$formatted_args['query'] = array();
+			$formatted_args['query']['function_score']['query'] = $formatted_args_query;
+			$formatted_args['query']['function_score']['functions'] = array(
+			//add extra weight to sticky posts to show them on top
+				(object) array(
+					'filter' => array(
+						'terms' => array( '_id' => $sticky_posts )
+					),
+					'weight' => 20
+				)
+			);
+		}
+
+		/**
 		 * If not set default to post. If search and not set, default to "any".
 		 */
 		if ( ! empty( $args['post_type'] ) ) {
@@ -1928,10 +1969,8 @@ class EP_API {
 						case 'like':
 							if ( isset( $single_meta_query['value'] ) ) {
 								$terms_obj = array(
-									'query' => array(
-										'match' => array(
-											$meta_key_path => $single_meta_query['value'],
-										)
+									'match_phrase' => array(
+										$meta_key_path => $single_meta_query['value'],
 									),
 								);
 							}
