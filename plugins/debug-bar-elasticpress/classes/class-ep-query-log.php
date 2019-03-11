@@ -173,7 +173,9 @@ class EP_Debug_Bar_Query_Log {
 			$enabled = get_option( 'ep_enable_logging' );
 		}
 
-		$log = array_reverse( $log );
+		if ( is_array( $log ) ) {
+			$log = array_reverse( $log );
+		}
 
 		$action = 'options.php';
 
@@ -227,7 +229,21 @@ class EP_Debug_Bar_Query_Log {
 
 						$class = $response < 200 || $response >= 300 ? 'ep-query-failed' : '';
 
-						?><li class="ep-query-debug hide-query-body hide-query-results hide-query-errors hide-query-args <?php echo sanitize_html_class( $class ); ?>">
+						$curl_request = 'curl -X' . strtoupper( $log_entry['query']['args']['method'] );
+
+						if ( ! empty( $log_entry['query']['args']['headers'] ) ) {
+							foreach ( $log_entry['query']['args']['headers'] as $key => $value ) {
+								$curl_request .= " -H '$key: $value'";
+							}
+						}
+
+						if ( ! empty( $query['query']['args']['body'] ) ) {
+							$curl_request .= " -d '" . json_encode( json_decode( $log_entry['query']['args']['body'], true ) ) . "'";
+						}
+
+						$curl_request .= " '" . $log_entry['query']['url'] . "'";
+
+						?><li class="ep-query-debug hide-query-body hide-query-results hide-query-errors hide-query-args hide-query-headers <?php echo sanitize_html_class( $class ); ?>">
 							<div class="ep-query-type">
 								<strong><?php esc_html_e( 'Type:', 'debug-bar' ); ?></strong>
 								<?php echo esc_html( $log_entry['type'] ); ?>
@@ -254,6 +270,13 @@ class EP_Debug_Bar_Query_Log {
 								<strong><?php esc_html_e( 'Method:', 'debug-bar' ); ?></strong>
 								<?php echo esc_html( $log_entry['query']['args']['method'] ); ?>
 							</div>
+
+							<?php if ( ! empty( $log_entry['query']['args']['headers'] ) ) : ?>
+								<div clsas="ep-query-headers">
+									<strong><?php esc_html_e( 'Headers:', 'debug-bar' ); ?> <div class="query-headers-toggle dashicons"></div></strong>
+									<pre class="query-headers"><?php echo var_dump( $log_entry['query']['args']['headers'] ); ?></pre>
+								</div>
+							<?php endif; ?>
 
 							<?php if ( ! empty( $log_entry['query']['query_args'] ) ) : ?>
 								<div class="ep-query-args">
@@ -288,6 +311,7 @@ class EP_Debug_Bar_Query_Log {
 									<pre class="query-errors"><?php echo esc_html( stripslashes( json_encode( $log_entry['query']['request']->errors, JSON_PRETTY_PRINT ) ) ); ?></pre>
 								</div>
 							<?php endif; ?>
+							<a class="copy-curl" data-request="<?php echo esc_attr( addcslashes( $curl_request, '"' ) ); ?>">Copy cURL Request</a>
 						</li>
 					<?php endforeach; ?>
 				</ol>
