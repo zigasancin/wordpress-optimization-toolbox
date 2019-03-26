@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: https://getwpo.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.2.12
+Version: 2.2.13
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '2.2.12');
+define('WPO_VERSION', '2.2.13');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -879,15 +879,12 @@ class WP_Optimize {
 		}
 
 		// table belongs to plugin.
-		if ($table_info->plugin && __('WordPress core', 'wp-optimize') !== $table_info->plugin) {
-			// and plugin not installed or not active then show Remove action button.
-			if (false == $table_info->plugin_status['installed'] || false == $table_info->plugin_status['active']) {
-				$content .= '<div>'
-					. '<button class="button button-secondary run-single-table-delete" data-table="' . esc_attr($table_info->Name) . '">' . __('Remove', 'wp-optimize') . '</button>'
-					. '<img class="optimization_spinner visibility-hidden" src="' . esc_attr(admin_url('images/spinner-2x.gif')) . '" width="20" height="20" alt="...">'
-					. '<span class="optimization_done_icon dashicons dashicons-yes visibility-hidden"></span>'
-					. '</div>';
-			}
+		if ($table_info->can_be_removed) {
+			$content .= '<div>'
+				. '<button class="button button-secondary run-single-table-delete" data-table="' . esc_attr($table_info->Name) . '">' . __('Remove', 'wp-optimize') . '</button>'
+				. '<img class="optimization_spinner visibility-hidden" src="' . esc_attr(admin_url('images/spinner-2x.gif')) . '" width="20" height="20" alt="...">'
+				. '<span class="optimization_done_icon dashicons dashicons-yes visibility-hidden"></span>'
+				. '</div>';
 		}
 
 		return $content;

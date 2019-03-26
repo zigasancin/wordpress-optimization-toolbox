@@ -315,10 +315,21 @@ div#wpoptimize_table_list_tables_not_found + h3 {
 		margin-left: 30px;
 		margin-bottom: 15px;
 		line-height: 1;
+		word-break: break-word;
 	}
 
 	.unused-image-sizes__label input[type=checkbox] {
 		margin-left: -30px;
+	}
+
+	body.rtl .unused-image-sizes__label {
+		margin-right: 30px;
+		margin-left: 0;
+	}
+
+	body.rtl .unused-image-sizes__label input[type=checkbox] {
+		margin-left: 4px;
+		margin-right: -30px;
 	}
 
 }
@@ -527,6 +538,31 @@ div#wpoptimize_table_list_tables_not_found + h3 {
 	display: none;
 }
 
+body[class*="toplevel_page_WP-Optimize"] #wpbody,
+body[class*="wp-optimize_page_"] #wpbody {
+	padding-right: 15px;
+}
+
+@media screen and (max-width: 782px) {
+
+	body[class*="toplevel_page_WP-Optimize"] #wpbody,
+body[class*="wp-optimize_page_"] #wpbody {
+		padding-right: 10px;
+	}
+}
+
+body.toplevel_page_WP-Optimize.rtl #wpbody {
+	padding-left: 15px;
+	padding-right: 0;
+}
+
+@media screen and (max-width: 782px) {
+
+	body.toplevel_page_WP-Optimize.rtl #wpbody {
+		padding-left: 10px;
+	}
+}
+
 body[class*="toplevel_page_WP-Optimize"] #wpbody-content,
 body[class*="wp-optimize_page_"] #wpbody-content {
 	padding-top: 80px;	
@@ -551,7 +587,6 @@ body[class*="wp-optimize_page_"] #wpbody-content {
 #wp-optimize-wrap {
 	position: relative;
 	padding-top: 20px;
-
 }
 
 @media (max-width: 600px) {
@@ -579,6 +614,7 @@ body[class*="wp-optimize_page_"] #wpbody-content {
     background: #FFF;
     right: 0;
     z-index: 9980;
+
 }
 
 @media (min-width: 820px) {
@@ -730,11 +766,82 @@ body.is-scrolled .wpo-main-header {
 		box-shadow: 0 5px 25px rgba(0, 0, 0, 0.17);
 }
 
+/* RTL */
+
+body.rtl .wpo-main-header {
+		right: 160px;
+		left: 0;
+}
+
+body.rtl .wpo-main-header .wpo-logo__container {
+			padding-left: 10px;
+			padding-right: 50px;
+			margin-left: 0;
+			margin-right: 10px;
+		}
+
+body.rtl .wpo-main-header .wpo-logo {
+			position: absolute;
+			left: auto;
+			right: 0;
+		}
+
+body.rtl .wpo-main-header p.wpo-header-links {
+			right: auto;
+			left: 0;
+			border-bottom-right-radius: 5px;
+			border-bottom-left-radius: 0;
+		}
+
+body.rtl .wpo-main-header p.wpo-header-links .wpo-header-links__label {
+				position: absolute;
+				left: 100%;
+				right: auto;
+				width: 110px;
+				text-align: left;
+				padding-left: 10px;
+			}
+
+@media (max-width: 960px) {
+
+	body.rtl.auto-fold .wpo-main-header {
+		right: 36px;
+	}
+}
+
+@media (max-width: 782px) {
+
+	body.rtl.auto-fold .wpo-main-header {
+		right: 0;
+		top: 46px;
+	}
+}
+
+@media (max-width: 600px) {
+
+	body.rtl.auto-fold .wpo-main-header {
+		position: absolute;
+		left: -10px;
+		right: -10px;
+		top: 10px;
+	}
+}
+
+@media (min-width: 782px) {
+
+	body.rtl.folded .wpo-main-header {
+		right: 36px;
+		left: 0;
+	}
+}
+
+body.rtl .wpo-page {
+		padding-right: 0;
+	}
+
 @media (min-width: 769px) {
 
-	.wpo-page {
-		padding-right: 15px;
-	}
+	.wpo-page {}
 }
 
 .wpo-page:not(.active) {
@@ -1019,7 +1126,6 @@ h2#wp-optimize-nav-tab-wrapper a.nav-tab.wp-optimize-nav-tab__back .dashicons, h
 	bottom: 0;
 	right: 0;
 	display: none;
-
 }
 
 @media (max-width: 820px) {
@@ -1138,6 +1244,11 @@ h2#wp-optimize-nav-tab-wrapper a.nav-tab.wp-optimize-nav-tab__back .dashicons, h
 	}
 }
 
+body.rtl .wpo-pages-menu {
+		left: 0;
+		right: auto;
+}
+
 #wp-optimize-nav-page-menu {
 	position: absolute;
 	right: 0;
@@ -1168,6 +1279,11 @@ h2#wp-optimize-nav-tab-wrapper a.nav-tab.wp-optimize-nav-tab__back .dashicons, h
 	#wp-optimize-nav-page-menu {
 		display: none;
 	}
+}
+
+body.rtl #wp-optimize-nav-page-menu {
+		right: auto;
+		left: 0;
 }
 
 /* DASHBOARD Menu */
@@ -1657,6 +1773,16 @@ div#wp-optimize-nav-tab-wpo_mayalso-may_also-contents .wpo-tab-postbox {
 			#wp-optimize-wrap .wp-list-table.wp-list-table-mobile-labels thead th:not(.column-primary) {
 				display: none !important; 
 			}
+}
+
+body.rtl #wp-optimize-wrap .wpo-table-list-filter {
+			text-align: left;
+		}
+
+@media screen and (max-width: 782px ) {
+				body.rtl #wp-optimize-wrap .wp-list-table.wp-list-table-mobile-labels tbody td {
+					padding: 3px 35% 3px 8px;
+				}
 }
 
 th:not(.sorter-false) .tablesorter-header-inner {

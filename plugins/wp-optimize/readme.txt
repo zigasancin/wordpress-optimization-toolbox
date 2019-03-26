@@ -4,7 +4,7 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 5.1
-Stable tag: 2.2.12
+Stable tag: 2.2.13
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -142,6 +142,13 @@ Please check your database for corrupted tables. That can happen, usually your w
 4. Settings
 
 == Changelog ==
+
+= 2.2.13 - 04/Mar/2019 =
+
+* FIX: Fixed RTL layout
+* FIX: Detect more relationships between tables and plugins in orphaned database tables optimization
+* FIX: Fixed orphaned relationships optimization
+* TWEAK: The informational list of WP core tables missed some possible extra tables on multisite
 
 = 2.2.12 - 07/Feb/2019 =
 
@@ -481,4 +488,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.2.12 : Improve orphaned relationships data optimization. Bug fixes. A recommended update for all.
+* 2.2.13 : The informational list of WP core tables missed some possible extra tables on multisite. Detect more relationships between tables and plugins in orphaned database tables optimization.

@@ -292,13 +292,8 @@ class WP_Optimizer {
 				$table_status[$index]->is_type_supported = WP_Optimize()->get_db_info()->is_table_type_optimize_supported($table_name);
 				// add information about corrupted tables.
 				$table_status[$index]->is_needing_repair = WP_Optimize()->get_db_info()->is_table_needing_repair($table_name);
-				// add information about using table by any of installed plugins.
-				$table_status[$index]->plugin   = WP_Optimize()->get_db_info()->get_table_plugin($table_name);
-				$table_status[$index]->is_using = WP_Optimize()->get_db_info()->is_table_using_by_plugin($table_name);
-				// if table belongs to any plugin then add plugins status.
-				if ($table_status[$index]->plugin) {
-					$table_status[$index]->plugin_status   = WP_Optimize()->get_db_info()->get_plugin_status($table_status[$index]->plugin);
-				}
+
+				$table_status[$index] = $this->join_plugin_information($table_name, $table_status[$index]);
 			}
 		}
 
@@ -324,16 +319,58 @@ class WP_Optimizer {
 		$table->is_type_supported = $db_info->is_table_type_optimize_supported($table_name);
 		$table->is_needing_repair = $db_info->is_table_needing_repair($table_name);
 
-		// add information about using table by any of installed plugins.
-		$table->plugin   = $db_info->get_table_plugin($table_name);
-		$table->is_using = $db_info->is_table_using_by_plugin($table_name);
-		// if table belongs to any plugin then add plugins status.
-		if ($table->plugin) {
-			$table->plugin_status   = $db_info->get_plugin_status($table->plugin);
-		}
+		// add information about plugins.
+		$table = $this->join_plugin_information($table_name, $table);
 
 		$table = apply_filters('wp_optimize_get_table', $table);
 		return $table;
+	}
+
+	/**
+	 * Add information about relationship database tables with plugins.
+	 *
+	 * @param {string} $table_name
+	 * @param {object} $table_obj
+	 *
+	 * @return {object}
+	 */
+	public function join_plugin_information($table_name, $table_obj) {
+		// set can be removed flag.
+		$can_be_removed = false;
+		// set WP core table flag.
+		$wp_core_table = false;
+		// add information about using table by any of installed plugins.
+		$table_obj->is_using = WP_Optimize()->get_db_info()->is_table_using_by_plugin($table_name);
+		// if table belongs to any plugin then add plugins status.
+		$plugins = WP_Optimize()->get_db_info()->get_table_plugin($table_name);
+
+		if (false !== $plugins) {
+			// if belongs to any of plugin then we can remove table if plugin not active.
+			$can_be_removed = true;
+
+			$plugin_status = array();
+			foreach ($plugins as $plugin) {
+				$status = WP_Optimize()->get_db_info()->get_plugin_status($plugin);
+
+				if (__('WordPress core', 'wp-optimize') == $plugin) $wp_core_table = true;
+				// if plugin is active then we can't remove.
+				if ($wp_core_table || $status['active']) $can_be_removed = false;
+
+				if ($status['installed'] || $status['active'] || !$table_obj->is_using) {
+					$plugin_status[] = array(
+						'plugin' => $plugin,
+						'status' => $status,
+					);
+				}
+			}
+
+			$table_obj->plugin_status = $plugin_status;
+		}
+
+		$table_obj->wp_core_table = $wp_core_table;
+		$table_obj->can_be_removed = $can_be_removed;
+
+		return $table_obj;
 	}
 
 	/**

@@ -15,7 +15,7 @@ do_action('wpo_tables_list_before', $table_information);
 
 <?php $wp_optimize->include_template('take-a-backup.php', false, array('label' => __('Take a backup with UpdraftPlus before any actions upon tables (recommended).', 'wp-optimize'), 'default_checkbox_value' => 'true')); ?>
 
-<p><strong><?php echo __('Database name:', 'wp-optimize')." '".htmlspecialchars(DB_NAME)."'"; ?><a id="wp_optimize_table_list_refresh" href="#" class="wpo-refresh-button"><span class="dashicons dashicons-image-rotate"></span><?php _e('Refresh tables', 'wp-optimize'); ?></a></strong> <input id="wpoptimize_table_list_filter" class="search" type="search" value="" placeholder="<?php esc_attr_e('Search for table', 'wp-optimize'); ?>" data-column="1" /></p>
+<p class="wpo-table-list-filter"><strong><?php echo __('Database name:', 'wp-optimize')." '".htmlspecialchars(DB_NAME)."'"; ?><a id="wp_optimize_table_list_refresh" href="#" class="wpo-refresh-button"><span class="dashicons dashicons-image-rotate"></span><?php _e('Refresh tables', 'wp-optimize'); ?></a></strong> <input id="wpoptimize_table_list_filter" class="search" type="search" value="" placeholder="<?php esc_attr_e('Search for table', 'wp-optimize'); ?>" data-column="1" /></p>
 <table id="wpoptimize_table_list" class="wp-list-table widefat striped tablesorter wp-list-table-mobile-labels">
 	<thead>
 		<tr>

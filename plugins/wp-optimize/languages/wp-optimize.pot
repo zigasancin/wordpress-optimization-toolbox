@@ -209,24 +209,24 @@ msgstr ""
 msgid "No such optimization"
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:475
+#: src/includes/class-wp-optimizer.php:355, src/includes/wp-optimize-database-information.php:412, src/includes/wp-optimize-database-information.php:460, src/templates/database/tables-body.php:34
+msgid "WordPress core"
+msgstr ""
+
+#: src/includes/class-wp-optimizer.php:512
 msgid "Comments have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:478
+#: src/includes/class-wp-optimizer.php:515
 msgid "Comments have now been enabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:485
+#: src/includes/class-wp-optimizer.php:522
 msgid "Trackbacks have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:488
+#: src/includes/class-wp-optimizer.php:525
 msgid "Trackbacks have now been enabled on all current and previously published posts."
-msgstr ""
-
-#: src/includes/wp-optimize-database-information.php:411, src/includes/wp-optimize-database-information.php:456, src/templates/database/tables-body.php:33, src/wp-optimize.php:882
-msgid "WordPress core"
 msgstr ""
 
 #: src/includes/wp-optimize-notices.php:41
@@ -789,7 +789,7 @@ msgstr ""
 msgid "FAQs"
 msgstr ""
 
-#: src/templates/admin-page-header.php:22, src/templates/pages-menu.php:41, src/wp-optimize.php:1070, src/wp-optimize.php:1071
+#: src/templates/admin-page-header.php:22, src/templates/pages-menu.php:41, src/wp-optimize.php:1067, src/wp-optimize.php:1068
 msgid "More plugins"
 msgstr ""
 
@@ -913,43 +913,43 @@ msgstr ""
 msgid "Belongs to:"
 msgstr ""
 
-#: src/templates/database/tables-body.php:39
+#: src/templates/database/tables-body.php:47
 msgid "not installed"
 msgstr ""
 
-#: src/templates/database/tables-body.php:41
+#: src/templates/database/tables-body.php:49
 msgid "inactive"
 msgstr ""
 
-#: src/templates/database/tables-body.php:48, src/templates/database/tables.php:24
+#: src/templates/database/tables-body.php:57, src/templates/database/tables.php:24
 msgid "Records"
 msgstr ""
 
-#: src/templates/database/tables-body.php:49, src/templates/database/tables.php:25
+#: src/templates/database/tables-body.php:58, src/templates/database/tables.php:25
 msgid "Data Size"
 msgstr ""
 
-#: src/templates/database/tables-body.php:50, src/templates/database/tables.php:26
+#: src/templates/database/tables-body.php:59, src/templates/database/tables.php:26
 msgid "Index Size"
 msgstr ""
 
-#: src/templates/database/tables-body.php:53, src/templates/database/tables-body.php:66, src/templates/database/tables.php:27
+#: src/templates/database/tables-body.php:62, src/templates/database/tables-body.php:75, src/templates/database/tables.php:27
 msgid "Type"
 msgstr ""
 
-#: src/templates/database/tables-body.php:55, src/templates/database/tables-body.php:67, src/templates/database/tables.php:28
+#: src/templates/database/tables-body.php:64, src/templates/database/tables-body.php:76, src/templates/database/tables.php:28
 msgid "Overhead"
 msgstr ""
 
-#: src/templates/database/tables-body.php:74, src/templates/database/tables-body.php:103, src/templates/database/tables.php:29, src/templates/settings/settings-logging.php:25
+#: src/templates/database/tables-body.php:83, src/templates/database/tables-body.php:112, src/templates/database/tables.php:29, src/templates/settings/settings-logging.php:25
 msgid "Actions"
 msgstr ""
 
-#: src/templates/database/tables-body.php:89
+#: src/templates/database/tables-body.php:98
 msgid "Total:"
 msgstr ""
 
-#: src/templates/database/tables-body.php:90
+#: src/templates/database/tables-body.php:99
 msgid "%s Table"
 msgid_plural "%s Tables"
 msgstr[0] ""
@@ -1579,7 +1579,7 @@ msgstr ""
 msgid "New feature: WP-Optimize Premium can now optimize all sites within a multisite install, not just the main one."
 msgstr ""
 
-#: src/wp-optimize.php:483, src/wp-optimize.php:856, src/wp-optimize.php:1033, src/wp-optimize.php:1034
+#: src/wp-optimize.php:483, src/wp-optimize.php:856, src/wp-optimize.php:1030, src/wp-optimize.php:1031
 msgid "Settings"
 msgstr ""
 
@@ -1663,94 +1663,94 @@ msgstr ""
 msgid "Repair"
 msgstr ""
 
-#: src/wp-optimize.php:886
+#: src/wp-optimize.php:884
 msgid "Remove"
 msgstr ""
 
-#: src/wp-optimize.php:993
+#: src/wp-optimize.php:990
 msgid "Warning"
 msgstr ""
 
-#: src/wp-optimize.php:993
+#: src/wp-optimize.php:990
 msgid "WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working."
 msgstr ""
 
-#: src/wp-optimize.php:993
+#: src/wp-optimize.php:990
 msgid "Read this page for a guide to possible causes and how to fix it."
 msgstr ""
 
-#: src/wp-optimize.php:1047, src/wp-optimize.php:1048
+#: src/wp-optimize.php:1044, src/wp-optimize.php:1045
 msgid "Database"
 msgstr ""
 
-#: src/wp-optimize.php:1061
+#: src/wp-optimize.php:1058
 msgid "Support & FAQs"
 msgstr ""
 
-#: src/wp-optimize.php:1062
+#: src/wp-optimize.php:1059
 msgid "Help"
 msgstr ""
 
-#: src/wp-optimize.php:1083, src/wp-optimize.php:1084
+#: src/wp-optimize.php:1080, src/wp-optimize.php:1081
 msgid "Cache"
 msgstr ""
 
-#: src/wp-optimize.php:1146
+#: src/wp-optimize.php:1143
 msgid "Error:"
 msgstr ""
 
-#: src/wp-optimize.php:1146
+#: src/wp-optimize.php:1143
 msgid "template not found"
 msgstr ""
 
-#: src/wp-optimize.php:1198
+#: src/wp-optimize.php:1195
 msgid "Automatic Operation Completed"
 msgstr ""
 
-#: src/wp-optimize.php:1200
+#: src/wp-optimize.php:1197
 msgid "Scheduled optimization was executed at"
 msgstr ""
 
-#: src/wp-optimize.php:1201
+#: src/wp-optimize.php:1198
 msgid "You can safely delete this email."
 msgstr ""
 
-#: src/wp-optimize.php:1203
+#: src/wp-optimize.php:1200
 msgid "Regards,"
 msgstr ""
 
-#: src/wp-optimize.php:1204
+#: src/wp-optimize.php:1201
 msgid "WP-Optimize Plugin"
 msgstr ""
 
-#: src/wp-optimize.php:1226
+#: src/wp-optimize.php:1223
 msgid "GB"
 msgstr ""
 
-#: src/wp-optimize.php:1228
+#: src/wp-optimize.php:1225
 msgid "MB"
 msgstr ""
 
-#: src/wp-optimize.php:1230
+#: src/wp-optimize.php:1227
 msgid "KB"
 msgstr ""
 
-#: src/wp-optimize.php:1232
+#: src/wp-optimize.php:1229
 msgid "bytes"
 msgstr ""
 
-#: src/wp-optimize.php:1553
+#: src/wp-optimize.php:1550
 msgid "You have no permissions to run optimizations."
 msgstr ""
 
-#: src/wp-optimize.php:1560
+#: src/wp-optimize.php:1557
 msgid "You have no permissions to manage WP-Optimize settings."
 msgstr ""
 
-#: src/wp-optimize.php:1710
+#: src/wp-optimize.php:1707
 msgid "Only Network Administrator can activate WP-Optimize plugin."
 msgstr ""
 
-#: src/wp-optimize.php:1711
+#: src/wp-optimize.php:1708
 msgid "go back"
 msgstr ""

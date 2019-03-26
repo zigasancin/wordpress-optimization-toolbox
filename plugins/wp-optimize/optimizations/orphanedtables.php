@@ -70,7 +70,7 @@ class WP_Optimization_orphanedtables extends WP_Optimization {
 		global $wpdb;
 
 		// don't delete table if it in use and plugin active.
-		if ($table_obj->is_using && $table_obj->plugin_status['active']) return true;
+		if (!$table_obj->can_be_removed) return true;
 
 		$sql_query = "DROP TABLE `{$table_obj->Name}`";
 
