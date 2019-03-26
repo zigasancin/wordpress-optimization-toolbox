@@ -11,6 +11,10 @@
  * @copyright (c) 2018, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Singleton class WP_Smush_Rest for extending the WordPress REST API interface.
  *

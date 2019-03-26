@@ -11,6 +11,10 @@
  * @copyright (c) 2016, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Png2jpg
  */
@@ -283,12 +287,6 @@ class WP_Smush_Png2jpg extends WP_Smush_Module {
 		}
 
 		return $meta;
-	}
-
-	function update_stats( $id = '', $savings = '' ) {
-		if ( empty( $id ) || empty( $savings ) ) {
-			return false;
-		}
 	}
 
 	/**

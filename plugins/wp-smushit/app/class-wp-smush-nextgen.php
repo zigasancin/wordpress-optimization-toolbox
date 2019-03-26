@@ -5,6 +5,10 @@
  * @package WP_Smush
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Nextgen_Page
  */
@@ -66,7 +70,7 @@ class WP_Smush_Nextgen_Page extends WP_Smush_View {
 	public function dashboard_summary_metabox() {
 		$ng = WP_Smush::get_instance()->core()->nextgen->ng_admin;
 
-		$lossy_enabled = WP_Smush::get_instance()->core()->mod->smush->lossy_enabled;
+		$lossy_enabled = WP_Smush::is_pro() && $this->settings->get( 'lossy' );
 
 		$smushed_image_count = 0;
 		if ( $lossy_enabled ) {
@@ -130,7 +134,7 @@ class WP_Smush_Nextgen_Page extends WP_Smush_View {
 			array(
 				'all_done'        => ( $ng->smushed_count == $ng->total_count ) && 0 == count( $ng->resmush_ids ),
 				'count'           => $count,
-				'lossy_enabled'   => WP_Smush::get_instance()->core()->mod->smush->lossy_enabled,
+				'lossy_enabled'   => WP_Smush::is_pro() && $this->settings->get( 'lossy' ),
 				'ng'              => $ng,
 				'remaining_count' => $ng->remaining_count,
 				'resmush_ids'     => $ng->resmush_ids,

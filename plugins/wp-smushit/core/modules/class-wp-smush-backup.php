@@ -5,6 +5,10 @@
  * @package WP_Smush
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Backup
  */
@@ -18,13 +22,6 @@ class WP_Smush_Backup extends WP_Smush_Module {
 	private $smush;
 
 	/**
-	 * Whether to backup images or not.
-	 *
-	 * @var bool
-	 */
-	private $backup_enabled = false;
-
-	/**
 	 * Key for storing file path for image backup
 	 *
 	 * @var string
@@ -35,19 +32,8 @@ class WP_Smush_Backup extends WP_Smush_Module {
 	 * WP_Smush_Backup constructor.
 	 */
 	public function init() {
-		// Initialize Variables and perform other operations.
-		add_action( 'admin_init', array( $this, 'initialize' ) );
-
 		// Handle Restore operation.
 		add_action( 'wp_ajax_smush_restore_image', array( $this, 'restore_image' ) );
-	}
-
-	/**
-	 * Init actions.
-	 */
-	public function initialize() {
-		// Whether backup is enabled or not.
-		$this->backup_enabled = $this->settings->get( 'backup' );
 	}
 
 	/**
@@ -69,7 +55,7 @@ class WP_Smush_Backup extends WP_Smush_Module {
 		}
 
 		// Return file path if backup is disabled.
-		if ( ! $this->backup_enabled || ! WP_Smush::is_pro() ) {
+		if ( ! $this->settings->get( 'backup' ) || ! WP_Smush::is_pro() ) {
 			return $file_path;
 		}
 
@@ -120,8 +106,9 @@ class WP_Smush_Backup extends WP_Smush_Module {
 			$backup_sizes = array();
 		}
 
+		// Prevent phar deserialization vulnerability.
 		// Return if backup file doesn't exists.
-		if ( ! file_exists( $backup_path ) ) {
+		if ( 0 === strpos( strtolower( trim( $backup_path ) ), 'phar://' ) || ! file_exists( $backup_path ) ) {
 			return false;
 		}
 		list( $width, $height ) = getimagesize( $backup_path );

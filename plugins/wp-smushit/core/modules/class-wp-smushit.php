@@ -5,6 +5,10 @@
  * @package WP_Smushit
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smushit.
  */
@@ -32,27 +36,6 @@ class WP_Smushit extends WP_Smush_Module {
 	public $media_type = 'wp';
 
 	/**
-	 * Super Smush is enabled or not.
-	 *
-	 * @var bool $lossy_enabled
-	 */
-	public $lossy_enabled = false;
-
-	/**
-	 * Whether to Smush the original image.
-	 *
-	 * @var bool $smush_original
-	 */
-	public $smush_original = false;
-
-	/**
-	 * Whether to preserve the EXIF data or not.
-	 *
-	 * @var bool $keep_exif
-	 */
-	public $keep_exif = false;
-
-	/**
 	 * Attachment ID for the image being Smushed currently.
 	 *
 	 * @var int $attachment_id
@@ -70,7 +53,7 @@ class WP_Smushit extends WP_Smush_Module {
 	 * WP_Smush constructor.
 	 */
 	public function init() {
-		// Update the Super Smush count, after the smushing.
+		// Update the Super Smush count, after the Smush'ing.
 		add_action( 'wp_smush_image_optimised', array( $this, 'update_lists' ), '', 2 );
 
 		// Smush image (Auto Smush) when `wp_update_attachment_metadata` filter is fired.
@@ -103,11 +86,6 @@ class WP_Smushit extends WP_Smush_Module {
 		$show_button = $show_resmush = false;
 
 		$links = '';
-
-		// If variables are not initialized properly, initialize it.
-		if ( ! has_action( 'admin_init', array( $this, 'admin_init' ) ) ) {
-			WP_Smush::get_instance()->core()->initialise();
-		}
 
 		$wp_smush_data      = get_post_meta( $id, self::$smushed_meta_key, true );
 		$wp_resize_savings  = get_post_meta( $id, WP_SMUSH_PREFIX . 'resize_savings', true );
@@ -214,7 +192,7 @@ class WP_Smushit extends WP_Smush_Module {
 
 			// Check if premium user, compression was lossless, and lossy compression is enabled.
 			// If we are displaying the resmush option already, no need to show the Super Smush button.
-			if ( ! $show_resmush && ! $is_lossy && $this->lossy_enabled && 'image/gif' !== $image_type ) {
+			if ( ! $show_resmush && ! $is_lossy && WP_Smush::is_pro() && $this->settings->get( 'lossy' ) && 'image/gif' !== $image_type ) {
 				$button_txt  = __( 'Super-Smush', 'wp-smushit' );
 				$show_button = true;
 			}
@@ -236,7 +214,8 @@ class WP_Smushit extends WP_Smush_Module {
 			$wp_smush_data = true;
 
 			// The status.
-			$status_txt = __( 'Not processed', 'wp-smushit' );
+			$ignored    = get_post_meta( $id, WP_SMUSH_PREFIX . 'ignore-bulk', true );
+			$status_txt = 'true' === $ignored ? __( 'Ignored in Bulk Smush', 'wp-smushit' ) : __( 'Not processed', 'wp-smushit' );
 
 			// We need to show the smush button.
 			$show_button = true;
@@ -384,7 +363,7 @@ class WP_Smushit extends WP_Smush_Module {
 		// Resmush: Show resmush link, Check if user have enabled smushing the original and full image was skipped
 		// Or: If keep exif is unchecked and the smushed image have exif
 		// PNG To JPEG.
-		if ( $this->smush_original ) {
+		if ( $this->settings->get( 'original' ) && WP_Smush::is_pro() ) {
 			// IF full image was not smushed.
 			if ( ! empty( $wp_smush_data ) && empty( $wp_smush_data['sizes']['full'] ) ) {
 				return true;
@@ -397,9 +376,9 @@ class WP_Smushit extends WP_Smush_Module {
 		}
 
 		// EXIF Check.
-		if ( ! $this->keep_exif ) {
+		if ( $this->settings->get( 'strip_exif' ) ) {
 			// If Keep Exif was set to true initially, and since it is set to false now.
-			if ( isset( $wp_smush_data['stats']['keep_exif'] ) && $wp_smush_data['stats']['keep_exif'] == 1 ) {
+			if ( isset( $wp_smush_data['stats']['keep_exif'] ) && true === $wp_smush_data['stats']['keep_exif'] ) {
 				return true;
 			}
 		}
@@ -719,7 +698,7 @@ class WP_Smushit extends WP_Smush_Module {
 	 * @param bool    $echo         If true, it directly outputs the HTML.
 	 * @param bool    $wrapper      Whether to return the button with wrapper div or not.
 	 *
-	 * @return string|void
+	 * @return string
 	 */
 	private function column_html( $id, $html = '', $button_txt = '', $show_button = true, $smushed = false, $echo = true, $wrapper = true ) {
 		$allowed_images = array( 'image/jpeg', 'image/jpg', 'image/x-citrix-jpeg', 'image/png', 'image/x-png', 'image/gif' );
@@ -728,7 +707,7 @@ class WP_Smushit extends WP_Smush_Module {
 		if ( ! wp_attachment_is_image( $id ) || ! in_array( get_post_mime_type( $id ), $allowed_images ) ) {
 			$status_txt = __( 'Not processed', 'wp-smushit' );
 			if ( $echo ) {
-				echo $status_txt;
+				echo esc_html( $status_txt );
 				return;
 			}
 
@@ -738,7 +717,7 @@ class WP_Smushit extends WP_Smush_Module {
 		// If we aren't showing the button.
 		if ( ! $show_button ) {
 			if ( $echo ) {
-				echo $html;
+				echo wp_kses_post( $html );
 				return;
 			}
 
@@ -747,30 +726,30 @@ class WP_Smushit extends WP_Smush_Module {
 			return $wrapper ? '<div class="smush-wrap' . $class . '">' . $html . '</div>' : $html;
 		}
 
-		$mode_class = ! empty( $_POST['mode'] ) && 'grid' === $_POST['mode'] ? ' button-primary' : '';
-		if ( ! $echo ) {
-			$button_class = $wrapper || ! empty( $mode_class ) ? 'button button-primary wp-smush-send' : 'button button-primary wp-smush-send';
-			$html        .= '
-			<button  class="' . $button_class . '" data-id="' . $id . '">
-                ' . $button_txt . '
-			</button>';
-			if ( ! $smushed ) {
-				$class = ' unsmushed';
-			} else {
-				$class = ' smushed';
-			}
+		$html .= '
+		<button  class="button button-primary wp-smush-send" data-id="' . $id . '">
+            ' . $button_txt . '
+		</button>';
 
-			$html .= $this->progress_bar();
+		$skipped = get_post_meta( $id, WP_SMUSH_PREFIX . 'ignore-bulk', true );
+		if ( 'true' === $skipped ) {
+			$nonce = wp_create_nonce( 'wp-smush-remove-skipped' );
+			$html .= '
+			<button  class="button button-primary wp-smush-remove-skipped" data-id="' . $id . '" data-nonce="' . $nonce . '">
+                ' . __( 'Show in bulk Smush', 'wp-smushit' ) . '
+			</button>';
+		}
+
+		$html .= $this->progress_bar();
+
+		if ( ! $echo ) {
+			$class = $smushed ? ' smushed' : ' unsmushed';
 			$html  = $wrapper ? '<div class="smush-wrap' . $class . '">' . $html . '</div>' : $html;
 
 			return $html;
 		}
 
-		$html .= '<button class="button button-primary wp-smush-send' . $mode_class . '" data-id="' . $id . '">
-			' . $button_txt . '
-		</button>';
-		$html  = $html . $this->progress_bar();
-		echo $html;
+		echo wp_kses_post( $html );
 	}
 
 	/**
@@ -880,7 +859,7 @@ class WP_Smushit extends WP_Smush_Module {
 	 */
 	private function smush_status( $id ) {
 		// Show Temporary Status, For Async Optimisation, No Good workaround.
-		if ( ! get_option( "wp-smush-restore-$id", false ) && ! empty( $_POST['action'] ) && 'upload-attachment' === $_POST['action'] && $this->is_auto_smush_enabled() ) {
+		if ( ! get_option( "wp-smush-restore-{$id}", false ) && ! empty( $_POST['action'] ) && 'upload-attachment' === $_POST['action'] && $this->is_auto_smush_enabled() ) {
 			$status_txt = '<p class="smush-status">' . __( 'Smushing in progress..', 'wp-smushit' ) . '</p>';
 
 			// We need to show the smush button.
@@ -1098,7 +1077,7 @@ class WP_Smushit extends WP_Smush_Module {
 			'user-agent' => WP_SMUSH_UA,
 		);
 		// Temporary increase the limit.
-		WP_Smush_Helper::increase_memory_limit();
+		wp_raise_memory_limit( 'image' );
 		$result = wp_remote_post( $api_url, $args );
 
 		unset( $file_data ); // Free memory.
@@ -1492,14 +1471,21 @@ class WP_Smushit extends WP_Smush_Module {
 	public function smush_image( $meta, $id = null ) {
 		if ( ! is_admin() ) {
 			// We need to check if this call originated from Gutenberg (is_admin() does not work in REST API).
+			if ( empty( $GLOBALS['wp']->query_vars['rest_route'] ) ) {
+				return $meta;
+			}
+
 			$route = untrailingslashit( $GLOBALS['wp']->query_vars['rest_route'] );
 			if ( empty( $route ) || '/wp/v2/media' !== $route ) {
 				// If not - return image meta data.
 				return $meta;
 			}
 		}
+
+		$upload_attachment    = filter_input( INPUT_POST, 'action', FILTER_SANITIZE_STRING );
+		$is_upload_attachment = 'upload-attachment' === $upload_attachment || isset( $_POST['post_id'] );
+
 		// Our async task runs when action is upload-attachment and post_id found. So do not run on these conditions.
-		$is_upload_attachment = ( ! empty( $_POST['action'] ) && 'upload-attachment' === $_POST['action'] ) || isset( $_POST['post_id'] );
 		if ( $is_upload_attachment && defined( 'WP_SMUSH_ASYNC' ) && WP_SMUSH_ASYNC ) {
 			return $meta;
 		}
@@ -1531,9 +1517,7 @@ class WP_Smushit extends WP_Smush_Module {
 
 		// While uploading from Mobile App or other sources, admin_init action may not fire.
 		// So we need to manually initialize those.
-		WP_Smush::get_instance()->core()->initialise();
 		WP_Smush::get_instance()->core()->mod->resize->initialize( true );
-		WP_Smush::get_instance()->core()->mod->backup->initialize();
 
 		// Check if auto is enabled.
 		$auto_smush = $this->is_auto_smush_enabled();
@@ -1821,7 +1805,7 @@ class WP_Smushit extends WP_Smush_Module {
 		// Check meta for rest of the sizes.
 		if ( ! empty( $meta ) && ! empty( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $size ) {
-				// Get the file path
+				// Get the file path.
 				if ( empty( $size['file'] ) ) {
 					continue;
 				}

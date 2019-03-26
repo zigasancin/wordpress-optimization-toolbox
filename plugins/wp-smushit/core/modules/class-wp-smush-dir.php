@@ -11,6 +11,10 @@
  * @copyright (c) 2016, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Dir
  */
@@ -47,10 +51,10 @@ class WP_Smush_Dir {
 	 * WP_Smush_Dir constructor.
 	 */
 	public function __construct() {
-	    // We only run in admin.
-	    if ( ! is_admin() ) {
-	        return;
-        }
+		// We only run in admin.
+		if ( ! is_admin() ) {
+			return;
+		}
 
 		if ( ! self::should_continue() ) {
 			// Remove directory smush from tabs if not required.
@@ -265,7 +269,7 @@ class WP_Smush_Dir {
 		$file_time = @filectime( $path );
 
 		// If super-smush enabled, update supersmushed meta value also.
-		$lossy = WP_Smush::get_instance()->core()->mod->smush->lossy_enabled ? 1 : 0;
+		$lossy = WP_Smush::is_pro() && WP_Smush::get_instance()->core()->mod->settings->get( 'lossy' ) ? 1 : 0;
 
 		// All good, Update the stats.
 		$wpdb->query(
@@ -420,7 +424,7 @@ class WP_Smush_Dir {
 			"SELECT COUNT(id)
 					FROM {$wpdb->prefix}smush_dir_images
 					WHERE error IS NOT NULL AND last_scan = ( SELECT MAX(last_scan) FROM {$wpdb->prefix}smush_dir_images )"
-		);
+		); // Db call ok.
 
 		return (int) $count;
 	}
@@ -519,7 +523,7 @@ class WP_Smush_Dir {
 
 				wp_send_json_success( $tree );
 			}
-		} // End if().
+		}
 	}
 
 	/**
@@ -529,7 +533,7 @@ class WP_Smush_Dir {
 	 */
 	public function get_root_path() {
 		// If main site.
-		if ( is_main_site() ) {
+		if ( is_multisite() && is_main_site() ) {
 			/**
 			 * Sometimes content directories may reside outside
 			 * the installation sub directory. We need to make sure
@@ -553,11 +557,9 @@ class WP_Smush_Dir {
 			}
 
 			return implode( '/', $common_path );
-		} else {
-			$up = wp_upload_dir();
-
-			return $up['basedir'];
 		}
+
+		return WP_CONTENT_DIR;
 	}
 
 	/**
@@ -585,10 +587,16 @@ class WP_Smush_Dir {
 		$timestamp = gmdate( 'Y-m-d H:i:s' );
 
 		// Temporary increase the limit.
-		WP_Smush_Helper::increase_memory_limit();
+		wp_raise_memory_limit( 'image' );
 
 		// Iterate over all the selected items (can be either an image or directory).
 		foreach ( $paths as $path ) {
+			// Prevent phar deserialization vulnerability.
+			$path = strtolower( trim( $path ) );
+			if ( strpos( $path, 'phar://' ) === 0 ) {
+				continue;
+			}
+
 			/**
 			 * Path is an image.
 			 */
@@ -669,8 +677,8 @@ class WP_Smush_Dir {
 					$this->store_images( $values, $images );
 					$images = $values = array();
 				}
-			} // End foreach().
-		} // End foreach().
+			}
+		}
 
 		// Update rest of the images.
 		if ( ! empty( $images ) && $count > 0 ) {
@@ -756,8 +764,10 @@ class WP_Smush_Dir {
 			wp_send_json_error( __( 'Empty Directory Path', 'wp-smushit' ) );
 		}
 
+		$smush_path = filter_input( INPUT_GET, 'smush_path', FILTER_SANITIZE_URL, FILTER_REQUIRE_ARRAY );
+
 		// This will add the images to the database and get the file list.
-		$files = $this->get_image_list( $_GET['smush_path'] ); // Input var ok.
+		$files = $this->get_image_list( $smush_path );
 
 		// If files array is empty, send a message.
 		if ( empty( $files ) ) {
@@ -876,7 +886,7 @@ class WP_Smush_Dir {
 		}
 
 		// Can be used to skip/include folders matching a specific directory path.
-		apply_filters( 'wp_smush_skip_folder', $skip, $path );
+		$skip = apply_filters( 'wp_smush_skip_folder', $skip, $path );
 
 		return $skip;
 	}
@@ -905,11 +915,11 @@ class WP_Smush_Dir {
 	/**
 	 * Fetch all the optimised image, calculate stats.
 	 *
-	 * @param bool $force_update Should force update?
+	 * @param bool $force_update Should force update or not.
 	 *
 	 * @return array Total stats.
 	 */
-	function total_stats( $force_update = false ) {
+	public function total_stats( $force_update = false ) {
 		// If not forced to update.
 		if ( ! $force_update ) {
 			// Get stats from cache.
@@ -1135,25 +1145,25 @@ class WP_Smush_Dir {
 			$human = ! empty( $dir_smush_stats['dir_smush']['bytes'] ) && $dir_smush_stats['dir_smush']['bytes'] > 0 ? $dir_smush_stats['dir_smush']['bytes'] : 0;
 		}
 		?>
-        <li class="smush-dir-savings">
+		<li class="smush-dir-savings">
 			<span class="sui-list-label"><?php esc_html_e( 'Directory Smush Savings', 'wp-smushit' ); ?>
 				<?php if ( $human <= 0 ) { ?>
-                    <p class="wp-smush-stats-label-message">
+					<p class="wp-smush-stats-label-message">
 						<?php esc_html_e( "Smush images that aren't located in your uploads folder.", 'wp-smushit' ); ?>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=smush&view=directory' ) ); ?>" class="wp-smush-dir-link"
-                           title="<?php esc_attr_e( "Select a directory you'd like to Smush.", 'wp-smushit' ); ?>">
+						title="<?php esc_attr_e( "Select a directory you'd like to Smush.", 'wp-smushit' ); ?>">
 							<?php esc_html_e( 'Choose directory', 'wp-smushit' ); ?>
 						</a>
 					</p>
 				<?php } ?>
 			</span>
-            <span class="wp-smush-stats sui-list-detail">
+			<span class="wp-smush-stats sui-list-detail">
 				<i class="sui-icon-loader sui-loading" aria-hidden="true" title="<?php esc_attr_e( 'Updating Stats', 'wp-smushit' ); ?>"></i>
 				<span class="wp-smush-stats-human"></span>
 				<span class="wp-smush-stats-sep sui-hidden">/</span>
 				<span class="wp-smush-stats-percent"></span>
 			</span>
-        </li>
+		</li>
 		<?php
 	}
 

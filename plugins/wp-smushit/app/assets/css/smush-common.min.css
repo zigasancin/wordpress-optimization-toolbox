@@ -438,7 +438,9 @@
 }
 
 .attachment-details .smush-wrap .wp-smush-send {
-  display: block;
+  display: inline-block;
+  float: left;
+  margin-right: 5px;
 }
 
 .attachment-details .smush-wrap .spinner {
@@ -468,10 +470,6 @@
   box-shadow: inset 0 1px 0 rgba(0,207,33,0.5),0 1px 0 rgba(0,0,0,0.15) !important;
 }
 
-.wp-smush-submit-wrap {
-  padding: 4px;
-}
-
 .smush-submit-note {
   color: #9B9B9B;
   float: left;
@@ -479,15 +477,7 @@
   font-size: 13px;
   line-height: 22px;
   margin-top: 4px;
-}
-
-input#wp-smush-save-settings {
-  float: right;
-  margin: 0;
-}
-
-.wp-smush-welcome #wp-smush-save-settings {
-  float: right;
+  margin-right: 4px;
 }
 
 .currently-smushing .smush-status {

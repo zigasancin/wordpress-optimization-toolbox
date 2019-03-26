@@ -7,6 +7,10 @@
  * @var object $count  WP_Smush_Core
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <div class="wp-smush-bulk-progress-bar-wrapper sui-hidden">

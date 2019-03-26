@@ -15,6 +15,10 @@
  * @var string                 $url              Media library URL.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 // Get the counts.
 if ( $show ) {
 	WP_Smush::get_instance()->admin()->bulk_resmush_content( $count, $show );

@@ -6,6 +6,10 @@
  * @package WP_Smush
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Dashboard
  */
@@ -86,6 +90,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				'directory'    => __( 'Directory Smush', 'wp-smushit' ),
 				'integrations' => __( 'Integrations', 'wp-smushit' ),
 				'cdn'          => __( 'CDN', 'wp-smushit' ),
+				'lazy_load'    => __( 'Lazyload', 'wp-smushit' ),
 				'settings'     => __( 'Settings', 'wp-smushit' ),
 			)
 		);
@@ -144,7 +149,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				__( 'Settings', 'wp-smushit' ),
 				array( $this, 'bulk_settings_metabox' ),
 				null,
-				null,
+				array( $this, 'common_metabox_footer' ),
 				'bulk',
 				array(
 					'box_class' => "sui-box {$settings_class}",
@@ -177,7 +182,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 					__( 'Integrations', 'wp-smushit' ),
 					array( $this, 'integrations_metabox' ),
 					null,
-					array( $this, 'integrations_metabox_footer' ),
+					array( $this, 'common_metabox_footer' ),
 					'integrations',
 					array(
 						'box_class'         => "sui-box {$class}",
@@ -213,7 +218,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 						__( 'Settings', 'wp-smushit' ),
 						array( $this, 'bulk_settings_metabox' ),
 						null,
-						null,
+						array( $this, 'common_metabox_footer' ),
 						'bulk',
 						array(
 							'box_class' => "sui-box {$settings_class}",
@@ -225,7 +230,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				if ( ! $is_pro && ( ! is_network_admin() || $is_networkwide ) ) {
 					$this->add_meta_box(
 						'meta-boxes/pro-features',
-						__( 'Pre Features', 'wp-smushit' ),
+						__( 'Pro Features', 'wp-smushit' ),
 						array( $this, 'pro_features_metabox' ),
 						array( $this, 'pro_features_metabox_header' ),
 						null,
@@ -261,10 +266,36 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 							__( 'CDN', 'wp-smushit' ),
 							array( $this, 'cdn_metabox' ),
 							array( $this, 'cdn_metabox_header' ),
-							null,
+							array( $this, 'common_metabox_footer' ),
 							'cdn'
 						);
 					}
+				}
+
+				break;
+
+			case 'lazy_load':
+				if ( ! $this->settings->get( 'lazy_load' ) ) {
+					$this->add_meta_box(
+						'meta-boxes/lazyload/disabled',
+						__( 'Lazyload', 'wp-smushit' ),
+						null,
+						array( $this, 'lazyload_metabox_header' ),
+						null,
+						'lazy_load',
+						array(
+							'box_class' => 'sui-box sui-message sui-no-padding',
+						)
+					);
+				} else {
+					$this->add_meta_box(
+						'meta-boxes/lazyload',
+						__( 'Lazyload', 'wp-smushit' ),
+						array( $this, 'lazyload_metabox' ),
+						array( $this, 'lazyload_metabox_header' ),
+						array( $this, 'common_metabox_footer' ),
+						'lazy_load'
+					);
 				}
 
 				break;
@@ -275,7 +306,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 					__( 'Settings', 'wp-smushit' ),
 					array( $this, 'settings_metabox' ),
 					null,
-					null,
+					array( $this, 'common_metabox_footer' ),
 					'settings'
 				);
 				break;
@@ -299,17 +330,24 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 			$status = $this->settings->get_setting( WP_SMUSH_PREFIX . 'cdn_status' );
 			$cdn    = $this->settings->get( 'cdn' );
 
+			if ( isset( $status->bandwidth ) && $status->bandwidth / 1073741824 > $status->bandwidth_plan ) {
+				echo '<i class="sui-icon-warning-alert sui-error" aria-hidden="true"></i>';
+				return;
+			}
+
 			if ( $cdn && isset( $status->cdn_enabled ) && $status->cdn_enabled ) {
 				if ( WP_Smush::get_instance()->core()->mod->cdn->get_status() ) {
 					echo '<i class="sui-icon-check-tick sui-info" aria-hidden="true"></i>';
 				} else {
-					echo '<i class="sui-icon-check-tick sui-error" aria-hidden="true"></i>';
+					echo '<i class="sui-icon-warning-alert sui-error" aria-hidden="true"></i>';
 				}
 			}
 
 			if ( $cdn && isset( $status->cdn_enabled ) && ! $status->cdn_enabled ) {
 				echo '<i class="sui-icon-check-tick sui-warning" aria-hidden="true"></i>';
 			}
+		} elseif ( 'lazy_load' === $tab && $this->settings->get( 'lazy_load' ) ) {
+			echo '<i class="sui-icon-check-tick sui-info" aria-hidden="true"></i>';
 		}
 	}
 
@@ -405,10 +443,10 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 
 	/**
 	 * Display a description in Settings - Usage Tracking.
-     *
-     * @since 3.1.0
-     *
-     * @param string $name  Setting name.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param string $name  Setting name.
 	 */
 	public function usage_settings( $name ) {
 		// Add only to full size settings.
@@ -417,13 +455,13 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 		}
 		?>
 
-        <span class="sui-description sui-toggle-description">
-            <?php
-            esc_html_e( 'Note: Usage tracking is completely anonymous. We are only tracking what features you are/aren’t using to make our feature decisions more informed.', 'wp-smushit' );
-            ?>
-        </span>
-        <?php
-    }
+		<span class="sui-description sui-toggle-description">
+			<?php
+			esc_html_e( 'Note: Usage tracking is completely anonymous. We are only tracking what features you are/aren’t using to make our feature decisions more informed.', 'wp-smushit' );
+			?>
+		</span>
+		<?php
+	}
 
 	/**
 	 * Show super smush stats in stats section.
@@ -468,7 +506,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 			<li class="super-smush-attachments">
 				<span class="sui-list-label">
 					<?php esc_html_e( 'Super-Smush Savings', 'wp-smushit' ); ?>
-					<?php if ( ! $core->mod->smush->lossy_enabled ) { ?>
+					<?php if ( ! $this->settings->get( 'lossy' ) ) { ?>
 						<p class="wp-smush-stats-label-message">
 							<?php
 							$link_class = 'wp-smush-lossy-enable-link';
@@ -490,7 +528,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 						</p>
 					<?php } ?>
 				</span>
-				<?php if ( $core->mod->smush->lossy_enabled ) { ?>
+				<?php if ( WP_Smush::is_pro() && $this->settings->get( 'lossy' ) ) { ?>
 					<span class="sui-list-detail wp-smush-stats">
 						<span class="smushed-savings">
 							<?php echo esc_html( size_format( $compression_savings, 1 ) ); ?>
@@ -629,7 +667,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				case 's3':
 					esc_html_e( 'Note: For this process to happen automatically you need automatic smushing enabled.', 'wp-smushit' );
 					break;
-				case 'default':
+				default:
 					break;
 			}
 			?>
@@ -778,23 +816,36 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				<span class="sui-description sui-toggle-description">
 					<?php echo esc_html( WP_Smush::get_instance()->core()->settings[ $name ]['desc'] ); ?>
 					<?php if ( 'detection' === $name && $setting_val ) : ?>
-						<div class="sui-notice sui-notice-info smush-notice-sm smush-highlighting-notice">
-							<p>
-								<?php
-								printf(
-									/* translators: %1$s: opening a tag, %2$s: closing a tag */
-									esc_html__(
-										'Incorrect image size highlighting is active. %1$sView the
-									frontend%2$s of your website to see which images aren\'t the correct size
-									for their containers.',
+						<?php if ( $this->settings->get( 'cdn' ) && $this->settings->get( 'auto_resize' ) ) : ?>
+							<div class="sui-notice smush-notice-sm smush-highlighting-notice">
+								<p>
+									<?php
+									esc_html_e(
+										'Note: Images served via the Smush CDN are automatically resized to fit their containers, these will be skipped.',
 										'wp-smushit'
-									),
-									'<a href="' . esc_url( home_url() ) . '" target="_blank">',
-									'</a>'
-								);
-								?>
-							</p>
-						</div>
+									);
+									?>
+								</p>
+							</div>
+						<?php else : ?>
+							<div class="sui-notice sui-notice-info smush-notice-sm smush-highlighting-notice">
+								<p>
+									<?php
+									printf(
+										/* translators: %1$s: opening a tag, %2$s: closing a tag */
+										esc_html__(
+											'Incorrect image size highlighting is active. %1$sView the
+										frontend%2$s of your website to see which images aren\'t the correct size
+										for their containers.',
+											'wp-smushit'
+										),
+										'<a href="' . esc_url( home_url() ) . '" target="_blank">',
+										'</a>'
+									);
+									?>
+								</p>
+							</div>
+						<?php endif; ?>
 					<?php elseif ( 'detection' === $name ) : ?>
 						<div class="sui-notice sui-notice-warning smush-notice-sm smush-highlighting-warning sui-hidden">
 							<p>
@@ -942,12 +993,12 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 		$this->view(
 			'meta-boxes/bulk/meta-box',
 			array(
-				'all_done'         => $core->smushed_count === $core->total_count && empty( $core->resmush_ids ),
+				'all_done'         => $core->smushed_count + $core->skipped_count === $core->total_count && empty( $core->resmush_ids ),
 				'bulk_upgrade_url' => $bulk_upgrade_url,
 				'core'             => $core,
 				'hide_pagespeed'   => get_site_option( WP_SMUSH_PREFIX . 'hide_pagespeed_suggestion' ),
 				'is_pro'           => WP_Smush::is_pro(),
-				'lossy_enabled'    => $core->mod->smush->lossy_enabled,
+				'lossy_enabled'    => WP_Smush::is_pro() && $this->settings->get( 'lossy' ),
 				'pro_upgrade_url'  => $pro_upgrade_url,
 				'upgrade_url'      => $upgrade_url,
 			)
@@ -962,7 +1013,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 	 */
 	public function bulk_settings_metabox() {
 		// Get all grouped settings that can be skipped.
-		$grouped_settings = array_merge( $this->resize_group, $this->full_size_group, $this->integration_group, array( 'webp', 'auto_resize', 'accessible_colors', 'usage' ) );
+		$grouped_settings = array_merge( $this->resize_group, $this->full_size_group, $this->integration_group, array( 'webp', 'auto_resize', 'accessible_colors', 'usage', 'keep_data' ) );
 
 		$this->view(
 			'meta-boxes/bulk-settings/meta-box',
@@ -1016,7 +1067,7 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 		$this->view(
 			'meta-boxes/pro-features/meta-box-header',
 			array(
-				'title'       => __( 'Pre Features', 'wp-smushit' ),
+				'title'       => __( 'Pro Features', 'wp-smushit' ),
 				'upgrade_url' => $upgrade_url,
 			)
 		);
@@ -1092,23 +1143,6 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 	}
 
 	/**
-	 * Integrations meta box footer.
-	 */
-	public function integrations_metabox_footer() {
-		/**
-		 * Filter to enable/disable submit button in integration settings.
-		 *
-		 * @param bool $show_submit Should show submit?
-		 */
-		$this->view(
-			'meta-boxes/integrations/meta-box-footer',
-			array(
-				'show_submit' => apply_filters( 'wp_smush_integration_show_submit', false ),
-			)
-		);
-	}
-
-	/**
 	 * CDN meta box (for free users).
 	 *
 	 * @since 3.0
@@ -1160,10 +1194,10 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				'wp-smushit'
 			),
 			'info'    => __(
-                'Your media is currently being served from the WPMU DEV CDN. Serving images from CDN is only possible
-                on publicly available domains.',
-                'wp-smushit'
-            ),
+				'Your media is currently being served from the WPMU DEV CDN. Serving images from CDN is only possible
+				on publicly available domains.',
+				'wp-smushit'
+			),
 			'error'   => __(
 				'CDN is inactive. You have gone over your 30 day cap so we’ve stopped serving your images.
 					Upgrade your plan now to reactivate this service.',
@@ -1176,11 +1210,15 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 		$cdn = $this->settings->get_setting( WP_SMUSH_PREFIX . 'cdn_status' );
 		if ( isset( $cdn->cdn_enabled ) && $cdn->cdn_enabled && WP_Smush::get_instance()->core()->mod->cdn->get_status() ) {
 			// 1073741824 = 1024 (kb) * 1024 (mb) * 1024 (gb).
-			$cdn_status = $cdn->bandwidth / 1073741824 < $cdn->bandwidth_plan ? 'info' : 'error';
+			$cdn_status = 'info';
 		}
 
 		if ( isset( $cdn->cdn_enabling ) && $cdn->cdn_enabling ) {
 			$cdn_status = 'notice';
+		}
+
+		if ( isset( $cdn->bandwidth ) && $cdn->bandwidth / 1073741824 > $cdn->bandwidth_plan ) {
+			$cdn_status = 'error';
 		}
 
 		$this->view(
@@ -1198,18 +1236,18 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 
 	/**
 	 * CDN meta box header.
-     *
-     * @since 3.0
+	 *
+	 * @since 3.0
 	 */
 	public function cdn_metabox_header() {
-	    $this->view(
-            'meta-boxes/cdn/meta-box-header',
-            array(
-                'title'   => __( 'CDN', 'wp-smushit' ),
-                'tooltip' => __( 'This feature is likely to work without issue, however our CDN is in beta stage and some issues are still present.', 'wp-smushit' ),
-            )
-        );
-    }
+		$this->view(
+			'meta-boxes/cdn/meta-box-header',
+			array(
+				'title'   => __( 'CDN', 'wp-smushit' ),
+				'tooltip' => __( 'This feature is likely to work without issue, however our CDN is in beta stage and some issues are still present.', 'wp-smushit' ),
+			)
+		);
+	}
 
 	/**
 	 * Settings meta box.
@@ -1236,12 +1274,47 @@ class WP_Smush_Dashboard extends WP_Smush_View {
 				'translation_link' => $link,
 				'settings'         => $this->settings->get(),
 				'settings_data'    => WP_Smush::get_instance()->core()->settings,
-				'settings_group'   => array(
-					'accessible_colors',
-                    'usage',
-				),
+				'settings_group'   => array( 'accessible_colors', 'usage' ),
 			)
 		);
+	}
+
+	/**
+	 * Lazy loading meta box header.
+	 *
+	 * @since 3.2.0
+	 */
+	public function lazyload_metabox_header() {
+		$this->view(
+			'meta-boxes/lazyload/meta-box-header',
+			array(
+				'title'   => __( 'Lazyload', 'wp-smushit' ),
+				'tooltip' => __( 'This feature is likely to work without issue, however lazyload is in beta stage and some issues are still present', 'wp-smushit' ),
+			)
+		);
+	}
+
+	/**
+	 * Lazy loading meta box.
+	 *
+	 * @since 3.2.0
+	 */
+	public function lazyload_metabox() {
+		$this->view(
+			'meta-boxes/lazyload/meta-box',
+			array(
+				'settings' => $this->settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' ),
+			)
+		);
+	}
+
+	/**
+	 * Common footer meta box.
+	 *
+	 * @since 3.2.0
+	 */
+	public function common_metabox_footer() {
+		$this->view( 'common/meta-box-footer', array() );
 	}
 
 }

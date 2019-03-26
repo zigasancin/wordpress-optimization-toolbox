@@ -10,6 +10,10 @@
  * @copyright (c) 2016, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Resize
  */
@@ -346,7 +350,7 @@ class WP_Smush_Resize extends WP_Smush_Module {
 	 *
 	 * @return mixed
 	 */
-	function file_name( $filename ) {
+	public function file_name( $filename ) {
 		if ( empty( $filename ) ) {
 			return $filename;
 		}

@@ -8,6 +8,10 @@
  * @var string $upgrade_url  Upgrade URL.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <h3 class="sui-box-title">

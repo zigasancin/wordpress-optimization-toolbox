@@ -10,6 +10,10 @@
  * @copyright (c) 2017, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Helper
  */
@@ -20,7 +24,7 @@ class WP_Smush_Helper {
 	 *
 	 * @since 3.1.0  Moved here as a helper function.
 	 *
-	 * @param $path
+	 * @param string $path  Image path.
 	 *
 	 * @return bool|string
 	 */
@@ -157,7 +161,7 @@ class WP_Smush_Helper {
 	/**
 	 * Add ellipsis in middle of long strings
 	 *
-	 * @param string $string
+	 * @param string $string  String.
 	 *
 	 * @return string Truncated string
 	 */
@@ -174,17 +178,6 @@ class WP_Smush_Helper {
 		$string = $start . '...' . $end;
 
 		return $string;
-	}
-
-	/**
-	 * Bump up the PHP memory limit temporarily
-	 */
-	public static function increase_memory_limit() {
-		$mlimit     = ini_get( 'memory_limit' );
-		$trim_limit = rtrim( $mlimit, 'M' );
-		if ( $trim_limit < '256' ) {
-			@ini_set( 'memory_limit', '256M' );
-		}
 	}
 
 	/**
@@ -208,7 +201,7 @@ class WP_Smush_Helper {
 				$table_name,
 				$column_name
 			)
-		);
+		); // Db call ok; no-cache ok.
 
 		if ( ! empty( $column ) ) {
 			return true;
@@ -230,7 +223,11 @@ class WP_Smush_Helper {
 	 */
 	public static function drop_index( $table, $index ) {
 		global $wpdb;
-		$wpdb->query( "ALTER TABLE `$table` DROP INDEX `$index`" );
+
+		$wpdb->query(
+			$wpdb->prepare( "ALTER TABLE %s DROP INDEX %s", $table, $index )
+		); // Db call ok; no-cache ok.
+
 		return true;
 	}
 
@@ -387,7 +384,7 @@ class WP_Smush_Helper {
 	/**
 	 * Format Numbers to short form 1000 -> 1k
 	 *
-	 * @param $number
+	 * @param int $number  Number.
 	 *
 	 * @return string
 	 */

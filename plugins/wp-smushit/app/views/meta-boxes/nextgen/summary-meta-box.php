@@ -12,6 +12,10 @@
  * @var int        $total_count
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <div class="sui-summary-image-space"></div>

@@ -25,7 +25,6 @@
 		}
 
 		.smush-onboarding-dialog {
-
 			@keyframes fadeInLeft {
 				from {
 					opacity: 0;
@@ -75,8 +74,6 @@
 						animation-name: fadeInRight;
 					}
 				}
-
-
 			}
 
 			// Start overwrite sui styles.
@@ -121,10 +118,7 @@
 
 				.sui-button { margin: 0; }
 
-				.sui-button-gray {
-					display: none;
-					margin-top: 30px;
-				}
+				.sui-button-gray { margin-top: 30px; }
 
 				button[type=submit] { margin-top: 25px; }
 			}
@@ -192,7 +186,6 @@
 				.sui-dialog-content { padding: 0 30px; }
 				.sui-dialog-image { display: block !important; }
 				.smush-onboarding-arrows { display: none; }
-				.sui-button-gray { display: inline-block !important; }
 			}
 			@media screen and (max-width: 320px) {
 				.sui-box { margin: 46px 0 0 !important; }
@@ -432,6 +425,14 @@
 			}
 		}
 
+		// Settings - keep data.
+		.smush-keep-data-form-row {
+			.sui-tabs-menu,
+			.sui-button-ghost {
+				margin-top: 15px;
+			}
+		}
+
 		.sui-summary-smush {
 			background-size: 180px;
 		}
@@ -574,7 +575,7 @@
 		float: right;
 	}
 
-	.sui-summary-smush {
+	.sui-summary.sui-summary-smush {
 		.smushed-items-count {
 			margin: 5px;
 
@@ -587,10 +588,19 @@
 			}
 		}
 
-		.sui-summary-detail {
-			font-size: 15px;
-			font-weight: 500;
-			line-height: 22px;
+		.sui-summary-details {
+			.sui-summary-detail {
+				font-size: 15px;
+				font-weight: 500;
+				line-height: 22px;
+				display: inline-flex;
+				.wp-smush-stats-percent {
+					margin-left: 5px;
+				}
+				.wp-smush-stats-human {
+					margin-right: 5px;
+				}
+			}
 		}
 
 		.wp-smush-stats-label-message {
@@ -613,6 +623,11 @@
 		display: block;
 		overflow: hidden;
 		padding: 10px 0 40px;
+	}
+
+	.sui-box-footer .sui-icon-loader {
+		line-height: 18px;
+		vertical-align: middle;
 	}
 
 	@media screen and (max-width: 600px) {

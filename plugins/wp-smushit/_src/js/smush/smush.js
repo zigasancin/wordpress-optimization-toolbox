@@ -172,7 +172,7 @@ class Smush {
 		this.button.prop( 'disabled', false );
 		// For bulk process, enable other buttons.
 		jQuery( 'button.wp-smush-all' ).removeAttr( 'disabled' );
-		jQuery( 'button.wp-smush-scan, a.wp-smush-lossy-enable, button.wp-smush-resize-enable, input#wp-smush-save-settings' ).removeAttr( 'disabled' );
+		jQuery( 'button.wp-smush-scan, a.wp-smush-lossy-enable, button.wp-smush-resize-enable, button#wp-smush-save-settings' ).removeAttr( 'disabled' );
 	};
 
 	/**
@@ -767,7 +767,7 @@ class Smush {
 					self.increment_errors( self.current_id );
 
 					/** @var {string} res.data.file_name */
-					const error_msg = Smush.prepare_error_row( res.data.error_message, res.data.file_name, res.data.thumbnail, self.current_id );
+					const error_msg = Smush.prepare_error_row( res.data.error_message, res.data.file_name, res.data.thumbnail, self.current_id, self.smush_type );
 
 					self.log.show();
 
@@ -828,7 +828,7 @@ class Smush {
 	};
 
 	/**
-	 * Prepare error row.
+	 * Prepare error row. Will only allow to hide errors for WP media attachments (not nextgen).
 	 *
 	 * @since 1.9.0
 	 *
@@ -836,26 +836,33 @@ class Smush {
 	 * @param {string} fileName   File name.
 	 * @param {string} thumbnail  Thumbnail for image (if available).
 	 * @param {int}    id         Image ID.
+	 * @param {string} type       Smush type: media or netxgen.
 	 *
 	 * @returns {string}
 	 */
-	static prepare_error_row( errorMsg, fileName, thumbnail, id ) {
+	static prepare_error_row( errorMsg, fileName, thumbnail, id, type ) {
 		const thumbDiv = ( 'undefined' === typeof thumbnail ) ? '<i class="sui-icon-photo-picture" aria-hidden="true"></i>' : thumbnail;
 		const fileLink = ( 'undefined' === fileName || 'undefined' === typeof fileName ) ? 'undefined' : fileName;
 
-		return '<div class="smush-bulk-error-row">' +
+		let tableDiv =
+			'<div class="smush-bulk-error-row">' +
 				'<div class="smush-bulk-image-data">' + thumbDiv +
 					'<span class="smush-image-name">' + fileLink + '</span>' +
 					'<span class="smush-image-error">' + errorMsg + '</span>' +
-				'</div>' +
-			/*
+				'</div>';
+
+		if ( 'media' === type ) {
+			tableDiv = tableDiv +
 				'<div class="smush-bulk-image-actions">' +
-					'<button type="button" class="sui-button-icon sui-tooltip sui-tooltip-constrained sui-tooltip-top-left smush-ignore-image" data-tooltip="Ignore this image from bulk smushing" data-id="' + id + '">' +
+					'<button type="button" class="sui-button-icon sui-tooltip sui-tooltip-constrained sui-tooltip-top-left smush-ignore-image" data-tooltip="' + wp_smush_msgs.error_ignore + '" data-id="' + id + '">' +
 						'<i class="sui-icon-eye-hide" aria-hidden="true"></i>' +
 					'</button>' +
-				'</div>' +
-			*/
-			'</div>';
+				'</div>';
+		}
+
+		tableDiv = tableDiv + '</div>';
+
+		return tableDiv;
 	};
 
 	/**

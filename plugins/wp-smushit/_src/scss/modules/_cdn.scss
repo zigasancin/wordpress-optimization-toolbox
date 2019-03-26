@@ -31,13 +31,23 @@
             }
         }
 
+        .wp-smush-stats {
+            display: flex;
+            align-items: center;
+            line-height: 0;
+
+            .sui-tooltip {
+                line-height: 10px;
+                margin-right: 10px;
+            }
+        }
+
         .smush-cdn-stats {
             .sui-circle-score {
                 float: right;
-                margin-top: -4px;
                 margin-left: 10px;
 
-                svg circle:last-child {
+                &:not(.sui-grade-f) svg circle:last-child {
                     stroke: #17A8E3;
                 }
             }

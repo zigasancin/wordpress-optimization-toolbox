@@ -10,6 +10,10 @@
  * @var string $orig_id          Meta box ID.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <div id="smush-box-<?php echo esc_attr( $id ); ?>" class="sui-<?php echo esc_attr( $id ); ?> <?php echo esc_attr( $args['box_class'] ); ?>">

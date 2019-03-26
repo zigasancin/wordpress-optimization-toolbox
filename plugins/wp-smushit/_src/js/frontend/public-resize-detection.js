@@ -60,6 +60,11 @@
 				return true;
 			}
 
+			// Skip images from Smush CDN with auto-resize feature.
+			if ( 'undefined' !== typeof image.dataset.resizeDetection && '0' === image.dataset.resizeDetection ) {
+				return true;
+			}
+
 			// If width attribute is not set, do not continue.
 			return null === image.clientWidth || null === image.clientHeight;
 		},

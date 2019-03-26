@@ -7,6 +7,10 @@
  * @var string $title  Title.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <h3 class="sui-box-title">

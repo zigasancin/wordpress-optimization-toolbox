@@ -6,6 +6,10 @@
  * @package WP_Smush
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 $tooltip = __( 'Join WPMU DEV to host your images on our blazing fast global CDN', 'wp-smushit' );
 ?>
 

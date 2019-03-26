@@ -6,7 +6,12 @@
  * @package WP_Smush
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
+
 <div class="sui-dialog sui-dialog-sm checking-files-dialog" aria-hidden="true" tabindex="-1" id="checking-files-dialog">
 	<div class="sui-dialog-overlay sui-fade-in"></div>
 	<div class="sui-dialog-content sui-bounce-in" aria-labelledby="dialogTitle" aria-describedby="dialogDescription" role="dialog">
@@ -30,10 +35,12 @@
 				</p>
 			</div>
 
+			<?php if ( ! $this->hide_wpmudev_branding() ) : ?>
 			<img class="sui-image sui-image-center"
-			     src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding.png' ); ?>"
-			     srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding@2x.png' ); ?> 2x"
-			     alt="<?php esc_attr_e( 'WP Smush', 'wp-smushit' ); ?>">
+				src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding.png' ); ?>"
+				srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding@2x.png' ); ?> 2x"
+				alt="<?php esc_attr_e( 'WP Smush', 'wp-smushit' ); ?>">
+			<?php endif; ?>
 		</div>
 	</div>
 </div>

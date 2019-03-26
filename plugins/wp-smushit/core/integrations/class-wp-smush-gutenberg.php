@@ -11,6 +11,10 @@
  * @copyright (c) 2018, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Gutenberg for Gutenberg integration.
  *
@@ -94,11 +98,10 @@ class WP_Smush_Gutenberg extends WP_Smush_Integration {
 		if ( $this->module !== $setting_key ) {
 			return;
 		}
-
 		?>
-        <div class="sui-notice smush-notice-sm">
-            <p><?php esc_html_e( 'To use this feature you need to install and activate the Gutenberg plugin.', 'wp-smushit' ); ?></p>
-        </div>
+		<div class="sui-notice smush-notice-sm">
+			<p><?php esc_html_e( 'To use this feature you need to install and activate the Gutenberg plugin.', 'wp-smushit' ); ?></p>
+		</div>
 		<?php
 	}
 

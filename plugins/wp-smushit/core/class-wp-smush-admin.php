@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Admin
  */
@@ -58,6 +62,8 @@ class WP_Smush_Admin {
 
 		// Smush image filter from Media Library.
 		add_filter( 'ajax_query_attachments_args', array( $this, 'filter_media_query' ) );
+		// Smush image filter from Media Library (list view).
+		add_action( 'restrict_manage_posts', array( $this, 'media_add_author_dropdown' ) );
 	}
 
 	/**
@@ -137,7 +143,7 @@ class WP_Smush_Admin {
 		}
 
 		// Load on all Smush page only.
-		if ( in_array( $current_screen->id, WP_Smush_Core::$plugin_pages, true ) ) {
+		if ( isset( $current_screen->id ) && in_array( $current_screen->id, WP_Smush_Core::$plugin_pages, true ) ) {
 			// Smush admin (smush-admin) includes the Shared UI.
 			wp_enqueue_style( 'smush-admin' );
 			wp_enqueue_script( 'smush-wpmudev-sui' );
@@ -155,8 +161,8 @@ class WP_Smush_Admin {
 
 	/**
 	 * Load media assets.
-     *
-     * Localization also used in Gutenberg integration.
+	 *
+	 * Localization also used in Gutenberg integration.
 	 */
 	private function extend_media_modal() {
 		if ( wp_script_is( 'smush-backbone-extension', 'enqueued' ) ) {
@@ -186,12 +192,12 @@ class WP_Smush_Admin {
 					'stats_label' => esc_html__( 'Smush', 'wp-smushit' ),
 					'filter_all'  => esc_html__( 'Smush: All images', 'wp-smushit' ),
 					'filter_excl' => esc_html__( 'Smush: Bulk ignored', 'wp-smushit' ),
-                    'gb'          => array(
-                        'stats'        => esc_html__( 'Smush Stats', 'wp-smushit' ),
-                        'select_image' => esc_html__( 'Select an image to view Smush stats.', 'wp-smushit' ),
-                        'size'         => esc_html__( 'Image size', 'wp-smushit' ),
-                        'savings'      => esc_html__( 'Savings', 'wp-smushit' ),
-                    )
+					'gb'          => array(
+						'stats'        => esc_html__( 'Smush Stats', 'wp-smushit' ),
+						'select_image' => esc_html__( 'Select an image to view Smush stats.', 'wp-smushit' ),
+						'size'         => esc_html__( 'Image size', 'wp-smushit' ),
+						'savings'      => esc_html__( 'Savings', 'wp-smushit' ),
+					),
 				),
 				'nonce'   => array(
 					'get_smush_status' => wp_create_nonce( 'get-smush-status' ),
@@ -227,7 +233,7 @@ class WP_Smush_Admin {
 			$links = array( $settings );
 		}
 
-        // Upgrade link.
+		// Upgrade link.
 		if ( ! WP_Smush::is_pro() ) {
 			$upgrade_url = add_query_arg(
 				array(
@@ -237,6 +243,7 @@ class WP_Smush_Admin {
 				),
 				esc_url( 'https://premium.wpmudev.org/project/wp-smush-pro/' )
 			);
+
 			$links['upgrade'] = '<a href="' . esc_url( $upgrade_url ) . '" aria-label="' . esc_attr( __( 'Upgrade to Smush Pro', 'wp-smushit' ) ) . '" target="_blank" style="color: #1ABC9C;">' . esc_html__( 'Upgrade', 'wp-smushit' ) . '</a>';
 		}
 
@@ -268,7 +275,7 @@ class WP_Smush_Admin {
 	}
 
 	/**
-	 * Add Smush Policy to "Privace Policy" page during creation.
+	 * Add Smush Policy to "Privacy Policy" page during creation.
 	 *
 	 * @since 2.3.0
 	 */
@@ -405,7 +412,22 @@ class WP_Smush_Admin {
 
 		// Filter only media screen.
 		if ( ! is_admin() || ( ! empty( $current_screen ) && 'upload' !== $current_screen->base ) ) {
-			return;
+			return $query;
+		}
+
+		if ( isset( $_REQUEST['smush-filter'] ) && 'ignored' === $_REQUEST['smush-filter'] ) {
+			$query->set(
+				'meta_query',
+				array(
+					array(
+						'key'     => WP_SMUSH_PREFIX . 'ignore-bulk',
+						'value'   => 'true',
+						'compare' => 'EXISTS',
+					),
+				)
+			);
+
+			return $query;
 		}
 
 		$orderby = $query->get( 'orderby' );
@@ -454,6 +476,29 @@ class WP_Smush_Admin {
 		}
 
 		return $query;
+	}
+
+	/**
+	 * Adds a search dropdown in Media Library list view to filter out images that have been
+	 * ignored with bulk Smush.
+	 *
+	 * @since 3.2.0
+	 */
+	public function media_add_author_dropdown() {
+		$scr = get_current_screen();
+
+		if ( 'upload' !== $scr->base ) {
+			return;
+		}
+
+		$ignored = filter_input( INPUT_GET, 'smush-filter', FILTER_SANITIZE_STRING );
+
+		?>
+		<select class="smush-filters" name="smush-filter" id="smush_filter">
+			<option value="" <?php selected( $ignored, '' ); ?>><?php esc_html_e( 'Smush: All images', 'wp-smushit' ); ?></option>
+			<option value="ignored" <?php selected( $ignored, 'ignored' ); ?>><?php esc_html_e( 'Smush: Bulk ignored', 'wp-smushit' ); ?></option>
+		</select>
+		<?php
 	}
 
 	/**

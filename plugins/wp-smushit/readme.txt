@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 3.1.1
+Version: 3.2.0.1
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
-Tags: image, resize, optimize, optimise, compress, performance, optimisation, optimise JPG, WebP, photography, optimizer, Smush WordPress Compression, Smush.it
+Tags: image, resize, optimize, optimise, compress, performance, optimisation, lazy load, WebP, photography, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
-Tested up to: 5.0.3
-Stable tag: 3.1.1
+Tested up to: 5.1.1
+Stable tag: 3.2.0.1
 Requires PHP: 5.2.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -23,6 +23,7 @@ Compress and optimize (or optimise) image files, improve performance and boost y
 Smush has been benchmarked and tested number one for speed and quality and is the [award-winning](https://torquemag.io/2018/04/smush-image-compression-wins-2018-plugin-madness/), back-to-back proven crowd favorite image optimization plugin for WordPress.
 
 - Lossless Compression – Strip unused data without affecting image quality
+- Lazy Loader -  Defer offscreen images with the flip of a switch
 - Bulk Smush – Optimize up to 50 images with one click
 - Image Resizing – Set a max width and height and large images will scale down as they are being compressed
 - Incorrect Size Image Detection – Quickly locate images that are slowing down your site
@@ -63,6 +64,9 @@ No matter what plugins you use to better manage your WordPress media library, Sm
 
 ### Incorrect Size Image Detection
 Smush now includes a wrong size image finder. Activate and your images will be highlighted with smart tips for scaling your images. Quickly locate the images that are keeping you from getting that perfect 100 on your Google PageSpeed test.
+
+### Defer Offscreen Images
+Smush has lazy load built-in. If your page has a bunch of images below the fold, lazy loading will drastically speed up your page by serving only the images being viewed and delaying others further down the page.
 
 ★★★★★
 > “I had no idea that my page load time was being dragged down by the images. The plugin nearly halved the time it took.” - [karlcw](http://profiles.wordpress.org/karlcw)
@@ -155,6 +159,29 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 3. Smush will find and optimize images for you.
 
 == Changelog ==
+
+= 3.2.0.1 =
+
+* Fix: CDN upgrade link not showing when bandwidth is over limit
+
+= 3.2.0 =
+
+* New: Image lazy loading
+* New: CDN support for mapped domains in multisite
+* New: Auto update free version of the plugin to Pro if Dashboard plugin is installed and activated
+* New: Options to preserve settings and data on plugin uninstall
+* New: Option to reset settings to defaults
+* New: Ignore images with errors during bulk Smush
+* Enhance: Performance
+* Enhance: Clean up outdated and deprecated code
+* Enhance: Onboarding experience
+* Enhance: Skip auto resized images on CDN from highlighting in image resize detection tab
+* Enhance: Directory Smush where wp-content is placed in a custom location
+* Fix: [NextGEN Gallery] bug with stats count
+* Fix: Translation strings and typos
+* Fix: wp_smush_skip_folder filter
+* Fix: Recalculate stats when clicking 'Re-check status' button
+* Fix: Illegal string offset 'file' warning in PHP
 
 = 3.1.1 =
 

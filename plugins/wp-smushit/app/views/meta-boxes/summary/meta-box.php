@@ -15,6 +15,10 @@
  * @var int        $total_optimized
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <div class="sui-summary-image-space" aria-hidden="true"></div>

@@ -7,6 +7,10 @@
  * @var string $upsell_url  Upsell URL.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <ul class="smush-pro-features">

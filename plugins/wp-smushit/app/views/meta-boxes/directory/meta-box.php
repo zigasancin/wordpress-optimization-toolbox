@@ -10,6 +10,10 @@
  * @var string $upgrade_url  Upgrade URL.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <?php wp_nonce_field( 'smush_get_dir_list', 'list_nonce' ); ?>

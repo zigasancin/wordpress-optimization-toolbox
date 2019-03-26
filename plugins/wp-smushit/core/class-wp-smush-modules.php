@@ -8,6 +8,10 @@
  * @package WP_Smush
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Modules
  */
@@ -70,6 +74,15 @@ class WP_Smush_Modules {
 	public $settings;
 
 	/**
+	 * Image lazy load module.
+	 *
+	 * @since 3.2
+	 *
+	 * @var WP_Smush_Lazy_Load
+	 */
+	private $lazy;
+
+	/**
 	 * WP_Smush_Modules constructor.
 	 */
 	public function __construct() {
@@ -81,73 +94,7 @@ class WP_Smush_Modules {
 		$this->resize   = new WP_Smush_Resize();
 		$this->cdn      = new WP_Smush_CDN();
 		$this->settings = WP_Smush_Settings::get_instance();
-
-		$this->init_compat();
-	}
-
-	/**
-	 * Hold all globals for compatibility.
-	 *
-	 * @since 3.0
-	 */
-	private function init_compat() {
-		global $WpSmush, $wpsmushit_admin, $wpsmush_backup, $wpsmush_db, $wpsmush_dir, $wpsmush_pngjpg, $wpsmush_resize, $wpsmush_settings;
-
-		/**
-		 * Former WpSmush class.
-		 *
-		 * @deprecated
-		 */
-		$WpSmush = $this->smush;
-
-		/**
-		 * Former WpSmushitAdmin class.
-		 *
-		 * @deprecated
-		 */
-		$wpsmushit_admin = $WpSmush;
-
-		/**
-		 * Former WpSmushBackup class.
-		 *
-		 * @deprecated
-		 */
-		$wpsmush_backup = $this->backup;
-
-		/**
-		 * Former WpSmushDB class.
-		 *
-		 * @deprecated
-		 */
-		$wpsmush_db = $this->db;
-
-		/**
-		 * Former WpSmushDir class.
-		 *
-		 * @deprecated
-		 */
-		$wpsmush_dir = $this->dir;
-
-		/**
-		 * Former WpSmushPngtoJpg class.
-		 *
-		 * @deprecated
-		 */
-		$wpsmush_pngjpg = $this->png2jpg;
-
-		/**
-		 * Former WpSmushResize class.
-		 *
-		 * @deprecated
-		 */
-		$wpsmush_resize = $this->resize;
-
-		/**
-		 * Former WpSmushSettings class.
-		 *
-		 * @deprecated
-		 */
-		$wpsmush_settings = $this->settings;
+		$this->lazy     = new WP_Smush_Lazy_Load();
 	}
 
 }

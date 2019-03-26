@@ -12,6 +12,10 @@
  * @var array $settings_data        Settings labels and descriptions.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <?php if ( $cdn_enabled && ( ( ! is_network_admin() && ! $opt_networkwide_val ) || ( is_network_admin() && $opt_networkwide_val ) ) ) : ?>

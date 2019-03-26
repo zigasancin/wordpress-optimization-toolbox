@@ -11,6 +11,10 @@
  * @copyright (c) 2018, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Singleton class WP_Smush_Common.
  *
@@ -131,13 +135,11 @@ class WP_Smush_Common {
 	 * @param int    $id           Attachment ID.
 	 * @param array  $smush_stats  Smush stats.
 	 * @param string $image_size   Image size.
-	 *
-	 * @return bool
 	 */
 	private function update_smush_stats_single( $id, $smush_stats, $image_size = '' ) {
 		// Return, if we don't have image id or stats for it.
 		if ( empty( $id ) || empty( $smush_stats ) || empty( $image_size ) ) {
-			return false;
+			return;
 		}
 
 		$smush = WP_Smush::get_instance()->core()->mod->smush;

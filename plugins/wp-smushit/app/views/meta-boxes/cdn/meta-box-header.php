@@ -8,6 +8,10 @@
  * @var string $tooltip  Tooltip text.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <h3 class="sui-box-title">

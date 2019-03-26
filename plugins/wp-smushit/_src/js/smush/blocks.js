@@ -54,7 +54,7 @@ export function smushStats( id, stats ) {
 				</tr>
 				</thead>
 				<tbody>
-				{ Object.keys( stats.sizes ).map( ( item, i ) => (
+				{ Object.keys( stats.sizes ).filter( item => 0 < stats.sizes[item].percent ).map( ( item, i ) => (
 					<tr key={ i }>
 						<td>{ item.toUpperCase() }</td>
 						<td>{ humanFileSize( stats.sizes[item].bytes ) } ( { stats.sizes[item].percent }% )</td>

@@ -16,7 +16,9 @@
 	}
 
 	.wp-smush-send {
-		display: block;
+		display: inline-block;
+		float: left;
+		margin-right: 5px;
 	}
 
 	.spinner {
@@ -54,10 +56,6 @@
 
 /** Settings Page **/
 
-.wp-smush-submit-wrap {
-	padding: 4px;
-}
-
 .smush-submit-note {
 	color: #9B9B9B;
 	float: left;
@@ -65,15 +63,7 @@
 	font-size: 13px;
 	line-height: 22px;
 	margin-top: 4px;
-}
-
-input#wp-smush-save-settings {
-	float: right;
-	margin: 0;
-}
-
-.wp-smush-welcome #wp-smush-save-settings {
-	float: right;
+	margin-right: 4px;
 }
 
 .currently-smushing .smush-status {

@@ -6,6 +6,10 @@
  * @package WP_Smush
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Reduce image file sizes, improve performance and boost your SEO using the free WPMU DEV Smush API.
  */
@@ -159,7 +163,12 @@ class WP_Smush_Cli_Command extends WP_CLI_Command {
 		$errors   = array();
 		$progress = \WP_CLI\Utils\make_progress_bar( $msg, count( $images ) + 1 );
 
-		$unsmushed_attachments = WP_Smush::get_instance()->core()->mod->db->get_unsmushed_attachments();
+		$smush = WP_Smush::get_instance()->core()->mod;
+
+		// We need to initialize the database module (maybe all other modules as well?).
+		$smush->settings->init();
+
+		$unsmushed_attachments = $smush->db->get_unsmushed_attachments();
 
 		while ( $images ) {
 			$progress->tick();
@@ -174,10 +183,7 @@ class WP_Smush_Cli_Command extends WP_CLI_Command {
 			}
 
 			$success = true;
-
-			// We need to initialize the database module (maybe all other modules as well?).
-			WP_Smush::get_instance()->core()->mod->backup->initialize();
-			WP_Smush::get_instance()->core()->mod->smush->smush_single( $attachment_id, true );
+			$smush->smush->smush_single( $attachment_id, true );
 		}
 
 		$progress->tick();

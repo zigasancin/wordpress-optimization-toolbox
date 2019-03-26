@@ -15,6 +15,10 @@
  * @var string        $upgrade_url       Upgrade to PRO link.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 // Show re-smush notice.
 WP_Smush::get_instance()->admin()->bulk_resmush_content();
 

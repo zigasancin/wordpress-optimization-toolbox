@@ -12,6 +12,10 @@
  * @var string $upsell_url        Upsell URL.
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 ?>
 
 <form id="wp-smush-settings-form" method="post">

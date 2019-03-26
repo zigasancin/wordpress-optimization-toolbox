@@ -11,6 +11,10 @@
  * @copyright (c) 2016, Incsub (http://incsub.com)
  */
 
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 /**
  * Class WP_Smush_Nextgen_Admin
  */
@@ -149,7 +153,7 @@ class WP_Smush_Nextgen_Admin extends WP_Smush_Nextgen {
 			$image_type = $this->get_file_type( $file_path );
 
 			// If image type not supported.
-			if ( ! $image_type || ! in_array( $image_type, WP_Smush_Core::$mime_types ) ) {
+			if ( ! $image_type || ! in_array( $image_type, WP_Smush_Core::$mime_types, true ) ) {
 				return;
 			}
 
@@ -389,11 +393,15 @@ class WP_Smush_Nextgen_Admin extends WP_Smush_Nextgen {
 			return false;
 		}
 
-		if ( ! empty( $nextgen_stats['size_before'] ) && ! empty( $nextgen_stats['size_after'] ) && $nextgen_stats['size_before'] > 0 && $nextgen_stats['size_after'] > 0 && $nextgen_stats['size_before'] > $smush_stats['stats']['size_before'] ) {
+		if ( ! empty( $nextgen_stats['size_before'] ) && ! empty( $nextgen_stats['size_after'] ) && $nextgen_stats['size_before'] > 0 && $nextgen_stats['size_after'] > 0 && $nextgen_stats['size_before'] >= $smush_stats['stats']['size_before'] ) {
 			$nextgen_stats['size_before'] = $nextgen_stats['size_before'] - $smush_stats['stats']['size_before'];
 			$nextgen_stats['size_after']  = $nextgen_stats['size_after'] - $smush_stats['stats']['size_after'];
 			$nextgen_stats['bytes']       = $nextgen_stats['size_before'] - $nextgen_stats['size_after'];
-			$nextgen_stats['percent']     = ( $nextgen_stats['bytes'] / $nextgen_stats['size_before'] ) * 100;
+			if ( 0 === $nextgen_stats['bytes'] && 0 === $nextgen_stats['size_before'] ) {
+				$nextgen_stats['percent'] = 0;
+			} else {
+				$nextgen_stats['percent']     = ( $nextgen_stats['bytes'] / $nextgen_stats['size_before'] ) * 100;
+			}
 			$nextgen_stats['human']       = size_format( $nextgen_stats['bytes'], 1 );
 		}
 

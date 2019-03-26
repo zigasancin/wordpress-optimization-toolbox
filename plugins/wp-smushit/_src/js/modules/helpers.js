@@ -103,6 +103,28 @@
 					return sParameterName[1];
 				}
 			}
+		},
+
+		/**
+		 * Reset settings.
+		 *
+		 * @since 3.2.0
+		 */
+		resetSettings: () => {
+			const xhr = new XMLHttpRequest();
+			xhr.open('POST', ajaxurl+'?action=reset_settings', true);
+			xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+			xhr.onload = () => {
+				if (200 === xhr.status ) {
+					const res = JSON.parse(xhr.response);
+					if ( 'undefined' !== typeof res.success && res.success ) {
+						window.location.href = wp_smush_msgs.smush_url;
+					}
+				} else {
+					console.log('Request failed.  Returned status of ' + xhr.status);
+				}
+			};
+			xhr.send('_ajax_nonce='+smush_vars.nonce.get_smush_status);
 		}
 
 	};

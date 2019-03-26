@@ -9,6 +9,11 @@
  *
  * @copyright (c) 2016, Incsub (http://incsub.com)
  */
+
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
 require_once 'abstract-wp-async-task-smush.php';
 
 /**
