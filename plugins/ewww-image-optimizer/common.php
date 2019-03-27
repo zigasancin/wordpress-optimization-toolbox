@@ -10,7 +10,7 @@
  * @package EWWW_Image_Optimizer
  */
 
-// TODO: might be able to use the Custom Bulk Actions in 4.7 to support the bulk optimize drop-down menu.
+// TODO: might be able to use the Custom Bulk Actions in WP 4.7 to support the bulk optimize drop-down menu.
 // TODO: need to make the scheduler so it can resume without having to re-run the queue population, and then we can probably also flush the queue when scheduled opt starts, but later it would be nice to implement the bulk_loop as the aux_loop so that it could handle media properly.
 // TODO: Add a custom async function for parallel mode to store image as pending and use the row ID instead of relative path.
 // TODO: write some tests for AGR.
@@ -18,12 +18,11 @@
 // TODO: use this: https://codex.wordpress.org/AJAX_in_Plugins#The_post-load_JavaScript_Event .
 // TODO: can some of the bulk "fallbacks" be implemented for async processing?
 // TODO: check to see if we can use PHP and WP core is_iterable and is_countable functions.
-// TODO: ExactDN can use data-id attribute in 5.0 instead of trying to grok wp-image-1234 in the class.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '470.0' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '471.0' );
 
 // Initialize a couple globals.
 $ewww_debug = '';
@@ -6446,6 +6445,14 @@ function ewww_image_optimizer_custom_column( $column_name, $id, $meta = null, $r
 		}
 		$output  .= "<div id='ewww-media-status-$id'>";
 		$ewww_cdn = false;
+		if ( is_array( $meta ) && ! empty( $meta['file'] ) && false !== strpos( $meta['file'], 'https://images-na.ssl-images-amazon.com' ) ) {
+			$output .= esc_html__( 'Amazon-hosted image', 'ewww-image-optimizer' ) . '</div>';
+			if ( $return_output ) {
+				return $output;
+			}
+			echo $output;
+			return;
+		}
 		if ( is_array( $meta ) && ! empty( $meta['cloudinary'] ) ) {
 			$output .= esc_html__( 'Cloudinary image', 'ewww-image-optimizer' ) . '</div>';
 			if ( $return_output ) {
