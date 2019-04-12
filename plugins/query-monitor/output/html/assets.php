@@ -32,9 +32,7 @@ abstract class QM_Output_Html_Assets extends QM_Output_Html {
 		);
 
 		$type_label = $this->get_type_labels();
-		$type       = $this->collector->get_dependency_type();
-
-		$this->type = $type;
+		$this->type = $this->collector->get_dependency_type();
 
 		$hosts = array(
 			__( 'Other', 'query-monitor' ),
@@ -52,14 +50,14 @@ abstract class QM_Output_Html_Assets extends QM_Output_Html {
 				'local' => $data['host'],
 			),
 		);
-		echo $this->build_filter( $type . '-host', $hosts, __( 'Host', 'query-monitor' ), $args ); // WPCS: XSS ok.
+		echo $this->build_filter( $this->type . '-host', $hosts, __( 'Host', 'query-monitor' ), $args ); // WPCS: XSS ok.
 		echo '</th>';
 		echo '<th scope="col">' . esc_html__( 'Source', 'query-monitor' ) . '</th>';
 		echo '<th scope="col" class="qm-filterable-column">';
-		echo $this->build_filter( $type . '-dependencies', $data['dependencies'], __( 'Dependencies', 'query-monitor' ) ); // WPCS: XSS ok.
+		echo $this->build_filter( $this->type . '-dependencies', $data['dependencies'], __( 'Dependencies', 'query-monitor' ) ); // WPCS: XSS ok.
 		echo '</th>';
 		echo '<th scope="col" class="qm-filterable-column">';
-		echo $this->build_filter( $type . '-dependents', $data['dependents'], __( 'Dependents', 'query-monitor' ) ); // WPCS: XSS ok.
+		echo $this->build_filter( $this->type . '-dependents', $data['dependents'], __( 'Dependents', 'query-monitor' ) ); // WPCS: XSS ok.
 		echo '</th>';
 		echo '<th scope="col">' . esc_html__( 'Version', 'query-monitor' ) . '</th>';
 		echo '</tr>';
@@ -67,14 +65,11 @@ abstract class QM_Output_Html_Assets extends QM_Output_Html {
 
 		echo '<tbody>';
 
-		$total = 0;
-
 		foreach ( $position_labels as $position => $label ) {
 			if ( ! empty( $data['assets'][ $position ] ) ) {
 				foreach ( $data['assets'][ $position ] as $handle => $asset ) {
 					$this->dependency_row( $handle, $asset, $label );
 				}
-				$total += count( $data['assets'][ $position ] );
 			}
 		}
 
@@ -87,7 +82,7 @@ abstract class QM_Output_Html_Assets extends QM_Output_Html {
 			'<td colspan="7">%1$s</td>',
 			sprintf(
 				esc_html( $type_label['total'] ),
-				'<span class="qm-items-number">' . esc_html( number_format_i18n( $total ) ) . '</span>'
+				'<span class="qm-items-number">' . esc_html( number_format_i18n( $data['counts']['total'] ) ) . '</span>'
 			)
 		);
 		echo '</tr>';
@@ -179,8 +174,8 @@ abstract class QM_Output_Html_Assets extends QM_Output_Html {
 			return $menu;
 		}
 
-		$type  = $this->collector->get_dependency_type();
-		$label = $this->collector->name();
+		$type_label = $this->get_type_labels();
+		$label = sprintf( $type_label['count'], number_format_i18n( $data['counts']['total'] ) );
 
 		$args = array(
 			'title' => esc_html( $label ),

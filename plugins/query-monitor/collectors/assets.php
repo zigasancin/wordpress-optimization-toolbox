@@ -53,6 +53,14 @@ abstract class QM_Collector_Assets extends QM_Collector {
 			'footer',
 		);
 
+		$this->data['counts'] = array(
+			'missing' => 0,
+			'broken'  => 0,
+			'header'  => 0,
+			'footer'  => 0,
+			'total'   => 0,
+		);
+
 		$type = $this->get_dependency_type();
 
 		foreach ( array( 'header', 'footer' ) as $position ) {
@@ -147,6 +155,9 @@ abstract class QM_Collector_Assets extends QM_Collector {
 					'dependents'   => $dependents,
 					'dependencies' => $dependencies,
 				);
+
+				$this->data['counts'][ $position ]++;
+				$this->data['counts']['total']++;
 			}
 		}
 
