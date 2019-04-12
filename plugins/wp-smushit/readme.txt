@@ -94,7 +94,7 @@ The faster your site loads, the more Google, Bing, Yahoo and other search engine
 
 Smush can take care of all your image compression needs, for free!
 
-However, if you’d like Super Smush lossy compression, fast CDN image delivery, WebP conversion, automatic resizing, the ability to optimize images up to 32MB, bulk smush optimization for all your images in just one-click, auto-convert PNG to JPEG, the ability to Smush and make a copy of your full-sized images (to restore them at any point) you can always take the next step with [WP Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme) along with her whole team of WordPress optimization hero friends (security, SEO, performance, support and maintenance automation) for unlimited sites – perfect for agencies and freelancers offering site maintenance services.
+However, if you’d like Super Smush lossy compression, fast CDN image delivery, WebP conversion, automatic resizing, the ability to optimize images up to 32MB, bulk smush optimization for all your images in just one-click, auto-convert PNG to JPEG, the ability to Smush and make a copy of your full-sized images (to restore them at any point) you can always take the next step with [WP Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wp_smush_pro#trial) along with her whole team of WordPress optimization hero friends (security, SEO, performance, support and maintenance automation) for unlimited sites – perfect for agencies and freelancers offering site maintenance services.
 
 ### Privacy
 
@@ -115,7 +115,7 @@ This means your images were not properly scaled for where they are being display
 
 = Does Smush delete or replace my original full-size images? =
 
-Nope. WordPress crops and resizes every image you upload for embedding on your site. By default, Smush only compresses these cropped and resized images, not your original full-size images. To compress your original full-sized images use [Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme).
+Nope. WordPress crops and resizes every image you upload for embedding on your site. By default, Smush only compresses these cropped and resized images, not your original full-size images. To compress your original full-sized images use [Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=smush_pro#trial).
 
 = What type of file should I use for my images (GIF, PNG, JPG)? =
 
@@ -135,7 +135,7 @@ Yes! EXIF data stores camera settings, focal length, date, time and location inf
 
 = I just ran bulk smush and some of my images didn't get compressed? =
 
-First, check to see if you're receiving any server errors. If your images seem to be processing correctly check the file size of the images being skipped. Images over 1mb will be skipped. To compress images up to 32mb get [Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme).
+First, check to see if you're receiving any server errors. If your images seem to be processing correctly check the file size of the images being skipped. Images over 1mb will be skipped. To compress images up to 32mb get [Smush Pro](https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wp_smush_pro#trial).
 
 = I activated Smush and I don’t see any difference in image quality. How am I supposed to know if Smush is working? =
 
@@ -720,10 +720,10 @@ Fix: Compatibility issues with latest WP Offload Media (WP Offload S3) update
 
 == About Us ==
 WPMU DEV is a premium supplier of quality WordPress plugins, services and support. Learn more here:
-[https://premium.wpmudev.org/](https://premium.wpmudev.org/?utm_source=wordpress.org&utm_medium=readme)
+[https://premium.wpmudev.org/](https://premium.wpmudev.org/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wpmu_dev_link)
 
 Don't forget to stay up to date on everything WordPress from the Internet's number one resource:
-[WPMU DEV Blog](https://premium.wpmudev.org/blog/?utm_source=wordpress.org&utm_medium=readme)
+[WPMU DEV Blog](https://premium.wpmudev.org/blog/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wpmu_dev_blog_link)
 
 Hey, one more thing... we hope you [enjoy our free offerings](http://profiles.wordpress.org/WPMUDEV/) as much as we've loved making them for you!
 
