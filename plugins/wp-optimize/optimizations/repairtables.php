@@ -35,17 +35,20 @@ class WP_Optimization_repairtables extends WP_Optimization {
 
 			if ($result) {
 				$wp_optimize = WP_Optimize();
+
 				$tablestatus = $wp_optimize->get_db_info()->get_table_status($table->Name, true);
 
 				$is_optimizable = $wp_optimize->get_db_info()->is_table_optimizable($table->Name);
+				$is_type_supported = $wp_optimize->get_db_info()->is_table_type_optimize_supported($table->Name);
 
 				$tableinfo = array(
 					'rows' => number_format_i18n($tablestatus->Rows),
 					'data_size' => $wp_optimize->format_size($tablestatus->Data_length),
 					'index_size' => $wp_optimize->format_size($tablestatus->Index_length),
 					'overhead' => $is_optimizable ? $wp_optimize->format_size($tablestatus->Data_free) : '-',
-					'type' => $table->Engine,
+					'type' => $tablestatus->Engine,
 					'is_optimizable' => $is_optimizable,
+					'is_type_supported' => $is_type_supported,
 				);
 
 				$this->register_meta('tableinfo', $tableinfo);

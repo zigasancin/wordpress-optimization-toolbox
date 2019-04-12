@@ -94,16 +94,11 @@ class WP_Optimize_Database_Information {
 	 * @return bool|mixed
 	 */
 	public function get_table_status($table_name, $update = false) {
-		global $wpdb;
 
-		if (false == $update) {
-			$tables_info = $this->get_show_table_status();
+		$tables_info = $this->get_show_table_status($update);
 
-			foreach ($tables_info as $table_info) {
-				if ($table_name == $table_info->Name) return $table_info;
-			}
-		} else {
-			return $wpdb->get_row($wpdb->prepare('SHOW TABLE STATUS LIKE %s;', $table_name));
+		foreach ($tables_info as $table_info) {
+			if ($table_name == $table_info->Name) return $table_info;
 		}
 
 		return false;
@@ -112,13 +107,15 @@ class WP_Optimize_Database_Information {
 	/**
 	 * Returns result for query SHOW TABLE STATUS.
 	 *
+	 * @param bool $update - refresh stored values.
+	 *
 	 * @return array
 	 */
-	public function get_show_table_status() {
+	public function get_show_table_status($update = false) {
 		global $wpdb;
 		static $tables_info = array();
 
-		if (empty($tables_info) || !is_array($tables_info)) {
+		if ($update || empty($tables_info) || !is_array($tables_info)) {
 			$tables_info = $wpdb->get_results('SHOW TABLE STATUS');
 		}
 

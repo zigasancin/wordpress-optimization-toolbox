@@ -1161,17 +1161,6 @@ var WP_Optimize = function (send_command) {
 	}
 
 	/**
-	 * Send check_overdue_crons command and output warning if need.
-	 */
-	setTimeout(function() {
-		send_command('check_overdue_crons', null, function (resp) {
-			if (resp && resp.hasOwnProperty('m')) {
-				$('#wpo_settings_warnings').append(resp.m);
-			}
-		});
-	}, 11000);
-
-	/**
 	 * Check if settings file selected for import.
 	 */
 	$('#wpo_import_settings_btn').on('click', function(e) {
@@ -1357,8 +1346,8 @@ var WP_Optimize = function (send_command) {
 					btn_wrap.fadeOut('fast', function() {
 						btn_wrap.closest('.wpo_button_wrap').remove();
 
-						// if table is optimizable then show OPTIMIZE button.
-						if (tableinfo.is_optimizable) {
+						// if table type is supported for optimization then show OPTIMIZE button.
+						if (tableinfo.is_type_supported) {
 							$('.wpo_button_wrap', parent_td).removeClass('wpo_hidden');
 						}
 					});

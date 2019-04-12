@@ -42,6 +42,8 @@ abstract class Updraft_Smush_Task extends Updraft_Task_1_0 {
 	 * @return bool - true if complete, false otherwise
 	 */
 	public function run() {
+
+		$this->set_status('active');
 		
 		do_action('ud_task_started', $this);
 
@@ -198,6 +200,7 @@ abstract class Updraft_Smush_Task extends Updraft_Task_1_0 {
 		update_post_meta($attachment_id, 'smush-stats', $stats);
 
 		$this->log("Successfully optimized the image - {$file_path}." . $info);
+		$this->set_status('complete');
 
 		return parent::complete();
 	}

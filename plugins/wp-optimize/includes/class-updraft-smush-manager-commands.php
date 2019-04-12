@@ -58,7 +58,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$lossy = filter_var($options['lossy_compression'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$backup = filter_var($options['back_up_original'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$exif = filter_var($options['preserve_exif'], FILTER_VALIDATE_BOOLEAN) ? true : false;
-		$quality = filter_var($options['image_quality'], FILTER_SANITIZE_STRING);
+		$quality = filter_var($options['image_quality'], FILTER_SANITIZE_NUMBER_INT);
 
 		$options = array(
 			'attachment_id' 	=> $image,
@@ -119,32 +119,56 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	 * @param mixed $data - Sent in via AJAX
 	 */
 	public function process_bulk_smush($data = array()) {
-		$images = isset($data['selected_images']) ? $data['selected_images'] : array();
-		$this->get_ui_update();
+		$images = isset($data['selected_images']) ? array_filter($data['selected_images'], 'is_numeric') : array();
+		$ui_update = $this->get_ui_update($images);
+		$this->close_browser_connection(json_encode($ui_update));
 		$this->task_manager->process_bulk_smush($images);
+		// Since we already sent back data and closed the browser connection, we must not return (that would result in further sending back of JSON).
+		die();
 	}
 
 	/**
 	 * Returns useful information for the UI and closes the connection
 	 *
-	 * @return mixed $data - Information for the UI
+	 * @param mixed $data - Sent in via AJAX
+	 *
+	 * @return mixed - Information for the UI
 	 */
-	public function get_ui_update() {
+	public function get_ui_update($data) {
 		
 		$ui_update['status'] = true;
-		$ui_update['pending_tasks'] = count($this->task_manager->get_pending_tasks());
+		$ui_update['is_multisite'] = is_multisite() ? 1 : 0;
+		$pending_tasks = $this->task_manager->get_pending_tasks();
+		
+		$ui_update['pending_tasks'] = is_array($pending_tasks) ? count($this->task_manager->get_pending_tasks()) : 0;
 		$ui_update['unsmushed_images'] = $this->task_manager->get_uncompressed_images();
+		$ui_update['admin_urls'] = $this->task_manager->get_admin_urls();
 		$ui_update['completed_task_count'] = $this->task_manager->options->get_option('completed_task_count', 0);
 		$ui_update['bytes_saved'] = $this->format_filesize($this->task_manager->options->get_option('total_bytes_saved', 0));
 		$ui_update['percent_saved'] = number_format($this->task_manager->options->get_option('total_percent_saved', 1), 2).'%';
 		$ui_update['failed_task_count'] = $this->task_manager->get_failed_task_count();
 
-		$ui_update['summary'] = sprintf(__("A total of %d image(s) were compressed on this site, saving approximately %s of space at an average of %02d percent per image.", 'wp-optimize'), $ui_update['completed_task_count'], $ui_update['bytes_saved'], number_format($ui_update['percent_saved'], 2));
-		$ui_update['failed'] = sprintf(__("%d image(s) could not be compressed. Please see the logs for more information or try again later.", 'wp-optimize'), $ui_update['failed_task_count']);
+		$ui_update['summary'] = sprintf(__("Since your compression statistics were last reset, a total of %d image(s) were compressed on this site, saving approximately %s of space at an average of %02d percent per image.", 'wp-optimize'), $ui_update['completed_task_count'], $ui_update['bytes_saved'], $ui_update['percent_saved']);
+		$ui_update['failed'] = sprintf(__("%d image(s) could not be compressed. Please see the logs for more information, or try again later.", 'wp-optimize'), $ui_update['failed_task_count']);
 		$ui_update['pending'] = sprintf(__("%d image(s) images were selected for compressing previously, but were not all processed. You can either complete them now or cancel and retry later.", 'wp-optimize'), $ui_update['pending_tasks']);
 		$ui_update['smush_complete'] = $this->task_manager->is_queue_processed();
 		
-		$this->close_browser_connection(json_encode($ui_update));
+		if (isset($data['image_list'])) {
+			$images = array_filter($data['image_list'], 'is_numeric');
+			$stats = $this->task_manager->get_session_stats($images);
+			$ui_update['session_stats'] = "";
+
+			if (!empty($stats['success'])) {
+			$ui_update['session_stats'] .= sprintf(__("A total of %d image(s) were successfully compressed in this iteration. ", 'wp-optimize'), $stats['success']);
+			}
+
+			if (!empty($stats['fail'])) {
+				$ui_update['session_stats'] .= sprintf(__("%d selected image(s) could not be compressed. Please see the logs for more information, you may try again later.", 'wp-optimize'), $stats['fail']);
+			}
+		}
+		
+		return $ui_update;
+
 	}
 
 	/**
@@ -160,7 +184,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$options['back_up_original'] = filter_var($data['back_up_original'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$options['preserve_exif'] = filter_var($data['preserve_exif'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$options['autosmush'] = filter_var($data['autosmush'], FILTER_VALIDATE_BOOLEAN) ? true : false;
-		$options['image_quality'] = filter_var($data['image_quality'], FILTER_SANITIZE_STRING);
+		$options['image_quality'] = filter_var($data['image_quality'], FILTER_SANITIZE_NUMBER_INT);
 
 		$success = $this->task_manager->update_smush_options($options);
 
@@ -169,6 +193,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		}
 
 		$response['status'] = true;
+		$response['saved'] = $success;
 		$response['summary'] = __('Options updated successfully', 'wp-optimize');
 		
 		return $response;
@@ -202,6 +227,11 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$server = filter_var($data['server'], FILTER_SANITIZE_STRING);
 		$response['status'] = true;
 		$response['online'] = $this->task_manager->check_server_online($server);
+		
+		if (!$response['online']) {
+			$response['error'] = get_option($this->task_manager->get_associated_task($server));
+		}
+
 		return $response;
 	}
 
@@ -240,7 +270,11 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 
 		$logfile = $this->task_manager->get_logfile_path();
 
-		if (file_exists($logfile)) {
+		if (!file_exists($logfile)) {
+			 $this->task_manager->write_log_header();
+		}
+
+		if (is_file($logfile)) {
 			header('Content-Description: File Transfer');
 			header('Content-Type: application/octet-stream');
 			header('Content-Disposition: attachment; filename="'.basename($logfile).'"');
@@ -286,11 +320,12 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	/**
 	 * Close browser connection so that it can resume AJAX polling
 	 *
-	 * @param array $txt Response to browser
+	 * @param array $txt Response to browser; this must be JSON (or if not, alter the Content-Type header handling below)
 	 * @return void
 	 */
 	public function close_browser_connection($txt = '') {
 		header('Content-Length: '.((!empty($txt)) ? 4+strlen($txt) : '0'));
+		header('Content-Type: application/json');
 		header('Connection: close');
 		header('Content-Encoding: none');
 		if (session_id()) session_write_close();

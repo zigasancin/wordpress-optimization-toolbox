@@ -45,9 +45,15 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 		if (!class_exists('Updraft_Logger_Interface')) include_once('class-updraft-logger-interface.php');
 		if (!class_exists('Updraft_Abstract_Logger')) include_once('class-updraft-abstract-logger.php');
 		if (!class_exists('Updraft_File_Logger')) include_once('class-updraft-file-logger.php');
+		if (!class_exists('WP_Optimize_Transients_Cache')) include_once('class-wp-optimize-transients-cache.php');
 
 		$this->commands = new Updraft_Smush_Manager_Commands($this);
 		$this->options = WP_Optimize()->get_options();
+
+		if (!isset($this->options)) {
+			$this->set_default_options();
+		}
+
 		$this->webservice = $this->options->get_option('compression_server', 'nitrosmush');
 
 		// Ensure the saved service is valid
@@ -128,7 +134,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 		
 		$options = array(
 			'attachment_id' => $post_id,
-			'image_quality' => $this->options->get_option('image_quality', 85),
+			'image_quality' => $this->options->get_option('image_quality', 96),
 			'keep_original' => $this->options->get_option('back_up_original', true),
 			'preserve_exif' => $this->options->get_option('preserve_exif', true),
 			'lossy_compression' => $this->options->get_option('lossy_compression', false)
@@ -222,7 +228,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 			return new WP_Error('restore_failed', __('Could not copy file, check your PHP error logs for details', 'wp-optimize'));
 		}
 
-		unlink($backup_path, false, 'd');
+		unlink($backup_path);
 		$this->delete_from_cache('uncompressed_images');
 
 		// Clear associated smush data
@@ -235,7 +241,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 			wp_schedule_single_event(time() + 7200, 'prune_smush_logs');
 		}
 
-		return $status;
+		return true;
 	}
 
 	/**
@@ -305,19 +311,15 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 	 */
 	public function check_server_online($server = 'nitrosmush') {
 		$task = $this->get_associated_task($server);
-		$last_checked = get_option($task, strtotime('- 1 hour'));
-
-		if (strtotime('- 1 hour') >= $last_checked) {
-			$online = call_user_func(array($task, 'is_server_online'));
+		$online = call_user_func(array($task, 'is_server_online'));
 			
-			if ($online) {
-				update_option($task, strtotime('now'));
-			}
+		if ($online) {
+			update_option($task, strtotime('now'));
 		} else {
-			$online = true;
+			$this->log(get_option($task));
 		}
 
-		$this->log(sprintf('%s server : %s', $task, $online ? 'Online' : 'Offline'));
+		$this->log(sprintf('%s server status: %s', $task, $online ? 'Online' : 'Offline'));
 		return $online;
 	}
 	
@@ -327,7 +329,9 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 	 * @return bool - true if processed, false otherwise
 	 */
 	public function is_queue_processed() {
-		if (0 !== count($this->get_active_tasks('smush')))
+
+		$active = $this->get_pending_tasks();
+		if ($active && 0 != count($active))
 			return false;
 
 		if (false !== get_option('updraft_semaphore_smush'))
@@ -354,15 +358,15 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 			return;
 		}
 
-		if (false === $completed_task_count || false === $bytes_saved) {
+		if (false === $completed_task_count || false === $total_bytes_saved) {
 			$completed_task_count = $total_bytes_saved = 0;
 		}
 
-		$stats = get_post_meta($attachment_id, 'smush-stats');
+		$stats = get_post_meta($attachment_id, 'smush-stats', true);
 
-		$original_size = $stats['original-size'];
-		$compressed_size = $stats['smushed-size'];
-		$percent = $stats['savings-percent'];
+		$original_size = isset($stats['original-size']) ? $stats['original-size'] : 0;
+		$compressed_size = isset($stats['smushed-size']) ? $stats['smushed-size'] : 0;
+		$percent = isset($stats['savings-percent']) ? $stats['savings-percent'] : 0;
 		$saved = $original_size - $compressed_size;
 		$completed_task_count++;
 
@@ -430,13 +434,16 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 	 * @return array - translations used in JS
 	 */
 	public function smush_js_translations() {
-		return apply_filters('smush_js_translations', array(
+		return apply_filters('updraft_smush_js_translations', array(
 			'all_images_compressed' 		=> __('All valid images are compressed now', 'wp-optimize'),
-			'error_unexpected_response' 	=> __('An unexpected response was received from the server.', 'wp-optimize'),
-			'compress_single_image_dialog'	=> __('Please wait. Compressing the selected image.', 'wp-optimize'),
+			'error_unexpected_response' 	=> __('An unexpected response was received from the server. More information has been logged in the browser console.', 'wp-optimize'),
+			'compress_single_image_dialog'	=> __('Please wait: compressing the selected image.', 'wp-optimize'),
 			'error_try_again_later'			=> __('Please try again later.', 'wp-optimize'),
 			'server_check'					=> __('Connecting to the Smush API server, please wait', 'wp-optimize'),
-			'server_error'					=> __('There was an error connecting to the Smush API server, please try later', 'wp-optimize'),
+			'please_wait'					=> __('Please wait while the request is being processed', 'wp-optimize'),
+			'server_error'					=> __('There was an error connecting to the image compression server. This could mean either the server is temporarily unavailable or there are connectivity issues with your internet connection. Please try later.', 'wp-optimize'),
+			'please_select_images'			=> __('Please select the images you want compressed from the "Uncompressed images" panel first', 'wp-optimize'),
+			'view_image'					=> __('View Image', 'wp-optimize'),
 		));
 	}
 
@@ -487,9 +494,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 		
 		$uncompressed_images = $this->get_from_cache('uncompressed_images');
 
-		if ($uncompressed_images) {
-			return $uncompressed_images;
-		}
+		if ($uncompressed_images) return $uncompressed_images;
 
 		$uncompressed_images = array();
 
@@ -497,7 +502,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 			'post_type'		=> 'attachment',
 			'post_mime_type' => 'image',
 			'post_status'	=> 'inherit',
-			'posts_per_page' => '100',
+			'posts_per_page' => apply_filters('updraft_smush_posts_per_page', 1000),
 			'meta_query' => array(
 				'relation' => 'OR',
 				array(
@@ -514,15 +519,14 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 
 			foreach ($sites as $site) {
 				
-				switch_to_blog($site->blod_id);
+				switch_to_blog($site->blog_id);
 
 				$images = new WP_Query($args);
 
 				foreach ($images->posts as $image) {
-					$uncompressed_images[$site->blod_id][] = array(
+					$uncompressed_images[$site->blog_id][] = array(
 						'id' => $image->ID,
 						'thumb_url' => utf8_encode(wp_get_attachment_thumb_url($image->ID)),
-						'admin_url' => admin_url('upload.php?item='.$image->ID),
 						'filesize'  => filesize(get_attached_file($image->ID))
 					);
 				}
@@ -535,7 +539,6 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 				$uncompressed_images[1][] = array(
 					'id' => $image->ID,
 					'thumb_url' => utf8_encode(wp_get_attachment_thumb_url($image->ID)),
-					'admin_url' => admin_url('post.php?post='.$image->ID.'&action=edit'),
 					'filesize'  => filesize(get_attached_file($image->ID))
 				);
 			}
@@ -545,6 +548,38 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 		return $uncompressed_images;
 	}
 
+	/**
+	 * Returns a list of admin URLs. This is to prevent unnecessary bloat in the output of get_uncompressed_images() (and thus better performance over the network on sites with huge numbers of images)
+	 *
+	 * @return array - list of admin URLs
+	 */
+	public function get_admin_urls() {
+		
+		$admin_urls = $this->get_from_cache('admin_urls');
+
+		if ($admin_urls) return $admin_urls;
+
+		$admin_urls = array();
+
+		if (is_multisite()) {
+		
+			$sites = WP_Optimize()->get_sites();
+
+			foreach ($sites as $site) {
+				switch_to_blog($site->blog_id);
+				$admin_urls[$site->blog_id] = admin_url();
+				restore_current_blog();
+			}
+
+		} else {
+			// The pseudo-blog_id here (1) matches (and must match) what is used in get_uncompressed_images
+			$admin_urls[1] = admin_url();
+		}
+
+		$this->save_to_cache('admin_urls', $admin_urls);
+		return $admin_urls;
+	}
+	
 	/**
 	 * Check if a task exists for a given image
 	 *
@@ -565,19 +600,29 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 	}
 
 	/**
+	 * Returns the status of images compressed in this iteration of the bulk compress
+	 *
+	 * @param array $images - List of images in the current session
+	 *
+	 * @return array - status of the operation
+	 */
+	public function get_session_stats($images) {
+		$stats = array();
+
+		foreach ($images as $image) {
+			$stats[$image] = get_post_meta($image, 'smush-complete', true) ? 'success' : 'fail';
+		}
+
+		return array_count_values($stats);
+	}
+
+	/**
 	 * Returns a list of images for smush (from cache if available)
 	 *
 	 * @return array - List of task objects with uncompressed images
 	 */
 	public function get_pending_tasks() {
-		$pending_tasks = $this->get_from_cache('pending_tasks');
-
-		if (empty($pending_tasks)) {
-			$pending_tasks = $this->get_active_tasks('smush');
-			$this->save_to_cache('pending_tasks', $pending_tasks);
-		}
-
-		return $pending_tasks;
+		return $this->get_active_tasks('smush');
 	}
 
 	/**
@@ -633,6 +678,23 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_0 {
 	 */
 	public function get_default_webservice() {
 		return 'resmushit';
+	}
+
+	/**
+	 * Sets default options for smush
+	 */
+	public function set_default_options() {
+
+		$options = array(
+			'compression_server' => $this->get_default_webservice(),
+			'image_quality'		 => 'very_good',
+			'lossy_compression'	 => false,
+			'back_up_original'	 => true,
+			'preserve_exif'		 => false,
+			'autosmush'			 => false,
+		);
+		
+		$this->update_smush_options($options);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 <?php if (!defined('WPO_VERSION')) die('No direct access allowed'); ?>
 
-<?php if (1 < count($tabs)) : ?>
+<?php if (0 < count($tabs)) : ?>
 
 <h2 id="wp-optimize-nav-tab-wrapper" class="nav-tab-wrapper">
 

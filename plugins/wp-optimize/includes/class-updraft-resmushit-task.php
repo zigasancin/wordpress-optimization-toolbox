@@ -25,6 +25,7 @@ class Re_Smush_It_Task extends Updraft_Smush_Task {
 	public static function is_server_online() {
 		
 		global $task_manager;
+		global $wp_version;
 		$test_image = WPO_PLUGIN_MAIN_PATH . 'images/icon/wpo.png';
 		$boundary = wp_generate_password(12);
 		$file_name = basename($test_image);
@@ -47,7 +48,7 @@ class Re_Smush_It_Task extends Updraft_Smush_Task {
 		$response = wp_remote_post(self::API_URL, $request);
 
 		if (is_wp_error($response)) {
-			$task_manager->log($response->get_error_message());
+			update_option(__CLASS__, $response->get_error_message());
 			return false;
 		}
 
@@ -55,12 +56,12 @@ class Re_Smush_It_Task extends Updraft_Smush_Task {
 
 
 		if (empty($data)) {
-			$task_manager->log("Empty data returned by server");
+			update_option(__CLASS__, "Empty data returned by server");
 			return false;
 		}
 
 		if (isset($data->error)) {
-			$task_manager->log($data->error_long);
+			update_option(__CLASS__, $data->error_long);
 			return false;
 		}
 
@@ -78,14 +79,20 @@ class Re_Smush_It_Task extends Updraft_Smush_Task {
 		$boundary = wp_generate_password(12);
 		$headers  = array( "content-type" => "multipart/form-data; boundary=$boundary" );
 
-		if ('best' == $this->get_option('image_quality')) {
-			$quality = 98;
-		} elseif ('very_good' == $this->get_option('image_quality')) {
-			$quality = 95;
+		$lossy = $this->get_option('lossy_compression');
+
+		if ($lossy) {
+			$quality = $this->get_option('image_quality');
+
+			if (89 >= $quality || 100 <= $quality) {
+				$quality = 95;
+			}
+
 		} else {
-			$quality = 92;
+			$quality = 100;
 		}
 
+		$this->log($quality);
 		$post_fields = array(
 			'qlty' => $quality,
 			'exif' => $this->get_option('preserve_exif', false)

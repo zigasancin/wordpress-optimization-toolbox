@@ -1,10 +1,10 @@
 === WP-Optimize ===
-Contributors: DavidAnderson, ruhanirabin, DNutbourne, aporter, snightingale
+Contributors: DavidAnderson, ruhanirabin, DNutbourne, aporter, snightingale, lumberhack
 Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
 Tested up to: 5.1
-Stable tag: 2.2.13
+Stable tag: 2.3.0
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,6 +18,7 @@ WP-Optimize is an effective tool for automatically cleaning your WordPress datab
 
 * Removes all unnecessary data (e.g. trashed/unapproved/spam comments, stale data) plus pingbacks, trackbacks and expired transient options
 * Compact/de-fragment MySQL tables with a button-press
+* Compress ("smush") images (existing images and automatically on new ones)
 * Detailed control of which optimizations you wish to carry out
 * Carries out automatic weekly (or otherwise) clean-ups
 * Retains a set number of weeks' data during clean-ups
@@ -143,6 +144,14 @@ Please check your database for corrupted tables. That can happen, usually your w
 
 == Changelog ==
 
+= 2.3.0 - 12/Apr/2019 =
+
+* FEATURE: Compress images using lossy and lossless compression - both existing images, and newly uploaded
+* FIX: Wrong information about corrupted tables
+* TWEAK: Prevent PHP notices on calls from UpdraftCentral
+* TWEAK: Prevent notices about Premium showing in Premium, correct button text, update coupon
+* TWEAK: Prevent the overdue cron checker running twice instead of once
+
 = 2.2.13 - 04/Mar/2019 =
 
 * FIX: Fixed RTL layout
@@ -167,8 +176,6 @@ Please check your database for corrupted tables. That can happen, usually your w
 
 * FIX: A regression in the "identify table by owner" feature caused optimizing to silently fail on some tables
 * TWEAK: Added ability to exclude lazy load images by class
-* TWEAK: Added feature to select multiple unused images with Shift key pressed
-* FIX: Fixed DROP TABLE query for orphaned tables optimization
 
 = 2.2.10 - 11/Jan/2019 =
 
@@ -488,4 +495,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.2.13 : The informational list of WP core tables missed some possible extra tables on multisite. Detect more relationships between tables and plugins in orphaned database tables optimization.
+* 2.3.0 : New feature: image compression, plus other tweaks and fixes. A recommended update for all.

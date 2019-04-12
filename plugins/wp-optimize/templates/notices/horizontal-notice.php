@@ -33,6 +33,8 @@
 						$button_text = __('Review WP-Optimize', 'wp-optimize');
 					} elseif ('updraftplus' == $button_meta) {
 						$button_text = __('Get UpdraftPlus', 'wp-optimize');
+					} elseif ('metaslider' == $button_meta) {
+						$button_text = __('Get MetaSlider', 'wp-optimize');
 					} elseif ('signup' == $button_meta) {
 						$button_text = __('Sign up', 'wp-optimize');
 					} elseif ('go_there' == $button_meta) {

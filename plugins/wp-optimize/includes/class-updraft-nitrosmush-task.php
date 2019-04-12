@@ -50,19 +50,19 @@ class Nitro_Smush_Task extends Updraft_Smush_Task {
 		$response = wp_remote_post(self::API_URL, $request);
 
 		if (is_wp_error($response)) {
-			$task_manager->log($response->get_error_message());
+			update_option(__CLASS__, $response->get_error_message());
 			return false;
 		}
 
 		$data = json_decode(wp_remote_retrieve_body($response));
 
 		if (empty($data)) {
-			$task_manager->log("Empty data returned by server");
+			update_option(__CLASS__, "Empty data returned by server");
 			return false;
 		}
 
 		if (isset($data->error)) {
-			$task_manager->log($data->error);
+			update_option(__CLASS__, $data->error);
 			return false;
 		}
 
@@ -80,16 +80,17 @@ class Nitro_Smush_Task extends Updraft_Smush_Task {
 		$lossy = $this->get_option('lossy_compression');
 
 		if ($lossy) {
-			if ('best' == $this->get_option('image_quality')) {
-				$quality = 99;
-			} elseif ('very_good' == $this->get_option('image_quality')) {
-				$quality = 96;
-			} else {
-				$quality = 94;
+			$quality = $this->get_option('image_quality');
+
+			if (89 >= $quality || 100 <= $quality) {
+				$quality = 95;
 			}
+
 		} else {
 			$quality = 100;
 		}
+
+		$this->log($quality);
 
 		$headers  = array( "content-type" => "multipart/form-data; boundary=$boundary" );
 		$payload = "";

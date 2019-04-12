@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize
 Plugin URI: https://getwpo.com
 Description: WP-Optimize is WordPress's #1 most installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
-Version: 2.2.13
+Version: 2.3.0
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '2.2.13');
+define('WPO_VERSION', '2.3.0');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -78,11 +78,20 @@ class WP_Optimize {
 		// Action column (show repair button if need).
 		add_filter('wpo_tables_list_additional_column_data', array($this, 'tables_list_additional_column_data'), 15, 2);
 
+		/**
+		 * Add action for display Images > Compress images tab.
+		 */
+		add_action('wp_optimize_admin_page_wpo_images_smush', array($this, 'admin_page_wpo_images_smush'));
+
 		include_once(WPO_PLUGIN_MAIN_PATH.'/includes/updraftcentral.php');
 
 		register_shutdown_function(array($this, 'log_fatal_errors'));
 
 		$this->schedule_plugin_cron_tasks();
+	}
+	
+	public function admin_page_wpo_images_smush() {
+		$this->include_template('images/smush.php');
 	}
 
 	public static function instance() {
@@ -193,6 +202,11 @@ class WP_Optimize {
 		include_once(WPO_PLUGIN_MAIN_PATH . '/vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-task-meta.php');
 		include_once(WPO_PLUGIN_MAIN_PATH . '/vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-task-options.php');
 		include_once(WPO_PLUGIN_MAIN_PATH . '/vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-task.php');
+		
+		include_once(WPO_PLUGIN_MAIN_PATH . '/includes/class-updraft-smush-task.php');
+		include_once(WPO_PLUGIN_MAIN_PATH . '/includes/class-updraft-smush-manager.php');
+
+		return Updraft_Smush_Manager();
 	}
 
 	/**
@@ -266,7 +280,9 @@ class WP_Optimize {
 			add_action('admin_notices', array($this, 'show_admin_notice_premium'));
 			return;
 		}
-
+		
+		// Loads the task manager
+		$this->get_task_manager();
 
 		// Loads the language file.
 		load_plugin_textdomain('wp-optimize', false, dirname(plugin_basename(__FILE__)) . '/languages');
@@ -478,15 +494,16 @@ class WP_Optimize {
 	public function get_tabs($page) {
 		// define tabs for pages.
 		$pages_tabs = array(
+			'wpo_database' => array('optimize' => __('Optimizations', 'wp-optimize'), 'tables' => __('Tables', 'wp-optimize')),
+			'wpo_images'  => array('smush' => __('Compress images', 'wp-optimize')),
+			'wpo_cache' => array(
+				'gzip' => __('Gzip compression', 'wp-optimize'), // Adds a GZIP tab
+				'settings' => __('Static file caching', 'wp-optimize')  // Adds a settings tab
+			),
 			'WP-Optimize' => array(
 				'settings' => array(
 					'title' => __('Settings', 'wp-optimize'),
 				),
-			),
-			'wpo_database' => array('optimize' => __('Optimizations', 'wp-optimize'), 'tables' => __('Tables', 'wp-optimize')),
-			'wpo_cache' => array(
-				'gzip' => __('Gzip compression', 'wp-optimize'), // Adds a GZIP tab
-				'settings' => __('Static file caching', 'wp-optimize')  // Adds a settings tab
 			),
 			'wpo_support' => array('support' => __('Support / FAQs', 'wp-optimize')),
 			'wpo_mayalso' => array('may_also' => __('Premium / Plugin family', 'wp-optimize')),
@@ -649,17 +666,6 @@ class WP_Optimize {
 	}
 
 	/**
-	 * Dashboard status
-	 */
-	public function output_status_column() {
-	?>
-		<div class="postbox wpo-tab-postbox right-col">
-			<?php WP_Optimize()->include_template('settings/status-box-contents.php', false, array('optimize_db' => false)); ?>
-		</div>
-	<?php
-	}
-
-	/**
 	 * Dashboard settings
 	 */
 	public function output_dashboard_settings_tab() {
@@ -784,7 +790,6 @@ class WP_Optimize {
 			'table_was_not_deleted' => __('%s was not deleted. For more details, please check your logs configured in logging destinations settings.', 'wp-optimize'),
 			'please_use_positive_integers' => __('Please use positive integers.', 'wp-optimize'),
 			'please_use_valid_values' => __('Please use valid values.', 'wp-optimize'),
-			'enable' => __('Enable', 'wp-optimize'),
 			'update' => __('Update', 'wp-optimize'),
 			'spinner_src' => esc_attr(admin_url('images/spinner-2x.gif')),
 			'sites' => $this->get_sites(),
@@ -1027,20 +1032,6 @@ class WP_Optimize {
 	public function get_submenu_items() {
 		$sub_menu_items = array(
 			array(
-				'page_title' => __('Settings', 'wp-optimize'),
-				'menu_title' => __('Settings', 'wp-optimize'),
-				'menu_slug' => 'WP-Optimize',
-				'function' => array($this, 'display_admin'),
-				'icon' => 'admin-settings',
-				'create_submenu' => true,
-				'order' => 10,
-			),
-			array(
-				'create_submenu' => false,
-				'order' => 15,
-				'icon' => 'separator',
-			),
-			array(
 				'page_title' => __('Database', 'wp-optimize'),
 				'menu_title' => __('Database', 'wp-optimize'),
 				'menu_slug' => 'wpo_database',
@@ -1050,9 +1041,27 @@ class WP_Optimize {
 				'order' => 20,
 			),
 			array(
+				'page_title' => __('Images', 'wp-optimize'),
+				'menu_title' => __('Images', 'wp-optimize'),
+				'menu_slug' => 'wpo_images',
+				'function' => array($this, 'display_admin'),
+				'icon' => 'images-alt2',
+				'create_submenu' => true,
+				'order' => 30,
+			),
+			array(
 				'create_submenu' => false,
 				'order' => 45,
 				'icon' => 'separator',
+			),
+			array(
+				'page_title' => __('Settings', 'wp-optimize'),
+				'menu_title' => __('Settings', 'wp-optimize'),
+				'menu_slug' => 'WP-Optimize',
+				'function' => array($this, 'display_admin'),
+				'icon' => 'admin-settings',
+				'create_submenu' => true,
+				'order' => 50,
 			),
 			array(
 				'page_title' => __('Support & FAQs', 'wp-optimize'),
@@ -1061,7 +1070,7 @@ class WP_Optimize {
 				'function' => array($this, 'display_admin'),
 				'icon' => 'sos',
 				'create_submenu' => true,
-				'order' => 50,
+				'order' => 60,
 			),
 			array(
 				'page_title' => __('More plugins', 'wp-optimize'),
@@ -1070,7 +1079,7 @@ class WP_Optimize {
 				'function' => array($this, 'display_admin'),
 				'icon' => 'admin-plugins',
 				'create_submenu' => true,
-				'order' => 60,
+				'order' => 70,
 			),
 		);
 
@@ -1272,30 +1281,7 @@ class WP_Optimize {
 	 * @return void
 	 */
 	public function do_plugin_cron_tasks() {
-		// get information about corrupted tables.
-		$this->update_corrupted_tables_count();
-	}
-
-	/**
-	 * Update corrupted tables count used with wp_optimize_get_tables filter.
-
-	 * @return void
-	 */
-	public function update_corrupted_tables_count() {
-		$tables = $this->get_optimizer()->get_tables();
-
-		$corrupted_tables_count = 0;
-
-		if (!empty($tables)) {
-			foreach ($tables as $table) {
-				if ($table->is_needing_repair) {
-					$corrupted_tables_count++;
-				}
-			}
-		}
-
-		// save results to options table and use it to notify user about corrupted tables.
-		$this->get_options()->update_option('corrupted-tables-count', $corrupted_tables_count);
+		// add tasks here.
 	}
 
 	/**

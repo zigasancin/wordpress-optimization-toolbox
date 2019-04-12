@@ -3,7 +3,7 @@
 /* OTHER VARS */
 
 .wpo_hidden {
-	display: none;
+	display: none !important;
 }
 
 .wpo_info {
