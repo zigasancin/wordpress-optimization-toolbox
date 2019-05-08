@@ -63,11 +63,12 @@ class ShortPixelAPI {
         if(!count($URLs)) {
             return false;
         }
-        return wp_remote_post($this->_apiDumpEndPoint, $this->prepareRequest(array(
+       $ret = wp_remote_post($this->_apiDumpEndPoint, $this->prepareRequest(array(
                 'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
                 'key' => $this->_settings->apiKey,
                 'urllist' => $URLs
             ) ) );
+        return $ret;
     }
 
     /**
@@ -100,11 +101,17 @@ class ShortPixelAPI {
             else throw new Exception(__('Image files are missing.', 'shortpixel-image-optimiser'));
         }
 
-        //WpShortPixel::log("DO REQUESTS for META: " . json_encode($itemHandler->getRawMeta()) . " STACK: " . json_encode(debug_backtrace()));
+        $apiKey = $this->_settings->apiKey;
+        if(strlen($apiKey) < 20) { //found in the logs many cases when the API Key is '', probably deleted from the DB but the verifiedKey setting is not changed
+            $this->_settings->verifiedKey = false;
+            throw new Exception(__('Invalid API Key', 'shortpixel-image-optimiser'));
+        }
+
+      //  WpShortPixel::log("DO REQUESTS for META: " . json_encode($itemHandler->getRawMeta()) . " STACK: " . json_encode(debug_backtrace()));
 
         $requestParameters = array(
             'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
-            'key' => $this->_settings->apiKey,
+            'key' => $apiKey,
             'lossy' => $compressionType === false ? $this->_settings->compressionType : $compressionType,
             'cmyk2rgb' => $this->_settings->CMYKtoRGBconversion,
             'keep_exif' => ($this->_settings->keepExif ? "1" : "0"),
@@ -121,7 +128,7 @@ class ShortPixelAPI {
             $requestParameters['refresh'] = 1;
         }
 
-        //WpShortPixel::log("DO REQUESTS SENDING: " . json_encode($requestParameters));
+        //WpShortPixel::log("ShortPixel API Request Settings: " . json_encode($requestParameters));
 
         $response = wp_remote_post($this->_apiEndPoint, $this->prepareRequest($requestParameters, $Blocking) );
 
@@ -557,7 +564,7 @@ class ShortPixelAPI {
     private function handleSuccess($APIresponse, $PATHs, $itemHandler, $compressionType) {
         WPShortPixel::log('Handling Success!');
 
-        $counter = $savedSpace =  $originalSpace =  $optimizedSpace =  $averageCompression = 0;
+        $counter = $savedSpace =  $originalSpace =  $optimizedSpace /* = $averageCompression */ = 0;
         $NoBackup = true;
 
         if($compressionType) {
@@ -672,7 +679,7 @@ class ShortPixelAPI {
                         $savedSpace += $fileData->OriginalSize - $fileData->$fileSize;
                         $originalSpace += $fileData->OriginalSize;
                         $optimizedSpace += $fileData->$fileSize;
-                        $averageCompression += $fileData->PercentImprovement;
+                        //$averageCompression += $fileData->PercentImprovement;
                         WPShortPixel::log("HANDLE SUCCESS: Image " . $PATHs[$tempFileID] . " original size: ".$fileData->OriginalSize . " optimized: " . $fileData->$fileSize);
 
                         //add the number of files with < 5% optimization
@@ -699,9 +706,12 @@ class ShortPixelAPI {
                 if(file_exists($tempWebpFilePATH)) {
                     $targetWebPFileCompat = dirname($targetFile) . '/'. self::MB_basename($targetFile, '.' . pathinfo($targetFile, PATHINFO_EXTENSION)) . ".webp";
                     $targetWebPFile = dirname($targetFile) . '/' . self::MB_basename($targetFile) . ".webp";
-                    copy($tempWebpFilePATH, $targetWebPFile);
-                    if(!file_exists($targetWebPFileCompat)) {
-                      @symlink($targetWebPFile,$targetWebPFileCompat);
+                    //if the WebP fileCompat already exists, it means that there is another file with the same basename but different extension which has its .webP counterpart
+                    //save it with double extension
+                    if(file_exists($targetWebPFileCompat)) {
+                        copy($targetWebPFile,$targetWebPFile);
+                    } else {
+                        copy($tempWebpFilePATH, $targetWebPFileCompat);
                     }
                     @unlink($tempWebpFilePATH);
                 }
@@ -726,8 +736,8 @@ class ShortPixelAPI {
         }
         //old average counting
         $this->_settings->savedSpace += $savedSpace;
-        $averageCompression = $this->_settings->averageCompression * $this->_settings->fileCount /  ($this->_settings->fileCount + count($APIresponse));
-        $this->_settings->averageCompression = $averageCompression;
+        //$averageCompression = $this->_settings->averageCompression * $this->_settings->fileCount /  ($this->_settings->fileCount + count($APIresponse));
+        //$this->_settings->averageCompression = $averageCompression;
         $this->_settings->fileCount += count($APIresponse);
         //new average counting
         $this->_settings->totalOriginal += $originalSpace;

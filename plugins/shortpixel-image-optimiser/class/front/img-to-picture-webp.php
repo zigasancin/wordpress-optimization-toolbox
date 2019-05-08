@@ -26,23 +26,33 @@ class ShortPixelImgToPictureWebp
     {
         // Don't do anything with the RSS feed.
         if (is_feed() || is_admin()) {
-            return $content;
+            return $content . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG convert is_feed or is_admin -->' : '');
         }
+        $content = preg_replace_callback('/<img[^>]*>/', array('self', 'convertImage'), $content);
+        //$content = preg_replace_callback('/background.*[^:](url\(.*\)[,;])/im', array('self', 'convertInlineStyle'), $content);
 
-        return preg_replace_callback('/<img[^>]*>/', array('ShortPixelImgToPictureWebp', 'convertImage'), $content);
+        // [BS] No callback because we need preg_match_all
+        //$content = self::testInlineStyle($content);
+      //  $content = preg_replace_callback('/background.*[^:]url\([\'|"](.*)[\'|"]\)[,;]/imU',array('self', 'convertInlineStyle'), $content);
+        return $content . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG WebP converted -->' : '');
+
     }
 
     public static function convertImage($match)
     {
         // Do nothing with images that have the 'sp-no-webp' class.
         if (strpos($match[0], 'sp-no-webp')) {
-            return $match[0];
+            return $match[0] . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG convertImage sp-no-webp -->' : '');
         }
 
         $img = self::get_attributes($match[0]);
+        // [BS] Can return false in case of Module fail. Escape in that case with unmodified image
+        if ($img === false)
+          return $match[0];
 
         $srcInfo = self::lazyGet($img, 'src');
         $src = $srcInfo['value'];
+        $parsed_url = parse_url($src);
         $srcPrefix = $srcInfo['prefix'];
 
         $srcsetInfo = self::lazyGet($img, 'srcset');
@@ -62,7 +72,8 @@ class ShortPixelImgToPictureWebp
         }
         $imageBase = dirname(get_attached_file($id)) . '/';
         */
-        $updir = wp_upload_dir();
+
+        /* [BS] $updir = wp_upload_dir();
         $proto = explode("://", $src);
         if (count($proto) > 1) {
             //check that baseurl uses the same http/https proto and if not, change
@@ -73,12 +84,31 @@ class ShortPixelImgToPictureWebp
                     $updir['baseurl'] = $proto . "://" . $base[1];
                 }
             }
-        }
-        $imageBase = str_replace($updir['baseurl'], SHORTPIXEL_UPLOADS_BASE, $src);
-        if ($imageBase == $src) {
-            return $match[0];
+        } */
+
+
+        /* [BS] $imageBase = str_replace($updir['baseurl'], SHORTPIXEL_UPLOADS_BASE, $src);
+        if ($imageBase == $src) { //maybe the site uses a CDN or a subdomain?
+            $urlParsed = parse_url($src);
+            $srcHost = array_reverse(explode('.', $urlParsed['host']));
+            $baseParsed = parse_url($updir['baseurl']);
+            $baseurlHost = array_reverse(explode('.', $baseParsed['host']));
+            if ($srcHost[0] == $baseurlHost[0] && $srcHost[1] == $baseurlHost[1]
+                && (strlen($srcHost[1]) > 3 || isset($srcHost[2]) && isset($srcHost[2]) && $srcHost[2] == $baseurlHost[2])) {
+                $baseurl = str_replace($baseParsed['scheme'] . '://' . $baseParsed['host'], $urlParsed['scheme'] . '://' . $urlParsed['host'], $updir['baseurl']);
+                $imageBase = str_replace($baseurl, SHORTPIXEL_UPLOADS_BASE, $src);
+            }
+            if ($imageBase == $src) { //looks like it's an external URL though...
+                if(isset($_GET['SHORTPIXEL_DEBUG'])) WPShortPixel::log('SPDBG baseurl ' . $updir['baseurl'] . ' doesn\'t match ' . $src, true);
+                return $match[0] . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG baseurl ' . $updir['baseurl'] . ' doesn\'t match ' . $src . '  -->' : '');
+            }
         }
         $imageBase = dirname($imageBase) . '/';
+        */
+        $imageBase = static::getImageBase($src);
+        if($imageBase === false) {
+            return $match[0] . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG baseurl doesn\'t match ' . $src . '  -->' : '');
+        }
 
         // We don't wanna have src-ish attributes on the <picture>
         unset($img['src']);
@@ -88,6 +118,7 @@ class ShortPixelImgToPictureWebp
         unset($img['sizes']);
         unset($img['alt']);
         $srcsetWebP = '';
+
         if ($srcset) {
             $defs = explode(",", $srcset);
             foreach ($defs as $item) {
@@ -112,7 +143,6 @@ class ShortPixelImgToPictureWebp
         } else {
             $srcset = trim($src);
 
-//                die(var_dump($match));
 
             $fileWebPCompat = $imageBase . wp_basename($srcset, '.' . pathinfo($srcset, PATHINFO_EXTENSION)) . '.webp';
             $fileWebP = $imageBase . wp_basename($srcset) . '.webp';
@@ -126,7 +156,7 @@ class ShortPixelImgToPictureWebp
         }
         //return($match[0]. "<!-- srcsetTZF:".$srcsetWebP." -->");
         if (!strlen($srcsetWebP)) {
-            return $match[0];
+            return $match[0] . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG no srcsetWebP found (' . $srcsetWebP . ') -->' : '');
         }
 
         //add the exclude class so if this content is processed again in other filter, the img is not converted again in picture
@@ -140,11 +170,143 @@ class ShortPixelImgToPictureWebp
         .'</picture>';
     }
 
+    public static function testInlineStyle($content)
+    {
+      //preg_match_all('/background.*[^:](url\(.*\))[;]/isU', $content, $matches);
+      preg_match_all('/url\(.*\)/isU', $content, $matches);
+
+      if (count($matches) == 0)
+        return $content;
+
+      $content = self::convertInlineStyle($matches, $content);
+      return $content;
+    }
+
+    /** Function to convert inline CSS backgrounds to webp
+    * @param $match Regex match for inline style
+    * @return String Replaced (or not) content for webp.
+    * @author Bas Schuiling
+    */
+    public static function convertInlineStyle($matches, $content)
+    {
+      // ** matches[0] = url('xx') matches[1] the img URL.
+//      preg_match_all('/url\(\'(.*)\'\)/imU', $match, $matches);
+
+  //    if (count($matches)  == 0)
+  //      return $match; // something wrong, escape.
+
+      //$content = $match;
+      $allowed_exts = array('jpg', 'jpeg', 'gif', 'png');
+      $converted = array();
+
+      for($i = 0; $i < count($matches[0]); $i++)
+      {
+        $item = $matches[0][$i];
+
+        preg_match('/url\(\'(.*)\'\)/imU', $item, $match);
+        if (! isset($match[1]))
+          continue;
+
+        $url = $match[1];
+        $parsed_url = parse_url($url);
+        $filename = basename($url);
+
+        $fileonly = pathinfo($url, PATHINFO_FILENAME);
+        $ext = pathinfo($url, PATHINFO_EXTENSION);
+
+        if (! in_array($ext, $allowed_exts))
+          continue;
+
+        $imageBaseURL = str_replace($filename, '', $url);
+
+        $imageBase = static::getImageBase($url);
+
+        if (! $imageBase) // returns false if URL is external, do nothing with that.
+          continue;
+
+        $checkedFile = false;
+        if (file_exists($imageBase . $fileonly . '.' . $ext . '.webp'))
+        {
+          $checkedFile = $imageBaseURL . $fileonly . '.' . $ext . '.webp';
+        }
+        elseif (file_exists($imageBase . $fileonly . '.webp'))
+        {
+          $checkedFile = $imageBaseURL . $fileonly . '.webp';
+        }
+
+        if ($checkedFile)
+        {
+            // if webp, then add another URL() def after the targeted one.  (str_replace old full URL def, with new one on main match?
+            $target_urldef = $matches[0][$i];
+            if (! isset($converted[$target_urldef])) // if the same image is on multiple elements, this replace might go double. prevent.
+            {
+              $converted[] = $target_urldef;
+              $new_urldef = "url('" . $checkedFile . "'), " . $target_urldef;
+              $content = str_replace($target_urldef, $new_urldef, $content);
+            }
+        }
+
+      }
+
+      return $content;
+    }
+
+    /* ** Utility function to get ImageBase.
+    **  @param String $src Image Source
+    **  @returns String The Image Base
+    **/
+    public static function getImageBase($src)
+    {
+      $updir = wp_upload_dir();
+      $proto = explode("://", $src);
+      if (count($proto) > 1) {
+          //check that baseurl uses the same http/https proto and if not, change
+          $proto = $proto[0];
+          if (strpos($updir['baseurl'], $proto."://") === false) {
+              $base = explode("://", $updir['baseurl']);
+              if (count($base) > 1) {
+                  $updir['baseurl'] = $proto . "://" . $base[1];
+              }
+          }
+      }
+
+      $imageBase = str_replace($updir['baseurl'], SHORTPIXEL_UPLOADS_BASE, $src);
+      if ($imageBase == $src) { //for themes images or other non-uploads paths
+          $imageBase = str_replace(content_url(), WP_CONTENT_DIR, $src);
+      }
+
+      if ($imageBase == $src) { //maybe the site uses a CDN or a subdomain? - Or relative link
+          $urlParsed = parse_url($src);
+          $baseParsed = parse_url($updir['baseurl']);
+
+          $srcHost = array_reverse(explode('.', $urlParsed['host']));
+          $baseurlHost = array_reverse(explode('.', $baseParsed['host']));
+
+          if ($srcHost[0] == $baseurlHost[0] && $srcHost[1] == $baseurlHost[1]
+              && (strlen($srcHost[1]) > 3 || isset($srcHost[2]) && isset($srcHost[2]) && $srcHost[2] == $baseurlHost[2])) {
+
+              $baseurl = str_replace($baseParsed['scheme'] . '://' . $baseParsed['host'], $urlParsed['scheme'] . '://' . $urlParsed['host'], $updir['baseurl']);
+              $imageBase = str_replace($baseurl, SHORTPIXEL_UPLOADS_BASE, $src);
+          }
+          if ($imageBase == $src) { //looks like it's an external URL though...
+              return false;
+          }
+      }
+
+
+        $imageBase = trailingslashit(dirname($imageBase));
+        return $imageBase;
+    }
+
     public static function get_attributes($image_node)
     {
         if (function_exists("mb_convert_encoding")) {
             $image_node = mb_convert_encoding($image_node, 'HTML-ENTITIES', 'UTF-8');
         }
+        // [BS] Escape when DOM Module not installed
+        if (! class_exists('DOMDocument'))
+          return false;
+
         $dom = new DOMDocument();
         @$dom->loadHTML($image_node);
         $image = $dom->getElementsByTagName('img')->item(0);

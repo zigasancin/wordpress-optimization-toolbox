@@ -242,7 +242,7 @@ class WpShortPixelMediaLbraryAdapter {
         return $wpdb->get_results($queryPostMeta);        
     }
     
-    public static function countSizesNotExcluded($sizes, $exclude = false) {
+    public static function getSizesNotExcluded($sizes, $exclude = false) {
         $uniq = array();
         $exclude = is_array($exclude) ? $exclude : array(); //this is because it sometimes receives directly the setting which could be false
         foreach($sizes as $key => $val) {
@@ -254,8 +254,14 @@ class WpShortPixelMediaLbraryAdapter {
             if(is_array($file)) { $file = $file[0];} // HelpScout case 709692915
             $uniq[$file] = $key;
         }
-        return count($uniq);
+        return $uniq;
     }
+
+    public static function countSizesNotExcluded($sizes, $exclude = false)
+    {
+        return count(self::getSizesNotExcluded($sizes, $exclude));
+    }
+
 
     public static function cleanupFoundThumbs($itemHandler) {
         $meta = $itemHandler->getMeta();
@@ -287,11 +293,8 @@ class WpShortPixelMediaLbraryAdapter {
                     $thumbs[]= $th;
                 }
             }
-            if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX') || defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ){
+            if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ){
                 $suffixes = defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES') ? explode(',', SHORTPIXEL_CUSTOM_THUMB_SUFFIXES) : array();
-                if( defined('SHORTPIXEL_CUSTOM_THUMB_SUFFIX') ){
-                    $suffixes[] = SHORTPIXEL_CUSTOM_THUMB_SUFFIX;
-                }
                 foreach ($suffixes as $suffix){
                     $pattern = '/' . preg_quote($base, '/') . '-\d+x\d+'. $suffix . '\.'. $ext .'/';
                     foreach($thumbsCandidates as $th) {
