@@ -24,14 +24,14 @@ class WP_Web_App_Manifest {
 	 *
 	 * @var string
 	 */
-	const REST_NAMESPACE = 'app/v1';
+	const REST_NAMESPACE = 'wp/v2';
 
 	/**
 	 * The REST API route for the manifest request.
 	 *
 	 * @var string
 	 */
-	const REST_ROUTE = '/web-manifest';
+	const REST_ROUTE = '/web-app-manifest';
 
 	/**
 	 * The default manifest icon sizes.
@@ -59,9 +59,23 @@ class WP_Web_App_Manifest {
 	 * Mainly copied from Jetpack_PWA_Manifest::render_manifest_link().
 	 */
 	public function manifest_link_and_meta() {
+		$manifest = $this->get_manifest();
 		?>
 		<link rel="manifest" href="<?php echo esc_url( rest_url( self::REST_NAMESPACE . self::REST_ROUTE ) ); ?>">
-		<meta name="theme-color" content="<?php echo esc_attr( $this->get_theme_color() ); ?>">
+		<meta name="theme-color" content="<?php echo esc_attr( $manifest['theme_color'] ); ?>">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-touch-fullscreen" content="YES">
+		<?php
+		$icons = isset( $manifest['icons'] ) ? $manifest['icons'] : array();
+		usort( $icons, array( $this, 'sort_icons_callback' ) );
+		$icon = array_shift( $icons );
+		?>
+		<?php if ( ! empty( $icon ) ) : ?>
+			<link rel="apple-touch-startup-image" href="<?php echo esc_url( $icon['src'] ); ?>">
+		<?php endif; ?>
+		<meta name="apple-mobile-web-app-title" content="<?php echo esc_attr( $manifest['short_name'] ); ?>">
+		<meta name="application-name" content="<?php echo esc_attr( $manifest['short_name'] ); ?>">
 		<?php
 	}
 
@@ -69,24 +83,30 @@ class WP_Web_App_Manifest {
 	 * Gets the theme color for the manifest.
 	 *
 	 * Mainly copied from Jetpack_PWA_Helpers::get_theme_color().
-	 * First looks for the header background color in the AMP for WordPress plugin, if it's active.
 	 * This color displays on loading the app.
 	 *
 	 * @return string $theme_color The theme color for the manifest.json file, as a hex value.
 	 */
 	public function get_theme_color() {
-		if ( current_theme_supports( 'custom-background' ) ) {
-			$background_color = get_background_color(); // This returns a hex value without the leading #, or an empty string.
-			if ( $background_color ) {
-				$theme_color = "#{$background_color}";
+
+		// Check if the current theme supports theme-color and a color is defined.
+		if ( current_theme_supports( 'theme-color' ) ) {
+			$theme_color = get_theme_support( 'theme-color' );
+			if ( $theme_color ) {
+				return ( is_array( $theme_color ) ) ? array_shift( $theme_color ) : $theme_color;
 			}
 		}
 
-		if ( ! isset( $theme_color ) ) {
-			$theme_color = self::FALLBACK_THEME_COLOR;
+		// Check if the current theme supports custom-background and a color is defined.
+		if ( current_theme_supports( 'custom-background' ) ) {
+			$background_color = get_background_color(); // This returns a hex value without the leading #, or an empty string.
+			if ( $background_color ) {
+				return "#{$background_color}";
+			}
 		}
 
-		return $theme_color;
+		// Fallback color.
+		return self::FALLBACK_THEME_COLOR;
 	}
 
 	/**
@@ -96,7 +116,7 @@ class WP_Web_App_Manifest {
 	 */
 	public function get_manifest() {
 		$manifest = array(
-			'name'      => get_bloginfo( 'name' ),
+			'name'      => wp_kses_decode_entities( get_bloginfo( 'name' ) ),
 			'start_url' => get_home_url(),
 			'display'   => 'minimal-ui',
 			'dir'       => is_rtl() ? 'rtl' : 'ltr',
@@ -114,7 +134,7 @@ class WP_Web_App_Manifest {
 		 *
 		 * @link https://stackoverflow.com/questions/12646197/cut-the-string-to-be-80-characters-and-must-keep-the-words-without-cutting-th#answer-12646400
 		 */
-		preg_match( '/^.{0,12}(?= |$)/', get_bloginfo( 'name' ), $short_name_matches );
+		preg_match( '/^.{0,12}(?= |$)/', $manifest['name'], $short_name_matches );
 		if ( $short_name_matches ) {
 			$manifest['short_name'] = $short_name_matches[0];
 		}
@@ -125,13 +145,13 @@ class WP_Web_App_Manifest {
 			$manifest['theme_color']      = $theme_color;
 		}
 
-		$description = get_bloginfo( 'description' );
+		$description = wp_kses_decode_entities( get_bloginfo( 'description' ) );
 		if ( $description ) {
 			$manifest['description'] = $description;
 		}
 
 		$manifest_icons = $this->get_icons();
-		if ( $manifest_icons ) {
+		if ( ! empty( $manifest_icons ) ) {
 			$manifest['icons'] = $manifest_icons;
 		}
 
@@ -150,11 +170,15 @@ class WP_Web_App_Manifest {
 	 * Registers the rest route to get the manifest.
 	 */
 	public function register_manifest_rest_route() {
-		register_rest_route( self::REST_NAMESPACE, self::REST_ROUTE, array(
-			'methods'             => 'GET',
-			'callback'            => array( $this, 'get_manifest' ),
-			'permission_callback' => array( $this, 'rest_permission' ),
-		) );
+		register_rest_route(
+			self::REST_NAMESPACE,
+			self::REST_ROUTE,
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_manifest' ),
+				'permission_callback' => array( $this, 'rest_permission' ),
+			)
+		);
 	}
 
 	/**
@@ -178,12 +202,12 @@ class WP_Web_App_Manifest {
 	 *
 	 * Mainly copied from Jetpack_PWA_Manifest::build_icon_object() and Jetpack_PWA_Helpers::site_icon_url().
 	 *
-	 * @return array|null $icon_object An array of icons, or null if there's no site icon.
+	 * @return array $icon_object An array of icons, which may be empty.
 	 */
 	public function get_icons() {
 		$site_icon_id = get_option( 'site_icon' );
 		if ( ! $site_icon_id || ! function_exists( 'get_site_icon_url' ) ) {
-			return null;
+			return array();
 		}
 
 		$icons     = array();
@@ -196,5 +220,18 @@ class WP_Web_App_Manifest {
 			);
 		}
 		return $icons;
+	}
+
+	/**
+	 * Sort icon sizes.
+	 *
+	 * Used as a callback in usort(), called from the manifest_link_and_meta() method.
+	 *
+	 * @param array $a The 1st icon item in our comparison.
+	 * @param array $b The 2nd icon item in our comparison.
+	 * @return int
+	 */
+	public function sort_icons_callback( $a, $b ) {
+		return intval( strtok( $a['sizes'], 'x' ) ) - intval( strtok( $b['sizes'], 'x' ) );
 	}
 }
