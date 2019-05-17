@@ -1,10 +1,10 @@
 === ElasticPress ===
-Contributors: tlovett1, aaronholbrook, collinsinternet, ChrisWiegman, sc0ttkclark, dkotter, 10up
+Contributors: tlovett1, aaronholbrook, ChrisWiegman, sc0ttkclark, collinsinternet, dkotter, 10up
 Author URI: http://10up.com
 Plugin URI: https://github.com/10up/ElasticPress
 Tags: performance, slow, search, elasticsearch, fuzzy, facet, aggregation, searching, autosuggest, suggest, elastic, advanced search, woocommerce, related posts
 Requires at least: 3.7.1
-Tested up to: 5.0
+Tested up to: 5.2
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -30,6 +30,8 @@ __Autosuggest__: Suggest relevant content as text is entered into the search fie
 
 __Facets__: Suggest relevant content as text is entered into the search field.
 
+__Users__: Improve user search relevancy and query performance.
+
 Please refer to [Github](https://github.com/10up/ElasticPress) for detailed usage instructions and documentation.
 
 == Installation ==
@@ -39,6 +41,25 @@ Please refer to [Github](https://github.com/10up/ElasticPress) for detailed usag
 4. Enjoy!
 
 == Changelog ==
+
+= 3.0 (Requires re-index) =
+
+3.0 is a refactor of ElasticPress for modern coding standards (PHP 5.4 required) as well as the introduction to indexables. Indexables abstracts out content types so data types other than post can be indexed and searched. 3.0 includes user indexing and search (integration with WP_User_Query). User features require at least WordPress version 5.1.
+
+The refactor changes a lot of ElasticPress internals. The biggest change is the feature registration API has completely changed. Now, new features should extend the `ElasticPress\Feature` class rather than calling `ep_register_feature`. Older features should be backwards compatible.
+
+Other Features:
+* Elasticsearch language setting in admin
+
+Here are a list of filters/actions removed or changed:
+
+### Actions Removed:
+
+* `ep_feature_setup`
+
+### Filters changed:
+
+* `ep_post_sync_kill` - Removed `$post_args` argument.
 
 = 2.8.2 =
 
@@ -72,7 +93,6 @@ ElasticPress 2.8 provides some new enhancements and bug fixes.
 * Protected content: filtering of filtered post types.
 * Implemented --post-ids CLI option to index only specific posts. (Props [dotancohen](https://github.com/dotancohen))
 
-
 = 2.7.0 (Requires re-index) =
 
 ElasticPress 2.7 provides some new enhancements and bug fixes.
@@ -84,7 +104,6 @@ ElasticPress 2.7 provides some new enhancements and bug fixes.
 * Random WooCommerce ordering allowed.
 * Query only post IDs when indexing. (Props [elliott-stocks](https://github.com/elliott-stocks))
 * Better error notices. (Props [petenelson](https://github.com/petenelson))
-
 
 = 2.6.1 =
 
