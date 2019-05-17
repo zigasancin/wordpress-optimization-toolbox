@@ -37,7 +37,38 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 		if (isset($this->data['optimization_table']) && '' != $this->data['optimization_table']) {
 			$table = $this->optimizer->get_table($this->data['optimization_table']);
 
-			if (false !== $table) $this->optimize_table($table, $force);
+			if (false !== $table) {
+				$this->optimize_table($table, $force);
+
+				$wp_optimize = WP_Optimize();
+				$tablestatus = $wp_optimize->get_db_info()->get_table_status($table->Name, true);
+
+				$is_optimizable = $wp_optimize->get_db_info()->is_table_optimizable($table->Name);
+
+				$tableinfo = array(
+					'rows' => number_format_i18n($tablestatus->Rows),
+					'data_size' => $wp_optimize->format_size($tablestatus->Data_length),
+					'index_size' => $wp_optimize->format_size($tablestatus->Index_length),
+					'overhead' => $is_optimizable ? $wp_optimize->format_size($tablestatus->Data_free) : '-',
+					'type' => $table->Engine,
+					'is_optimizable' => $is_optimizable,
+				);
+
+				$this->register_meta('tableinfo', $tableinfo);
+
+				$tables = $this->optimizer->get_tables(true);
+
+				$overhead_usage = 0;
+
+				foreach ($tables as $table) {
+					if ($table->is_optimizable) {
+						$overhead_usage += $table->Data_free;
+					}
+				}
+
+				$this->register_meta('overhead', $overhead_usage);
+				$this->register_meta('overhead_formatted', $wp_optimize->format_size($overhead_usage));
+			}
 		} else {
 			$tables = $this->optimizer->get_tables();
 

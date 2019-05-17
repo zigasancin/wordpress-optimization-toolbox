@@ -1,6 +1,6 @@
 <?php
 /**
- * The base class which must e extended to use the tasks library
+ * The base class which must be extended to use the tasks library
  */
 
 if (!defined('ABSPATH')) die('Access denied.');
@@ -11,7 +11,7 @@ if (!class_exists('Updraft_Task_1_0')) :
 
 if (!class_exists('Updraft_Task_Options')) require_once('class-updraft-task-options.php');
 if (!class_exists('Updraft_Task_Meta')) require_once('class-updraft-task-meta.php');
-if (!class_exists('Updraft_Semaphore_2_0')) require_once(__DIR__.'/../updraft-semaphore/class-updraft-semaphore.php');
+if (!class_exists('Updraft_Semaphore_2_0')) require_once(dirname(__FILE__).'/../updraft-semaphore/class-updraft-semaphore.php');
 
 abstract class Updraft_Task_1_0 {
 

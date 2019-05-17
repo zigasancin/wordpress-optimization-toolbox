@@ -39,11 +39,11 @@ $custom = 100 == $smush_options['image_quality'] || 90 == $smush_options['image_
 		<div class="compression_options">
 			<h3><?php _e('Global options', 'wp-optimize');?></h3>
 			<input type="radio" id="enable_lossy_compression" name="compression_level" <?php checked($smush_options['image_quality'], 90); ?> class="smush-options compression_level"> 
-			<label for="chk_thumbnail"><?php _e('Prioritise maximum compression', 'wp-optimize');?></label>
+			<label for="chk_thumbnail"><?php _e('Prioritize maximum compression', 'wp-optimize');?></label>
 			<b data-tooltip="<?php _e('Uses lossy compression to ensure maximum savings per image, the resulting images are of a slightly lower quality', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
 			<br>						
 			<input type="radio" id="enable_lossless_compression" <?php checked($smush_options['image_quality'], 100); ?>name="compression_level" class="smush-options compression_level"> 
-			<label for="chk_thumbnail"><?php _e('Prioritise retention of detail', 'wp-optimize');?></label>
+			<label for="chk_thumbnail"><?php _e('Prioritize retention of detail', 'wp-optimize');?></label>
 			<b data-tooltip="<?php _e('Uses lossless compression, which results in much better image quality but lower filesize savings per image', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
 			<br>
 			<input id="enable_custom_compression" <?php checked($custom); ?> type="radio" name="compression_level" class="smush-options compression_level"> 

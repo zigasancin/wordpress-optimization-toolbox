@@ -1030,13 +1030,18 @@ var WP_Optimize = function (send_command) {
 
 	// Handle single optimization click.
 	$('#wpoptimize_table_list').on('click', '.run-single-table-optimization', function() {
-		var take_backup_checkbox = $('#enable-auto-backup-1');
+		var take_backup_checkbox = $('#enable-auto-backup-1'),
+			button = $(this);
 
 		// check if backup checkbox is checked for db tables
 		if (take_backup_checkbox.is(':checked')) {
-			take_a_backup_with_updraftplus(run_single_table_optimization($(this)));
+			take_a_backup_with_updraftplus(
+				function() {
+					run_single_table_optimization(button);
+				}
+			);
 		} else {
-			run_single_table_optimization($(this));
+			run_single_table_optimization(button);
 		}
 	});
 
@@ -1065,7 +1070,19 @@ var WP_Optimize = function (send_command) {
 
 		spinner.removeClass('visibility-hidden');
 
-		send_command('do_optimization', { optimization_id: 'optimizetables', data: data }, function () {
+		send_command('do_optimization', { optimization_id: 'optimizetables', data: data }, function (response) {
+
+			if (response.result.meta.tableinfo) {
+				var row = btn.closest('tr'),
+					meta = response.result.meta,
+					tableinfo = meta.tableinfo;
+
+				update_single_table_information(row, tableinfo);
+
+				// update total overhead.
+				$('#wpoptimize_table_list > tbody:last th:eq(6)').html(['<span style="color:', meta.overhead > 0 ? '#0000FF' : '#004600', '">', meta.overhead_formatted,'</span>'].join(''));
+			}
+
 			btn.prop('disabled', false);
 			spinner.addClass('visibility-hidden');
 			action_done_icon.show().removeClass('visibility-hidden').delay(2500).fadeOut('fast', function() {
@@ -1081,6 +1098,30 @@ var WP_Optimize = function (send_command) {
 
 	// Update single table optimization buttons state on load.
 	update_single_table_optimization_buttons(single_table_optimization_force.is(':checked'));
+
+	/**
+	 * Update information about single table in the database tables list.
+	 *
+	 * @param {Object} row		 jQuery object for TR html tag.
+	 * @param {Object} tableinfo
+	 *
+	 * @return {void}
+	 */
+	function update_single_table_information(row, tableinfo) {
+
+		// update table information in row.
+		$('td:eq(2)', row).text(tableinfo.rows);
+		$('td:eq(3)', row).text(tableinfo.data_size);
+		$('td:eq(4)', row).text(tableinfo.index_size);
+		$('td:eq(5)', row).text(tableinfo.type);
+
+		if (tableinfo.is_optimizable) {
+			$('td:eq(6)', row).html(['<span style="color:', tableinfo.overhead > 0 ? '#0000FF' : '#004600', '">', tableinfo.overhead,'</span>'].join(''));
+		} else {
+			$('td:eq(6)', row).html('<span color="#0000FF">-</span>');
+		}
+
+	}
 
 	/**
 	 * Update single table optimization buttons state depends on force_optimization value.
@@ -1325,17 +1366,7 @@ var WP_Optimize = function (send_command) {
 				spinner.addClass('visibility-hidden');
 				action_done_icon.show().removeClass('visibility-hidden');
 
-				// update table information in row.
-				$('td:eq(2)', row).text(tableinfo.rows);
-				$('td:eq(3)', row).text(tableinfo.data_size);
-				$('td:eq(4)', row).text(tableinfo.index_size);
-				$('td:eq(5)', row).text(tableinfo.type);
-
-				if (tableinfo.is_optimizable) {
-					$('td:eq(6)', row).html(['<span color="', tableinfo.overhead > 0 ? '#0000FF' : '#004600', '">', tableinfo.overhead,'</span>'].join(''));
-				} else {
-					$('td:eq(6)', row).html('<span color="#0000FF">-</span>');
-				}
+				update_single_table_information(row, tableinfo);
 
 				// keep visible results from previous operation for one second and show optimize button if possible.
 				setTimeout(function() {

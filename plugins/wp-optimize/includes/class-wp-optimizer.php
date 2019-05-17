@@ -261,14 +261,16 @@ class WP_Optimizer {
 	/**
 	 * Returns information about database tables.
 	 *
+	 * @param bool $update refresh or no cached data
+	 *
 	 * @return mixed
 	 */
-	public function get_tables() {
+	public function get_tables($update = false) {
 		static $tables_info = null;
 
-		if (null !== $tables_info) return $tables_info;
+		if (false === $update && null !== $tables_info) return $tables_info;
 
-		$table_status = WP_Optimize()->get_db_info()->get_show_table_status();
+		$table_status = WP_Optimize()->get_db_info()->get_show_table_status($update);
 
 		// Filter on the site's DB prefix (was not done in releases up to 1.9.1).
 		$table_prefix = $this->get_table_prefix();

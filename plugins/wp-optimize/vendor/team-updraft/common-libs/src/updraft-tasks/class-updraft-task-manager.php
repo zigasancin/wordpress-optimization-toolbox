@@ -26,7 +26,7 @@ class Updraft_Task_Manager_1_0 {
 
 		if (!class_exists('Updraft_Task_1_0')) require_once('class-updraft-task.php');
 		if (!class_exists('Updraft_Task_Manager_Commands_1_0')) require_once('class-updraft-task-manager-commands.php');
-		if (!class_exists('Updraft_Semaphore_2_0')) require_once(__DIR__.'/../updraft-semaphore/class-updraft-semaphore.php');
+		if (!class_exists('Updraft_Semaphore_2_0')) require_once(dirname(__FILE__).'/../updraft-semaphore/class-updraft-semaphore.php');
 
 		$this->commands = new Updraft_Task_Manager_Commands_1_0($this);
 

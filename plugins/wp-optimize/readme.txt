@@ -3,8 +3,8 @@ Contributors: DavidAnderson, ruhanirabin, DNutbourne, aporter, snightingale, lum
 Donate link: https://david.dw-perspective.org.uk/donate
 Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
 Requires at least: 3.8
-Tested up to: 5.1
-Stable tag: 2.3.0
+Tested up to: 5.2
+Stable tag: 2.3.3
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -143,6 +143,22 @@ Please check your database for corrupted tables. That can happen, usually your w
 4. Settings
 
 == Changelog ==
+
+= 2.3.3 - 17/Apr/2019 =
+
+* FIX: Revert faulty change to the default settings page in 2.3.2, which prevented optimization buttons working
+
+= 2.3.2 - 17/Apr/2019 =
+
+* FIX: Non-ASCII filenames could get mangled in the image optimization preview, resulting in images not shown (and WP 404 generation on the back-end).
+* FIX: Optimizing a table now runs correctly after automatic pre-optimize backup
+* TWEAK: Changed the default settings page from 'Settings' to 'Database'
+
+= 2.3.1 - 16/Apr/2019 =
+
+* FIX: Fix a code path that could cause a fatal error on PHP 5.2
+* TWEAK: Optimizing a table should then refresh the information in the UI shown for it
+* TWEAK: Use an image compression logfile path inside the uploads hierarchy, with unpredictable salted element
 
 = 2.3.0 - 12/Apr/2019 =
 
@@ -495,4 +511,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.3.0 : New feature: image compression, plus other tweaks and fixes. A recommended update for all.
+* 2.3.3 : New feature in 2.3: image compression, plus other tweaks and fixes. 2.3.3 fixes a regression in 2.3.2. A recommended update for all.

@@ -153,6 +153,10 @@ msgstr ""
 msgid "View Image"
 msgstr ""
 
+#: src/includes/class-updraft-smush-manager.php:461
+msgid "Compress Image"
+msgstr ""
+
 #: src/includes/class-updraft-smush-task.php:189
 msgid "The file was compressed from %s to %s saving %s percent using WP-Optimize"
 msgstr ""
@@ -229,23 +233,23 @@ msgstr ""
 msgid "No such optimization"
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:362, src/includes/wp-optimize-database-information.php:409, src/includes/wp-optimize-database-information.php:457, src/templates/database/tables-body.php:34
+#: src/includes/class-wp-optimizer.php:364, src/includes/wp-optimize-database-information.php:408, src/includes/wp-optimize-database-information.php:456, src/templates/database/tables-body.php:34
 msgid "WordPress core"
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:519
+#: src/includes/class-wp-optimizer.php:521
 msgid "Comments have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:522
+#: src/includes/class-wp-optimizer.php:524
 msgid "Comments have now been enabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:529
+#: src/includes/class-wp-optimizer.php:531
 msgid "Trackbacks have now been disabled on all current and previously published posts."
 msgstr ""
 
-#: src/includes/class-wp-optimizer.php:532
+#: src/includes/class-wp-optimizer.php:534
 msgid "Trackbacks have now been enabled on all current and previously published posts."
 msgstr ""
 
@@ -463,31 +467,31 @@ msgstr ""
 msgid "Remove unused tags"
 msgstr ""
 
-#: src/optimizations/optimizetables.php:70
+#: src/optimizations/optimizetables.php:101
 msgid "Optimizing Table:"
 msgstr ""
 
-#: src/optimizations/optimizetables.php:85
+#: src/optimizations/optimizetables.php:116
 msgid "Total gain:"
 msgstr ""
 
-#: src/optimizations/optimizetables.php:93
+#: src/optimizations/optimizetables.php:124
 msgid "Other tables will be optimized (%s)."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:98
+#: src/optimizations/optimizetables.php:129
 msgid "Optimize InnoDB tables anyway."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:98
+#: src/optimizations/optimizetables.php:129
 msgid "Warning: you should read the FAQ on the risks of this operation first."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:101
+#: src/optimizations/optimizetables.php:132
 msgid "Tables will be optimized (%s)."
 msgstr ""
 
-#: src/optimizations/optimizetables.php:106, src/optimizations/optimizetables.php:110
+#: src/optimizations/optimizetables.php:137, src/optimizations/optimizetables.php:141
 msgid "Optimize database tables"
 msgstr ""
 
@@ -786,7 +790,7 @@ msgid "Restore original"
 msgstr ""
 
 #: src/templates/admin-metabox-smush.php:14, src/templates/images/smush.php:42
-msgid "Prioritise maximum compression"
+msgid "Prioritize maximum compression"
 msgstr ""
 
 #: src/templates/admin-metabox-smush.php:15
@@ -794,7 +798,7 @@ msgid "Potentially uses lossy compression to ensure maximum savings per image, t
 msgstr ""
 
 #: src/templates/admin-metabox-smush.php:18, src/templates/images/smush.php:46
-msgid "Prioritise retention of detail"
+msgid "Prioritize retention of detail"
 msgstr ""
 
 #: src/templates/admin-metabox-smush.php:19, src/templates/images/smush.php:47

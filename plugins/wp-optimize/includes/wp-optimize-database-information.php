@@ -107,8 +107,7 @@ class WP_Optimize_Database_Information {
 	/**
 	 * Returns result for query SHOW TABLE STATUS.
 	 *
-	 * @param bool $update - refresh stored values.
-	 *
+	 * @param bool $update refresh or no cached data
 	 * @return array
 	 */
 	public function get_show_table_status($update = false) {

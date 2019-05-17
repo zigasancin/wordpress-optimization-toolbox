@@ -11,11 +11,11 @@
 	</div>
 	<div class='wpo_smush_single_image compression_level' <?php echo $smush_display; ?>>
 		<input type="radio" id="enable_lossy_compression" name="compression_level" class="smush-options compression_level"> 
-		<label for="chk_thumbnail"><?php _e('Prioritise maximum compression', 'wp-optimize');?></label>
+		<label for="chk_thumbnail"><?php _e('Prioritize maximum compression', 'wp-optimize');?></label>
 		<b data-tooltip="<?php _e('Potentially uses lossy compression to ensure maximum savings per image, the resulting images are of a slightly lower quality', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
 		<br>						
 		<input type="radio" id="enable_lossless_compression" checked="checked" name="compression_level" class="smush-options compression_level"> 
-		<label for="chk_thumbnail"><?php _e('Prioritise retention of detail', 'wp-optimize');?></label>
+		<label for="chk_thumbnail"><?php _e('Prioritize retention of detail', 'wp-optimize');?></label>
 		<b data-tooltip="<?php _e('Uses lossless compression, which results in much better image quality but lower filesize savings per image', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
 		<br>
 		<input id="enable_custom_compression" type="radio" name="compression_level" class="smush-options compression_level"> 
