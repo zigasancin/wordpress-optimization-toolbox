@@ -10,8 +10,8 @@ namespace ElasticPress\Indexable\Post;
 
 use ElasticPress\Indexable as Indexable;
 use ElasticPress\Elasticsearch as Elasticsearch;
-use ElasticPress\Indexables as Indexables;
 use \WP_Query as WP_Query;
+use \WP_User as WP_User;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -1184,8 +1184,8 @@ class Post extends Indexable {
 	 * @since 1.1
 	 * @access protected
 	 *
-	 * @param string  $orderbys Alias or path for the field to order by.
-	 * @param string  $default_order Default order direction
+	 * @param string $orderbys Alias or path for the field to order by.
+	 * @param string $default_order Default order direction
 	 * @param  array  $args Query args
 	 * @return array
 	 */
