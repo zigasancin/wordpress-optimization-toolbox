@@ -12,13 +12,38 @@
 class AMP_HTTP {
 
 	/**
+	 * Query var which is submitted with a form which had an action attribute which was automatically converted into action-xhr.
+	 *
+	 * @see \AMP_Form_Sanitizer::sanitize()
+	 * @var string
+	 */
+	const ACTION_XHR_CONVERTED_QUERY_VAR = '_wp_amp_action_xhr_converted';
+
+	/**
 	 * Headers sent (or attempted to be sent).
+	 *
+	 * This is used primarily for the benefit of unit testing. Otherwise, `headers_list()` should be used.
 	 *
 	 * @since 1.0
 	 * @see AMP_HTTP::send_header()
 	 * @var array[]
 	 */
 	public static $headers_sent = array();
+
+	/**
+	 * Whether Server-Timing headers are sent.
+	 *
+	 * By default this is false to prevent breaking some web servers with an unexpected number of response headers. To
+	 * enable in `WP_DEBUG` mode, consider the following plugin code:
+	 *
+	 *     add_action( 'amp_init', function () {
+	 *         AMP_HTTP::$server_timing = ( ( defined( 'WP_DEBUG' ) && WP_DEBUG ) || current_user_can( 'manage_options' ) );
+	 *     } );
+	 *
+	 * @link https://gist.github.com/westonruter/053f8f47c21df51f1a081fc41b47f547
+	 * @var bool
+	 */
+	public static $server_timing = false;
 
 	/**
 	 * AMP-specific query vars that were purged.
@@ -83,7 +108,7 @@ class AMP_HTTP {
 	 * @return bool Return value of send_header call. If WP_DEBUG is not enabled or admin user (who can manage_options) is not logged-in, this will always return false.
 	 */
 	public static function send_server_timing( $name, $duration = null, $description = null ) {
-		if ( ! WP_DEBUG && ! current_user_can( 'manage_options' ) ) {
+		if ( ! self::$server_timing ) {
 			return false;
 		}
 		$value = $name;
@@ -115,7 +140,7 @@ class AMP_HTTP {
 	public static function purge_amp_query_vars() {
 		$query_vars = array(
 			'__amp_source_origin',
-			'_wp_amp_action_xhr_converted',
+			self::ACTION_XHR_CONVERTED_QUERY_VAR,
 			'amp_latest_update_time',
 			'amp_last_check_time',
 		);
@@ -287,7 +312,7 @@ class AMP_HTTP {
 	 */
 	public static function handle_xhr_request() {
 		$is_amp_xhr = (
-			! empty( self::$purged_amp_query_vars['_wp_amp_action_xhr_converted'] )
+			! empty( self::$purged_amp_query_vars[ self::ACTION_XHR_CONVERTED_QUERY_VAR ] )
 			&&
 			( ! empty( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] )
 		);
@@ -302,12 +327,11 @@ class AMP_HTTP {
 		add_filter( 'comment_post_redirect', array( __CLASS__, 'filter_comment_post_redirect' ), PHP_INT_MAX, 2 );
 
 		// Add die handler for AMP error display, most likely due to problem with comment.
-		add_filter(
-			'wp_die_handler',
-			function () {
-				return array( __CLASS__, 'handle_wp_die' );
-			}
-		);
+		$handle_wp_die = function () {
+			return array( __CLASS__, 'handle_wp_die' );
+		};
+		add_filter( 'wp_die_json_handler', $handle_wp_die );
+		add_filter( 'wp_die_handler', $handle_wp_die ); // Needed for WP<5.1.
 	}
 
 	/**
@@ -350,7 +374,13 @@ class AMP_HTTP {
 		self::send_header( 'AMP-Redirect-To', $absolute_location );
 		self::send_header( 'Access-Control-Expose-Headers', 'AMP-Redirect-To', array( 'replace' => false ) );
 
-		wp_send_json_success();
+		wp_send_json(
+			array(
+				'message'     => __( 'Redirecting…', 'amp' ),
+				'redirecting' => true, // Make sure that the submit-success doesn't get styled as success since redirection _could_ be to error page.
+			),
+			200
+		);
 	}
 
 	/**
@@ -371,8 +401,10 @@ class AMP_HTTP {
 	 *
 	 *     @type int $response The HTTP response code. Default 200 for Ajax requests, 500 otherwise.
 	 * }
+	 * @global string $pagenow
 	 */
 	public static function handle_wp_die( $error, $title = '', $args = array() ) {
+		global $pagenow;
 		if ( is_int( $title ) ) {
 			$status_code = $title;
 		} elseif ( is_int( $args ) ) {
@@ -382,7 +414,20 @@ class AMP_HTTP {
 		} else {
 			$status_code = 500;
 		}
-		status_header( $status_code );
+
+		/*
+		 * Handle apparent defect in core where invalid comment form submissions return with a 200 status code.
+		 * Successful requests to wp-comments-post.php should always end up doing a redirect after applying the
+		 * comment_post_redirect filter, and as such the \AMP_HTTP::filter_comment_post_redirect() method will
+		 * ensure that redirect works in AMP. When there is no comment_post_redirect then the alternative is a wp_die()
+		 * scenario which should always be considered an error. This workaround is important because otherwise an error
+		 * case will get rendered unexpectedly in the div[submit-success] element, when it should be rendered in the
+		 * div[submit-error] element. For a fix to the core defect which will make this unnecessary,
+		 * see <https://core.trac.wordpress.org/ticket/47393>.
+		 */
+		if ( 200 === $status_code && isset( $pagenow ) && 'wp-comments-post.php' === $pagenow ) {
+			$status_code = 400;
+		}
 
 		if ( is_wp_error( $error ) ) {
 			$error = $error->get_error_message();
@@ -391,8 +436,9 @@ class AMP_HTTP {
 		// Message will be shown in template defined by AMP_Theme_Support::amend_comment_form().
 		wp_send_json(
 			array(
-				'error' => amp_wp_kses_mustache( $error ),
-			)
+				'message' => amp_wp_kses_mustache( $error ),
+			),
+			$status_code
 		);
 	}
 
@@ -440,9 +486,29 @@ class AMP_HTTP {
 		wp_send_json(
 			array(
 				'message' => amp_wp_kses_mustache( $message ),
-			)
+			),
+			200
 		);
 
 		return null;
+	}
+
+	/**
+	 * Get the Content-Type for the response.
+	 *
+	 * @since 1.2
+	 *
+	 * @return string Content type.
+	 */
+	public static function get_response_content_type() {
+		$content_type = ini_get( 'default_mimetype' );
+		foreach ( headers_list() as $header ) {
+			list( $name, $value ) = explode( ':', $header, 2 );
+			if ( 'content-type' === strtolower( $name ) ) {
+				$content_type = trim( $value );
+				break;
+			}
+		}
+		return $content_type;
 	}
 }
