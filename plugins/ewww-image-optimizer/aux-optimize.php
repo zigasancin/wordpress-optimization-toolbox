@@ -416,7 +416,7 @@ function ewww_image_optimizer_get_queued_attachments( $gallery, $limit = 100 ) {
 	$selected_ids = $wpdb->get_col( $wpdb->prepare( "SELECT attachment_id FROM $wpdb->ewwwio_queue WHERE gallery = %s AND scanned = 1 LIMIT %d", $gallery, $limit ) );
 	if ( empty( $selected_ids ) ) {
 		ewwwio_debug_message( 'no attachments found in queue' );
-		return array();
+		return array( 0 );
 	}
 	array_walk( $selected_ids, 'intval' );
 	ewwwio_debug_message( 'selected items: ' . count( $selected_ids ) );
@@ -803,6 +803,9 @@ function ewww_image_optimizer_aux_images_script( $hook = '' ) {
 		}
 		if ( defined( 'WPS_CORE_PLUGINS' ) ) {
 			ewww_image_optimizer_image_scan( WP_CONTENT_DIR . '/wps-pro-content', $started );
+		}
+		if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_lazy_load' ) ) {
+			ewww_image_optimizer_image_scan( WP_CONTENT_DIR . '/ewww/lazy/', $started );
 		}
 		if ( is_plugin_active( 'ml-slider/ml-slider.php' ) || is_plugin_active_for_network( 'ml-slider/ml-slider.php' ) ) {
 			global $wpdb;

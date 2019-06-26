@@ -2,10 +2,10 @@
 Contributors: nosilver4u
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MKMQKCBFFG3WW
 Tags: image, compress, resize, optimize, optimization, lossless, lossy, seo, webp, wp-cli, scale, tinypng, tinyjpg
-Requires at least: 4.9
+Requires at least: 5.0
 Tested up to: 5.2
 Requires PHP: 5.6
-Stable tag: 4.7.4
+Stable tag: 4.8.0
 License: GPLv3
 
 Speed up your website and improve your visitors' experience by automatically compressing and resizing images and PDFs. Boost SEO and improve sales.
@@ -173,6 +173,24 @@ http://developer.yahoo.com/performance/rules.html#opt_images
 
 * Feature requests can be viewed and submitted at https://github.com/nosilver4u/ewww-image-optimizer/labels/enhancement
 * If you would like to help translate this plugin in your language, get started here: https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/
+
+= 4.8.0 =
+* added: ability to resize images outside media library via scheduled or bulk optimization
+* added: compatibility with WP Stateless for GSC
+* added: use ewww_image_optimizer_autoconvert_threshold filter to modify conversion threshold (default of 300kb)
+* changed: Lazy Load without ExactDN uses blank PNG placeholders for better srcset auto-sizing
+* changed: API backups taken prior to resizing/scaling rather than just before compression
+* changed: ExactDN + Lazy Load uses scaling rather than cropping by default
+* changed: prevent NextGEN backup images from being optimized
+* fixed: bulk optimizer not resuming when non-media library images remain in queue
+* fixed: notices when a user-selected admin theme is unavailable
+* fixed: privacy policy function triggers notices in WP-CLI
+* fixed: background-image attributes with single-quotes now supported by ExactDN, Lazy Load, and JS WebP
+* fixed: background-image attributes getting extra arguments with lazy load
+* fixed: On multi-site installs, site admins could add folders to optimize outside of the uploads folder
+* fixed: LQIP with SVG files results in duplicate requests
+* fixed: image optimization results in media library report file missing when using WP Stateless
+* fixed: plugin checking for 'nice' on Windows servers
 
 = 4.7.4 =
 * fixed: ExactDN modifies Autoptimize CDN setting even when Include All Resources is disabled
