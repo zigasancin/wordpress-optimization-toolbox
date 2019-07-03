@@ -6,6 +6,8 @@
  * @package Jetpack
  */
 
+use Automattic\Jetpack\Constants;
+
 /**
  * Wrapper function to safely register a gutenberg block type
  *
@@ -220,7 +222,7 @@ class Jetpack_Gutenberg {
 		 * @param boolean
 		 */
 		if ( apply_filters( 'jetpack_load_beta_blocks', false ) ) {
-			Jetpack_Constants::set_constant( 'JETPACK_BETA_BLOCKS', true );
+			Constants::set_constant( 'JETPACK_BETA_BLOCKS', true );
 		}
 
 		/**
@@ -318,7 +320,7 @@ class Jetpack_Gutenberg {
 
 		$preset_extensions = isset( $preset_extensions_manifest->production ) ? (array) $preset_extensions_manifest->production : array();
 
-		if ( Jetpack_Constants::is_true( 'JETPACK_BETA_BLOCKS' ) ) {
+		if ( Constants::is_true( 'JETPACK_BETA_BLOCKS' ) ) {
 			$beta_extensions = isset( $preset_extensions_manifest->beta ) ? (array) $preset_extensions_manifest->beta : array();
 			return array_unique( array_merge( $preset_extensions, $beta_extensions ) );
 		}
@@ -493,11 +495,12 @@ class Jetpack_Gutenberg {
 		$script_deps_path     = JETPACK__PLUGIN_DIR . self::get_blocks_directory() . $type . '/view.deps.json';
 
 		$script_dependencies = file_exists( $script_deps_path )
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			? json_decode( file_get_contents( $script_deps_path ) )
 			: array();
 		$script_dependencies = array_merge( $script_dependencies, $dependencies, array( 'wp-polyfill' ) );
 
-		if ( self::block_has_asset( $script_relative_path ) ) {
+		if ( ( ! class_exists( 'Jetpack_AMP_Support' ) || ! Jetpack_AMP_Support::is_amp_request() ) && self::block_has_asset( $script_relative_path ) ) {
 			$script_version = self::get_asset_version( $script_relative_path );
 			$view_script    = plugins_url( $script_relative_path, JETPACK__PLUGIN_FILE );
 			wp_enqueue_script( 'jetpack-block-' . $type, $view_script, $script_dependencies, $script_version, false );
@@ -547,7 +550,7 @@ class Jetpack_Gutenberg {
 		}
 
 		$rtl        = is_rtl() ? '.rtl' : '';
-		$beta       = Jetpack_Constants::is_true( 'JETPACK_BETA_BLOCKS' ) ? '-beta' : '';
+		$beta       = Constants::is_true( 'JETPACK_BETA_BLOCKS' ) ? '-beta' : '';
 		$blocks_dir = self::get_blocks_directory();
 
 		$editor_script = plugins_url( "{$blocks_dir}editor{$beta}.js", JETPACK__PLUGIN_FILE );
@@ -555,9 +558,10 @@ class Jetpack_Gutenberg {
 
 		$editor_deps_path = JETPACK__PLUGIN_DIR . $blocks_dir . "editor{$beta}.deps.json";
 		$editor_deps      = file_exists( $editor_deps_path )
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			? json_decode( file_get_contents( $editor_deps_path ) )
 			: array();
-		$editor_deps[]    = 'wp-polyfill';
+		$editor_deps[] = 'wp-polyfill';
 
 		$version = Jetpack::is_development_version() && file_exists( JETPACK__PLUGIN_DIR . $blocks_dir . 'editor.js' )
 			? filemtime( JETPACK__PLUGIN_DIR . $blocks_dir . 'editor.js' )

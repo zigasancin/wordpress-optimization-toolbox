@@ -5,6 +5,11 @@
  * @package jetpack
  */
 
+use Automattic\Jetpack\Constants;
+use Automattic\Jetpack\Sync\Modules;
+use Automattic\Jetpack\Sync\Functions;
+use Automattic\Jetpack\Sync\Sender;
+
 /**
  * Class Jetpack_Debug_Data
  *
@@ -169,25 +174,20 @@ class Jetpack_Debug_Data {
 		 *
 		 * If a token does not contain a period, then it is malformed and we report it as such.
 		 */
-		$user_id     = get_current_user_id();
-		$user_tokens = Jetpack_Options::get_option( 'user_tokens' );
-		$blog_token  = Jetpack_Options::get_option( 'blog_token' );
-		$user_token  = null;
-		if ( is_array( $user_tokens ) && array_key_exists( $user_id, $user_tokens ) ) {
-			$user_token = $user_tokens[ $user_id ];
-		}
-		unset( $user_tokens );
+		$user_id    = get_current_user_id();
+		$blog_token = Jetpack_Data::get_access_token();
+		$user_token = Jetpack_Data::get_access_token( $user_id );
 
 		$tokenset = '';
 		if ( $blog_token ) {
 			$tokenset = 'Blog ';
-			$blog_key = substr( $blog_token, 0, strpos( $blog_token, '.' ) );
+			$blog_key = substr( $blog_token->secret, 0, strpos( $blog_token->secret, '.' ) );
 			// Intentionally not translated since this is helpful when sent to Happiness.
 			$blog_key = ( $blog_key ) ? $blog_key : 'Potentially Malformed Token.';
 		}
 		if ( $user_token ) {
 			$tokenset .= 'User';
-			$user_key  = substr( $user_token, 0, strpos( $user_token, '.' ) );
+			$user_key  = substr( $user_token->secret, 0, strpos( $user_token->secret, '.' ) );
 			// Intentionally not translated since this is helpful when sent to Happiness.
 			$user_key = ( $user_key ) ? $user_key : 'Potentially Malformed Token.';
 		}
@@ -206,12 +206,12 @@ class Jetpack_Debug_Data {
 			'private' => false,
 		);
 		$debug_info['blog_token']   = array(
-			'label'   => 'Blog Token Key',
+			'label'   => 'Blog Public Key',
 			'value'   => ( $blog_token ) ? $blog_key : 'Not set.',
 			'private' => false,
 		);
 		$debug_info['user_token']   = array(
-			'label'   => 'User Token Key',
+			'label'   => 'User Public Key',
 			'value'   => ( $user_token ) ? $user_key : 'Not set.',
 			'private' => false,
 		);
@@ -271,14 +271,7 @@ class Jetpack_Debug_Data {
 		);
 
 		/** Sync Debug Information */
-		/** Load Sync modules */
-		require_once JETPACK__PLUGIN_DIR . 'sync/class.jetpack-sync-modules.php';
-		/** Load Sync sender */
-		require_once JETPACK__PLUGIN_DIR . 'sync/class.jetpack-sync-sender.php';
-		/** Load Sync functions */
-		require_once JETPACK__PLUGIN_DIR . 'sync/class.jetpack-sync-functions.php';
-
-		$sync_module = Jetpack_Sync_Modules::get_module( 'full-sync' );
+		$sync_module = Modules::get_module( 'full-sync' );
 		if ( $sync_module ) {
 			$sync_statuses              = $sync_module->get_status();
 			$human_readable_sync_status = array();
@@ -294,7 +287,7 @@ class Jetpack_Debug_Data {
 			);
 		}
 
-		$queue = Jetpack_Sync_Sender::get_instance()->get_sync_queue();
+		$queue = Sender::get_instance()->get_sync_queue();
 
 		$debug_info['sync_size'] = array(
 			'label'   => 'Sync Queue Size',
@@ -307,7 +300,7 @@ class Jetpack_Debug_Data {
 			'private' => false,
 		);
 
-		$full_sync_queue = Jetpack_Sync_Sender::get_instance()->get_full_sync_queue();
+		$full_sync_queue = Sender::get_instance()->get_full_sync_queue();
 
 		$debug_info['full_sync_size'] = array(
 			'label'   => 'Full Sync Queue Size',
@@ -326,10 +319,10 @@ class Jetpack_Debug_Data {
 		 * Must follow sync debug since it depends on sync functionality.
 		 */
 		$idc_urls = array(
-			'home'       => Jetpack_Sync_Functions::home_url(),
-			'siteurl'    => Jetpack_Sync_Functions::site_url(),
-			'WP_HOME'    => Jetpack_Constants::is_defined( 'WP_HOME' ) ? Jetpack_Constants::get_constant( 'WP_HOME' ) : '',
-			'WP_SITEURL' => Jetpack_Constants::is_defined( 'WP_SITEURL' ) ? Jetpack_Constants::get_constant( 'WP_SITEURL' ) : '',
+			'home'       => Functions::home_url(),
+			'siteurl'    => Functions::site_url(),
+			'WP_HOME'    => Constants::is_defined( 'WP_HOME' ) ? Constants::get_constant( 'WP_HOME' ) : '',
+			'WP_SITEURL' => Constants::is_defined( 'WP_SITEURL' ) ? Constants::get_constant( 'WP_SITEURL' ) : '',
 		);
 
 		$debug_info['idc_urls']         = array(

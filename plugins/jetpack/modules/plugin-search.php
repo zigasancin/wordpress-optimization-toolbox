@@ -1,4 +1,7 @@
 <?php
+
+use Automattic\Jetpack\Tracking;
+
 /**
  * Disable direct access and execution.
  */
@@ -34,7 +37,6 @@ class Jetpack_Plugin_Search {
 		static $instance = null;
 
 		if ( ! $instance ) {
-			jetpack_require_lib( 'tracks/client' );
 			$instance = new Jetpack_Plugin_Search();
 		}
 
@@ -285,6 +287,7 @@ class Jetpack_Plugin_Search {
 		// Looks like a search query; it's matching time
 		if ( ! empty( $args->search ) ) {
 			require_once JETPACK__PLUGIN_DIR . 'class.jetpack-admin.php';
+			$tracking = new Tracking();
 			$jetpack_modules_list = array_intersect_key(
 				array_merge( $this->get_extra_features(), Jetpack_Admin::init()->get_modules() ),
 				array_flip( array(
@@ -307,7 +310,7 @@ class Jetpack_Plugin_Search {
 
 			// Record event when user searches for a term over 3 chars (less than 3 is not very useful.)
 			if ( strlen( $args->search ) >= 3 ) {
-				JetpackTracking::record_user_event( 'wpa_plugin_search_term', array( 'search_term' => $args->search ) );
+				$tracking->record_user_event( 'wpa_plugin_search_term', array( 'search_term' => $args->search ) );
 			}
 
 			// Lowercase, trim, remove punctuation/special chars, decode url, remove 'jetpack'
@@ -337,7 +340,7 @@ class Jetpack_Plugin_Search {
 
 			if ( isset( $matching_module ) && $this->should_display_hint( $matching_module ) ) {
 				// Record event when a matching feature is found
-				JetpackTracking::record_user_event( 'wpa_plugin_search_match_found', array( 'feature' => $matching_module ) );
+				$tracking->record_user_event( 'wpa_plugin_search_match_found', array( 'feature' => $matching_module ) );
 
 				$inject = (array) self::get_jetpack_plugin_data();
 				$image_url = plugins_url( 'modules/plugin-search/psh', JETPACK__PLUGIN_FILE );
@@ -374,16 +377,14 @@ class Jetpack_Plugin_Search {
 	 *
 	 * @since 7.1.0
 	 * @since 7.2.0 Only remove Jetpack.
+	 * @since 7.4.0 Simplify for WordPress 5.1+.
 	 *
 	 * @param array|object $plugin
 	 *
 	 * @return bool
 	 */
 	function filter_cards( $plugin ) {
-		// Take in account that before WordPress 5.1, the list of plugins is an array of objects.
-		// With WordPress 5.1 the list of plugins is an array of arrays.
-		$slug = is_array( $plugin ) ? $plugin['slug'] : $plugin->slug;
-		return ! in_array( $slug, array( 'jetpack' ), true );
+		return ! in_array( $plugin['slug'], array( 'jetpack' ), true );
 	}
 
 	/**
@@ -446,13 +447,13 @@ class Jetpack_Plugin_Search {
 		switch ( $feature ) {
 			case 'sharing':
 			case 'publicize':
-				$configure_url = "https://wordpress.com/sharing/$siteFragment";
+				$configure_url = "https://wordpress.com/marketing/connections/$siteFragment";
 				break;
 			case 'seo-tools':
-				$configure_url = "https://wordpress.com/settings/traffic/$siteFragment#seo";
+				$configure_url = "https://wordpress.com/marketing/traffic/$siteFragment#seo";
 				break;
 			case 'google-analytics':
-				$configure_url = "https://wordpress.com/settings/traffic/$siteFragment#analytics";
+				$configure_url = "https://wordpress.com/marketing/traffic/$siteFragment#analytics";
 				break;
 			case 'wordads':
 				$configure_url = "https://wordpress.com/ads/settings/$siteFragment";

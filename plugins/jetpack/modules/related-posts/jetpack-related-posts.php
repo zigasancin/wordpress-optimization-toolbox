@@ -1,4 +1,8 @@
 <?php
+
+use Automattic\Jetpack\Assets;
+use Automattic\Jetpack\Sync\Settings;
+
 class Jetpack_RelatedPosts {
 	const VERSION   = '20190204';
 	const SHORTCODE = 'jetpack-related-posts';
@@ -51,6 +55,7 @@ class Jetpack_RelatedPosts {
 	 * Constructor for Jetpack_RelatedPosts.
 	 *
 	 * @uses get_option, add_action, apply_filters
+	 *
 	 * @return null
 	 */
 	public function __construct() {
@@ -197,8 +202,7 @@ class Jetpack_RelatedPosts {
 	 * @returns string
 	 */
 	public function get_target_html() {
-		require_once JETPACK__PLUGIN_DIR . '/sync/class.jetpack-sync-settings.php';
-		if ( Jetpack_Sync_Settings::is_syncing() ) {
+		if ( Settings::is_syncing() ) {
 			return '';
 		}
 
@@ -232,8 +236,7 @@ EOT;
 	 * @returns string
 	 */
 	public function get_target_html_unsupported() {
-		require_once JETPACK__PLUGIN_DIR . '/sync/class.jetpack-sync-settings.php';
-		if ( Jetpack_Sync_Settings::is_syncing() ) {
+		if ( Settings::is_syncing() ) {
 			return '';
 		}
 		return "\n\n<!-- Jetpack Related Posts is not supported in this context. -->\n\n";
@@ -384,15 +387,17 @@ EOT;
 		);
 
 		/*
-		Below is a hack to get the block content to render correctly.
-
-		This functionality should be covered in /inc/blocks.php but due to an error,
-		this has not been fixed as of this writing.
-
-		Alda has submitted a patch to Core in order to have this issue fixed at
-		https://core.trac.wordpress.org/attachment/ticket/45495/do_blocks.diff and
-		hopefully it makes to to the final RC of WP 5.1.
-		*/
+		 * Below is a hack to get the block content to render correctly.
+		 *
+		 * This functionality should be covered in /inc/blocks.php but due to an error,
+		 * this has not been fixed as of this writing.
+		 *
+		 * Alda has submitted a patch to Core in order to have this issue fixed at
+		 * https://core.trac.wordpress.org/ticket/45495 and
+		 * made it into WordPress 5.2.
+		 *
+		 * @todo update when WP 5.2 is the minimum support version.
+		 */
 		$priority = has_filter( 'the_content', 'wpautop' );
 		remove_filter( 'the_content', 'wpautop', $priority );
 		add_filter( 'the_content', '_restore_wpautop_hook', $priority + 1 );
@@ -1604,6 +1609,7 @@ EOT;
 	 */
 	protected function _enabled_for_request() {
 		$enabled = is_single()
+			&& ! is_attachment()
 			&& ! is_admin()
 			&& ( ! $this->_allow_feature_toggle() || $this->get_option( 'enabled' ) );
 
@@ -1650,7 +1656,7 @@ EOT;
 		if ( $script ) {
 			wp_enqueue_script(
 				'jetpack_related-posts',
-				Jetpack::get_file_url_for_environment(
+				Assets::get_file_url_for_environment(
 					'_inc/build/related-posts/related-posts.min.js',
 					'modules/related-posts/related-posts.js'
 				),

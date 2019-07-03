@@ -1,5 +1,8 @@
 <?php
 
+use Automattic\Jetpack\Assets;
+use Automattic\Jetpack\Sync\Settings;
+
 include_once dirname( __FILE__ ) . '/sharing-sources.php';
 
 define( 'WP_SHARING_PLUGIN_VERSION', JETPACK__VERSION );
@@ -219,7 +222,10 @@ class Sharing_Service {
 		// Default services
 		if ( ! is_array( $enabled ) ) {
 			$enabled = array(
-				'visible' => array(),
+				'visible' => array(
+					'twitter',
+					'facebook',
+				),
 				'hidden'  => array(),
 			);
 
@@ -303,17 +309,17 @@ class Sharing_Service {
 	public function set_global_options( $data ) {
 		$options = get_option( 'sharing-options' );
 
-		// No options yet
+		// No options yet.
 		if ( ! is_array( $options ) ) {
 			$options = array();
 		}
 
-		// Defaults
+		// Defaults.
 		$options['global'] = array(
 			'button_style'  => 'icon-text',
 			'sharing_label' => $this->default_sharing_label,
 			'open_links'    => 'same',
-			'show'          => array(),
+			'show'          => ! isset( $options['global'] ) ? array( 'post', 'page' ) : array(),
 			'custom'        => isset( $options['global']['custom'] ) ? $options['global']['custom'] : array(),
 		);
 
@@ -666,8 +672,7 @@ add_action( 'template_redirect', 'sharing_process_requests', 9 );
 function sharing_display( $text = '', $echo = false ) {
 	global $post, $wp_current_filter;
 
-	require_once JETPACK__PLUGIN_DIR . '/sync/class.jetpack-sync-settings.php';
-	if ( Jetpack_Sync_Settings::is_syncing() ) {
+	if ( Settings::is_syncing() ) {
 		return $text;
 	}
 
@@ -891,9 +896,10 @@ function sharing_display( $text = '', $echo = false ) {
 			} else {
 				$ver = '20141212';
 			}
+
 			wp_register_script(
 				'sharing-js',
-				Jetpack::get_file_url_for_environment(
+				Assets::get_file_url_for_environment(
 					'_inc/build/sharedaddy/sharing.min.js',
 					'modules/sharedaddy/sharing.js'
 				),
