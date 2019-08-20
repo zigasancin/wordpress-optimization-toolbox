@@ -7,7 +7,7 @@
 		<div id="trackbacks_notice"></div>
 
 		<p>
-			<small class="wpo-text__dim"><?php _e('Use these buttons to enable or disable any future trackbacks on all your previously published posts.', 'wp-optimize'); ?></small>
+			<small><?php _e('Use these buttons to enable or disable any future trackbacks on all your previously published posts.', 'wp-optimize'); ?></small>
 		</p>
 		
 		<button class="button btn-updraftplus" type="button" id="wp-optimize-disable-enable-trackbacks-enable" name="wp-optimize-disable-enable-trackbacks-enable"><?php _e('Enable', 'wp-optimize'); ?></button>
@@ -24,7 +24,7 @@
 		
 		<div id="comments_notice"></div>
 
-		<p><small class="wpo-text__dim"><?php _e('Use these buttons to enable or disable any future comments on all your previously published posts.', 'wp-optimize'); ?></small></p>
+		<p><small><?php _e('Use these buttons to enable or disable any future comments on all your previously published posts.', 'wp-optimize'); ?></small></p>
 
 		<button class="button btn-updraftplus" type="button" id="wp-optimize-disable-enable-comments-enable" name="wp-optimize-disable-enable-comments-enable"><?php _e('Enable', 'wp-optimize'); ?></button>
 

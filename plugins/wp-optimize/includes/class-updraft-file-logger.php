@@ -123,12 +123,12 @@ class Updraft_File_Logger extends Updraft_Abstract_Logger {
 	/**
 	 * Log message with any level
 	 *
-	 * @param  string $message
 	 * @param  mixed  $level
+	 * @param  string $message
 	 * @param  array  $context
 	 * @return null|void
 	 */
-	public function log($message, $level = 'info', array $context = array()) {
+	public function log($level, $message, array $context = array()) {
 
 		if (!$this->is_enabled()) return false;
 		

@@ -4,6 +4,9 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (class_exists('Updraft_Abstract_Logger')) return;
 
+require_once 'class-updraft-log-levels.php';
+require_once 'class-updraft-logger-interface.php';
+
 /**
  * Class Updraft_Abstract_Logger
  */

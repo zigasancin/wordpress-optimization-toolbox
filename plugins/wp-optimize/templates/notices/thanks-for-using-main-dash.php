@@ -27,10 +27,6 @@
 		</p>
 
 		<p>
-			<strong><?php $wp_optimize->wp_optimize_url('https://getkeyy.com/', __('Keyy:', 'wp-optimize')); ?></strong> <?php echo htmlspecialchars(__('Simple & secure login with a wave of your phone', 'wp-optimize')); ?>
-		</p>
-
-		<p>
 			<strong><?php $wp_optimize->wp_optimize_url('https://metaslider.com', 'MetaSlider');?>: </strong> <?php echo __('Add style and flare easily with beautifully-designed sliders with the #1 WP slider plugin', 'wp-optimize'); ?>
 		</p>
 		

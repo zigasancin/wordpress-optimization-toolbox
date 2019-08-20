@@ -5,10 +5,11 @@
  * @param {[type]}   data       Data to send
  * @param {Function} callback   Will be called with the results
  * @param {boolean}  json_parse JSON parse the results
+ * @param {object}   options    Optional extra options; current properties supported are 'timeout' (in milliseconds)
  *
  * @return {JSON}
  */
-wp_optimize_send_command_admin_ajax = function (action, data, callback, json_parse) {
+wp_optimize_send_command_admin_ajax = function (action, data, callback, json_parse, options) {
 
 	json_parse = ('undefined' === typeof json_parse) ? true : json_parse;
 
@@ -19,27 +20,37 @@ wp_optimize_send_command_admin_ajax = function (action, data, callback, json_par
 		data: data
 	};
 
-	return jQuery.post(ajaxurl, ajax_data, function (response) {
-
-		if (json_parse) {
-			try {
-				var resp = JSON.parse(response);
-			} catch (e) {
-				console.log(e);
-				console.log(response);
-				alert(wpoptimize.error_unexpected_response);
-				return;
+	var args = {
+		type: 'post',
+		data: ajax_data,
+		success: function (response) {
+			if (json_parse) {
+				try {
+					var resp = wpo_parse_json(response);
+				} catch (e) {
+					console.log(e);
+					console.log(response);
+					alert(wpoptimize.error_unexpected_response);
+					return;
+				}
+				if ('function' === typeof callback) callback(resp);
+			} else {
+				if ('function' === typeof callback) callback(response);
 			}
-			if ('undefined' !== typeof callback) callback(resp);
-		} else {
-			if ('undefined' !== typeof callback) callback(response);
 		}
-	});
-	
+	};
+
+	// Eventually merge options
+	if ('object' === typeof options) {
+		if (options.hasOwnProperty('timeout')) { args.timeout = options.timeout; }
+	}
+
+	return jQuery.ajax(ajaxurl, args);
 };
 
 jQuery(document).ready(function ($) {
 	WP_Optimize = WP_Optimize(wp_optimize_send_command_admin_ajax);
+	if ('undefined' != typeof WP_Optimize_Cache) WP_Optimize_Cache = WP_Optimize_Cache(wp_optimize_send_command_admin_ajax);
 });
 
 /**
@@ -226,11 +237,22 @@ var WP_Optimize = function (send_command) {
 			$(this).addClass('active');
 			$('.wpo-page[data-whichpage="' + $(this).data('menuslug') + '"]').addClass('active');
 			window.scroll(0, 0);
+
+			// Trigger a global event when changing page
+			$('#wp-optimize-wrap').trigger('page-change', { page: $(this).data('menuslug') });
 		}
+
 		// Close the menu on mobile
 		$('#wp-optimize-nav-page-menu').trigger('click');
 
 	});
+
+	// set a time out, as needs to be done once the rest is loaded
+	// TODO: Refactor the JS to be able to execute things at the right time without having to guess.
+	setTimeout(function() {
+		// Trigger page-change event  on load
+		$('#wp-optimize-wrap').trigger('page-change', { page: $('.wpo-pages-menu a.active').data('menuslug') });
+	}, 500);
 
 	// Tabs menu
 	$('.nav-tab-wrapper .nav-tab').click(function (e) {
@@ -546,7 +568,7 @@ var WP_Optimize = function (send_command) {
 	/**
 	 * Run single optimization click.
 	 */
-	$('#wp-optimize-nav-tab-wpo_database-optimize-contents').on('click', 'button.wp-optimize-settings-optimization-run-button', function () {
+	$('#wp-optimize-nav-tab-WP-Optimize-optimize-contents').on('click', 'button.wp-optimize-settings-optimization-run-button', function () {
 		var optimization_id = $(this).closest('.wp-optimize-settings').data('optimization_id');
 		if (!optimization_id) {
 			console.log("Optimization ID corresponding to pressed button not found");
@@ -566,7 +588,7 @@ var WP_Optimize = function (send_command) {
 	/**
 	 * Run all optimizations click.
 	 */
-	$('#wp-optimize-nav-tab-wpo_database-optimize-contents').on('click', '#wp-optimize', function (e) {
+	$('#wp-optimize-nav-tab-WP-Optimize-optimize-contents').on('click', '#wp-optimize', function (e) {
 		var run_btn = $(this);
 
 		e.preventDefault();
@@ -636,135 +658,6 @@ var WP_Optimize = function (send_command) {
 
 		send_command('save_auto_backup_option', options);
 	}
-
-	var browser_cache_enable_btn = $('#wp_optimize_browser_cache_enable');
-
-	/**
-	 * Trigger click Browser cache button if user push Enter and form start submitting.
-	 */
-	browser_cache_enable_btn.closest('form').submit(
-		function(e) {
-			e.preventDefault();
-			browser_cache_enable_btn.trigger('click');
-			return false;
-		}
-	);
-
-	/**
-	 * Handle Enable Gzip compression button click.
-	 */
-	$('#wp_optimize_gzip_compression_enable').on('click', function() {
-		var button = $(this),
-			loader = button.next();
-
-		loader.show();
-
-		send_command('enable_gzip_compression', {enable: button.data('enable')}, function(response) {
-			var gzip_status_message = $('#wpo_gzip_compression_status');
-			if (response) {
-				if (response.enabled) {
-					button.text(wpoptimize.disable);
-					button.data('enable', '0');
-					gzip_status_message.removeClass('wpo-disabled').addClass('wpo-enabled');
-				} else {
-					button.text(wpoptimize.enable);
-					button.data('enable', '1');
-					gzip_status_message.addClass('wpo-disabled').removeClass('wpo-enabled');
-				}
-
-				if (response.message) {
-					$('#wpo_gzip_compression_error_message').text(response.message).show();
-				} else {
-					$('#wpo_gzip_compression_error_message').hide();
-				}
-
-				if (response.output) {
-					$('#wpo_gzip_compression_output').html(response.output).show();
-				} else {
-					$('#wpo_gzip_compression_output').hide();
-				}
-
-			} else {
-				alert(wpoptimize.error_unexpected_response);
-			}
-
-			loader.hide();
-		}).fail(function() {
-			alert(wpoptimize.error_unexpected_response);
-			loader.hide();
-		});
-	});
-
-	/**
-	 * Handle Enable browser cache button click.
-	 */
-	browser_cache_enable_btn.on('click', function() {
-		var browser_cache_expire_days_el = $('#wpo_browser_cache_expire_days'),
-			browser_cache_expire_hours_el = $('#wpo_browser_cache_expire_hours'),
-			browser_cache_expire_days = parseInt(browser_cache_expire_days_el.val(), 10),
-			browser_cache_expire_hours = parseInt(browser_cache_expire_hours_el.val(), 10),
-			button = $(this),
-			loader = button.next();
-
-		// check for invalid integer.
-		if (isNaN(browser_cache_expire_days)) browser_cache_expire_days = 0;
-		if (isNaN(browser_cache_expire_hours)) browser_cache_expire_hours = 0;
-
-		if (browser_cache_expire_days < 0 || browser_cache_expire_hours < 0) {
-			$('#wpo_browser_cache_error_message').text(wpoptimize.please_use_positive_integers).show();
-			return false;
-		} else if (browser_cache_expire_hours > 23) {
-			$('#wpo_browser_cache_error_message').text(wpoptimize.please_use_valid_values).show();
-			return false;
-		} else {
-			$('#wpo_browser_cache_error_message').hide();
-		}
-
-		// set parsed values into input fields.
-		browser_cache_expire_days_el.val(browser_cache_expire_days);
-		browser_cache_expire_hours_el.val(browser_cache_expire_hours);
-
-		loader.show();
-
-		send_command('enable_browser_cache', {browser_cache_expire_days: browser_cache_expire_days, browser_cache_expire_hours: browser_cache_expire_hours}, function(response) {
-			var cache_status_message = $('#wpo_browser_cache_status');
-			if (response) {
-				if (response.enabled) {
-					button.text(wpoptimize.update);
-					cache_status_message.removeClass('wpo-disabled').addClass('wpo-enabled');
-				} else {
-					button.text(wpoptimize.enable);
-					cache_status_message.addClass('wpo-disabled').removeClass('wpo-enabled');
-				}
-
-				if (response.message) {
-					$('#wpo_browser_cache_message').text(response.message).show();
-				} else {
-					$('#wpo_browser_cache_message').hide();
-				}
-
-				if (response.error_message) {
-					$('#wpo_browser_cache_error_message').text(response.error_message).show();
-				} else {
-					$('#wpo_browser_cache_error_message').hide();
-				}
-
-				if (response.output) {
-					$('#wpo_browser_cache_output').html(response.output).show();
-				} else {
-					$('#wpo_browser_cache_output').hide();
-				}
-
-			} else {
-				alert(wpoptimize.error_unexpected_response);
-			}
-
-			loader.hide();
-		}).fail(function() {
-			alert(wpoptimize.error_unexpected_response);
-			loader.hide();
-		});
-	});
 
 	// Show/hide sites list for multi-site settings.
 	var wpo_settings_sites_list = $('#wpo_settings_sites_list'),
@@ -959,6 +852,7 @@ var WP_Optimize = function (send_command) {
 				$('#optimize_current_db_size').html(response.total_size);
 			}
 
+			change_actions_column_visibility();
 			update_single_table_optimization_buttons(single_table_optimization_force.is(':checked'));
 		});
 	});
@@ -1581,13 +1475,26 @@ var WP_Optimize = function (send_command) {
 		});
 	}, 11000);
 
+	/**
+	 * Hide introduction notice
+	 */
+	$('.wpo-introduction-notice .notice-dismiss, .wpo-introduction-notice .close').on('click', function(e) {
+		$('.wpo-introduction-notice').remove();
+		send_command('dismiss_install_or_update_notice', null, function (resp) {
+			if (resp && resp.hasOwnProperty('error')) {
+				// there was an error.
+				console.log('There was an error dismissing the install or update notice (dismiss_install_or_update_notice)', resp);
+			}
+		});
+	});
+
 	return {
 		send_command: send_command,
 		optimization_get_info: optimization_get_info,
 		take_a_backup_with_updraftplus: take_a_backup_with_updraftplus,
 		save_auto_backup_options: save_auto_backup_options
 	}
-};
+}; // END function WP_Optimize()
 
 jQuery(document).ready(function ($) {
 	/**
@@ -1839,6 +1746,25 @@ jQuery(document).ready(function ($) {
 				$('body').toggleClass('is-scrolled', is_scrolled);
 			}
 		});
+	});
+
+	// Opens the video preview / info popup
+	$('.wpo-info__trigger').on('click', function(e) {
+		e.preventDefault();
+		var $container = $(this).closest('.wpo-info');
+		$container.toggleClass('opened');
+	});
+
+	// Embed videos when clicking the vimeo links
+	$('.wpo-video-preview a').on('click', function(e) {
+		var video_url = $(this).data('embed');
+		if (video_url) {
+			e.preventDefault();
+			var $iframe = $('<iframe width="356" height="200" allowfullscreen webkitallowfullscreen mozallowfullscreen>').attr('src', video_url);
+			$iframe.insertAfter($(this));
+			$(this).remove();
+			$iframe.focus();
+		}
 	});
 });
 

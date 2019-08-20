@@ -51,8 +51,10 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	 */
 	public function compress_single_image($data) {
 
-		$options = isset($data['smush_options']) ? $data['smush_options'] : false;
-		$image = isset($data['selected_image']) ? $data['selected_image'] : false;
+		$options = !empty($data['smush_options']) ? $data['smush_options'] : $this->task_manager->get_smush_options();
+		$image = isset($data['selected_image']) ? filter_var($data['selected_image']['attachment_id'], FILTER_SANITIZE_NUMBER_INT) : false;
+		$blog = isset($data['selected_image']) ? filter_var($data['selected_image']['blog_id'], FILTER_SANITIZE_NUMBER_INT) : false;
+
 		$server = filter_var($options['compression_server'], FILTER_SANITIZE_STRING);
 
 		$lossy = filter_var($options['lossy_compression'], FILTER_VALIDATE_BOOLEAN) ? true : false;
@@ -62,9 +64,11 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 
 		$options = array(
 			'attachment_id' 	=> $image,
+			'blog_id'		   => $blog,
 			'image_quality' 	=> $quality,
 			'keep_original'		=> $backup,
 			'lossy_compression' => $lossy,
+			'preserve_exif'	 => $exif
 		);
 
 		if (filesize(get_attached_file($image)) > 5242880) {
@@ -119,7 +123,8 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	 * @param mixed $data - Sent in via AJAX
 	 */
 	public function process_bulk_smush($data = array()) {
-		$images = isset($data['selected_images']) ? array_filter($data['selected_images'], 'is_numeric') : array();
+		$images = isset($data['selected_images']) ? $data['selected_images'] : array();
+
 		$ui_update = $this->get_ui_update($images);
 		$this->close_browser_connection(json_encode($ui_update));
 		$this->task_manager->process_bulk_smush($images);
@@ -154,7 +159,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$ui_update['smush_complete'] = $this->task_manager->is_queue_processed();
 		
 		if (isset($data['image_list'])) {
-			$images = array_filter($data['image_list'], 'is_numeric');
+			$images = $data['image_list'];
 			$stats = $this->task_manager->get_session_stats($images);
 			$ui_update['session_stats'] = "";
 
@@ -185,6 +190,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$options['preserve_exif'] = filter_var($data['preserve_exif'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$options['autosmush'] = filter_var($data['autosmush'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$options['image_quality'] = filter_var($data['image_quality'], FILTER_SANITIZE_NUMBER_INT);
+		$options['show_smush_metabox'] = filter_var($data['show_smush_metabox'], FILTER_VALIDATE_BOOLEAN) ? 'show' : 'hide';
 
 		$success = $this->task_manager->update_smush_options($options);
 

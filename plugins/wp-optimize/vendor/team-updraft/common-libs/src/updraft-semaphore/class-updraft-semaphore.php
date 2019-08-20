@@ -8,9 +8,9 @@ if (!defined('ABSPATH')) die('No direct access.');
  * Thanks to Alex King (https://github.com/crowdfavorite/wp-social)
  */
 
-if (!class_exists('Updraft_Semaphore_2_0')) :
+if (!class_exists('Updraft_Semaphore_2_1')) :
 
-class Updraft_Semaphore_2_0 {
+class Updraft_Semaphore_2_1 {
 
 	/**
 	 * Lock Broke
@@ -18,6 +18,13 @@ class Updraft_Semaphore_2_0 {
 	 * @var boolean
 	 */
 	protected $lock_broke = false;
+
+	/**
+	 * Gained the lock successfully
+	 *
+	 * @var Integer
+	 */
+	protected $last_updated_lock = 0;
 
 	/**
 	 * Array of loggers
@@ -54,6 +61,21 @@ class Updraft_Semaphore_2_0 {
 		return new self;
 	}
 
+	/**
+	 * Call this method if (and *only* if) you previously gained the lock, and if you wish to retain it (so that it doesn't get broken by something else after the time in self::stuck_check() has expired)
+	 *
+	 * @param Boolean $not_more_often_than_every - require at least this number of seconds to have passed since the last update
+	 *
+	 * @return Boolean - whether any update took place (N.B. false can mean that one was not necessary)
+	 */
+	public function update_lock($not_more_often_than_every = 0) {
+	
+		if (!$this->last_updated_lock) return false;
+		
+		return $this->update_lock_time($not_more_often_than_every);
+	
+	}
+	
 	/**
 	 * Ensures that the semaphore options exists before using them
 	 */
@@ -107,6 +129,7 @@ class Updraft_Semaphore_2_0 {
 
 		if ('0' == $affected && !$this->stuck_check()) {
 			$this->log('Semaphore lock ('.$this->lock_name.', '.$wpdb->options.') failed (line '.__LINE__.')');
+			$this->last_updated_lock = 0;
 			return false;
 		}
 
@@ -120,6 +143,7 @@ class Updraft_Semaphore_2_0 {
 		if ('1' != $affected) {
 			if (!$this->stuck_check()) {
 				$this->log('Semaphore lock ('.$this->lock_name.', '.$wpdb->options.') failed (line '.__LINE__.')');
+				$this->last_updated_lock = 0;
 				return false;
 			}
 
@@ -133,6 +157,26 @@ class Updraft_Semaphore_2_0 {
 			$this->log('Semaphore ('.$this->lock_name.', '.$wpdb->options.') reset to 1');
 		}
 
+		$this->update_lock_time();
+	
+		$this->log('Semaphore lock ('.$this->lock_name.') complete');
+
+		return true;
+	}
+
+	/**
+	 * Updates the lock to the current time (optionally, if it's not been updated in the last X seconds)
+	 *
+	 * @param Boolean $not_more_often_than_every - require at least this number of seconds to have passed since the last update
+	 *
+	 * @return Boolean - whether any update took place
+	 */
+	private function update_lock_time($not_more_often_than_every = 0) {
+		
+		if ($this->last_updated_lock && $this->last_updated_lock + $not_more_often_than_every > time()) return false;
+		
+		global $wpdb;
+		
 		// Set the lock time
 		$wpdb->query($wpdb->prepare("
 			UPDATE $wpdb->options
@@ -140,8 +184,9 @@ class Updraft_Semaphore_2_0 {
 			 WHERE option_name = 'updraft_last_lock_time_".$this->lock_name."'
 		", current_time('mysql', 1)));
 		$this->log('Set semaphore last lock ('.$this->lock_name.') time to '.current_time('mysql', 1));
-
-		$this->log('Semaphore lock ('.$this->lock_name.') complete');
+		
+		$this->last_updated_lock = time();
+		
 		return true;
 	}
 
@@ -251,11 +296,11 @@ class Updraft_Semaphore_2_0 {
 	/**
 	 * Cleans up the DB of any residual data
 	 */
-	public function clean_up() {
+	public function delete() {
 
 		global $wpdb;
 
-		$affected_options = $this->get_affected_options();
+		$affected_options = $this->get_used_options();
 
 		foreach ($affected_options as $option) {
 			delete_option($option);
@@ -267,17 +312,16 @@ class Updraft_Semaphore_2_0 {
 	/**
 	 * Cleans up the DB of any residual data
 	 */
-	public function get_affected_options() {
+	private function get_used_options() {
 
 		$options = array(
 			"updraft_semaphore_{$this->lock_name}",
-			"updraft_last_scheduled_{$this->lock_name}",
 			"updraft_last_lock_time_{$this->lock_name}",
 			"updraft_locked_{$this->lock_name}",
 			"updraft_unlocked_{$this->lock_name}",
 		);
 
-		return apply_filters('updraft_semaphore_affected_option_rows', $options, $this->lock_name);
+		return $options;
 	}
 
 	/**
@@ -286,8 +330,10 @@ class Updraft_Semaphore_2_0 {
 	 * @param array $loggers - the loggers for this task
 	 */
 	public function set_loggers($loggers) {
-		foreach ($loggers as $logger) {
-			$this->add_logger($logger);
+		if (is_array($loggers)) {
+			foreach ($loggers as $logger) {
+				$this->add_logger($logger);
+			}
 		}
 	}
 
@@ -319,10 +365,8 @@ class Updraft_Semaphore_2_0 {
 
 		if (isset($this->_loggers)) {
 			foreach ($this->_loggers as $logger) {
-				$logger->log($message, $error_type);
+				$logger->log($error_type, $message);
 			}
-		} else {
-			error_log($message);
 		}
 	}
 } // End UpdraftPlus_Semaphore

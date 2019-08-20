@@ -35,17 +35,24 @@ var WP_Optimize_Smush = function() {
 
 
 	/**
-	 *  Checks if smush is active and loads images if yes.
+	 *  Checks if smush is active and loads images if yes - image tabs change.
 	 */
-	$('#wp-optimize-nav-tab-wrapper .nav-tab').on('click', function() {
-		if ($('#wp-optimize-nav-tab-wrapper .nav-tab-active').is('#wp-optimize-nav-tab-wpo_images-smush')) {
+	$('#wp-optimize-nav-tab-wrapper__wpo_images .nav-tab').on('click', function() {
+		if ($(this).is('#wp-optimize-nav-tab-wpo_images-smush')) {
 			get_info_from_smush_manager();
 		}
 	});
 
-	if ($('#wp-optimize-nav-tab-wrapper .nav-tab-active').is('#wp-optimize-nav-tab-wpo_images-smush')) {
-		get_info_from_smush_manager();
-	}
+	/**
+	 * Checks if smush is active and loads images if yes - main menu change.
+	 */
+	$('#wp-optimize-wrap').on('page-change', function(e, params) {
+		if ('wpo_images' == params.page) {
+			if ($('#wp-optimize-nav-tab-wrapper__wpo_images .nav-tab-active').is('#wp-optimize-nav-tab-wpo_images-smush')) {
+				get_info_from_smush_manager();
+			}
+		}
+	});
 
 	if ($('#smush-metabox').length > 0) {
 		update_view_available_options();
@@ -194,11 +201,12 @@ var WP_Optimize_Smush = function() {
 	/**
 	 * Single image compression
 	 */
-	smush_single_image_btn.on('click', function() {
-		var clicked_image = $(this).attr('id');
-		if (!clicked_image) { return; }
-		image_id = clicked_image.substring(15);
+	$('body').on('click', '.wpo_smush_single_image .button', function() {
 
+		image = {
+			'attachment_id':$(this).attr('id').substring(15),
+			'blog_id': $(this).data('blog')
+		};
 
 		if ($('#enable_custom_compression').is(":checked")) {
 			image_quality = $('#custom_compression_slider').val();
@@ -209,19 +217,19 @@ var WP_Optimize_Smush = function() {
 		}
 
 		smush_options = {
-			'compression_server': $("input[name='compression_server_" + image_id+ "']:checked").val(),
+			'compression_server': $("input[name='compression_server_" + image.attachment_id + "']:checked").val(),
 			'image_quality': image_quality,
 			'lossy_compression': lossy_compression,
-			'back_up_original': $('#smush_backup_' + image_id).is(":checked"),
-			'preserve_exif': $('#smush_exif_' + image_id).is(":checked"),
+			'back_up_original': $('#smush_backup_' + image.attachment_id).is(":checked"),
+			'preserve_exif': $('#smush_exif_' + image.attachment_id).is(":checked"),
 		}
 
-		console.log("Compressing Image : " + image_id);
-		data = { 'server':  $("input[name='compression_server_" + image_id+ "']:checked").val() };
+		console.log("Compressing Image : " + image.attachment_id);
+		data = { 'server':  $("input[name='compression_server_" + $(this).attr('id').substring(15) + "']:checked").val() };
 		update_view_modal_message(wposmush.server_check);
 		smush_manager_send_command('check_server_status', data, function(resp) {
 			if (resp.online) {
-				smush_selected_image(image_id, smush_options);
+				smush_selected_image(image, smush_options);
 			} else {
 				if (resp.error) {
 					error_message = resp.error + '<br>' + wposmush.server_error
@@ -237,7 +245,7 @@ var WP_Optimize_Smush = function() {
 	/**
 	 * Single image restore
 	 */
-	smush_single_restore_btn.on('click', function() {
+	$('body').on('click', '.wpo_restore_single_image .button', function() {
 		var clicked_image = $(this).attr('id');
 		if (!clicked_image) { return; }
 		image_id = clicked_image.substring(25);
@@ -245,30 +253,35 @@ var WP_Optimize_Smush = function() {
 		restore_selected_image(image_id);
 	});
 
-	$('#smush-log-modal .close, #smush-information-modal .information-modal-close').on('click', function() {
+	$('body').on('click', '#smush-log-modal .close, #smush-information-modal .information-modal-close', function() {
 		$.unblockUI();
 	});
 
-	$('.wpo_smush_stats_cta_btn, .wpo_smush_get_logs, #smush-complete-summary .close').on('click', function() {
+	$('body').on('click', '.wpo_smush_stats_cta_btn, .wpo_smush_get_logs, #smush-complete-summary .close', function() {
 		$.unblockUI();
 		get_info_from_smush_manager();
 		setTimeout(reset_view_bulk_smush, 500);
 	});
 
-	$('.toggle-smush-advanced').on('click', function() {
-		$('.smush-advanced').toggle('fast');
+	$('body').on('click', '.toggle-smush-advanced', function(e) {
+		e.preventDefault();
+		$(this).toggleClass('opened');
 	});
 
-	$('.wpo-fieldgroup .autosmush input, .wpo-fieldgroup .compression_level, .wpo-fieldgroup .image_options').on('change', function() {
+	$('.wpo-fieldgroup .autosmush input, .wpo-fieldgroup .compression_level, .wpo-fieldgroup .image_options, #smush-show-metabox').on('change', function(e) {
 		save_options();
 	});
 
-	$('.smush-options.compression_level').change(function() {
+	$('body').on('change', '.smush-options.compression_level', function() {
 		if ($('#enable_custom_compression').is(':checked')) {
 			$('.smush-options.custom_compression').show();
 		} else {
 			$('.smush-options.custom_compression').hide();
 		}
+	});
+
+	$('body').on('change', '.smush-advanced input[type="radio"]', function() {
+		update_view_available_options();
 	});
 
 	/**
@@ -307,7 +320,11 @@ var WP_Optimize_Smush = function() {
 	function bulk_smush_selected_images() {
 				
 		$('#wpo_smush_images_grid input:checked').each(function() {
-			smush_image_list.push($(this).val());
+			image = {
+				'attachment_id':$(this).val(),
+				'blog_id': $(this).data('blog')
+			};
+			smush_image_list.push(image);
 		});
 
 		data = {
@@ -332,6 +349,9 @@ var WP_Optimize_Smush = function() {
 	 * @return void
 	 */
 	function save_options() {
+		// only save when changing the options on the wpo dashboard.
+		if (!$('#wp-optimize-wrap').length) return;
+
 		$('#wpo_smush_images_save_options_spinner').show().delay(3000).fadeOut();
 
 		if ($('#enable_custom_compression').is(":checked")) {
@@ -349,6 +369,7 @@ var WP_Optimize_Smush = function() {
 			'back_up_original': $('#smush-backup-original').is(":checked"),
 			'preserve_exif': $('#smush-preserve-exif').is(":checked"),
 			'autosmush': $('#smush-automatically').is(":checked"),
+			'show_smush_metabox': $('#smush-show-metabox').is(":checked"),
 		}
 
 		smush_manager_send_command('update_smush_options', smush_options, function(resp) {
@@ -435,7 +456,7 @@ var WP_Optimize_Smush = function() {
 		var pending_tasks = data.pending_tasks;
 
 		if (0 == data.unsmushed_images.length && 0 == data.pending_tasks) {
-			smush_images_grid.text(wposmush.all_images_compressed).wrapInner("<h2 class='center'> </h2>");
+			smush_images_grid.text(wposmush.all_images_compressed).wrapInner("<div class='wpo-fieldgroup'> </div>");
 		}
 
 		if (0 != data.pending_tasks) {
@@ -450,7 +471,7 @@ var WP_Optimize_Smush = function() {
 			for (i in data.unsmushed_images[blog_id]) {
 				if (!data.unsmushed_images[blog_id].hasOwnProperty(i)) continue;
 				image = data.unsmushed_images[blog_id][i];
-				add_image_to_grid(image, data.admin_urls[blog_id] + admin_url_pre_id + image.id + admin_url_post_id);
+				add_image_to_grid(image, blog_id, data.admin_urls[blog_id] + admin_url_pre_id + image.id + admin_url_post_id);
 			}
 		}
 	}
@@ -561,16 +582,19 @@ var WP_Optimize_Smush = function() {
 	 * Append the image to the grid
 	 *
 	 * @param {Object} image	 - image data returned from smush manager
+	 * @param {int} blog_id - The blog id the image
 	 * @param {String} admin_url - The URL to link to for viewing the image
 	 *
 	 * @return void
 	 */
-	function add_image_to_grid(image, admin_url) {
+	function add_image_to_grid(image, blog_id, admin_url) {
+
+		var dom_id = ['wpo_smush_', blog_id, '_', image.id].join('');
 
 		image_html = '<div class="wpo_smush_image" data-filesize="'+image.filesize+'">';
 		image_html += '<a class="button" href="'+admin_url+'" target="_blank"> ' + wposmush.view_image + ' </a>';
-		image_html += '<input id="wpo_smush_'+image.id+'" type="checkbox" class="wpo_smush_image__input" value="'+image.id+'">';
-		image_html += '<label for="wpo_smush_'+image.id+'"></a>';
+		image_html += '<input id="' + dom_id + '" type="checkbox" data-blog="'+blog_id+ '" class="wpo_smush_image__input" value="'+image.id+'">';
+		image_html += '<label for="' + dom_id + '"></a>';
 		image_html += '<div class="thumbnail">';
 		image_html += '<img class="lazyload" src="'+image.thumb_url+'">';
 		image_html += '</div></label></div>';
@@ -634,8 +658,8 @@ var WP_Optimize_Smush = function() {
 	/**
 	 * Gets selected image and make an ajax request to compress it.
 	 *
-	 * @param {Number} selected_image - The image id
-	 * @param {Array} smush_options - The options to use
+	 * @param {Object} selected_image - { attachment_id: ..., blog_id: ... }
+	 * @param {Array}  smush_options - The options to use
 	 *
 	 * @return void
 	 */
@@ -686,6 +710,7 @@ var WP_Optimize_Smush = function() {
 		if (resp.hasOwnProperty('success') && resp.success) {
 			$("#smush-information").text(resp.summary);
 			update_view_modal_message($("#smush-information-modal"), $.unblockUI);
+			$('.toggle-smush-advanced.wpo_smush_single_image').removeClass('opened');
 			if ('compress' == resp.operation) {
 				$(".wpo_smush_single_image").hide();
 				$(".wpo_restore_single_image").show();
@@ -720,10 +745,11 @@ var WP_Optimize_Smush = function() {
 		$.blockUI({
 			message: message,
 			onOverlayClick: callback,
+			baseZ: 160001,
 			css: {
 				width: '400px',
 				padding: '20px',
-				cursor: 'pointer',
+				cursor: 'pointer'
 			}
 		});
 	}
@@ -743,50 +769,6 @@ var WP_Optimize_Smush = function() {
 			alert(wposmush.error_unexpected_response);
 			console.log(resp);
 		}
-	}
-
-	/**
-	 * Parse JSON string, including automatically detecting unwanted extra input and skipping it
-	 *
-	 * @param {string} json_mix_str - JSON string which need to parse and convert to object
-	 *
-	 * @throws SyntaxError|String (including passing on what JSON.parse may throw) if a parsing error occurs.
-	 *
-	 * @return mixed parsed JSON object. Will only return if parsing is successful (otherwise, will throw)
-	 */
-	function wpo_parse_json(json_mix_str) {
-		// Here taking first and last char in variable, because these are used more than once in this function
-		var first_char = json_mix_str.charAt(0);
-		var last_char = json_mix_str.charAt(json_mix_str.length - 1);
-		
-		// Just try it - i.e. the 'default' case where things work (which can include extra whitespace/line-feeds, and simple strings, etc.).
-		try {
-			var result = JSON.parse(json_mix_str);
-			return result;
-		} catch (e) {
-			console.log("WPO: Exception when trying to parse JSON (1) - will attempt to fix/re-parse");
-			console.log(json_mix_str);
-		}
-		
-		var json_start_pos = json_mix_str.indexOf('{');
-		var json_last_pos = json_mix_str.lastIndexOf('}');
-		
-		// Case where some php notice may be added after or before json string
-		if (json_start_pos > -1 && json_last_pos > -1) {
-			var json_str = json_mix_str.slice(json_start_pos, json_last_pos + 1);
-			try {
-				var parsed = JSON.parse(json_str);
-				console.log("WPO: JSON re-parse successful");
-				return parsed;
-			} catch (e) {
-				console.log("WPO: Exception when trying to parse JSON (2)");
-				// Throw it again, so that our function works just like JSON.parse() in its behaviour.
-				throw e;
-			}
-		}
-		
-		throw "WPO: could not parse the JSON";
-		
 	}
 	
 	/**
@@ -848,4 +830,77 @@ var WP_Optimize_Smush = function() {
 		
 	};
 
+} // END WP_Optimize_Smush
+
+/**
+ * Parse JSON string, including automatically detecting unwanted extra input and skipping it
+ *
+ * @param {string} json_mix_str - JSON string which need to parse and convert to object
+ *
+ * @throws SyntaxError|String (including passing on what JSON.parse may throw) if a parsing error occurs.
+ *
+ * @return mixed parsed JSON object. Will only return if parsing is successful (otherwise, will throw)
+ */
+function wpo_parse_json(json_mix_str) {
+	// Just try it - i.e. the 'default' case where things work (which can include extra whitespace/line-feeds, and simple strings, etc.).
+	try {
+		var result = JSON.parse(json_mix_str);
+		return result;
+	} catch (e) {
+		console.log("WPO: Exception when trying to parse JSON (1) - will attempt to fix/re-parse");
+		console.log(json_mix_str);
+	}
+	
+	var json_start_pos = json_mix_str.indexOf('{');
+	var json_last_pos = json_mix_str.lastIndexOf('}');
+	
+	// Case where some php notice may be added after or before json string
+	if (json_start_pos > -1 && json_last_pos > -1) {
+		var json_str = json_mix_str.slice(json_start_pos, json_last_pos + 1);
+		try {
+			var parsed = JSON.parse(json_str);
+			console.log("WPO: JSON re-parse successful");
+			return parsed;
+		} catch (e) {
+			console.log("WPO: Exception when trying to parse JSON (2) - will attempt to fix/re-parse based upon bracket counting");
+			
+			var cursor = json_start_pos;
+			var open_count = 0;
+			var last_character = '';
+			var inside_string = false;
+			
+			// Don't mistake this for a real JSON parser. Its aim is to improve the odds in real-world cases seen, not to arrive at universal perfection.
+			while ((open_count > 0 || cursor == json_start_pos) && cursor <= json_last_pos) {
+				
+				var current_character = json_mix_str.charAt(cursor);
+				
+				if (!inside_string && '{' == current_character) {
+					open_count++;
+				} else if (!inside_string && '}' == current_character) {
+					open_count--;
+				} else if ('"' == current_character && '\\' != last_character) {
+					inside_string = inside_string ? false : true;
+				}
+				
+				last_character = current_character;
+				cursor++;
+			}
+			
+			console.log("Started at cursor="+json_start_pos+", ended at cursor="+cursor+" with result following:");
+			console.log(json_mix_str.substring(json_start_pos, cursor));
+			
+			try {
+				var parsed = JSON.parse(json_mix_str.substring(json_start_pos, cursor));
+				console.log('WPO: JSON re-parse successful');
+				return parsed;
+			} catch (e) {
+				// Throw it again, so that our function works just like JSON.parse() in its behaviour.
+				throw e;
+			}
+			
+		}
+	}
+	
+	throw "WPO: could not parse the JSON";
+	
 }

@@ -2,36 +2,29 @@
 
 <div class="wpo_section wpo_group">
 
-	<h3 class="wpo-first-child">Gzip compression settings</h3>
+	<h3 class="wpo-first-child"><?php _e('Gzip compression settings', 'wp-optimize');?></h3>
 
 	<?php
-		$wpo_gzip_compression = $wp_optimize->get_gzip_compression();
-		$wpo_gzip_compression_enabled = $wpo_gzip_compression->is_gzip_compression_enabled();
-		$wpo_gzip_compression_settings_added = $wpo_gzip_compression->is_gzip_compression_section_exists();
-
-		$info_link = 'https://getwpo.com/gzip-compression-explained/';
-		$faq_link = 'https://getwpo.com/gzip-faq-link/';
-
-		$class_name = (!is_wp_error($wpo_gzip_compression_enabled) && $wpo_gzip_compression_enabled ? 'wpo-enabled' : 'wpo-disabled');
-
 		if ($wpo_gzip_compression_enabled && false == $wpo_gzip_compression_settings_added) {
 			?>
 			<div class="wpo-fieldgroup">
-				<p><span class="dashicons dashicons-info"></span> <?php _e('GZip compression has been enabled by something other than WP-Optimize.', 'wp-optimize'); ?></p>
+				<p><span class="dashicons dashicons-info"></span> <?php _e('Gzip compression has been enabled by something other than WP-Optimize.', 'wp-optimize'); ?></p>
 			</div>
 			<?php
 		}
 
 	?>
 	<div class="wpo-fieldgroup">
-		<span><?php _e("Gzip compression improves the performance of your website and decreases its loading time. When a visitor makes a request for your website, the server compresses the requested page and transfers it to the customer's computer.", 'wp-optimize'); ?>
-			<br>
+		<span><?php _e("This option improves the performance of your website and decreases its loading time. When a visitor makes a request, the server compresses the requested resource before sending it leading to smaller file sizes and faster loading.", 'wp-optimize'); ?>
 			<?php echo sprintf('<a href="%s" target="_blank">%s</a>', $info_link, __('Follow this link to get more information about Gzip compression.', 'wp_optimize')); ?>
 		</span>
 
 		<p id="wpo_gzip_compression_status" class="<?php echo $class_name; ?>">
 			<strong class="wpo-enabled"><?php _e('Gzip compression is currently ENABLED.', 'wp-optimize'); ?></strong>
 			<strong class="wpo-disabled"><?php _e('Gzip compression is currently DISABLED.', 'wp-optimize'); ?></strong>
+			<?php if (!$wp_optimize->is_apache_server() || ($wpo_gzip_compression_enabled && false == $wpo_gzip_compression_settings_added)) : ?>
+				<a href="#" class="wpo-refresh-gzip-status" title="<?php esc_attr_e('Press this to see if any changes were made to your Gzip configuration', 'wp-optimize'); ?>"><?php _e('Check status again', 'wp-optimize'); ?> <img class="wpo_spinner display-none" src="<?php echo esc_attr(admin_url('images/spinner-2x.gif')); ?>"></a>
+			<?php endif; ?>
 		</p>
 		<br>
 		<?php
@@ -60,7 +53,7 @@
 	<div id="wpo_gzip_compression_error_message">
 		<?php
 		if (is_wp_error($wpo_gzip_compression_enabled)) {
-			echo $wpo_gzip_compression_enabled->get_error_message();
+			echo htmlspecialchars($wpo_gzip_compression_enabled->get_error_message());
 		}
 		?>
 	</div>

@@ -28,7 +28,7 @@ class WP_Optimization_orphandata extends WP_Optimization {
 	 * Do optimization.
 	 */
 	public function optimize() {
-		$clean = "DELETE FROM `" . $this->wpdb->term_relationships . "` WHERE object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
+		$clean = "DELETE FROM `" . $this->wpdb->term_relationships . "` WHERE term_taxonomy_id=1 AND object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
 
 		$orphandata = $this->query($clean);
 		$this->processed_count += $orphandata;
@@ -55,7 +55,7 @@ class WP_Optimization_orphandata extends WP_Optimization {
 	 * Get count of unoptimized items.
 	 */
 	public function get_info() {
-		$sql = "SELECT COUNT(*) FROM `" . $this->wpdb->term_relationships . "` WHERE object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
+		$sql = "SELECT COUNT(*) FROM `" . $this->wpdb->term_relationships . "` WHERE term_taxonomy_id=1 AND object_id NOT IN (SELECT id FROM `" . $this->wpdb->posts . "`);";
 		$orphandata = $this->wpdb->get_var($sql);
 
 		$this->found_count += $orphandata;

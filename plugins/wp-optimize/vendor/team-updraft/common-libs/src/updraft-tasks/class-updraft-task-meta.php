@@ -23,7 +23,7 @@ class Updraft_Task_Meta {
 		$id = (int) $id;
 		if (!$id) return false;
 
-		$sql = $wpdb->prepare("SELECT meta_value FROM {$wpdb->prefix}tm_taskmeta WHERE task_id = %d AND meta_key = %s LIMIT 1", $id, $key);
+		$sql = $wpdb->prepare("SELECT meta_value FROM {$wpdb->base_prefix}tm_taskmeta WHERE task_id = %d AND meta_key = %s LIMIT 1", $id, $key);
 
 		$meta = $wpdb->get_var($sql);
 
@@ -51,9 +51,9 @@ class Updraft_Task_Meta {
 		$value = maybe_serialize($value);
 
 		if (false !== self::get_task_meta($id, $key)) {
-			$sql = $wpdb->prepare("UPDATE {$wpdb->prefix}tm_taskmeta SET meta_value = %s WHERE meta_key = %s AND task_id = %d", $value, $key, $id);
+			$sql = $wpdb->prepare("UPDATE {$wpdb->base_prefix}tm_taskmeta SET meta_value = %s WHERE meta_key = %s AND task_id = %d", $value, $key, $id);
 		} else {
-			$sql = $wpdb->prepare("INSERT INTO {$wpdb->prefix}tm_taskmeta (task_id, meta_key, meta_value) VALUES (%d, %s, %s)", $id, $key, $value);
+			$sql = $wpdb->prepare("INSERT INTO {$wpdb->base_prefix}tm_taskmeta (task_id, meta_key, meta_value) VALUES (%d, %s, %s)", $id, $key, $value);
 		}
 
 		return $wpdb->query($sql);
@@ -71,7 +71,7 @@ class Updraft_Task_Meta {
 		$id = (int) $id;
 		if (!$id) return false;
 
-		$sql = $wpdb->prepare("DELETE FROM {$wpdb->prefix}tm_taskmeta WHERE task_id = %d AND meta_key = %s LIMIT 1", $id, $option);
+		$sql = $wpdb->prepare("DELETE FROM {$wpdb->base_prefix}tm_taskmeta WHERE task_id = %d AND meta_key = %s LIMIT 1", $id, $option);
 		return $wpdb->query($sql);
 	}
 
@@ -86,7 +86,7 @@ class Updraft_Task_Meta {
 		$id = (int) $id;
 		if (!$id) return false;
 
-		$sql = $wpdb->prepare("DELETE FROM {$wpdb->prefix}tm_taskmeta WHERE task_id = %d", $id);
+		$sql = $wpdb->prepare("DELETE FROM {$wpdb->base_prefix}tm_taskmeta WHERE task_id = %d", $id);
 		return $wpdb->query($sql);
 	}
 }

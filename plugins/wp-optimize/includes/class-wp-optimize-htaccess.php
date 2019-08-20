@@ -24,7 +24,7 @@ class WP_Optimize_Htaccess {
 	 * @param string $htaccess_file Full path to .htaccess file.
 	 */
 	public function __construct($htaccess_file = '') {
-		$this->_htaccess_file = ('' != $htaccess_file) ? $htaccess_file : get_home_path() . '.htaccess';
+		$this->_htaccess_file = ('' != $htaccess_file) ? $htaccess_file : $this->get_home_path() . '.htaccess';
 		// read .htaccess content into $_file_tree.
 		$this->read_file();
 	}
@@ -305,5 +305,32 @@ class WP_Optimize_Htaccess {
 	 */
 	private function normalize_string($string) {
 		return strtolower(str_replace(array("\n", "\r", ' '), '', $string));
+	}
+
+	/**
+	 * Get the absolute filesystem path to the root of the WordPress installation.
+	 * WP_Core function from wp-admin/includes/file.php.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @return string Full filesystem path to the root of the WordPress installation
+	 */
+	private function get_home_path() {
+		if (function_exists('get_home_path')) {
+			return get_home_path();
+		}
+
+		$home    = set_url_scheme(get_option('home'), 'http');
+		$siteurl = set_url_scheme(get_option('siteurl'), 'http');
+		if (!empty($home) && 0 !== strcasecmp($home, $siteurl)) {
+			$wp_path_rel_to_home = str_ireplace($home, '', $siteurl); /* $siteurl - $home */
+			$pos                 = strripos(str_replace('\\', '/', $_SERVER['SCRIPT_FILENAME']), trailingslashit($wp_path_rel_to_home));
+			$home_path           = substr($_SERVER['SCRIPT_FILENAME'], 0, $pos);
+			$home_path           = trailingslashit($home_path);
+		} else {
+			$home_path = ABSPATH;
+		}
+
+		return str_replace('\\', '/', $home_path);
 	}
 }

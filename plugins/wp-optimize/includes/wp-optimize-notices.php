@@ -79,15 +79,6 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 				'supported_positions' => $this->anywhere,
 				'validity_function' => 'translation_needed',
 			),
-			'keyy' => array(
-				'prefix' => '',
-				'title' => 'Keyy: Instant and secure logon with a wave of your phone',
-				'text' => __("Find out more about our revolutionary new WordPress plugin.", "wp-optimize") . $this->url_end(true, 'getkeyy.com'),
-				'image' => 'notices/keyy_logo.png',
-				'dismiss_time' => 'dismiss_notice',
-				'supported_positions' => $this->anywhere,
-				'validity_function' => 'is_keyy_installed',
-			),
 			'wpo-premium' => array(
 				'prefix' => '',
 				'title' => __("Perform optimizations while your visitors sleep", "wp-optimize"),
@@ -228,8 +219,8 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 		$this->initialized = true;
 		$this->notices_content = (defined('WP_OPTIMIZE_NOADS_B') && WP_OPTIMIZE_NOADS_B) ? array() : $this->populate_notices_content();
 		$our_version = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? WPO_VERSION.'.'.time() : WPO_VERSION;
-		$min_or_not = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '.min';
-		wp_enqueue_style('wp-optimize-notices-css',  WPO_PLUGIN_URL.'/css/wp-optimize-notices'.$min_or_not.'.css', array(), $our_version);
+		$min_or_not_internal = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '-'. str_replace('.', '-', WPO_VERSION). '.min';
+		wp_enqueue_style('wp-optimize-notices-css',  WPO_PLUGIN_URL.'/css/wp-optimize-notices'.$min_or_not_internal.'.css', array(), $our_version);
 	}
 
 	/**
@@ -251,17 +242,6 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 	 * @return boolean                      a bool to indicate if the notice should be displayed or not
 	 */
 	protected function is_updraftcentral_installed($product = 'updraftcentral', $also_require_active = false) {
-		return parent::is_plugin_installed($product, $also_require_active);
-	}
-
-	/**
-	 * This method will call the parent is_plugin_installed and pass in the product keyy to check if that plugin is installed if it is then we shouldn't display the notice
-	 *
-	 * @param  string  $product             the plugin slug
-	 * @param  boolean $also_require_active a bool to indicate if the plugin should also be active
-	 * @return boolean                      a bool to indicate if the notice should be displayed or not
-	 */
-	protected function is_keyy_installed($product = 'keyy', $also_require_active = false) {
 		return parent::is_plugin_installed($product, $also_require_active);
 	}
 

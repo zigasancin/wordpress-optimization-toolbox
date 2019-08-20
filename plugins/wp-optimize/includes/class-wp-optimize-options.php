@@ -24,11 +24,11 @@ class WP_Optimize_Options {
 	 *
 	 * @return string
 	 */
-	public function admin_page_url() {
+	public function admin_page_url($page = 'WP-Optimize') {
 		if (is_multisite()) {
-			return network_admin_url('admin.php?page=WP-Optimize');
+			return network_admin_url('admin.php?page='.$page);
 		} else {
-			return admin_url('admin.php?page=WP-Optimize');
+			return admin_url('admin.php?page='.$page);
 		}
 	}
 
@@ -72,12 +72,11 @@ class WP_Optimize_Options {
 	/**
 	 * Update WP-Optimize option value.
 	 *
-	 * @param string $option    Option name.
-	 * @param mixed  $value     Option value.
-	 * @param bool   $use_cache
+	 * @param string $option Option name.
+	 * @param mixed  $value  Option value.
 	 * @return bool
 	 */
-	public function update_option($option, $value, $use_cache = true) {
+	public function update_option($option, $value) {
 		if (is_multisite()) {
 			return update_site_option('wp-optimize-mu-'.$option, $value);
 		} else {

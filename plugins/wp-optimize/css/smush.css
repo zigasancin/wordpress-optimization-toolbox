@@ -2,48 +2,8 @@
  * Autosmush
  */
 .wpo-fieldgroup .autosmush {
-	min-height: 40px;
 	display: inline-block;
 	width: 100%;
-}
-
-/* The switch - the box around the slider */
-.wpo-fieldgroup .autosmush .switch {
-	position: relative;
-	display: inline-block;
-	width: 48px;
-	height: 23px;
-}
-
-/* Hide default HTML checkbox */
-.wpo-fieldgroup .autosmush .switch input {
-	opacity: 0;
-	width: 0;
-	height: 0;
-}
-
-/* The slider */
-.wpo-fieldgroup .autosmush .slider {
-	position: absolute;
-	cursor: pointer;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: #EDEFF0;
-	transition: .4s;
-}
-
-.wpo-fieldgroup .autosmush .slider:before {
-	position: absolute;
-	content: "";
-	height: 15px;
-	width: 15px;
-	left: 1px;
-	bottom: 2px;
-	background-color: #EDEFF0;
-	border: 1px solid black;
-	transition: .4s;
 }
 
 .wpo-fieldgroup .autosmush h3 {
@@ -51,26 +11,11 @@
 	margin: 3px 18px;
 }
 
-.wpo-fieldgroup .autosmush input:checked + .slider:before {
-	transform: translatex(26px);
-	background: black;
-}
-
-/* Rounded sliders */
-.wpo-fieldgroup .autosmush .slider.round {
-	border-radius: 23px;
-	border: 1px solid;
-}
-
-.wpo-fieldgroup .autosmush .slider.round:before {
-	border-radius: 50%;
-}
-
 /**
  * Compression Server
  */
 .wpo-fieldgroup .compression_server div {
-	max-width: 250px;
+	max-width: 300px;
 }
 
 .wpo-fieldgroup .compression_server h2 {
@@ -100,41 +45,75 @@
 .wpo-fieldgroup .compression_server > div {
 	-ms-flex: 1;
 	flex: 1;
-	padding: 0.5px;
+	margin-right: 10px;
 	height: 100%;
-}
-
-.wpo-fieldgroup .compression_server input[type="radio"] {
-	display: none;
-}
-
-.wpo-fieldgroup .compression_server input[type="radio"] ~ label h2 {
-	color: black;
-}
-
-.wpo-fieldgroup .compression_server label {
-	height: 100%;
-	display: block;
-	background: #F9F9F9;
-	padding: 1px;
-	margin: 1px;
-	text-align: center;
-	box-shadow: 0px 3px 10px -2px hsla(150, 5%, 65%, 0.5);
 	position: relative;
 }
 
+.wpo-fieldgroup .compression_server input[type="radio"] {
+	position: absolute;
+	z-index: 1;
+	top: calc(50% + 2px);
+	left: 20px;
+	transform: translatey(-50%);
+}
+
+.wpo-fieldgroup .compression_server input[type="radio"] ~ label h4 {
+	color: #23282D;
+	margin-top: 0;
+	margin-bottom: 0.9em;
+	font-size: 1.2em;
+}
+
+.wpo-fieldgroup .compression_server label {
+	display: block;
+	position: relative;
+	box-sizing: border-box;
+	height: 100%;
+	background: #FFF;
+	text-align: left;
+	box-shadow: 0px 3px 10px -2px hsla(150, 5%, 65%, 0.5);
+}
+
 .wpo-fieldgroup .compression_server input[type="radio"] + label {
-	padding: 6px;
-	border: 2px solid #F1F2F3;
+	padding: 20px;
+	border: 2px solid #FFF;
+	padding-left: 65px;
+	position: relative;
+	border-radius: 5px;
+	color: #82868B;
+}
+
+.wpo-fieldgroup .compression_server input[type="radio"] + label::before {
+	content: '';
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 52px;
+	height: 100%;
+	border-right: 1px solid #EDEFF0;
 }
 
 .wpo-fieldgroup .save-options {
 	margin: 10px 0;
 }
 
-.wpo-fieldgroup .compression_server input[type="radio"]:checked + label {
-	border: 2px solid #0086B9;
-	padding: 6px;
+.wpo-fieldgroup .compression_server input[type="radio"]:focus + label,
+.wpo-fieldgroup .compression_server input[type="radio"] + label:hover {
+	border-color: rgba(0, 134, 184, 0.38);
+}
+
+.wpo-fieldgroup .compression_server input[type="radio"]:focus + label {
+	box-shadow: 0px 3px 10px -2px #5B9DD9;
+}
+
+.wpo-fieldgroup .compression_server input[type="radio"]:focus + label h4 {
+	color: #0086B9;
+}
+
+.wpo-fieldgroup .compression_server input[type="radio"]:checked + label,
+.wpo-fieldgroup .compression_server input[type="radio"]:checked + label:hover {
+	border-color: #0086B9;
 }
 
 @media only screen and (max-width: 700px) {
@@ -142,6 +121,11 @@
 	.wpo-fieldgroup .compression_server {
 		-ms-flex-direction: column;
 		flex-direction: column;
+	}
+
+	.wpo-fieldgroup .compression_server > div {
+		margin-bottom: 15px;
+		max-width: 100%;
 	}
 
 }
@@ -234,6 +218,56 @@ span.close {
 	margin: 10px;
 }
 
+.wpo-fieldgroup .smush-options.custom_compression {
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	    align-items: center;
+	margin-left: 24px;
+}
+
+.wpo-fieldgroup .smush-options.custom_compression > span {
+	display: inline-block;
+	padding: 6px;
+	border: 1px solid #CFD2D4;
+	border-radius: 4px;
+	font-size: 0.9em;
+	position: relative;
+}
+
+.wpo-fieldgroup .smush-options.custom_compression > span.slider-start::after {
+	content: '';
+	width: 6px;
+	height: 6px;
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 100%;
+	transform: translate(-3px, 8px) rotate(45deg);
+	border-right: 1px solid #CFD2D4;
+	border-top: 1px solid #CFD2D4;
+	background: #EDEFF0;
+}
+
+.wpo-fieldgroup .smush-options.custom_compression > span.slider-end::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	display: block;
+	position: absolute;
+	top: 0;
+	right: 100%;
+	transform: translate(3px, 8px) rotate(45deg);
+	border-left: 1px solid #CFD2D4;
+	border-bottom: 1px solid #CFD2D4;
+	background: #EDEFF0;
+}
+
+.wpo-fieldgroup .smush-options.custom_compression > input {
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
 @media screen and (max-width: 782px) {
 
 	.wpo-fieldgroup input[type="radio"] {
@@ -247,15 +281,36 @@ span.close {
 		margin: 4px;
 	}
 
+	.wpo-fieldgroup .smush-options.custom_compression {
+		-ms-flex-direction: column;
+		    flex-direction: column;
+	}
+
+	.wpo-fieldgroup .smush-options.custom_compression > input {
+		width: 100%;
+	}
+
+	.wpo-fieldgroup .smush-options.custom_compression > span {
+		display: block;
+		width: 100%;
+	}
+
+	.wpo-fieldgroup .smush-options.custom_compression > span.slider-start::after {
+		left: 0;
+		transform: translate(7px, 22px) rotate(135deg);
+	}
+
+	.wpo-fieldgroup .smush-options.custom_compression > span.slider-end::before {
+		right: auto;
+		left: 100%;
+		transform: translate(-14px, -5px) rotate(135deg);
+	}
+
 }
 
 /**
  * Uncompressed images
  */
-
-#wpo_smush_images_grid {
-	border: 2px solid #CFD1D5;
-}
 
 #wpo_smush_settings .align-left {
 	float: left;
@@ -270,8 +325,7 @@ span.close {
 }
 
 .wpo-fieldgroup .smush-refresh-icon,
-.wpo-fieldgroup .smush-select-actions,
-.toggle-smush-advanced {
+.wpo-fieldgroup .smush-select-actions {
 	font-size: 15px;
 }
 
@@ -291,19 +345,91 @@ span.close {
 	color: #0088BC;
 }
 
+.wpo-fieldgroup .button.toggle-smush-advanced {
+	display: block;
+	width: calc(100% + 40px);
+	margin-left: -20px;
+	margin-right: -20px;
+	padding-left: 20px;
+	padding-right: 20px;
+	position: relative;
+	text-decoration: none;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced span.dashicons {
+	text-decoration: none;
+	font-size: 16px;
+	height: 16px;
+	vertical-align: middle;
+	color: #444;
+	transition: .2s all;
+}
+
+.wpo-fieldgroup .toggle-smush-advanced span.text {
+	background: #EDEFF0;
+	z-index: 1;
+	position: relative;
+	padding-right: 5px;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced:hover,
+.wpo-fieldgroup .button.toggle-smush-advanced:focus {
+	background: transparent;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced .toggle-smush-advanced__text-show {
+	display: inline-block;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced .toggle-smush-advanced__text-hide {
+	display: none;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced.opened .toggle-smush-advanced__text-show {
+	display: none;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced.opened .toggle-smush-advanced__text-hide {
+	display: inline-block;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced.opened::before {
+	content: '';
+	border-top: 1px solid #CCC;
+	width: 100%;
+	position: absolute;
+	top: 16px;
+	left: 0;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced.opened span.dashicons {
+	transform: rotate(180deg);
+}
+
 .wpo-fieldgroup .smush-advanced {
 	display: none;
+}
+
+.wpo-fieldgroup .button.toggle-smush-advanced.opened + .smush-advanced {
+	display: block;
+}
+
+.wpo_smush_image:focus-within label {
+	box-shadow: 0 0 4px #0272AA;
 }
 
 .wpo_smush_image .wpo_smush_image__input:checked + label {
 	border-color: #0272AA;
 }
 
-.wpo-fieldgroup.uncompressed-images input[type="checkbox"] {
-	display: none;
+.uncompressed-images input[type="checkbox"] {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
 }
 
-.wpo-fieldgroup.uncompressed-images small.red {
+.uncompressed-images small.red {
 	clear: both;
 	display: block;
 	margin: 5px;
@@ -437,6 +563,12 @@ span.close {
 	margin: 15px auto;
 }
 
+img#wpo_smush_images_clear_stats_spinner {
+	width: 20px;
+	line-height: 1;
+	vertical-align: middle;
+}
+
 /* Animated progress bar */
 
 #wpo_smush_images_information_container {
@@ -500,15 +632,12 @@ span.close {
 	margin: 10px 0;
 }
 
-#smush-metabox-inside-wrapper .alignleft {
-	float: left;
+#smush-metabox-inside-wrapper input[type="radio"] {
+	margin: -4px 4px 0 0;
 }
 
-#smush-metabox-inside-wrapper input,
-#smush-metabox-inside-wrapper select,
-#smush-metabox-inside-wrapper .button {
-	float: right;
-	margin: 0px;
+#smush-metabox-inside-wrapper .alignleft {
+	float: left;
 }
 
 #smush-metabox-inside-wrapper p#smush_info {
@@ -517,21 +646,20 @@ span.close {
 	clear: both;
 }
 
-#smush-metabox-inside-wrapper .wpo_smush_single_image.compression_level label {
-	display: inline-block;
-}
-
-#smush-metabox-inside-wrapper .wpo_smush_single_image.compression_level span {
-	margin: 3px 0;
-}
-
 #smush-metabox-inside-wrapper .toggle-smush-advanced {
-	font-size: 14px;
 	cursor: pointer;
-	text-decoration: underline;
-	color: #0088BC;
 	display: block;
 	clear: both;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+#smush-metabox-inside-wrapper .toggle-smush-advanced:not(.opened) ~ .smush-advanced {
+	display: none;
+}
+
+#smush-metabox-inside-wrapper .toggle-smush-advanced.opened ~ .smush-advanced {
+	display: block !important;
 }
 
 #smush-metabox-inside-wrapper .smush-options.custom_compression span {
@@ -555,11 +683,54 @@ span.close {
 	text-align: right;
 }
 
+.smush-metabox-dashboard-link {
+	clear: both;
+	padding-top: 15px;
+	text-align: right;
+}
+
+.media-frame-content .attachment-compat .compat-item,
+.compat-field-wpo_compress_image {
+	overflow: visible !important;
+}
+
+.compat-field-wpo_compress_image {
+	border-top: 1px solid #DDD;
+}
+
+.compat-field-wpo_compress_image span.dashicons {
+	text-align: left;
+	float: none;
+	min-height: 0;
+	padding-top: 2px;
+}
+
+.compat-field-wpo_compress_image td.field {
+	width: auto;
+	float: none;
+}
+
+.compat-field-wpo_compress_image td.field [data-tooltip] {
+	display: none;
+}
+
+.compat-field-wpo_compress_image th.label {
+	text-align: left;
+	min-width: 0;
+	float: none;
+	margin: 0;
+}
+
+.compat-field-wpo_compress_image th.label label span {
+	font-weight: 500;
+	text-align: left;
+}
+
 /**
  * Force fix the modals
  */
 .blockUI.blockMsg.blockPage {
-	z-index: 9999 !important;
+	z-index: 170000 !important;
 	right: 0;
 	left: 0 !important;
 	margin-right: auto !important;
@@ -581,6 +752,7 @@ span.close {
 .wpo-fieldgroup [data-tooltip] {
 	position: relative;
 	cursor: pointer;
+	line-height: 18px;
 }
 
 /* Hide the tooltip content by default */
@@ -602,18 +774,19 @@ span.close {
 	bottom: 150%;
 	left: 50%;
 	margin-bottom: 5px;
-	margin-left: -80px;
-	padding: 7px;
+	margin-left: -140px;
+	padding: 12px;
 	width: 275px;
 	z-index: 9999;
 	border-radius: 3px;
 	background-color: #000;
-	background-color: hsla(0, 0%, 20%, 0.9);
+	background-color: hsla(0, 0%, 20%, 0.95);
 	color: #FFF;
 	content: attr(data-tooltip);
 	text-align: center;
-	font-size: 14px;
-	line-height: 1.2;
+	font-size: .85rem;
+	font-weight: 400;
+	line-height: 1.4;
 }
 
 #smush-metabox-inside-wrapper [data-tooltip]:before {
@@ -641,7 +814,11 @@ span.close {
 #smush-metabox-inside-wrapper [data-tooltip]:hover:before,
 #smush-metabox-inside-wrapper [data-tooltip]:hover:after,
 .wpo-fieldgroup [data-tooltip]:hover:before,
-.wpo-fieldgroup [data-tooltip]:hover:after {
+.wpo-fieldgroup [data-tooltip]:hover:after,
+#smush-metabox-inside-wrapper [data-tooltip]:focus:before,
+#smush-metabox-inside-wrapper [data-tooltip]:focus:after,
+.wpo-fieldgroup [data-tooltip]:focus:before,
+.wpo-fieldgroup [data-tooltip]:focus:after {
 	visibility: visible;
 	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
 	filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=100);

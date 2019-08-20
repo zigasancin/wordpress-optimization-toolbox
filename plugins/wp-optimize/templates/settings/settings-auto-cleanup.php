@@ -26,11 +26,14 @@
 					$schedule_options = array(
 						'wpo_daily' => __('Daily', 'wp-optimize'),
 						'wpo_weekly' => __('Weekly', 'wp-optimize'),
-						'wpo_otherweekly' => __('Fortnightly', 'wp-optimize'),
+						'wpo_fortnightly' => __('Fortnightly', 'wp-optimize'),
 						'wpo_monthly' => __('Monthly (approx. - every 30 days)', 'wp-optimize'),
 					);
 
 					$schedule_type_saved_id = $options->get_option('schedule-type', 'wpo_weekly');
+
+					// Backwards compatibility:
+					if ('wpo_otherweekly' == $schedule_type_saved_id) $schedule_type_saved_id = 'wpo_fortnightly';
 
 					foreach ($schedule_options as $opt_id => $opt_description) {
 					?>

@@ -18,12 +18,12 @@
 			<td>
 				<img src="<?php echo WPO_PLUGIN_URL.'/images/notices/wp_optimize_logo.png';?>" alt="WP-Optimize" width="80" height="80">
 				<br>
-				<?php _e('WP-Optimize', 'wp-optimize'); ?> <br> <?php _e('Free', 'wp-optimize');?>
+				<?php _e('Free', 'wp-optimize');?>
 			</td>
 			<td>
 				<img src="<?php echo WPO_PLUGIN_URL.'/images/notices/wp_optimize_logo.png';?>" alt="<?php esc_attr_e('WP-Optimize Premium', 'wp-optimize');?>" width="80" height="80">
 				<br>
-				<?php _e('WP-Optimize', 'wp-optimize'); ?> <br> <?php _e('Premium', 'wp-optimize');?>
+				<?php _e('Premium', 'wp-optimize');?>
 			</td>
 		</tr>
 		<tr>
@@ -35,11 +35,11 @@
 				<p><a href="<?php esc_attr_e(apply_filters('wpo_premium_buy_url', 'https://getwpo.com/buy/'));?>"><?php _e('Upgrade now', 'wp-optimize');?></a></p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="wpo-main-feature-row">
 			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/auto-optimize.png';?>" alt="<?php esc_attr_e('Auto-optimize database', 'wp-optimize');?>" class="wpo-premium-image">
-				<h4><?php _e('Auto-optimize database', 'wp-optimize');?></h4>
-				<p><?php _e('Optimizes without the need for manual queries', 'wp-optimize'); ?></p>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/database-optimization-vehicle-64x64.png';?>" alt="<?php esc_attr_e('Database cleaning', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Database cleaning', 'wp-optimize');?></h4>
+				<p><?php _e('Clears out unnecessary data, cleans up your tables and retrieves space lost to data fragmentation.', 'wp-optimize'); ?></p>
 			</td>
 			<td>
 				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
@@ -48,11 +48,11 @@
 				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="wpo-main-feature-row">
 			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'images/features/automatic-clean-ups.png';?>" alt="<?php esc_attr_e('Scheduled clean-ups', 'wp-optimize');?>" class="wpo-premium-image">
-				<h4><?php _e('Scheduled clean-ups', 'wp-optimize');?></h4>
-				<p><?php _e('Carries out scheduled clean-ups daily, weekly, fortnightly and monthly', 'wp-optimize');?></p>
+				<img src="<?php echo WPO_PLUGIN_URL.'images/features/image-compression-vehicle-64x64.png';?>" alt="<?php esc_attr_e('Image compression', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Image compression', 'wp-optimize');?></h4>
+				<p><?php _e('Compress your images for a much faster page load.', 'wp-optimize');?></p>
 			</td>
 			<td>
 				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
@@ -61,50 +61,11 @@
 				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="wpo-main-feature-row">
 			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'images/features/displays-database-table-sta.png';?>" alt="<?php esc_attr_e('Displays database table statistics', 'wp-optimize');?>" class="wpo-premium-image">
-				<h4><?php _e('Displays database table statistics', 'wp-optimize');?></h4>
-				<p><?php _e('Displays database table statistics to show how much space can be cleared', 'wp-optimize');?></p>
-			</td>
-			<td>
-				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
-			</td>
-			<td>
-				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/enables-disables-trackbacks.png';?>" alt="<?php esc_attr_e('Enables / disables trackbacks and comments', 'wp-optimize');?>" class="wpo-premium-image">
-				<h4><?php _e('Enables / disables trackbacks and comments', 'wp-optimize');?></h4>
-				<p><?php _e('Enable or disable trackbacks and comments for all of your published posts', 'wp-optimize');?></p>
-			</td>
-			<td>
-				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
-			</td>
-			<td>
-				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/number_of_weeks.png';?>" alt="<?php esc_attr_e("Retains a set number of weeks' data during clean-ups", 'wp-optimize'); ?>" class="wpo-premium-image">
-				<h4><?php _e("Retains a set number of weeks' data during clean-ups", 'wp-optimize'); ?></h4>
-				<p><?php _e("Choose how much historical data to retain, for extra safety.", 'wp-optimize'); ?></p>
-			</td>
-			<td>
-				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
-			</td>
-			<td>
-				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/automatic-clean-ups.png';?>" alt="<?php esc_attr_e('Clean auto-draft posts', 'wp-optimize');?>" class="wpo-premium-image">
-				<h4><?php _e('Clean auto-draft posts', 'wp-optimize');?></h4>
-				<p><?php _e('Automatically cleans up auto draft posts older than your chosen age', 'wp-optimize');?></p>
+				<img src="<?php echo WPO_PLUGIN_URL.'images/features/cache-vehicle-64x64.png';?>" alt="<?php esc_attr_e('Caching', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Caching', 'wp-optimize');?></h4>
+				<p><?php _e('Cache your page and post for even more speed.', 'wp-optimize');?></p>
 			</td>
 			<td>
 				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
@@ -232,6 +193,19 @@
 		</tr>
 		<tr>
 			<td>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/more-settings.png';?>" alt="<?php esc_attr_e('Multilingual and multi-currency compatible', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Multilingual and multi-currency compatible', 'wp-optimize');?></h4>
+				<p><?php _e('Cache supports WPML multilingual plugin and multiple currencies for WooCommerce', 'wp-optimize');?></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/premium-support.png';?>" alt="<?php esc_attr_e('Premium support', 'wp-optimize');?>" class="wpo-premium-image">
 				<h4><?php _e('Premium support', 'wp-optimize');?></h4>
 				<p><?php _e('Get your specific queries addressed directly by our experts', 'wp-optimize');?></p>
@@ -264,10 +238,7 @@
 			
 			<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/updraftcentral/', 'UpdraftCentral'); ?> |
 
-			<?php $wp_optimize->wp_optimize_url('https://metaslider.com/', 'MetaSlider'); ?> |
-
-			<?php $wp_optimize->wp_optimize_url('https://getkeyy.com/', 'Keyy'); ?>
-		
+			<?php $wp_optimize->wp_optimize_url('https://metaslider.com/', 'MetaSlider'); ?>		
 		</p>
 	</header>
 	<div class="wpo-plugin-family__plugins">
@@ -328,21 +299,6 @@
 				<?php _e("Easily improve the look of your site, your conversion rate and bottom line.", 'wp-optimize');?>
 			</p>
 			<?php $wp_optimize->wp_optimize_url('https://www.metaslider.com/', null, __('Try for free', 'wp-optimize')); ?>
-		</div>
-		<div class="wpo-plugin-family__plugin">
-			<?php $wp_optimize->wp_optimize_url('https://getkeyy.com/', null, '<img class="addons" alt="'.__("Keyy Two Factor Authentication", 'wp-optimize').'" src="'. WPO_PLUGIN_URL.'images/features/keyy_logo.png' .'">');
-			$wp_optimize->wp_optimize_url('https://www.metaslider.com/', null, '<h3>'.__('Keyy – instant &amp; secure logins with a wave of your phone', 'wp-optimize').'</h3>', 'class="other-plugin-title"');
-			?>
-			<p>
-				<?php _e("Keyy is a unique 2-factor authentication plugin that allows you to log in to your website with just a wave of your smartphone. It represents the ultimate UX, doing away with the need for usernames, passwords and other 2FA tokens.", 'wp-optimize');?>
-			</p>
-			<p>
-				<?php _e("Using innovative RSA public-key cryptography, Keyy is highly secure and prevents password-based hacking risks such as brute-forcing, key-logging, shoulder-surfing and connection sniffing.", 'wp-optimize');?>
-			</p>
-			<p>
-				<?php _e("Logging in with Keyy is simple. Once users have installed the app onto their smartphone and secured it using a fingerprint or 4-number pin, they just open the app, point it at the moving on-screen barcode and voila!", 'wp-optimize');?>
-			</p>
-			<?php $wp_optimize->wp_optimize_url('https://getkeyy.com/', null, __('Try for free', 'wp-optimize')); ?>
 		</div>
 	</div><!-- END wpo-plugin-family__plugins -->
 </div>

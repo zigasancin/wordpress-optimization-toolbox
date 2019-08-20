@@ -3,14 +3,17 @@
 .updraft-ad-container.updated,
 .updraft-ad-container {
 	margin-left: 0px;
+	margin-right: 0px;
 	position: relative;
 	padding-right: 80px;
 }
 
 /* General notices (non WPO) on the WPO page */
 
-.toplevel_page_WP-Optimize .notice {
+body[class*=WP-Optimize] .notice,
+body[class*=wp-optimize] .notice {
 	margin-left: 0;
+	margin-right: 0;
 }
 
 .toplevel_page_WP-Optimize.rtl .notice,

@@ -14,7 +14,7 @@
 	<?php
 	$sqlversion = (string) $wp_optimize->get_db_info()->get_version();
 
-	echo '<p class="wpo-system-status wpo-text__dim"><em>WP-Optimize '.WPO_VERSION.' - '.__('running on:', 'wp-optimize').' PHP '.htmlspecialchars(PHP_VERSION).', '.__('MySQL', 'wp-optimize').' '.htmlspecialchars($sqlversion).' - '.htmlspecialchars(PHP_OS).'</em></p>';
+	echo '<p class="wpo-system-status"><em>WP-Optimize '.WPO_VERSION.' - '.__('running on:', 'wp-optimize').' PHP '.htmlspecialchars(PHP_VERSION).', '.__('MySQL', 'wp-optimize').' '.htmlspecialchars($sqlversion).' - '.htmlspecialchars(PHP_OS).'</em></p>';
 
 	echo '<p>';
 	$lastopt = $options->get_option('last-optimized', 'Never');

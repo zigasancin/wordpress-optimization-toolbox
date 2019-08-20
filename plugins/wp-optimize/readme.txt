@@ -1,33 +1,48 @@
-=== WP-Optimize ===
+=== WP-Optimize - Clean, Compress, Cache. ===  
 Contributors: DavidAnderson, ruhanirabin, DNutbourne, aporter, snightingale, lumberhack
 Donate link: https://david.dw-perspective.org.uk/donate
-Tags: comments, spam, optimize, database, revisions, users, posts, trash, schedule, automatic, clean, phpmyadmin, meta, postmeta, responsive, mobile
+Tags: cache, optimizing, database, image optimize, performance, clean, spam, speed, caching, smush, smushing
 Requires at least: 3.8
 Tested up to: 5.2
-Stable tag: 2.3.3
+Stable tag: 3.0.11
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-WP-Optimize is WordPress's most-installed optimization plugin. With it, you can clean up your database easily and safely, without manual queries.
+WP-Optimize makes your site fast and efficient. It cleans the database, compresses images and caches pages. Fast sites attract more traffic and users.
 
 == Description ==
 
-WP-Optimize is an effective tool for automatically cleaning your WordPress database so that it runs at maximum efficiency.
+WP-Optimize is a revolutionary, all-in-one plugin that cleans your database, compresses your images and caches your site. This simple, popular and highly effective tool has everything you need to keep your website fast and thoroughly optimized!
 
-= Major Features =
+[vimeo https://vimeo.com/333705073]
+
+Faster sites win a higher SEO rank and higher user satisfaction whilst using fewer server resources. 
+ 
+It does it in three clever ways:
+
+= 1. Cleans the database  =
+
+Your WordPress database stores everything that you need for your website – plus many things that you don’t. WP-Optimize clears out all of this unnecessary data, cleans up your tables and even retrieves space lost to data fragmentation.
+
+Mobile-friendly and incredibly simple to use, it:
 
 * Removes all unnecessary data (e.g. trashed/unapproved/spam comments, stale data) plus pingbacks, trackbacks and expired transient options
-* Compact/de-fragment MySQL tables with a button-press
-* Compress ("smush") images (existing images and automatically on new ones)
+* Compacts/de-fragment MySQL tables with a button-press
 * Detailed control of which optimizations you wish to carry out
 * Carries out automatic weekly (or otherwise) clean-ups
-* Retains a set number of weeks' data during clean-ups
+* Retains a set number of weeks’ data during clean-ups
 * Performs optimizations without the need for running manual queries
 * Automatically trigger a pre-optimize backup via <a href="https://updraftplus.com">UpdraftPlus</a>
 * Show database statistics and potential savings
-* Mobile friendly and easy-to-use
-* Translated into several languages
-* More planned!
+
+<strong>Why is this important?</strong>
+
+* The tables in MySQL (the database that WordPress uses) will, over time, become inefficient as data is added, removed, moved around. Asking MySQL to optimize its tables every now and again will keep your site running as fast as possible. It won’t happen by itself.
+* Every-time you save a new post or pages, WordPress creates a revision of that post or page. If you edit a post 6 times you might have 5 copy of that post as revisions. This quickly adds lots of rarely-used data to your database tables, making them unnecessarily bloated, and slower to access.
+* There might be thousands of spam and un-approved comments in your comments table, WP-Optimize can clean and remove those in a single click.
+* WP-Optimize reports which database tables have overhead and wasted spaces also it allows you to shrink and get rid of those wasted spaces.
+* Automatically cleans database every week and respects the “Keeps selected number of weeks data” option.
+
 
 = WP-Optimize helps you to: =
 
@@ -35,42 +50,54 @@ WP-Optimize is an effective tool for automatically cleaning your WordPress datab
 
 * <strong>Take control:</strong> WP-Optimize reports on exactly which of your database tables have overhead and wasted space, giving you the insight, control and power to keep your website neat, fast and efficient.
 
-* <strong>Keep it clean:</strong> Once enabled, WP-Optimize can run an automatic clean-up on a schedule, keeping a selected number of weeks' data, according to your specification. 
+* <strong>Keep it clean and fast:</strong> Once enabled, WP-Optimize can run an automatic clean-up on a schedule, keeping a selected number of weeks’ data, according to your specification.
 
-When you use this plugin for the first time or just updated to major version, make a backup of your database (we recommend <a href="https://wordpress.org/plugins/updraftplus">UpdraftPlus</a>). Though none of the queries used are dangerous, it is always the best practice to make a database backup before altering your database.
+= 2. Compresses images =
 
-= How this could help you? =
+Loading large images is often the biggest culprit in slowing your site’s loading time.  
 
-* The tables in MySQL (the database that WordPress uses) will, over time, become inefficient as data is added, removed, moved around. Asking MySQL to optimize its tables every now and again will keep your site running as fast as possible. It won't happen by itself.
+WP-Optimize also has an image-compression tool that uses cutting-edge lossy compression techniques to convert large images (which take a long time to load up) into compressed files saved in your image library, where they can be uploaded in an instant. 
 
-* Every-time you save a new post or pages, WordPress creates a revision of that post or page. If you edit a post 6 times you might have 5 copy of that post as revisions. This quickly adds lots of rarely-used data to your database tables, making them unnecessarily bloated, and slower to access.
+It enables you to compress PNG, JPG, GIF, BMP and TIF pictures up to 5MG in size, and it’s packed with other useful features, including:
 
-* Similar to the scenario described above, there might be thousands of spam and un-approved comments in your comments table, WP-Optimize can clean and remove those in a single click.
+* <strong>Bulk compression</strong>, allowing you to compress multiple existing images at the same time.
+* <strong>Intelligent, multi-pass lossy compression algorithm</strong>, which gives you twice the compression with much less loss of resolution.
+* <strong>‘Restore Originals’ function</strong>, which allows you to retrieve or revert back to your original images at any point.
+* <strong>Auto-compress function</strong>, which automatically compress images as they’re added to the site. 
+* <strong>EXIF Data-Keeping</strong> means image information is retained even once the image is compressed.
+* <strong>‘Compress Big Files function’</strong> allowing you to compress images up to 64MB- much higher than any other plugin.
 
-* WP-Optimize reports which database tables have overhead and wasted spaces also it allows you to shrink and get rid of those wasted spaces.
+Smaller yet high quality images means significantly faster page loading times and frees up server space and bandwidth for more customers.
 
-* Automatically cleans database every week and respects the "Keeps selected number of weeks data" option.
+= 3. Caches pages =
+
+Caching involves keeping dynamic data in a temporary storage area so that it can be retrieved in an instant. It’s a sure-fire way to ensure that web pages load at lightning-fast speed.
+
+Our powerful yet simple WP-Optimize cache feature loads your WordPress posts and pages as static files, thus reducing the processing load on the web server (and preventing overload if PHP and MySQL are used), which helps to improves your website’s speed and performance. 
+
+With minimal configuration, the plugin is easy to use and has a load of useful features, including:
+
+* <strong>Cache Preloading</strong> to ensure the cache is always ready and loaded 
+* <strong>Gzip Compression</strong> of HTML, JavaScript, and CSS to reduces site load time.
+* <strong>Device-Specific Cache</strong> to ensure the optimized page version is always served.
+* <strong>Advanced Exclude Rules</strong>, so that you can cache almost anything by excluding logged in users, specific URLs or cookies. 
+* <strong>Browser Cache</strong> to instruct client browsers to reuse resources (HTML, CSS, JS) if no changes were made since the last request. 
+
+Overall WP-Optimize brings the best optimization technology together in a single seamless plugin to make your WordPress site fast, lean and efficient.
 
 = WP-Optimize Premium =
 
-<strong>Our free version of WP-Optimize is great, but we also have a more powerful Premium version with extra features that offer the ultimate in freedom and flexibility:</strong>
+Our free version of WP-Optimize is great, but we also have an even more powerful Premium version with extra features that offer the ultimate in freedom and flexibility:
 
-<strong>Multisite Support:</strong> extends database optimisations so they function for multiple WordPress sites at a time. If you manage more than one website, you will need WP-Optimize Premium.
-
-<strong>Flexibility and Control:</strong> gives you the power to optimize select individual tables or a particular combination of tables on one or more WordPress websites, rather than having to optimize all database tables.
-
-<strong>Image Optimization:</strong> removes orphaned images from your WordPress site, plus images of a certain, pre-defined size.
-
-<strong>Sophisticated Scheduling:</strong> offers a wide range of options for scheduling automatic optimization. Specify an exact time and run clean-ups daily, weekly, fortnightly or monthly and perform any number of aditional one off optimizations.
-
-<strong>Seamless Graphical User Interface:</strong> for superb clarity in scheduling and managing of multi-site optimizations.
-
-<strong>WP-CLI support:</strong> provides a way to manage optimizations from command-line interface.
-
-<strong>Lazy Loading:</strong> lazy loading is the technique of only loading parts of a web-page when it is visible to the user.
-
-
-<strong>Optimization Preview:</strong> gives users the ability to preview, select and remove data and records available for optimization from the database.
+* <strong>Multisite Support:</strong> extends database optimisations so they function for multiple WordPress sites at a time. If you manage more than one website, you will need WP-Optimize Premium.
+* <strong>Flexibility and Control:</strong> gives you the power to optimize select individual tables or a particular combination of tables on one or more WordPress websites, rather than having to optimize all database tables.
+* <strong>Deleting unused and unwanted images:</strong> removes orphaned images from your WordPress site, plus images of a certain, pre-defined size.
+* <strong>Sophisticated Scheduling:</strong> offers a wide range of options for scheduling automatic optimization. Specify an exact time and run clean-ups daily, weekly, fortnightly or monthly and perform any number of aditional one off optimizations.
+* <strong>Seamless Graphical User Interface:</strong> for superb clarity in scheduling and managing of multi-site optimizations.
+* <strong>WP-CLI support:</strong> provides a way to manage optimizations from command-line interface if you have lots of sites
+* <strong>Lazy Loading:</strong> load only the images and part of a web-page when it is visible to the user so they can see something very quickly.
+* <strong>Optimization Preview:</strong> gives users the ability to preview, select and remove data and records available for optimization from the database.
+* <strong>Premium support</strong> - caching is one of the most complex things you can do for a website, so premium support offers you peace of mind there’s someone to talk quickly to if you need any technical answers.
 
 = Translations =
 
@@ -137,12 +164,109 @@ Please check your database for corrupted tables. That can happen, usually your w
 
 == Screenshots ==
 
-1. The main optimizer Screen
+1. Database optimization
 2. UpdraftPlus running a backup before an optimization proceeds
 3. Table Report
-4. Settings
+4. Image compression
+5. Main cache screen
+6. Settings
+
 
 == Changelog ==
+
+= 3.0.11 - 07/Aug/2019 =
+
+* FIX: Check the results of opendir() when emptying the cache, to prevent a possible infinite loop if it fails
+* FIX: Compatibility issues with WordPress 4.0
+* FIX: Replace function that did not exist on PHP 5.2
+* TWEAK: Add work-around for plugins which call the WP action comment_post incorrectly
+* TWEAK: Change the algorithm for locating file-based-page-cache.php to handle same-server site moves better
+* TWEAK: Prevent an unwanted PHP notice caused by Action Scheduler purges
+
+= 3.0.10 - 30/Jul/2019 =
+
+* TWEAK: If short-circuiting the attachment_fields_to_edit filter result, return the pre-existing value
+* TWEAK: Adjust wpo_delete_files() and related functions with extra sanity checks
+
+= 3.0.9 - 30/Jul/2019 =
+
+* FIX: Fix bug in logic for sending "Content-Encoding: gzip" header that could cause it to be sent prematurely with non-cached pages
+
+= 3.0.8 - 30/Jul/2019 =
+
+* FIX: Lazy-loading regression in recent Premium release
+* FIX: Smush images selection on multisite
+* FIX: Displaying WP-Optimize tabs menu on mobile devices
+* TWEAK: Disable redundant lazy-loading feature when Divi theme is active
+* TWEAK: Improve accuracy of message shown when it is not possible to automatically enable Gzip compression of static resources
+* TWEAK: Only output reasons a page was not cached if the wp_footer action was run
+
+= 3.0.7 - 25/Jul/2019 =
+
+* FIX: Fix some logic bugs related to the decision whether to send gzip-encoded cached content
+* FEATURE: To aid debugging if WP_DEBUG is turned on then if a page was *not* cached, then the HTML source will now contain the reason(s) why not in the footer
+* TWEAK: The is_user_logged_in() function is not necessarily available during a WP 'technical difficulties' scenario
+* TWEAK: Purge site homepage cache after updating post or publishing a new post (can be over-ridden with the filter wpo_delete_cached_homepage_on_post_update)
+
+= 3.0.6 - 25/Jul/2019 =
+
+* FIX: Regression causing incorrect JavaScript filenames in the Premium release in 3.0.5
+* TWEAK: Also add cache-busting for the compiled handlebars file
+* TWEAK: Change the handlebars enqueue handle to prevent double loading
+
+= 3.0.5 - 23/Jul/2019 =
+
+* FIX: Short-circuit Updraft_Smush_Manager::add_compress_button_to_media_modal() outside of a dashboard context, so that plugins or themes that hook into some dashboard hooks outside of that context can't cause fatal errors
+* TWEAK: Added suffixes with WP-Optimize version number to js, css files
+* TWEAK: Change the method used to generate the configuration file path in advanced-cache.php; no issues were reported, but analysis indicated a potential way to generate a path that would not agree with what was written by saving settings; and also another way to generate an invalid path on Windows webservers running on non-standard ports.
+* TWEAK: Use WPO_CACHE_CONFIG_DIR constant instead string value in advanced-cache.php
+
+= 3.0.4 - 20/Jul/2019 =
+
+* FIX: Fixed a regression in 3.0 with orphaned relationship data optimization
+
+= 3.0.3 - 20/Jul/2019 =
+
+* TWEAK: Prevent saving of page cache settings when the page cache was already off and another page cache plugin was active from over-writing the other plugin's advanced-cache.php
+
+= 3.0.2 - 19/Jul/2019 =
+
+* TWEAK: Rename in order to cache-bust sites that cached old versions of the JS admin scripts
+* TWEAK: Prevent unwanted PHP notice if saving page cache settings without ever having turned the cache on
+
+= 3.0.1 - 18/Jul/2019 =
+
+* FIX: Prevent a potential stray line of text appearing
+
+= 3.0.0 - 17/Jul/2019 =
+
+* FEATURE: Adds a caching feature, with page cache, browser cache control and gzip control
+* TWEAK: Smush feature added to medial modal
+* TWEAK: Remove references to Keyy
+* TWEAK: Image compression metabox tweaks
+* TWEAK: Preload after purging, If preload schedule is enabled
+* TWEAK: Prevent image compression AJAX call from firing upon every tab change
+* TWEAK: Load assets in admin_enqueue_scripts()
+* TWEAK: Smush all image sizes
+* TWEAK: Add quick feedback link
+* TWEAK: Delete the original backup file when an attachment file has been deleted
+* TWEAK: Remove die() from shutdown handler
+* TWEAK: Remove references to Keyy
+
+= 2.3.4 - 10/Jun/2019 =
+
+* FIX: Incorrect file paths on multisites 
+* FIX: Wrong DB Schema caused image compression to fail on multisites
+* TWEAK: Improve image compression UI
+* TWEAK: Add the possibility to hide the image optimisation metabox in the media edit screen.
+* TWEAK: Fix potential PHP notice in task queue when Automatic Smush is activated
+* TWEAK: Improve JSON-reparser to cope with even more exotic junk from some setups with problems elsewhere in their stack
+* TWEAK: Remove the numerical index column from the list of tables
+* TWEAK: Prevent methods being called when create_task returns false
+* TWEAK: Prevent PHP log warnings when images are missing from server (log in WP-O internal log instead)
+* TWEAK: Changed the default settings page from 'Settings' to 'Database'
+* TWEAK: Better discoverability of Premium features
+* TWEAK: Use new task manager class Updraft_Task_Manager_1_1
 
 = 2.3.3 - 17/Apr/2019 =
 
@@ -153,6 +277,7 @@ Please check your database for corrupted tables. That can happen, usually your w
 * FIX: Non-ASCII filenames could get mangled in the image optimization preview, resulting in images not shown (and WP 404 generation on the back-end).
 * FIX: Optimizing a table now runs correctly after automatic pre-optimize backup
 * TWEAK: Changed the default settings page from 'Settings' to 'Database'
+* TWEAK: Updated plugin links
 
 = 2.3.1 - 16/Apr/2019 =
 
@@ -511,4 +636,4 @@ Please check your database for corrupted tables. That can happen, usually your w
 * Fix Interface
 
 == Upgrade Notice ==
-* 2.3.3 : New feature in 2.3: image compression, plus other tweaks and fixes. 2.3.3 fixes a regression in 2.3.2. A recommended update for all.
+* 3.0.11: 3.0 introduces a new major feature: Page caching, as well as various small improvements, tweaks and fixes. A recommended update for all. 3.0.1-11 releases add small tweaks/fixes.

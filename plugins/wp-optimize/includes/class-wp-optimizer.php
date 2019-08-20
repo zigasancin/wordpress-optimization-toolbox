@@ -149,7 +149,7 @@ class WP_Optimizer {
 			return $optimization;
 		}
 
-		$this->change_time_limit();
+		WP_Optimize()->change_time_limit();
 
 		$optimization->init();
 	
@@ -191,7 +191,7 @@ class WP_Optimizer {
 		
 		if (is_wp_error($optimization)) return $optimization;
 
-		$this->change_time_limit();
+		WP_Optimize()->change_time_limit();
 
 		$optimization->before_get_info();
 
@@ -234,7 +234,7 @@ class WP_Optimizer {
 
 				if ('auto' == $which_option && empty($optimization->available_for_auto)) continue;
 
-				$this->change_time_limit();
+				WP_Optimize()->change_time_limit();
 
 				$results[$optimization_id] = $this->do_optimization($optimization);
 			}
@@ -536,16 +536,5 @@ class WP_Optimizer {
 		}
 		
 		return array('output' => $output);
-	}
-
-	/**
-	 * Try to change PHP script time limit.
-	 */
-	private function change_time_limit() {
-		$time_limit = (defined('WP_OPTIMIZE_SET_TIME_LIMIT') && WP_OPTIMIZE_SET_TIME_LIMIT > 15) ? WP_OPTIMIZE_SET_TIME_LIMIT : 1800;
-
-		// Try to reduce the chances of PHP self-terminating via reaching max_execution_time.
-		// @codingStandardsIgnoreLine
-		@set_time_limit($time_limit);
 	}
 }

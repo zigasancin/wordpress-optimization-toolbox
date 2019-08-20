@@ -40,31 +40,21 @@ class WP_Optimize_Gzip_Compression {
 	 * @return bool|WP_Error
 	 */
 	public function check_headers_for_gzip() {
-		// get url to theme style.css file.
-		$url = get_template_directory_uri() . '/style.css';
-		// trying to load style.css.
-		$response = wp_remote_get($url, array('timeout' => 10));
 
-		if (is_wp_error($response)) return $response;
+		static $found_gzip;
+		if (isset($found_gzip)) return $found_gzip;
 
-		// get returned headers.
-		$headers = wp_remote_retrieve_headers($response);
+		$headers = WP_Optimize()->get_stylesheet_headers();
 
-		/**
-		 * Since 4.6.0 wp_remote_retrieve_headers() returns Requests_Utility_CaseInsensitiveDictionary instance.
-		 * Therefore we use getAll() function to get array with headers as array and keep compatibility with
-		 * previous WordPress versions.
-		 */
-		if (is_a($headers, 'Requests_Utility_CaseInsensitiveDictionary')) {
-			$headers = $headers->getAll();
-		}
+		if (is_wp_error($headers)) return $headers;
 
 		// check if there exists Content-encoding header with gzip value.
 		if (array_key_exists('content-encoding', $headers) && preg_match('/gzip/i', $headers['content-encoding'])) {
-			return true;
+			$found_gzip = true;
+		} else {
+			$found_gzip = false;
 		}
-
-		return false;
+		return $found_gzip;
 	}
 
 	/**
@@ -97,22 +87,34 @@ class WP_Optimize_Gzip_Compression {
 	/**
 	 * Check if Gzip compression is enabled.
 	 *
+	 * @param boolean $force_check - force the check
 	 * @return bool|WP_Error
 	 */
-	public function is_gzip_compression_enabled() {
+	public function is_gzip_compression_enabled($force_check = false) {
+
+		if (!$force_check) return WP_Optimize()->get_options()->get_option('is_gzip_compression_enabled');
+
 		// trying to get info about gzip in headers.
 		$is_gzip_compression_enabled = $this->check_headers_for_gzip();
 
 		// if we got error then trying to get info from api otherwise get result from check_headers_for_gzip().
-		$is_gzip_compression_enabled = is_wp_error($is_gzip_compression_enabled) ? $this->check_api_for_gzip() : $is_gzip_compression_enabled;
+		// $is_gzip_compression_enabled = is_wp_error($is_gzip_compression_enabled) ? $this->check_api_for_gzip() : $is_gzip_compression_enabled;
 
 		// we can't determine then return WP_Error.
 		if (is_wp_error($is_gzip_compression_enabled)) return $is_gzip_compression_enabled;
 
 		// if Gzip is not enabled but we have added settings and Apache modules nt loaded then return error.
-		if (false == $is_gzip_compression_enabled && $this->is_gzip_compression_section_exists() && false === $this->_wp_optimize->is_apache_module_loaded(array('mod_filter', 'mod_deflate'))) {
-			return new WP_Error('Gzip', __('We successfully added Gzip compression settings into .htaccess file. But it seems one of Apache modules - mod_filter or mod_deflate is not active.', 'wp-optimize'));
+		if (false == $is_gzip_compression_enabled && $this->is_gzip_compression_section_exists()) {
+			if (false === $this->_wp_optimize->is_apache_module_loaded(array('mod_filter', 'mod_deflate'))) {
+				return new WP_Error('gzip_missing_module', __('We successfully added Gzip compression settings into .htaccess file.', 'wp-optimize').' '.__('However, the test file we fetched was not Gzip-compressed.', 'wp-optimize').' '.__('It seems one of Apache modules - mod_filter or mod_deflate - is not active.', 'wp-optimize'));
+			} elseif (WP_Optimize()->is_apache_server()) {
+				return new WP_Error('gzip_missing_module', __('We successfully added Gzip compression settings into .htaccess file.', 'wp-optimize').' '.__('However, the test file we fetched was not Gzip-compressed.', 'wp-optimize').' '.__('Possible causes include that Apache (your webserver) is not configured to allow .htaccess files to take effect, or one of Apache modules - mod_filter or mod_deflate - is not active, or the webserver is configured to disallow Gzip compression.', 'wp-optimize').' '.__('You should speak to your web hosting support to find how to enable it.', 'wp-optimize'));
+			} else {
+				return new WP_Error('gzip_unsuccessful', __('We successfully added Gzip compression settings into .htaccess file.', 'wp-optimize').' '.__('However, the test file we fetched was not Gzip-compressed.', 'wp-optimize').' '.__('You should speak to your web hosting support to find how to enable it.', 'wp-optimize'));
+			}
 		}
+
+		WP_Optimize()->get_options()->update_option('is_gzip_compression_enabled', $is_gzip_compression_enabled);
 
 		return $is_gzip_compression_enabled;
 	}
@@ -170,7 +172,7 @@ class WP_Optimize_Gzip_Compression {
 			$section_updated = $enable === $section_exists;
 		}
 
-		$is_gzip_compression_enabled = $this->is_gzip_compression_enabled();
+		$is_gzip_compression_enabled = $this->is_gzip_compression_enabled(true);
 
 		if ($section_updated) {
 			return array(

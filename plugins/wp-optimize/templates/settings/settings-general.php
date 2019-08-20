@@ -18,7 +18,7 @@
 		echo '</label>';
 		?>
 		<br>
-		<small class="wpo-text__dim"><?php _e('This option will, where relevant, retain data from the chosen period, and remove any garbage data before that period.', 'wp-optimize').' '.__('If the option is not active, then all garbage data will be removed.', 'wp-optimize').' '.__('This will also affect Auto Clean-up process', 'wp-optimize'); ?></small>
+		<small><?php _e('This option will, where relevant, retain data from the chosen period, and remove any garbage data before that period.', 'wp-optimize').' '.__('If the option is not active, then all garbage data will be removed.', 'wp-optimize').' '.__('This will also affect Auto Clean-up process', 'wp-optimize'); ?></small>
 	</p>
 	<p>
 		<label>
@@ -26,6 +26,6 @@
 			<?php _e('Enable admin bar link', 'wp-optimize'); ?>
 		</label>
 		<br>
-		<small class="wpo-text__dim"><?php _e('This option will put an WP-Optimize link on the top admin bar (default is off). Requires a second page refresh after saving the settings.', 'wp-optimize'); ?></small>
+		<small><?php _e('This option will put an WP-Optimize link on the top admin bar (default is off). Requires a second page refresh after saving the settings.', 'wp-optimize'); ?></small>
 	</p>
 </div>
