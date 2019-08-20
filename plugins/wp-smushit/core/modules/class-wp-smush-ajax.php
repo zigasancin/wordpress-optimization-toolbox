@@ -85,12 +85,18 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 		// Toggle CDN.
 		add_action( 'wp_ajax_smush_toggle_cdn', array( $this, 'toggle_cdn' ) );
 		// Update stats box and CDN status.
-		add_action( 'wp_ajax_get_cdn_stats', array( $this, 'get_cdn_stats' ) );
+		add_action( 'wp_ajax_get_cdn_stats', array( new WP_Smush_CDN( new WP_Smush_Page_Parser() ), 'update_stats' ) );
 
 		/**
-		 * Lazy loading
+		 * LAZY LOADING
 		 */
 		add_action( 'wp_ajax_smush_toggle_lazy_load', array( $this, 'smush_toggle_lazy_load' ) );
+		add_action( 'wp_ajax_smush_remove_icon', array( $this, 'remove_icon' ) );
+
+		/**
+		 * SETTINGS
+		 */
+		add_action( 'wp_ajax_recheck_api_status', array( $this, 'recheck_api_status' ) );
 	}
 
 	/***************************************
@@ -123,16 +129,16 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 		$settings = $this->settings->get();
 
 		// Available settings for free/pro version.
-		$available = array( 'auto', 'lossy', 'strip_exif', 'original', 'usage' );
+		$available = array( 'auto', 'lossy', 'strip_exif', 'original', 'lazy_load', 'usage' );
 
-		foreach ( WP_Smush::get_instance()->core()->settings as $name => $values ) {
+		foreach ( $settings as $name => $values ) {
 			// Update only specified settings.
 			if ( ! in_array( $name, $available, true ) ) {
 				continue;
 			}
 
 			// Skip premium features if not a member.
-			if ( ! in_array( $name, WP_Smush_Core::$basic_features, true ) && ! WP_Smush::is_pro() ) {
+			if ( ! in_array( $name, WP_Smush_Settings::$basic_features, true ) && ! WP_Smush::is_pro() ) {
 				continue;
 			}
 
@@ -142,6 +148,11 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 			// If Smush originals is selected, enable backups.
 			if ( 'original' === $name && $settings[ $name ] && WP_Smush::is_pro() ) {
 				$settings['backup'] = true;
+			}
+
+			// If lazy load enabled - init defaults.
+			if ( 'lazy_load' === $name && (bool) $quick_settings->{$name} ) {
+				$this->settings->init_lazy_load_defaults();
 			}
 		}
 
@@ -164,7 +175,7 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 	 * @param bool $ajax  Does this come from an AJAX request.
 	 */
 	public function dismiss_upgrade_notice( $ajax = true ) {
-		update_site_option( 'wp-smush-hide_upgrade_notice', 1 );
+		update_site_option( WP_SMUSH_PREFIX . 'hide_upgrade_notice', true );
 		// No Need to send json response for other requests.
 		if ( $ajax ) {
 			wp_send_json_success();
@@ -175,7 +186,7 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 	 * Store a key/value to hide the smush features on bulk page
 	 */
 	public function dismiss_welcome_notice() {
-		update_site_option( 'wp-smush-hide_smush_welcome', 1 );
+		update_site_option( WP_SMUSH_PREFIX . 'hide_smush_welcome', true );
 		wp_send_json_success();
 	}
 
@@ -345,7 +356,7 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 		$core = WP_Smush::get_instance()->core();
 
 		// Save settings only if networkwide settings are disabled.
-		if ( ( ! is_multisite() || ! $this->settings->is_network_enabled() ) && ( ! isset( $_REQUEST['process_settings'] ) || 'false' != $_REQUEST['process_settings'] ) ) {
+		if ( WP_Smush_Settings::can_access() && ( ! isset( $_REQUEST['process_settings'] ) || 'false' !== $_REQUEST['process_settings'] ) ) {
 			// Save Settings.
 			$this->settings->save( false );
 			// Fetch the new settings.
@@ -468,6 +479,38 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 						$should_resmush = true;
 					}
 
+					// Check if new sizes have been selected.
+					$image_sizes = $this->settings->get_setting( WP_SMUSH_PREFIX . 'image_sizes' );
+					/**
+					 * This is a too complicated way to check if the attachment needs a resmush.
+					 * Basically, smaller images might not have all the image sizes. And if, let's say, image does not
+					 * have a large attachment size, but user selects large to be compressed - do not trigger the
+					 * $show_resmush action for such an image.
+					 *
+					 * 1. Check if the selected image size is not already compressed.
+					 * 2. Check if the image has the defined size so it can be compressed.
+					 *
+					 * @since 3.2.1
+					 */
+					if ( is_array( $image_sizes ) && count( $image_sizes ) > count( $smush_data['sizes'] ) ) {
+						// Move this inside an if statement.
+						$attachment_data = wp_get_attachment_metadata( $attachment );
+						if ( isset( $attachment_data['sizes'] ) && count( $attachment_data['sizes'] ) !== count( $smush_data['sizes'] ) ) {
+							foreach ( $image_sizes as $image_size ) {
+								// Already compressed.
+								if ( isset( $smush_data['sizes'][ $image_size ] ) ) {
+									continue;
+								}
+
+								// If image has the size that can be compressed.
+								if ( isset( $attachment_data['sizes'][ $image_size ] ) ) {
+									$should_resmush = true;
+									break;
+								}
+							}
+						}
+					}
+
 					// If Image needs to be resized.
 					if ( ! $should_resmush ) {
 						$should_resmush = $core->mod->resize->should_resize( $attachment );
@@ -512,8 +555,8 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 						$stats['size_after'] += ! empty( $resize_savings['size_after'] ) ? $resize_savings['size_after'] : 0;
 						$stats['size_after'] += ! empty( $conversion_savings['size_after'] ) ? $conversion_savings['size_after'] : 0;
 
-						$stats['savings_resize']     += ! empty( $resize_savings ) ? $resize_savings['bytes'] : 0;
-						$stats['savings_conversion'] += ! empty( $conversion_savings ) ? $conversion_savings['bytes'] : 0;
+						$stats['savings_resize']     += ! empty( $resize_savings ) && isset( $resize_savings['bytes'] ) ? $resize_savings['bytes'] : 0;
+						$stats['savings_conversion'] += ! empty( $conversion_savings ) && isset( $conversion_savings['bytes'] ) ? $conversion_savings['bytes'] : 0;
 					}
 				}
 			}// End of Foreach Loop
@@ -721,9 +764,8 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 		if ( ! WP_Smush::is_pro() && ! WP_Smush_Core::check_bulk_limit() ) {
 			wp_send_json_error(
 				array(
-					'error'         => 'limit_exceeded',
-					'error_message' => sprintf( esc_html__( "You've reached the %1\$d attachment limit for bulk smushing in the free version. Upgrade to Pro to smush unlimited images, or click resume to smush another %2\$d attachments.", 'wp-smushit' ), WP_Smush_Core::$max_free_bulk, WP_Smush_Core::$max_free_bulk ),
-					'continue'      => false,
+					'error'    => 'limit_exceeded',
+					'continue' => false,
 				)
 			);
 		}
@@ -740,7 +782,7 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 				array(
 					'error'         => 'no_file_meta',
 					'error_message' => WP_Smush_Helper::filter_error( esc_html__( 'No file data found in image meta.', 'wp-smushit' ) ),
-					'file_name'     => printf(
+					'file_name'     => sprintf(
 						/* translators: %d - attachment ID */
 						esc_html__( 'undefined (attachment ID: %d)', 'wp-smushit' ),
 						(int) $attachment_id
@@ -978,32 +1020,9 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 		wp_send_json_success();
 	}
 
-	/**
-	 * Refresh the stats in CDN meta box and update CDN status on page refresh.
-	 *
-	 * @since 3.0
-	 */
-	public function get_cdn_stats() {
-		$current_status = $this->settings->get_setting( WP_SMUSH_PREFIX . 'cdn_status' );
-
-		$smush = WP_Smush::get_instance();
-
-		if ( isset( $current_status->cdn_enabling ) && $current_status->cdn_enabling ) {
-			$status = $smush->api()->enable();
-		} else {
-			$status = $smush->api()->check();
-		}
-
-		$data = $smush->core()->mod->cdn->process_cdn_status( $status );
-		$this->settings->set_setting( WP_SMUSH_PREFIX . 'cdn_status', $data );
-
-		// At this point we already know that $status->data is valid.
-		wp_send_json_success( $data );
-	}
-
 	/***************************************
 	 *
-	 * Lazy loading
+	 * LAZY LOADING
 	 *
 	 * @since 3.2.0
 	 */
@@ -1042,6 +1061,44 @@ class WP_Smush_Ajax extends WP_Smush_Module {
 
 		$this->settings->set( 'lazy_load', 'true' === $param );
 
+		wp_send_json_success();
+	}
+
+	/**
+	 * Remove spinner/placeholder icon from lazy-loading.
+	 *
+	 * @since 3.2.2
+	 */
+	public function remove_icon() {
+		check_ajax_referer( 'save_wp_smush_options' );
+
+		$id   = filter_input( INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT );
+		$type = filter_input( INPUT_POST, 'type', FILTER_SANITIZE_STRING );
+		if ( $id && $type ) {
+			$settings = $this->settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
+			if ( false !== ( $key = array_search( $id, $settings['animation'][ $type ]['custom'] ) ) ) {
+				unset( $settings['animation'][ $type ]['custom'][ $key ] );
+				$this->settings->set_setting( WP_SMUSH_PREFIX . 'lazy_load', $settings );
+			}
+		}
+
+		wp_send_json_success();
+	}
+
+	/***************************************
+	 *
+	 * SETTINGS
+	 *
+	 * @since 3.2.0.2
+	 */
+
+	/**
+	 * Re-check API status.
+	 *
+	 * @since 3.2.0.2
+	 */
+	public function recheck_api_status() {
+		WP_Smush::get_instance()->validate_install( true );
 		wp_send_json_success();
 	}
 

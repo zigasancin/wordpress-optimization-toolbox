@@ -14,7 +14,6 @@
             vertical-align: top;
         }
 
-        .sui-meta-boxes-directory p,
         .sui-meta-boxes-cdn-upsell p,
         .sui-meta-boxes-cdn-disabled p {
             max-width: 600px;
@@ -24,10 +23,6 @@
         .sui-meta-boxes-cdn {
             form p:first-of-type {
                 margin-top: 0;
-            }
-
-            .wp-smush-image-size-list {
-                display: none !important;
             }
         }
 
@@ -39,47 +34,6 @@
             .sui-tooltip {
                 line-height: 10px;
                 margin-right: 10px;
-            }
-        }
-
-        .smush-cdn-stats {
-            .sui-circle-score {
-                float: right;
-                margin-left: 10px;
-
-                &:not(.sui-grade-f) svg circle:last-child {
-                    stroke: #17A8E3;
-                }
-            }
-
-            .sui-circle-score-label:after {
-                content: '%';
-            }
-        }
-
-        .smush-cdn-quota-boxes {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-
-            .sui-border-frame {
-                width: 100%;
-                text-align: center;
-                margin-top: 0;
-
-                span:first-child {
-                    font-size: 24px;
-                    letter-spacing: -0.2px;
-                    line-height: 30px;
-                    color: #333;
-                }
-
-                &:not(:last-child) {
-                    margin-bottom: 0;
-                }
-
-                &:first-child { margin-right: 15px; }
-                &:last-child { margin-left: 15px; }
             }
         }
 

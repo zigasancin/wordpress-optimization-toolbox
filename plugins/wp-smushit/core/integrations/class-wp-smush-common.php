@@ -33,7 +33,7 @@ class WP_Smush_Common {
 		add_action( 'wr2x_retina_file_added', array( $this, 'smush_retina_image' ), 20, 3 );
 
 		// WPML integration.
-		add_action( 'wp_smush_image_url_changed', array( $this, 'wpml_update_duplicate_meta' ), 10, 4 );
+		add_action( 'wp_smush_image_optimised', array( $this, 'wpml_update_duplicate_meta' ), 10, 3 );
 	}
 
 	/**************************************
@@ -196,25 +196,26 @@ class WP_Smush_Common {
 	 */
 
 	/**
-	 * Update meta for image.
+	 * Update meta for the duplicated image.
 	 *
-	 * If converting PNG to JPG and WPML is duplicating images, we need to update the meta for the duplicate image as well,
+	 * If WPML is duplicating images, we need to update the meta for the duplicate image as well,
 	 * otherwise it will not be found during compression or on the WordPress back/front-ends.
 	 *
 	 * @since 3.0
 	 *
-	 * @param int    $id      Attachment ID.
-	 * @param string $file    Attachment path.
-	 * @param string $n_file  Attachment name (with extension).
-	 * @param string $size    Attachment size.
+	 * @param int    $id   Attachment ID.
+	 * @param array $stats Smushed stats.
+	 * @param array $meta  New meta data.
 	 */
-	public function wpml_update_duplicate_meta( $id, $file, $n_file, $size ) {
-		if ( ! $this->is_wpml_duplicating_images( $id ) ) {
+	public function wpml_update_duplicate_meta( $id, $stats, $meta ) {
+		// Continue only if duplication is enabled.
+		if ( ! $this->is_wpml_duplicating_images() ) {
 			return;
 		}
 
 		global $wpdb;
 
+		// Get translated attachments.
 		$image_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT element_id FROM {$wpdb->prefix}icl_translations
@@ -225,17 +226,21 @@ class WP_Smush_Common {
 			)
 		); // Db call ok; no-cache ok.
 
-		/**
-		 * Get source file meta data.
-		 * Leave out wp-smush-resize_savings, as we actually want the file to run the compression stage so we don't
-		 * interfere with the progress of Smush.
-		 */
-		$_wp_attached_file       = get_post_meta( $id, '_wp_attached_file', true );
-		$_wp_attachment_metadata = wp_get_attachment_metadata( $id, true );
-
-		foreach ( $image_ids as $img_id ) {
-			update_post_meta( $img_id, '_wp_attached_file', $_wp_attached_file );
-			wp_update_attachment_metadata( $img_id, $_wp_attachment_metadata );
+		// If images found.
+		if ( ! empty( $image_ids ) ) {
+			// Get the resize savings.
+			$resize = get_post_meta( $id, WP_SMUSH_PREFIX . 'resize_savings' );
+			// Update each translations.
+			foreach ( $image_ids as $attchment_id ) {
+				// Smushed stats.
+				update_post_meta( $attchment_id, WP_Smushit::$smushed_meta_key, $stats );
+				// Resize savings.
+				if ( ! empty( $resize ) ) {
+					update_post_meta( $attchment_id, WP_SMUSH_PREFIX . 'resize_savings', $resize );
+				}
+				// Attachment meta data.
+				update_post_meta( $attchment_id, '_wp_attachment_metadata', $meta );
+			}
 		}
 	}
 
@@ -244,11 +249,9 @@ class WP_Smush_Common {
 	 *
 	 * @since 3.0
 	 *
-	 * @param int $id  Attachment ID.
-	 *
 	 * @return bool
 	 */
-	private function is_wpml_duplicating_images( $id ) {
+	private function is_wpml_duplicating_images() {
 		if ( ! class_exists( 'SitePress' ) ) {
 			return false;
 		}
@@ -265,8 +268,6 @@ class WP_Smush_Common {
 			return false;
 		}
 
-		// Is the image the sorurce?
-		return get_post_meta( $id, 'wpml_media_processed', true );
+		return true;
 	}
-
 }

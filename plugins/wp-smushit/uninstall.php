@@ -33,23 +33,21 @@ $smushit_keys = array(
 	'resize_sizes',
 	'transparent_png',
 	'image_sizes',
-	'skip-redirect',
 	'nextgen-resmush-list',
 	'super_smushed',
 	'super_smushed_nextgen',
 	'settings_updated',
-	'skip-redirect',
 	'hide_smush_welcome',
 	'hide_upgrade_notice',
 	'hide_update_info',
 	'install-type',
-	'lossy-updated',
 	'version',
-	'dir_path',
 	'scan',
 	'settings',
 	'cdn_status',
 	'lazy_load',
+	'last_run_sync',
+	'networkwide',
 );
 
 $db_keys = array(
@@ -107,7 +105,6 @@ if ( ! is_multisite() ) {
 delete_option( 'dir_smush_stats' );
 delete_option( 'wp_smush_scan' );
 delete_option( 'wp_smush_api_auth' );
-delete_option( 'wp_smush_dir_path' );
 delete_site_option( 'wp_smush_api_auth' );
 
 // Delete Post meta.

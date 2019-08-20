@@ -5,22 +5,241 @@
 	.sui-wrap {
 
 		/**
+		 * Upesll notices.
+		 *
+		 * @since 3.2.3
+		 */
+		.smush-upsell-notice {
+			margin-left: 130px;
+			@media screen and (max-width: 782px) {
+				margin-left: 0;
+			}
+		}
+
+		@media screen and (min-width: 1140px) {
+			.sui-upgrade-page-header__image {
+				width: 45% !important;
+			}
+		}
+
+		.sui-upgrade-page {
+			.sui-upgrade-page-cta__inner a:hover {
+				color: #fff !important;
+			}
+
+			.smush-stats {
+				position: relative;
+				display: flex;
+				justify-content: space-between;
+				width: 600px;
+				height: 100px;
+				border-radius: 4px;
+				background-color: #FFFFFF;
+				box-shadow: 0 0 20px 0 rgba(0,0,0,0.05);
+				margin: -100px auto 30px;
+				padding: 20px 40px;
+				text-align: center;
+				font-size: 15px;
+				font-weight: 500;
+				color: #333333;
+
+				.smush-stats-description {
+					color: #888888;
+					font-size: 12px;
+					text-transform: uppercase;
+				}
+
+				span {
+					font-size: 24px;
+				}
+			}
+
+			@media (max-width: 800px) {
+				.smush-stats {
+					margin-top: 0;
+					height: auto;
+					width: 75%;
+					flex-wrap: wrap;
+				}
+
+				.smush-stats-item {
+					flex-basis: 100%;
+				}
+
+				.smush-stats-item:nth-child(2) {
+					margin: 20px 0;
+				}
+			}
+		}
+
+		/**
+		 * Lazy loading
+		 *
+		 * @since 3.2.2
+		 */
+		.sui-meta-boxes-lazyload {
+			#smush-lazy-load-spinners span.sui-description:first-of-type,
+			#smush-lazy-load-placeholder span.sui-description:first-of-type {
+				margin-bottom: 20px;
+			}
+
+			#smush-lazy-load-spinners .sui-box-selectors,
+			#smush-lazy-load-placeholder .sui-box-selectors {
+				background-color: #FFF;
+				padding: 0 0 20px 0;
+
+				&:not([class*="sui-box-selectors-col-"]) ul li {
+					flex: 0;
+				}
+
+				.sui-box-selector {
+					border: 1px solid #DDD;
+				}
+
+				.remove-selector {
+					display: none;
+					top: 0;
+					right: 0;
+					position: absolute;
+					background-color: #AAA;
+					width: 18px;
+					height: 18px;
+					margin-right: 0;
+					border-radius: 0 3px 0 3px;
+
+					i {
+						margin: 0;
+					}
+
+					i:before {
+						color: #FFF;
+						font-size: 12px;
+						line-height: 18px;
+					}
+
+					&:hover {
+						background-color: #FF6D6D;
+					}
+				}
+
+				.sui-box-selector:hover .remove-selector {
+					display: flex;
+				}
+			}
+
+			#smush-lazy-load-spinners .sui-box-selectors {
+				label.sui-box-selector {
+					width: 50px;
+					height: 50px;
+					overflow: visible;
+				}
+
+				.sui-box-selector input + span {
+					padding-top: 17px;
+					padding-bottom: 17px;
+
+					img {
+						max-width: 16px;
+						margin: 0;
+					}
+				}
+
+				.sui-box-selector input ~ span {
+					padding-right: 17px;
+					padding-left: 17px;
+					height: 48px;
+					border-radius: 4px;
+					overflow: visible;
+				}
+
+				.sui-box-selector input:checked + span:before,
+				.sui-box-selector input:checked + span:after {
+					content: none;
+				}
+			}
+
+			#smush-lazy-load-placeholder .sui-box-selectors {
+				label.sui-box-selector {
+					width: 80px;
+					height: 60px;
+					overflow: visible;
+
+					&:hover {
+						background-color: #E5E5E5;
+					}
+
+					input + span {
+						height: 40px;
+						padding: 0;
+						margin: 10px;
+						overflow: visible;
+						position: relative;
+
+						&:before {
+							top: -5px;
+							right: -5px;
+						}
+
+						&:after {
+							top: -10px;
+							right: -10px;
+						}
+					}
+
+					input + span img {
+						margin: 0 auto;
+					}
+
+					input[id^="placeholder-icon-1"] + span {
+						background-color: #FAFAFA;
+					}
+
+					input[id^="placeholder-icon-2"] + span {
+						background-color: #333333;
+					}
+
+					.remove-selector {
+						top: -10px;
+						right: -10px;
+					}
+				}
+			}
+		}
+
+		/**
+		 * Bulk restore modal
+		 *
+		 * @since 3.2.2
+		 */
+		.smush-restore-images-dialog {
+			.sui-image {
+				margin-top: 20px;
+			}
+
+			.sui-notice {
+				text-align: left;
+			}
+		}
+
+		/**
 		 * Onboarding modals
 		 *
 		 * @since 3.1
 		 */
+		.smush-restore-images-dialog,
 		.checking-files-dialog {
 			.sui-box { background-color: #fff; }
 
 			.sui-box-title {
 				display: flex !important;
 				flex-direction: column !important;
-			}
 
-			.sui-icon-loader {
-				margin-bottom: 20px;
-				margin-right: 0 !important;
-				color: #AAAAAA;
+				.sui-icon-check,
+				.sui-icon-loader {
+					margin-bottom: 20px;
+					margin-right: 0 !important;
+					color: #AAAAAA;
+				}
 			}
 		}
 
@@ -206,6 +425,10 @@
 			.wp-smush-progress-inner {
 				background: #FECF2F !important;
 			}
+
+			.sui-icon-info:before {
+				color: #FECF2F;
+			}
 		}
 		// Directory smush overwrites when limit exceeded
 		.wp-smush-progress-dialog.wp-smush-exceed-limit {
@@ -218,7 +441,7 @@
 					.sui-icon-loader {
 						@include icon( before, info );
 						&:before {
-							color: #fecf2f;
+							color: #FECF2F;
 							animation: none;
 						}
 					}
@@ -226,7 +449,7 @@
 			}
 
 			.sui-progress-bar span {
-				background: #fecf2f;
+				background: #888888;
 			}
 
 			.sui-box-footer .sui-actions-right:not(.sui-hidden) {
@@ -403,6 +626,10 @@
 			font-size: 13px;
 		}
 
+		.auto-smush-notice {
+			margin: 5px 0 0 47px;
+		}
+
 		.wp-smush-resize-settings-wrap,
 		.wp-smush-png_to_jpg-wrap,
 		.wp-smush-image-size-list {
@@ -410,18 +637,21 @@
 			border: 1px solid #E6E6E6;
 			border-radius: 5px;
 			color: #555;
-			margin-left: 48px;
+			margin-left: 48px !important;
 			overflow: hidden;
 			padding: 30px;
 			vertical-align: middle;
-			margin-top: 10px;
+			margin-top: 10px !important;
 			margin-bottom: 10px;
 
 			.sui-checkbox {
-
 				.sui-description {
 					font-size: 13px;
 				}
+			}
+
+			p:last-of-type:not(:last-child) {
+				margin-bottom: 10px;
 			}
 		}
 
@@ -450,7 +680,7 @@
 				padding: 0 0 0 30px;
 				position: relative;
 				&:before {
-					color: #43a9e4;
+					color: #8D00B1;
 					vertical-align: middle;
 					margin-left: -30px;
 					margin-right: 10px;

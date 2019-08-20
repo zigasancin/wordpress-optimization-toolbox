@@ -279,10 +279,11 @@ class WP_Smush_Helper {
 	 *
 	 * @param int    $id    Image ID.
 	 * @param string $name  Image file name.
+	 * @param bool   $src   Return only src. Default - return link.
 	 *
 	 * @return string
 	 */
-	public static function get_image_media_link( $id, $name ) {
+	public static function get_image_media_link( $id, $name, $src = false ) {
 		$mode = get_user_option( 'media_library_mode' );
 		if ( 'grid' === $mode ) {
 			$link = admin_url( "upload.php?item={$id}" );
@@ -290,7 +291,11 @@ class WP_Smush_Helper {
 			$link = admin_url( "post.php?post={$id}&action=edit" );
 		}
 
-		return "<a href='{$link}'>{$name}</a>";
+		if ( ! $src ) {
+			return "<a href='{$link}'>{$name}</a>";
+		}
+
+		return $link;
 	}
 
 	/**
@@ -328,7 +333,7 @@ class WP_Smush_Helper {
 	}
 
 	/**
-	 * Format meta data from $_POST request.
+	 * Format metadata from $_POST request.
 	 *
 	 * Post request in WordPress will convert all values
 	 * to string. Make sure image height and width are int.
@@ -337,7 +342,7 @@ class WP_Smush_Helper {
 	 *
 	 * @since 2.8.0
 	 *
-	 * @param array $meta Meta data of attachment.
+	 * @param array $meta Metadata of attachment.
 	 *
 	 * @return array
 	 */
@@ -347,7 +352,7 @@ class WP_Smush_Helper {
 			return $meta;
 		}
 
-		// If meta data is array proceed.
+		// If metadata is array proceed.
 		if ( is_array( $meta ) ) {
 
 			// Walk through each items and format.

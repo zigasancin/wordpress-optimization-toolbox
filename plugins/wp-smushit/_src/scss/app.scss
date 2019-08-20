@@ -1,3 +1,6 @@
+$upgrade-image: '../../app/assets/images/hero@2x.png';
+$upgrade-image-mobile: '../../app/assets/images/hero.png';
+
 // This needs to be here.
 @import "modules/variables";
 
@@ -33,6 +36,13 @@
 @import "~@wpmudev/shared-ui/scss/utility";
 @import "~@wpmudev/shared-ui/scss/wp-admin-notices";
 @import "~@wpmudev/shared-ui/scss/tables";
+// Used on lazy loading page (since 3.2.2).
+@import "~@wpmudev/shared-ui/scss/box-selectors";
+@import "~@wpmudev/shared-ui/scss/upload";
+@import "~@wpmudev/shared-ui/scss/_colorpickers.scss";
+// Upgrade page (since 3.2.3).
+@import "~@wpmudev/shared-ui/scss/upgrade-page";
+@import "~@wpmudev/shared-ui/scss/reviews";
 
 // App styles
 @import "modules/admin";

@@ -540,11 +540,11 @@ class WP_Smush_Nextgen_Stats extends WP_Smush_Nextgen {
 	function get_skipped_images( $size_stats, $full_image ) {
 		$skipped = array();
 
-		// If full image was not smushed, reason 1. Large Size logic, 2. Free and greater than 1Mb.
+		// If full image was not smushed, reason 1. Large Size logic, 2. Free and greater than 5Mb.
 		if ( ! array_key_exists( 'full', $size_stats ) ) {
 			// For free version, Check the image size
 			if ( ! $this->is_pro_user ) {
-				// For free version, check if full size is greater than 1 Mb, show the skipped status.
+				// For free version, check if full size is greater than 5 Mb, show the skipped status.
 				$file_size = file_exists( $full_image ) ? filesize( $full_image ) : '';
 				if ( ! empty( $file_size ) && ( $file_size / WP_SMUSH_MAX_BYTES ) > 1 ) {
 					$skipped[] = array(

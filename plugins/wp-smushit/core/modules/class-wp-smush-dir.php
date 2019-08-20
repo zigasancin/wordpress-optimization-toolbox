@@ -268,13 +268,13 @@ class WP_Smush_Dir {
 		// Get file time.
 		$file_time = @filectime( $path );
 
-		// If super-smush enabled, update supersmushed meta value also.
+		// If Super-Smush enabled, update supersmushed meta value also.
 		$lossy = WP_Smush::is_pro() && WP_Smush::get_instance()->core()->mod->settings->get( 'lossy' ) ? 1 : 0;
 
 		// All good, Update the stats.
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$wpdb->prefix}smush_dir_images SET image_size=%d, file_time=%d, lossy=%s WHERE id=%d LIMIT 1",
+				"UPDATE {$wpdb->prefix}smush_dir_images SET error=NULL, image_size=%d, file_time=%d, lossy=%s WHERE id=%d LIMIT 1",
 				$smush_results['data']->after_size,
 				$file_time,
 				$lossy,
@@ -521,7 +521,7 @@ class WP_Smush_Dir {
 					);
 				}
 
-				wp_send_json_success( $tree );
+				wp_send_json( $tree );
 			}
 		}
 	}
@@ -592,7 +592,7 @@ class WP_Smush_Dir {
 		// Iterate over all the selected items (can be either an image or directory).
 		foreach ( $paths as $path ) {
 			// Prevent phar deserialization vulnerability.
-			$path = strtolower( trim( $path ) );
+			$path = trim( $path );
 			if ( strpos( $path, 'phar://' ) === 0 ) {
 				continue;
 			}

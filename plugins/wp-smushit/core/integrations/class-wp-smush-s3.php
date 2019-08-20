@@ -24,10 +24,9 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 	 * WP_Smush_S3 constructor.
 	 */
 	public function __construct() {
-		$this->module   = 's3';
-		$this->class    = 'pro';
-		$this->priority = 5;
-		$this->enabled  = function_exists( 'as3cf_init' ) || function_exists( 'as3cf_pro_init' );
+		$this->module  = 's3';
+		$this->class   = 'pro';
+		$this->enabled = function_exists( 'as3cf_init' ) || function_exists( 'as3cf_pro_init' );
 
 		parent::__construct();
 
@@ -75,7 +74,7 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 			'short_label' => __( 'Amazon S3', 'wp-smushit' ),
 			'desc'        => sprintf(
 				esc_html__(
-					"Storing your image on S3 buckets using %1\$sWP Offload S3%2\$s? Smush can detect
+					"Storing your image on S3 buckets using %1\$sWP Offload Media%2\$s? Smush can detect
 				and smush those assets for you, including when you're removing files from your host server.",
 					'wp-smushit'
 				),
@@ -161,13 +160,13 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 	 * Error message to show when S3 support is required.
 	 *
 	 * Show a error message to admins, if they need to enable S3 support. If "remove files from
-	 * server" option is enabled in WP Offload S3 plugin, we need WP Smush Pro to enable S3 support.
+	 * server" option is enabled in WP Offload Media plugin, we need WP Smush Pro to enable S3 support.
 	 *
 	 * @return bool
 	 */
 	public function s3_support_required_notice() {
 		// Do not display it for other users. Do not display on network screens, if network-wide option is disabled.
-		if ( ! current_user_can( 'manage_options' ) || ( is_network_admin() && ! $this->settings->is_network_enabled() ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! WP_Smush_Settings::can_access( 'integrations' ) ) {
 			return true;
 		}
 
@@ -208,7 +207,7 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 				 * %3$s: opening a and strong tags, %4$s: closing a and strong tags
 				 */
 				__(
-					"We can see you have WP Offload S3 installed with the %1\$sRemove Files From Server%2\$s option
+					"We can see you have WP Offload Media installed with the %1\$sRemove Files From Server%2\$s option
 				activated. If you want to optimize your S3 images you'll need to enable the %3\$sAmazon S3 Support%4\$s
 				feature in Smush's settings.",
 					'wp-smushit'
@@ -227,7 +226,7 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 				 * %3$s: opening a and strong tags, %4$s: closing a and strong tags
 				 */
 				__(
-					"We can see you have WP Offload S3 installed with the %1\$sRemove Files From Server%2\$s option
+					"We can see you have WP Offload Media installed with the %1\$sRemove Files From Server%2\$s option
 				activated. If you want to optimize your S3 images you'll need to %3\$supgrade to Smush Pro%4\$s",
 					'wp-smushit'
 				),
@@ -281,7 +280,7 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 		// If S3 offload global variable is not available, plugin is not active.
 		if ( ! is_object( $as3cf ) ) {
 			$class   = '';
-			$message = __( 'To use this feature you need to install WP Offload S3 and have an Amazon S3 account setup.', 'wp-smushit' );
+			$message = __( 'To use this feature you need to install WP Offload Media and have an Amazon S3 account setup.', 'wp-smushit' );
 		} elseif ( ! method_exists( $as3cf, 'is_plugin_setup' ) ) {
 			// Check if in case for some reason, we couldn't find the required function.
 			$class       = ' sui-notice-warning';
@@ -289,7 +288,7 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 			$message     = sprintf(
 				/* translators: %1$s: opening a tag, %2$s: closing a tag */
 				esc_html__(
-					'We are having trouble interacting with WP Offload S3, make sure the plugin is
+					'We are having trouble interacting with WP Offload Media, make sure the plugin is
 				activated. Or you can %1$sreport a bug%2$s.',
 					'wp-smushit'
 				),
@@ -303,7 +302,7 @@ class WP_Smush_S3 extends WP_Smush_Integration {
 			$message       = sprintf(
 				/* translators: %1$s: opening a tag, %2$s: closing a tag */
 				esc_html__(
-					'It seems you haven’t finished setting up WP Offload S3 yet. %1$sConfigure it
+					'It seems you haven’t finished setting up WP Offload Media yet. %1$sConfigure it
 				now%2$s to enable Amazon S3 support.',
 					'wp-smushit'
 				),

@@ -55,7 +55,7 @@ jQuery(function() {
 
 	// Open a tab to rate the plugin.
 	function act_rate() {
-		var url = url_wp.replace( /\/plugins\//, "/support/view/plugin-reviews/" ) + "?rate=5#postform",
+		var url = url_wp.replace( /\/plugins\//, "/support/plugin/" ) + "/reviews/?rate=5#new-post",
 			link = jQuery( '<a href="' + url + '" target="_blank">Rate</a>' );
 
 		link.appendTo( "body" );
@@ -101,7 +101,7 @@ jQuery(function() {
 
 		//Do not submit form if the value is not set
 		var email_inpt = btn_act.parent().find('input[type="email"]');
-		if( !email_inpt.length || !email_inpt.val() ) {
+		if( ( !email_inpt.length || !email_inpt.val() ) && type === 'email' ) {
 			return;
 		}
 

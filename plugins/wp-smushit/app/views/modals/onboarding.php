@@ -36,6 +36,8 @@ if ( ! defined( 'WPINC' ) ) {
 			<?php esc_html_e( 'EXIF Metadata', 'wp-smushit' ); ?>
 			<# } else if ( 'original' === data.slide ) { #>
 			<?php esc_html_e( 'Full Size Images', 'wp-smushit' ); ?>
+			<# } else if ( 'lazy_load' === data.slide ) { #>
+			<?php esc_html_e( 'Lazy Load', 'wp-smushit' ); ?>
 			<# } else if ( 'usage' === data.slide ) { #>
 			<?php esc_html_e( 'Usage Data', 'wp-smushit' ); ?>
 			<# } #>
@@ -53,9 +55,11 @@ if ( ! defined( 'WPINC' ) ) {
 			<# } else if ( 'strip_exif' === data.slide ) { #>
 			<?php esc_html_e( 'Whenever you take a photo, your camera stores metadata, such as focal length, date, time and location, within the image. Removing this data will reduce your image sizes.', 'wp-smushit' ); ?>
 			<# } else if ( 'original' === data.slide ) { #>
-			<?php esc_html_e( 'Choose to also compress your original image uploads - helpful if your theme serve full size images.', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'You can also have Smush compress your original images - this is helpful if your theme serves full size images.', 'wp-smushit' ); ?>
+			<# } else if ( 'lazy_load' === data.slide ) { #>
+			<?php esc_html_e( 'This feature defers the loading of below the fold imagery until the page has loaded. This reduces load on your server and speeds up the page load time.', 'wp-smushit' ); ?>
 			<# } else if ( 'usage' === data.slide ) { #>
-			<?php esc_html_e( 'Help us improve Smush by letting our product designers gain insight into what features need improvement. We don’t track any personalised data, it’s all basic stuff.', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'Help us improve Smush by letting our product designers gain insight into what features need improvement. We don’t track any personalized data, it’s all basic stuff.', 'wp-smushit' ); ?>
 			<# } #>
 		</p>
 
@@ -76,9 +80,11 @@ if ( ! defined( 'WPINC' ) ) {
 				<# } else if ( 'lossy' === data.slide ) { #>
 				<?php esc_html_e( 'Enable enhanced multi-pass lossy compression', 'wp-smushit' ); ?>
 				<# } else if ( 'strip_exif' === data.slide ) { #>
-				<?php esc_html_e( 'Strip my image meta data', 'wp-smushit' ); ?>
+				<?php esc_html_e( 'Strip my image metadata', 'wp-smushit' ); ?>
 				<# } else if ( 'original' === data.slide ) { #>
 				<?php esc_html_e( 'Compress my full size images', 'wp-smushit' ); ?>
+				<# } else if ( 'lazy_load' === data.slide ) { #>
+				<?php esc_html_e( 'Enable Lazy Loading', 'wp-smushit' ); ?>
 				<# } else if ( 'usage' === data.slide ) { #>
 				<?php esc_html_e( 'Allow usage data tracking', 'wp-smushit' ); ?>
 				<# } #>
@@ -132,6 +138,9 @@ if ( ! defined( 'WPINC' ) ) {
 					<span class="<# if ( 'original' === data.slide ) { #>active<# } #>"> </span>
 				</a>
 			<?php endif; ?>
+			<a href="#" onclick="WP_Smush.onboarding.goTo('lazy_load')">
+				<span class="<# if ( 'lazy_load' === data.slide ) { #>active<# } #>"> </span>
+			</a>
 			<a href="#" onclick="WP_Smush.onboarding.goTo('usage')">
 				<span class="<# if ( 'usage' === data.slide ) { #>active<# } #>"> </span>
 			</a>

@@ -14,7 +14,9 @@ $this->do_meta_boxes( 'summary' );
 
 <div class="sui-row-with-sidenav">
 	<?php $this->show_tabs(); ?>
-	<?php $this->do_meta_boxes( $this->get_current_tab() ); ?>
+	<div>
+		<?php $this->do_meta_boxes( $this->get_current_tab() ); ?>
+	</div>
 </div><!-- end row -->
 
 <?php if ( ! WP_Smush::is_pro() ) : ?>
@@ -53,7 +55,7 @@ $this->do_meta_boxes( 'summary' );
 				<div class="sui-box">
 					<div class="sui-box-body">
 						<h3><?php esc_html_e( 'SmartCrawl Search Engine Optimization', 'wp-smushit' ); ?></h3>
-						<p><?php esc_html_e( 'Customize Titles & Meta Data, OpenGraph, Twitter & Pinterest Support, Auto-Keyword Linking, SEO & Readability Analysis, Sitemaps, URL Crawler & more.', 'wp-smushit' ); ?></p>
+						<p><?php esc_html_e( 'Customize Titles & Metadata, OpenGraph, Twitter & Pinterest Support, Auto-Keyword Linking, SEO & Readability Analysis, Sitemaps, URL Crawler & more.', 'wp-smushit' ); ?></p>
 						<a href="<?php echo esc_url( 'https://wordpress.org/plugins/smartcrawl-seo/' ); ?>" class="sui-button sui-button-ghost" target="_blank">
 							<?php esc_html_e( 'View features', 'wp-smushit' ); ?> <i class="sui-icon-arrow-right"></i>
 						</a>

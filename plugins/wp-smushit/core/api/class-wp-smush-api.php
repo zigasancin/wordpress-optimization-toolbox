@@ -70,15 +70,18 @@ class WP_Smush_API {
 	 *
 	 * @since 3.0
 	 *
+	 * @param bool $manual  If it's a manual check. Only manual on button click.
+	 *
 	 * @return mixed|WP_Error
 	 */
-	public function check() {
+	public function check( $manual = false ) {
 		return $this->request->get(
 			"check/{$this->api_key}",
 			array(
 				'api_key' => $this->api_key,
 				'domain'  => $this->request->get_this_site(),
-			)
+			),
+			$manual
 		);
 	}
 
@@ -87,15 +90,18 @@ class WP_Smush_API {
 	 *
 	 * @since 3.0
 	 *
+	 * @param bool $manual  If it's a manual check. Overwrites the exponential back off.
+	 *
 	 * @return mixed|WP_Error
 	 */
-	public function enable() {
+	public function enable( $manual = false ) {
 		return $this->request->post(
 			'cdn',
 			array(
 				'api_key' => $this->api_key,
 				'domain'  => $this->request->get_this_site(),
-			)
+			),
+			$manual
 		);
 	}
 

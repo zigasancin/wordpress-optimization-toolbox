@@ -52,7 +52,7 @@ if ( ! defined( 'WPINC' ) ) {
 			<li class="super-smush-attachments">
 				<div class="super-smush-attachments">
 					<span class="sui-list-label">
-						<?php esc_html_e( 'Super-smushed images', 'wp-smushit' ); ?>
+						<?php esc_html_e( 'Super-Smushed images', 'wp-smushit' ); ?>
 					</span>
 					<span class="sui-list-detail wp-smush-stats">
 						<?php if ( $lossy_enabled ) : ?>

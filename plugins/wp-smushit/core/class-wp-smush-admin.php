@@ -85,7 +85,7 @@ class WP_Smush_Admin {
 		wp_register_script( 'smush-sui', WP_SMUSH_URL . 'app/assets/js/smush-sui.min.js', array( 'jquery' ), WP_SHARED_UI_VERSION, true );
 
 		// Main JS.
-		wp_register_script( 'smush-admin', WP_SMUSH_URL . 'app/assets/js/smush-admin.min.js', array( 'jquery', 'smush-sui', 'underscore' ), WP_SMUSH_VERSION, true );
+		wp_register_script( 'smush-admin', WP_SMUSH_URL . 'app/assets/js/smush-admin.min.js', array( 'jquery', 'smush-sui', 'underscore', 'wp-color-picker' ), WP_SMUSH_VERSION, true );
 
 		// Main CSS.
 		wp_register_style( 'smush-admin', WP_SMUSH_URL . 'app/assets/css/smush-admin.min.css', array(), WP_SMUSH_VERSION );
@@ -124,7 +124,7 @@ class WP_Smush_Admin {
 		 * Load js and css on all admin pages, in order to display install/upgrade notice.
 		 * And If upgrade/install message is dismissed or for pro users, Do not enqueue script.
 		 */
-		if ( get_option( 'wp-smush-hide_upgrade_notice' ) || get_site_option( 'wp-smush-hide_upgrade_notice' ) || WP_Smush::is_pro() ) {
+		if ( get_site_option( WP_SMUSH_PREFIX . 'hide_upgrade_notice' ) || WP_Smush::is_pro() ) {
 			/**
 			 * Do not enqueue, unless it is one of the required screen, or not in WordPress backend.
 			 *
@@ -258,6 +258,8 @@ class WP_Smush_Admin {
 		include_once WP_SMUSH_DIR . 'app/abstract-wp-smush-view.php';
 		/* @noinspection PhpIncludeInspection */
 		include_once WP_SMUSH_DIR . 'app/class-wp-smush-dashboard.php';
+		/* @noinspection PhpIncludeInspection */
+		include_once WP_SMUSH_DIR . 'app/class-wp-smush-upgrade.php';
 	}
 
 	/**
@@ -266,11 +268,18 @@ class WP_Smush_Admin {
 	public function add_menu_pages() {
 		$title = WP_Smush::is_pro() ? esc_html__( 'Smush Pro', 'wp-smushit' ) : esc_html__( 'Smush', 'wp-smushit' );
 
-		$this->pages['smush'] = new WP_Smush_Dashboard( $title, 'smush' );
+		if ( WP_Smush_Settings::can_access( false, true ) ) {
+			$this->pages['smush']           = new WP_Smush_Dashboard( 'smush', $title );
+			$this->pages['smush-dashboard'] = new WP_Smush_Dashboard( 'smush', __( 'Dashboard', 'wp-smushit' ), 'smush' );
+
+			if ( ! WP_Smush::is_pro() ) {
+				$this->pages['smush-upgrade'] = new WP_Smush_Upgrade_Page( 'smush-upgrade', __( 'Smush Pro', 'wp-smushit' ), 'smush' );
+			}
+		}
 
 		// Add a bulk smush option for NextGen gallery.
 		if ( defined( 'NGGFOLDER' ) && WP_Smush::get_instance()->core()->nextgen->is_enabled() && WP_Smush::is_pro() && ! is_network_admin() ) {
-			$this->pages['nextgen'] = new WP_Smush_Nextgen_Page( $title, 'wp-smush-nextgen-bulk', true );
+			$this->pages['nextgen'] = new WP_Smush_Nextgen_Page( 'wp-smush-nextgen-bulk', $title, NGGFOLDER );
 		}
 	}
 

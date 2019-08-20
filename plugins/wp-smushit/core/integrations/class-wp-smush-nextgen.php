@@ -50,10 +50,9 @@ class WP_Smush_Nextgen extends WP_Smush_Integration {
 	 * WP_Smush_Nextgen constructor.
 	 */
 	public function __construct() {
-		$this->module   = 'nextgen';
-		$this->class    = 'pro';
-		$this->priority = 10;
-		$this->enabled  = class_exists( 'C_NextGEN_Bootstrap' );
+		$this->module  = 'nextgen';
+		$this->class   = 'pro';
+		$this->enabled = class_exists( 'C_NextGEN_Bootstrap' );
 
 		parent::__construct();
 
@@ -672,7 +671,7 @@ class WP_Smush_Nextgen extends WP_Smush_Integration {
 	}
 
 	/**
-	 * Read the image paths from an attachment's meta data and process each image
+	 * Read the image paths from an attachment's metadata and process each image
 	 * with wp_smushit().
 	 *
 	 * @param $image
@@ -939,7 +938,7 @@ class WP_Smush_Nextgen extends WP_Smush_Integration {
 			$savings['size_before'] = $original_file_size;
 			$savings['size_after']  = $u_file_size;
 
-			// Store savings in meta data.
+			// Store savings in metadata.
 			if ( ! empty( $savings ) ) {
 				$meta['wp_smush_resize_savings'] = $savings;
 			}

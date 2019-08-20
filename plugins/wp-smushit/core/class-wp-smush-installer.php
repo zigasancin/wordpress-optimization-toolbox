@@ -41,9 +41,10 @@ class WP_Smush_Installer {
 			define( 'WP_SMUSH_ACTIVATING', true );
 		}
 
-		$version  = get_site_option( WP_SMUSH_PREFIX . 'version' );
+		$version = get_site_option( WP_SMUSH_PREFIX . 'version' );
+
+		WP_Smush_Settings::get_instance()->init();
 		$settings = WP_Smush_Settings::get_instance()->get();
-		$settings = ! empty( $settings ) ? $settings : WP_Smush_Settings::get_instance()->init();
 
 		// If the version is not saved or if the version is not same as the current version,.
 		if ( ! $version || WP_SMUSH_VERSION !== $version ) {
@@ -106,6 +107,14 @@ class WP_Smush_Installer {
 
 			if ( version_compare( $version, '3.2.0', '<' ) ) {
 				self::upgrade_3_2_0();
+			}
+
+			if ( version_compare( $version, '3.2.2', '<' ) ) {
+				self::upgrade_3_2_2();
+			}
+
+			if ( version_compare( $version, '3.2.2.1', '<' ) ) {
+				self::upgrade_3_2_2_1();
 			}
 
 			// Create/upgrade directory smush table.
@@ -193,7 +202,7 @@ class WP_Smush_Installer {
 						switch_to_blog( $blog['blog_id'] );
 
 						$settings = get_option( WP_SMUSH_PREFIX . 'last_settings', array() );
-						$settings = array_merge( WP_Smush_Settings::get_instance()->get(), $settings );
+						$settings = array_merge( WP_Smush_Settings::get_instance()->get(), maybe_unserialize( $settings ) );
 						update_option( WP_SMUSH_PREFIX . 'settings', $settings );
 						// Remove previous data.
 						delete_option( WP_SMUSH_PREFIX . 'last_settings' );
@@ -234,6 +243,69 @@ class WP_Smush_Installer {
 	private static function upgrade_3_2_0() {
 		// Not used.
 		delete_option( 'smush_option' );
+	}
+
+	/**
+	 * Upgrade to 3.2.2
+	 *
+	 * @since 3.2.2
+	 */
+	private static function upgrade_3_2_2() {
+		// Show the upgrade notice for everyone.
+		delete_site_option( WP_SMUSH_PREFIX . 'hide_upgrade_notice' );
+
+		// Add new lazy-load options.
+		$lazy = WP_Smush_Settings::get_instance()->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
+
+		if ( ! $lazy ) {
+			return;
+		}
+
+		$selected = 'fadein';
+		if ( $lazy['animation']['spinner'] ) {
+			$selected = 'spinner';
+		} elseif ( $lazy['animation']['disabled'] ) {
+			$selected = false;
+		}
+
+		$animation = array(
+			'selected'    => $selected,
+			'fadein'      => array(
+				'duration' => isset( $lazy['animation']['duration'] ) ? $lazy['animation']['duration'] : 400,
+				'delay'    => isset( $lazy['animation']['delay'] ) ? $lazy['animation']['delay'] : 0,
+			),
+			'spinner'     => array(
+				'selected' => 1,
+				'custom'   => array(),
+			),
+			'placeholder' => array(
+				'selected' => 1,
+				'custom'   => array(),
+				'color'    => '#F3F3F3',
+			),
+		);
+
+		$lazy['animation'] = $animation;
+
+		WP_Smush_Settings::get_instance()->set_setting( WP_SMUSH_PREFIX . 'lazy_load', $lazy );
+	}
+
+	/**
+	 * Upgrade to 3.2.2.1
+	 *
+	 * Fix the network wide access upgrade.
+	 *
+	 * @since 3.2.2.1
+	 */
+	private static function upgrade_3_2_2_1() {
+		if ( ! is_multisite() ) {
+			return;
+		}
+
+		wp_cache_flush();
+		$network_enabled = get_site_option( WP_SMUSH_PREFIX . 'networkwide' );
+		update_site_option( WP_SMUSH_PREFIX . 'networkwide', ! ( '1' === $network_enabled ) );
+		wp_cache_flush();
 	}
 
 }

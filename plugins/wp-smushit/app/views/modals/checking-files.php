@@ -27,8 +27,7 @@ if ( ! defined( 'WPINC' ) ) {
 				<p>
 					<?php
 					esc_html_e(
-						'Great! We’re just running a check to see what images need compressing. You can configure
-						more advanced settings once this image check is complete.',
+						'Great! We’re just running a check to see what images need compressing. You can configure more advanced settings once this image check is complete.',
 						'wp-smushit'
 					);
 					?>

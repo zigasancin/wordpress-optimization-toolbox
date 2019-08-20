@@ -133,12 +133,6 @@ class WP_Smush_Resize extends WP_Smush_Module {
 			return false;
 		}
 
-		// Check if already resized.
-		$resize_meta = get_post_meta( $id, WP_SMUSH_PREFIX . 'resize_savings', true );
-		if ( ! empty( $resize_meta ) ) {
-			return false;
-		}
-
 		// Get attachment metadata.
 		$meta = empty( $meta ) ? wp_get_attachment_metadata( $id ) : $meta;
 
@@ -235,7 +229,7 @@ class WP_Smush_Resize extends WP_Smush_Module {
 			$savings['size_before'] = $original_file_size;
 			$savings['size_after']  = $u_file_size;
 
-			// Store savings in meta data.
+			// Store savings in metadata.
 			if ( ! empty( $savings ) ) {
 				update_post_meta( $id, WP_SMUSH_PREFIX . 'resize_savings', $savings );
 			}

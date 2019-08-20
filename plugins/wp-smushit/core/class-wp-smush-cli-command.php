@@ -182,8 +182,15 @@ class WP_Smush_Cli_Command extends WP_CLI_Command {
 				continue;
 			}
 
+			$status = $smush->smush->smush_single( $attachment_id, true );
+
+			if ( is_array( $status ) && isset( $status['error'] ) ) {
+				/* translators: %1$d - attachment ID, %2$s - error. */
+				$errors[] = sprintf( __( 'Error compressing image (ID: %1$d). %2$s', 'wp-smushit' ), $attachment_id, $status['error'] );
+				continue;
+			}
+
 			$success = true;
-			$smush->smush->smush_single( $attachment_id, true );
 		}
 
 		$progress->tick();

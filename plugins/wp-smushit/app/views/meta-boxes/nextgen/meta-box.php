@@ -90,7 +90,7 @@ if ( 0 >= $total_count ) : ?>
 				printf(
 					/* translators: %1$s: opening a tag, %2$s: closing a tag */
 					esc_html__(
-						'Enable Super-smush in the %1$sSettings%2$s area to get even more savings with
+						'Enable Super-Smush in the %1$sSettings%2$s area to get even more savings with
 					almost no visible drop in quality.',
 						'wp-smushit'
 					),

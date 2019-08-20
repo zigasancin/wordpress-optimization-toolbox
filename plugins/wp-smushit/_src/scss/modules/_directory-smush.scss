@@ -4,6 +4,20 @@
 
 @include body-class {
 
+    .wp-smush-progress-dialog,
+    .wp-smush-list-dialog {
+        text-align: left;
+    }
+
+    .sui-meta-boxes-directory.sui-message {
+        text-align: left;
+
+        .wp-smush-no-image,
+        .sui-message-content {
+            text-align: center;
+        }
+    }
+
     .sui-meta-boxes-directory .smush-final-log {
         margin-top: 30px;
 
@@ -13,7 +27,6 @@
     }
 
     ul.fancytree-container {
-
         color: #666;
         font-family: "Roboto", sans-serif;
         font-size: 13px;
@@ -245,6 +258,7 @@
         .fancytree-loading span.fancytree-expander:before,
         .fancytree-statusnode-loading span.fancytree-icon:before {
             content: 'N';
+            display: inline-block;
             animation: spin 1.3s linear infinite;
         }
 

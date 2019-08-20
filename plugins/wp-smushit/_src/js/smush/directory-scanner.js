@@ -37,6 +37,7 @@ const DirectoryScanner = ( totalSteps, currentStep ) => {
 			if ( cancelling ) {
 				return 0;
 			}
+			// O M G ... Logic at it's finest!
 			const remainingSteps = totalSteps - currentStep;
 			return Math.min( Math.round( ( parseInt( ( totalSteps - remainingSteps ) ) * 100 ) / totalSteps ), 99 );
 		},

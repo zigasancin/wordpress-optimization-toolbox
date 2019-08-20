@@ -80,7 +80,7 @@ class WP_Smush_Modules {
 	 *
 	 * @var WP_Smush_Lazy_Load
 	 */
-	private $lazy;
+	public $lazy;
 
 	/**
 	 * WP_Smush_Modules constructor.
@@ -92,9 +92,11 @@ class WP_Smush_Modules {
 		$this->backup   = new WP_Smush_Backup( $this->smush );
 		$this->png2jpg  = new WP_Smush_Png2jpg();
 		$this->resize   = new WP_Smush_Resize();
-		$this->cdn      = new WP_Smush_CDN();
 		$this->settings = WP_Smush_Settings::get_instance();
-		$this->lazy     = new WP_Smush_Lazy_Load();
+
+		$page_parser = new WP_Smush_Page_Parser();
+		$this->cdn   = new WP_Smush_CDN( $page_parser );
+		$this->lazy  = new WP_Smush_Lazy_Load( $page_parser );
 	}
 
 }

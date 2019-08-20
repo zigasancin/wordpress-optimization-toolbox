@@ -17,7 +17,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Class WP_Smush_Auto_Resize
  */
-class WP_Smush_Auto_Resize extends WP_Smush_Content {
+class WP_Smush_Auto_Resize extends WP_Smush_Module {
 
 	/**
 	 * Is auto detection enabled.
@@ -156,7 +156,7 @@ class WP_Smush_Auto_Resize extends WP_Smush_Content {
 			return $image;
 		}
 
-		$this->add_attribute( $image, 'data-resize-detection', '0' );
+		WP_Smush_Page_Parser::add_attribute( $image, 'data-resize-detection', '0' );
 
 		return $image;
 	}

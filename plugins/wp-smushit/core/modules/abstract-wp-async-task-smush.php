@@ -107,7 +107,14 @@ abstract class WP_Async_Task_Smush {
 		try {
 			$data = $this->prepare_data( $data );
 		} catch ( Exception $e ) {
-			error_log( sprintf( 'Async Smush: Error in prepare_data function in %s at line %s: %s', __FILE__, __LINE__, $e->getMessage() ) );
+			error_log(
+				sprintf(
+					'Async Smush: Error in prepare_data function in %s at line %s: %s',
+					__FILE__,
+					__LINE__,
+					$e->getMessage()
+				)
+			);
 			return;
 		}
 
@@ -121,7 +128,7 @@ abstract class WP_Async_Task_Smush {
 		// Do not use this, as in case of importing, only the last image gets processed
 		// It's very important that all the Media uploads, are handled via shutdown action, else, sometimes the image meta updated
 		// by smush is earlier, and then original meta update causes discrepancy.
-		if ( ( ( ! empty( $_POST['action'] ) && 'upload-attachment' == $_POST['action'] ) || ( ! empty( $_POST ) && isset( $_POST['post_id'] ) ) ) && ! $shutdown_action ) {
+		if ( ( ( ! empty( $_POST['action'] ) && 'upload-attachment' === $_POST['action'] ) || ( ! empty( $_POST ) && isset( $_POST['post_id'] ) && $_POST['post_id'] ) ) && ! $shutdown_action ) {
 			add_action( 'shutdown', array( $this, 'process_request' ) );
 		} else {
 			// Send a ajax request to process image and return image metadata, added for compatibility with plugins like
