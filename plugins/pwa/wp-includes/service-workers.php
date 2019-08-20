@@ -96,12 +96,12 @@ function wp_get_service_worker_url( $scope = WP_Service_Workers::SCOPE_FRONT ) {
 			array( WP_Service_Workers::QUERY_VAR => $scope ),
 			home_url( '/' )
 		);
-	} else {
-		return add_query_arg(
-			array( 'action' => WP_Service_Workers::QUERY_VAR ),
-			admin_url( 'admin-ajax.php' )
-		);
 	}
+
+	return add_query_arg(
+		array( 'action' => WP_Service_Workers::QUERY_VAR ),
+		admin_url( 'admin-ajax.php' )
+	);
 }
 
 /**
@@ -110,6 +110,18 @@ function wp_get_service_worker_url( $scope = WP_Service_Workers::SCOPE_FRONT ) {
  * @since 0.1
  */
 function wp_print_service_workers() {
+	/*
+	 * Skip installing service worker from context of post embed iframe, as the post embed iframe does not need the
+	 * service worker. Also, installation via post embed iframe could be seen to be somewhat sneaky. Lastly, if the
+	 * post embed is on the same site and contained iframe is sandbox without allow-same-origin, then the service
+	 * worker will fail to install with an exception:
+	 * > Uncaught DOMException: Failed to read the 'serviceWorker' property from 'Navigator': Service worker is
+	 * > disabled because the context is sandboxed and lacks the 'allow-same-origin' flag.
+	 */
+	if ( is_embed() ) {
+		return;
+	}
+
 	global $pagenow;
 	$scopes = array();
 
@@ -150,7 +162,9 @@ function wp_print_service_workers() {
 							<?php echo wp_json_encode( wp_get_service_worker_url( $name ) ); ?>,
 							<?php echo wp_json_encode( compact( 'scope' ) ); ?>
 						).then( reg => {
-							document.cookie = 'wordpress_sw_installed=1; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT; secure; samesite=strict';
+							<?php if ( WP_Service_Workers::SCOPE_ADMIN === $name ) : ?>
+								document.cookie = <?php echo wp_json_encode( sprintf( 'wordpress_sw_installed=1; path=%s; expires=Fri, 31 Dec 9999 23:59:59 GMT; secure; samesite=strict', $scope ) ); ?>;
+							<?php endif; ?>
 							<?php if ( ! wp_service_worker_skip_waiting() ) : ?>
 								reg.addEventListener( 'updatefound', () => {
 									if ( ! reg.installing ) {
@@ -252,13 +266,15 @@ function wp_disable_script_concatenation() {
 	 * for authenticated users without full-page caching.
 	*/
 	if ( isset( $_COOKIE['wordpress_sw_installed'] ) ) {
-		$concatenate_scripts = false; // WPCS: Override OK.
+		$concatenate_scripts = false; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 	}
 
+	// phpcs:disable
 	// @todo This is just here for debugging purposes.
-	if ( isset( $_GET['wp_concatenate_scripts'] ) ) { // WPCS: csrf ok.
-		$concatenate_scripts = rest_sanitize_boolean( $_GET['wp_concatenate_scripts'] ); // WPCS: csrf ok, override ok.
+	if ( isset( $_GET['wp_concatenate_scripts'] ) ) {
+		$concatenate_scripts = rest_sanitize_boolean( $_GET['wp_concatenate_scripts'] );
 	}
+	// phpcs:enable
 }
 
 /**

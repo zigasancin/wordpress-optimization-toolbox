@@ -2,8 +2,8 @@
 Contributors:      xwp, google, automattic
 Tags:              pwa, progressive web apps, service workers, web app manifest, https
 Requires at least: 5.2
-Tested up to:      5.2
-Stable tag:        0.2.0
+Tested up to:      5.3-alpha
+Stable tag:        0.3.0
 License:           GPLv2 or later
 License URI:       http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP:      5.6
@@ -212,10 +212,9 @@ wp_register_service_worker_caching_route(
 
 <pre lang="php">
 wp_register_service_worker_precaching_route(
-		'https://example.com/wp-content/themes/my-theme/my-theme-image.png',
-		array(
-			'revision' => get_bloginfo( 'version' ),
-		),
+	'https://example.com/wp-content/themes/my-theme/my-theme-image.png',
+	array(
+		'revision' => get_bloginfo( 'version' ),
 	)
 );
 </pre>
@@ -223,8 +222,6 @@ wp_register_service_worker_precaching_route(
 If you would like to opt-in to a caching strategy for navigation requests, you can do:
 
 <pre lang="php">
-add_filter( 'wp_service_worker_navigation_preload', '__return_false' );
-
 add_filter( 'wp_service_worker_navigation_caching_strategy', function() {
 	return WP_Service_Worker_Caching_Routes::STRATEGY_STALE_WHILE_REVALIDATE;
 } );
@@ -236,10 +233,16 @@ add_filter( 'wp_service_worker_navigation_caching_strategy_args', function( $arg
 } );
 </pre>
 
+👉 If you previously added a `wp_service_worker_navigation_preload` filter to disable navigation preload,
+you should probably remove it. This was originally needed to work around an issue with ensuring the offline
+page would work when using a navigation caching strategy, but it is no longer needed and it should be removed
+[improved performance](https://developers.google.com/web/updates/2017/02/navigation-preload). Disabling navigation
+preload is only relevant when you are developing an app shell.
+
 = Offline / 500 error handling =
 The feature plugins offers improved offline experience by displaying a custom template when user is offline instead of the default message in browser. Same goes for 500 errors -- a template is displayed together with error details.
 
-Themes can override the default template by using `error.php`, `offline.php`, and `500.php` in you theme folder. `error.php` is a general template for both offline and 500 error pages and it is overriden by `offline.php` and `500.php` if they exist.
+Themes can override the default template by using `error.php`, `offline.php`, and `500.php` in you theme folder. `error.php` is a general template for both offline and 500 error pages and it is overridden by `offline.php` and `500.php` if they exist.
 
 Note that the templates should use `wp_service_worker_error_message_placeholder()` for displaying the offline / error messages. Additionally, on the 500 error template the details of the error can be displayed using the function `wp_service_worker_error_details_template( $output )`.
 
@@ -331,10 +334,4 @@ Please see the [documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP
 
 == Changelog ==
 
-= 0.2.0 (2019-04-16) =
-
-[View 0.2.0 Changelog](https://github.com/xwp/pwa-wp/milestone/1).
-
-= 0.1.0 (2018-07-12) =
-
-[View 0.1.0 Changelog](https://github.com/xwp/pwa-wp/milestone/3).
+For the plugin’s changelog, please see [the Releases page on GitHub](https://github.com/xwp/pwa-wp/releases).

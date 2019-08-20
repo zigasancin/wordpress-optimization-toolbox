@@ -74,8 +74,10 @@ class WP_Web_App_Manifest {
 		<?php if ( ! empty( $icon ) ) : ?>
 			<link rel="apple-touch-startup-image" href="<?php echo esc_url( $icon['src'] ); ?>">
 		<?php endif; ?>
-		<meta name="apple-mobile-web-app-title" content="<?php echo esc_attr( $manifest['short_name'] ); ?>">
-		<meta name="application-name" content="<?php echo esc_attr( $manifest['short_name'] ); ?>">
+
+		<?php $name = isset( $manifest['short_name'] ) ? $manifest['short_name'] : $manifest['name']; ?>
+		<meta name="apple-mobile-web-app-title" content="<?php echo esc_attr( $name ); ?>">
+		<meta name="application-name" content="<?php echo esc_attr( $name ); ?>">
 		<?php
 	}
 
@@ -117,26 +119,13 @@ class WP_Web_App_Manifest {
 	public function get_manifest() {
 		$manifest = array(
 			'name'      => wp_kses_decode_entities( get_bloginfo( 'name' ) ),
-			'start_url' => get_home_url(),
+			'start_url' => home_url( '/' ),
 			'display'   => 'minimal-ui',
 			'dir'       => is_rtl() ? 'rtl' : 'ltr',
 		);
 		$language = get_bloginfo( 'language' );
 		if ( $language ) {
 			$manifest['lang'] = $language;
-		}
-
-		/**
-		 * Gets the 'short_name' by limiting the blog name to 12 characters.
-		 * And if this cuts off a word, it omits the word entirely by using a positive look-ahead in the regex.
-		 * For example, the first 12 characters of 'My PWA WordPress Site' are 'My PWA WordP'.
-		 * Because this cuts off the last word, this removes 'WordP' entirely: 'My PWA'.
-		 *
-		 * @link https://stackoverflow.com/questions/12646197/cut-the-string-to-be-80-characters-and-must-keep-the-words-without-cutting-th#answer-12646400
-		 */
-		preg_match( '/^.{0,12}(?= |$)/', $manifest['name'], $short_name_matches );
-		if ( $short_name_matches ) {
-			$manifest['short_name'] = $short_name_matches[0];
 		}
 
 		$theme_color = $this->get_theme_color();
@@ -232,6 +221,6 @@ class WP_Web_App_Manifest {
 	 * @return int
 	 */
 	public function sort_icons_callback( $a, $b ) {
-		return intval( strtok( $a['sizes'], 'x' ) ) - intval( strtok( $b['sizes'], 'x' ) );
+		return (int) strtok( $a['sizes'], 'x' ) - (int) strtok( $b['sizes'], 'x' );
 	}
 }

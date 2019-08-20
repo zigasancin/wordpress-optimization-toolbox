@@ -69,10 +69,10 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 	 * @return string|null Stream fragment name or null if not requested.
 	 */
 	public static function get_stream_fragment_query_var() {
-		if ( ! isset( $_GET[ self::STREAM_FRAGMENT_QUERY_VAR ] ) ) { // WPCS: CSRF OK.
+		if ( ! isset( $_GET[ self::STREAM_FRAGMENT_QUERY_VAR ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return null;
 		}
-		$stream_fragment = wp_unslash( $_GET[ self::STREAM_FRAGMENT_QUERY_VAR ] ); // WPCS: CSRF OK.
+		$stream_fragment = wp_unslash( $_GET[ self::STREAM_FRAGMENT_QUERY_VAR ] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( in_array( $stream_fragment, array( 'header', 'body' ), true ) ) {
 			return $stream_fragment;
 		}
@@ -150,7 +150,7 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 			if ( ! $loading_content ) {
 				$loading_content = esc_html__( 'Loading&hellip;', 'pwa' );
 			}
-			echo $loading_content; // WPCS: XSS OK.
+			echo $loading_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 		echo '</div>';
 
@@ -170,8 +170,8 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 			printf(
 				'<script id="%s">%s</script>',
 				esc_attr( self::STREAM_COMBINE_DEFINE_SCRIPT_ID ),
-				$script
-			); // WPCS: XSS OK.
+				$script // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			);
 		}
 
 		// Short-circuit the response when requesting the header since there is nothing left to stream.
@@ -197,7 +197,7 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 				wp_die( esc_html__( 'Failed to turn header into document.', 'pwa' ) );
 			}
 			$response = self::get_header_combine_invoke_script( $dom, true );
-			echo $response; // WPCS: XSS OK.
+			echo $response; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 	}
 
@@ -218,29 +218,29 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 		);
 		$head = $dom->getElementsByTagName( 'head' )->item( 0 );
 		if ( $head ) {
-			foreach ( $head->childNodes as $node ) {
+			foreach ( $head->childNodes as $node ) { // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 				if ( $node instanceof DOMElement ) {
-					if ( 'noscript' === $node->nodeName ) {
+					if ( 'noscript' === $node->nodeName ) { // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 						continue; // Obviously noscript will never be relevant to synchronize since it will never be evaluated.
 					}
 					$element = array(
-						$node->nodeName,
+						$node->nodeName, // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 						null,
 					);
 					if ( $node->hasAttributes() ) {
 						$element[1] = array();
 						foreach ( $node->attributes as $attribute ) {
-							$element[1][ $attribute->nodeName ] = $attribute->nodeValue;
+							$element[1][ $attribute->nodeName ] = $attribute->nodeValue; // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 						}
 					}
-					if ( $node->firstChild instanceof DOMText ) {
-						$element[] = $node->firstChild->nodeValue;
+					if ( $node->firstChild instanceof DOMText ) { // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+						$element[] = $node->firstChild->nodeValue; // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 					}
 					$data['head_nodes'][] = $element;
 				} elseif ( $node instanceof DOMComment ) {
 					$data['head_nodes'][] = array(
 						'#comment',
-						$node->nodeValue,
+						$node->nodeValue, // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 					);
 				}
 			}
@@ -249,7 +249,7 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 		$body = $dom->getElementsByTagName( 'body' )->item( 0 );
 		if ( $body ) {
 			foreach ( $body->attributes as $attribute ) {
-				$data['body_attributes'][ $attribute->nodeName ] = $attribute->nodeValue;
+				$data['body_attributes'][ $attribute->nodeName ] = $attribute->nodeValue; // phpcs:ignore  WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 			}
 		}
 
@@ -259,16 +259,16 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 				esc_attr( self::STREAM_COMBINE_INVOKE_SCRIPT_ID ),
 				wp_json_encode( $data, JSON_PRETTY_PRINT ) // phpcs:ignore PHPCompatibility.PHP.NewConstants.json_pretty_printFound -- Defined in core.
 			);
-		} else {
-			$script = $dom->createElement( 'script' );
-			$script->setAttribute( 'id', self::STREAM_COMBINE_INVOKE_SCRIPT_ID );
-			$script->appendChild(
-				$dom->createTextNode(
-					sprintf( 'wpStreamCombine( %s )', wp_json_encode( $data, JSON_PRETTY_PRINT ) ) // phpcs:ignore PHPCompatibility.PHP.NewConstants.json_pretty_printFound -- Defined in core.
-				)
-			);
-			return $script;
 		}
+
+		$script = $dom->createElement( 'script' );
+		$script->setAttribute( 'id', self::STREAM_COMBINE_INVOKE_SCRIPT_ID );
+		$script->appendChild(
+			$dom->createTextNode(
+				sprintf( 'wpStreamCombine( %s )', wp_json_encode( $data, JSON_PRETTY_PRINT ) ) // phpcs:ignore PHPCompatibility.PHP.NewConstants.json_pretty_printFound -- Defined in core.
+			)
+		);
+		return $script;
 	}
 
 	/**
@@ -334,19 +334,7 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 			$revision .= ';nav=' . $this->get_nav_menu_locations_hash();
 
 			// Include all scripts and styles in revision.
-			$enqueued_scripts = array();
-			foreach ( wp_scripts()->queue as $handle ) {
-				if ( isset( wp_scripts()->registered[ $handle ] ) ) {
-					$enqueued_scripts[ $handle ] = wp_scripts()->registered[ $handle ];
-				}
-			}
-			$enqueued_styles = array();
-			foreach ( wp_styles()->queue as $handle ) {
-				if ( isset( wp_styles()->registered[ $handle ] ) ) {
-					$enqueued_styles[ $handle ] = wp_styles()->registered[ $handle ];
-				}
-			}
-			$revision .= ';deps=' . md5( wp_json_encode( compact( 'enqueued_scripts', 'enqueued_styles' ) ) );
+			$revision .= ';deps=' . md5( wp_json_encode( array( wp_scripts()->queue, wp_styles()->queue ) ) );
 
 			// @todo Allow different routes to have varying caching strategies?
 
@@ -499,7 +487,10 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 			}
 		}
 		if ( ! empty( $navigation_route_precache_entry['url'] ) ) {
-			$scripts->precaching_routes()->register( $navigation_route_precache_entry['url'], isset( $navigation_route_precache_entry['revision'] ) ? $navigation_route_precache_entry['revision'] : null );
+			$scripts->precaching_routes()->register(
+				$navigation_route_precache_entry['url'],
+				isset( $navigation_route_precache_entry['revision'] ) ? $navigation_route_precache_entry['revision'] : null
+			);
 		}
 
 		// Streaming.
@@ -525,14 +516,63 @@ class WP_Service_Worker_Navigation_Routing_Component implements WP_Service_Worke
 			 */
 			$streaming_header_precache_entry = apply_filters( 'wp_streaming_header_precache_entry', $streaming_header_precache_entry );
 
-			if ( $streaming_header_precache_entry ) {
+			if ( ! empty( $streaming_header_precache_entry['url'] ) ) {
 				$scripts->precaching_routes()->register( $streaming_header_precache_entry['url'], isset( $streaming_header_precache_entry['revision'] ) ? $streaming_header_precache_entry['revision'] : null );
+			}
+		}
 
-				add_filter( 'wp_service_worker_navigation_preload', '__return_false' ); // Navigation preload and streaming don't mix!
+		/*
+		 * App shell is mutually exclusive with navigation preload.
+		 * Likewise, navigation preload doesn't mix with streaming.
+		 */
+		$navigation_preload = empty( $streaming_header_precache_entry['url'] ) && empty( $navigation_route_precache_entry['url'] );
+
+		if ( $navigation_preload ) {
+			/**
+			 * Filters whether navigation preload is enabled.
+			 *
+			 * The filtered value will be sent as the Service-Worker-Navigation-Preload header value if a truthy string.
+			 * This filter should be set to return false to disable navigation preload such as when a site is using
+			 * the app shell model, but in practice this filter does not need to be used because by supplying a
+			 * navigation route via the wp_service_worker_navigation_route filter, then the navigation preload will
+			 * automatically be set to false. Take care of the current scope when setting this, as it is unlikely that the admin
+			 * should have navigation preload disabled until core has an admin single-page app. To disable navigation preload on
+			 * the frontend only, you may do:
+			 *
+			 *     add_filter( 'wp_front_service_worker', function() {
+			 *         add_filter( 'wp_service_worker_navigation_preload', '__return_false' );
+			 *     } );
+			 *
+			 * Alternatively, you should check the `$current_scope` for example:
+			 *
+			 *     add_filter( 'wp_service_worker_navigation_preload', function( $preload, $current_scope ) {
+			 *         if ( WP_Service_Workers::SCOPE_FRONT === $current_scope ) {
+			 *             $preload = false;
+			 *         }
+			 *         return $preload;
+			 *     }, 10, 2 );
+			 *
+			 * @param bool|string $navigation_preload Whether to use navigation preload. Returning a string will cause it it to populate the Service-Worker-Navigation-Preload header.
+			 * @param int $current_scope The current scope. Either 1 (WP_Service_Workers::SCOPE_FRONT) or 2 (WP_Service_Workers::SCOPE_ADMIN).
+			 */
+			$navigation_preload = apply_filters( 'wp_service_worker_navigation_preload', $navigation_preload, wp_service_workers()->get_current_scope() );
+
+			if ( false === $navigation_preload && WP_Service_Worker_Caching_Routes::STRATEGY_NETWORK_ONLY !== $caching_strategy ) {
+				$navigation_preload = true;
+				_doing_it_wrong(
+					'add_filter',
+					sprintf(
+						/* translators: %s is the wp_service_worker_navigation_preload filter name */
+						esc_html__( 'PWA: Navigation preload should not be disabled (via the %s filter) when using a navigation caching strategy (and app shell is not being used). It is being forcibly re-enabled.', 'pwa' ),
+						'wp_service_worker_navigation_preload'
+					),
+					'0.3'
+				);
 			}
 		}
 
 		$this->replacements = array(
+			'NAVIGATION_PRELOAD'               => wp_service_worker_json_encode( $navigation_preload ),
 			'CACHING_STRATEGY'                 => wp_service_worker_json_encode( $caching_strategy ),
 			'CACHING_STRATEGY_ARGS'            => isset( $caching_strategy_args_js ) ? $caching_strategy_args_js : '{}',
 			'NAVIGATION_ROUTE_ENTRY'           => wp_service_worker_json_encode( $navigation_route_precache_entry ),

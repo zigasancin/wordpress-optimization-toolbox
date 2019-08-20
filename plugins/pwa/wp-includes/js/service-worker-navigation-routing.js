@@ -1,24 +1,43 @@
-/* global CACHING_STRATEGY, CACHING_STRATEGY_ARGS, NAVIGATION_ROUTE_ENTRY,
+/* global NAVIGATION_PRELOAD, CACHING_STRATEGY, CACHING_STRATEGY_ARGS, NAVIGATION_ROUTE_ENTRY,
 ERROR_OFFLINE_URL, ERROR_500_URL, SHOULD_STREAM_RESPONSE, STREAM_HEADER_FRAGMENT_URL, ERROR_500_BODY_FRAGMENT_URL,
 ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BLACKLIST_PATTERNS, ERROR_MESSAGES */
 
 // IIFE is used for lexical scoping instead of just a braces block due to bug with const in Safari.
 ( () => {
+	const navigationPreload = NAVIGATION_PRELOAD;
 	const isStreamingResponses = SHOULD_STREAM_RESPONSE && wp.serviceWorker.streams.isSupported();
 	const errorMessages = ERROR_MESSAGES;
 	const navigationRouteEntry = NAVIGATION_ROUTE_ENTRY;
 
+	// Configure navigation preload.
+	if ( false !== navigationPreload ) {
+		if ( typeof navigationPreload === 'string' ) {
+			wp.serviceWorker.navigationPreload.enable( navigationPreload );
+		} else {
+			wp.serviceWorker.navigationPreload.enable();
+		}
+	} else {
+		wp.serviceWorker.navigationPreload.disable();
+	}
+
+	/*
+	 * Define strategy up front so that Workbox modules will import at install time.
+	 * If this is not done, then an error will happen like:
+	 * > Unable to import module 'workbox-expiration'
+	 * Along with an exception:
+	 * > workbox-sw.js:1 Uncaught (in promise) DOMException: Failed to execute 'importScripts' on 'WorkerGlobalScope'
+	 */
+	const navigationCacheStrategy = new wp.serviceWorker.strategies[ CACHING_STRATEGY ]( CACHING_STRATEGY_ARGS );
+
 	/**
 	 * Handle navigation request.
 	 *
-	 * @param event Event.
+	 * @param {Object} event Event.
 	 * @return {Promise<Response>} Response.
 	 */
 	async function handleNavigationRequest( { event } ) {
-		let responsePreloaded = false;
-
 		const canStreamResponse = () => {
-			return isStreamingResponses && ! responsePreloaded;
+			return isStreamingResponses && ! navigationPreload;
 		};
 
 		const handleResponse = ( response ) => {
@@ -35,9 +54,8 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 					return response.text().then( ( body ) => {
 						return new Response( script + body );
 					} );
-				} else {
-					return response;
 				}
+				return response;
 			}
 
 			if ( canStreamResponse() ) {
@@ -46,28 +64,26 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 
 			const originalResponse = response.clone();
 			return response.text().then( function( responseBody ) {
-
 				// Prevent serving custom error template if WordPress is already responding with a valid error page (e.g. via wp_die()).
 				if ( -1 !== responseBody.indexOf( '</html>' ) ) {
 					return originalResponse;
 				}
 
 				return caches.match( wp.serviceWorker.precaching.getCacheKeyForURL( ERROR_500_URL ) ).then( function( errorResponse ) {
-
 					if ( ! errorResponse ) {
 						return response;
 					}
 
 					return errorResponse.text().then( function( text ) {
-						let init = {
+						const init = {
 							status: errorResponse.status,
 							statusText: errorResponse.statusText,
-							headers: errorResponse.headers
+							headers: errorResponse.headers,
 						};
 
-						let body = text.replace( /<!--WP_SERVICE_WORKER_ERROR_MESSAGE-->/, errorMessages.error );
+						let body = text.replace( /[<]!--WP_SERVICE_WORKER_ERROR_MESSAGE-->/, errorMessages.error );
 						body = body.replace(
-							/(<!--WP_SERVICE_WORKER_ERROR_TEMPLATE_BEGIN-->)((?:.|\n)+?)(<!--WP_SERVICE_WORKER_ERROR_TEMPLATE_END-->)/,
+							/([<]!--WP_SERVICE_WORKER_ERROR_TEMPLATE_BEGIN-->)((?:.|\n)+?)([<]!--WP_SERVICE_WORKER_ERROR_TEMPLATE_END-->)/,
 							( details ) => {
 								if ( ! responseBody ) {
 									return ''; // Remove the details from the document entirely.
@@ -79,19 +95,18 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 									.replace( /"/g, '&quot;' )
 									.replace( /</g, '&lt;' )
 									.replace( />/g, '&gt;' );
-								const iframe = `<iframe style="width:100%" src="${src}" data-srcdoc="${srcdoc}"></iframe>`;
+								const iframe = `<iframe style="width:100%" src="${ src }" data-srcdoc="${ srcdoc }"></iframe>`;
 								details = details.replace( '{{{error_details_iframe}}}', iframe );
 								// The following are in case the user wants to include the <iframe> in the template.
 								details = details.replace( '{{{iframe_src}}}', src );
 								details = details.replace( '{{{iframe_srcdoc}}}', srcdoc );
 
 								// Replace the comments.
-								details = details.replace( '<!--WP_SERVICE_WORKER_ERROR_TEMPLATE_BEGIN-->', '' );
-								details = details.replace( '<!--WP_SERVICE_WORKER_ERROR_TEMPLATE_END-->', '' );
+								details = details.replace( '<' + '!--WP_SERVICE_WORKER_ERROR_TEMPLATE_BEGIN-->', '' );
+								details = details.replace( '<' + '!--WP_SERVICE_WORKER_ERROR_TEMPLATE_END-->', '' );
 								return details;
 							}
 						);
-
 						return new Response( body, init );
 					} );
 				} );
@@ -105,48 +120,29 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 
 			return caches.match( wp.serviceWorker.precaching.getCacheKeyForURL( ERROR_OFFLINE_URL ) ).then( function( response ) {
 				return response.text().then( function( text ) {
-					let init = {
+					const init = {
 						status: response.status,
 						statusText: response.statusText,
-						headers: response.headers
+						headers: response.headers,
 					};
 
-					const body = text.replace( /<!--WP_SERVICE_WORKER_ERROR_MESSAGE-->/, errorMessages.default );
+					const body = text.replace( /[<]!--WP_SERVICE_WORKER_ERROR_MESSAGE-->/, navigator.onLine ? errorMessages.serverOffline : errorMessages.clientOffline );
 
 					return new Response( body, init );
 				} );
 			} );
 		};
 
-		/*
-		 * If navigation preload is enabled, use the preload request instead of doing another fetch.
-		 * This prevents requests from being duplicated. See <https://github.com/xwp/pwa-wp/issues/67>.
-		 */
-		if ( event.preloadResponse ) {
-			try {
-				const response = await event.preloadResponse;
-				if ( response ) {
-					responsePreloaded = true;
-					return handleResponse( response );
-				}
-			} catch ( error ) {
-				responsePreloaded = true;
-				return sendOfflineResponse();
-			}
-		}
-
-		const navigationCacheStrategy = new wp.serviceWorker.strategies[ CACHING_STRATEGY ]( CACHING_STRATEGY_ARGS );
-
 		if ( canStreamResponse() ) {
 			const streamHeaderFragmentURL = STREAM_HEADER_FRAGMENT_URL;
-			const precacheStrategy = new wp.serviceWorker.strategies.cacheFirst({
+			const precacheStrategy = new wp.serviceWorker.strategies.cacheFirst( {
 				cacheName: wp.serviceWorker.core.cacheNames.precache,
-			});
+			} );
 
 			const url = new URL( event.request.url );
 			url.searchParams.append( STREAM_HEADER_FRAGMENT_QUERY_VAR, 'body' );
 			const init = {
-				mode: 'same-origin'
+				mode: 'same-origin',
 			};
 			const copiedProps = [
 				'method',
@@ -161,19 +157,18 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 				init[ initProp ] = event.request[ initProp ];
 			}
 			const request = new Request( url.toString(), init );
-			const stream = wp.serviceWorker.streams.concatenateToResponse([
-				precacheStrategy.makeRequest({ request: streamHeaderFragmentURL }),
+			const stream = wp.serviceWorker.streams.concatenateToResponse( [
+				precacheStrategy.makeRequest( { request: streamHeaderFragmentURL } ),
 				navigationCacheStrategy.makeRequest( { request } )
 					.then( handleResponse )
 					.catch( sendOfflineResponse ),
-			]);
+			] );
 
 			return stream.response;
-		} else {
-			return navigationCacheStrategy.makeRequest( { request: event.request } )
-				.then( handleResponse )
-				.catch( sendOfflineResponse );
 		}
+		return navigationCacheStrategy.handle( { event, request: event.request } )
+			.then( handleResponse )
+			.catch( sendOfflineResponse );
 	}
 
 	const blacklist = NAVIGATION_BLACKLIST_PATTERNS.map( ( pattern ) => new RegExp( pattern ) );
@@ -190,13 +185,13 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 			 *
 			 * @inheritDoc
 			 */
-			constructor(handler, {
-				whitelist = [/./],
-				blacklist = []
-			} = {}) {
-				super(options => this._match(options), handler);
-				this._whitelist = whitelist;
-				this._blacklist = blacklist;
+			constructor( handler, {
+				whitelist: _whitelist = [ /./ ],
+				blacklist: _blacklist = [],
+			} = {} ) {
+				super( ( options ) => this._match( options ), handler );
+				this._whitelist = _whitelist;
+				this._blacklist = _blacklist;
 			}
 
 			/**
@@ -205,24 +200,24 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 			 * @param {Object} options
 			 * @param {URL} options.url
 			 * @param {Request} options.request
-			 * @return {boolean}
+			 * @return {boolean} Whether there is a match or not.
 			 *
 			 * @private
 			 */
-			_match({ url, request }) {
+			_match( { url, request } ) {
 				// This replaces checking for navigate in NavigationRoute, which looks for 'navigate' instead.
 				if ( request.mode !== 'same-origin' ) {
 					return false;
 				}
 
 				const pathnameAndSearch = url.pathname + url.search;
-				for (const regExp of this._blacklist) {
-					if (regExp.test(pathnameAndSearch)) {
+				for ( const regExp of this._blacklist ) {
+					if ( regExp.test( pathnameAndSearch ) ) {
 						return false;
 					}
 				}
 
-				return this._whitelist.some(regExp => regExp.test(pathnameAndSearch));
+				return this._whitelist.some( ( regExp ) => regExp.test( pathnameAndSearch ) );
 			}
 		}
 
@@ -244,6 +239,6 @@ ERROR_OFFLINE_BODY_FRAGMENT_URL, STREAM_HEADER_FRAGMENT_QUERY_VAR, NAVIGATION_BL
 wp.serviceWorker.routing.registerRoute( new wp.serviceWorker.routing.NavigationRoute(
 	new wp.serviceWorker.strategies.NetworkOnly(),
 	{
-		whitelist: NAVIGATION_BLACKLIST_PATTERNS.map( ( pattern ) => new RegExp( pattern ) )
+		whitelist: NAVIGATION_BLACKLIST_PATTERNS.map( ( pattern ) => new RegExp( pattern ) ),
 	}
 ) );
