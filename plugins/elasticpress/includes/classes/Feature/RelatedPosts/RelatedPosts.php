@@ -67,9 +67,9 @@ class RelatedPosts extends Feature {
 							'terms.post_tag.name',
 						)
 					),
-					'min_term_freq'   => 1,
-					'max_query_terms' => 12,
-					'min_doc_freq'    => 1,
+					'min_term_freq'   => apply_filters( 'ep_related_posts_min_term_freq', 1 ),
+					'max_query_terms' => apply_filters( 'ep_related_posts_max_query_terms', 12 ),
+					'min_doc_freq'    => apply_filters( 'ep_related_posts_min_doc_freq', 1 ),
 				),
 			);
 		}
@@ -90,6 +90,7 @@ class RelatedPosts extends Feature {
 			'more_like'      => $post_id,
 			'posts_per_page' => $return,
 			'ep_integrate'   => true,
+			'ignore_sticky_posts' => true,
 		);
 
 		$query = new WP_Query( apply_filters( 'ep_find_related_args', $args ) );
