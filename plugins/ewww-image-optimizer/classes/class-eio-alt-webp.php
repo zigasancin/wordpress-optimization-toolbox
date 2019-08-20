@@ -3,7 +3,7 @@
  * Implements WebP rewriting using page parsing and JS functionality.
  *
  * @link https://ewww.io
- * @package EWWW_Image_Optimizer
+ * @package EIO
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Enables EWWW IO to filter the page content and replace img elements with WebP markup.
  */
-class EWWWIO_Alt_Webp extends EWWWIO_Page_Parser {
+class EIO_Alt_Webp extends EIO_Page_Parser {
 
 	/**
 	 * The Alt WebP inline script contents. Current length 11704.
@@ -43,8 +43,8 @@ class EWWWIO_Alt_Webp extends EWWWIO_Page_Parser {
 	 * Register (once) actions and filters for Alt WebP.
 	 */
 	function __construct() {
-		global $ewwwio_alt_webp;
-		if ( is_object( $ewwwio_alt_webp ) ) {
+		global $eio_alt_webp;
+		if ( is_object( $eio_alt_webp ) ) {
 			return 'you are doing it wrong';
 		}
 		if ( ewww_image_optimizer_ce_webp_enabled() ) {
@@ -297,7 +297,9 @@ class EWWWIO_Alt_Webp extends EWWWIO_Page_Parser {
 			is_feed() ||
 			is_preview() ||
 			( defined( 'REST_REQUEST' ) && REST_REQUEST ) ||
-			preg_match( '/^<\?xml/', $buffer )
+			preg_match( '/^<\?xml/', $buffer ) ||
+			strpos( $buffer, 'amp-boilerplate' ) ||
+			ewww_image_optimizer_ce_webp_enabled()
 		) {
 			if ( empty( $buffer ) ) {
 				ewwwio_debug_message( 'empty buffer' );
@@ -338,7 +340,7 @@ class EWWWIO_Alt_Webp extends EWWWIO_Page_Parser {
 		/* TODO: detect non-utf8 encoding and convert the buffer (if necessary). */
 
 		$images = $this->get_images_from_html( preg_replace( '/<noscript.*?\/noscript>/s', '', $buffer ), false );
-		if ( ewww_image_optimizer_iterable( $images[0] ) ) {
+		if ( ! empty( $images[0] ) && $this->is_iterable( $images[0] ) ) {
 			foreach ( $images[0] as $index => $image ) {
 				$file = $images['img_url'][ $index ];
 				ewwwio_debug_message( "parsing an image: $file" );
@@ -407,7 +409,7 @@ class EWWWIO_Alt_Webp extends EWWWIO_Page_Parser {
 						$buffer = str_replace( $image, $new_image, $buffer );
 					}
 				} elseif ( ! empty( $file ) && strpos( $image, 'data-src=' ) && ( strpos( $image, 'data-lazy-type="image' ) || strpos( $image, 'lazyload' ) ) ) {
-					// a3 Lazy Load.
+					// a3 or EWWW IO Lazy Load.
 					$new_image = $image;
 					$real_file = $this->get_attribute( $new_image, 'data-src' );
 					ewwwio_debug_message( "checking webp for Lazy Load data-src: $real_file" );
@@ -457,7 +459,7 @@ class EWWWIO_Alt_Webp extends EWWWIO_Page_Parser {
 		} // End if().
 		// Now we will look for any lazy images that don't have a src attribute (this search returns ALL img elements though).
 		$images = $this->get_images_from_html( preg_replace( '/<noscript.*?\/noscript>/s', '', $buffer ), false, false );
-		if ( ewww_image_optimizer_iterable( $images[0] ) ) {
+		if ( ! empty( $images[0] ) && $this->is_iterable( $images[0] ) ) {
 			ewwwio_debug_message( 'parsing images without requiring src' );
 			foreach ( $images[0] as $index => $image ) {
 				if ( $this->get_attribute( $image, 'src' ) ) {
@@ -788,5 +790,5 @@ class EWWWIO_Alt_Webp extends EWWWIO_Page_Parser {
 	}
 }
 
-global $ewwwio_alt_webp;
-$ewwwio_alt_webp = new EWWWIO_Alt_Webp();
+global $eio_alt_webp;
+$eio_alt_webp = new EIO_Alt_Webp();

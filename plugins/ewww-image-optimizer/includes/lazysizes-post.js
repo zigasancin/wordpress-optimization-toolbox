@@ -1,10 +1,16 @@
 lazysizesWebP('alpha', lazySizes.init);
 function constrainSrc(url,objectWidth,objectHeight,objectType){
+	if (url===null){
+		return url;
+	}
 	var regW      = /w=(\d+)/;
 	var regFit    = /fit=(\d+),(\d+)/;
 	var regResize = /resize=(\d+),(\d+)/;
 	var decUrl = decodeURIComponent(url);
-	if (url.search('\\?') > 0 && url.search(ewww_lazy_vars.exactdn_domain) > 0){
+	if (typeof eio_lazy_vars === 'undefined'){
+		var eio_lazy_vars = {"exactdn_domain":".exactdn.com"};
+	}
+	if (url.search('\\?') > 0 && url.search(eio_lazy_vars.exactdn_domain) > 0){
 		var resultResize = regResize.exec(decUrl);
 		if(resultResize && objectWidth < resultResize[1]){
 			return decUrl.replace(regResize, 'resize=' + objectWidth + ',' + objectHeight);
@@ -30,15 +36,21 @@ function constrainSrc(url,objectWidth,objectHeight,objectType){
 			if('bg-cover'===objectType){
 				return url + '?resize=' + objectWidth + ',' + objectHeight;
 			}
+			if(objectHeight>objectWidth){
+				return url + '&h=' + objectHeight;
+			}
 			return url + '&w=' + objectWidth;
 		}
 	}
-	if (url.search('\\?') == -1 && url.search(ewww_lazy_vars.exactdn_domain) > 0){
+	if (url.search('\\?') == -1 && url.search(eio_lazy_vars.exactdn_domain) > 0){
 		if('img'===objectType){
 			return url + '?fit=' + objectWidth + ',' + objectHeight;
 		}
 		if('bg-cover'===objectType){
 			return url + '?resize=' + objectWidth + ',' + objectHeight;
+		}
+		if(objectHeight>objectWidth){
+			return url + '?h=' + objectHeight;
 		}
 		return url + '?w=' + objectWidth;
 	}

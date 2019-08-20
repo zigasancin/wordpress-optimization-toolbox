@@ -1,3 +1,31 @@
+= 4.9.2 =
+* fixed: generating lazy load PNG placeholders with large heights causes 500 errors
+* fixed: error when importing media via WordPress Importer plugin
+* fixed: error with WP/LR Sync
+
+= 4.9.1 =
+* fixed: error on settings screen when JS WebP is enabled
+
+= 4.9.0 =
+* added: Lazy Load background image support for section elements
+* added: ExactDN background image support for li,span, and section elements
+* added: lazysizes print plugin, enable via EWWW_IMAGE_OPTIMIZER_LAZY_PRINT constant
+* added: compatibility with upcoming Easy Image Optimizer
+* changed: automatic compression disabled during WP/LR Sync with admin notice
+* changed: Lazy Load PNG placeholders capped at 1920px wide to prevent errors
+* changed: use ExactDN, when active, for Lazy Load PNG placeholders
+* changed: EWWW_MEMORY_LIMIT renamed to EIO_MEMORY_LIMIT for setting plugin memory limit
+* fixed: WebP test image not refreshing after inserting .htaccess rules
+* fixed: errors when manually adding lazysizes script
+
+= 4.8.1 =
+* added: Lazy Load background image support added for span elements
+* changed: constrain by height for background images that are taller than they are wide
+* changed: debug.log moved to more suitable location
+* fix: Lazy Load breaks when an image has an empty class attribute
+* fix: regression that caused jpegtran and pngout tests to fail on Windows
+* fix: writing to debug.log causes errors
+
 = 4.8.0 =
 * added: ability to resize images outside media library via scheduled or bulk optimization
 * added: compatibility with WP Stateless for GSC
@@ -1240,9 +1268,9 @@ You can find more information about overriding options in the [Documentation](ht
 * prevent tool checks and cloud verification from firing on every page load, yikes...
 
 = 1.6.1 =
-*fixed: temporary jpgs were not being deleted (leftovers from testing for last release)
-*fixed: jpgs would not be converted to pngs if jpgs had already been optimized
-*fixed: cloud service not converting gif to png
+* fixed: temporary jpgs were not being deleted (leftovers from testing for last release)
+* fixed: jpgs would not be converted to pngs if jpgs had already been optimized
+* fixed: cloud service not converting gif to png
 
 = 1.6.0 =
 * Cloud Optimization option (BETA: get your free API key at http://www.exactlywww.com/cloud/)

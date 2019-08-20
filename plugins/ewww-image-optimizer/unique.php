@@ -319,7 +319,7 @@ function ewww_image_optimizer_tool_folder_permissions_notice() {
 	echo "<div id='ewww-image-optimizer-warning-tool-folder-permissions' class='notice notice-error'><p><strong>" .
 		/* translators: %s: Folder location where executables should be installed */
 		sprintf( esc_html__( 'EWWW Image Optimizer could not install tools in %s', 'ewww-image-optimizer' ), htmlentities( EWWW_IMAGE_OPTIMIZER_TOOL_PATH ) ) . '.</strong> ' .
-		esc_html__( 'Please adjust permissions or create the folder. If you have installed the tools elsewhere on your system, check the option to Use System Paths.', 'ewww-image-optimizer' ) . ' ' .
+		esc_html__( 'Please adjust permissions or create the folder. If you have installed the tools elsewhere on your system, use the override which allows you to skip the bundled tools.', 'ewww-image-optimizer' ) . ' ' .
 		/* translators: 1: Settings Page (link) 2: Installation Instructions (link) */
 		sprintf( esc_html__( 'For more details, visit the %1$s or the %2$s.', 'ewww-image-optimizer' ), "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='https://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
 }
@@ -687,9 +687,32 @@ function ewww_image_optimizer_notice_utils( $quiet = null ) {
 		} elseif ( ! is_writable( EWWW_IMAGE_OPTIMIZER_TOOL_PATH ) ) {
 			ewww_image_optimizer_tool_folder_permissions_notice();
 		}
-		echo "<div id='ewww-image-optimizer-warning-opt-missing' class='notice notice-error'><p>" .
-		/* translators: 1-6: jpegtran, optipng, pngout, pngquant, gifsicle, and cwebp (links) 7: Settings Page (link) 8: Installation Instructions (link) */
-		sprintf( esc_html__( 'EWWW Image Optimizer uses %1$s, %2$s, %3$s, %4$s, %5$s, and %6$s. You are missing: %7$s. Please install via the %8$s or the %9$s.', 'ewww-image-optimizer' ), "<a href='http://jpegclub.org/jpegtran/'>jpegtran</a>", "<a href='http://optipng.sourceforge.net/'>optipng</a>", "<a href='http://advsys.net/ken/utils.htm'>pngout</a>", "<a href='http://pngquant.org/'>pngquant</a>", "<a href='http://www.lcdf.org/gifsicle/'>gifsicle</a>", "<a href='https://developers.google.com/speed/webp/'>cwebp</a>", $msg, "<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>', "<a href='https://docs.ewww.io/'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
+		if ( 'pngout' === $msg ) {
+			echo "<div id='ewww-image-optimizer-warning-opt-missing' class='notice notice-error'><p>" .
+			sprintf(
+				/* translators: 1: automatically (link) 2: manually (link) */
+				esc_html__( 'You are missing pngout. Install %1$s or %2$s.', 'ewww-image-optimizer' ),
+				'<a href="admin.php?action=ewww_image_optimizer_install_pngout">' . esc_html__( 'automatically', 'ewww-image-optimizer' ) . '</a>',
+				'<a href="https://docs.ewww.io/article/13-installing-pngout" data-beacon-article="5854531bc697912ffd6c1afa">' . esc_html__( 'manually', 'ewww-image-optimizer' ) . '</a>'
+			) .
+			'</p></div>';
+		} else {
+			echo "<div id='ewww-image-optimizer-warning-opt-missing' class='notice notice-error'><p>" .
+			sprintf(
+				/* translators: 1-6: jpegtran, optipng, pngout, pngquant, gifsicle, and cwebp (links) 7: Settings Page (link) 8: Installation Instructions (link) */
+				esc_html__( 'EWWW Image Optimizer uses %1$s, %2$s, %3$s, %4$s, %5$s, and %6$s. You are missing: %7$s. Please install via the %8$s or the %9$s.', 'ewww-image-optimizer' ),
+				"<a href='http://jpegclub.org/jpegtran/'>jpegtran</a>",
+				"<a href='http://optipng.sourceforge.net/'>optipng</a>",
+				"<a href='http://advsys.net/ken/utils.htm'>pngout</a>",
+				"<a href='http://pngquant.org/'>pngquant</a>",
+				"<a href='http://www.lcdf.org/gifsicle/'>gifsicle</a>",
+				"<a href='https://developers.google.com/speed/webp/'>cwebp</a>",
+				$msg,
+				"<a href='$settings_page'>" . esc_html__( 'Settings Page', 'ewww-image-optimizer' ) . '</a>',
+				"<a href='https://docs.ewww.io/article/6-the-plugin-says-i-m-missing-something' data-beacon-article='585371e3c697912ffd6c0ba1' target='_blank'>" . esc_html__( 'Installation Instructions', 'ewww-image-optimizer' ) . '</a>'
+			) .
+			'</p></div>';
+		}
 		ewwwio_memory( __FUNCTION__ );
 	}
 }
@@ -1206,14 +1229,12 @@ function ewww_image_optimizer_escapeshellcmd( $path ) {
 function ewww_image_optimizer_tool_found( $path, $tool ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	ewwwio_debug_message( "testing case: $tool at $path" );
-	$fork = '2>&1';
-	if ( ( defined( 'EWWW_IMAGE_OPTIMIZER_FORK' ) && ! EWWW_IMAGE_OPTIMIZER_FORK ) || 'WINNT' === PHP_OS ) {
-		$fork = '';
-	}
+
 	// '*b' cases are 'blind' testing in case we can't get at the version string, but the binaries are actually working, we run a test compression, and compare the results with what they should be.
 	switch ( $tool ) {
 		case 'j': // jpegtran.
-			exec( $path . ' -v ' . EWWW_IMAGE_OPTIMIZER_IMAGES_PATH . "sample.jpg $fork", $jpegtran_version );
+			// In case you forget, it is not any slower to run jpegtran this way (with a sample file to operate on) than the other tools.
+			exec( $path . ' -v ' . EWWW_IMAGE_OPTIMIZER_IMAGES_PATH . 'sample.jpg 2>&1', $jpegtran_version );
 			if ( ewww_image_optimizer_iterable( $jpegtran_version ) ) {
 				ewwwio_debug_message( "$path: {$jpegtran_version[0]}" );
 			} else {
@@ -1242,7 +1263,7 @@ function ewww_image_optimizer_tool_found( $path, $tool ) {
 			}
 			break;
 		case 'o': // optipng.
-			exec( $path . " -v $fork", $optipng_version );
+			exec( $path . ' -v 2>&1', $optipng_version );
 			if ( ewww_image_optimizer_iterable( $optipng_version ) ) {
 				ewwwio_debug_message( "$path: {$optipng_version[0]}" );
 			} else {
@@ -1269,7 +1290,7 @@ function ewww_image_optimizer_tool_found( $path, $tool ) {
 			}
 			break;
 		case 'g': // gifsicle.
-			exec( $path . " --version $fork", $gifsicle_version );
+			exec( $path . ' --version 2>&1', $gifsicle_version );
 			if ( ewww_image_optimizer_iterable( $gifsicle_version ) ) {
 				ewwwio_debug_message( "$path: {$gifsicle_version[0]}" );
 			} else {
@@ -1296,7 +1317,7 @@ function ewww_image_optimizer_tool_found( $path, $tool ) {
 			}
 			break;
 		case 'p': // pngout.
-			exec( "$path $fork", $pngout_version );
+			exec( "$path 2>&1", $pngout_version );
 			if ( ewww_image_optimizer_iterable( $pngout_version ) ) {
 				ewwwio_debug_message( "$path: {$pngout_version[0]}" );
 			} else {
@@ -1323,7 +1344,7 @@ function ewww_image_optimizer_tool_found( $path, $tool ) {
 			}
 			break;
 		case 'q': // pngquant.
-			exec( $path . " -V $fork", $pngquant_version );
+			exec( $path . ' -V 2>&1', $pngquant_version );
 			if ( ewww_image_optimizer_iterable( $pngquant_version ) ) {
 				ewwwio_debug_message( "$path: {$pngquant_version[0]}" );
 			} else {
@@ -1353,7 +1374,7 @@ function ewww_image_optimizer_tool_found( $path, $tool ) {
 			if ( PHP_OS === 'WINNT' ) {
 				return false;
 			}
-			exec( "$path $fork", $nice_output );
+			exec( "$path 2>&1", $nice_output );
 			if ( ewww_image_optimizer_iterable( $nice_output ) && isset( $nice_output[0] ) ) {
 				ewwwio_debug_message( "$path: {$nice_output[0]}" );
 			} else {
@@ -1369,7 +1390,7 @@ function ewww_image_optimizer_tool_found( $path, $tool ) {
 			}
 			break;
 		case 'w': // cwebp.
-			exec( "$path -version $fork", $webp_version );
+			exec( "$path -version 2>&1", $webp_version );
 			if ( ewww_image_optimizer_iterable( $webp_version ) ) {
 				ewwwio_debug_message( "$path: {$webp_version[0]}" );
 			} else {
@@ -2805,16 +2826,6 @@ function ewww_image_optimizer_install_pngout() {
 		);
 	}
 	return $sendback;
-}
-
-/**
- * Downloads a file to the EWWW IO folder.
- *
- * @param string $url The remote url to fetch.
- * @return string|WP_Error The location of the downloaded file, or a WP_Error object on failure.
- */
-function ewwwio_download_url( $url ) {
-	return $location;
 }
 
 /**
