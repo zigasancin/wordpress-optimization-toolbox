@@ -3,6 +3,8 @@ if ( !function_exists( 'download_url' ) ) {
     require_once( ABSPATH . 'wp-admin/includes/file.php' );
 }
 
+use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
 class ShortPixelAPI {
 
     const STATUS_SUCCESS = 1;
@@ -14,6 +16,7 @@ class ShortPixelAPI {
     const STATUS_NOT_FOUND = -5;
     const STATUS_NO_KEY = -6;
     const STATUS_RETRY = -7;
+    const STATUS_SEARCHING = -8; // when the Queue is looping over images, but in batch none were found.
     const STATUS_QUEUE_FULL = -404;
     const STATUS_MAINTENANCE = -500;
 
@@ -104,10 +107,12 @@ class ShortPixelAPI {
         $apiKey = $this->_settings->apiKey;
         if(strlen($apiKey) < 20) { //found in the logs many cases when the API Key is '', probably deleted from the DB but the verifiedKey setting is not changed
             $this->_settings->verifiedKey = false;
+            Log::addWarn('Invalid API Key');
             throw new Exception(__('Invalid API Key', 'shortpixel-image-optimiser'));
         }
 
       //  WpShortPixel::log("DO REQUESTS for META: " . json_encode($itemHandler->getRawMeta()) . " STACK: " . json_encode(debug_backtrace()));
+          $URLs = apply_filters('shortpixel_image_urls', $URLs, $itemHandler->getId()) ;
 
         $requestParameters = array(
             'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
@@ -129,7 +134,7 @@ class ShortPixelAPI {
         }
 
         //WpShortPixel::log("ShortPixel API Request Settings: " . json_encode($requestParameters));
-
+        Log::addDebug('ShortPixel API Request', array($requestParameters));
         $response = wp_remote_post($this->_apiEndPoint, $this->prepareRequest($requestParameters, $Blocking) );
 
         //WpShortPixel::log('RESPONSE: ' . json_encode($response));
@@ -411,7 +416,7 @@ class ShortPixelAPI {
         $fileURL = $this->setPreferredProtocol(urldecode($optimizedUrl));
 
         $tempFile = download_url($fileURL, $downloadTimeout);
-        WPShortPixel::log('Downloading file: '.json_encode($tempFile));
+        Log::addInfo('Downloading file: '.json_encode($tempFile));
         if(is_wp_error( $tempFile ))
         { //try to switch the default protocol
             $fileURL = $this->setPreferredProtocol(urldecode($optimizedUrl), true); //force recheck of the protocol
@@ -447,27 +452,42 @@ class ShortPixelAPI {
         return $returnMessage;
     }
 
+    /** Tries to create backup
+    *
+    * @param $mainPath The path of the main image?
+    * @param $PATHs MUST be included. If just one image is for backup, add array($mainPath)
+    * @return Array Array with Status and optional Message  */
     public static function backupImage($mainPath, $PATHs) {
+        /**
+         * Passing a truthy value to the filter will effectively short-circuit this function.
+         * So third party plugins can handle Backup by there own.
+         */
+        if(apply_filters('shortpixel_skip_backup', false, $mainPath, $PATHs)){
+            return array("Status" => self::STATUS_SUCCESS);
+        }
+
         //$fullSubDir = str_replace(wp_normalize_path(get_home_path()), "", wp_normalize_path(dirname($itemHandler->getMeta()->getPath()))) . '/';
         //$SubDir = ShortPixelMetaFacade::returnSubDir($itemHandler->getMeta()->getPath(), $itemHandler->getType());
         $fullSubDir = ShortPixelMetaFacade::returnSubDir($mainPath);
         $source = $PATHs; //array with final paths for these files
 
-        if( !file_exists(SHORTPIXEL_BACKUP_FOLDER) && !@mkdir(SHORTPIXEL_BACKUP_FOLDER, 0777, true) ) {//creates backup folder if it doesn't exist
+        if( !file_exists(SHORTPIXEL_BACKUP_FOLDER) && ! ShortPixelFolder::createBackUpFolder() ) {//creates backup folder if it doesn't exist
+            Log::addWarn('Backup folder does not exist and it cannot be created');
             return array("Status" => self::STATUS_FAIL, "Message" => __('Backup folder does not exist and it cannot be created','shortpixel-image-optimiser'));
         }
         //create subdir in backup folder if needed
-        @mkdir( SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir, 0777, true);
+        //@mkdir( SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir, 0777, true);
+        ShortPixelFolder::createBackUpFolder(SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir);
 
         foreach ( $source as $fileID => $filePATH )//create destination files array
         {
             $destination[$fileID] = SHORTPIXEL_BACKUP_FOLDER . '/' . $fullSubDir . self::MB_basename($source[$fileID]);
         }
-        //die("IZ BACKUP: " . SHORTPIXEL_BACKUP_FOLDER . '/' . $SubDir . var_dump($destination));
 
         //now that we have original files and where we should back them up we attempt to do just that
         if(is_writable(SHORTPIXEL_BACKUP_FOLDER))
         {
+
             foreach ( $destination as $fileID => $filePATH )
             {
                 if ( !file_exists($filePATH) )
@@ -483,6 +503,7 @@ class ShortPixelAPI {
         }
         else {//cannot write to the backup dir, return with an error
             $msg = __('Cannot save file in backup directory','shortpixel-image-optimiser');
+            Log::addWarn('Backup directory not writable');
             return array("Status" => self::STATUS_FAIL, "Message" => $msg);
         }
     }
@@ -490,7 +511,7 @@ class ShortPixelAPI {
     private function createArchiveTempFolder($archiveBasename) {
         $archiveTempDir = get_temp_dir() . '/' . $archiveBasename;
         if(file_exists($archiveTempDir) && is_dir($archiveTempDir) && (time() - filemtime($archiveTempDir) < max(30, SHORTPIXEL_MAX_EXECUTION_TIME) + 10)) {
-            WPShortPixel::log("CONFLICT. Folder already exists and is modified in the last minute. Current IP:" . $_SERVER['REMOTE_ADDR']);
+            Log::addWarn("CONFLICT. Folder already exists and is modified in the last minute. Current IP:" . $_SERVER['REMOTE_ADDR']);
             return array("Status" => self::STATUS_RETRY, "Code" => 1, "Message" => "Pending");
         }
         if( !file_exists($archiveTempDir) && !@mkdir($archiveTempDir) ) {
@@ -562,7 +583,7 @@ class ShortPixelAPI {
      * @return array status/message
      */
     private function handleSuccess($APIresponse, $PATHs, $itemHandler, $compressionType) {
-        WPShortPixel::log('Handling Success!');
+        Log::addDebug('Shortpixel API : Handling Success!', array($APIresponse));
 
         $counter = $savedSpace =  $originalSpace =  $optimizedSpace /* = $averageCompression */ = 0;
         $NoBackup = true;
@@ -631,9 +652,11 @@ class ShortPixelAPI {
         if( $this->_settings->backupImages )
         {
             $backupStatus = self::backupImage($mainPath, $PATHs);
+            Log::addDebug('Status', $backupStatus);
             if($backupStatus == self::STATUS_FAIL) {
                 $itemHandler->incrementRetries(1, self::ERR_SAVE_BKP, $backupStatus["Message"]);
                 self::cleanupTemporaryFiles($archive, empty($tempFiles) ? array() : $tempFiles);
+                Log::addError('Failed to create image backup!', array('status' => $backupStatus));
                 return array("Status" => self::STATUS_FAIL, "Code" =>"backup-fail", "Message" => "Failed to back the image up.");
             }
             $NoBackup = false;
@@ -664,7 +687,7 @@ class ShortPixelAPI {
 
                 if($tempFile['Status'] == self::STATUS_SUCCESS) { //if it's unchanged it will still be in the array but only for WebP (handled below)
                     $tempFilePATH = $tempFile["Message"];
-                    if ( file_exists($tempFilePATH) && file_exists($targetFile) && is_writable($targetFile) ) {
+                    if ( file_exists($tempFilePATH) && (!file_exists($targetFile) || is_writable($targetFile)) ) {
                         copy($tempFilePATH, $targetFile);
                         if(ShortPixelMetaFacade::isRetina($targetFile)) {
                             $retinas ++;
@@ -691,15 +714,13 @@ class ShortPixelAPI {
                         if($archive &&  SHORTPIXEL_DEBUG === true) {
                             if(!file_exists($tempFilePATH)) {
                                 WPShortPixel::log("MISSING FROM ARCHIVE. tempFilePath: $tempFilePATH with ID: $tempFileID");
-                            } elseif(!file_exists($targetFile)){
-                                WPShortPixel::log("MISSING TARGET: $targetFile");
-                            } elseif(!is_writable($targetFile)){
+                            } elseif(!wp_is_writable($targetFile)){
                                 WPShortPixel::log("TARGET NOT WRITABLE: $targetFile");
                             }
                         }
                         $writeFailed++;
                     }
-                    @unlink($tempFilePATH);
+                    @unlink($tempFilePATH); // @todo Unlink is risky due to lack of checks.
                 }
 
                 $tempWebpFilePATH = $tempFile["WebP"];
@@ -709,7 +730,7 @@ class ShortPixelAPI {
                     //if the WebP fileCompat already exists, it means that there is another file with the same basename but different extension which has its .webP counterpart
                     //save it with double extension
                     if(file_exists($targetWebPFileCompat)) {
-                        copy($targetWebPFile,$targetWebPFile);
+                        copy($tempWebpFilePATH, $targetWebPFile);
                     } else {
                         copy($tempWebpFilePATH, $targetWebPFileCompat);
                     }
@@ -818,7 +839,10 @@ class ShortPixelAPI {
         $Separator = " qq ";
         $qqPath = preg_replace("/[^ ]/u", $Separator."\$0".$Separator, $Path);
         if(!$qqPath) { //this is not an UTF8 string!! Don't rely on basename either, since if filename starts with a non-ASCII character it strips it off
-            $fileName = end(explode(DIRECTORY_SEPARATOR, $Path));
+
+            // This line is separated because of 'passed by reference' errors otherwise.
+            $pathAr = explode(DIRECTORY_SEPARATOR, $Path);
+            $fileName = end($pathAr);
             $pos = strpos($fileName, $suffix);
             if($pos !== false) {
                 return substr($fileName, 0, $pos);
@@ -847,7 +871,7 @@ class ShortPixelAPI {
         foreach ( $PATHs as $Id => $File )
         {
             //we try again with a different path
-            if ( !file_exists($File) ){
+            if ( !apply_filters( 'shortpixel_image_exists', file_exists($File), $File ) ){
                 //$NewFile = $uploadDir['basedir'] . "/" . substr($File,strpos($File, $StichString));//+strlen($StichString));
                 $NewFile = SHORTPIXEL_UPLOADS_BASE . substr($File,strpos($File, $StichString)+strlen($StichString));
                 if (file_exists($NewFile)) {

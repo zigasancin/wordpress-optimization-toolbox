@@ -1,7 +1,6 @@
 <?php
 namespace ShortPixel;
 
-
 class BulkRestoreAll extends ShortPixelController
 {
     protected static $slug = 'bulk-restore-all';
@@ -64,6 +63,8 @@ class BulkRestoreAll extends ShortPixelController
 
     public function setupBulk()
     {
+      $this->checkPost(); // check if any POST vars are there ( which should be if custom restore is on )
+
       // handle the custom folders if there are any.
       if (count($this->selected_folders) > 0)
       {

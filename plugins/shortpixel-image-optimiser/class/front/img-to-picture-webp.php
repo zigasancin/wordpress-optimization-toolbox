@@ -4,8 +4,12 @@
  * thanks to the Responsify WP plugin for some of the code
  */
 
+//use ShortPixel\DebugItem as DebugItem;
+use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
 class ShortPixelImgToPictureWebp
 {
+    /** If lazy loading is happening, get source (src) from those values */
     public static function lazyGet($img, $type)
     {
         return array(
@@ -24,25 +28,87 @@ class ShortPixelImgToPictureWebp
 
     public static function convert($content)
     {
+
         // Don't do anything with the RSS feed.
         if (is_feed() || is_admin()) {
-            return $content . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG convert is_feed or is_admin -->' : '');
+            Log::addInfo('SPDBG convert is_feed or is_admin');
+            return $content; // . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!--  -->' : '');
         }
-        $content = preg_replace_callback('/<img[^>]*>/', array('self', 'convertImage'), $content);
+
+        $new_content = self::testPictures($content);
+        if ($new_content !== false)
+          $content = $new_content;
+
+        $content = preg_replace_callback('/<img[^>]*>/i', array('self', 'convertImage'), $content);
         //$content = preg_replace_callback('/background.*[^:](url\(.*\)[,;])/im', array('self', 'convertInlineStyle'), $content);
 
         // [BS] No callback because we need preg_match_all
-        //$content = self::testInlineStyle($content);
+        $content = self::testInlineStyle($content);
       //  $content = preg_replace_callback('/background.*[^:]url\([\'|"](.*)[\'|"]\)[,;]/imU',array('self', 'convertInlineStyle'), $content);
-        return $content . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG WebP converted -->' : '');
+        Log::addDebug('SPDBG WebP process done');
+
+        return $content; // . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG WebP converted -->' : '');
 
     }
+
+    public static function testPictures($content)
+    {
+      // [BS] Escape when DOM Module not installed
+      //if (! class_exists('DOMDocument'))
+      //  return false;
+
+    //$pattern =''
+    //$pattern ='/(?<=(<picture>))(.*)(?=(<\/picture>))/mi';
+    $pattern = '/<picture.*?>.*?(<img.*?>).*?<\/picture>/is';
+    preg_match_all($pattern, $content, $matches);
+
+    if ($matches === false)
+      return false;
+
+    if ( is_array($matches) && count($matches) > 0)
+    {
+      foreach($matches[1] as $match)
+      {
+           $imgtag = $match;
+
+           if (strpos($imgtag, 'class=') !== false) // test for class, if there, insert ours in there.
+           {
+            $pos = strpos($imgtag, 'class=');
+            $pos = $pos + 7;
+
+            $newimg = substr($imgtag, 0, $pos) . 'sp-no-webp ' . substr($imgtag, $pos);
+
+           }
+           else {
+              $pos = 4;
+              $newimg = substr($imgtag, 0, $pos) . ' class="sp-no-webp" ' . substr($imgtag, $pos);
+           }
+
+           $content = str_replace($imgtag, $newimg, $content);
+
+      }
+    }
+
+
+
+    return $content;
+
+    }
+
+    /* This might be a future solution for regex callbacks.
+    public static function processImageNode($node, $type)
+    {
+      $srcsets = $node->getElementsByTagName('srcset');
+      $srcs = $node->getElementsByTagName('src');
+      $imgs = $node->getElementsByTagName('img');
+    } */
 
     public static function convertImage($match)
     {
         // Do nothing with images that have the 'sp-no-webp' class.
         if (strpos($match[0], 'sp-no-webp')) {
-            return $match[0] . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG convertImage sp-no-webp -->' : '');
+            Log::addInfo('SPDBG convertImage skipped, sp-no-webp found');
+            return $match[0]; //. (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG convertImage sp-no-webp -->' : '');
         }
 
         $img = self::get_attributes($match[0]);
@@ -62,8 +128,6 @@ class ShortPixelImgToPictureWebp
         $sizesInfo = self::lazyGet($img, 'sizes');
         $sizes = $sizesInfo['value'];
         $sizesPrefix = $sizesInfo['prefix'];
-
-        $altAttr = isset($img['alt']) && strlen($img['alt']) ? ' alt="' . $img['alt'] . '"' : '';
 
         //check if there are webps
         /*$id = $thisClass::url_to_attachment_id( $src );
@@ -105,10 +169,19 @@ class ShortPixelImgToPictureWebp
         }
         $imageBase = dirname($imageBase) . '/';
         */
-        $imageBase = static::getImageBase($src);
+
+        $imageBase = apply_filters( 'shortpixel_webp_image_base', static::getImageBase($src), $src);
+
         if($imageBase === false) {
-            return $match[0] . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG baseurl doesn\'t match ' . $src . '  -->' : '');
+            return $match[0]; // . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG baseurl doesn\'t match ' . $src . '  -->' : '');
+            Log::addInfo('SPDBG baseurl doesn\'t match ' . $src);
         }
+
+        //some attributes should not be moved from <img>
+        $altAttr = isset($img['alt']) && strlen($img['alt']) ? ' alt="' . $img['alt'] . '"' : '';
+        $idAttr = isset($img['id']) && strlen($img['id']) ? ' id="' . $img['id'] . '"' : '';
+        $heightAttr = isset($img['height']) && strlen($img['height']) ? ' height="' . $img['height'] . '"' : '';
+        $widthAttr = isset($img['width']) && strlen($img['width']) ? ' width="' . $img['width'] . '"' : '';
 
         // We don't wanna have src-ish attributes on the <picture>
         unset($img['src']);
@@ -116,7 +189,12 @@ class ShortPixelImgToPictureWebp
         unset($img['data-lazy-src']);
         unset($img['srcset']);
         unset($img['sizes']);
+        //nor the ones that belong to <img>
         unset($img['alt']);
+        unset($img['id']);
+        unset($img['width']);
+        unset($img['height']);
+
         $srcsetWebP = '';
 
         if ($srcset) {
@@ -128,7 +206,7 @@ class ShortPixelImgToPictureWebp
 
                 $fileWebPCompat = $imageBase . wp_basename($parts[0], '.' . pathinfo($parts[0], PATHINFO_EXTENSION)) . '.webp';
                 $fileWebP = $imageBase . wp_basename($parts[0]) . '.webp';
-                if (file_exists($fileWebP)) {
+                if (apply_filters( 'shortpixel_image_exists', file_exists($fileWebP), $fileWebP)) {
                     $srcsetWebP .= (strlen($srcsetWebP) ? ',': '')
                         . $parts[0].'.webp'
                      . (isset($parts[1]) ? ' ' . $parts[1] : '');
@@ -138,6 +216,9 @@ class ShortPixelImgToPictureWebp
                        .preg_replace('/\.[a-zA-Z0-9]+$/', '.webp', $parts[0])
                        .(isset($parts[1]) ? ' ' . $parts[1] : '');
                 }
+                else {
+                    Log::addDebug('Image srcset for webp doesn\'t exist', array($fileWebP));
+                }
             }
             //$srcsetWebP = preg_replace('/\.[a-zA-Z0-9]+\s+/', '.webp ', $srcset);
         } else {
@@ -146,17 +227,21 @@ class ShortPixelImgToPictureWebp
 
             $fileWebPCompat = $imageBase . wp_basename($srcset, '.' . pathinfo($srcset, PATHINFO_EXTENSION)) . '.webp';
             $fileWebP = $imageBase . wp_basename($srcset) . '.webp';
-            if (file_exists($fileWebP)) {
+            if (apply_filters( 'shortpixel_image_exists', file_exists($fileWebP), $fileWebP)) {
                 $srcsetWebP = $srcset.".webp";
             } else {
-                if (file_exists($fileWebPCompat)) {
+                if (apply_filters( 'shortpixel_image_exists', file_exists($fileWebPCompat), $fileWebPCompat) ) {
                     $srcsetWebP = preg_replace('/\.[a-zA-Z0-9]+$/', '.webp', $srcset);
+                }
+                else {
+                  Log::addDebug('Image file for webp doesn\'t exist', array($fileWebP));
                 }
             }
         }
         //return($match[0]. "<!-- srcsetTZF:".$srcsetWebP." -->");
         if (!strlen($srcsetWebP)) {
-            return $match[0] . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG no srcsetWebP found (' . $srcsetWebP . ') -->' : '');
+            return $match[0]; //. (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG no srcsetWebP found (' . $srcsetWebP . ') -->' : '');
+            Log::addInfo(' SPDBG no srcsetWebP found (' . $srcsetWebP . ')');
         }
 
         //add the exclude class so if this content is processed again in other filter, the img is not converted again in picture
@@ -165,7 +250,7 @@ class ShortPixelImgToPictureWebp
         return '<picture ' . self::create_attributes($img) . '>'
         .'<source ' . $srcsetPrefix . 'srcset="' . $srcsetWebP . '"' . ($sizes ? ' ' . $sizesPrefix . 'sizes="' . $sizes . '"' : '') . ' type="image/webp">'
         .'<source ' . $srcsetPrefix . 'srcset="' . $srcset . '"' . ($sizes ? ' ' . $sizesPrefix . 'sizes="' . $sizes . '"' : '') . '>'
-        .'<img ' . $srcPrefix . 'src="' . $src . '" ' . self::create_attributes($img) . $altAttr
+        .'<img ' . $srcPrefix . 'src="' . $src . '" ' . self::create_attributes($img) . $idAttr . $altAttr . $heightAttr . $widthAttr
             . (strlen($srcset) ? ' srcset="' . $srcset . '"': '') . (strlen($sizes) ? ' sizes="' . $sizes . '"': '') . '>'
         .'</picture>';
     }
@@ -257,7 +342,20 @@ class ShortPixelImgToPictureWebp
     **/
     public static function getImageBase($src)
     {
+        $urlParsed = parse_url($src);
+        if(!isset($urlParsed['host'])) {
+            if($src[0] == '/') { //absolute URL, current domain
+                $src = get_site_url() . $src;
+            } else {
+                global $wp;
+                $src = trailingslashit(home_url( $wp->request )) . $src;
+            }
+            $urlParsed = parse_url($src);
+        }
       $updir = wp_upload_dir();
+      if(substr($src, 0, 2) == '//') {
+          $src = (stripos($_SERVER['SERVER_PROTOCOL'],'https') === false ? 'http:' : 'https:') . $src;
+      }
       $proto = explode("://", $src);
       if (count($proto) > 1) {
           //check that baseurl uses the same http/https proto and if not, change
@@ -276,7 +374,6 @@ class ShortPixelImgToPictureWebp
       }
 
       if ($imageBase == $src) { //maybe the site uses a CDN or a subdomain? - Or relative link
-          $urlParsed = parse_url($src);
           $baseParsed = parse_url($updir['baseurl']);
 
           $srcHost = array_reverse(explode('.', $urlParsed['host']));
@@ -305,12 +402,20 @@ class ShortPixelImgToPictureWebp
         }
         // [BS] Escape when DOM Module not installed
         if (! class_exists('DOMDocument'))
+        {
+          Log::addWarn('Webp Active, but DomDocument class not found ( missing xmldom library )');
           return false;
-
+        }
         $dom = new DOMDocument();
         @$dom->loadHTML($image_node);
         $image = $dom->getElementsByTagName('img')->item(0);
         $attributes = array();
+
+        /* This can happen with mismatches, or extremely malformed HTML.
+        In customer case, a javascript that did  for (i<imgDefer) --- </script> */
+        if (! is_object($image))
+          return false;
+
         foreach ($image->attributes as $attr) {
             $attributes[$attr->nodeName] = $attr->nodeValue;
         }

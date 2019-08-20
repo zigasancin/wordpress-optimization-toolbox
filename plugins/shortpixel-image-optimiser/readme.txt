@@ -1,10 +1,10 @@
 === ShortPixel Image Optimizer ===
-Contributors: ShortPixel 
+Contributors: ShortPixel
 Tags: compressor, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
 Requires at least: 3.2.0
-Tested up to: 5.1
+Tested up to: 5.2
 Requires PHP: 5.3
-Stable tag: 4.13.1
+Stable tag: 4.14.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ ShortPixel is an easy to use, lightweight, install-and-forget-about-it <a href="
 
 Short Pixel uses minimal resources and works well with any shared, cloud, VPS or dedicated web hosting. It can optimize any image you have on your website even the images that aren't listed in Media Library like those in galleries like <a href="https://wordpress.org/plugins/nextgen-gallery/" target="_blank">NextGEN</a>, <a href="https://wordpress.org/plugins/modula-best-grid-gallery/" target="_blank">Modula</a> or added directly via FTP!
 
-Both lossy and lossless image compression is available for the most common image types (JPG, PNG, GIF and WebP) plus PDF files.
+Both lossy and lossless image compression are available for the most common image types (JPG, PNG, GIF and WebP) plus PDF files.
 We also offer **glossy** JPEG compression which is a very high quality lossy optimization algorithm. Specially designed for photographers!
 Optimized images mean better user experience, better PageSpeed Insights or GTmetrix results, better Google PageRank and more visitors.
 
@@ -61,17 +61,17 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 * 40 days optimization report with all image details and overall statistics
 * We are GDPR compliant! <a href="https://shortpixel.com/privacy#gdpr" target="_blank">Read more.</a>
 * **free optimization credits for non-profits**, <a href="https://shortpixel.com/contact" target="_blank">contact us</a> for details
-    
+
 **How much does it cost?**
 ShortPixel comes with 100 free credits/month and additional credits can be bought for as little as $4.99 for 5,000 image credits.
 Check out <a href="https://shortpixel.com/pricing" target="_blank">our prices</a>.
 
-> **Testimonials:**  
-> ★★★★★ **A Super Plugin works very well 62% reduction overall.** [robertvarns](https://wordpress.org/support/topic/a-super-plugin-works-very-well-62-reduction-overall/)   
-> ★★★★★ **The secret sauce for a WordPress website.**  [mark1mark](https://wordpress.org/support/topic/the-secret-sauce-for-a-wordpress-website/)  
-> ★★★★★ **A must have plugin, great support!** [ElColo13](https://wordpress.org/support/topic/a-must-have-plugin-great-support/)  
-> ★★★★★ **Excellent Plugin! Even Better Customer Service!**  [scaliendo](https://wordpress.org/support/topic/great-plugin-great-support-508/)  
-> ★★★★★ **Great image compression, solid plugin, equally great support.** [matters1959](https://wordpress.org/support/topic/support-shortpixel-image-optimizer/)  
+> **Testimonials:**
+> ★★★★★ **A Super Plugin works very well 62% reduction overall.** [robertvarns](https://wordpress.org/support/topic/a-super-plugin-works-very-well-62-reduction-overall/)
+> ★★★★★ **The secret sauce for a WordPress website.**  [mark1mark](https://wordpress.org/support/topic/the-secret-sauce-for-a-wordpress-website/)
+> ★★★★★ **A must have plugin, great support!** [ElColo13](https://wordpress.org/support/topic/a-must-have-plugin-great-support/)
+> ★★★★★ **Excellent Plugin! Even Better Customer Service!**  [scaliendo](https://wordpress.org/support/topic/great-plugin-great-support-508/)
+> ★★★★★ **Great image compression, solid plugin, equally great support.** [matters1959](https://wordpress.org/support/topic/support-shortpixel-image-optimiser/)  
 > [more testimonials](https://wordpress.org/support/plugin/shortpixel-image-optimiser/reviews/?filter=5)
 
 [youtube https://www.youtube.com/watch?v=5EbX0Hsy6j4]
@@ -104,21 +104,21 @@ Let's get ShortPixel plugin running on your WordPress website:
 = How does ShortPixel compare to other image optimisation plugins (e.g Smush, Imagify, TinyPNG, Kraken, EWWW)?  =
 	ShortPixel has better compression rates, more features, supports backups and has very affordable one-time plans.
 	If you are serious about making an informed decision please take 10 minutes and read this <a href="https://blog.shortpixel.com/wp-image-optimization-wordpress-plugins/">article</a>.
-	
+
 = Can I use the same API Key on multiple web sites? =
-    Yes, you can. 
+    Yes, you can.
     As long as you have available credits you can use a single API Key on as many websites as you wish!
 
 = Can I test/use the plugin for free? =
-    Yes you can. 
+    Yes you can.
     We offer 100 free image optimization credits each month. Exceeding the monthly free quota will pause the optimization process till the quota is reset or extended by buying one of our plans.
 
 = Can I optimize images that aren't in Media Library? =
-    Absolutely. 
+    Absolutely.
     You can actually optimize any image you have on your site regardless of its place. You just need to add - in the Advanced section of the ShortPixel Settings - the folders where the images you want to optimize are located and ShortPixel will work its magic and do the rest.
 
 = Can I optimize both past and new images? =
-    Sure! 
+    Sure!
     You can optimize all your past/current images using our "Bulk ShortPixel" page in your Media with a single click.
 
 = A credit = an optimized image? =
@@ -166,7 +166,7 @@ Let's get ShortPixel plugin running on your WordPress website:
     Please also note that usually images in your Media Library have 3-5 thumbs associated and a credit will be used for each featured image or associated thumbnail that is optimized.
 
 = Why shall I use a wordpress plugin and not an offline tool? =
-    Because ShortPixel algorithms were perfected while optimizing over a hundred million real-life images. 
+    Because ShortPixel algorithms were perfected while optimizing over a hundred million real-life images.
     ShortPixel not only offers the best compression for JPEG, PNG, GIF and PDF files but it also saves you a lot of time. You just install it on your site and then ShortPixel will take care that all the images on your site are immediately optimized after upload.
 
 = Does optimizing images affect my ALT tags? =
@@ -177,18 +177,18 @@ Let's get ShortPixel plugin running on your WordPress website:
     Once optimized the images will remain optimized unless you explicitly choose to restore them. But why would you do that? :-)
 
 = Do I have to pay monthly or one time? =
-    We have both options available. 
+    We have both options available.
     One-time credits never expire are a bit more expensive. Check out our prices <a href="https://shortpixel.com/pricing" >here</a>
 
 = When can I cancel a monthly plan? =
-    Whenever you want. 
+    Whenever you want.
     The credits you still have available for the current billing period will still be available until the end of the billing period. At the end of it, you won't be billed again and the plan will be reset to the free plan.
 
 = When credits expire? =
     Monthly credits expire after 30 days while one-time credits never expire.
 
 = Do you have an API? =
-    Yes, we have several APIs and tools. 
+    Yes, we have several APIs and tools.
     You can learn more about it here:
     <a href="https://shortpixel.com/api-tools">https://shortpixel.com/api-tools</a>
 
@@ -216,8 +216,13 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 > do_action( 'shortpixel_image_optimised', $post_id ); //upon successful optimization
 > do_action("shortpixel_before_restore_image", $post_id); //before restoring an image from backup
 > do_action("shortpixel_after_restore_image", $post_id); //after succesful restore
-> apply_filters("shortpixel_backup_folder", $backup_folder); //just before returning the ShortPixel backup folder, usually ...wp-content/uploads/ShortpixelBackups
+> apply_filters("shortpixel_backup_folder", $backup_folder, $main_file_path, $sizes); //just before returning the ShortPixel backup folder, usually /wp-content/uploads/ShortpixelBackups. The $sizes are the sizes array from metadata.
+> apply_filters('shortpixel_image_exists', file_exists($path), $path, $post_id); //post ID is not always set, only if it's an image from Media Library
+> apply_filters('shortpixel_image_urls', $URLs, $post_id) // filters the URLs that will be sent to optimization, $URLs is a plain array
 
+In order to define custom thumbnails to be picked up by the optimization you have two options, both comma separated defines:
+define('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES', '_tl,_tr'); will handle custom thumbnails like image-100x100_tl.jpg
+define('SHORTPIXEL_CUSTOM_THUMB_INFIXES', '-uae'); will handle custom thumbnails like image-uae-100x100.jpg
 
 == Screenshots ==
 
@@ -240,6 +245,55 @@ The ShortPixel Image Optimiser plugin calls the following actions and filters:
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.14.4 =
+Release date: 19th August 2019
+* Check if unlisted thumbnails present for already optimized images (in case the thumbnails were added later) in Media Library list and when doing bulk. This also integrates with the Unicode plugin.
+* If JSON PHP module not present, add a proper error
+* Fixed: bulk error "WordPress database error You have an error in your SQL syntax" on some installs
+* Fixed: Warning: count() Parameter must be an array.
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
+
+== 4.14.3 ==
+
+Release date: 22nd July 2019
+* Compatibility with Flywheel hosting by not using flock if Flywheel detected
+* When using the PICTURE tag to deliver WebP, keep the width and height at <IMG> level
+* Refactoring of the API Key settings page, refactoring of Other media
+* Performance improvements for selecting from large wp_posts and wp_postmeta tables when doing bulk optimization
+* Display a message when bulk is skipping many processed images, if bulk processing is ran again.
+* Fixed: Other media - Recompress adds "Preserve CMYK"
+* Fixed: duplicate error message when validating wrong API key
+* Conflict message: align the text vertically and provide space between text and button when displayed on any admin page
+* Fixed: Other media Restore fails when original file is readable, not writable
+
+== 4.14.2 ==
+
+Release date: 1st July 2019
+* add the possibility to define custom infixes for thumbnails (like image-uai-150x150.jpg for image.jpg) - comma separated define SHORTPIXEL_CUSTOM_THUMB_INFIXES
+
+== 4.14.1 ==
+
+Release date: 17th June 2019
+* Fix errors when DOMDocument not present
+
+== 4.14.0 ==
+
+Release date: 17th June 2019
+* Add new filters proposed by WP Stateless: shortpixel_backup_folder, shortpixel_image_exists, shortpixel_image_urls
+* Better placement of the elements on the Other Media page
+* Fix custom bulk for PDFs when the pdf thumbnails are not activated
+* Fix selecting items from DB twice for bulk in some circumstances
+* Warn user that converting PNG to JPG while keeping EXIF in options doesn't keep it (no EXIF for PNGs).
+* When SHORTPIXEL_DEBUG=x get parameter is provided, display a floating link to the shortpixel_log file
+* Adaptive Max execution time and capped to 90 sec. for the bulk background AJAX calls. (Kinsta has a max_execution_time of 300 sec. in PHP but the HTTP connection is cut after 180 sec.)
+* Fix custom 404 page for missing images not working when using .htaccess for WebP
+* Fix WebP picture tag with relative URLs not working in some circumstances
+* Fix replacing the <img> inside an existing <picture> tag with another <picture> tag.
+* Clear SP optimization cache in order to be able to optimize an image which initially had permissions error, after changing the permissions.
+* Fix being able to list the contents of ShortpixelBackups on some badly configured servers.
+* Fix error when inputting D'Artagnan in the AUTH pass field of settings.
+* Add the Quriobot for support.
 
 = 4.13.1 =
 

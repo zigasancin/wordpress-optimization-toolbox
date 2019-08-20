@@ -2,7 +2,7 @@
 
 class ShortPixelFolder extends ShortPixelEntity{
     const META_VERSION = 1;
-    
+
     protected $id;
     protected $path;
     protected $type;
@@ -10,28 +10,57 @@ class ShortPixelFolder extends ShortPixelEntity{
     protected $fileCount;
     protected $tsCreated;
     protected $tsUpdated;
-    
+
     protected $excludePatterns;
-    
+
     const TABLE_SUFFIX = 'folders';
-    
+
     public function __construct($data, $excludePatterns = false) {
         parent::__construct($data);
         $this->excludePatterns = $excludePatterns;
     }
-    
+
     public static function checkFolder($folder, $base) {
         if(strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN' && substr($folder, 0, 1) !== '/') {
             $folder = '/' . $folder;
         }
         if(is_dir($folder)) {
             return $folder;
-        } elseif(is_dir($base . $folder)) {            
+        } elseif(is_dir($base . $folder)) {
             return $base . $folder;
         }
         return false;
     }
 
+    /** This creates the general backup folder **/
+    public static function createBackUpFolder($folder = SHORTPIXEL_BACKUP_FOLDER)
+    {
+      // create backup folder
+      $result = @mkdir($folder, 0777, true);
+
+      if ($result)
+      {
+          self::protectDirectoryListing($folder);
+      }
+
+      return $result;
+    }
+
+    public static function protectDirectoryListing($dirname)
+    {
+      $rules = "Options -Indexes";
+      /* Plugin init is before loading these admin scripts. So it can happen misc.php is not yet loaded */
+      if (! function_exists('insert_with_markers'))
+      {
+        require_once( ABSPATH . 'wp-admin/includes/misc.php' );
+      }
+      insert_with_markers( trailingslashit($dirname) . '.htaccess', 'ShortPixel', $rules);
+      // note - this doesn't bring the same protection. Subdirs without files written will still be listable.
+      file_put_contents(trailingslashit($dirname) . 'index.html', chr(0)); // extra - for non-apache
+
+    }
+
+    /** @todo This function is double with wp-short-pixel - deleteDir */
     public static function deleteFolder($dirname) {
         if (is_dir($dirname))
             $dir_handle = opendir($dirname);
@@ -49,7 +78,7 @@ class ShortPixelFolder extends ShortPixelEntity{
         @rmdir($dirname);
         return true;
     }
-    
+
     /**
      * returns the first from parents that is a parent folder of $folder
      * @param string $folder
@@ -67,7 +96,7 @@ class ShortPixelFolder extends ShortPixelEntity{
         }
         return false;
     }
-    
+
     /**
      * finds the first from the subfolders that has the folder as parent
      * @param string $folder
@@ -104,11 +133,11 @@ class ShortPixelFolder extends ShortPixelEntity{
                 $size += $this->countFiles($tpath);
             } elseif(WPShortPixel::_isProcessablePath($tpath, array(), $this->excludePatterns)) {
                 $size++;
-            }   
+            }
         }
         return $size;
-    }    
-    
+    }
+
     public function getFileList($onlyNewerThan = 0) {
         $fileListPath = tempnam(SHORTPIXEL_UPLOADS_BASE . '/', 'sp_');
         $fileHandle = fopen($fileListPath, 'w+');
@@ -116,14 +145,14 @@ class ShortPixelFolder extends ShortPixelEntity{
         fclose($fileHandle);
         return $fileListPath;
     }
-    
+
     protected static function getFileListRecursive($path, $fileHandle, $onlyNewerThan) {
         $ignore = array('.','..');
         $files = scandir($path);
         $add = (filemtime($path) > $onlyNewerThan);
         /*
         if($add && $onlyNewerThan) {
-            echo("<br> FOLDER UPDATED: " . $path);            
+            echo("<br> FOLDER UPDATED: " . $path);
         }
         */
         foreach($files as $t) {
@@ -133,16 +162,16 @@ class ShortPixelFolder extends ShortPixelEntity{
                 self::getFileListRecursive($tpath, $fileHandle, $onlyNewerThan);
             } elseif($add && WPShortPixel::_isProcessablePath($tpath, array(), WPShortPixelSettings::getOpt('excludePatterns'))) {
                 fwrite($fileHandle, $tpath . "\n");
-            }   
+            }
         }
     }
-    
+
     public function checkFolderContents($callback) {
         $changed = array();
         self::checkFolderContentsRecursive($this->getPath(), $changed, $callback);
         return $changed;
     }
-    
+
     protected static function checkFolderContentsRecursive($path, &$changed, $callback) {
         $ignore = array('.','..');
         $files = scandir($path);
@@ -155,14 +184,14 @@ class ShortPixelFolder extends ShortPixelEntity{
             } elseif(   WPShortPixel::_isProcessablePath($tpath, array(), WPShortPixelSettings::getOpt('excludePatterns'))
                      && !(in_array($tpath, $reference) && $reference[$tpath]->compressedSize == filesize($tpath))) {
                 $changed[] = $tpath;
-            }   
+            }
         }
     }
-    
+
     public function getFolderContentsChangeDate() {
         return self::getFolderContentsChangeDateRecursive($this->getPath(), 0, strtotime($this->getTsUpdated()));
     }
-    
+
     protected static function getFolderContentsChangeDateRecursive($path, $mtime, $refMtime) {
         $ignore = array('.','..');
         if(!is_writable($path)) {
@@ -176,11 +205,11 @@ class ShortPixelFolder extends ShortPixelEntity{
             if (is_dir($tpath)) {
                 $mtime = max($mtime, filemtime($tpath));
                 self::getFolderContentsChangeDateRecursive($tpath, $mtime, $refMtime);
-            }   
+            }
         }
         return $mtime;
-    }    
-    
+    }
+
     function getId() {
         return $this->id;
     }
@@ -236,7 +265,7 @@ class ShortPixelFolder extends ShortPixelEntity{
     function setTsUpdated($tsUpdated) {
         $this->tsUpdated = $tsUpdated;
     }
-    
+
     /**
      * needed as callback
      * @param ShortPixelFolder $item

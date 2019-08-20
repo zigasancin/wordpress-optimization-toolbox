@@ -1,4 +1,6 @@
 <?php
+use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
 
 class ShortPixelCustomMetaDao {
     const META_VERSION = 1;
@@ -176,17 +178,29 @@ class ShortPixelCustomMetaDao {
     public function removeFolder($folderPath) {
         $sql = "SELECT id FROM {$this->db->getPrefix()}shortpixel_folders WHERE path = %s";
         $row = $this->db->query($sql, array(stripslashes($folderPath)));
+
         if(!isset($row[0]->id)) return false;
         $id = $row[0]->id;
         $sql = "UPDATE {$this->db->getPrefix()}shortpixel_folders SET status = -1 WHERE id = %d";
         $this->db->query($sql, array($id));
 
-        $this->db->hideErrors();
-        $sql = "DELETE FROM {$this->db->getPrefix()}shortpixel_meta WHERE folder_id = %d AND status <> 1 AND status <> 2";
-        @$this->db->query($sql, array($id));
-        $sql = "DELETE FROM {$this->db->getPrefix()}shortpixel_folders WHERE path = %s";
-        @$this->db->query($sql, array($folderPath));
-        $this->db->restoreErrors();
+        //$this->db->hideErrors();
+        //  If images are optimized, not all are removed here.
+        $sql = "DELETE FROM {$this->db->getPrefix()}shortpixel_meta WHERE folder_id = %d AND status <> %d AND status <> %d";
+        $this->db->query($sql, array($id, ShortPixelMeta::FILE_STATUS_PENDING, ShortPixelMeta::FILE_STATUS_SUCCESS));
+
+        $sql = "SELECT FROM {$this->db->getPrefix()}shortpixel_meta WHERE folder_id = %d ";
+        $still_has_images = $this->db->query($sql, array($id));
+
+        // if there are no images left, remove the folder. Otherwise keep it at -1.
+        if (count($still_has_images) == 0)
+        {
+          $sql = "DELETE FROM {$this->db->getPrefix()}shortpixel_folders WHERE path = %s";
+          $this->db->query($sql, array($folderPath));
+        }
+
+
+        //$this->db->restoreErrors();
     }
 
     public function newFolderFromPath($path, $uploadPath, $rootPath) {
@@ -390,6 +404,7 @@ class ShortPixelCustomMetaDao {
     */
     public function setBulkRestore($folder_id)
     {
+        LOG::addDebug('Set Bulk Restore', array('folderid' => $folder_id));
       if (! is_numeric($folder_id) || $folder_id <= 0)
         return false;
 
@@ -467,6 +482,7 @@ class ShortPixelCustomMetaDao {
         $tableSuffix = "";
         $tableSuffix = $metaClass::TABLE_SUFFIX;
         $prefix = $this->db->getPrefix();
+
 //        eval( '$tableSuffix = ' . $metaClass . '::TABLE_SUFFIX;'); // horror!
         $sql = "UPDATE " . $prefix . "shortpixel_" . $tableSuffix . " SET ";
         foreach(self::$fields[$tableSuffix] as $field => $type) {
@@ -485,12 +501,14 @@ class ShortPixelCustomMetaDao {
         $sql = rtrim($sql, ",");
         $sql .= " WHERE id = %d";
         $params[] = $meta->getId();
+        Log::addDebug('Update Custom Meta' . $sql, $params);
         $this->db->query($sql, $params);
     }
 
     public function delete($meta) {
         $metaClass = get_class($meta);
         $tableSuffix = "";
+        // @todo Why O why 
         eval( '$tableSuffix = ' . $metaClass . '::TABLE_SUFFIX;');
         $sql = "DELETE FROM {$this->db->getPrefix()}shortpixel_" . $tableSuffix . " WHERE id = %d";
         $this->db->query($sql, array($meta->getId()));

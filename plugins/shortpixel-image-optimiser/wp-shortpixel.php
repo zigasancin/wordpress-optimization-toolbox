@@ -2,23 +2,25 @@
 /**
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
- * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster.
- * Version: 4.13.1
+ * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel-settings" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster.
+ * Version: 4.14.4
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
  * Domain Path: /lang
  */
 
-define('SHORTPIXEL_RESET_ON_ACTIVATE', false); //if true TODO set false
+if (! defined('SHORTPIXEL_RESET_ON_ACTIVATE'))
+  define('SHORTPIXEL_RESET_ON_ACTIVATE', false); //if true TODO set false
 //define('SHORTPIXEL_DEBUG', true);
 //define('SHORTPIXEL_DEBUG_TARGET', true);
 
 define('SHORTPIXEL_PLUGIN_FILE', __FILE__);
+define('SHORTPIXEL_PLUGIN_DIR', __DIR__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.13.1");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.14.4");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -32,9 +34,15 @@ if(!defined('SHORTPIXEL_MAX_THUMBS')) { //can be defined in wp-config.php
 define('SHORTPIXEL_PRESEND_ITEMS', 3);
 define('SHORTPIXEL_API', 'api.shortpixel.com');
 
-define('SHORTPIXEL_MAX_EXECUTION_TIME', ini_get('max_execution_time'));
+$max_exec = intval(ini_get('max_execution_time'));
+if ($max_exec === 0) // max execution time of zero means infinite. Quantify.
+  $max_exec = 60;
+define('SHORTPIXEL_MAX_EXECUTION_TIME', $max_exec);
 
-require_once(ABSPATH . 'wp-admin/includes/file.php');
+// ** @todo For what is this needed? */
+//require_once(ABSPATH . 'wp-admin/includes/file.php');
+require_once(SHORTPIXEL_PLUGIN_DIR . '/build/shortpixel/autoload.php');
+
 
 $sp__uploads = wp_upload_dir();
 define('SHORTPIXEL_UPLOADS_BASE', (file_exists($sp__uploads['basedir']) ? '' : ABSPATH) . $sp__uploads['basedir'] );
@@ -57,6 +65,7 @@ else
 
 define('SHORTPIXEL_MAX_EXECUTION_TIME2', 2 );
 define("SHORTPIXEL_MAX_RESULTS_QUERY", 30);
+//define("SHORTPIXEL_NOFLOCK", true); // don't use flock queue, can cause instability.
 
 function shortpixelInit() {
     global $shortPixelPluginInstance;
@@ -81,14 +90,17 @@ function shortpixelInit() {
        )
     {
         require_once('wp-shortpixel-req.php');
+
         $shortPixelPluginInstance = new WPShortPixel;
     }
 
 }
 
+
 function shortPixelCheckQueue(){
     require_once('class/shortpixel_queue.php');
-    $prio = ShortPixelQueue::get();
+    require_once('class/external/shortpixel_queue_db.php');
+    $prio = (! defined('SHORTPIXEL_NOFLOCK')) ? ShortPixelQueue::get() : ShortPixelQueueDB::get();
     return $prio && is_array($prio) && count($prio);
 }
 
@@ -158,7 +170,9 @@ function shortPixelConvertImgToPictureAddWebp($content) {
         //for AMP pages the <picture> tag is not allowed
         return $content . (isset($_GET['SHORTPIXEL_DEBUG']) ? '<!-- SPDBG is AMP -->' : '');
     }
+    require_once('wp-shortpixel-req.php');
     require_once('class/front/img-to-picture-webp.php');
+
     return ShortPixelImgToPictureWebp::convert($content);// . "<!-- PICTURE TAGS BY SHORTPIXEL -->";
 }
 function shortPixelAddPictureJs() {
@@ -204,11 +218,17 @@ function shortPixelIsPluginActive($plugin) {
 }
 
 // [BS] Start runtime here
+$log = ShortPixel\ShortPixelLogger\ShortPixelLogger::getInstance();
+$log->setLogPath(SHORTPIXEL_BACKUP_FOLDER . "/shortpixel_log");
+
+// Pre-Runtime Checks
+require_once('class/external/flywheel.php'); // check if SP runs on flywheel
+
 $option = get_option('wp-short-pixel-create-webp-markup');
 if ( $option ) {
     if(shortPixelIsPluginActive('shortpixel-adaptive-images/short-pixel-ai.php')) {
         set_transient("shortpixel_thrown_notice", array('when' => 'spai', 'extra' => __('Please deactivate the ShortPixel Image Optimizer\'s
-            <a href="options-general.php?page=wp-shortpixel#adv-settings">Deliver WebP using PICTURE tag</a>
+            <a href="options-general.php?page=wp-shortpixel-settings&part=adv-settings">Deliver WebP using PICTURE tag</a>
             option when the ShortPixel Adaptive Images plugin is active.','shortpixel-image-optimiser')), 1800);
     }
     elseif( $option == 1 ){
