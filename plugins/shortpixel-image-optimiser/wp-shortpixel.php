@@ -3,13 +3,12 @@
  * Plugin Name: ShortPixel Image Optimizer
  * Plugin URI: https://shortpixel.com/
  * Description: ShortPixel optimizes images automatically, while guarding the quality of your images. Check your <a href="options-general.php?page=wp-shortpixel-settings" target="_blank">Settings &gt; ShortPixel</a> page on how to start optimizing your image library and make your website load faster.
- * Version: 4.14.4
+ * Version: 4.14.5
  * Author: ShortPixel
  * Author URI: https://shortpixel.com
  * Text Domain: shortpixel-image-optimiser
  * Domain Path: /lang
  */
-
 if (! defined('SHORTPIXEL_RESET_ON_ACTIVATE'))
   define('SHORTPIXEL_RESET_ON_ACTIVATE', false); //if true TODO set false
 //define('SHORTPIXEL_DEBUG', true);
@@ -20,7 +19,7 @@ define('SHORTPIXEL_PLUGIN_DIR', __DIR__);
 
 //define('SHORTPIXEL_AFFILIATE_CODE', '');
 
-define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.14.4");
+define('SHORTPIXEL_IMAGE_OPTIMISER_VERSION', "4.14.5");
 define('SHORTPIXEL_MAX_TIMEOUT', 10);
 define('SHORTPIXEL_VALIDATE_MAX_TIMEOUT', 15);
 define('SHORTPIXEL_BACKUP', 'ShortpixelBackups');
@@ -29,6 +28,10 @@ define('SHORTPIXEL_MAX_ERR_RETRIES', 5);
 define('SHORTPIXEL_MAX_FAIL_RETRIES', 3);
 if(!defined('SHORTPIXEL_MAX_THUMBS')) { //can be defined in wp-config.php
     define('SHORTPIXEL_MAX_THUMBS', 149);
+}
+
+if(!defined('SHORTPIXEL_USE_DOUBLE_WEBP_EXTENSION')) { //can be defined in wp-config.php
+    define('SHORTPIXEL_USE_DOUBLE_WEBP_EXTENSION', false);
 }
 
 define('SHORTPIXEL_PRESEND_ITEMS', 3);
@@ -70,8 +73,8 @@ define("SHORTPIXEL_MAX_RESULTS_QUERY", 30);
 function shortpixelInit() {
     global $shortPixelPluginInstance;
     //limit to certain admin pages if function available
-    $loadOnThisPage = !function_exists('get_current_screen');
-    if(!$loadOnThisPage) {
+    $loadOnThisPage = function_exists('get_current_screen');
+    if($loadOnThisPage) {
         $screen = get_current_screen();
         if(is_object($screen) && !in_array($screen->id, array('upload', 'edit', 'edit-tags', 'post-new', 'post'))) {
             return;
@@ -222,7 +225,10 @@ $log = ShortPixel\ShortPixelLogger\ShortPixelLogger::getInstance();
 $log->setLogPath(SHORTPIXEL_BACKUP_FOLDER . "/shortpixel_log");
 
 // Pre-Runtime Checks
+// @todo Better solution for pre-runtime inclusions of externals.
 require_once('class/external/flywheel.php'); // check if SP runs on flywheel
+require_once('class/external/wp-offload-media.php');
+
 
 $option = get_option('wp-short-pixel-create-webp-markup');
 if ( $option ) {
