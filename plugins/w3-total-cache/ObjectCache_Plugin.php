@@ -108,6 +108,9 @@ class ObjectCache_Plugin {
 				$this, 'w3tc_usage_statistics_of_request' ), 10, 1 );
 		add_filter( 'w3tc_usage_statistics_metrics', array(
 				$this, 'w3tc_usage_statistics_metrics' ) );
+		add_filter( 'w3tc_usage_statistics_sources', array(
+				$this, 'w3tc_usage_statistics_sources' ) );
+
 
 		if ( Util_Environment::is_wpmu() ) {
 			add_action( 'delete_blog', array(
@@ -269,7 +272,7 @@ class ObjectCache_Plugin {
 			'id' => 'w3tc_flush_objectcache',
 			'parent' => 'w3tc_flush',
 			'title' => __( 'Object Cache', 'w3-total-cache' ),
-			'href' => wp_nonce_url( network_admin_url(
+			'href' => wp_nonce_url( admin_url(
 					'admin.php?page=w3tc_dashboard&amp;w3tc_flush_objectcache' ), 'w3tc' )
 		);
 
@@ -289,8 +292,41 @@ class ObjectCache_Plugin {
 	}
 
 	public function w3tc_usage_statistics_metrics( $metrics ) {
-		return array_merge( $metrics, array(
-				'objectcache_calls_total', 'objectcache_calls_hits' ) );
+		$metrics = array_merge( $metrics, array(
+			'objectcache_get_total',
+			'objectcache_get_hits',
+			'objectcache_sets',
+			'objectcache_flushes',
+			'objectcache_time_ms'
+		) );
+
+		return $metrics;
+	}
+
+	public function w3tc_usage_statistics_sources($sources) {
+		$c = Dispatcher::config();
+		if ( $c->get_string( 'objectcache.engine' ) == 'apc' ) {
+			$sources['apc_servers']['objectcache'] = array(
+				'name' => __( 'Object Cache', 'w3-total-cache' )
+			);
+		} elseif ( $c->get_string( 'objectcache.engine' ) == 'memcached' ) {
+			$sources['memcached_servers']['objectcache'] = array(
+				'servers' => $c->get_array( 'objectcache.memcached.servers' ),
+				'username' => $c->get_string( 'objectcache.memcached.username' ),
+				'password' => $c->get_string( 'objectcache.memcached.password' ),
+				'name' => __( 'Object Cache', 'w3-total-cache' )
+			);
+		} elseif ( $c->get_string( 'objectcache.engine' ) == 'redis' ) {
+			$sources['redis_servers']['objectcache'] = array(
+				'servers' => $c->get_array( 'objectcache.redis.servers' ),
+				'username' => $c->get_boolean( 'objectcache.redis.username' ),
+				'dbid' => $c->get_integer( 'objectcache.redis.dbid' ),
+				'password' => $c->get_string( 'objectcache.redis.password' ),
+				'name' => __( 'Object Cache', 'w3-total-cache' )
+			);
+		}
+
+		return $sources;
 	}
 
 	/**
