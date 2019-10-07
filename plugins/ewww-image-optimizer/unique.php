@@ -1219,6 +1219,33 @@ function ewww_image_optimizer_escapeshellcmd( $path ) {
 }
 
 /**
+ * Replacement for escapeshellarg() that won't kill non-ASCII characters.
+ *
+ * @param string $arg A value to sanitize/escape for commmand-line usage.
+ * @return string The value after being escaped.
+ */
+function ewww_image_optimizer_escapeshellarg( $arg ) {
+	if ( PHP_OS === 'WINNT' ) {
+		$safe_arg = str_replace( '%', ' ', $arg );
+		$safe_arg = str_replace( '!', ' ', $safe_arg );
+		$safe_arg = str_replace( '"', ' ', $safe_arg );
+		return '"' . $safe_arg . '"';
+	} elseif ( ewww_image_optimizer_function_exists( 'setlocale' ) ) {
+		$current_locale = strtolower( setlocale( LC_CTYPE, 0 ) );
+		if ( false === strpos( $current_locale, 'utf8' ) && false === strpos( $current_locale, 'utf-8' ) ) {
+			$changed_local = true;
+			ewwwio_debug_message( "setting locale, found $current_locale" );
+			setlocale( LC_CTYPE, 'en_US.UTF-8' );
+		}
+	}
+	$safe_arg = escapeshellarg( $arg );
+	if ( ! empty( $changed_local ) ) {
+		setlocale( LC_CTYPE, $current_locale );
+	}
+	return $safe_arg;
+}
+
+/**
  * Test the given binary to see if it returns a valid version string.
  *
  * @param string $path The absolute path to a binary file.
@@ -1869,7 +1896,11 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 		case 'image/jpeg':
 			$png_size = 0;
 			// If jpg2png conversion is enabled, and this image is in the WordPress media library.
-			if ( ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_to_png' ) && 1 === (int) $gallery_type ) || ! empty( $_REQUEST['ewww_convert'] ) ) {
+			if (
+				1 === (int) $gallery_type &&
+				$fullsize &&
+				( ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_to_png' ) || ! empty( $_REQUEST['ewww_convert'] ) )
+			) {
 				// Generate the filename for a PNG:
 				// If this is a resize version.
 				if ( $converted ) {
@@ -2098,8 +2129,12 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 			$jpg_size = 0;
 			// Png2jpg conversion is turned on, and the image is in the WordPress media library.
 			// We check for transparency later, after optimization, because optipng might fix an empty alpha channel.
-			if ( ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_to_jpg' ) || ! empty( $_REQUEST['ewww_convert'] ) )
-				&& 1 === (int) $gallery_type && ! $skip_lossy ) {
+			if (
+				1 === (int) $gallery_type &&
+				$fullsize &&
+				( ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_to_jpg' ) || ! empty( $_REQUEST['ewww_convert'] ) ) &&
+				! $skip_lossy
+			) {
 				ewwwio_debug_message( 'PNG to JPG conversion turned on' );
 				$cloud_background = '';
 				$r                = '';
@@ -2408,8 +2443,12 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 			break;
 		case 'image/gif':
 			// If gif2png is turned on, and the image is in the WordPress media library.
-			if ( ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_to_png' ) || ! empty( $_REQUEST['ewww_convert'] ) )
-				&& 1 === (int) $gallery_type && ! ewww_image_optimizer_is_animated( $file ) ) {
+			if (
+				1 === (int) $gallery_type &&
+				$fullsize &&
+				( ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_to_png' ) || ! empty( $_REQUEST['ewww_convert'] ) ) &&
+				! ewww_image_optimizer_is_animated( $file )
+			) {
 				// Generate the filename for a PNG:
 				// if this is a resize version...
 				if ( $converted ) {

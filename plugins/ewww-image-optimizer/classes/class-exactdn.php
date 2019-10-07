@@ -184,9 +184,12 @@ if ( ! class_exists( 'ExactDN' ) ) {
 				global $as3cf;
 				$s3_region = $as3cf->get_setting( 'region' );
 				$s3_bucket = $as3cf->get_setting( 'bucket' );
+				if ( is_wp_error( $s3_region ) ) {
+					$s3_region = '';
+				}
 				$s3_domain = $as3cf->get_provider()->get_url_domain( $s3_bucket, $s3_region, null, array(), true );
 				$this->debug_message( "found S3 domain of $s3_domain with bucket $s3_bucket and region $s3_region" );
-				if ( ! empty( $s3_domain ) ) {
+				if ( ! empty( $s3_domain ) && $as3cf->get_setting( 'serve-from-s3' ) ) {
 					$s3_active = true;
 				}
 			}
@@ -204,7 +207,10 @@ if ( ! class_exists( 'ExactDN' ) ) {
 			}
 			$this->upload_domain = $upload_url_parts['host'];
 			$this->debug_message( "allowing images from here: $this->upload_domain" );
-			if ( strpos( $this->upload_domain, 'amazonaws.com' ) && ! empty( $upload_url_parts['path'] ) ) {
+			if (
+				( false !== strpos( $this->upload_domain, 'amazonaws.com' ) || false !== strpos( $this->upload_domain, 'storage.googleapis.com' ) ) &&
+				! empty( $upload_url_parts['path'] )
+			) {
 				$this->remove_path = rtrim( $upload_url_parts['path'], '/' );
 				$this->debug_message( "removing this from urls: $this->remove_path" );
 			}
@@ -273,9 +279,12 @@ if ( ! class_exists( 'ExactDN' ) ) {
 				$s3_scheme = $as3cf->get_url_scheme();
 				$s3_region = $as3cf->get_setting( 'region' );
 				$s3_bucket = $as3cf->get_setting( 'bucket' );
+				if ( is_wp_error( $s3_region ) ) {
+					$s3_region = '';
+				}
 				$s3_domain = $as3cf->get_provider()->get_url_domain( $s3_bucket, $s3_region, null, array(), true );
 				$this->debug_message( "found S3 domain of $s3_domain with bucket $s3_bucket and region $s3_region" );
-				if ( ! empty( $s3_domain ) ) {
+				if ( ! empty( $s3_domain ) && $as3cf->get_setting( 'serve-from-s3' ) ) {
 					$s3_active = true;
 				}
 			}
@@ -310,12 +319,23 @@ if ( ! class_exists( 'ExactDN' ) ) {
 			} elseif ( ! empty( $result['body'] ) && strpos( $result['body'], 'domain' ) !== false ) {
 				$response = json_decode( $result['body'], true );
 				if ( ! empty( $response['domain'] ) ) {
-					if ( strpos( $site_url, 'amazonaws.com' ) || strpos( $site_url, 'digitaloceanspaces.com' ) ) {
+					if (
+						false !== strpos( $site_url, 'amazonaws.com' ) ||
+						false !== strpos( $site_url, 'digitaloceanspaces.com' ) ||
+						false !== strpos( $site_url, 'storage.googleapis.com' )
+					) {
 						$this->set_exactdn_option( 'verify_method', -1, false );
 					}
 					if ( get_option( 'exactdn_never_been_active' ) ) {
 						$this->set_option( $this->prefix . 'lazy_load', true );
 						delete_option( 'exactdn_never_been_active' );
+					}
+					if ( 'external' === get_option( 'elementor_css_print_method' ) ) {
+						update_option( 'elementor_css_print_method', 'internal' );
+					}
+					if ( function_exists( 'et_get_option' ) && function_exists( 'et_update_option' ) && 'on' === et_get_option( 'et_pb_static_css_file', 'on' ) ) {
+						et_update_option( 'et_pb_static_css_file', 'off' );
+						et_update_option( 'et_pb_css_in_footer', 'off' );
 					}
 					return $this->set_exactdn_domain( $response['domain'] );
 				}
@@ -368,7 +388,7 @@ if ( ! class_exists( 'ExactDN' ) ) {
 					add_action( 'admin_notices', $this->prefix . 'notice_exactdn_activation_error' );
 					return false;
 				} elseif ( ! empty( $test_result['body'] ) && strlen( $test_result['body'] ) > 300 ) {
-					if ( 200 === $test_result['response']['code'] &&
+					if ( 200 === (int) $test_result['response']['code'] &&
 						( '89504e470d0a1a0a' === bin2hex( substr( $test_result['body'], 0, 8 ) ) || '52494646' === bin2hex( substr( $test_result['body'], 0, 4 ) ) ) ) {
 						$this->debug_message( 'exactdn (real-world) verification succeeded' );
 						$this->set_exactdn_option( 'verified', 1, false );
@@ -377,6 +397,9 @@ if ( ! class_exists( 'ExactDN' ) ) {
 					}
 					$this->debug_message( 'mime check failed: ' . bin2hex( substr( $test_result['body'], 0, 3 ) ) );
 					$exactdn_activate_error = 'zone setup pending';
+				}
+				if ( ! empty( $test_result['response']['code'] ) && 200 !== (int) $test_result['response']['code'] ) {
+					ewwwio_debug_message( 'received response code: ' . $test_result['response']['code'] );
 				}
 				add_action( 'admin_notices', $this->prefix . 'notice_exactdn_activation_error' );
 				return false;
@@ -786,7 +809,8 @@ if ( ! class_exists( 'ExactDN' ) ) {
 						'/' === substr( $src, 0, 1 ) &&
 						'/' !== substr( $src, 1, 1 ) &&
 						false === strpos( $this->upload_domain, 'amazonaws.com' ) &&
-						false === strpos( $this->upload_domain, 'digitaloceanspaces.com' )
+						false === strpos( $this->upload_domain, 'digitaloceanspaces.com' ) &&
+						false === strpos( $this->upload_domain, 'storage.googleapis.com' )
 					) {
 						$src = '//' . $this->upload_domain . $src;
 					}
@@ -1136,7 +1160,11 @@ if ( ! class_exists( 'ExactDN' ) ) {
 					$content = preg_replace( '#(https?:)?//(?:www\.)?' . $escaped_upload_domain . '([^"\'?>]+?)?/wp-content/([^"\'?>]+?)\.(htm|html|php|ashx|m4v|mov|wvm|qt|webm|ogv|mp4|m4p|mpg|mpeg|mpv)#i', '$1//' . $this->upload_domain . '$2/?wpcontent-bypass?/$3.$4', $content );
 					$content = str_replace( 'wp-content/themes/jupiter"', '?wpcontent-bypass?/themes/jupiter"', $content );
 					$content = str_replace( 'wp-content/plugins/anti-captcha/', '?wpcontent-bypass?/plugins/anti-captcha', $content );
-					if ( strpos( $this->upload_domain, 'amazonaws.com' ) || strpos( $this->upload_domain, 'digitaloceanspaces.com' ) ) {
+					if (
+						false !== strpos( $this->upload_domain, 'amazonaws.com' ) ||
+						false !== strpos( $this->upload_domain, 'digitaloceanspaces.com' ) ||
+						false !== strpos( $this->upload_domain, 'storage.googleapis.com' )
+					) {
 						$content = preg_replace( '#(https?:)?//(?:www\.)?' . $escaped_upload_domain . $this->remove_path . '/#i', '$1//' . $this->exactdn_domain . '/', $content );
 					} else {
 						$content = preg_replace( '#(https?:)?//(?:www\.)?' . $escaped_upload_domain . '/([^"\'?>]+?)?(nextgen-image|wp-includes|wp-content)/#i', '$1//' . $this->exactdn_domain . '/$2$3/', $content );
