@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 3.2.4
+Version: 3.3.1
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
 Tags: image, resize, optimize, optimise, compress, performance, optimisation, lazy load, WebP, photography, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
-Tested up to: 5.2.2
-Stable tag: 3.2.4
+Tested up to: 5.3.0
+Stable tag: 3.3.1
 Requires PHP: 5.3
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -157,8 +157,32 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 1. Watch as your image library is processed – up to 50 images at a time.
 2. Set automatic smush to resize and optimize every image as it is uploaded.
 3. Smush will find and optimize images for you.
+4. Smush scans your library for savings and lets you know when an image needs compressing.
 
 == Changelog ==
+
+= 3.3.1 =
+
+- Fix: CDN incorrect calculation for image sizes attribute
+- Fix: Undefined index PHP notices
+
+= 3.3.0 =
+
+- New: Integration with Envira Gallery
+- New: Integration with Avada Fusion Builder background images
+- Enhance: Compatibility with staging environment on WPMU DEV hosting
+- Enhance: SmartCrawl readability analysis compatibility
+- Enhance: Allow optimizing directories in root folder
+- Enhance: Error descriptions during optimization
+- Enhance: Detection of image sizes when "All" option is selected in Bulk Smush settings
+- Enhance: CDN detection of background images
+- Fix: Issue with CDN auto resize and Revolution Slider
+- Fix: CDN auto resize feature overwriting the correct sizes attribute
+- Fix: NextGen summary meta box layout
+- Fix: PHP warnings on NextGen integration
+- Fix: UI layout in NextGen integration
+- Fix: Lazy loading spinner layout issue
+- Fix: Compatibility with RT Media
 
 = 3.2.4 =
 

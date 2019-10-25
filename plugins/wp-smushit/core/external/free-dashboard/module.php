@@ -3,7 +3,7 @@
  * WPMUDEV Frash - Free Dashboard Notification module.
  * Used by wordpress.org hosted plugins.
  *
- * @version 1.2
+ * @version 1.3
  * @author  Incsub (Philipp Stracker)
  */
 if ( ! class_exists( 'WDev_Frash' ) ) {
@@ -385,6 +385,7 @@ if ( ! class_exists( 'WDev_Frash' ) ) {
 
 			$msg = __( "We're happy that you've chosen to install %s! Are you interested in how to make the most of this plugin? How would you like a quick 5 day email crash course with actionable advice on building your membership site? Only the info you want, no subscription!", 'wdev_frash' );
 			$msg = apply_filters( 'wdev-email-message-' . $plugin->id, $msg );
+			$mc_list_id = $plugin->mc_list_id;
 
 			?>
 			<div class="frash-notice-logo"><span></span></div>
@@ -397,6 +398,16 @@ if ( ! class_exists( 'WDev_Frash' ) ) {
 					?>
 				</div>
 				<div class="frash-notice-cta">
+					<?php
+					/**
+					* Fires before subscribe form renders
+					*
+					* @since 1.3
+					*
+					* @param int    $mc_list_id 	Mailchimp list id
+					*/
+					do_action( 'frash_before_subscribe_form_render', $mc_list_id ); ?>
+
 					<form action="<?php echo $action; ?>" method="get" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank">
 						<input type="email" name="EMAIL" class="email" id="mce-EMAIL" value="<?php echo esc_attr( $admin_email ); ?>" required="required"/>
 						<button class="frash-notice-act button-primary" data-msg="<?php _e( 'Thanks :)', 'wdev_frash' ); ?>" type="submit">
@@ -405,7 +416,32 @@ if ( ! class_exists( 'WDev_Frash' ) ) {
 						<button class="frash-notice-dismiss" data-msg="<?php _e( 'Saving', 'wdev_frash' ); ?>">
 							<?php _e( 'No thanks', 'wdev_frash' ); ?>
 						</button>
+
+						<?php
+						/**
+						 * Fires after subscribe form fields are rendered.
+						 * Use this hook to add additional fields for on the sub form.
+						 *
+						 * Make sure that the additional field has is also present on the
+						 * actual MC subscribe form.
+						 *
+						 * @since 1.3
+						 *
+						 * @param int    $mc_list_id 	Mailchimp list id
+						 */
+						do_action( 'frash_subscribe_form_fields', $mc_list_id ); ?>
 					</form>
+
+					<?php
+					/**
+					 * Fires after subscribe form is rendered
+					 *
+					 * @since 1.3
+					 *
+					 * @param int    $mc_list_id 	Mailchimp list id
+					 */
+					do_action( 'frash_before_subscribe_form_render', $mc_list_id ); ?>
+
 				</div>
 			<?php
 		}

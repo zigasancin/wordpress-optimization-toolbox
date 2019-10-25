@@ -11,7 +11,7 @@ $upgrade_url = add_query_arg(
 		'utm_source' => 'smush',
 		'utm_medium' => 'plugin',
 	),
-	WP_Smush::get_instance()->core()->upgrade_url
+	'https://premium.wpmudev.org/project/wp-smush-pro/'
 );
 
 ?>

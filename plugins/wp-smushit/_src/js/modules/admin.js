@@ -76,12 +76,12 @@ jQuery( function ( $ ) {
 		//Reduce the opacity of stats and disable the click
 		disable_links( current_button );
 
-		Smush.progress_bar( current_button, wp_smush_msgs[action], 'show' );
+		Smush.progressBar( current_button, wp_smush_msgs[action], 'show' );
 
 		//Restore the image
 		$.post( ajaxurl, params, function ( r ) {
 
-			Smush.progress_bar( current_button, wp_smush_msgs[action], 'hide' );
+			Smush.progressBar( current_button, wp_smush_msgs[action], 'hide' );
 
 			//reset all functionality
 			enable_links( current_button );
@@ -97,7 +97,7 @@ jQuery( function ( $ ) {
 				}
 
 				if ( 'undefined' != typeof (r.data) && 'restore' === action ) {
-					Smush.update_image_stats( r.data.new_size );
+					Smush.updateImageStats( r.data.new_size );
 				}
 			} else {
 				if ( r.data.message ) {
@@ -262,7 +262,7 @@ jQuery( function ( $ ) {
 					}
 
 					if ( 'nextgen' === scan_type ) {
-						wp_smushit_data.bytes = parseInt( wp_smushit_data.size_before ) - parseInt( wp_smushit_data.size_after )
+						wp_smushit_data.bytes = parseInt( wp_smushit_data.size_before ) - parseInt( wp_smushit_data.size_after );
 					}
 
 					// Hide the Existing wrapper.
@@ -298,7 +298,7 @@ jQuery( function ( $ ) {
 						$( '.super-smush-attachments .wp-smush-stats' ).html( r.data.super_smush_stats );
 					}
 				}
-				Smush.update_stats( scan_type );
+				Smush.updateStats( scan_type );
 			}
 		} ).always( function () {
 			// Hide the progress bar.
@@ -311,7 +311,8 @@ jQuery( function ( $ ) {
 
 			// Remove success message from button.
 			setTimeout( function () {
-				button.removeClass( 'smush-button-check-success' ).text( wp_smush_msgs.resmush_check );
+				button.removeClass( 'smush-button-check-success' )
+					.html( '<i class="sui-icon-update" aria-hidden="true"></i>' + wp_smush_msgs.resmush_check );
 			}, 2000 );
 
 			$( '.wp-smush-all' ).removeAttr( 'disabled' );
@@ -476,6 +477,9 @@ jQuery( function ( $ ) {
 	$( 'body' ).on( 'click', '.wp-smush-nextgen-bulk', function ( e ) {
 		// prevent the default action
 		e.preventDefault();
+
+		// Remove existing Re-Smush notices.
+		$( '.wp-smush-resmush-notice' ).remove();
 
 		//Check for ids, if there is none (Unsmushed or lossless), don't call smush function
 		if ( 'undefined' === typeof wp_smushit_data ||
@@ -709,7 +713,7 @@ jQuery( function ( $ ) {
 					$( '.sui-notice-success.wp-smush-all-done' ).show();
 				}
 
-				Smush.update_stats();
+				Smush.updateStats();
 			}
 		} );
 	} );
