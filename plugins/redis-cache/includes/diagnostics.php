@@ -1,9 +1,11 @@
 <?php
 
+// TODO: detect constants being defined too late...
+
 global $wp_object_cache;
 
 $info = $plugins = $dropins = array();
-$dropin = $this->validate_object_cache_dropin();
+$dropin = $this->validate_object_cache_dropin() && ( ! defined('WP_REDIS_DISABLED') || ! WP_REDIS_DISABLED );
 
 $info[ 'Status' ] = $this->get_status();
 $info[ 'Client' ] = $this->get_redis_client_name();
@@ -45,6 +47,9 @@ $constants = array(
     'WP_REDIS_HOST',
     'WP_REDIS_PORT',
     'WP_REDIS_DATABASE',
+    'WP_REDIS_TIMEOUT',
+    'WP_REDIS_READ_TIMEOUT',
+    'WP_REDIS_RETRY_INTERVAL',
     'WP_REDIS_SERVERS',
     'WP_REDIS_CLUSTER',
     'WP_REDIS_SHARDS',
@@ -54,6 +59,7 @@ $constants = array(
     'WP_CACHE_KEY_SALT',
     'WP_REDIS_GLOBAL_GROUPS',
     'WP_REDIS_IGNORED_GROUPS',
+    'WP_REDIS_UNFLUSHABLE_GROUPS',
 );
 
 foreach ( $constants as $constant ) {
@@ -67,8 +73,9 @@ if ( defined( 'WP_REDIS_PASSWORD' ) ) {
 }
 
 if ( $dropin ) {
-    $info[ 'Global Groups' ] = json_encode( $wp_object_cache->global_groups );
-    $info[ 'Ignored Groups' ] = json_encode( $wp_object_cache->ignored_groups );
+    $info[ 'Global Groups' ] = json_encode( $wp_object_cache->global_groups, JSON_PRETTY_PRINT );
+    $info[ 'Ignored Groups' ] = json_encode( $wp_object_cache->ignored_groups, JSON_PRETTY_PRINT );
+    $info[ 'Unflushable Groups' ] = json_encode( $wp_object_cache->unflushable_groups, JSON_PRETTY_PRINT );
 }
 
 foreach ( $info as $name => $value ) {
