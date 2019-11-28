@@ -43,6 +43,45 @@ Please refer to [Github](https://github.com/10up/ElasticPress) for detailed usag
 
 == Changelog ==
 
+= 3.2.6 =
+This is a bugfix release
+
+* Under some edge conditions content for autosuggest can be large - don't cache it
+
+= 3.2.5 =
+This is a bug fix version.
+
+* Fix WP <5.0 fatal error on register_block_type.
+
+= 3.2.4 =
+This is a bug fix version.
+
+* Fix Gutenberg block initialization
+* Fix Autosuggest: remove filter with proper priority in query generation. Props [Maxdw](https://github.com/Maxdw).
+* Fix Autosuggest: returning WP_Error for non object cache autosuggest queries causes issue. Fallback to transient
+
+= 3.2.3 =
+This is a bug fix version.
+
+* Ensure query building for Autosuggest does not fallback to WPDB.
+
+= 3.2.2 =
+This is a bug fix version with some feature additions.
+
+* Fix PHPCS errors. Props [mmcachran](https://github.com/mmcachran)
+* Fix ensuring stats are built prior to requesting information
+* Fix related post block enqueue block assets on the frontend
+* Fix custom order results change webpack config for externals:lodash
+* Fix don't overwrite search fields
+* Autosuggest queries generated though PHP instead of JavaScript
+* Add WP Acceptance tests
+* Add new WP-CLI commands: get_indexes and get_cluster_indexes
+
+= 3.2.1 =
+This is a bug fix version.
+
+* Fix Gutenberg breaking issue with Related Posts and image blocks. Props [adamsilverstein](https://github.com/adamsilverstein)
+
 = 3.2 =
 ElasticPress 3.2 is a feature release. We've added quite a few useful features including an index health page, the ability to control which sites are indexed in a network activated multisite setup, a related posts Gutenberg block, and more.
 
