@@ -205,6 +205,8 @@ class Core {
 
 		// Send Smush stats for PRO members.
 		add_filter( 'wpmudev_api_project_extra_data-912164', array( $this, 'send_smush_stats' ) );
+		// Big image size threshold (WordPress 5.3+).
+		add_filter( 'big_image_size_threshold', array( $this, 'big_image_size_threshold' ), 10, 4 );
 
 		/**
 		 * Load NextGen Gallery, instantiate the Async class. if hooked too late or early, auto Smush doesn't
@@ -376,6 +378,13 @@ class Core {
 				'desc'        => esc_html__( 'Made a mistake? Use this feature to restore your image thumbnails to their original state.', 'wp-smushit' ),
 			),
 		);
+
+		global $wp_version;
+
+		if ( version_compare( $wp_version, '5.2.999', '>' ) ) {
+			$this->settings['backup']['label'] = __( 'Store a copy of my small originals', 'wp-smushit' );
+			$this->settings['backup']['desc']  = __( 'As of WordPress v5.3, full size images above a certain size (2560px by default) will be stored as originals, while a new max sized image will be created. However, if the uploaded image is smaller than the specified size WordPress won’t create a backup for it. Enable this setting to ensure you always have backups of all your image uploads.', 'wp-smushit' );
+		}
 
 		/**
 		 * Allow to add other settings via filtering the variable
@@ -944,6 +953,27 @@ class Core {
 			// If lte $this->max_free_bulk images are sent, increment.
 			set_transient( $transient_name, $bulk_sent_count + 1, 200 );
 		}
+	}
+
+	/**
+	 * Set the big image threshold.
+	 *
+	 * @since 3.3.2
+	 *
+	 * @param int    $threshold      The threshold value in pixels. Default 2560.
+	 * @param array  $imagesize      Indexed array of the image width and height (in that order).
+	 * @param string $file           Full path to the uploaded image file.
+	 * @param int    $attachment_id  Attachment post ID.
+	 *
+	 * @return int  New threshold.
+	 */
+	public function big_image_size_threshold( $threshold, $imagesize, $file, $attachment_id ) {
+		$resize_sizes = Settings::get_instance()->get_setting( WP_SMUSH_PREFIX . 'resize_sizes' );
+		if ( ! $resize_sizes || ! is_array( $resize_sizes ) ) {
+			return $threshold;
+		}
+
+		return $resize_sizes['width'];
 	}
 
 }

@@ -121,6 +121,10 @@ class Installer {
 				self::upgrade_3_2_2_1();
 			}
 
+			if ( version_compare( $version, '3.3.2', '<' ) ) {
+				self::upgrade_3_3_2();
+			}
+
 			// Create/upgrade directory smush table.
 			self::directory_smush_table();
 
@@ -292,6 +296,18 @@ class Installer {
 		$network_enabled = get_site_option( WP_SMUSH_PREFIX . 'networkwide' );
 		update_site_option( WP_SMUSH_PREFIX . 'networkwide', ! ( '1' === $network_enabled ) );
 		wp_cache_flush();
+	}
+
+	/**
+	 * Show notice on upgrade.
+	 *
+	 * @since 3.3.2
+	 */
+	private static function upgrade_3_3_2() {
+		$install_type = get_site_option( 'wp-smush-install-type', false );
+		if ( 'existing' === $install_type ) {
+			set_site_transient( 'wp-smush-update-modal', true, 3600 );
+		}
 	}
 
 }

@@ -45,15 +45,14 @@ class Resize extends Abstract_Module {
 	 */
 	public $resize_enabled = false;
 
-
 	/**
 	 * Resize constructor.
+	 *
+	 * Initialize class variables, after all stuff has been loaded.
 	 */
 	public function init() {
-		/**
-		 * Initialize class variables, after all stuff has been loaded
-		 */
 		add_action( 'admin_init', array( $this, 'initialize' ) );
+		add_action( 'admin_init', array( $this, 'maybe_disable_module' ), 15 );
 	}
 
 	/**
@@ -86,6 +85,16 @@ class Resize extends Abstract_Module {
 		// Resize width and Height.
 		$this->max_w = ! empty( $resize_sizes['width'] ) ? $resize_sizes['width'] : 0;
 		$this->max_h = ! empty( $resize_sizes['height'] ) ? $resize_sizes['height'] : 0;
+	}
+
+	/**
+	 * We do not need this module on WordPress 5.3+.
+	 *
+	 * @since 3.3.2
+	 */
+	public function maybe_disable_module() {
+		global $wp_version;
+		$this->resize_enabled = version_compare( $wp_version, '5.3.0', '<' );
 	}
 
 	/**

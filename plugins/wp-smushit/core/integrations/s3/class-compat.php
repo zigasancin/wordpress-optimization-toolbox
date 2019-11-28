@@ -24,13 +24,6 @@ class Compat extends AS3CF_Plugin_Compatibility {
 	 * Compat constructor.
 	 */
 	public function __construct() {
-		$this->init();
-	}
-
-	/**
-	 * Init actions.
-	 */
-	private function init() {
 		// Plugin Compatibility with Amazon S3.
 		add_filter( 'as3cf_get_attached_file', array( $this, 'smush_download_file' ), 11, 4 );
 	}

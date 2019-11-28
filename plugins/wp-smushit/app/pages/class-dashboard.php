@@ -356,7 +356,7 @@ class Dashboard extends Abstract_Page {
 							aria-describedby="<?php echo esc_attr( $prefix ); ?>resize-note"
 							id="<?php echo esc_attr( $prefix ) . esc_attr( $name ) . '_width'; ?>"
 							name="<?php echo esc_attr( WP_SMUSH_PREFIX ) . esc_attr( $name ) . '_width'; ?>"
-							value="<?php echo isset( $resize_sizes['width'] ) && ! empty( $resize_sizes['width'] ) ? absint( $resize_sizes['width'] ) : 2048; ?>">
+							value="<?php echo isset( $resize_sizes['width'] ) && ! empty( $resize_sizes['width'] ) ? absint( $resize_sizes['width'] ) : 2560; ?>">
 				</div>
 				<div class="sui-col">
 					<label aria-labelledby="<?php echo esc_attr( $prefix ); ?>label-max-height" for="<?php echo esc_attr( $prefix . $name ) . '_height'; ?>" class="sui-label">
@@ -366,7 +366,7 @@ class Dashboard extends Abstract_Page {
 							aria-describedby="<?php echo esc_attr( $prefix ); ?>resize-note"
 							id="<?php echo esc_attr( $prefix . $name ) . '_height'; ?>"
 							name="<?php echo esc_attr( WP_SMUSH_PREFIX . $name ) . '_height'; ?>"
-							value="<?php echo isset( $resize_sizes['height'] ) && ! empty( $resize_sizes['height'] ) ? absint( $resize_sizes['height'] ) : 2048; ?>">
+							value="<?php echo isset( $resize_sizes['height'] ) && ! empty( $resize_sizes['height'] ) ? absint( $resize_sizes['height'] ) : 2560; ?>">
 				</div>
 			</div>
 			<div class="sui-description" id="<?php echo esc_attr( $prefix ); ?>resize-note">
@@ -661,26 +661,26 @@ class Dashboard extends Abstract_Page {
 		) ) {
 			return;
 		}
+
+		global $wp_version;
+
 		?>
 		<span class="sui-description sui-toggle-description" id="<?php echo esc_attr( WP_SMUSH_PREFIX . $setting_key . '-desc' ); ?>">
 			<?php
 			switch ( $setting_key ) {
 				case 'resize':
-					esc_html_e(
-						'Save a ton of space by not storing over-sized images on your server. Set a maximum height
-						and width for all images uploaded to your site so that any unnecessarily large images are
-						automatically resized before they are added to the media gallery. This setting does not apply
-						to images smushed using Directory Smush feature.',
-						'wp-smushit'
-					);
+					if ( version_compare( $wp_version, '5.2.999', '>' ) ) {
+						esc_html_e( 'As of WordPress 5.3, large image uploads are resized down to a specified max width and height. If you require images larger than 2560px, you can override this setting here.', 'wp-smushit' );
+					} else {
+						esc_html_e( 'Save a ton of space by not storing over-sized images on your server. Set a maximum height and width for all images uploaded to your site so that any unnecessarily large images are automatically resized before they are added to the media gallery. This setting does not apply to images smushed using Directory Smush feature.', 'wp-smushit' );
+					}
 					break;
 				case 'original':
-					esc_html_e(
-						'By default, bulk smush will ignore your original uploads and only compress the
-					thumbnail sizes your theme outputs. Enable this setting to also smush your original uploads. We
-					recommend storing copies of your originals (below) in case you ever need to restore them.',
-						'wp-smushit'
-					);
+					if ( version_compare( $wp_version, '5.2.999', '>' ) ) {
+						esc_html_e( 'As of WordPress v5.3, every image that gets uploaded will have your normal thumbnail outputs, a new max sized image, and the original upload as backup. By default, Smush will only compress the thumbnail sizes your theme outputs, skipping the new max sized image. Enable this setting to include optimizing this image too.', 'wp-smushit' );
+					} else {
+						esc_html_e( 'By default, bulk smush will ignore your original uploads and only compress the thumbnail sizes your theme outputs. Enable this setting to also smush your original uploads. We recommend storing copies of your originals (below) in case you ever need to restore them.', 'wp-smushit' );
+					}
 					break;
 				case 'strip_exif':
 					esc_html_e(

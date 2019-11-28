@@ -65,8 +65,9 @@ class Smush extends Abstract_Module {
 		// Update the Super Smush count, after the Smush'ing.
 		add_action( 'wp_smush_image_optimised', array( $this, 'update_lists' ), '', 2 );
 
-		// Smush image (Auto Smush) when `wp_update_attachment_metadata` filter is fired.
-		add_filter( 'wp_update_attachment_metadata', array( $this, 'smush_image' ), 15, 2 );
+		// Smush image (Auto Smush) when `wp_generate_attachment_metadata` filter is fired.
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'smush_image' ), 15, 2 );
+
 		// Delete backup files.
 		add_action( 'delete_attachment', array( $this, 'delete_images' ), 12 );
 
@@ -1079,13 +1080,11 @@ class Smush extends Abstract_Module {
 	 * @return bool|array array containing success status, and stats
 	 */
 	private function _post( $file_path, $file_size ) {
-		$data = false;
-
-		$file_data = file_get_contents( $file_path );
-
 		$headers = array(
 			'accept'       => 'application/json',   // The API returns JSON.
 			'content-type' => 'application/binary', // Set content type to binary.
+			'lossy'        => WP_Smush::is_pro() && $this->settings->get( 'lossy' ) ? 'true' : 'false',
+			'exif'         => $this->settings->get( 'strip_exif' ) ? 'false' : 'true',
 		);
 
 		// Check if premium member, add API key.
@@ -1094,26 +1093,19 @@ class Smush extends Abstract_Module {
 			$headers['apikey'] = $api_key;
 		}
 
-		if ( WP_Smush::is_pro() && $this->settings->get( 'lossy' ) ) {
-			$headers['lossy'] = 'true';
-		} else {
-			$headers['lossy'] = 'false';
-		}
-
-		$headers['exif'] = $this->settings->get( 'strip_exif' ) ? 'false' : 'true';
-
 		$api_url = defined( 'WP_SMUSH_API_HTTP' ) ? WP_SMUSH_API_HTTP : WP_SMUSH_API;
 		$args    = array(
 			'headers'    => $headers,
-			'body'       => $file_data,
+			'body'       => file_get_contents( $file_path ),
 			'timeout'    => WP_SMUSH_TIMEOUT,
 			'user-agent' => WP_SMUSH_UA,
 		);
+
 		// Temporary increase the limit.
 		wp_raise_memory_limit( 'image' );
 		$result = wp_remote_post( $api_url, $args );
+		unset( $args ); // Free memory.
 
-		unset( $file_data ); // Free memory.
 		if ( is_wp_error( $result ) ) {
 			$er_msg = $result->get_error_message();
 
@@ -1122,6 +1114,7 @@ class Smush extends Abstract_Module {
 				// Update DB for using http protocol.
 				$this->settings->set_setting( WP_SMUSH_PREFIX . 'use_http', 1 );
 			}
+
 			// Check for timeout error and suggest to filter timeout.
 			if ( strpos( $er_msg, 'timed out' ) ) {
 				$data['message'] = esc_html__( "Skipped due to a timeout error. You can increase the request timeout to make sure Smush has enough time to process larger files. define('WP_SMUSH_API_TIMEOUT', 150);", 'wp-smushit' );
@@ -1130,6 +1123,7 @@ class Smush extends Abstract_Module {
 				/* translators: %s error message */
 				$data['message'] = sprintf( __( 'Error posting to API: %s', 'wp-smushit' ), $result->get_error_message() );
 			}
+
 			$data['success'] = false;
 			unset( $result ); // Free memory.
 			return $data;
@@ -1145,7 +1139,6 @@ class Smush extends Abstract_Module {
 		// If there is a response and image was successfully optimised.
 		$response = json_decode( $result['body'] );
 		if ( $response && true === $response->success ) {
-
 			// If there is any savings.
 			if ( $response->data->bytes_saved > 0 ) {
 				// base64_decode is necessary to send binary img over JSON, no security problems here!
@@ -1496,12 +1489,12 @@ class Smush extends Abstract_Module {
 	 *
 	 * @uses resize_from_meta_data
 	 *
-	 * @param mixed    $meta  Attachment metadata.
-	 * @param null|int $id    Attachment ID.
+	 * @param array $meta  Attachment metadata.
+	 * @param int   $id    Attachment ID.
 	 *
 	 * @return mixed
 	 */
-	public function smush_image( $meta, $id = null ) {
+	public function smush_image( $meta, $id ) {
 		// We need to check if this call originated from Gutenberg and allow only media.
 		if ( ! empty( $GLOBALS['wp']->query_vars['rest_route'] ) ) {
 			$route = untrailingslashit( $GLOBALS['wp']->query_vars['rest_route'] );
@@ -1574,14 +1567,12 @@ class Smush extends Abstract_Module {
 			 * Check for use of http url (Hostgator mostly).
 			 */
 			$use_http = wp_cache_get( WP_SMUSH_PREFIX . 'use_http', 'smush' );
-
 			if ( ! $use_http ) {
 				$use_http = $this->settings->get_setting( WP_SMUSH_PREFIX . 'use_http', false );
 				wp_cache_add( WP_SMUSH_PREFIX . 'use_http', $use_http, 'smush' );
 			}
 
 			if ( $use_http ) {
-				// HTTP url.
 				define( 'WP_SMUSH_API_HTTP', 'http://smushpro.wpmudev.org/1.0/' );
 			}
 
@@ -1620,7 +1611,7 @@ class Smush extends Abstract_Module {
 		// Set a transient to avoid multiple request.
 		update_option( "smush-in-progress-{$attachment_id}", true );
 
-		$attachment_id = absint( (int) ( $attachment_id ) );
+		$attachment_id = absint( (int) $attachment_id );
 
 		// Get the file path for backup.
 		$attachment_file_path = Helper::get_attached_file( $attachment_id );

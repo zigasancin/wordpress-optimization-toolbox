@@ -357,7 +357,7 @@ class Backup extends Abstract_Module {
 		// Update Meta.
 		if ( ! empty( $meta ) ) {
 			// Remove Smushing, while attachment data is updated for the image.
-			remove_filter( 'wp_update_attachment_metadata', array( $mod->smush, 'smush_image' ), 15 );
+			remove_filter( 'wp_generate_attachment_metadata', array( $mod->smush, 'smush_image' ), 15 );
 			wp_update_attachment_metadata( $image_id, $meta );
 
 			return true;

@@ -14,9 +14,7 @@
 namespace Smush\Core\Integrations;
 
 use Amazon_S3_And_CloudFront;
-use Exception;
-use Null_Provider;
-use Provider;
+use DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item;
 use Smush\WP_Smush;
 use Smush\Core\Settings;
 
@@ -369,14 +367,38 @@ class S3 extends Abstract_Integration {
 
 		$s3_object = $this->is_attachment_served_by_provider( $as3cf, $attachment_id );
 		// If we have plugin method available, us that otherwise check it ourselves.
-		if ( $s3_object && is_array( $s3_object ) ) {
-			$size_prefix      = dirname( $s3_object['key'] );
+		if ( $s3_object && ( is_array( $s3_object ) || $s3_object instanceof Media_Library_Item ) ) {
+			if ( is_array( $s3_object ) ) {
+				$key = $s3_object['key'];
+			} else {
+				$key = $s3_object->path();
+			}
+
+			$size_prefix      = dirname( $key );
 			$size_file_prefix = ( '.' === $size_prefix ) ? '' : $size_prefix . '/';
 			if ( ! empty( $size_details ) && is_array( $size_details ) ) {
-				$s3_object['key'] = path_join( $size_file_prefix, $size_details['file'] );
+				$key = path_join( $size_file_prefix, $size_details['file'] );
 			} elseif ( ! empty( $uf_file_path ) ) {
 				// Get the File path using basename for given attachment path.
-				$s3_object['key'] = path_join( $size_file_prefix, wp_basename( $uf_file_path ) );
+				$key = path_join( $size_file_prefix, wp_basename( $uf_file_path ) );
+			}
+
+			if ( is_array( $s3_object ) ) {
+				$s3_object['key'] = $key;
+			} else {
+				// Add compatibility with WP Offload Media 5.3.
+				$s3_object = new Media_Library_Item(
+					$s3_object->provider(),
+					$s3_object->region(),
+					$s3_object->bucket(),
+					$key,
+					$s3_object->is_private(),
+					$s3_object->source_id(),
+					$s3_object->source_path(),
+					wp_basename( $s3_object->original_source_path() ),
+					$s3_object->private_sizes(),
+					$s3_object->id()
+				);
 			}
 
 			// Try to download the attachment.
@@ -446,11 +468,17 @@ class S3 extends Abstract_Integration {
 			return false;
 		}
 
-		$size_prefix      = dirname( $s3_object['key'] );
+		if ( is_array( $s3_object ) ) {
+			$key = $s3_object['key'];
+		} else {
+			$key = $s3_object->path();
+		}
+
+		$size_prefix      = dirname( $key );
 		$size_file_prefix = ( '.' === $size_prefix ) ? '' : $size_prefix . '/';
 
 		// Get the File path using basename for given attachment path.
-		$s3_object['key'] = path_join( $size_file_prefix, wp_basename( $file_path ) );
+		$key = path_join( $size_file_prefix, wp_basename( $file_path ) );
 
 		// Get bucket details.
 		$bucket = $as3cf->get_setting( 'bucket' );
@@ -464,9 +492,9 @@ class S3 extends Abstract_Integration {
 
 		// If we still have the older version of S3 Offload, use old method.
 		if ( method_exists( $s3client, 'doesObjectExist' ) ) {
-			$file_exists = $s3client->doesObjectExist( $bucket, $s3_object['key'] );
+			$file_exists = $s3client->doesObjectExist( $bucket, $key );
 		} else {
-			$file_exists = $s3client->does_object_exist( $bucket, $s3_object['key'] );
+			$file_exists = $s3client->does_object_exist( $bucket, $key );
 		}
 
 		return $file_exists;
@@ -502,7 +530,7 @@ class S3 extends Abstract_Integration {
 	 * @since 3.0
 	 *
 	 * @param Amazon_S3_And_CloudFront $as3cf          Amazon_S3_And_CloudFront global.
-	 * @param int                       $attachment_id  Attachment ID.
+	 * @param int                      $attachment_id  Attachment ID.
 	 *
 	 * @return bool|array
 	 */
@@ -524,8 +552,8 @@ class S3 extends Abstract_Integration {
 	 * @since 3.0
 	 *
 	 * @param Amazon_S3_And_CloudFront $as3cf         Amazon_S3_And_CloudFront global.
-	 * @param array                     $s3_object     Data array.
-	 * @param string                    $uf_file_path  File path.
+	 * @param array                    $s3_object     Data array.
+	 * @param string                   $uf_file_path  File path.
 	 *
 	 * @return bool|string
 	 */
@@ -548,13 +576,13 @@ class S3 extends Abstract_Integration {
 	 *
 	 * Get provider client.
 	 *
-	 * @param Amazon_S3_And_CloudFront $as3cf Amazon_S3_And_CloudFront global.
-	 * @param bool|string $region Specify region to client for signature.
+	 * @param Amazon_S3_And_CloudFront $as3cf   Amazon_S3_And_CloudFront global.
+	 * @param bool|string              $region  Specify region to client for signature.
 	 *
 	 * @since 3.0
-     *
-	 * @return Provider|Null_Provider|bool
-	 * @throws Exception
+	 *
+	 * @return \Provider|\Null_Provider|bool
+	 * @throws \Exception Exception.
 	 */
 	private function get_provider_client( $as3cf, $region ) {
 		if ( method_exists( $as3cf, 'get_provider_client' ) ) {

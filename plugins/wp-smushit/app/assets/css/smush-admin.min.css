@@ -6804,7 +6804,6 @@ fieldset[disabled] .sui-2-3-29 .sui-wrap .sui-multi-checkbox:hover {
 .sui-2-3-29 .sui-wrap .sui-radio,
 .sui-2-3-29 .sui-wrap .sui-checkbox {
   -webkit-user-select: none;
-     -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
   -ms-flex-align: start;
@@ -10477,7 +10476,6 @@ html.sui-has-overlay {
 
 .sui-2-3-29 .sui-wrap .sui-upload .sui-upload-file span {
   -webkit-user-select: none;
-     -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
   display: block;

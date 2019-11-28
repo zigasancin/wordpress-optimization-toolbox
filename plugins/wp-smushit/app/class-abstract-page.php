@@ -373,6 +373,7 @@ abstract class Abstract_Page {
 
 		// Load page header.
 		$this->render_page_header();
+		$this->add_update_dialog();
 
 		$hide_quick_setup = false !== get_option( 'skip-smush-setup' );
 
@@ -389,6 +390,29 @@ abstract class Abstract_Page {
 
 		// Close shared ui wrapper.
 		echo '</div>';
+	}
+
+	/**
+	 * Show an update dialog.
+	 *
+	 * @since 3.3.2
+	 */
+	private function add_update_dialog() {
+		$show_modal = get_site_transient( 'wp-smush-update-modal' );
+		if ( ! $show_modal ) {
+			return;
+		}
+
+		delete_site_transient( 'wp-smush-update-modal' );
+
+		$this->view( 'resizing-update', array(), 'modals' );
+		?>
+		<script>
+			window.addEventListener('load', function() {
+				SUI.dialogs['resizing-update'].show();
+			});
+		</script>
+		<?php
 	}
 
 	/**

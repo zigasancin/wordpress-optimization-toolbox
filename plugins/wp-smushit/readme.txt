@@ -1,13 +1,13 @@
 === Smush Image Compression and Optimization ===
 Plugin Name: Smush Image Compression and Optimization
-Version: 3.3.1
+Version: 3.3.2
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
 Tags: image, resize, optimize, optimise, compress, performance, optimisation, lazy load, WebP, photography, optimizer, Smush WordPress Compression, Smush.it
 Requires at least: 4.6
 Tested up to: 5.3.0
-Stable tag: 3.3.1
+Stable tag: 3.3.2
 Requires PHP: 5.3
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -157,9 +157,13 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 1. Watch as your image library is processed – up to 50 images at a time.
 2. Set automatic smush to resize and optimize every image as it is uploaded.
 3. Smush will find and optimize images for you.
-4. Smush scans your library for savings and lets you know when an image needs compressing.
 
 == Changelog ==
+
+= 3.3.2 =
+
+- New: Support for big images in WordPress 5.3
+- Fix: WP Offload Media integration with Pro version
 
 = 3.3.1 =
 

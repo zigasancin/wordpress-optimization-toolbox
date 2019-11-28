@@ -964,4 +964,17 @@ jQuery( function ( $ ) {
 		} );
 	} );
 
+	/**
+	 * Scroll to resize settings.
+	 *
+	 * @since 3.3.2
+	 */
+	$( '#close-resize-update-dialog' ).on( 'click', function( e ) {
+		e.preventDefault();
+
+		window.SUI.dialogs[ 'resizing-update' ].hide();
+
+		goToByScroll( '#column-wp-smush-resize' );
+	} );
+
 } );
