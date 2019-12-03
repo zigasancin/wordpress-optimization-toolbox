@@ -1,13 +1,12 @@
 <?php
 
-// TODO: detect constants being defined too late...
-
 global $wp_object_cache;
 
 $info = $plugins = $dropins = array();
 $dropin = $this->validate_object_cache_dropin() && ( ! defined('WP_REDIS_DISABLED') || ! WP_REDIS_DISABLED );
 
 $info[ 'Status' ] = $this->get_status();
+$info[ 'Redis Version' ] = $this->get_redis_version() ?: 'Unknown';
 $info[ 'Client' ] = $this->get_redis_client_name();
 
 $info[ 'Drop-in' ] = $dropin ? 'Valid' : 'Invalid';
