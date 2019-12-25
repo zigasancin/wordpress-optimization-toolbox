@@ -20,9 +20,10 @@ trait AMP_Noscript_Fallback {
 	 * This is used to prevent duplicated validation errors.
 	 *
 	 * @since 1.1
+	 *
 	 * @var array
 	 */
-	private $noscript_fallback_allowed_attributes = array();
+	private $noscript_fallback_allowed_attributes = [];
 
 	/**
 	 * Initializes the internal allowed attributes array.
@@ -33,12 +34,21 @@ trait AMP_Noscript_Fallback {
 	 */
 	protected function initialize_noscript_allowed_attributes( $tag ) {
 		$this->noscript_fallback_allowed_attributes = array_fill_keys(
-			array_merge(
-				array_keys( current( AMP_Allowed_Tags_Generated::get_allowed_tag( $tag ) )['attr_spec_list'] ),
-				array_keys( AMP_Allowed_Tags_Generated::get_allowed_attributes() )
-			),
+			array_keys( AMP_Allowed_Tags_Generated::get_allowed_attributes() ),
 			true
 		);
+
+		foreach ( AMP_Allowed_Tags_Generated::get_allowed_tag( $tag ) as $tag_spec ) { // Normally 1 iteration.
+			foreach ( $tag_spec['attr_spec_list'] as $attr_name => $attr_spec ) {
+				$this->noscript_fallback_allowed_attributes[ $attr_name ] = true;
+				if ( isset( $attr_spec['alternative_names'] ) ) {
+					$this->noscript_fallback_allowed_attributes = array_merge(
+						$this->noscript_fallback_allowed_attributes,
+						array_fill_keys( $attr_spec['alternative_names'], true )
+					);
+				}
+			}
+		}
 	}
 
 	/**
@@ -46,10 +56,11 @@ trait AMP_Noscript_Fallback {
 	 *
 	 * @since 1.1
 	 *
-	 * @param \DOMNode $node DOM node to check.
+	 * @param DOMNode $node DOM node to check.
+	 *
 	 * @return bool True if in an AMP noscript element, false otherwise.
 	 */
-	protected function is_inside_amp_noscript( \DOMNode $node ) {
+	protected function is_inside_amp_noscript( DOMNode $node ) {
 		return 'noscript' === $node->parentNode->nodeName && $node->parentNode->parentNode && 'amp-' === substr( $node->parentNode->parentNode->nodeName, 0, 4 );
 	}
 
@@ -58,11 +69,11 @@ trait AMP_Noscript_Fallback {
 	 *
 	 * @since 1.1
 	 *
-	 * @param \DOMNode     $new_node New node to append a noscript with the old node to.
-	 * @param \DOMNode     $old_node Old node to append in a noscript.
-	 * @param \DOMDocument $dom      DOM document instance.
+	 * @param DOMNode     $new_node New node to append a noscript with the old node to.
+	 * @param DOMNode     $old_node Old node to append in a noscript.
+	 * @param DOMDocument $dom DOM document instance.
 	 */
-	protected function append_old_node_noscript( \DOMNode $new_node, \DOMNode $old_node, \DOMDocument $dom ) {
+	protected function append_old_node_noscript( DOMNode $new_node, DOMNode $old_node, DOMDocument $dom ) {
 		$noscript = $dom->createElement( 'noscript' );
 		$noscript->appendChild( $old_node );
 		$new_node->appendChild( $noscript );

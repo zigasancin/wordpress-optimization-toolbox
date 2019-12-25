@@ -5,7 +5,7 @@
  * Plugin URI: https://amp-wp.org
  * Author: AMP Project Contributors
  * Author URI: https://github.com/ampproject/amp-wp/graphs/contributors
- * Version: 1.2.0
+ * Version: 1.4.2
  * Text Domain: amp
  * Domain Path: /languages/
  * License: GPLv2 or later
@@ -13,16 +13,20 @@
  * @package AMP
  */
 
+define( 'AMP__FILE__', __FILE__ );
+define( 'AMP__DIR__', dirname( __FILE__ ) );
+define( 'AMP__VERSION', '1.4.2' );
+
 /**
  * Errors encountered while loading the plugin.
  *
  * This has to be a global for the same of PHP 5.2.
  *
- * @var \WP_Error $_amp_load_errors
+ * @var WP_Error $_amp_load_errors
  */
 global $_amp_load_errors;
 
-$_amp_load_errors = new \WP_Error();
+$_amp_load_errors = new WP_Error();
 
 if ( version_compare( phpversion(), '5.4', '<' ) ) {
 	$_amp_load_errors->add(
@@ -145,22 +149,11 @@ if ( count( $_amp_missing_functions ) > 0 ) {
 
 unset( $_amp_required_extensions, $_amp_missing_extensions, $_amp_required_constructs, $_amp_missing_classes, $_amp_missing_functions, $_amp_required_extension, $_amp_construct_type, $_amp_construct, $_amp_constructs );
 
-if ( ! file_exists( __DIR__ . '/vendor/autoload.php' ) || ! file_exists( __DIR__ . '/vendor/sabberworm/php-css-parser' ) || ! file_exists( __DIR__ . '/assets/js/amp-block-editor.js' ) ) {
-	$_amp_load_errors->add(
-		'build_required',
-		sprintf(
-			/* translators: %s: composer install && npm install && npm run build */
-			__( 'You appear to be running the AMP plugin from source. Please do %s to finish installation.', 'amp' ), // phpcs:ignore WordPress.Security.EscapeOutput
-			'<code>composer install &amp;&amp; npm install &amp;&amp; npm run build</code>'
-		)
-	);
-}
-
 /**
  * Displays an admin notice about why the plugin is unable to load.
  *
  * @since 1.1.2
- * @global \WP_Error $_amp_load_errors
+ * @global WP_Error $_amp_load_errors
  */
 function _amp_show_load_errors_admin_notice() {
 	global $_amp_load_errors;
@@ -207,9 +200,6 @@ if ( ! empty( $_amp_load_errors->errors ) ) {
 	return;
 }
 
-define( 'AMP__FILE__', __FILE__ );
-define( 'AMP__DIR__', dirname( __FILE__ ) );
-define( 'AMP__VERSION', '1.2.0' );
 
 /**
  * Print admin notice if plugin installed with incorrect slug (which impacts WordPress's auto-update system).
@@ -237,6 +227,29 @@ function _amp_incorrect_plugin_slug_admin_notice() {
 }
 if ( 'amp' !== basename( AMP__DIR__ ) ) {
 	add_action( 'admin_notices', '_amp_incorrect_plugin_slug_admin_notice' );
+}
+
+/**
+ * Print admin notice if the Xdebug extension is loaded.
+ *
+ * @since 1.3
+ */
+function _amp_xdebug_admin_notice() {
+	?>
+	<div class="notice notice-warning">
+		<p>
+			<?php
+			esc_html_e(
+				'Your server currently has the Xdebug PHP extension loaded. This can cause some of the AMP plugin\'s processes to timeout depending on your system resources and configuration. Please deactivate Xdebug for the best experience.',
+				'amp'
+			);
+			?>
+		</p>
+	</div>
+	<?php
+}
+if ( extension_loaded( 'xdebug' ) ) {
+	add_action( 'admin_notices', '_amp_xdebug_admin_notice' );
 }
 
 require_once AMP__DIR__ . '/includes/class-amp-autoloader.php';
@@ -363,11 +376,17 @@ function amp_init() {
 
 	if ( AMP_Options_Manager::is_stories_experience_enabled() ) {
 		AMP_Story_Post_Type::register();
-		add_action( 'wp_loaded', 'amp_story_templates' );
 	}
 
+	// Does its own is_stories_experience_enabled() check.
+	add_action( 'wp_loaded', 'amp_story_templates' );
+
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
-		WP_CLI::add_command( 'amp', new AMP_CLI() );
+		if ( class_exists( 'WP_CLI\Dispatcher\CommandNamespace' ) ) {
+			WP_CLI::add_command( 'amp', 'AMP_CLI_Namespace' );
+		}
+
+		WP_CLI::add_command( 'amp validation', 'AMP_CLI_Validation_Command' );
 	}
 
 	/*
@@ -458,6 +477,7 @@ function amp_maybe_add_actions() {
 
 		// Prevent infinite URL space under /amp/ endpoint.
 		global $wp;
+		$path_args = [];
 		wp_parse_str( $wp->matched_query, $path_args );
 		if ( isset( $path_args[ amp_get_slug() ] ) && '' !== $path_args[ amp_get_slug() ] ) {
 			wp_safe_redirect( amp_get_permalink( $post->ID ), 301 );

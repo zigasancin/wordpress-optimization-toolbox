@@ -45,9 +45,9 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 	 *
 	 * @var array
 	 */
-	protected $DEFAULT_ARGS = array(
+	protected $DEFAULT_ARGS = [
 		'add_noscript_fallback' => true,
-	);
+	];
 
 	/**
 	 * Animation extension.
@@ -62,12 +62,12 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 	 * @return array Mapping.
 	 */
 	public function get_selector_conversion_mapping() {
-		return array(
-			'img' => array(
+		return [
+			'img' => [
 				'amp-img',
 				'amp-anim',
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -83,7 +83,7 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 		 * @var DOMNodeList $node
 		 */
 		$nodes           = $this->dom->getElementsByTagName( self::$tag );
-		$need_dimensions = array();
+		$need_dimensions = [];
 
 		$num_nodes = $nodes->length;
 
@@ -97,7 +97,7 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 
 		for ( $i = $num_nodes - 1; $i >= 0; $i-- ) {
 			$node = $nodes->item( $i );
-			if ( ! $node instanceof DOMElement ) {
+			if ( ! $node instanceof DOMElement || $this->has_dev_mode_exemption( $node ) ) {
 				continue;
 			}
 
@@ -136,7 +136,7 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 				(
 					( ! $has_width || ! $has_height )
 					&&
-					in_array( $layout, array( 'fixed', 'responsive', 'intrinsic' ), true )
+					in_array( $layout, [ 'fixed', 'responsive', 'intrinsic' ], true )
 				)
 			);
 			if ( $missing_dimensions ) {
@@ -148,21 +148,6 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 
 		$this->determine_dimensions( $need_dimensions );
 		$this->adjust_and_replace_nodes_in_array_map( $need_dimensions );
-
-		/*
-		 * Opt-in to amp-img-auto-sizes experiment.
-		 * This is needed because the sizes attribute is removed from all img elements converted to amp-img
-		 * in order to prevent the undesirable setting of the width. This $meta tag can be removed once the
-		 * experiment ends (and the feature has been fully launched).
-		 * See <https://github.com/ampproject/amphtml/issues/21371> and <https://github.com/ampproject/amp-wp/pull/2036>.
-		 */
-		$head = $this->dom->getElementsByTagName( 'head' )->item( 0 );
-		if ( $head ) {
-			$meta = $this->dom->createElement( 'meta' );
-			$meta->setAttribute( 'name', 'amp-experiments-opt-in' );
-			$meta->setAttribute( 'content', 'amp-img-auto-sizes' );
-			$head->insertBefore( $meta, $head->firstChild );
-		}
 	}
 
 	/**
@@ -186,7 +171,7 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 	 * @return array Returns HTML attributes; removes any not specifically declared above from input.
 	 */
 	private function filter_attributes( $attributes ) {
-		$out = array();
+		$out = [];
 
 		foreach ( $attributes as $name => $value ) {
 			switch ( $name ) {
@@ -201,6 +186,12 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 
 				case 'data-amp-noloading':
 					$out['noloading'] = $value;
+					break;
+
+				// Skip directly copying new web platform attributes from img to amp-img which are largely handled by AMP already.
+				case 'importance': // Not supported by AMP.
+				case 'loading': // Lazy-loading handled by amp-img natively.
+				case 'intrinsicsize': // Responsive images handled by amp-img directly.
 					break;
 
 				default:
@@ -233,6 +224,7 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 					$class = '';
 				}
 				if ( ! $dimensions ) {
+					$node->setAttribute( 'object-fit', 'contain' );
 					$class .= ' amp-wp-unknown-size';
 				}
 
@@ -248,8 +240,8 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 				if ( ! is_numeric( $node->getAttribute( 'width' ) ) ) {
 
 					// Let width have the right aspect ratio based on the height attribute.
-					if ( is_numeric( $node->getAttribute( 'height' ) ) && isset( $dimensions['height'] ) && isset( $dimensions['width'] ) ) {
-						$width = ( floatval( $node->getAttribute( 'height' ) ) * $dimensions['width'] ) / $dimensions['height'];
+					if ( is_numeric( $node->getAttribute( 'height' ) ) && isset( $dimensions['height'], $dimensions['width'] ) ) {
+						$width = ( (float) $node->getAttribute( 'height' ) * $dimensions['width'] ) / $dimensions['height'];
 					}
 
 					$node->setAttribute( 'width', $width );
@@ -260,8 +252,8 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 				if ( ! is_numeric( $node->getAttribute( 'height' ) ) ) {
 
 					// Let height have the right aspect ratio based on the width attribute.
-					if ( is_numeric( $node->getAttribute( 'width' ) ) && isset( $dimensions['width'] ) && isset( $dimensions['height'] ) ) {
-						$height = ( floatval( $node->getAttribute( 'width' ) ) * $dimensions['height'] ) / $dimensions['width'];
+					if ( is_numeric( $node->getAttribute( 'width' ) ) && isset( $dimensions['height'], $dimensions['width'] ) ) {
+						$height = ( (float) $node->getAttribute( 'width' ) * $dimensions['height'] ) / $dimensions['width'];
 					}
 
 					$node->setAttribute( 'height', $height );
@@ -336,7 +328,7 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 		 */
 		if ( $img_node->hasAttribute( 'style' ) ) {
 			$layout = $img_node->getAttribute( 'layout' );
-			if ( in_array( $layout, array( 'fixed-height', 'responsive', 'fill', 'flex-item' ), true ) ) {
+			if ( in_array( $layout, [ 'fixed-height', 'responsive', 'fill', 'flex-item' ], true ) ) {
 				$required_display = 'block';
 			} elseif ( 'nodisplay' === $layout ) {
 				$required_display = 'none';
@@ -354,14 +346,7 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 			);
 		}
 
-		$can_include_noscript = (
-			$this->args['add_noscript_fallback']
-			&&
-			( $node->hasAttribute( 'src' ) && ! preg_match( '/^http:/', $node->getAttribute( 'src' ) ) )
-			&&
-			( ! $node->hasAttribute( 'srcset' ) || ! preg_match( '/http:/', $node->getAttribute( 'srcset' ) ) )
-		);
-		if ( $can_include_noscript ) {
+		if ( $this->args['add_noscript_fallback'] ) {
 			// Preserve original node in noscript for no-JS environments.
 			$this->append_old_node_noscript( $img_node, $node, $this->dom );
 		}
@@ -376,26 +361,71 @@ class AMP_Img_Sanitizer extends AMP_Base_Sanitizer {
 	 */
 	private function maybe_add_lightbox_attributes( $attributes, $node ) {
 		$parent_node = $node->parentNode;
-		if ( ! ( $parent_node instanceof DOMElement ) || 'figure' !== $parent_node->tagName ) {
+		if ( ! ( $parent_node instanceof DOMElement ) || ! ( $parent_node->parentNode instanceof DOMElement ) ) {
 			return $attributes;
+		}
+
+		$is_file_url                        = preg_match( '/\.\w+$/', wp_parse_url( $parent_node->getAttribute( 'href' ), PHP_URL_PATH ) );
+		$is_node_wrapped_in_media_file_link = (
+			'a' === $parent_node->tagName
+			&&
+			( 'figure' === $parent_node->tagName || 'figure' === $parent_node->parentNode->tagName )
+			&&
+			$is_file_url // This should be a link to the media file, not the attachment page.
+		);
+
+		if ( 'figure' !== $parent_node->tagName && ! $is_node_wrapped_in_media_file_link ) {
+			return $attributes;
+		}
+
+		// Account for blocks that include alignment or images that are wrapped in <a>.
+		// With alignment, the structure changes from figure.wp-block-image > img
+		// to div.wp-block-image > figure > img and the amp-lightbox attribute
+		// can be found on the wrapping div instead of the figure element.
+		$grand_parent = $parent_node->parentNode;
+		if ( $this->does_node_have_block_class( $grand_parent ) ) {
+			$parent_node = $grand_parent;
+		} elseif ( isset( $grand_parent->parentNode ) && $this->does_node_have_block_class( $grand_parent->parentNode ) ) {
+			$parent_node = $grand_parent->parentNode;
 		}
 
 		$parent_attributes = AMP_DOM_Utils::get_node_attributes_as_assoc_array( $parent_node );
 
 		if ( isset( $parent_attributes['data-amp-lightbox'] ) && true === filter_var( $parent_attributes['data-amp-lightbox'], FILTER_VALIDATE_BOOLEAN ) ) {
 			$attributes['data-amp-lightbox'] = '';
-			$attributes['on']                = 'tap:' . self::AMP_IMAGE_LIGHTBOX_ID;
-			$attributes['role']              = 'button';
-			$attributes['tabindex']          = 0;
+			$attributes['lightbox']          = '';
 
-			$this->maybe_add_amp_image_lightbox_node();
+			/*
+			 * Removes the <a> if the image is wrapped in one, as it can prevent the lightbox from working.
+			 * But this only removes the <a> if it links to the media file, not the attachment page.
+			 */
+			if ( $is_node_wrapped_in_media_file_link ) {
+				$node->parentNode->parentNode->replaceChild( $node, $node->parentNode );
+			}
 		}
 
 		return $attributes;
 	}
 
 	/**
-	 * Determines is a URL is considered a GIF URL
+	 * Gets whether a node has the class 'wp-block-image', meaning it is a wrapper for an Image block.
+	 *
+	 * @param DOMElement $node A node to evaluate.
+	 * @return bool Whether the node has the class 'wp-block-image'.
+	 */
+	private function does_node_have_block_class( $node ) {
+		if ( $node instanceof DOMElement ) {
+			$classes = preg_split( '/\s+/', $node->getAttribute( 'class' ) );
+			if ( in_array( 'wp-block-image', $classes, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Determines if a URL is considered a GIF URL
 	 *
 	 * @since 0.2
 	 *

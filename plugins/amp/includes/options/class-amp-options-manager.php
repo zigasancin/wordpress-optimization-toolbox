@@ -34,18 +34,22 @@ class AMP_Options_Manager {
 	 *
 	 * @var array
 	 */
-	protected static $defaults = array(
-		'experiences'              => array( self::WEBSITE_EXPERIENCE ),
-		'theme_support'            => AMP_Theme_Support::READER_MODE_SLUG,
-		'supported_post_types'     => array( 'post' ),
-		'analytics'                => array(),
-		'auto_accept_sanitization' => true,
-		'all_templates_supported'  => true,
-		'supported_templates'      => array( 'is_singular' ),
-		'enable_response_caching'  => true,
-		'version'                  => AMP__VERSION,
-		'story_templates_version'  => false,
-	);
+	protected static $defaults = [
+		'experiences'             => [ self::WEBSITE_EXPERIENCE ],
+		'theme_support'           => AMP_Theme_Support::READER_MODE_SLUG,
+		'supported_post_types'    => [ 'post' ],
+		'analytics'               => [],
+		'all_templates_supported' => true,
+		'supported_templates'     => [ 'is_singular' ],
+		'enable_response_caching' => true,
+		'version'                 => AMP__VERSION,
+		'story_templates_version' => false,
+		'story_export_base_url'   => '',
+		'story_settings'          => [
+			'auto_advance_after'          => '',
+			'auto_advance_after_duration' => 0,
+		],
+	];
 
 	/**
 	 * Register settings.
@@ -54,17 +58,18 @@ class AMP_Options_Manager {
 		register_setting(
 			self::OPTION_NAME,
 			self::OPTION_NAME,
-			array(
+			[
 				'type'              => 'array',
-				'sanitize_callback' => array( __CLASS__, 'validate_options' ),
-			)
+				'sanitize_callback' => [ __CLASS__, 'validate_options' ],
+			]
 		);
 
-		add_action( 'update_option_' . self::OPTION_NAME, array( __CLASS__, 'maybe_flush_rewrite_rules' ), 10, 2 );
-		add_action( 'admin_notices', array( __CLASS__, 'render_welcome_notice' ) );
-		add_action( 'admin_notices', array( __CLASS__, 'persistent_object_caching_notice' ) );
-		add_action( 'admin_notices', array( __CLASS__, 'render_cache_miss_notice' ) );
-		add_action( 'admin_notices', array( __CLASS__, 'render_php_css_parser_conflict_notice' ) );
+		add_action( 'update_option_' . self::OPTION_NAME, [ __CLASS__, 'maybe_flush_rewrite_rules' ], 10, 2 );
+		add_action( 'admin_notices', [ __CLASS__, 'render_welcome_notice' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'persistent_object_caching_notice' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'render_cache_miss_notice' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'render_php_css_parser_conflict_notice' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'insecure_connection_notice' ] );
 	}
 
 	/**
@@ -76,12 +81,12 @@ class AMP_Options_Manager {
 	 * @param array $new_options New options.
 	 */
 	public static function maybe_flush_rewrite_rules( $old_options, $new_options ) {
-		$old_post_types = isset( $old_options['supported_post_types'] ) ? $old_options['supported_post_types'] : array();
-		$new_post_types = isset( $new_options['supported_post_types'] ) ? $new_options['supported_post_types'] : array();
+		$old_post_types = isset( $old_options['supported_post_types'] ) ? $old_options['supported_post_types'] : [];
+		$new_post_types = isset( $new_options['supported_post_types'] ) ? $new_options['supported_post_types'] : [];
 		sort( $old_post_types );
 		sort( $new_post_types );
-		$old_experiences = isset( $old_options['experiences'] ) ? $old_options['experiences'] : array();
-		$new_experiences = isset( $new_options['experiences'] ) ? $new_options['experiences'] : array();
+		$old_experiences = isset( $old_options['experiences'] ) ? $old_options['experiences'] : [];
+		$new_experiences = isset( $new_options['experiences'] ) ? $new_options['experiences'] : [];
 		sort( $old_experiences );
 		sort( $new_experiences );
 		if ( $old_post_types !== $new_post_types || $old_experiences !== $new_experiences ) {
@@ -111,18 +116,17 @@ class AMP_Options_Manager {
 	 * @return array Options.
 	 */
 	public static function get_options() {
-		$options = get_option( self::OPTION_NAME, array() );
+		$options = get_option( self::OPTION_NAME, [] );
 		if ( empty( $options ) ) {
-			$options = array(); // Ensure empty string becomes array.
+			$options = []; // Ensure empty string becomes array.
 		}
 
 		$defaults = self::$defaults;
 
 		$defaults['enable_response_caching'] = wp_using_ext_object_cache();
 
-		$args = AMP_Theme_Support::get_theme_support_args();
-		if ( false !== $args ) {
-			$defaults['theme_support'] = empty( $args[ AMP_Theme_Support::PAIRED_FLAG ] ) ? AMP_Theme_Support::STANDARD_MODE_SLUG : AMP_Theme_Support::TRANSITIONAL_MODE_SLUG;
+		if ( current_theme_supports( 'amp' ) ) {
+			$defaults['theme_support'] = amp_is_canonical() ? AMP_Theme_Support::STANDARD_MODE_SLUG : AMP_Theme_Support::TRANSITIONAL_MODE_SLUG;
 		}
 
 		$options = array_merge( $defaults, $options );
@@ -151,6 +155,11 @@ class AMP_Options_Manager {
 			 * default 'reader' mode.
 			 */
 			$options['theme_support'] = $defaults['theme_support'];
+		}
+
+		// Remove 'auto_accept_sanitization' option as of 1.4.
+		if ( isset( $options['auto_accept_sanitization'] ) ) {
+			unset( $options['auto_accept_sanitization'] );
 		}
 
 		return $options;
@@ -219,38 +228,36 @@ class AMP_Options_Manager {
 			// Validate the selected experiences.
 			$options['experiences'] = array_intersect(
 				$new_options['experiences'],
-				array(
+				[
 					self::WEBSITE_EXPERIENCE,
 					self::STORIES_EXPERIENCE,
-				)
+				]
 			);
 
 			// At least one experience must be selected.
 			if ( empty( $options['experiences'] ) ) {
-				$options['experiences'] = array( self::WEBSITE_EXPERIENCE );
+				$options['experiences'] = [ self::WEBSITE_EXPERIENCE ];
 			}
 		}
 
 		// Theme support.
-		$recognized_theme_supports = array(
+		$recognized_theme_supports = [
 			AMP_Theme_Support::READER_MODE_SLUG,
 			AMP_Theme_Support::TRANSITIONAL_MODE_SLUG,
 			AMP_Theme_Support::STANDARD_MODE_SLUG,
-		);
+		];
 		if ( isset( $new_options['theme_support'] ) && in_array( $new_options['theme_support'], $recognized_theme_supports, true ) ) {
 			$options['theme_support'] = $new_options['theme_support'];
 
 			// If this option was changed, display a notice with the new template mode.
 			if ( self::get_option( 'theme_support' ) !== $new_options['theme_support'] ) {
-				add_action( 'update_option_' . self::OPTION_NAME, array( __CLASS__, 'handle_updated_theme_support_option' ) );
+				add_action( 'update_option_' . self::OPTION_NAME, [ __CLASS__, 'handle_updated_theme_support_option' ] );
 			}
 		}
 
-		$options['auto_accept_sanitization'] = ! empty( $new_options['auto_accept_sanitization'] );
-
 		// Validate post type support.
 		if ( in_array( self::WEBSITE_EXPERIENCE, $options['experiences'], true ) || isset( $new_options['supported_post_types'] ) ) {
-			$options['supported_post_types'] = array();
+			$options['supported_post_types'] = [];
 			if ( isset( $new_options['supported_post_types'] ) ) {
 				foreach ( $new_options['supported_post_types'] as $post_type ) {
 					if ( ! post_type_exists( $post_type ) ) {
@@ -269,7 +276,7 @@ class AMP_Options_Manager {
 			$options['all_templates_supported'] = ! empty( $new_options['all_templates_supported'] );
 
 			// Validate supported templates.
-			$options['supported_templates'] = array();
+			$options['supported_templates'] = [];
 			if ( isset( $new_options['supported_templates'] ) ) {
 				$options['supported_templates'] = array_intersect(
 					$new_options['supported_templates'],
@@ -315,10 +322,10 @@ class AMP_Options_Manager {
 				if ( isset( $data['delete'] ) ) {
 					unset( $options['analytics'][ $entry_id ] );
 				} else {
-					$options['analytics'][ $entry_id ] = array(
+					$options['analytics'][ $entry_id ] = [
 						'type'   => $entry_vendor_type,
 						'config' => $entry_config,
-					);
+					];
 				}
 			}
 		}
@@ -334,6 +341,18 @@ class AMP_Options_Manager {
 		);
 		if ( $options['enable_response_caching'] ) {
 			AMP_Theme_Support::reset_cache_miss_url_option();
+		}
+
+		// Handle the base URL for exported stories.
+		$options['story_export_base_url'] = isset( $new_options['story_export_base_url'] ) ? esc_url_raw( $new_options['story_export_base_url'], [ 'https' ] ) : '';
+
+		// AMP stories settings definitions.
+		$definitions = AMP_Story_Post_Type::get_stories_settings_definitions();
+
+		// Handle the AMP stories settings sanitization.
+		foreach ( $definitions as $option_name => $definition ) {
+			$value = $new_options[ AMP_Story_Post_Type::STORY_SETTINGS_OPTION ][ $option_name ];
+			$options[ AMP_Story_Post_Type::STORY_SETTINGS_OPTION ][ $option_name ] = call_user_func( $definition['meta_args']['sanitize_callback'], $value );
 		}
 
 		return $options;
@@ -355,7 +374,7 @@ class AMP_Options_Manager {
 			return;
 		}
 
-		$supported_types = self::get_option( 'supported_post_types', array() );
+		$supported_types = self::get_option( 'supported_post_types', [] );
 		foreach ( AMP_Post_Type_Support::get_eligible_post_types() as $name ) {
 			$post_type = get_post_type_object( $name );
 			if ( empty( $post_type ) ) {
@@ -381,9 +400,11 @@ class AMP_Options_Manager {
 				add_settings_error(
 					self::OPTION_NAME,
 					$code,
-					sprintf(
-						$error,
-						isset( $post_type->label ) ? $post_type->label : $post_type->name
+					esc_html(
+						sprintf(
+							$error,
+							isset( $post_type->label ) ? $post_type->label : $post_type->name
+						)
 					)
 				);
 			}
@@ -464,7 +485,7 @@ class AMP_Options_Manager {
 
 		$notice_id = 'amp-welcome-notice-1';
 		$dismissed = get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true );
-		if ( in_array( $notice_id, explode( ',', strval( $dismissed ) ), true ) ) {
+		if ( in_array( $notice_id, explode( ',', (string) $dismissed ), true ) ) {
 			return;
 		}
 
@@ -474,7 +495,7 @@ class AMP_Options_Manager {
 			<div class="amp-welcome-icon-holder">
 				<img width="200" height="200" class="amp-welcome-icon" src="<?php echo esc_url( amp_get_asset_url( 'images/amp-welcome-icon.svg' ) ); ?>" alt="<?php esc_attr_e( 'Illustration of WordPress running AMP plugin.', 'amp' ); ?>" />
 			</div>
-			<h1><?php esc_html_e( 'Welcome to AMP for WordPress', 'amp' ); ?></h1>
+			<h2><?php esc_html_e( 'Welcome to AMP for WordPress', 'amp' ); ?></h2>
 			<h3><?php esc_html_e( 'Bring the speed and features of the open source AMP project to your site, complete with the tools to support content authoring and website development.', 'amp' ); ?></h3>
 			<h3><?php esc_html_e( 'From granular controls that help you create AMP content, to Core Gutenberg support, to a sanitizer that only shows visitors error-free pages, to a full error workflow for developers, this release enables rich, performant experiences for your WordPress site.', 'amp' ); ?></h3>
 			<a href="https://amp-wp.org/getting-started/" target="_blank" class="button button-primary"><?php esc_html_e( 'Learn More', 'amp' ); ?></a>
@@ -531,10 +552,13 @@ class AMP_Options_Manager {
 		if ( ! wp_using_ext_object_cache() && 'toplevel_page_' . self::OPTION_NAME === get_current_screen()->id ) {
 			printf(
 				'<div class="notice notice-warning"><p>%s</p></div>',
-				sprintf(
-					/* translators: %s: Persistent object cache support URL */
-					__( 'The AMP plugin performs at its best when persistent object cache is enabled. <a href="%s">More details</a>', 'amp' ), // phpcs:ignore WordPress.Security.EscapeOutput
-					esc_url( __( 'https://codex.wordpress.org/Class_Reference/WP_Object_Cache#Persistent_Caching', 'amp' ) )
+				wp_kses(
+					sprintf(
+						/* translators: %s: Persistent object cache support URL */
+						__( 'The AMP plugin performs at its best when persistent object cache is enabled. <a href="%s">More details</a>', 'amp' ),
+						esc_url( __( 'https://codex.wordpress.org/Class_Reference/WP_Object_Cache#Persistent_Caching', 'amp' ) )
+					),
+					[ 'a' => [ 'href' => true ] ]
 				)
 			);
 		}
@@ -556,10 +580,13 @@ class AMP_Options_Manager {
 
 		printf(
 			'<div class="notice notice-warning is-dismissible"><p>%s</p></div>',
-			sprintf(
-				/* translators: %s: post-processor cache support URL */
-				__( 'The AMP plugin&lsquo;s post-processor cache was disabled due to the detection of highly-variable content. <a href="%s">More details</a>', 'amp' ), // phpcs:ignore WordPress.Security.EscapeOutput
-				esc_url( __( 'https://github.com/ampproject/amp-wp/wiki/Post-Processor-Cache', 'amp' ) )
+			wp_kses(
+				sprintf(
+					/* translators: %s: post-processor cache support URL */
+					__( 'The AMP plugin&lsquo;s post-processor cache was disabled due to the detection of highly-variable content. <a href="%s">More details</a>', 'amp' ),
+					esc_url( __( 'https://github.com/ampproject/amp-wp/wiki/Post-Processor-Cache', 'amp' ) )
+				),
+				[ 'a' => [ 'href' => true ] ]
 			)
 		);
 	}
@@ -588,10 +615,13 @@ class AMP_Options_Manager {
 
 			printf(
 				'<div class="notice notice-warning"><p>%s</p></div>',
-				sprintf(
-					/* translators: %s: path to the conflicting library */
-					__( 'A conflicting version of PHP-CSS-Parser appears to be installed by another plugin or theme (located in %s). Because of this, CSS processing will be limited, and tree shaking will not be available.', 'amp' ), // phpcs:ignore WordPress.Security.EscapeOutput
-					'<code>' . esc_html( $source_dir ) . '</code>'
+				wp_kses(
+					sprintf(
+						/* translators: %s: path to the conflicting library */
+						__( 'A conflicting version of PHP-CSS-Parser appears to be installed by another plugin or theme (located in %s). Because of this, CSS processing will be limited, and tree shaking will not be available.', 'amp' ),
+						'<code>' . esc_html( $source_dir ) . '</code>'
+					),
+					[ 'code' => [] ]
 				)
 			);
 		} catch ( ReflectionException $e ) {
@@ -619,6 +649,42 @@ class AMP_Options_Manager {
 		);
 	}
 
+
+	/**
+	 * Outputs an admin notice if the site is not served over HTTPS.
+	 *
+	 * @since 1.3
+	 *
+	 * @return void
+	 */
+	public static function insecure_connection_notice() {
+		// is_ssl() only tells us whether the admin backend uses HTTPS here, so we add a few more sanity checks.
+		$uses_ssl = (
+			is_ssl()
+			&&
+			( strpos( get_bloginfo( 'wpurl' ), 'https' ) === 0 )
+			&&
+			( strpos( get_bloginfo( 'url' ), 'https' ) === 0 )
+		);
+
+		if ( ! $uses_ssl && 'toplevel_page_' . self::OPTION_NAME === get_current_screen()->id ) {
+			printf(
+				'<div class="notice notice-warning"><p>%s</p></div>',
+				wp_kses(
+					sprintf(
+						/* translators: %s: "Why should I use HTTPS" support URL */
+						__( 'Your site is not being fully served over a secure connection (using HTTPS).<br>As some AMP functionality requires a secure connection, you might experience degraded performance or broken components.<br><a href="%s">More details</a>', 'amp' ),
+						esc_url( __( 'https://wordpress.org/support/article/why-should-i-use-https/', 'amp' ) )
+					),
+					[
+						'br' => [],
+						'a'  => [ 'href' => true ],
+					]
+				)
+			);
+		}
+	}
+
 	/**
 	 * Adds a message for an update of the theme support setting.
 	 */
@@ -636,7 +702,7 @@ class AMP_Options_Manager {
 		if ( $has_theme_support ) {
 			$theme_support = current_theme_supports( AMP_Theme_Support::SLUG );
 			if ( ! is_array( $theme_support ) ) {
-				$theme_support = array();
+				$theme_support = [];
 			}
 			$theme_support['paired'] = AMP_Theme_Support::TRANSITIONAL_MODE_SLUG === $template_mode;
 			add_theme_support( AMP_Theme_Support::SLUG, $theme_support );
@@ -647,28 +713,14 @@ class AMP_Options_Manager {
 		$url = amp_admin_get_preview_permalink();
 
 		$notice_type     = 'updated';
-		$review_messages = array();
+		$review_messages = [];
 		if ( $url && $has_theme_support ) {
 			$validation = AMP_Validation_Manager::validate_url( $url );
 
 			if ( is_wp_error( $validation ) ) {
-				$review_messages[] = esc_html(
-					sprintf(
-						/* translators: 1: error message. 2: error code. */
-						__( 'However, there was an error when checking the AMP validity for your site.', 'amp' ),
-						$validation->get_error_message(),
-						$validation->get_error_code()
-					)
-				);
-
-				$error_message = $validation->get_error_message();
-				if ( $error_message ) {
-					$review_messages[] = $error_message;
-				} else {
-					/* translators: %s is the error code */
-					$review_messages[] = esc_html( sprintf( __( 'Error code: %s.', 'amp' ), $validation->get_error_code() ) );
-				}
-				$notice_type = 'error';
+				$review_messages[] = esc_html__( 'However, there was an error when checking the AMP validity for your site.', 'amp' );
+				$review_messages[] = AMP_Validation_Manager::get_validate_url_error_message( $validation->get_error_code(), $validation->get_error_message() );
+				$notice_type       = 'error';
 			} elseif ( is_array( $validation ) ) {
 				$new_errors      = 0;
 				$rejected_errors = 0;
@@ -691,7 +743,7 @@ class AMP_Options_Manager {
 				if ( $rejected_errors > 0 ) {
 					$notice_type = 'error';
 
-					$message = wp_kses_post(
+					$message = esc_html(
 						sprintf(
 							/* translators: %s is count of rejected errors */
 							_n(
@@ -706,43 +758,37 @@ class AMP_Options_Manager {
 					);
 
 					if ( $invalid_url_screen_url ) {
-						$message .= ' ' . wp_kses_post(
-							sprintf(
-								/* translators: %s is URL to review issues */
-								_n(
-									'<a href="%s">Review Issue</a>.',
-									'<a href="%s">Review Issues</a>.',
-									$rejected_errors,
-									'amp'
-								),
-								esc_url( $invalid_url_screen_url )
-							)
+						$message .= ' ' . sprintf(
+							/* translators: %s is URL to review issues */
+							_n(
+								'<a href="%s">Review Issue</a>.',
+								'<a href="%s">Review Issues</a>.',
+								$rejected_errors,
+								'amp'
+							),
+							esc_url( $invalid_url_screen_url )
 						);
 					}
 
 					$review_messages[] = $message;
 				} else {
-					$message = wp_kses_post(
-						sprintf(
-							/* translators: %s is an AMP URL */
-							__( 'View an <a href="%s">AMP version of your site</a>.', 'amp' ),
-							esc_url( $url )
-						)
+					$message = sprintf(
+						/* translators: %s is an AMP URL */
+						__( 'View an <a href="%s">AMP version of your site</a>.', 'amp' ),
+						esc_url( $url )
 					);
 
 					if ( $new_errors > 0 && $invalid_url_screen_url ) {
-						$message .= ' ' . wp_kses_post(
-							sprintf(
-								/* translators: 1: URL to review issues. 2: count of new errors. */
-								_n(
-									'Please also <a href="%1$s">review %2$s issue</a> which may need to be fixed (for one URL at least).',
-									'Please also <a href="%1$s">review %2$s issues</a> which may need to be fixed (for one URL at least).',
-									$new_errors,
-									'amp'
-								),
-								esc_url( $invalid_url_screen_url ),
-								number_format_i18n( $new_errors )
-							)
+						$message .= ' ' . sprintf(
+							/* translators: 1: URL to review issues. 2: count of new errors. */
+							_n(
+								'Please also <a href="%1$s">review %2$s issue</a> which may need to be fixed (for one URL at least).',
+								'Please also <a href="%1$s">review %2$s issues</a> which may need to be fixed (for one URL at least).',
+								$new_errors,
+								'amp'
+							),
+							esc_url( $invalid_url_screen_url ),
+							number_format_i18n( $new_errors )
 						);
 					}
 
@@ -755,28 +801,26 @@ class AMP_Options_Manager {
 			case AMP_Theme_Support::STANDARD_MODE_SLUG:
 				$message = esc_html__( 'Standard mode activated!', 'amp' );
 				if ( $review_messages ) {
-					$message .= ' ' . join( ' ', $review_messages );
+					$message .= ' ' . implode( ' ', $review_messages );
 				}
 				break;
 			case AMP_Theme_Support::TRANSITIONAL_MODE_SLUG:
 				$message = esc_html__( 'Transitional mode activated!', 'amp' );
 				if ( $review_messages ) {
-					$message .= ' ' . join( ' ', $review_messages );
+					$message .= ' ' . implode( ' ', $review_messages );
 				}
 				break;
 			case AMP_Theme_Support::READER_MODE_SLUG:
-				$message = wp_kses_post(
-					sprintf(
-						/* translators: %s is an AMP URL */
-						__( 'Reader mode activated! View the <a href="%s">AMP version of a recent post</a>. It is recommended that you upgrade to Standard or Transitional mode.', 'amp' ),
-						esc_url( $url )
-					)
+				$message = sprintf(
+					/* translators: %s is an AMP URL */
+					__( 'Reader mode activated! View the <a href="%s">AMP version of a recent post</a>. It is recommended that you upgrade to Standard or Transitional mode.', 'amp' ),
+					esc_url( $url )
 				);
 				break;
 		}
 
 		if ( isset( $message ) ) {
-			add_settings_error( self::OPTION_NAME, 'template_mode_updated', $message, $notice_type );
+			add_settings_error( self::OPTION_NAME, 'template_mode_updated', wp_kses_post( $message ), $notice_type );
 		}
 	}
 }
