@@ -28,7 +28,7 @@
                   if($showApiKey) {
                       $canValidate = true;?>
                       <input name="key" type="text" id="key" value="<?php echo( $view->data->apiKey );?>"
-                         class="regular-text" <?php echo($editApiKey ? "" : 'disabled') ?>  >
+                         class="regular-text" <?php echo($editApiKey ? "" : 'disabled') ?> <?php echo $this->is_verifiedkey ? 'onkeyup="ShortPixel.apiKeyChanged()"' : '' ?>>
                     <?php
                       }
                       elseif(defined("SHORTPIXEL_API_KEY")) {
@@ -43,10 +43,10 @@
                     <?php } ?>
                         <input type="hidden" name="validate" id="valid" value=""/>
                         <span class="spinner" id="pluginemail_spinner" style="float:none;"></span>
-                         <!-- <button type="button" id="validate" class="button button-primary" title="<?php _e('Validate the provided API key','shortpixel-image-optimiser');?>"
+                         <button type="button" id="validate" class="button button-primary" title="<?php _e('Validate the provided API key','shortpixel-image-optimiser');?>"
                             onclick="ShortPixel.validateKey(this)" <?php echo $canValidate ? "" : "disabled"?> <?php echo $this->is_verifiedkey ? 'style="display:none;"' : '' ?>>
-                            <?php _e('Validate','shortpixel-image-optimiser');?>
-                        </button> -->
+                            <?php _e('Save settings & validate','shortpixel-image-optimiser');?>
+                        </button>
                         <span class="shortpixel-key-valid" <?php echo $this->is_verifiedkey ? '' : 'style="display:none;"' ?>>
                             <span class="dashicons dashicons-yes"></span><?php _e('Your API key is valid.','shortpixel-image-optimiser');?>
                         </span>
@@ -159,12 +159,12 @@
                     </p>
                     <div style="margin-top: 10px;">
                         <input type="radio" name="resizeType" id="resize_type_outer" value="outer" <?php echo($view->data->resizeType == 'inner' ? '' : 'checked') ?> style="margin: -50px 10px 60px 0;">
-                        <img src="<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-outer.png' ));?>"
-                             srcset='<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-outer.png' ));?> 1x, <?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-outer@2x.png' ));?> 2x'
+                        <img alt="<?php _e('Resize outer','shortpixel-image-optimiser'); ?>" src="<?php echo(wpSPIO()->plugin_url('res/img/resize-outer.png' ));?>"
+                             srcset='<?php echo(wpSPIO()->plugin_url('res/img/resize-outer.png' ));?> 1x, <?php echo(wpSPIO()->plugin_url('res/img/resize-outer@2x.png' ));?> 2x'
                              title="<?php _e('Sizes will be greater or equal to the corresponding value. For example, if you set the resize dimensions at 1000x1200, an image of 2000x3000px will be resized to 1000x1500px while an image of 3000x2000px will be resized to 1800x1200px','shortpixel-image-optimiser');?>">
                         <input type="radio" name="resizeType" id="resize_type_inner" value="inner" <?php echo($view->data->resizeType == 'inner' ? 'checked' : '') ?> style="margin: -50px 10px 60px 35px;">
-                        <img src="<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner.png' ));?>"
-                             srcset='<?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner.png' ));?> 1x, <?php echo(plugins_url( 'shortpixel-image-optimiser/res/img/resize-inner@2x.png' ));?> 2x'
+                        <img alt="<?php _e('Resize inner','shortpixel-image-optimiser'); ?>" src="<?php echo(wpSPIO()->plugin_url('res/img/resize-inner.png' ));?>"
+                             srcset='<?php echo(wpSPIO()->plugin_url('res/img/resize-inner.png' ));?> 1x, <?php echo(wpSPIO()->plugin_url('res/img/resize-inner@2x.png' ));?> 2x'
                              title="<?php _e('Sizes will be smaller or equal to the corresponding value. For example, if you set the resize dimensions at 1000x1200, an image of 2000x3000px will be resized to 800x1200px while an image of 3000x2000px will be resized to 1000x667px','shortpixel-image-optimiser');?>">
                         <div style="display:inline-block;margin-left: 20px;"><a href="https://blog.shortpixel.com/resize-images/" class="shortpixel-help-link" target="_blank">
                             <span class="dashicons dashicons-editor-help"></span><?php _e('What is this?','shortpixel-image-optimiser');?></a>

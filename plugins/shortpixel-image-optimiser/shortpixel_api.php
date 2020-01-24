@@ -113,7 +113,7 @@ class ShortPixelAPI {
         }
 
       //  WpShortPixel::log("DO REQUESTS for META: " . json_encode($itemHandler->getRawMeta()) . " STACK: " . json_encode(debug_backtrace()));
-          $URLs = apply_filters('shortpixel_image_urls', $URLs, $itemHandler->getId()) ;
+        $URLs = apply_filters('shortpixel_image_urls', $URLs, $itemHandler->getId()) ;
 
         $requestParameters = array(
             'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
@@ -135,8 +135,8 @@ class ShortPixelAPI {
         }
 
         //WpShortPixel::log("ShortPixel API Request Settings: " . json_encode($requestParameters));
-        //Log::addDebug('ShortPixel API Request');
         $response = wp_remote_post($this->_apiEndPoint, $this->prepareRequest($requestParameters, $Blocking) );
+        Log::addDebug('ShortPixel API Request sent', $requestParameters);
 
         //WpShortPixel::log('RESPONSE: ' . json_encode($response));
 
@@ -246,6 +246,7 @@ class ShortPixelAPI {
         $meta = $itemHandler->getMeta();
         $compressionType = $meta->getCompressionType() !== null ? $meta->getCompressionType() : $this->_settings->compressionType;
         $response = $this->doRequests($URLs, true, $itemHandler, $compressionType);//send requests to API
+
 
         //die($response['body']);
 
@@ -467,10 +468,13 @@ class ShortPixelAPI {
             return array("Status" => self::STATUS_SUCCESS);
         }
 
+//Log::addDebug('Backing The Up', array($mainPath, $PATHs));
+
         //$fullSubDir = str_replace(wp_normalize_path(get_home_path()), "", wp_normalize_path(dirname($itemHandler->getMeta()->getPath()))) . '/';
         //$SubDir = ShortPixelMetaFacade::returnSubDir($itemHandler->getMeta()->getPath(), $itemHandler->getType());
         $fullSubDir = ShortPixelMetaFacade::returnSubDir($mainPath);
         $source = $PATHs; //array with final paths for these files
+        $fs = \wpSPIO()->filesystem();
 
         if( !file_exists(SHORTPIXEL_BACKUP_FOLDER) && ! ShortPixelFolder::createBackUpFolder() ) {//creates backup folder if it doesn't exist
             Log::addWarn('Backup folder does not exist and it cannot be created');
@@ -487,16 +491,20 @@ class ShortPixelAPI {
         //now that we have original files and where we should back them up we attempt to do just that
         if(is_writable(SHORTPIXEL_BACKUP_FOLDER))
         {
-
             foreach ( $destination as $fileID => $filePATH )
             {
-                if ( !file_exists($filePATH) )
+                $destination_file = $fs->getFile($filePATH);
+
+                if ( ! $destination_file->exists() )
                 {
-                    if ( !@copy($source[$fileID], $filePATH) )
+                    $source_file = $fs->getFile($source[$fileID]);
+                    $result = $source_file->copy($destination_file);
+                    if (  ! $result )
                     {//file couldn't be saved in backup folder
                         $msg = sprintf(__('Cannot save file <i>%s</i> in backup directory','shortpixel-image-optimiser'),self::MB_basename($source[$fileID]));
                         return array("Status" => self::STATUS_FAIL, "Message" => $msg);
                     }
+
                 }
             }
             return array("Status" => self::STATUS_SUCCESS);
@@ -510,14 +518,21 @@ class ShortPixelAPI {
 
     private function createArchiveTempFolder($archiveBasename) {
         $archiveTempDir = get_temp_dir() . '/' . $archiveBasename;
-        if(file_exists($archiveTempDir) && is_dir($archiveTempDir) && (time() - filemtime($archiveTempDir) < max(30, SHORTPIXEL_MAX_EXECUTION_TIME) + 10)) {
+        $fs = \wpSPIO()->filesystem();
+        $tempDir = $fs->getDirectory($archiveTempDir);
+
+        if( $tempDir->exists() && (time() - filemtime($archiveTempDir) < max(30, SHORTPIXEL_MAX_EXECUTION_TIME) + 10)) {
             Log::addWarn("CONFLICT. Folder already exists and is modified in the last minute. Current IP:" . $_SERVER['REMOTE_ADDR']);
             return array("Status" => self::STATUS_RETRY, "Code" => 1, "Message" => "Pending");
         }
-        if( !file_exists($archiveTempDir) && !@mkdir($archiveTempDir) ) {
+
+        // try to create temporary folder
+        $tempDir->check();
+
+        if( ! $tempDir->exists() ) {
             return array("Status" => self::STATUS_ERROR, "Code" => self::ERR_SAVE, "Message" => "Could not create temporary folder.");
         }
-        return array("Status" => self::STATUS_SUCCESS, "Dir" => $archiveTempDir);
+        return array("Status" => self::STATUS_SUCCESS, "Dir" => $tempDir);
     }
 
     private function downloadArchive($archive, $compressionType, $first = true) {
@@ -826,6 +841,7 @@ class ShortPixelAPI {
     /**
      * @param $archive
      * @param $tempFiles
+     * @todo Move to FS-controller
      */
     protected static function cleanupTemporaryFiles($archive, $tempFiles)
     {
@@ -833,8 +849,16 @@ class ShortPixelAPI {
             ShortpixelFolder::deleteFolder($archive['Path']);
         } else {
             if (!empty($tempFiles) && is_array($tempFiles)) {
+
                 foreach ($tempFiles as $tmpFile) {
-                    @unlink($tmpFile["Message"]);
+                    $filepath = isset($tmpFile['Message']) ? $tmpFile['Message'] : false;
+                    if ($filepath)
+                    {
+                      $file = \wpSPIO()->filesystem()->getFile($filepath);
+                      if ($file->exists())
+                        $file->delete();
+                    //@unlink($tmpFile["Message"]);
+                    }
                 }
             }
         }

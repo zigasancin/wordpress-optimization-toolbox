@@ -16,16 +16,18 @@ class FileModel extends ShortPixelModel
 {
 
   // File info
-  protected $fullpath;
-  protected $filename; // filename + extension
-  protected $filebase; // filename without extension
-  protected $directory;
-  protected $extension;
+  protected $fullpath = null;
+  protected $filename = null; // filename + extension
+  protected $filebase = null; // filename without extension
+  protected $directory = null;
+  protected $extension = null;
 
   // File Status
-  protected $exists = false;
-  protected $is_writable = false;
-  protected $is_readable = false;
+  protected $exists = null;
+  protected $is_writable = null;
+  protected $is_readable = null;
+  protected $is_file = null;
+
   protected $status;
 
   protected $backupDirectory;
@@ -37,17 +39,13 @@ class FileModel extends ShortPixelModel
   /** Creates a file model object. FileModel files don't need to exist on FileSystem */
   public function __construct($path)
   {
-      $processed_path = $this->processPath($path);
-      if ($processed_path !== false)
-        $this->fullpath = $processed_path; // set processed path if that went alright
-      else {
-        $this->fullpath = $path;  // fallback, but there should be error state
-      }
-
-    //  $this->fullpath =
-      $this->setFileInfo();
+    $this->fullpath = trim($path);
   }
 
+  /* Get a string representation of file, the fullpath
+  *  Note - this might be risky, without processedpath, in cases.
+  * @return String  Full path  processed or unprocessed.
+  */
   public function __toString()
   {
     return (string) $this->fullpath;
@@ -55,46 +53,82 @@ class FileModel extends ShortPixelModel
 
   protected function setFileInfo()
   {
-    if (file_exists($this->fullpath))
-    {
-      $this->exists = true;
+
+      $processed_path = $this->processPath($this->fullpath);
+      if ($processed_path !== false)
+        $this->fullpath = $processed_path; // set processed path if that went alright
+
+    /*  else {
+        $this->fullpath = $path;  // fallback, but there should be error state
+      } */
+
       $info = pathinfo($this->fullpath);
-      $this->filename = isset($info['basename']) ? $info['basename'] : null; // filename + extension
-      $this->filebase = isset($info['filename']) ? $info['filename'] : null; // only filename
-      $this->extension = isset($info['extension']) ? $info['extension'] : null; // only (last) extension
-      $this->directory = isset($info['dirname']) ? new DirectoryModel($info['dirname']) : null;
-      $this->is_writable();
-      $this->is_readable();
-    }
-    else {
-      $this->exists = false;
-      $this->is_writable = false;
-      $this->is_readable = false;
+      // Todo, maybe replace this with splFileINfo.
+      if ($this->is_file()) // only set fileinfo when it's an actual file.
+      {
+        $this->filename = isset($info['basename']) ? $info['basename'] : null; // filename + extension
+        $this->filebase = isset($info['filename']) ? $info['filename'] : null; // only filename
+        $this->extension = isset($info['extension']) ? $info['extension'] : null; // only (last) extension
+      }
 
-      if (is_null($this->filename))
-        $this->filename = basename($this->fullpath);
+  }
 
-      if (is_null($this->directory) && ! is_null($this->filename) && strlen($this->filename) > 0)
-        $this->directory = new DirectoryModel(dirname($this->fullpath));
-    }
+  /** Call when file status changed, so writable / readable / exists are not reliable anymore */
+  public function resetStatus()
+  {
+      $this->is_writable = null;
+      $this->is_readable = null;
+      $this->is_file = null;
+      $this->exists = null;
   }
 
   public function exists()
   {
-    $this->exists = file_exists($this->fullpath);
+    if (is_null($this->exists))
+      $this->exists = file_exists($this->fullpath);
+
     return $this->exists;
   }
 
   public function is_writable()
   {
-    $this->is_writable = is_writable($this->fullpath);
+    if (is_null($this->is_writable))
+      $this->is_writable = is_writable($this->fullpath);
+
     return $this->is_writable;
   }
 
   public function is_readable()
   {
-    $this->is_readable = is_readable($this->fullpath);
+    if (is_null($this->is_readable))
+      $this->is_readable = is_readable($this->fullpath);
+
     return $this->is_readable;
+  }
+
+  /* Function checks if path is actually a file. This can be used to check possible confusion if a directory path is given to filemodel */
+  public function is_file()
+  {
+    if (is_null($this->is_file))
+    {
+      if ($this->exists())
+        $this->is_file = is_file($this->fullpath);
+      else // file can not exist, but still have a valid filepath format. In that case, if file should return true.
+      {
+         //$pathinfo = pathinfo($this->fullpath);
+         //if (isset($pathinfo['extension'])) // extension means file.
+
+         //  if file does not exist on disk, anything can become a file ( with/ without extension, etc). Meaning everything non-existing is a potential file ( or directory ) until created. 
+         $this->is_file = true;
+
+      }
+    }
+    return $this->is_file;
+  }
+
+  public function getModified()
+  {
+    return filemtime($this->fullpath);
   }
 
   public function hasBackup()
@@ -103,9 +137,9 @@ class FileModel extends ShortPixelModel
       if (! $directory)
         return false;
 
-      $backupFile =  $directory . $this->filename;
+      $backupFile =  $directory . $this->getFileName();
 
-      if (file_exists($backupFile))
+      if (file_exists($backupFile) && ! is_dir($backupFile) )
         return true;
       else {
         return false;
@@ -119,7 +153,7 @@ class FileModel extends ShortPixelModel
   public function getBackupFile()
   {
      if ($this->hasBackup())
-        return new FileModel($this->getBackupDirectory() . $this->filename);
+        return new FileModel($this->getBackupDirectory() . $this->getFileName() );
      else
        return false;
   }
@@ -129,8 +163,22 @@ class FileModel extends ShortPixelModel
   * @return DirectoryModel Directorymodel Object
   */
   public function getFileDir()
-  {
+ {
+      // create this only when needed.
+      if (is_null($this->directory) && strlen($this->fullpath) > 0)
+      {
+        // Feed to full path to DirectoryModel since it checks if input is file, or dir. Using dirname here would cause errors when fullpath is already just a dirpath ( faulty input )
+          $this->directory = new DirectoryModel($this->fullpath);
+      }
       return $this->directory;
+  }
+
+  public function getFileSize()
+  {
+    if ($this->exists())
+      return filesize($this->fullpath);
+    else
+      return 0;
   }
 
   /** Copy a file to somewhere
@@ -149,12 +197,19 @@ class FileModel extends ShortPixelModel
         return false;
       }
 
+      if (! $this->exists())
+      {
+        Log::addWarn('Tried to copy non-existing file - '  . $sourcePath);
+        return false;
+      }
+
       $is_new = ($destination->exists()) ? false : true;
       $status = copy($sourcePath, $destinationPath);
 
       if (! $status)
         Log::addWarn('Could not copy file ' . $sourcePath . ' to' . $destinationPath);
       else {
+        $destination->resetStatus();
         $destination->setFileInfo(); // refresh info.
       }
       //
@@ -172,6 +227,8 @@ class FileModel extends ShortPixelModel
      if ($this->copy($destination))
      {
        $result = $this->delete();
+       $this->resetStatus();
+       $destination->resetStatus();
      }
      return $result;
   }
@@ -181,36 +238,50 @@ class FileModel extends ShortPixelModel
   */
   public function delete()
   {
-      \wp_delete_file($this->fullpath);  // delete file hook via wp_delet_file
-      $this->setFileInfo(); // update info
+     if ($this->exists())
+      \wp_delete_file($this->fullpath);  // delete file hook via wp_delete_file
 
       if (! file_exists($this->fullpath))
       {
+        $this->resetStatus();
         return true;
       }
       else {
         return false;
         Log::addWarn('File seems not removed - ' . $this->fullpath);
       }
+
   }
 
   public function getFullPath()
   {
+    if (is_null($this->filename))
+      $this->setFileInfo();
+
     return $this->fullpath;
   }
 
   public function getFileName()
   {
+    if (is_null($this->filename))
+      $this->setFileInfo();
+
     return $this->filename;
   }
 
   public function getFileBase()
   {
+    if (is_null($this->filename))
+      $this->setFileInfo();
+
     return $this->filebase;
   }
 
   public function getExtension()
   {
+    if (is_null($this->filename))
+      $this->setFileInfo();
+
     return $this->extension;
   }
 
@@ -219,7 +290,7 @@ class FileModel extends ShortPixelModel
   */
   private function getBackupDirectory()
   {
-    if (is_null($this->directory))
+    if (is_null($this->getFileDir()))
     {
         return false;
     }
@@ -247,7 +318,6 @@ class FileModel extends ShortPixelModel
   protected function processPath($path)
   {
     $original_path = $path;
-    $path = trim($path);
 
     if ($this->pathIsUrl($path))
     {
@@ -260,7 +330,8 @@ class FileModel extends ShortPixelModel
     $path = wp_normalize_path($path);
 
     // if path does not contain basepath.
-    if (strpos($path, ABSPATH) === false && strpos($path, $this->getUploadPath()) === false)
+    $uploadPath = wp_normalize_path($this->getUploadPath()); // mixed slashes and dashes can also be a config-error in WP.
+    if (strpos($path, ABSPATH) === false && strpos($path, $uploadPath) === false)
       $path = $this->relativeToFullPath($path);
 
 
@@ -356,7 +427,7 @@ class FileModel extends ShortPixelModel
 
   private function getUploadPath()
   {
-    $upload_dir = wp_upload_dir(null, false);
+    $upload_dir = wp_upload_dir(null, false, false);
     $basedir = $upload_dir['basedir'];
 
     return $basedir;

@@ -1,6 +1,8 @@
 <?php
 namespace ShortPixel;
 
+$path = '/var/www/shortpixel/wp-content/uploads/2019/09/';
+
 ?>
 
 <section id="tab-debug" <?php echo ($this->display_part == 'debug') ? ' class="sel-tab" ' :''; ?>>
@@ -34,6 +36,14 @@ namespace ShortPixel;
   <div class='quotadata'>
     <h3><?php _e('Quota Data', 'shortpixel'); ?></h3>
     <pre><?php var_export($this->quotaData); ?></pre>
+  </div>
+
+  <h3>Tools</h3>
+  <div class='debug-images'>
+    <form method="POST" action="<?php echo add_query_arg(array('sp-action' => 'action_debug_medialibrary')) ?>"
+      id="shortpixel-form-debug-medialib">
+      <button class='button' type='submit'>Reacquire Thumbnails on Media Library</button>
+      </form>
   </div>
 
 </div> <!-- tab-content -->
