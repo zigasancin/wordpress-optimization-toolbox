@@ -6,7 +6,7 @@ Plugin URI: https://wordpress.org/plugins/hyperdb/
 Description: An advanced database class that supports replication, failover, load balancing, and partitioning.
 Author: Automattic
 License: GPLv2 or later
-Version: 1.5
+Version: 1.6
 */
 
 /** This file should be installed at ABSPATH/wp-content/db.php **/
@@ -645,7 +645,7 @@ class hyperdb extends wpdb {
 						$this->dbh2host[$dbhname] = "$host:$port";
 						$queries = 1;
 						$lag = isset( $this->lag ) ? $this->lag : 0;
-						$this->last_connection = compact('dbhname', 'host', 'port', 'user', 'name', 'tcp', 'elapsed', 'success', 'queries', 'lag');
+						$this->last_connection = compact('dbhname', 'host', 'port', 'user', 'name', 'server_state', 'elapsed', 'success', 'queries', 'lag');
 						$this->db_connections[] = $this->last_connection;
 						$this->open_connections[] = $dbhname;
 						break;
@@ -767,6 +767,7 @@ class hyperdb extends wpdb {
 		}
 		return $escaped;
 	}
+
 	/**
 	 * Disconnect and remove connection from open connections list
 	 * @param string $tdbhname
@@ -1237,6 +1238,8 @@ class hyperdb extends wpdb {
 	}
 
 	function ex_mysql_connect( $db_host, $db_user, $db_password, $persistent ) {
+		$client_flags = defined( 'MYSQL_CLIENT_FLAGS' ) ? MYSQL_CLIENT_FLAGS : 0;
+
 		if ( ! $this->use_mysqli ) {
 			$connect_function = $persistent ? 'mysql_pconnect' : 'mysql_connect';
 			return @$connect_function( $db_host, $db_user, $db_password, true );
@@ -1266,7 +1269,7 @@ class hyperdb extends wpdb {
 		if ( $persistent )
 			$db_host = "p:{$db_host}";
 
-        $retval = mysqli_real_connect( $dbh, $db_host, $db_user, $db_password, null, $port, $socket );
+        $retval = mysqli_real_connect( $dbh, $db_host, $db_user, $db_password, null, $port, $socket, $client_flags );
 
 		if ( ! $retval || $dbh->connect_errno )
 			return false;
