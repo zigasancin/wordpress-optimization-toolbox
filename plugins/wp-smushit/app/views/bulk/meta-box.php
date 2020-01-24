@@ -30,7 +30,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 <?php
 // Show re-smush notice.
-WP_Smush::get_instance()->admin()->bulk_resmush_content();
+echo WP_Smush::get_instance()->admin()->bulk_resmush_content();
 
 // If there are no images in media library.
 if ( 0 === absint( $core->total_count ) ) {

@@ -21,6 +21,11 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+$tooltip = sprintf(
+    esc_html__( 'You have %d images that need smushing', 'wp-smushit' ),
+    absint( $remaining )
+);
+
 ?>
 
 <div class="sui-summary-image-space" aria-hidden="true"></div>
@@ -30,7 +35,9 @@ if ( ! defined( 'WPINC' ) ) {
 		<span class="sui-summary-large wp-smush-stats-human">
 			<?php echo esc_html( $human_size ); ?>
 		</span>
-		<i class="sui-icon-info sui-warning smush-stats-icon <?php echo $remaining > 0 ? '' : 'sui-hidden'; ?>" aria-hidden="true"></i>
+        <span class="sui-tooltip" data-tooltip="<?php echo esc_html( $tooltip ); ?>">
+            <i class="sui-icon-info sui-warning smush-stats-icon <?php echo $remaining > 0 ? '' : 'sui-hidden'; ?>" aria-hidden="true"></i>
+        </span>
 		<span class="sui-summary-detail wp-smush-savings">
 			<span class="wp-smush-stats-human"><?php echo esc_html( $human_format ); ?></span> /
 			<span class="wp-smush-stats-percent"><?php echo esc_html( $stats_percent ); ?></span>%

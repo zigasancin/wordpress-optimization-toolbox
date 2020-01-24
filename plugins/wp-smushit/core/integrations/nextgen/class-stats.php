@@ -73,6 +73,80 @@ class Stats extends NextGen {
 	}
 
 	/**
+	 * Returns/Updates the number of images Super Smushed.
+	 *
+	 * @param array $attachments  Optional, By default Media attachments will be fetched.
+	 *
+	 * @return array|mixed
+	 *
+	 * @todo Refactor Method, Separate Media Library and Nextgen, moreover nextgen functionality is broken
+	 */
+	public function nextgen_super_smushed_count( $attachments = array() ) {
+		$key = 'wp-smush-super_smushed_nextgen';
+
+		// Clear up the stats, if there are no images.
+		if ( method_exists( 'Smush\\Core\\Integrations\\NextGen\\Stats', 'total_count' ) && 0 === self::total_count() ) {
+			delete_option( $key );
+		}
+
+		// Flag to check if we need to re-evaluate the count.
+		$reevaluate = false;
+
+		$super_smushed = get_option( $key, false );
+
+		// Check if need to revalidate.
+		if ( ! $super_smushed || empty( $super_smushed ) || empty( $super_smushed['ids'] ) ) {
+			$super_smushed = array(
+				'ids' => array(),
+			);
+
+			$reevaluate = true;
+		} else {
+			$last_checked = $super_smushed['timestamp'];
+
+			$diff = $last_checked - current_time( 'timestamp' );
+
+			// Difference in hour.
+			$diff_h = $diff / 3600;
+
+			// if last checked was more than 1 hours.
+			if ( $diff_h > 1 ) {
+				$reevaluate = true;
+			}
+		}
+
+		// Do not reevaluate stats if nextgen attachments are not provided.
+		if ( empty( $attachments ) && $reevaluate ) {
+			$reevaluate = false;
+		}
+
+		// Need to scan all the image.
+		if ( $reevaluate ) {
+			// Get all the Smushed attachments ids
+			// Note: Wrong Method called, it'll fetch media images and not NextGen images
+			// Should be $attachments, in place of $super_smushed_images.
+			$super_smushed_images = WP_Smush::get_instance()->core()->get_super_smushed_attachments();
+
+			if ( ! empty( $super_smushed_images ) && is_array( $super_smushed_images ) ) {
+				// Iterate over all the attachments to check if it's already there in list, else add it.
+				foreach ( $super_smushed_images as $id ) {
+					if ( ! in_array( $id, $super_smushed['ids'], true ) ) {
+						$super_smushed['ids'][] = $id;
+					}
+				}
+			}
+
+			$super_smushed['timestamp'] = current_time( 'timestamp' );
+
+			update_option( $key, $super_smushed, false );
+		}
+
+		$count = ! empty( $super_smushed['ids'] ) ? count( $super_smushed['ids'] ) : 0;
+
+		return $count;
+	}
+
+	/**
 	 * Get the images id for nextgen gallery
 	 *
 	 * @param bool $force_refresh Optional. Whether to force the cache to be refreshed.
@@ -137,7 +211,7 @@ class Stats extends NextGen {
 					} elseif ( class_exists( 'C_NextGen_Serializable' ) && method_exists( 'C_NextGen_Serializable', 'unserialize' ) ) {
 						$meta = C_NextGen_Serializable::unserialize( $attachment->meta_data );
 					} else {
-						$meta = unserialize( $attachment->meta_data );
+						$meta = maybe_unserialize( $attachment->meta_data );
 					}
 
 					// Store pid in image meta.
@@ -223,7 +297,7 @@ class Stats extends NextGen {
 					$status_txt .= '<br />' . $mush->get_resmsuh_link( $pid, 'nextgen' );
 				}
 			} elseif ( ! empty( $percent ) && ! empty( $bytes_readable ) ) {
-				$status_txt = sprintf( __( 'Reduced by %1$s (  %2$01.1f%% )', 'wp-smushit' ), $bytes_readable, number_format_i18n( $percent, 2 ) );
+				$status_txt = sprintf( __( 'Reduced by %1$s (%2$01.1f%%)', 'wp-smushit' ), $bytes_readable, number_format_i18n( $percent, 2 ) );
 
 				$show_resmush = $this->show_resmush( $show_resmush, $wp_smush_data );
 

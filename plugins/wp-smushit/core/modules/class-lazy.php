@@ -62,11 +62,6 @@ class Lazy extends Abstract_Module {
 			return;
 		}
 
-		// Skip AMP pages.
-		if ( function_exists( 'is_amp_endpoint' ) && is_amp_endpoint() ) {
-			return;
-		}
-
 		// Load js file that is required in public facing pages.
 		add_action( 'wp_head', array( $this, 'add_inline_styles' ) );
 
@@ -76,7 +71,11 @@ class Lazy extends Abstract_Module {
 		add_filter( 'wp_kses_allowed_html', array( $this, 'add_lazy_load_attributes' ) );
 
 		$this->parser->enable( 'lazy_load' );
-		add_filter( 'wp_smush_should_skip_parse', array( $this, 'maybe_skip_parse' ), 10 );
+		if ( isset( $this->options['format']['iframe'] ) && $this->options['format']['iframe'] ) {
+			$this->parser->enable( 'iframes' );
+		}
+
+		add_filter( 'wp_smush_should_skip_parse', array( $this, 'maybe_skip_parse' ) );
 
 		// Filter images.
 		if ( ! isset( $this->options['output']['content'] ) || ! $this->options['output']['content'] ) {
@@ -100,6 +99,15 @@ class Lazy extends Abstract_Module {
 	 * @since 3.2.0
 	 */
 	public function add_inline_styles() {
+		if ( $this->is_amp() ) {
+			return;
+		}
+		// Fix for poorly coded themes that do not remove the no-js in the HTML class.
+		?>
+		<script>
+			document.documentElement.className = document.documentElement.className.replace( 'no-js', 'js' );
+		</script>
+		<?php
 		if ( ! $this->options['animation']['selected'] ) {
 			return;
 		}
@@ -162,6 +170,10 @@ class Lazy extends Abstract_Module {
 	 * @since 3.2.0
 	 */
 	public function enqueue_assets() {
+		if ( $this->is_amp() ) {
+			return;
+		}
+
 		$in_footer = isset( $this->options['footer'] ) ? $this->options['footer'] : true;
 
 		wp_enqueue_script(
@@ -181,8 +193,38 @@ window.lazySizesConfig.loadedClass  = 'lazyloaded';
 lazySizesConfig.loadMode = 1;"; // Page is optimized for fast onload event.
 
 		wp_add_inline_script( 'smush-lazy-load', $custom, 'before' );
-
 		wp_add_inline_script( 'smush-lazy-load', 'lazySizes.init();' );
+
+		$this->add_masonry_support();
+	}
+
+	/**
+	 * Add support for plugins that use the masonry grid system (Block Gallery and CoBlocks plugins).
+	 *
+	 * @since 3.5.0
+	 *
+	 * @see https://wordpress.org/plugins/coblocks/
+	 * @see https://github.com/godaddy/block-gallery
+	 * @see https://masonry.desandro.com/methods.html#layout-masonry
+	 */
+	private function add_masonry_support() {
+		if ( ! function_exists( 'has_block' ) ) {
+			return;
+		}
+
+		// None of the supported blocks are active - exit.
+		if ( ! has_block( 'blockgallery/masonry' ) && ! has_block( 'coblocks/gallery-masonry' ) ) {
+			return;
+		}
+
+		$js = "var e = jQuery( '.wp-block-coblocks-gallery-masonry ul' );";
+		if ( has_block( 'blockgallery/masonry' ) ) {
+			$js = "var e = jQuery( '.wp-block-blockgallery-masonry ul' );";
+		}
+
+		$block_gallery_compat = "jQuery(document).on('lazyloaded', function(){{$js} if ('function' === typeof e.masonry) e.masonry();});";
+
+		wp_add_inline_script( 'smush-lazy-load', $block_gallery_compat );
 	}
 
 	/**
@@ -243,6 +285,10 @@ lazySizesConfig.loadMode = 1;"; // Page is optimized for fast onload event.
 	 * @return string
 	 */
 	public function parse_image( $src, $image ) {
+		if ( $this->is_amp() ) {
+			return $image;
+		}
+
 		/**
 		 * Filter to skip a single image from lazy load.
 		 *
@@ -261,16 +307,45 @@ lazySizesConfig.loadMode = 1;"; // Page is optimized for fast onload event.
 			return $image;
 		}
 
-		/**
-		 * Check if some image formats are excluded.
-		 */
-		if ( in_array( false, $this->options['format'], true ) ) {
-			$ext = strtolower( pathinfo( $src, PATHINFO_EXTENSION ) );
-			$ext = 'jpg' === $ext ? 'jpeg' : $ext;
+		// Compatibility with Essential Grid lazy loading.
+		if ( false !== strpos( $image, 'data-lazysrc' ) ) {
+			return $image;
+		}
 
-			if ( isset( $this->options['format'][ $ext ] ) && ! $this->options['format'][ $ext ] ) {
-				return $image;
-			}
+		// Compatibility with JetPack lazy loading.
+		if ( false !== strpos( $image, 'jetpack-lazy-image' ) ) {
+			return $image;
+		}
+
+		$ext = strtolower( pathinfo( $src, PATHINFO_EXTENSION ) );
+		$ext = 'jpg' === $ext ? 'jpeg' : $ext;
+
+		// If not a supported image in src or not an iframe - skip.
+		$iframe = 'iframe' === substr( $image, 1, 6 );
+		if ( ! in_array( $ext, array( 'jpeg', 'gif', 'png', 'svg' ), true ) && ! $iframe ) {
+			return $image;
+		}
+
+		// Check if some image formats are excluded.
+		if ( in_array( false, $this->options['format'], true ) && isset( $this->options['format'][ $ext ] ) && ! $this->options['format'][ $ext ] ) {
+			return $image;
+		}
+
+		// Check if iframes are excluded.
+		if ( $iframe && isset( $this->options['format']['iframe'] ) && ! $this->options['format']['iframe'] ) {
+			return $image;
+		}
+
+		/**
+		 * Filter to skip a iframe from lazy load.
+		 *
+		 * @since 3.4.2
+		 *
+		 * @param bool   $skip  Should skip? Default: false.
+		 * @param string $src   Iframe url.
+		 */
+		if ( $iframe && apply_filters( 'smush_skip_iframe_from_lazy_load', false, $src ) ) {
+			return $image;
 		}
 
 		if ( $this->has_excluded_class_or_id( $image ) ) {
@@ -428,7 +503,7 @@ lazySizesConfig.loadMode = 1;"; // Page is optimized for fast onload event.
 			}
 
 			// Internal class to skip images.
-			if ( 'no-lazyload' === $class ) {
+			if ( 'no-lazyload' === $class || 'skip-lazy' === $class ) {
 				return true;
 			}
 
@@ -460,6 +535,17 @@ lazySizesConfig.loadMode = 1;"; // Page is optimized for fast onload event.
 		echo $this->exclude_from_lazy_loading( $content );
 
 		unset( $content );
+	}
+
+	/**
+	 * Determine whether it is an AMP page.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @return bool Whether AMP.
+	 */
+	private function is_amp() {
+		return function_exists( 'is_amp_endpoint' ) && is_amp_endpoint();
 	}
 
 }

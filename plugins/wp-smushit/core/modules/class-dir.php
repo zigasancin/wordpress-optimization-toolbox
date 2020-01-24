@@ -59,11 +59,18 @@ class Dir extends Abstract_Module {
 	/**
 	 * Dir constructor.
 	 */
-	public function __construct() {
+	public function init() {
 		// We only run in admin.
 		if ( ! is_admin() ) {
 			return;
 		}
+
+		/**
+		 * Handle Ajax request 'smush_get_directory_list'.
+		 *
+		 * This needs to be before self::should_continue so that the request from network admin is processed.
+		 */
+		add_action( 'wp_ajax_smush_get_directory_list', array( $this, 'directory_list' ) );
 
 		if ( ! self::should_continue() ) {
 			// Remove directory smush from tabs if not required.
@@ -87,9 +94,6 @@ class Dir extends Abstract_Module {
 		// Check to see if the scanner should be running.
 		add_action( 'admin_footer', array( $this, 'check_scan' ) );
 
-		// Handle Ajax request 'smush_get_directory_list'.
-		add_action( 'wp_ajax_smush_get_directory_list', array( $this, 'directory_list' ) );
-
 		// Scan the given directory path for the list of images.
 		add_action( 'wp_ajax_image_list', array( $this, 'image_list' ) );
 
@@ -110,8 +114,12 @@ class Dir extends Abstract_Module {
 	 * @return bool True/False, whether to display the Directory smush or not
 	 */
 	public static function should_continue() {
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX && isset( $_SERVER['HTTP_REFERER'] ) && preg_match( '#^' . network_admin_url() . '#i', wp_unslash( $_SERVER['HTTP_REFERER'] ) ) ) { // Input var ok.
+			return true;
+		}
+
 		// Do not show directory smush, if not main site in a network.
-		if ( ! is_main_site() || is_network_admin() ) {
+		if ( is_multisite() && ( ! is_main_site() || ! is_network_admin() ) ) {
 			return false;
 		}
 
@@ -239,6 +247,17 @@ class Dir extends Abstract_Module {
 
 		$path = $image['path'];
 
+		if ( false !== stripos( $path, 'phar://' ) ) {
+			wp_send_json_error(
+				array(
+					'error' => esc_html_e( 'Potential Phar PHP Object Injection detected', 'wp-smushit' ),
+					'image' => array(
+						'id' => $id,
+					),
+				)
+			);
+		}
+
 		// We have the image path, optimise.
 		$smush_results = WP_Smush::get_instance()->core()->mod->smush->do_smushit( $path );
 
@@ -298,8 +317,6 @@ class Dir extends Abstract_Module {
 		// Update bulk limit transient.
 		Core::update_smush_count( 'dir_sent_count' );
 	}
-
-
 
 	/**
 	 * Create the Smush image table to store the paths of scanned images, and stats
@@ -440,6 +457,7 @@ class Dir extends Abstract_Module {
 		if ( ! current_user_can( 'manage_options' ) || ! is_user_logged_in() ) {
 			wp_send_json_error( __( 'Unauthorized', 'wp-smushit' ) );
 		}
+
 		// Verify nonce.
 		check_ajax_referer( 'smush_get_dir_list', 'list_nonce' );
 
@@ -775,6 +793,10 @@ class Dir extends Abstract_Module {
 			return false;
 		}
 
+		if ( false !== stripos( $path, 'phar://' ) ) {
+			return false;
+		}
+
 		$a = @getimagesize( $path );
 
 		// If a is not set.
@@ -918,22 +940,24 @@ class Dir extends Abstract_Module {
 		$optimised = 0;
 		$limit     = 1000;
 		$images    = array();
+		$continue  = true;
 
-		$total = $wpdb->get_col( "SELECT count(id) FROM {$wpdb->prefix}smush_dir_images" ); // Db call ok; no-cache ok.
+		while ( $continue ) {
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT path, image_size, orig_size FROM {$wpdb->prefix}smush_dir_images WHERE image_size IS NOT NULL ORDER BY `id` LIMIT %d, %d",
+					$offset,
+					$limit
+				),
+				ARRAY_A
+			); // Db call ok; no-cache ok.
 
-		$total = ! empty( $total ) && is_array( $total ) ? $total[0] : 0;
-
-		$continue = true;
-
-		while ( $continue && $results = $wpdb->get_results( "SELECT path, image_size, orig_size FROM {$wpdb->prefix}smush_dir_images WHERE image_size IS NOT NULL ORDER BY `id` LIMIT $offset, $limit", ARRAY_A ) ) { // Db call ok; no-cache ok.
-			if ( ! empty( $results ) ) {
-				$images = array_merge( $images, $results );
+			if ( ! $results ) {
+				break;
 			}
+
+			$images  = array_merge( $images, $results );
 			$offset += $limit;
-			// If offset is above total number, do not query.
-			if ( $offset > $total ) {
-				$continue = false;
-			}
 		}
 
 		// Iterate over stats, return count and savings.
@@ -965,7 +989,7 @@ class Dir extends Abstract_Module {
 			$this->stats['human'] = size_format( $this->stats['bytes'], 1 );
 		}
 
-		$this->stats['total']     = $total;
+		$this->stats['total']     = count( $images );
 		$this->stats['optimised'] = $optimised;
 
 		// Set stats in cache.

@@ -16,16 +16,17 @@ if ( ! defined( 'WPINC' ) ) {
 ?>
 
 <script type="text/template" id="smush-onboarding" data-type="<?php echo WP_Smush::is_pro() ? 'pro' : 'free'; ?>">
-	<div class="sui-box-header sui-dialog-with-image">
+	<div class="sui-box-header sui-flatten sui-content-center sui-spacing-sides--90">
 		<?php if ( ! $this->hide_wpmudev_branding() ) : ?>
-		<div class="sui-dialog-image" aria-hidden="true">
+		<figure class="sui-box-banner" aria-hidden="true">
 			<img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding-' ); ?>{{{ data.slide }}}.png"
 				srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding-' ); ?>{{{ data.slide }}}.png 1x, <?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding-' ); ?>{{{ data.slide }}}@2x.png 2x"
-				alt="<?php esc_attr_e( 'Smush Onboarding Modal', 'wp-smushit' ); ?>" class="sui-image sui-image-center">
-		</div>
+				alt="<?php esc_attr_e( 'Smush Onboarding Modal', 'wp-smushit' ); ?>" class="sui-image sui-image-center"
+			>
+		</figure>
 		<?php endif; ?>
 
-		<h3 class="sui-box-title <?php echo $this->hide_wpmudev_branding() ? 'sui-padding-top' : ''; ?>" id="dialogTitle">
+		<h3 class="sui-box-title sui-lg" id="smush-title-onboarding-dialog">
 			<# if ( 'start' === data.slide ) { #>
 			<?php
 			/* translators: %s: current user name */
@@ -45,10 +46,8 @@ if ( ! defined( 'WPINC' ) ) {
 			<?php esc_html_e( 'Usage Data', 'wp-smushit' ); ?>
 			<# } #>
 		</h3>
-	</div>
 
-	<div class="sui-box-body">
-		<p>
+		<p class="sui-description" id="smush-description-onboarding-dialog">
 			<# if ( 'start' === data.slide ) { #>
 			<?php esc_html_e( 'Nice work installing Smush! Let’s get started by choosing how you want this plugin to work, and then let Smush do all the heavy lifting for you.', 'wp-smushit' ); ?>
 			<# } else if ( 'auto' === data.slide ) { #>
@@ -66,18 +65,21 @@ if ( ! defined( 'WPINC' ) ) {
 			<# } #>
 		</p>
 
+	</div>
+
+	<div class="sui-box-body sui-content-center sui-spacing-sides--0">
 		<# if ( 'start' === data.slide ) { #>
 		<a class="sui-button sui-button-blue sui-button-icon-right next" onclick="WP_Smush.onboarding.next(this)">
 			<?php esc_html_e( 'Begin setup', 'wp-smushit' ); ?>
 			<i class="sui-icon-chevron-right" aria-hidden="true"> </i>
 		</a>
 		<# } else { #>
-		<div class="smush-onboarding-toggle">
+		<div class="sui-box-selectors">
 			<label class="sui-toggle">
 				<input type="checkbox" id="{{{ data.slide }}}" <# if ( data.value ) { #>checked<# } #>>
 				<span class="sui-toggle-slider"> </span>
 			</label>
-			<label for="{{{ data.slide }}}" class="sui-toggle-label">
+			<label for="{{{ data.slide }}}">
 				<# if ( 'auto' === data.slide ) { #>
 				<?php esc_html_e( 'Automatically optimize new uploads', 'wp-smushit' ); ?>
 				<# } else if ( 'lossy' === data.slide ) { #>
@@ -96,15 +98,17 @@ if ( ! defined( 'WPINC' ) ) {
 		<# } #>
 
 		<# if ( 'original' === data.slide ) { #>
-		<p class="smush-onboarding-note"><?php esc_html_e( 'Note: By default we will store a copy of your original uploads just in case you want to revert in the future - you can turn this off at any time.', 'wp-smushit' ); ?></p>
-		<# } else if ( 'usage' === data.slide ) { #>
-		<button type="submit" class="sui-button sui-button-blue sui-button-icon-left" data-a11y-dialog-hide>
+		<p class="sui-description" style="padding: 0 90px">
+			<?php esc_html_e( 'Note: By default we will store a copy of your original uploads just in case you want to revert in the future - you can turn this off at any time.', 'wp-smushit' ); ?>
+		</p>
+		<# } else if ( 'lazy_load' === data.slide ) { #>
+		<button type="submit" class="sui-button sui-button-blue sui-button-icon-left" data-modal-close="">
 			<i class="sui-icon-check" aria-hidden="true"> </i>
 			<?php esc_html_e( 'Finish setup wizard', 'wp-smushit' ); ?>
 		</button>
 		<# } #>
 
-		<# if ( 'start' !== data.slide && 'usage' !== data.slide ) { #>
+		<# if ( 'start' !== data.slide && 'lazy_load' !== data.slide ) { #>
 		<a class="sui-button sui-button-gray next" onclick="WP_Smush.onboarding.next(this)">
 			<?php esc_html_e( 'Next', 'wp-smushit' ); ?>
 		</a>
@@ -120,47 +124,54 @@ if ( ! defined( 'WPINC' ) ) {
 		</div>
 	</div>
 
-	<div class="sui-box-footer">
-		<div class="smush-onboarding-dots">
-			<a href="#" onclick="WP_Smush.onboarding.goTo('start')">
-				<span class="<# if ( 'start' === data.slide ) { #>active<# } #>"> </span>
-			</a>
-			<a href="#" onclick="WP_Smush.onboarding.goTo('auto')">
-				<span class="<# if ( 'auto' === data.slide ) { #>active<# } #>"> </span>
-			</a>
+	<div class="sui-box-footer sui-flatten sui-content-center">
+		<div class="sui-box-steps sui-sm">
+			<button onclick="WP_Smush.onboarding.goTo('start')" class="<# if ( 'start' === data.slide ) { #>sui-current<# } #>" <# if ( 'start' === data.slide ) { #>disabled<# } #>>
+				<?php esc_html_e( 'First step', 'wp-smushit' ); ?>
+			</button>
+			<button onclick="WP_Smush.onboarding.goTo('auto')" class="<# if ( 'auto' === data.slide ) { #>sui-current<# } #>" <# if ( 'auto' === data.slide ) { #>disabled<# } #>>
+				<?php esc_html_e( 'Automatic Compression', 'wp-smushit' ); ?>
+			</button>
 			<?php if ( WP_Smush::is_pro() ) : ?>
-				<a href="#" onclick="WP_Smush.onboarding.goTo('lossy')">
-					<span class="<# if ( 'lossy' === data.slide ) { #>active<# } #>"> </span>
-				</a>
+				<button onclick="WP_Smush.onboarding.goTo('lossy')" class="<# if ( 'lossy' === data.slide ) { #>sui-current<# } #>" <# if ( 'lossy' === data.slide ) { #>disabled<# } #>>
+					<?php esc_html_e( 'Advanced Compression', 'wp-smushit' ); ?>
+				</button>
 			<?php endif; ?>
-			<a href="#" onclick="WP_Smush.onboarding.goTo('strip_exif')">
-				<span class="<# if ( 'strip_exif' === data.slide ) { #>active<# } #>"> </span>
-			</a>
+			<button onclick="WP_Smush.onboarding.goTo('strip_exif')" class="<# if ( 'strip_exif' === data.slide ) { #>sui-current<# } #>" <# if ( 'strip_exif' === data.slide ) { #>disabled<# } #>>
+				<?php esc_html_e( 'EXIF Metadata', 'wp-smushit' ); ?>
+			</button>
 			<?php if ( WP_Smush::is_pro() ) : ?>
-				<a href="#" onclick="WP_Smush.onboarding.goTo('original')">
-					<span class="<# if ( 'original' === data.slide ) { #>active<# } #>"> </span>
-				</a>
+				<button onclick="WP_Smush.onboarding.goTo('original')" class="<# if ( 'original' === data.slide ) { #>sui-current<# } #>" <# if ( 'original' === data.slide ) { #>disabled<# } #>>
+					<?php esc_html_e( 'Full Size Images', 'wp-smushit' ); ?>
+				</button>
 			<?php endif; ?>
-			<a href="#" onclick="WP_Smush.onboarding.goTo('lazy_load')">
-				<span class="<# if ( 'lazy_load' === data.slide ) { #>active<# } #>"> </span>
-			</a>
-			<a href="#" onclick="WP_Smush.onboarding.goTo('usage')">
-				<span class="<# if ( 'usage' === data.slide ) { #>active<# } #>"> </span>
-			</a>
+			<button onclick="WP_Smush.onboarding.goTo('lazy_load')" class="<# if ( 'lazy_load' === data.slide ) { #>sui-current<# } #>" <# if ( 'lazy_load' === data.slide ) { #>disabled<# } #>>
+				<?php esc_html_e( 'Lazy Load', 'wp-smushit' ); ?>
+			</button>
+			<!--
+			<button onclick="WP_Smush.onboarding.goTo('usage')" class="<# if ( 'usage' === data.slide ) { #>sui-current<# } #>" <# if ( 'usage' === data.slide ) { #>disabled<# } #>>
+				<?php esc_html_e( 'Usage Data', 'wp-smushit' ); ?>
+			</button>
+			-->
 		</div>
 	</div>
 </script>
 
-<div class="sui-dialog sui-dialog-sm smush-onboarding-dialog" aria-hidden="true" tabindex="-1" id="smush-onboarding-dialog">
-	<div class="sui-dialog-overlay sui-fade-in"></div>
-	<div class="sui-dialog-content sui-bounce-in" aria-labelledby="dialogTitle" aria-describedby="dialogDescription" role="dialog">
-		<div class="sui-box" role="document">
-			<div id="smush-onboarding-content"></div>
-
+<div class="sui-modal sui-modal-md">
+	<div
+		role="dialog"
+		id="smush-onboarding-dialog"
+		class="sui-modal-content smush-onboarding-dialog"
+		aria-modal="true"
+		aria-labelledby="smush-title-onboarding-dialog"
+		aria-describedby="smush-description-onboarding-dialog"
+	>
+		<div class="sui-box">
+			<div id="smush-onboarding-content" aria-live="polite"></div>
 			<?php wp_nonce_field( 'smush_quick_setup' ); ?>
-			<a href="#" class="smush-onboarding-skip-link" data-a11y-dialog-hide>
-				<?php esc_html_e( 'Skip this, I’ll set it up later', 'wp-smushit' ); ?>
-			</a>
 		</div>
+		<button class="sui-modal-skip smush-onboarding-skip-link">
+			<?php esc_html_e( 'Skip this, I’ll set it up later', 'wp-smushit' ); ?>
+		</button>
 	</div>
 </div>

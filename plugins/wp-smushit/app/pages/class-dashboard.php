@@ -72,7 +72,6 @@ class Dashboard extends Abstract_Page {
 
 		if ( ( ! is_network_admin() && ! $access ) || ( is_network_admin() && true === $access ) ) {
 			unset( $this->tabs['bulk'] );
-			unset( $this->tabs['directory'] );
 			unset( $this->tabs['integrations'] );
 			unset( $this->tabs['lazy_load'] );
 			unset( $this->tabs['cdn'] );
@@ -894,7 +893,7 @@ class Dashboard extends Abstract_Page {
 	public function dashboard_summary_metabox() {
 		$core = WP_Smush::get_instance()->core();
 
-		$resize_count = $core->db()->resize_savings( false, false, true );
+		$resize_count = $core->get_savings( 'resize', false, false, true );
 
 		// Split human size to get format and size.
 		$human = explode( ' ', $core->stats['human'] );
@@ -1278,12 +1277,8 @@ class Dashboard extends Abstract_Page {
 	 * @since 3.2.0
 	 */
 	public function lazyload_metabox() {
-		$this->view(
-			'lazyload/meta-box',
-			array(
-				'settings' => $this->settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' ),
-			)
-		);
+		$settings = $this->settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
+		$this->view( 'lazyload/meta-box', array( 'settings' => $settings ) );
 	}
 
 	/**

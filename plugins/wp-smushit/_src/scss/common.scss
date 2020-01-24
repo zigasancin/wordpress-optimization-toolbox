@@ -4,35 +4,35 @@
 @import "/modules/media";
 
 /**
+ * Media details (grid layout)
+ * @since 3.4.0
+ */
+.attachment-info .smush-stats .value {
+	display: flex;
+	flex-wrap: wrap;
+
+	.smush-status {
+		margin: 0 0 10px;
+		flex-basis: 100%;
+		font-size: 12px;
+		line-height: 1.33333;
+	}
+
+	a {
+		margin-left: 5px;
+	}
+
+	a:first-of-type {
+		margin-left: 0;
+		margin-right: 5px;
+	}
+}
+
+/**
  * Smush buttons & stats in the media library, media upload and featured image modals.
  *
  * @since 2.8.0
  */
-.attachment-details .smush-wrap {
-	.smush-status {
-		margin: 0 0 1em;
-		padding: 0;
-		line-height: 16px;
-	}
-
-	.wp-smush-send {
-		display: block;
-		margin-right: 5px;
-	}
-
-	.spinner {
-		background-position: left;
-		padding: 0 0 0 25px;
-		width: auto;
-		margin: 10px 0 0;
-		line-height: 23px;
-	}
-
-	.spinner.visible {
-		visibility: visible;
-	}
-}
-
 .wp-list-table.media {
 	.spinner.visible {
 		width: 100%;
@@ -41,34 +41,7 @@
 	}
 }
 
-/*
- * Smush button transformation
- */
-
-.button.wp-smush-finished.disabled, .button.wp-smush-finished:disabled, .button.wp-smush-finished[disabled] {
-	color: #fff !important;
-	background: #00cf21 !important;
-	border-color: #619f6b !important;
-	-webkit-box-shadow: inset 0 1px 0 rgba(0, 207, 33, .5), 0 1px 0 rgba(0, 0, 0, .15) !important;
-	box-shadow: inset 0 1px 0 rgba(0, 207, 33, .5), 0 1px 0 rgba(0, 0, 0, .15) !important;
-}
-
 /** Settings Page **/
-
-.smush-submit-note {
-	color: #9B9B9B;
-	float: left;
-	font-family: 'Roboto', sans-serif;
-	font-size: 13px;
-	line-height: 22px;
-	margin-top: 4px;
-	margin-right: 4px;
-}
-
-.currently-smushing .smush-status {
-	color: #0074a2;
-}
-
 .smush-status.fail {
 	color: #dd3d36;
 }
@@ -87,12 +60,6 @@
 
 .attachment-info .wp-smush-error-message {
 	margin: 0 0 1em;
-}
-
-label.setting.smush-stats .smush-wrap,
-.compat-field-wp_smush .smush-wrap {
-	margin: 0 0 5px 0;
-	max-width: 100%;
 }
 
 .smush-stats-wrapper .row {
@@ -144,7 +111,6 @@ label.setting.smush-stats .smush-wrap,
 }
 
 /** Resmush Button **/
-
 #wp-smush-resmush {
 	margin: 20px 0;
 }
@@ -202,6 +168,12 @@ label.setting.smush-stats .smush-wrap,
 			filter: blur(2px);
 		}
 	}
+}
+
+.column-smushit {
+	color: #ddd !important;
+
+	.wp-smush-progress { color: #32373c; }
 }
 
 .column-smushit div.smush-status-links,
@@ -538,11 +510,6 @@ div.wp-smush-resize-note {
 	color: #555;
 	font-size: 13px;
 	font-weight: 400;
-}
-
-/** Override WP Footer Styling, Hide it on WPMU pages only, if we really need to **/
-.wp-admin #wpfooter {
-	display: block;
 }
 
 /** Directory Browser **/

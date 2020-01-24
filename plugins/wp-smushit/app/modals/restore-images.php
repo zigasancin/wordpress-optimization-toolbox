@@ -13,25 +13,30 @@ if ( ! defined( 'WPINC' ) ) {
 ?>
 
 <script type="text/template" id="smush-bulk-restore">
-	<div class="sui-box-header">
-		<h3 class="sui-box-title" id="dialogTitle">
+	<div class="sui-box-header sui-flatten sui-content-center sui-spacing-top--60">
+		<# if ( 'progress' === data.slide ) { #>
+			<i class="sui-icon-loader sui-loading sui-lg" aria-hidden="true"></i>
+		<# } else if ( 'finish' === data.slide ) { #>
+			<i class="sui-icon-check sui-lg" aria-hidden="true"></i>
+		<# } #>
+		<h3 class="sui-box-title sui-lg" id="smush-restore-images-dialog-title">
 			<# if ( 'start' === data.slide ) { #>
 			<?php esc_html_e( 'Restore Thumbnails', 'wp-smushit' ); ?>
 			<# } else if ( 'progress' === data.slide ) { #>
-			<i class="sui-icon-loader sui-loading" aria-hidden="true"></i>
-			<?php esc_html_e( 'Restoring Images', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'Restoring images...', 'wp-smushit' ); ?>
 			<# } else if ( 'finish' === data.slide ) { #>
-			<i class="sui-icon-check" aria-hidden="true"></i>
-			<?php esc_html_e( 'Restore Complete', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'Restore complete', 'wp-smushit' ); ?>
 			<# } #>
 		</h3>
-		<div class="sui-actions-right">
-			<button onclick="WP_Smush.restore.cancel()" data-a11y-dialog-hide class="sui-dialog-close" aria-label="Close this dialog window"></button>
-		</div>
+
+		<button class="sui-button-icon sui-button-float--right" onclick="WP_Smush.restore.cancel()">
+			<i class="sui-icon-close sui-md" aria-hidden="true"></i>
+			<span class="sui-screen-reader-text"><?php esc_html_e( 'Close this modal', 'wp-smushit' ); ?></span>
+		</button>
 	</div>
 
-	<div class="sui-box-body">
-		<p>
+	<div class="sui-box-body sui-flatten sui-content-center sui-spacing-top--20">
+		<p class="sui-description" id="smush-restore-images-dialog-description">
 			<# if ( 'start' === data.slide ) { #>
 			<?php esc_html_e( 'Are you sure you want to restore all image thumbnails to their original, non-optimized states?', 'wp-smushit' ); ?>
 			<# } else if ( 'progress' === data.slide ) { #>
@@ -43,7 +48,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 		<div class="sui-block-content-center">
 			<# if ( 'start' === data.slide ) { #>
-			<button class="sui-button sui-button-ghost" onclick="WP_Smush.restore.cancel()" data-a11y-dialog-hide>
+			<button class="sui-button sui-button-ghost" onclick="WP_Smush.restore.cancel()" data-modal-close="">
 				<?php esc_html_e( 'Cancel', 'wp-smushit' ); ?>
 			</button>
 			<button class="sui-button" id="smush-bulk-restore-button">
@@ -74,16 +79,16 @@ if ( ! defined( 'WPINC' ) ) {
 			</div>
 			<# } else if ( 'finish' === data.slide ) { #>
 				<# if ( 0 === data.errors.length ) { #>
-				<div class="sui-notice sui-notice-success">
+				<div class="sui-notice sui-notice-success" style="text-align: left">
 					<p>{{{ data.success }}}
 						<?php esc_html_e( 'images were successfully restored.', 'wp-smushit' ); ?>
 					</p>
 				</div>
-				<button class="sui-button" onclick="window.location.reload()" data-a11y-dialog-hide type="button">
+				<button class="sui-button" onclick="window.location.reload()" data-modal-close="" type="button">
 					<?php esc_html_e( 'Finish', 'wp-smushit' ); ?>
 				</button>
 				<# } else { #>
-				<div class="sui-notice sui-notice-warning">
+				<div class="sui-notice sui-notice-warning" style="text-align: left">
 					<p>{{{ data.success }}}/{{{ data.total }}}
 						<?php esc_html_e( 'images were successfully restored but some were unrecoverable. You can try again, or reupload these images.', 'wp-smushit' ); ?>
 					</p>
@@ -96,7 +101,7 @@ if ( ! defined( 'WPINC' ) ) {
 	<# if ( 'finish' === data.slide && 0 < data.errors.length ) { #>
 	<div class="smush-final-log">
 		<div class="smush-bulk-errors">
-            <# for ( let i = 0, len = data.errors.length; i < len; i++ ) { #>
+			<# for ( let i = 0, len = data.errors.length; i < len; i++ ) { #>
 			<div class="smush-bulk-error-row sui-no-margin">
 				<div class="smush-bulk-image-data">
 					<# if ( data.errors[i].thumb ) { #>
@@ -131,7 +136,7 @@ if ( ! defined( 'WPINC' ) ) {
 	</p>
 	<div class="sui-box-footer sui-no-padding-bottom sui-no-padding-top">
 		<div class="sui-actions-left">
-			<button class="sui-button sui-button-ghost" onclick="WP_Smush.restore.cancel()" data-a11y-dialog-hide>
+			<button class="sui-button sui-button-ghost" onclick="WP_Smush.restore.cancel()" data-modal-close="">
 				<?php esc_html_e( 'Cancel', 'wp-smushit' ); ?>
 			</button>
 		</div>
@@ -146,18 +151,27 @@ if ( ! defined( 'WPINC' ) ) {
 	<# } #>
 
 	<?php if ( ! $this->hide_wpmudev_branding() ) : ?>
-		<img class="sui-image sui-image-center"
-			src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding.png' ); ?>"
-			srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding@2x.png' ); ?> 2x"
-			alt="<?php esc_attr_e( 'WP Smush', 'wp-smushit' ); ?>">
+		<div class="sui-box-footer sui-flatten sui-spacing-bottom--0">
+			<img class="sui-image sui-image-center"
+				src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding.png' ); ?>"
+				srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding@2x.png' ); ?> 2x"
+				alt="<?php esc_attr_e( 'WP Smush', 'wp-smushit' ); ?>">
+		</div>
 	<?php endif; ?>
 </script>
 
-<div class="sui-dialog sui-dialog-sm smush-restore-images-dialog" aria-hidden="true" tabindex="-1" id="smush-restore-images-dialog">
-	<div class="sui-dialog-overlay sui-fade-in"></div>
-	<div class="sui-dialog-content sui-bounce-in" aria-labelledby="dialogTitle" aria-describedby="dialogDescription" role="dialog">
-		<div class="sui-box" role="document">
-			<div id="smush-bulk-restore-content"></div>
+
+<div class="sui-modal sui-modal-sm">
+	<div
+			role="dialog"
+			id="smush-restore-images-dialog"
+			class="sui-modal-content smush-restore-images-dialog"
+			aria-modal="true"
+			aria-labelledby="smush-restore-images-dialog-title"
+			aria-describedby="smush-restore-images-dialog-description"
+	>
+		<div class="sui-box">
+			<div id="smush-bulk-restore-content" aria-live="polite"></div>
 			<?php wp_nonce_field( 'smush_bulk_restore' ); ?>
 		</div>
 	</div>

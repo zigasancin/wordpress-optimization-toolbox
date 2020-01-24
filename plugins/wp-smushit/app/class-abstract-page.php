@@ -188,7 +188,7 @@ abstract class Abstract_Page {
 		// Prepare notice.
 		if ( 'new' === $install_type ) {
 			$notice_heading = __( 'Thanks for installing Smush. We hope you like it!', 'wp-smushit' );
-			$notice_content = __( 'And hey, if you do, you can join WPMU DEV for a free 30 day trial and get access to even more features!', 'wp-smushit' );
+			$notice_content = __( 'And hey, if you do, you can join WPMU DEV for a free trial and get access to even more features!', 'wp-smushit' );
 			$button_content = __( 'Try Smush Pro Free', 'wp-smushit' );
 		} else {
 			$notice_heading = __( 'Thanks for updating Smush!', 'wp-smushit' );
@@ -319,15 +319,15 @@ abstract class Abstract_Page {
 	/**
 	 * Add meta box.
 	 *
-	 * @param string $id               Meta box ID.
-	 * @param string $title            Meta box title.
-	 * @param string $callback         Callback for meta box content.
-	 * @param string $callback_header  Callback for meta box header.
-	 * @param string $callback_footer  Callback for meta box footer.
-	 * @param string $context          Meta box context.
-	 * @param array  $args             Arguments.
+	 * @param string   $id               Meta box ID.
+	 * @param string   $title            Meta box title.
+	 * @param callable $callback         Callback for meta box content.
+	 * @param callable $callback_header  Callback for meta box header.
+	 * @param callable $callback_footer  Callback for meta box footer.
+	 * @param string   $context          Meta box context.
+	 * @param array    $args             Arguments.
 	 */
-	public function add_meta_box( $id, $title, $callback = '', $callback_header = '', $callback_footer = '', $context = 'main', $args = array() ) {
+	public function add_meta_box( $id, $title, $callback = null, $callback_header = null, $callback_footer = null, $context = 'main', $args = array() ) {
 		$default_args = array(
 			'box_class'         => 'sui-box',
 			'box_header_class'  => 'sui-box-header',
@@ -676,7 +676,7 @@ abstract class Abstract_Page {
 		}
 
 		// Show settings saved message.
-		if ( ! $this->settings->get_setting( WP_SMUSH_PREFIX . 'settings_updated' ) ) {
+		if ( ! get_option( WP_SMUSH_PREFIX . 'settings_updated' ) ) {
 			return;
 		}
 
@@ -703,7 +703,8 @@ abstract class Abstract_Page {
 			$message_class = ' sui-notice-warning';
 			// Show link to bulk smush tab from other tabs.
 			$bulk_smush_link = 'bulk' === $this->get_current_tab() ? '<a href="#" class="wp-smush-trigger-bulk">' : '<a href="' . WP_Smush::get_instance()->admin()->settings_link( array(), true ) . '">';
-			$message        .= ' ' . sprintf( esc_html__( 'You have images that need smushing. %1$sBulk smush now!%2$s', 'wp-smushit' ), $bulk_smush_link, '</a>' );
+			/* translators: %1$s - <a>, %2$s - </a> */
+			$message .= ' ' . sprintf( esc_html__( 'You have images that need smushing. %1$sBulk smush now!%2$s', 'wp-smushit' ), $bulk_smush_link, '</a>' );
 		}
 		?>
 		<div class="sui-notice-top sui-can-dismiss <?php echo esc_attr( $message_class ); ?>">
@@ -776,7 +777,7 @@ abstract class Abstract_Page {
 
 		$access = get_site_option( WP_SMUSH_PREFIX . 'networkwide' );
 
-		if ( ! $access ) {
+		if ( ! $access || 'directory' === $this->get_current_tab() ) {
 			return is_network_admin() ? true : false;
 		}
 

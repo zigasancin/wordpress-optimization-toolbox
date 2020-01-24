@@ -8,7 +8,6 @@
 
 namespace Smush\Core;
 
-use Exception;
 use Smush\WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -18,7 +17,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Class Core
  */
-class Core {
+class Core extends Stats {
 
 	/**
 	 * S3 module
@@ -40,14 +39,6 @@ class Core {
 	 * @var Modules
 	 */
 	public $mod;
-
-	/**
-	 * Database module.
-	 *
-	 * @since 3.3.0
-	 * @var Modules\DB
-	 */
-	private $database;
 
 	/**
 	 * Allowed mime types of image.
@@ -87,13 +78,6 @@ class Core {
 	public $settings;
 
 	/**
-	 * Stores the stats for all the images.
-	 *
-	 * @var array $stats
-	 */
-	public $stats;
-
-	/**
 	 * Attachment IDs.
 	 *
 	 * @var array $attachments
@@ -128,14 +112,14 @@ class Core {
 	 *
 	 * @var int $smushed_count
 	 */
-	public $smushed_count;
+	public $smushed_count = 0;
 
 	/**
 	 * Smushed attachments out of total attachments.
 	 *
 	 * @var int $remaining_count
 	 */
-	public $remaining_count;
+	public $remaining_count = 0;
 
 	/**
 	 * Images with errors that have been skipped from bulk smushing.
@@ -143,21 +127,21 @@ class Core {
 	 * @since 3.0
 	 * @var int $skipped_count
 	 */
-	public $skipped_count;
+	public $skipped_count = 0;
 
 	/**
 	 * Super Smushed attachments count.
 	 *
 	 * @var int $super_smushed
 	 */
-	public $super_smushed;
+	public $super_smushed = 0;
 
 	/**
 	 * Total count of attachments for smushing.
 	 *
 	 * @var int $total_count
 	 */
-	public $total_count;
+	public $total_count = 0;
 
 	/**
 	 * Image ids that needs to be resmushed.
@@ -165,13 +149,6 @@ class Core {
 	 * @var array $resmush_ids
 	 */
 	public $resmush_ids = array();
-
-	/**
-	 * Smushed attachments from selected directories.
-	 *
-	 * @var array $dir_stats
-	 */
-	public $dir_stats;
 
 	/**
 	 * Limit for allowed number of images per bulk request.
@@ -183,15 +160,27 @@ class Core {
 	public static $max_free_bulk = 50;
 
 	/**
-	 * Core constructor.
+	 * Enqueue scripts and initialize variables.
+	 */
+	public function admin_init() {
+		$this->init_settings();
+
+		// Handle notice dismiss.
+		if ( isset( $_GET['remove_smush_upgrade_notice'] ) && 1 == $_GET['remove_smush_upgrade_notice'] ) {
+			WP_Smush::get_instance()->admin()->ajax->dismiss_upgrade_notice( false );
+		}
+	}
+
+	/**
+	 * Initialize modules.
 	 *
 	 * @since 2.9.0
-	 * @param Modules\DB $db  Database module.
-	 * @throws Exception  Autoload exception.
 	 */
-	public function __construct( Modules\DB $db ) {
-		$this->database = $db;
-		$this->init();
+	protected function init() {
+		$this->mod = new Modules();
+
+		new Modules\Resize_Detection();
+		new Rest();
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\\Smush\\Core\\Installer', 'upgrade_settings' ) );
@@ -203,8 +192,6 @@ class Core {
 		// Load integrations.
 		add_action( 'init', array( $this, 'load_integrations' ) );
 
-		// Send Smush stats for PRO members.
-		add_filter( 'wpmudev_api_project_extra_data-912164', array( $this, 'send_smush_stats' ) );
 		// Big image size threshold (WordPress 5.3+).
 		add_filter( 'big_image_size_threshold', array( $this, 'big_image_size_threshold' ), 10, 4 );
 
@@ -216,54 +203,12 @@ class Core {
 	}
 
 	/**
-	 * Getter for database module.
-	 *
-	 * @since 3.3.0
-	 *
-	 * @return Modules\DB
-	 */
-	public function db() {
-		return $this->database;
-	}
-
-	/**
-	 * Enqueue scripts and initialize variables.
-	 */
-	public function admin_init() {
-		$this->init_settings();
-
-		// Handle notice dismiss.
-		$this->dismiss_smush_upgrade();
-	}
-
-	/**
-	 * Manually Dismiss Smush Upgrade notice
-	 */
-	private function dismiss_smush_upgrade() {
-		if ( isset( $_GET['remove_smush_upgrade_notice'] ) && 1 == $_GET['remove_smush_upgrade_notice'] ) {
-			WP_Smush::get_instance()->admin()->ajax->dismiss_upgrade_notice( false );
-		}
-	}
-
-	/**
 	 * Load integrations class.
 	 *
 	 * @since 2.8.0
 	 */
 	public function load_integrations() {
 		new Integrations\Common();
-	}
-
-	/**
-	 * Initialize modules.
-	 *
-	 * @since 2.9.0
-	 */
-	private function init() {
-		$this->mod = new Modules();
-
-		new Modules\Resize_Detection();
-		new Rest();
 	}
 
 	/**
@@ -357,11 +302,11 @@ class Core {
 				'short_label' => esc_html__( 'Subsite Controls', 'wp-smushit' ),
 				'desc'        => esc_html__( 'By default, subsites will inherit your network settings. Choose which modules you want to allow subsite admins to override.', 'wp-smushit' ),
 			),
-			'usage'             => array(
+			/*'usage'             => array(
 				'label'       => esc_html__( 'Help us make Smush better by allowing usage tracking', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Usage Tracking', 'wp-smushit' ),
 				'desc'        => esc_html__( 'Help make Smush better by letting our designers learn how you’re using the plugin.', 'wp-smushit' ),
-			),
+			),*/
 			'keep_data'         => array(
 				'label'       => esc_html__( 'Uninstallation', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Data', 'wp-smushit' ),
@@ -450,13 +395,18 @@ class Core {
 			'resmush_complete'        => esc_html__( 'CHECK COMPLETE', 'wp-smushit' ),
 			// Progress bar text.
 			'progress_smushed'        => esc_html__( 'images optimized', 'wp-smushit' ),
-			'directory_url'           => admin_url( 'admin.php?page=smush&view=directory' ),
+			'directory_url'           => network_admin_url( 'admin.php?page=smush&view=directory' ),
 			'add_dir'                 => esc_html__( 'Choose directory', 'wp-smushit' ),
 			'bulk_resume'             => esc_html__( 'Resume scan', 'wp-smushit' ),
 			'bulk_stop'               => esc_html__( 'Stop current bulk smush process.', 'wp-smushit' ),
 			'smush_url'               => network_admin_url( 'admin.php?page=smush' ),
 			// Errors.
 			'error_ignore'            => esc_html__( 'Ignore this image from bulk smushing', 'wp-smushit' ),
+			// Ignore text.
+			'ignore'                  => esc_html__( 'Ignore', 'wp-smushit' ),
+			'ignored'                 => esc_html__( 'Ignored in Bulk Smush', 'wp-smushit' ),
+			'not_processed'           => esc_html__( 'Not processed', 'wp-smushit' ),
+			'bulkShow'                => esc_html__( ' Show in bulk Smush', 'wp-smushit' ),
 		);
 
 		wp_localize_script( $handle, 'wp_smush_msgs', $wp_smush_msgs );
@@ -478,7 +428,7 @@ class Core {
 
 			if ( empty( $this->unsmushed_attachments ) ) {
 				// Get attachments if all the images are not smushed.
-				$this->unsmushed_attachments = $this->remaining_count > 0 ? $this->database->get_unsmushed_attachments() : array();
+				$this->unsmushed_attachments = $this->remaining_count > 0 ? $this->get_unsmushed_attachments() : array();
 				$this->unsmushed_attachments = ! empty( $this->unsmushed_attachments ) && is_array( $this->unsmushed_attachments ) ? array_values( $this->unsmushed_attachments ) : $this->unsmushed_attachments;
 			}
 
@@ -571,30 +521,17 @@ class Core {
 	}
 
 	/**
-	 * Return Global stats
-	 *
-	 * Stats sent
-	 *
-	 *  array( 'total_images','bytes', 'human', 'percent')
-	 *
-	 * @return array|bool|mixed
-	 */
-	public function send_smush_stats() {
-		$stats = $this->global_stats();
-
-		$required_stats = array( 'total_images', 'bytes', 'human', 'percent' );
-
-		$stats = is_array( $stats ) ? array_intersect_key( $stats, array_flip( $required_stats ) ) : array();
-
-		return $stats;
-	}
-
-	/**
 	 * Get registered image sizes with dimension
 	 *
 	 * @return array
 	 */
 	public function image_dimensions() {
+		// Get from cache if available to avoid duplicate looping.
+		$sizes = wp_cache_get( 'get_image_sizes', 'smush_image_sizes' );
+		if ( $sizes ) {
+			return $sizes;
+		}
+
 		global $_wp_additional_image_sizes;
 		$additional_sizes = get_intermediate_image_sizes();
 		$sizes            = array();
@@ -617,6 +554,7 @@ class Core {
 				);
 			}
 		}
+
 		// Medium Large.
 		if ( ! isset( $sizes['medium_large'] ) || empty( $sizes['medium_large'] ) ) {
 			$width  = intval( get_option( 'medium_large_size_w' ) );
@@ -628,258 +566,10 @@ class Core {
 			);
 		}
 
+		// Set cache to avoid this loop next time.
+		wp_cache_set( 'get_image_sizes', $sizes, 'smush_image_sizes' );
+
 		return $sizes;
-	}
-
-	/**
-	 * Runs the expensive queries to get our global smush stats
-	 *
-	 * @param bool $force_update  Whether to force update the global stats or not.
-	 */
-	public function setup_global_stats( $force_update = false ) {
-		// Set directory smush status.
-		$this->dir_stats = Modules\Dir::should_continue() ? $this->mod->dir->total_stats() : array();
-
-		// Setup Attachments and total count.
-		$this->database->total_count( true );
-
-		$this->stats = $this->global_stats( $force_update );
-
-		if ( empty( $this->smushed_attachments ) ) {
-			// Get smushed attachments.
-			$this->smushed_attachments = $this->database->smushed_count( true, $force_update );
-		}
-
-		// Get supersmushed images count.
-		if ( empty( $this->super_smushed ) ) {
-			$this->super_smushed = $this->database->super_smushed_count();
-		}
-
-		// Set pro savings.
-		$this->set_pro_savings();
-
-		// Get skipped attachments.
-		$this->skipped_attachments = $this->database->skipped_count( $force_update );
-		$this->skipped_count       = count( $this->skipped_attachments );
-
-		// Set smushed count.
-		$this->smushed_count   = ! empty( $this->smushed_attachments ) ? count( $this->smushed_attachments ) : 0;
-		$this->remaining_count = $this->remaining_count();
-	}
-
-	/**
-	 * Get all the attachment meta, sum up the stats and return
-	 *
-	 * @param bool $force_update     Whether to forcefully update the cache.
-	 *
-	 * @return array|bool|mixed
-	 *
-	 * @todo: remove id from global stats stored in db
-	 */
-	public function global_stats( $force_update = false ) {
-		$stats = get_option( 'smush_global_stats' );
-		if ( ! $force_update && $stats ) {
-			if ( ! empty( $stats ) && isset( $stats['size_before'] ) ) {
-				if ( isset( $stats['id'] ) ) {
-					unset( $stats['id'] );
-				}
-
-				return $stats;
-			}
-		}
-
-		global $wpdb;
-
-		$smush_data = array(
-			'size_before' => 0,
-			'size_after'  => 0,
-			'percent'     => 0,
-			'human'       => 0,
-			'bytes'       => 0,
-		);
-
-		/**
-		 * Allows to set a limit of mysql query
-		 * Default value is 2000
-		 */
-		$limit      = apply_filters( 'wp_smush_query_limit', 2000 );
-		$offset     = 0;
-		$query_next = true;
-
-		$supersmushed_count         = 0;
-		$smush_data['total_images'] = 0;
-
-		while ( $query_next ) {
-			$global_data = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key=%s LIMIT %d, %d",
-					Modules\Smush::$smushed_meta_key,
-					$offset,
-					$limit
-				)
-			); // Db call ok; no-cache ok.
-			if ( ! empty( $global_data ) ) {
-				foreach ( $global_data as $data ) {
-					// Skip attachment, if not in attachment list.
-					if ( ! in_array( $data->post_id, $this->attachments ) ) {
-						continue;
-					}
-
-					$smush_data['id'][] = $data->post_id;
-					if ( ! empty( $data->meta_value ) ) {
-						$meta = maybe_unserialize( $data->meta_value );
-						if ( ! empty( $meta['stats'] ) ) {
-
-							// Check for lossy compression.
-							if ( 1 == $meta['stats']['lossy'] ) {
-								$supersmushed_count++;
-							}
-
-							// If the image was optimised.
-							if ( ! empty( $meta['stats'] ) && $meta['stats']['size_before'] >= $meta['stats']['size_after'] ) {
-								// Total Image Smushed.
-								$smush_data['total_images'] += ! empty( $meta['sizes'] ) ? count( $meta['sizes'] ) : 0;
-
-								$smush_data['size_before'] += ! empty( $meta['stats']['size_before'] ) ? (int) $meta['stats']['size_before'] : 0;
-								$smush_data['size_after']  += ! empty( $meta['stats']['size_after'] ) ? (int) $meta['stats']['size_after'] : 0;
-							}
-						}
-					}
-				}
-			}
-
-			$smush_data['bytes'] = $smush_data['size_before'] - $smush_data['size_after'];
-
-			// Update the offset.
-			$offset += $limit;
-
-			// Compare the Offset value to total images.
-			if ( ! empty( $this->total_count ) && $this->total_count <= $offset ) {
-				$query_next = false;
-			} elseif ( ! $global_data ) {
-				// If we didn' got any results.
-				$query_next = false;
-			}
-		}
-
-		// Add directory smush image bytes.
-		if ( ! empty( $this->dir_stats['bytes'] ) && $this->dir_stats['bytes'] > 0 ) {
-			$smush_data['bytes'] += $this->dir_stats['bytes'];
-		}
-		// Add directory smush image total size.
-		if ( ! empty( $this->dir_stats['orig_size'] ) && $this->dir_stats['orig_size'] > 0 ) {
-			$smush_data['size_before'] += $this->dir_stats['orig_size'];
-		}
-		// Add directory smush saved size.
-		if ( ! empty( $this->dir_stats['image_size'] ) && $this->dir_stats['image_size'] > 0 ) {
-			$smush_data['size_after'] += $this->dir_stats['image_size'];
-		}
-		// Add directory smushed images.
-		if ( ! empty( $this->dir_stats['optimised'] ) && $this->dir_stats['optimised'] > 0 ) {
-			$smush_data['total_images'] += $this->dir_stats['optimised'];
-		}
-
-		// Resize Savings.
-		$smush_data['resize_count']   = $this->database->resize_savings( false, false, true );
-		$resize_savings               = $this->database->resize_savings( false );
-		$smush_data['resize_savings'] = ! empty( $resize_savings['bytes'] ) ? $resize_savings['bytes'] : 0;
-
-		// Conversion Savings.
-		$conversion_savings               = $this->database->conversion_savings( false );
-		$smush_data['conversion_savings'] = ! empty( $conversion_savings['bytes'] ) ? $conversion_savings['bytes'] : 0;
-
-		if ( ! isset( $smush_data['bytes'] ) || $smush_data['bytes'] < 0 ) {
-			$smush_data['bytes'] = 0;
-		}
-
-		// Add the resize savings to bytes.
-		$smush_data['bytes']       += $smush_data['resize_savings'];
-		$smush_data['size_before'] += $resize_savings['size_before'];
-		$smush_data['size_after']  += $resize_savings['size_after'];
-
-		// Add Conversion Savings.
-		$smush_data['bytes']       += $smush_data['conversion_savings'];
-		$smush_data['size_before'] += $conversion_savings['size_before'];
-		$smush_data['size_after']  += $conversion_savings['size_after'];
-
-		if ( $smush_data['size_before'] > 0 ) {
-			$smush_data['percent'] = ( $smush_data['bytes'] / $smush_data['size_before'] ) * 100;
-		}
-
-		// Round off precentage.
-		$smush_data['percent'] = round( $smush_data['percent'], 1 );
-
-		$smush_data['human'] = size_format( $smush_data['bytes'], 1 );
-
-		// Setup Smushed attachment IDs.
-		$this->smushed_attachments = ! empty( $smush_data['id'] ) ? $smush_data['id'] : '';
-
-		// Super Smushed attachment count.
-		$this->super_smushed = $supersmushed_count;
-
-		// Remove ids from stats.
-		unset( $smush_data['id'] );
-
-		// Update cache.
-		update_option( 'smush_global_stats', $smush_data, false );
-
-		return $smush_data;
-	}
-
-	/**
-	 * Set pro savings stats if not premium user.
-	 *
-	 * For non-premium users, show expected avarage savings based
-	 * on the free version savings.
-	 */
-	public function set_pro_savings() {
-		// No need this already premium.
-		if ( WP_Smush::is_pro() ) {
-			return;
-		}
-
-		// Initialize.
-		$this->stats['pro_savings'] = array(
-			'percent' => 0,
-			'savings' => 0,
-		);
-
-		// Default values.
-		$savings       = $this->stats['percent'] > 0 ? $this->stats['percent'] : 0;
-		$savings_bytes = $this->stats['human'] > 0 ? $this->stats['bytes'] : '0';
-		$orig_diff     = 2.22058824;
-		if ( ! empty( $savings ) && $savings > 49 ) {
-			$orig_diff = 1.22054412;
-		}
-		// Calculate Pro savings.
-		if ( ! empty( $savings ) ) {
-			$savings       = $orig_diff * $savings;
-			$savings_bytes = $orig_diff * $savings_bytes;
-		}
-
-		// Set pro savings in global stats.
-		if ( $savings > 0 ) {
-			$this->stats['pro_savings'] = array(
-				'percent' => number_format_i18n( $savings, 1 ),
-				'savings' => size_format( $savings_bytes, 1 ),
-			);
-		}
-	}
-
-	/**
-	 * Returns remaining count
-	 *
-	 * @return int
-	 */
-	private function remaining_count() {
-		// Check if the resmush count is equal to remaining count.
-		$resmush_count   = count( $this->resmush_ids );
-		$remaining_count = $this->total_count - $this->smushed_count - $this->skipped_count;
-		if ( $resmush_count > 0 && ( $resmush_count !== $this->smushed_count || 0 === $remaining_count ) ) {
-			return $resmush_count + $remaining_count;
-		}
-
-		return $remaining_count;
 	}
 
 	/**
@@ -968,6 +658,10 @@ class Core {
 	 * @return int  New threshold.
 	 */
 	public function big_image_size_threshold( $threshold, $imagesize, $file, $attachment_id ) {
+		if ( ! Settings::get_instance()->get( 'resize' ) ) {
+			return $threshold;
+		}
+
 		$resize_sizes = Settings::get_instance()->get_setting( WP_SMUSH_PREFIX . 'resize_sizes' );
 		if ( ! $resize_sizes || ! is_array( $resize_sizes ) ) {
 			return $threshold;

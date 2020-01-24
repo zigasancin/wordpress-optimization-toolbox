@@ -24,7 +24,7 @@ $upgrade_url = add_query_arg(
 				<p><?php esc_html_e( 'Get Smush Pro and bulk optimize every image you’ve ever added to your site with one-click. Save 2x more with lossy Super-Smush. Serve stunning, high-quality images from 45 locations around the globe with our blazing-fast CDN.', 'wp-smushit' ); ?></p>
 				<p><?php esc_html_e( 'Automatically compress and resize huge photos up to 32MB. Double your savings and fix your Google PageSpeed with the best image optimizer WordPress has ever known.', 'wp-smushit' ); ?></p>
 				<a href="<?php echo esc_url( add_query_arg( 'utm_campaign', 'smush_propage_topbutton', $upgrade_url ) ); ?>" class="sui-button sui-button-lg sui-button-purple" target="_blank">
-					<?php esc_html_e( 'Try Free for 30 Days', 'wp-smushit' ); ?>
+					<?php esc_html_e( 'Try Smush Pro for Free', 'wp-smushit' ); ?>
 				</a>
 				<div class="sui-reviews">
 					<span class="sui-reviews__stars"></span>
@@ -109,19 +109,19 @@ $upgrade_url = add_query_arg(
 			<div class="sui-upgrade-page-features__item">
 				<i class="sui-icon-wpmudev-logo" aria-hidden="true"></i>
 				<h3><?php esc_html_e( 'The WPMU DEV Guarantee', 'wp-smushit' ); ?></h3>
-				<p><?php esc_html_e( "You'll be delighted with Smush Pro. You've got a 30-day free trial to test the WPMU DEV Membership, and if you continue but change your mind, you can cancel any time.", 'wp-smushit' ); ?></p>
+				<p><?php esc_html_e( "You'll be delighted with Smush Pro. You've got a no risk free trial to test the WPMU DEV Membership, and if you continue but change your mind, you can cancel any time.", 'wp-smushit' ); ?></p>
 			</div>
 		</div>
 	</div>
 	<div class="sui-upgrade-page-cta">
 		<div class="sui-upgrade-page-cta__inner">
 			<h2><?php esc_html_e( 'Join 771,093 Happy Members', 'wp-smushit' ); ?></h2>
-			<p><?php esc_html_e( "97% of customers are happy with WPMU DEV's service, and it’s a great time to join them: as a Smush user you’ll get a free 30-day trial, so you can see what all the fuss is about.", 'wp-smushit' ); ?></p>
+			<p><?php esc_html_e( "97% of customers are happy with WPMU DEV's service, and it’s a great time to join them: as a Smush user you’ll get a free trial, so you can see what all the fuss is about.", 'wp-smushit' ); ?></p>
 			<a href="<?php echo esc_url( add_query_arg( 'utm_campaign', 'smush_propage_bottombutton', $upgrade_url ) ); ?>" class="sui-button sui-button-lg sui-button-purple" target="_blank">
 				<?php esc_html_e( 'Get Smush Pro, and get a faster WordPress', 'wp-smushit' ); ?>
 			</a>
 			<a href="<?php echo esc_url( add_query_arg( 'utm_campaign', 'smush_propage_bottombutton', $upgrade_url ) ); ?>" target="_blank">
-				<?php esc_html_e( 'Try it free for 30 days', 'wp-smushit' ); ?>
+				<?php esc_html_e( 'Try it for free', 'wp-smushit' ); ?>
 			</a>
 		</div>
 	</div>

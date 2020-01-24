@@ -10,7 +10,6 @@
  * @var Admin  $ng               NextGen admin class.
  * @var int    $remaining_count  Remaining images.
  * @var array  $resmush_ids      Resmush ID.
- * @var bool   $show             Show resmush window.
  * @var int    $total_count      Total count.
  * @var string $url              Media library URL.
  */
@@ -30,8 +29,8 @@ if ( ! defined( 'WPINC' ) ) {
 
 <?php
 // Get the counts.
-if ( $show ) {
-	WP_Smush::get_instance()->admin()->bulk_resmush_content( $count, $show );
+if ( $count > 0 ) {
+	echo WP_Smush::get_instance()->admin()->bulk_resmush_content( $count );
 }
 
 // If there are no images in Media Library.

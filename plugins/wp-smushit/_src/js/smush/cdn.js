@@ -1,5 +1,6 @@
 /* global WP_Smush */
 /* global ajaxurl */
+
 /**
  * CDN functionality.
  *

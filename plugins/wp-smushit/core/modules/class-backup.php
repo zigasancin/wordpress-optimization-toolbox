@@ -72,7 +72,7 @@ class Backup extends Abstract_Module {
 
 		// Get a backup path if empty.
 		if ( empty( $backup_path ) ) {
-			$backup_path = $mod->smush->get_image_backup_path( $file_path );
+			$backup_path = $this->get_image_backup_path( $file_path );
 		}
 
 		// If we don't have any backup path yet, bail!
@@ -117,8 +117,12 @@ class Backup extends Abstract_Module {
 		}
 
 		// Prevent phar deserialization vulnerability.
+		if ( false !== stripos( $backup_path, 'phar://' ) ) {
+			return false;
+		}
+
 		// Return if backup file doesn't exists.
-		if ( false !== strpos( strtolower( trim( $backup_path ) ), 'phar://' ) || ! file_exists( $backup_path ) ) {
+		if ( ! file_exists( $backup_path ) ) {
 			return false;
 		}
 
@@ -209,7 +213,7 @@ class Backup extends Abstract_Module {
 					$backup_path = $backup_sizes[ $this->backup_key ];
 				} else {
 					// If we don't have a backup path, check for legacy backup naming convention.
-					$backup_path = $smush->get_image_backup_path( $file_path );
+					$backup_path = $this->get_image_backup_path( $file_path );
 				}
 			}
 			$backup_path = is_array( $backup_path ) && ! empty( $backup_path['file'] ) ? $backup_path['file'] : $backup_path;
@@ -275,26 +279,26 @@ class Backup extends Abstract_Module {
 			delete_post_meta( $attachment_id, WP_SMUSH_PREFIX . 'resize_savings' );
 
 			// Get the Button html without wrapper.
-			$button_html = $smush->set_status( $attachment_id, false, false, false );
+			$button_html = $smush->set_status( $attachment_id );
 
 			// Remove the transient.
 			delete_option( "wp-smush-restore-$attachment_id" );
 
-			if ( $resp ) {
-				$size = file_exists( $file_path ) ? filesize( $file_path ) : 0;
-				if ( $size > 0 ) {
-					$update_size = size_format( $size, 0 ); // Used in js to update image stat.
-				}
-
-				wp_send_json_success(
-					array(
-						'button'   => $button_html,
-						'new_size' => isset( $update_size ) ? $update_size : 0,
-					)
-				);
-			} else {
+			if ( ! $resp ) {
 				return true;
 			}
+
+			$size = file_exists( $file_path ) ? filesize( $file_path ) : 0;
+			if ( $size > 0 ) {
+				$update_size = size_format( $size, 0 ); // Used in js to update image stat.
+			}
+
+			wp_send_json_success(
+				array(
+					'button'   => $button_html,
+					'new_size' => isset( $update_size ) ? $update_size : 0,
+				)
+			);
 		}
 		// Remove the transient.
 		delete_option( "wp-smush-restore-$attachment_id" );
@@ -401,6 +405,34 @@ class Backup extends Abstract_Module {
 	}
 
 	/**
+	 * Get the attachments that can be restored.
+	 *
+	 * @param bool $return_ids  Whether to return ids or just the count.
+	 *
+	 * @return array|int  Attachments IDs / Number of attachments.
+	 */
+	private function get_attachments_with_backups( $return_ids = false ) {
+		$images = wp_cache_get( 'images_with_backups', 'wp-smush' );
+
+		if ( ! $images ) {
+			global $wpdb;
+			$images = $wpdb->get_col(
+				"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='_wp_attachment_backup_sizes' AND post_id IN (SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='wp-smpro-smush-data')"
+			); // Db call ok.
+
+			if ( $images ) {
+				wp_cache_set( 'images_with_backups', $images, 'wp-smush' );
+			}
+		}
+
+		if ( $return_ids ) {
+			return $images;
+		}
+
+		return count( $images );
+	}
+
+	/**
 	 * Get the number of attachments that can be restored.
 	 *
 	 * @since 3.2.2
@@ -409,7 +441,7 @@ class Backup extends Abstract_Module {
 		check_ajax_referer( 'smush_bulk_restore', '_wpnonce' );
 		wp_send_json_success(
 			array(
-				'items' => WP_Smush::get_instance()->core()->db()->get_attachments_with_backups( true ),
+				'items' => $this->get_attachments_with_backups( true ),
 			)
 		);
 	}
@@ -444,6 +476,70 @@ class Backup extends Abstract_Module {
 				'link'    => Helper::get_image_media_link( $id, $file_name, true ),
 			)
 		);
+	}
+
+	/**
+	 * Returns the backup path for attachment
+	 *
+	 * @param string $attachment_path  Attachment path.
+	 *
+	 * @return bool|string
+	 */
+	public function get_image_backup_path( $attachment_path ) {
+		// If attachment id is not available, return false.
+		if ( empty( $attachment_path ) ) {
+			return false;
+		}
+		$path = pathinfo( $attachment_path );
+
+		// If we don't have complete filename return false.
+		if ( empty( $path['extension'] ) ) {
+			return false;
+		}
+
+		$backup_name = trailingslashit( $path['dirname'] ) . $path['filename'] . '.bak.' . $path['extension'];
+
+		return $backup_name;
+	}
+
+	/**
+	 * Clear up all the backup files for the image, if any.
+	 *
+	 * @param int $image_id  Attachment ID.
+	 */
+	public function delete_backup_files( $image_id ) {
+		$smush_meta = get_post_meta( $image_id, Smush::$smushed_meta_key, true );
+		if ( empty( $smush_meta ) ) {
+			// Return if we don't have any details.
+			return;
+		}
+
+		// Get the attachment details.
+		$meta = wp_get_attachment_metadata( $image_id );
+
+		// Attachment file path.
+		$file = get_attached_file( $image_id );
+
+		// Get the backup path.
+		$backup_name = $this->get_image_backup_path( $file );
+
+		// If file exists, corresponding to our backup path, delete it.
+		@unlink( $backup_name );
+
+		// Check meta for rest of the sizes.
+		if ( ! empty( $meta ) && ! empty( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $size ) {
+				// Get the file path.
+				if ( empty( $size['file'] ) ) {
+					continue;
+				}
+
+				// Image Path and Backup path.
+				$image_size_path  = path_join( dirname( $file ), $size['file'] );
+				$image_bckup_path = $this->get_image_backup_path( $image_size_path );
+				@unlink( $image_bckup_path );
+			}
+		}
 	}
 
 }

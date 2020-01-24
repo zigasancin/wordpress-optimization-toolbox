@@ -1,64 +1,50 @@
+/* global ajaxurl */
+
 /**
- * Created by umeshkumar on 12/05/16.
+ * @typedef {Object} jQuery
  */
-jQuery(function () {
-	var el_notice = jQuery(".smush-notice"),
-		btn_act = el_notice.find(".smush-notice-act"),
-		btn_dismiss = el_notice.find(".smush-notice-dismiss");
-	el_notice.fadeIn(500);
+( function( $ ) {
+	let elNotice = $( '.smush-notice' );
+	const btnAct = elNotice.find( '.smush-notice-act' );
+
+	elNotice.fadeIn( 500 );
 
 	// Hide the notice after a CTA button was clicked
-	function remove_notice() {
-		el_notice.fadeTo(100, 0, function () {
-			el_notice.slideUp(100, function () {
-				el_notice.remove();
-			});
-		});
+	function removeNotice() {
+		elNotice.fadeTo( 100, 0, () => elNotice.slideUp( 100, () => elNotice.remove() ) );
 	}
 
-	btn_act.click(function (ev) {
-		remove_notice();
-		notify_wordpress(btn_act.data("msg"));
-	});
+	btnAct.on( 'click', () => {
+		removeNotice();
+		notifyWordpress( btnAct.data( 'msg' ) );
+	} );
 
-	btn_dismiss.click(function (ev) {
-		remove_notice();
-		notify_wordpress(btn_act.data("msg"));
-	});
+	elNotice.find( '.smush-notice-dismiss' ).on( 'click', () => {
+		removeNotice();
+		notifyWordpress( btnAct.data( 'msg' ) );
+	} );
 
 	// Notify WordPress about the users choice and close the message.
-	function notify_wordpress(message) {
-		el_notice.attr("data-message", message);
-		el_notice.addClass("loading");
+	function notifyWordpress( message ) {
+		elNotice.attr( 'data-message', message );
+		elNotice.addClass( 'loading' );
 
 		//Send a ajax request to save the dismissed notice option
-		var param = {
-			action: 'dismiss_upgrade_notice'
-		};
-		jQuery.post(ajaxurl, param);
-	}
-
-	// Store the preference in db.
-	function send_dismiss_request( action ) {
-		var param = {
-			action: action
-		};
-		jQuery.post(ajaxurl, param);
+		$.post( ajaxurl, { action: 'dismiss_upgrade_notice' } );
 	}
 
 	// Dismiss the update notice.
-	jQuery('.wp-smush-update-info').on('click', '.notice-dismiss', function (e) {
+	$( '.wp-smush-update-info' ).on( 'click', '.notice-dismiss', ( e ) => {
 		e.preventDefault();
-		el_notice = jQuery(this);
-		remove_notice();
-		send_dismiss_request( 'dismiss_update_info' );
-	});
+		elNotice = $( this );
+		removeNotice();
+		$.post( ajaxurl, { action: 'dismiss_update_info' } );
+	} );
 
 	// Dismiss S3 support alert.
-	jQuery('div.wp-smush-s3support-alert').on('click', '.sui-notice-dismiss > a', function (e) {
-		el_notice = jQuery(this);
-		remove_notice();
-		send_dismiss_request( 'dismiss_s3support_alert' );
-	});
-
-});
+	$( 'div.wp-smush-s3support-alert' ).on( 'click', '.sui-notice-dismiss > a', () => {
+		elNotice = $( this );
+		removeNotice();
+		$.post( ajaxurl, { action: 'dismiss_s3support_alert' } );
+	} );
+}( jQuery ) );

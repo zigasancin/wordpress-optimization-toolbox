@@ -346,7 +346,7 @@ class Admin extends NextGen {
 	 *
 	 * @return string|void
 	 */
-	public function column_html( $pid, $status_txt = '', $button_txt = '', $show_button = true, $smushed = false, $echo = true, $wrapper = false ) {
+	public function column_html( $pid, $status_txt = '', $button_txt = '', $show_button = true, $smushed = false, $echo = true ) {
 		$class = $smushed ? '' : ' sui-hidden';
 		$html  = '<p class="smush-status' . $class . '">' . $status_txt . '</p>';
 		$html .= wp_nonce_field( 'wp_smush_nextgen', '_wp_smush_nonce', '', false );
@@ -357,13 +357,7 @@ class Admin extends NextGen {
 
 				return;
 			} else {
-				if ( ! $smushed ) {
-					$class = ' currently-smushing';
-				} else {
-					$class = ' smushed';
-				}
-
-				return $wrapper ? '<div class="smush-wrap' . $class . '">' . $html . '</div>' : $html;
+				return $html;
 			}
 		}
 		if ( ! $echo ) {
@@ -371,14 +365,7 @@ class Admin extends NextGen {
 			<button  class="button button-primary wp-smush-nextgen-send" data-id="' . $pid . '">
 				<span>' . $button_txt . '</span>
 			</button>';
-			if ( ! $smushed ) {
-				$class = ' unsmushed';
-			} else {
-				$class = ' smushed';
-			}
 			$html .= WP_Smush::get_instance()->core()->mod->smush->progress_bar();
-			$html  = $wrapper ? '<div class="smush-wrap' . $class . '">' . $html . '</div>' : $html;
-
 			return $html;
 		} else {
 			$html .= '<button class="button button-primary wp-smush-nextgen-send" data-id="' . $pid . '">

@@ -64,7 +64,7 @@ class Settings {
 		'cdn'               => false,
 		'auto_resize'       => false,
 		'webp'              => true,
-		'usage'             => true,
+		'usage'             => false,
 		'accessible_colors' => false,
 		'keep_data'         => true,
 		'lazy_load'         => false,
@@ -77,7 +77,7 @@ class Settings {
 	 * @sincr 3.2.2
 	 * @var array $modules
 	 */
-	private $modules = array( 'bulk', 'integrations', 'cdn', 'tools', 'settings' );
+	private $modules = array( 'bulk', 'integrations', 'lazy_load', 'cdn', 'tools', 'settings' );
 
 	/**
 	 * List of features/settings that are free.
@@ -110,7 +110,7 @@ class Settings {
 	 *
 	 * @var array
 	 */
-	private $integrations_fields = array( 'gutenberg', 's3', 'nextgen', 'js_builder' );
+	private $integrations_fields = array( 'gutenberg', 'js_builder', 's3', 'nextgen' );
 
 	/**
 	 * List of fields in CDN form.
@@ -434,7 +434,15 @@ class Settings {
 
 		$global = $this->is_network_enabled();
 
-		return $global && ! is_array( $global ) ? get_site_option( $name, $default ) : get_option( $name, $default );
+		if ( $global && ! is_array( $global ) ) {
+			return get_site_option( $name, $default );
+		}
+
+		// Fallback to network settings.
+		$settings = get_option( $name, $default );
+
+		// TODO: this fallback is dangerous! Make sure that a proper false option is not replaced.
+		return $settings ? $settings : get_site_option( $name, $default );
 	}
 
 	/**
@@ -605,7 +613,7 @@ class Settings {
 		if ( 'disabled' === $status ) {
 			$response = WP_Smush::get_instance()->api()->enable();
 
-			// Probably an exponential backoff.
+			// Probably an exponential back-off.
 			if ( is_wp_error( $response ) ) {
 				sleep( 1 ); // This is needed so we don't trigger the 597 API response.
 				$response = WP_Smush::get_instance()->api()->enable( true );
@@ -747,10 +755,11 @@ class Settings {
 	public function init_lazy_load_defaults() {
 		$defaults = array(
 			'format'          => array(
-				'jpeg' => true,
-				'png'  => true,
-				'gif'  => true,
-				'svg'  => true,
+				'jpeg'   => true,
+				'png'    => true,
+				'gif'    => true,
+				'svg'    => true,
+				'iframe' => true,
 			),
 			'output'          => array(
 				'content'    => true,

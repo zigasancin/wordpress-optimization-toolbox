@@ -41,6 +41,9 @@ class Common {
 
 		// Remove any pre_get_posts_filters added by WP Media Folder plugin.
 		add_action( 'wp_smush_remove_filters', array( $this, 'remove_filters' ) );
+
+		// ReCaptcha lazy load.
+		add_filter( 'smush_skip_iframe_from_lazy_load', array( $this, 'exclude_recaptcha_iframe' ), 10, 2 );
 	}
 
 	/**
@@ -188,7 +191,7 @@ class Common {
 				// if stats for a particular size doesn't exists.
 				if ( empty( $stats['sizes'][ $image_size ] ) ) {
 					// Update size wise details.
-					$stats['sizes'][ $image_size ] = (object) $smush->_array_fill_placeholders( $smush->_get_size_signature(), (array) $data );
+					$stats['sizes'][ $image_size ] = (object) $smush->array_fill_placeholders( $smush->get_size_signature(), (array) $data );
 				} else {
 					// Update compression percent and bytes saved for each size.
 					$stats['sizes'][ $image_size ]->bytes   = $stats['sizes'][ $image_size ]->bytes + $data->bytes_saved;
@@ -199,7 +202,7 @@ class Common {
 			// Create new stats.
 			$stats = array(
 				'stats' => array_merge(
-					$smush->_get_size_signature(),
+					$smush->get_size_signature(),
 					array(
 						'api_version' => - 1,
 						'lossy'       => - 1,
@@ -213,7 +216,7 @@ class Common {
 			$stats['stats']['keep_exif']   = ! empty( $data->keep_exif ) ? $data->keep_exif : 0;
 
 			// Update size wise details.
-			$stats['sizes'][ $image_size ] = (object) $smush->_array_fill_placeholders( $smush->_get_size_signature(), (array) $data );
+			$stats['sizes'][ $image_size ] = (object) $smush->array_fill_placeholders( $smush->get_size_signature(), (array) $data );
 		}
 
 		// Calculate the total compression.
@@ -304,4 +307,19 @@ class Common {
 
 		return true;
 	}
+
+	/**
+	 * Skip ReCaptcha iframes from lazy loading.
+	 *
+	 * @since 3.4.2
+	 *
+	 * @param bool   $skip  Should skip? Default: false.
+	 * @param string $src   Iframe url.
+	 *
+	 * @return bool
+	 */
+	public function exclude_recaptcha_iframe( $skip, $src ) {
+		return false !== strpos( $src, 'recaptcha/api' );
+	}
+
 }

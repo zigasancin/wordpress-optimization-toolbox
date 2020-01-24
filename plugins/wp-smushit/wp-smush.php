@@ -13,7 +13,7 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/extend/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
- * Version:           3.3.2
+ * Version:           3.4.2
  * Author:            WPMU DEV
  * Author URI:        https://premium.wpmudev.org/
  * License:           GPLv2
@@ -52,11 +52,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '3.3.2' );
+	define( 'WP_SMUSH_VERSION', '3.4.2' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
-	define( 'WP_SHARED_UI_VERSION', 'sui-2-3-29' );
+	define( 'WP_SHARED_UI_VERSION', 'sui-2-5-0' );
 }
 if ( ! defined( 'WP_SMUSH_BASENAME' ) ) {
 	define( 'WP_SMUSH_BASENAME', plugin_basename( __FILE__ ) );
@@ -87,7 +87,7 @@ if ( ! defined( 'WP_SMUSH_TIMEOUT' ) ) {
 }
 
 // Compat with WPMU DEV staging.
-if ( isset( $_SERVER['WPMUDEV_HOSTING_ENV'] ) && 'staging' === wp_unslash( $_SERVER['WPMUDEV_HOSTING_ENV'] ) ) {
+if ( ! defined( 'WP_SMUSH_ASYNC' ) && isset( $_SERVER['WPMUDEV_HOSTING_ENV'] ) && 'staging' === wp_unslash( $_SERVER['WPMUDEV_HOSTING_ENV'] ) ) {
 	define( 'WP_SMUSH_ASYNC', false );
 }
 
@@ -138,7 +138,7 @@ register_deactivation_hook( __FILE__, array( 'Smush\\Core\\Installer', 'smush_de
 // Init the plugin and load the plugin instance for the first time.
 add_action( 'plugins_loaded', array( 'Smush\\WP_Smush', 'get_instance' ) );
 
-if ( ! class_exists( 'WP_Smush' ) ) {
+if ( ! class_exists( 'Smush\\WP_Smush' ) ) {
 	/**
 	 * Class WP_Smush
 	 */
@@ -148,7 +148,6 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		 * Plugin instance.
 		 *
 		 * @since 2.9.0
-		 *
 		 * @var null|WP_Smush
 		 */
 		private static $instance = null;
@@ -157,7 +156,6 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		 * Plugin core.
 		 *
 		 * @since 2.9.0
-		 *
 		 * @var Core\Core
 		 */
 		private $core;
@@ -166,7 +164,6 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		 * Plugin admin.
 		 *
 		 * @since 2.9.0
-		 *
 		 * @var App\Admin
 		 */
 		private $admin;
@@ -175,7 +172,6 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		 * Plugin API.
 		 *
 		 * @since 3.0
-		 *
 		 * @var Core\Api\API
 		 */
 		private $api = '';
@@ -191,7 +187,6 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		 * Smush project ID.
 		 *
 		 * @since  3.1.1
-		 *
 		 * @var int $project_id
 		 */
 		private static $project_id = 912164;
@@ -277,7 +272,7 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 
 			self::$is_pro = $this->validate_install();
 
-			$this->core  = new Core\Core( new Core\Modules\DB() );
+			$this->core  = new Core\Core();
 			$this->admin = new App\Admin();
 
 			if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -377,7 +372,7 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 				'frash_subscribe_form_fields',
 				function ( $mc_list_id ) {
 					if ( '4b14b58816' === $mc_list_id ) {
-						echo '<input type="hidden" id="mce-group[53]-53-0" name="group[53][1]" value="1" />';
+						echo '<input type="hidden" id="mce-group[53]-53-1" name="group[53][2]" value="2" />';
 					}
 				}
 			);
@@ -388,7 +383,7 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 				/* 1             Plugin ID */ WP_SMUSH_BASENAME,
 				/* 2          Plugin Title */ 'Smush',
 				/* 3 https://wordpress.org */ '/plugins/wp-smushit/',
-				/* 4      Email Button CTA */ __( 'Free Download', 'wp-smushit' ),
+				/* 4      Email Button CTA */ __( 'Get Fast!', 'wp-smushit' ),
 				/* 5  Mailchimp List id for the plugin - e.g. 4b14b58816 is list id for Smush */ '4b14b58816'
 			);
 
@@ -398,7 +393,7 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 			add_filter(
 				'wdev-email-message-' . WP_SMUSH_BASENAME,
 				function () {
-					return 'Sign up now to get %s Guide to Image Optimization for free and learn the tricks used on more than 1 million sites to optimize over 36 billion images.';
+					return "You're awesome for installing %s! Make sure you get the most out of it, boost your Google PageSpeed score with these tips and tricks - just for users of Smush!";
 				}
 			);
 		}

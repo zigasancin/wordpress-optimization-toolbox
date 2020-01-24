@@ -1,15 +1,17 @@
+/* global WP_Smush */
+/* global ajaxurl */
+
 /**
  * Modals JavaScript code.
  */
-
 ( function() {
 	'use strict';
 
 	/**
-     * Onboarding modal.
-     *
-     * @since 3.1
-     */
+	 * Onboarding modal.
+	 *
+	 * @since 3.1
+	 */
 	WP_Smush.onboarding = {
 		membership: 'free', // Assume free by default.
 		onboardingModal: document.getElementById( 'smush-onboarding-dialog' ),
@@ -26,16 +28,17 @@
 			strip_exif: true,
 			original: false,
 			lazy_load: true,
-			usage: true,
+			usage: false,
 		},
 		contentContainer: document.getElementById( 'smush-onboarding-content' ),
-		onboardingSlides: [ 'start', 'auto', 'lossy', 'strip_exif', 'original', 'lazy_load', 'usage' ],
+		//onboardingSlides: [ 'start', 'auto', 'lossy', 'strip_exif', 'original', 'lazy_load', 'usage' ],
+		onboardingSlides: [ 'start', 'auto', 'lossy', 'strip_exif', 'original', 'lazy_load' ],
 		touchX: null,
 		touchY: null,
 
 		/**
-         * Init module.
-         */
+		 * Init module.
+		 */
 		init() {
 			if ( ! this.onboardingModal ) {
 				return;
@@ -57,15 +60,14 @@
 			}
 
 			// Show the modal.
-			const dialog = new A11yDialog( this.onboardingModal );
-			dialog.show();
+			window.SUI.openModal( 'smush-onboarding-dialog', 'checking-files-dialog', undefined, false );
 		},
 
 		/**
-         * Get swipe coordinates.
-         *
-         * @param e
-         */
+		 * Get swipe coordinates.
+		 *
+		 * @param {Object} e
+		 */
 		handleTouchStart( e ) {
 			const firstTouch = e.touches[ 0 ];
 			this.touchX = firstTouch.clientX;
@@ -73,10 +75,10 @@
 		},
 
 		/**
-         * Process swipe left/right.
-         *
-         * @param e
-         */
+		 * Process swipe left/right.
+		 *
+		 * @param {Object} e
+		 */
 		handleTouchMove( e ) {
 			if ( ! this.touchX || ! this.touchY ) {
 				return;
@@ -102,11 +104,11 @@
 		},
 
 		/**
-         * Update the template, register new listeners.
-         *
-         * @param {string} directionClass  Accepts: fadeInRight, fadeInLeft.
-         */
-		renderTemplate( directionClass ) {
+		 * Update the template, register new listeners.
+		 *
+		 * @param {string} directionClass  Accepts: fadeInRight, fadeInLeft, none.
+		 */
+		renderTemplate( directionClass = 'none' ) {
 			// Grab the selected value.
 			const input = this.onboardingModal.querySelector( 'input[type="checkbox"]' );
 			if ( input ) {
@@ -119,7 +121,7 @@
 			if ( content ) {
 				this.contentContainer.innerHTML = content;
 
-				if ( 'undefined' === typeof directionClass ) {
+				if ( 'none' === directionClass ) {
 					this.contentContainer.classList.add( 'loaded' );
 				} else {
 					this.contentContainer.classList.remove( 'loaded' );
@@ -138,8 +140,8 @@
 		},
 
 		/**
-         * Catch "Finish setup wizard" button click.
-         */
+		 * Catch "Finish setup wizard" button click.
+		 */
 		bindSubmit() {
 			const submitButton = this.onboardingModal.querySelector( 'button[type="submit"]' );
 			const self = this;
@@ -163,7 +165,7 @@
 						if ( 200 === xhr.status ) {
 							WP_Smush.onboarding.showScanDialog();
 						} else {
-							console.log( 'Request failed.  Returned status of ' + xhr.status );
+							window.console.log( 'Request failed.  Returned status of ' + xhr.status );
 						}
 					};
 					xhr.send( 'smush_settings=' + JSON.stringify( self.selection ) + '&_ajax_nonce=' + _nonce.value );
@@ -172,11 +174,11 @@
 		},
 
 		/**
-         * Handle navigation.
-         *
-         * @param e
-         * @param whereTo
-         */
+		 * Handle navigation.
+		 *
+		 * @param {Object} e
+		 * @param {null|string} whereTo
+		 */
 		next( e, whereTo = null ) {
 			const index = this.onboardingSlides.indexOf( this.settings.slide );
 			let newIndex = 0;
@@ -200,10 +202,10 @@
 		},
 
 		/**
-         * Handle circle navigation.
-         *
-         * @param target
-         */
+		 * Handle circle navigation.
+		 *
+		 * @param {string} target
+		 */
 		goTo( target ) {
 			const newIndex = this.onboardingSlides.indexOf( target );
 
@@ -218,8 +220,8 @@
 		},
 
 		/**
-         * Skip onboarding experience.
-         */
+		 * Skip onboarding experience.
+		 */
 		skipSetup: () => {
 			const _nonce = document.getElementById( '_wpnonce' );
 
@@ -229,21 +231,18 @@
 				if ( 200 === xhr.status ) {
 					WP_Smush.onboarding.showScanDialog();
 				} else {
-					console.log( 'Request failed.  Returned status of ' + xhr.status );
+					window.console.log( 'Request failed.  Returned status of ' + xhr.status );
 				}
 			};
 			xhr.send();
 		},
 
 		/**
-         * Show checking files dialog.
-         */
+		 * Show checking files dialog.
+		 */
 		showScanDialog() {
-			const dialog = new A11yDialog( this.onboardingModal );
-			dialog.hide();
-
-			const scanDialog = new A11yDialog( this.scanFilesModal );
-			scanDialog.show();
+			window.SUI.closeModal();
+			window.SUI.openModal( 'checking-files-dialog', 'wpbody-content', undefined, false );
 
 			const nonce = document.getElementById( 'wp_smush_options_nonce' );
 
@@ -254,15 +253,14 @@
 				xhr.onload = () => {
 					const elem = document.querySelector( '#smush-onboarding-dialog' );
 					elem.parentNode.removeChild( elem );
-					scanDialog.hide();
+					window.SUI.closeModal();
 
 					if ( 200 === xhr.status ) {
 						setTimeout( function() {
 							location.reload();
-						}, 1000
-						);
+						}, 1000 );
 					} else {
-						console.log( 'Request failed.  Returned status of ' + xhr.status );
+						window.console.log( 'Request failed.  Returned status of ' + xhr.status );
 					}
 				};
 				xhr.send( 'type=media&get_ui=false&process_settings=false&wp_smush_options_nonce=' + nonce.value );
@@ -271,18 +269,18 @@
 	};
 
 	/**
-     * Template function (underscores based).
-     *
-     * @type {Function}
-     */
+	 * Template function (underscores based).
+	 *
+	 * @type {Function}
+	 */
 	WP_Smush.onboarding.template = _.memoize( ( id ) => {
-		let compiled,
-			options = {
-				evaluate: /<#([\s\S]+?)#>/g,
-				interpolate: /\{\{\{([\s\S]+?)\}\}\}/g,
-				escape: /\{\{([^\}]+?)\}\}(?!\})/g,
-				variable: 'data',
-			};
+		let compiled;
+		const options = {
+			evaluate: /<#([\s\S]+?)#>/g,
+			interpolate: /{{{([\s\S]+?)}}}/g,
+			escape: /{{([^}]+?)}}(?!})/g,
+			variable: 'data',
+		};
 
 		return ( data ) => {
 			_.templateSettings = options;

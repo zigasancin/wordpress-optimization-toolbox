@@ -69,7 +69,7 @@ class Thumbs extends Mixin {
 						// Initialize stats array.
 						$stats                = array(
 							'stats' => array_merge(
-								$smush->_get_size_signature(),
+								$smush->get_size_signature(),
 								array(
 									'api_version' => - 1,
 									'lossy'       => - 1,
@@ -84,7 +84,7 @@ class Thumbs extends Mixin {
 						$stats['size_before'] = $response['data']->before_size;
 						$stats['time']        = $response['data']->time;
 					}
-					$stats['sizes'][ $size ] = (object) $smush->_array_fill_placeholders( $smush->_get_size_signature(), (array) $response['data'] );
+					$stats['sizes'][ $size ] = (object) $smush->array_fill_placeholders( $smush->get_size_signature(), (array) $response['data'] );
 
 					if ( isset( $image->metadata ) ) {
 						$image->meta_data['wp_smush'] = $stats;

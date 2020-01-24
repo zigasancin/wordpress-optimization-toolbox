@@ -14,7 +14,6 @@ namespace Smush\Core;
 
 use finfo;
 use Smush\WP_Smush;
-use wpdb;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -51,6 +50,29 @@ class Helper {
 		}
 
 		return $mime;
+	}
+
+	/**
+	 * Filter the Posts object as per mime type.
+	 *
+	 * @param array $posts Object of Posts.
+	 *
+	 * @return mixed array of post ids
+	 */
+	public static function filter_by_mime( $posts ) {
+		if ( empty( $posts ) ) {
+			return $posts;
+		}
+
+		foreach ( $posts as $post_k => $post ) {
+			if ( ! isset( $post->post_mime_type ) || ! in_array( $post->post_mime_type, Core::$mime_types, true ) ) {
+				unset( $posts[ $post_k ] );
+			} else {
+				$posts[ $post_k ] = $post->ID;
+			}
+		}
+
+		return $posts;
 	}
 
 	/**
@@ -111,29 +133,6 @@ class Helper {
 	}
 
 	/**
-	 * Multiple Needles in an array
-	 *
-	 * @param string $haystack  Where to search.
-	 * @param array  $needle    What to search for.
-	 * @param int    $offset    Offset.
-	 *
-	 * @return bool
-	 */
-	public static function strposa( $haystack, $needle, $offset = 0 ) {
-		if ( ! is_array( $needle ) ) {
-			$needle = array( $needle );
-		}
-
-		foreach ( $needle as $query ) {
-			if ( strpos( $haystack, $query, $offset ) !== false ) {
-				return true;
-			} // stop on first true result
-		}
-
-		return false;
-	}
-
-	/**
 	 * Checks if file for given attachment id exists on s3, otherwise looks for local path.
 	 *
 	 * @param int    $id         File ID.
@@ -162,69 +161,6 @@ class Helper {
 		}
 
 		return $file_exists;
-	}
-
-	/**
-	 * Add ellipsis in middle of long strings
-	 *
-	 * @param string $string  String.
-	 *
-	 * @return string Truncated string
-	 */
-	public static function add_ellipsis( $string = '' ) {
-		if ( empty( $string ) ) {
-			return $string;
-		}
-		// Return if the character length is 120 or less, else add ellipsis in between.
-		if ( strlen( $string ) < 121 ) {
-			return $string;
-		}
-		$start  = substr( $string, 0, 60 );
-		$end    = substr( $string, -40 );
-		$string = $start . '...' . $end;
-
-		return $string;
-	}
-
-	/**
-	 * Sanitizes a hex color.
-	 *
-	 * @since 2.9  Moved from wp-smushit.php file.
-	 *
-	 * @param string $color  HEX color code.
-	 *
-	 * @return string Returns either '', a 3 or 6 digit hex color (with #), or nothing
-	 */
-	private function smush_sanitize_hex_color( $color ) {
-		if ( '' === $color ) {
-			return '';
-		}
-
-		// 3 or 6 hex digits, or the empty string.
-		if ( preg_match( '|^#([A-Fa-f0-9]{3}){1,2}$|', $color ) ) {
-			return $color;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Sanitizes a hex color without hash.
-	 *
-	 * @since 2.9  Moved from wp-smushit.php file.
-	 *
-	 * @param string $color  HEX color code with hash.
-	 *
-	 * @return string Returns either '', a 3 or 6 digit hex color (with #), or nothing
-	 */
-	public function smush_sanitize_hex_color_no_hash( $color ) {
-		$color = ltrim( $color, '#' );
-
-		if ( '' === $color ) {
-			return '';
-		}
-
-		return $this->smush_sanitize_hex_color( '#' . $color ) ? $color : null;
 	}
 
 	/**
@@ -349,38 +285,46 @@ class Helper {
 	}
 
 	/**
-	 * Format Numbers to short form 1000 -> 1k
+	 * Check to see if file is animated.
 	 *
-	 * @param int $number  Number.
+	 * @since 3.0  Moved from class-resize.php
 	 *
-	 * @return string
+	 * @param string $file_path  Image file path.
+	 * @param int    $id         Attachment ID.
 	 */
-	public static function format_number( $number ) {
-		if ( $number >= 1000 ) {
-			return $number / 1000 . 'k'; // NB: you will want to round this.
+	public static function check_animated_status( $file_path, $id ) {
+		// Only do this for GIFs.
+		if ( 'image/gif' !== get_post_mime_type( $id ) || ! isset( $file_path ) ) {
+			return;
 		}
 
-		return $number;
-	}
+		$filecontents = file_get_contents( $file_path );
 
-	/**
-	 * Return the file size in a humanly readable format.
-	 *
-	 * Taken from http://www.php.net/manual/en/function.filesize.php#91477
-	 *
-	 * @param int $bytes      Number of bytes.
-	 * @param int $precision  Precision.
-	 *
-	 * @return string
-	 */
-	public static function format_bytes( $bytes, $precision = 1 ) {
-		$units  = array( 'B', 'KB', 'MB', 'GB', 'TB' );
-		$bytes  = max( $bytes, 0 );
-		$pow    = floor( ( $bytes ? log( $bytes ) : 0 ) / log( 1024 ) );
-		$pow    = min( $pow, count( $units ) - 1 );
-		$bytes /= pow( 1024, $pow );
+		$str_loc = 0;
+		$count   = 0;
 
-		return round( $bytes, $precision ) . ' ' . $units[ $pow ];
+		// There is no point in continuing after we find a 2nd frame.
+		while ( $count < 2 ) {
+			$where1 = strpos( $filecontents, "\x00\x21\xF9\x04", $str_loc );
+			if ( false === $where1 ) {
+				break;
+			} else {
+				$str_loc = $where1 + 1;
+				$where2  = strpos( $filecontents, "\x00\x2C", $str_loc );
+				if ( false === $where2 ) {
+					break;
+				} else {
+					if ( $where2 === $where1 + 8 ) {
+						$count++;
+					}
+					$str_loc = $where2 + 1;
+				}
+			}
+		}
+
+		if ( $count > 1 ) {
+			update_post_meta( $id, WP_SMUSH_PREFIX . 'animated', true );
+		}
 	}
 
 }

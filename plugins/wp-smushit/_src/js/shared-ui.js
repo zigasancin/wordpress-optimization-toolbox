@@ -3,8 +3,7 @@
  *
  * @package Smush
  */
-require( '@wpmudev/shared-ui/dist/js/_src/modals' );
-require( '@wpmudev/shared-ui/dist/js/_src/a11y-dialog' );
+require( '@wpmudev/shared-ui/dist/js/_src/modal-dialog' );
 require( '@wpmudev/shared-ui/dist/js/_src/notifications' );
 require( '@wpmudev/shared-ui/dist/js/_src/scores' );
 require( '@wpmudev/shared-ui/dist/js/_src/select' );

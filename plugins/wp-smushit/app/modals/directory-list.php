@@ -11,29 +11,38 @@ if ( ! defined( 'WPINC' ) ) {
 
 ?>
 
-<div class="sui-dialog wp-smush-list-dialog" aria-hidden="true" id="wp-smush-list-dialog">
-	<div class="sui-dialog-overlay sui-fade-in" tabindex="0"></div>
-	<div class="sui-dialog-content sui-bounce-in" role="dialog">
-		<div class="sui-box" role="document">
+<div class="sui-modal sui-modal-lg">
+	<div
+			role="dialog"
+			id="wp-smush-list-dialog"
+			class="sui-modal-content wp-smush-list-dialog"
+			aria-modal="true"
+			aria-labelledby="list-dialog-title"
+			aria-describedby="list-dialog-description"
+	>
+		<div class="sui-box">
 			<div class="sui-box-header">
-				<h3 class="sui-box-title"><?php esc_html_e( 'Choose Directory', 'wp-smushit' ); ?></h3>
-				<div class="sui-actions-right">
-					<button class="sui-dialog-close" aria-label="<?php esc_attr_e( 'Close', 'wp-smushit' ); ?>" data-a11y-dialog-hide></button>
-				</div>
+				<h3 class="sui-box-title" id="list-dialog-title">
+					<?php esc_html_e( 'Choose Directory', 'wp-smushit' ); ?>
+				</h3>
+				<button class="sui-button-icon sui-button-float--right" data-modal-close="" id="dialog-close-div">
+					<i class="sui-icon-close sui-md" aria-hidden="true"></i>
+					<span class="sui-screen-reader-text"><?php esc_html_e( 'Close', 'wp-smushit' ); ?></span>
+				</button>
 			</div>
 
 			<div class="sui-box-body">
-				<p><?php esc_html_e( 'Choose which folder you wish to smush. Smush will automatically include any images in subfolders of your selected folder.', 'wp-smushit' ); ?></p>
+				<p id="list-dialog-description">
+					<?php esc_html_e( 'Choose which folder you wish to smush. Smush will automatically include any images in subfolders of your selected folder.', 'wp-smushit' ); ?>
+				</p>
 				<div class="content"></div>
 			</div>
 
-			<div class="sui-box-footer">
-				<div class="sui-actions-right">
-					<span class="add-dir-loader"></span>
-					<button class="sui-modal-close sui-button sui-button-blue wp-smush-select-dir" disabled>
-						<?php esc_html_e( 'SMUSH', 'wp-smushit' ); ?>
-					</button>
-				</div>
+			<div class="sui-box-footer sui-content-right">
+				<span class="add-dir-loader"></span>
+				<button class="sui-modal-close sui-button sui-button-blue wp-smush-select-dir" disabled id="wp-smush-select-dir">
+					<?php esc_html_e( 'SMUSH', 'wp-smushit' ); ?>
+				</button>
 			</div>
 		</div>
 	</div>

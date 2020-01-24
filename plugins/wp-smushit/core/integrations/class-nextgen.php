@@ -74,6 +74,8 @@ class NextGen extends Abstract_Integration {
 
 		// Do not continue if not PRO member or NextGen plugin not installed.
 		if ( ! $is_pro || ! $this->enabled || ! $this->is_enabled() ) {
+			// Add Pro tag.
+			add_action( 'smush_setting_column_tag', array( $this, 'add_pro_tag' ) );
 			return;
 		}
 
@@ -254,13 +256,13 @@ class NextGen extends Abstract_Integration {
 	public function additional_notice( $name ) {
 		if ( 'nextgen' === $name && ! $this->enabled ) {
 			?>
-			<div class="sui-notice sui-notice-sm">
-				<p>
-					<?php
-					esc_html_e( 'To use this feature you need to install and activate NextGen Gallery.', 'wp-smushit' );
-					?>
-				</p>
-			</div>
+            <div class="sui-toggle-content">
+                <div class="sui-notice sui-notice-sm">
+                    <p>
+                        <?php esc_html_e( 'To use this feature you need to be using NextGen Gallery.', 'wp-smushit' ); ?>
+                    </p>
+                </div>
+            </div>
 			<?php
 		}
 	}
@@ -411,11 +413,19 @@ class NextGen extends Abstract_Integration {
 
 		// Check for media upload permission.
 		if ( ! current_user_can( 'upload_files' ) ) {
-			wp_die( __( "You don't have permission to work with uploaded files.", 'wp-smushit' ) );
+			wp_send_json_error(
+				array(
+					'error_msg' => __( "You don't have permission to work with uploaded files.", 'wp-smushit' ),
+				)
+			);
 		}
 
 		if ( empty( $pid ) ) {
-			wp_die( __( 'No attachment ID was provided.', 'wp-smushit' ) );
+			wp_send_json_error(
+				array(
+					'error_msg' => __( 'No attachment ID was provided.', 'wp-smushit' ),
+				)
+			);
 		}
 
 		$this->smush_image( $pid, '' );
@@ -445,7 +455,7 @@ class NextGen extends Abstract_Integration {
 	 * @return bool
 	 */
 	public function show_restore_option( $pid, $attachment_data ) {
-		$smush = WP_Smush::get_instance()->core()->mod->smush;
+		$backup = WP_Smush::get_instance()->core()->mod->backup;
 
 		// Registry Object for NextGen Gallery.
 		$registry = C_Component_Registry::get_instance();
@@ -463,7 +473,7 @@ class NextGen extends Abstract_Integration {
 		$attachment_file_path = $storage->get_image_abspath( $image, 'full' );
 
 		// Get the backup path.
-		$backup_path = $smush->get_image_backup_path( $attachment_file_path );
+		$backup_path = $backup->get_image_backup_path( $attachment_file_path );
 
 		// If one of the backup(Ours/NextGen) exists, show restore option.
 		if ( file_exists( $backup_path ) || file_exists( $attachment_file_path . '_backup' ) ) {
@@ -484,7 +494,7 @@ class NextGen extends Abstract_Integration {
 			$attachment_size_file_path = $storage->get_image_abspath( $image, $size );
 
 			// Get the backup path.
-			$backup_path = $smush->get_image_backup_path( $attachment_size_file_path );
+			$backup_path = $backup->get_image_backup_path( $attachment_size_file_path );
 
 			// If one of the backup(Ours/NextGen) exists, show restore option.
 			if ( file_exists( $backup_path ) || file_exists( $attachment_size_file_path . '_backup' ) ) {
@@ -521,7 +531,7 @@ class NextGen extends Abstract_Integration {
 			);
 		}
 
-		$smush = WP_Smush::get_instance()->core()->mod->smush;
+		$backup = WP_Smush::get_instance()->core()->mod->backup;
 
 		// Store the restore success/failure for all the sizes.
 		$restored = array();
@@ -546,7 +556,7 @@ class NextGen extends Abstract_Integration {
 		$attachment_file_path = $storage->get_image_abspath( $image, 'full' );
 
 		// Get the backup path.
-		$backup_path = $smush->get_image_backup_path( $attachment_file_path );
+		$backup_path = $backup->get_image_backup_path( $attachment_file_path );
 
 		// Restoring the full image.
 		// If file exists, corresponding to our backup path.
@@ -571,7 +581,7 @@ class NextGen extends Abstract_Integration {
 				$attachment_size_file_path = $storage->get_image_abspath( $image, $size );
 
 				// Get the backup path.
-				$backup_path = $smush->get_image_backup_path( $attachment_size_file_path );
+				$backup_path = $backup->get_image_backup_path( $attachment_size_file_path );
 
 				// If file exists, corresponding to our backup path.
 				if ( file_exists( $backup_path ) ) {
@@ -663,6 +673,23 @@ class NextGen extends Abstract_Integration {
 		}
 	}
 
+	/**
+	 * Add a pro tag next to the setting title.
+	 *
+	 * @param string $setting_key  Setting key name.
+	 *
+	 * @since 3.4.0
+	 */
+	public function add_pro_tag( $setting_key ) {
+		// Return if not NextGen integration.
+		if ( $this->module !== $setting_key || WP_Smush::is_pro() ) {
+			return;
+		}
+		?>
+        <span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Pro', 'wp-smushit' ); ?></span>
+		<?php
+    }
+
 	/**************************************
 	 *
 	 * PRIVATE CLASSES
@@ -724,7 +751,7 @@ class NextGen extends Abstract_Integration {
 		$errors = new WP_Error();
 		$stats  = array(
 			'stats' => array_merge(
-				$smush->_get_size_signature(),
+				$smush->get_size_signature(),
 				array(
 					'api_version' => - 1,
 					'lossy'       => - 1,
@@ -810,7 +837,7 @@ class NextGen extends Abstract_Integration {
 					continue;
 				}
 
-				$stats['sizes'][ $size ] = (object) $smush->_array_fill_placeholders( $smush->_get_size_signature(), (array) $response['data'] );
+				$stats['sizes'][ $size ] = (object) $smush->array_fill_placeholders( $smush->get_size_signature(), (array) $response['data'] );
 
 				if ( empty( $stats['stats']['api_version'] ) || - 1 == $stats['stats']['api_version'] ) {
 					$stats['stats']['api_version'] = $response['data']->api_version;

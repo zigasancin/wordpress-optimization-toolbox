@@ -42,6 +42,8 @@ class S3 extends Abstract_Integration {
 
 		// Do not continue if not PRO member or S3 Offload plugin is not installed.
 		if ( ! WP_Smush::is_pro() || ! $this->enabled ) {
+			// Add Pro tag.
+			add_action( 'smush_setting_column_tag', array( $this, 'add_pro_tag' ) );
 			return;
 		}
 
@@ -274,10 +276,8 @@ class S3 extends Abstract_Integration {
 		 */
 		global $as3cf;
 
-		$is_pro = WP_Smush::is_pro();
-
 		// If S3 integration is not enabled, return.
-		$setting_val = $is_pro ? $this->settings->get( $this->module ) : 0;
+		$setting_val = WP_Smush::is_pro() ? $this->settings->get( $this->module ) : 0;
 
 		// If integration is disabled when S3 offload is active, do not continue.
 		if ( ! $setting_val && is_object( $as3cf ) ) {
@@ -323,13 +323,32 @@ class S3 extends Abstract_Integration {
 		}
 
 		// Return early if we don't need to do anything.
-		if ( empty( $message ) || ! $is_pro ) {
+		if ( empty( $message ) ) {
 			return;
 		}
 		?>
-		<div class="sui-notice<?php echo esc_attr( $class ); ?> smush-notice-sm">
-			<p><?php echo $message; ?></p>
-		</div>
+        <div class="sui-toggle-content">
+            <div class="sui-notice<?php echo esc_attr( $class ); ?> smush-notice-sm">
+                <p><?php echo $message; ?></p>
+            </div>
+        </div>
+		<?php
+	}
+
+	/**
+	 * Add a pro tag next to the setting title.
+	 *
+	 * @param string $setting_key  Setting key name.
+	 *
+	 * @since 3.4.0
+	 */
+	public function add_pro_tag( $setting_key ) {
+		// Return if not NextGen integration.
+		if ( $this->module !== $setting_key || WP_Smush::is_pro() ) {
+			return;
+		}
+		?>
+        <span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Pro', 'wp-smushit' ); ?></span>
 		<?php
 	}
 

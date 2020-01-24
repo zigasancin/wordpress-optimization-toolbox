@@ -1,5 +1,5 @@
+/* global WP_Smush */
 /* global ajaxurl */
-/* global wp_smush_msgs */
 
 /**
  * Directory scanner module that will Smush images in the Directory Smush modal.
@@ -9,7 +9,7 @@
  * @param {string|number} totalSteps
  * @param {string|number} currentStep
  * @return {Object}  Scan object.
- * @constructor
+ * @class
  */
 const DirectoryScanner = ( totalSteps, currentStep ) => {
 	totalSteps = parseInt( totalSteps );
@@ -45,20 +45,20 @@ const DirectoryScanner = ( totalSteps, currentStep ) => {
 		},
 
 		onFinishStep( progress ) {
-			jQuery( '.wp-smush-progress-dialog .sui-progress-state-text' ).html( ( currentStep - failedItems ) + '/' + totalSteps + ' ' + wp_smush_msgs.progress_smushed );
+			jQuery( '.wp-smush-progress-dialog .sui-progress-state-text' ).html( ( currentStep - failedItems ) + '/' + totalSteps + ' ' + window.wp_smush_msgs.progress_smushed );
 			WP_Smush.directory.updateProgressBar( progress );
 		},
 
 		onFinish() {
 			WP_Smush.directory.updateProgressBar( 100 );
-			window.location.href = wp_smush_msgs.directory_url + '&scan=done';
+			window.location.href = window.wp_smush_msgs.directory_url + '&scan=done';
 		},
 
 		limitReached() {
 			const dialog = jQuery( '#wp-smush-progress-dialog' );
 
 			dialog.addClass( 'wp-smush-exceed-limit' );
-			dialog.find( '#cancel-directory-smush' ).attr( 'data-tooltip', wp_smush_msgs.bulk_resume );
+			dialog.find( '#cancel-directory-smush' ).attr( 'data-tooltip', window.wp_smush_msgs.bulk_resume );
 			dialog.find( '.sui-icon-close' ).removeClass( 'sui-icon-close' ).addClass( 'sui-icon-play' );
 			dialog.find( '#cancel-directory-smush' ).attr( 'id', 'cancel-directory-smush-disabled' );
 		},

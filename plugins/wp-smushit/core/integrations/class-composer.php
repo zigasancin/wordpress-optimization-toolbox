@@ -83,13 +83,13 @@ class Composer extends Abstract_Integration {
 	public function additional_notice( $name ) {
 		if ( 'js_builder' === $name && ! $this->enabled ) {
 			?>
-			<div class="sui-notice sui-notice-sm">
-				<p>
-					<?php
-					esc_html_e( 'To use this feature you need to install and activate WPBakery Page Builder.', 'wp-smushit' );
-					?>
-				</p>
-			</div>
+            <div class="sui-toggle-content">
+                <div class="sui-notice sui-notice-sm">
+                    <p>
+                        <?php esc_html_e( 'To use this feature you need be using WPBakery Page Builder.', 'wp-smushit' ); ?>
+                    </p>
+                </div>
+            </div>
 			<?php
 		}
 	}

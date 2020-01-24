@@ -4,6 +4,8 @@
  *
  * @package WP_Smush
  *
+ * @var Dashboard $this
+ *
  * @var array  $basic_features    Basic features array.
  * @var bool   $is_pro            Is PRO user or not.
  * @var array  $integration_group Integration group.
@@ -11,6 +13,8 @@
  * @var array  $settings_data     Settings descriptions and labels.
  * @var string $upsell_url        Upsell URL.
  */
+
+use Smush\App\Pages\Dashboard;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -50,8 +54,10 @@ if ( ! defined( 'WPINC' ) ) {
 
 <?php if ( ! $is_pro ) : ?>
 	<div class="sui-box-settings-row sui-upsell-row">
-		<img class="sui-image sui-upsell-image sui-upsell-image-smush integrations-upsell-image" src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/smush-promo.png' ); ?>">
-		<div class="sui-upsell-notice">
+		<img class="sui-image sui-upsell-image sui-upsell-image-smush integrations-upsell-image"
+             src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/smush-graphic-integrations-upsell.png' ); ?>"
+             srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/smush-graphic-integrations-upsell@2x.png' ); ?> 2x">
+		<div class="sui-notice sui-notice-purple smush-upsell-notice">
 			<p>
 				<?php
 				printf(
@@ -62,6 +68,11 @@ if ( ! defined( 'WPINC' ) ) {
 				);
 				?>
 			</p>
+			<div class="sui-notice-buttons">
+				<a href="<?php echo esc_url( $upsell_url ); ?>" class="sui-button sui-button-purple">
+					<?php esc_html_e( 'Try Smush Pro for Free', 'wp-smushit' ); ?>
+				</a>
+			</div>
 		</div>
 	</div>
 <?php endif; ?>

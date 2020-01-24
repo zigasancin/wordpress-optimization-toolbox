@@ -1,26 +1,29 @@
+/* global WP_Smush */
+/* global ajaxurl */
+/* global wp_smush_msgs */
+/* global smush_vars */
+
 /**
  * Helpers functions.
  *
  * @since 2.9.0  Moved from admin.js
  */
-
-( function( $ ) {
+( function() {
 	'use strict';
 
 	WP_Smush.helpers = {
-
 		init: () => {},
 
 		/**
 		 * Convert bytes to human readable form.
 		 *
-		 * @param a  Bytes
-		 * @param b  Number of digits
-		 * @returns {*} Formatted Bytes
+		 * @param {number} a  Bytes
+		 * @param {number} b  Number of digits
+		 * @return {*} Formatted Bytes
 		 */
 		formatBytes: ( a, b ) => {
 			const thresh = 1024,
-				  units  = ['KB', 'MB', 'GB', 'TB', 'PB'];
+				units = [ 'KB', 'MB', 'GB', 'TB', 'PB' ];
 
 			if ( Math.abs( a ) < thresh ) {
 				return a + ' B';
@@ -33,76 +36,41 @@
 				++u;
 			} while ( Math.abs( a ) >= thresh && u < units.length - 1 );
 
-			return a.toFixed( b ) + ' ' + units[u];
+			return a.toFixed( b ) + ' ' + units[ u ];
 		},
 
 		/**
 		 * Get size from a string.
 		 *
-		 * @param formatted_size  Formatter string
-		 * @returns {*} Formatted Bytes
+		 * @param {string} formattedSize  Formatter string
+		 * @return {*} Formatted Bytes
 		 */
-		getSizeFromString: ( formatted_size ) => {
-			return formatted_size.replace( /[a-zA-Z]/g, '' ).trim();
+		getSizeFromString: ( formattedSize ) => {
+			return formattedSize.replace( /[a-zA-Z]/g, '' ).trim();
 		},
 
 		/**
 		 * Get type from formatted string.
 		 *
-		 * @param formatted_size  Formatted string
-		 * @returns {*} Formatted Bytes
+		 * @param {string} formattedSize  Formatted string
+		 * @return {*} Formatted Bytes
 		 */
-		getFormatFromString: ( formatted_size ) => {
-			return formatted_size.replace( /[0-9.]/g, '' ).trim();
+		getFormatFromString: ( formattedSize ) => {
+			return formattedSize.replace( /[0-9.]/g, '' ).trim();
 		},
 
 		/**
 		 * Stackoverflow: http://stackoverflow.com/questions/1726630/formatting-a-number-with-exactly-two-decimals-in-javascript
-		 * @param num
-		 * @param decimals
-		 * @returns {number}
+		 *
+		 * @param {number} num
+		 * @param {number} decimals
+		 * @return {number}  Number
 		 */
 		precise_round: ( num, decimals ) => {
 			const sign = num >= 0 ? 1 : -1;
 			// Keep the percentage below 100.
 			num = num > 100 ? 100 : num;
-			return (Math.round( (num * Math.pow( 10, decimals )) + (sign * 0.001) ) / Math.pow( 10, decimals ));
-		},
-
-		/**
-		 * Finds y value of given object.
-		 *
-		 * @param obj
-		 * @returns {*[]}
-		 */
-		findPos: ( obj ) => {
-			let cur_top = 0;
-
-			if ( obj.offsetParent ) {
-				do {
-					cur_top += obj.offsetTop;
-				} while ( obj = obj.offsetParent );
-
-				return [cur_top];
-			}
-		},
-
-		/**
-		 * Checks for the specified param in URL.
-		 *
-		 * @param arg
-		 * @returns {*}
-		 */
-		geturlparam: ( arg ) => {
-			const sPageURL = window.location.search.substring( 1 );
-			const sURLVariables = sPageURL.split( '&' );
-
-			for ( let i = 0; i < sURLVariables.length; i++ ) {
-				const sParameterName = sURLVariables[i].split( '=' );
-				if ( sParameterName[0] === arg ) {
-					return sParameterName[1];
-				}
-			}
+			return ( Math.round( ( num * Math.pow( 10, decimals ) ) + ( sign * 0.001 ) ) / Math.pow( 10, decimals ) );
 		},
 
 		/**
@@ -112,23 +80,22 @@
 		 */
 		resetSettings: () => {
 			const xhr = new XMLHttpRequest();
-			xhr.open('POST', ajaxurl+'?action=reset_settings', true);
-			xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+			xhr.open( 'POST', ajaxurl + '?action=reset_settings', true );
+			xhr.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded' );
 			xhr.onload = () => {
-				if (200 === xhr.status ) {
-					const res = JSON.parse(xhr.response);
+				if ( 200 === xhr.status ) {
+					const res = JSON.parse( xhr.response );
 					if ( 'undefined' !== typeof res.success && res.success ) {
 						window.location.href = wp_smush_msgs.smush_url;
 					}
 				} else {
-					console.log('Request failed.  Returned status of ' + xhr.status);
+					window.console.log( 'Request failed.  Returned status of ' + xhr.status );
 				}
 			};
-			xhr.send('_ajax_nonce='+smush_vars.nonce.get_smush_status);
-		}
+			xhr.send( '_ajax_nonce=' + smush_vars.nonce.get_smush_status );
+		},
 
 	};
 
 	WP_Smush.helpers.init();
-
-}( jQuery ));
+}() );

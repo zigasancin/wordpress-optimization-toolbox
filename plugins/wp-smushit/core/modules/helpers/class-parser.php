@@ -33,7 +33,6 @@ class Parser {
 	 * Process background images.
 	 *
 	 * @since 3.2.2
-	 *
 	 * @var bool $background_images
 	 */
 	private $background_images = false;
@@ -65,7 +64,7 @@ class Parser {
 	 * @param string $module  Module ID.
 	 */
 	public function enable( $module ) {
-		if ( ! in_array( $module, array( 'cdn', 'lazy_load', 'background_images' ), true ) ) {
+		if ( ! in_array( $module, array( 'cdn', 'lazy_load', 'iframes', 'background_images' ), true ) ) {
 			return;
 		}
 
@@ -104,22 +103,22 @@ class Parser {
 			return $content;
 		}
 
-		/**
-		 * Internal filter to disable page parsing.
-		 *
-		 * Because the page parser module is universal, we need to make sure that all modules have the ability to skip
-		 * parsing of certain pages. For example, lazy loading should skip if_preview() pages. In order to achieve this
-		 * functionality, I've introduced this filter. Filter priority can be used to overwrite the $skip param.
-		 *
-		 * @since 3.2.2
-		 *
-		 * @param bool $skip  Skip status.
-		 */
-		if ( empty( $content ) || apply_filters( 'wp_smush_should_skip_parse', false ) ) {
+		// We probably don't want any processing during Ajax requests.
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+			return $content;
+		}
+
+		// Add support for Oxygen Builder.
+		if ( defined( 'SHOW_CT_BUILDER' ) && SHOW_CT_BUILDER ) {
+			return $content;
+		}
+
+		if ( empty( $content ) ) {
 			return $content;
 		}
 
 		$content = $this->process_images( $content );
+
 		if ( $this->background_images ) {
 			$content = $this->process_background_images( $content );
 		}
@@ -147,13 +146,23 @@ class Parser {
 			$img_src   = $images['img_url'][ $key ];
 			$new_image = $image;
 
-			// Then update the image with correct CDN links.
+			// Update the image with correct CDN links.
 			if ( $this->cdn ) {
 				$new_image = WP_Smush::get_instance()->core()->mod->cdn->parse_image( $img_src, $new_image );
 			}
 
-			// First prepare for lazy-loading, as that does not require any URL rewrites.
-			if ( $this->lazy_load ) {
+			/**
+			 * Internal filter to disable page parsing.
+			 *
+			 * Because the page parser module is universal, we need to make sure that all modules have the ability to skip
+			 * parsing of certain pages. For example, lazy loading should skip if_preview() pages. In order to achieve this
+			 * functionality, I've introduced this filter. Filter priority can be used to overwrite the $skip param.
+			 *
+			 * @since 3.2.2
+			 *
+			 * @param bool $skip  Skip status.
+			 */
+			if ( $this->lazy_load && ! apply_filters( 'wp_smush_should_skip_parse', false ) ) {
 				$new_image = WP_Smush::get_instance()->core()->mod->lazy->parse_image( $img_src, $new_image );
 			}
 
@@ -225,7 +234,7 @@ class Parser {
 	public static function get_images_from_content( $content ) {
 		$images = array();
 
-		if ( preg_match_all( '/(?:<img[^>]*?\s+?src=["|\'](?P<img_url>[^\s]+?)["|\'].*?>)/is', $content, $images ) ) {
+		if ( preg_match_all( '/(?:<(img|source|iframe)[^>]*?\s+?(src|srcset)=["|\'](?P<img_url>[^\s]+?)["|\'].*?>)/is', $content, $images ) ) {
 			foreach ( $images as $key => $unused ) {
 				// Simplify the output as much as possible, mostly for confirming test results.
 				if ( is_numeric( $key ) && $key > 0 ) {
@@ -262,6 +271,30 @@ class Parser {
 	}
 
 	/**
+	 * Get iframes from content.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param string $content  Page content.
+	 *
+	 * @return array
+	 */
+	private static function get_iframes( $content ) {
+		$iframes = array();
+
+		if ( preg_match_all( '/(?:<iframe[^>]*?\s+?src=["|\'](?P<frame_url>[^\s]+?)["|\'].*?>)/is', $content, $iframes ) ) {
+			foreach ( $iframes as $key => $unused ) {
+				// Simplify the output as much as possible, mostly for confirming test results.
+				if ( is_numeric( $key ) && $key > 0 ) {
+					unset( $iframes[ $key ] );
+				}
+			}
+		}
+
+		return $iframes;
+	}
+
+	/**
 	 * Add attribute to selected tag.
 	 *
 	 * @since 3.1.0
@@ -289,7 +322,7 @@ class Parser {
 	 * @return string
 	 */
 	public static function get_attribute( $element, $name ) {
-		preg_match( "/{$name}=['\"]([^'\"]+)\"/is", $element, $value );
+		preg_match( "/{$name}=['\"]([^'\"]+)['\"]/is", $element, $value );
 		return isset( $value['1'] ) ? $value['1'] : '';
 	}
 

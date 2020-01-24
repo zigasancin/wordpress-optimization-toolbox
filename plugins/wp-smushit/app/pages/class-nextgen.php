@@ -123,9 +123,6 @@ class Nextgen extends Abstract_Page {
 
 		$count = $resmush_ids ? count( $resmush_ids ) : 0;
 
-		// Whether to show the remaining re-smush notice.
-		$show = $count > 0 ? true : false;
-
 		$count += $ng->remaining_count;
 
 		$url = add_query_arg(
@@ -144,7 +141,6 @@ class Nextgen extends Abstract_Page {
 				'ng'              => $ng,
 				'remaining_count' => $ng->remaining_count,
 				'resmush_ids'     => $ng->resmush_ids,
-				'show'            => $show,
 				'total_count'     => $ng->total_count,
 				'url'             => $url,
 			)

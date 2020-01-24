@@ -374,6 +374,16 @@ class CDN extends Abstract_Module {
 			return $src;
 		}
 
+		/**
+		 * Filter hook to alter image src before going through cdn.
+		 *
+		 * @since 3.4.0
+		 * @see smush_image_src_before_cdn filter if you need earlier access with the image element.
+		 *
+		 * @param string $src  Image src.
+		 */
+		$src = apply_filters( 'smush_filter_generate_cdn_url', $src );
+
 		// Support for WP installs in subdirectories: remove the site url and leave only the file path.
 		$path = str_replace( get_site_url(), '', $src );
 
@@ -449,10 +459,19 @@ class CDN extends Abstract_Module {
 			// Store the original $src to be used later on.
 			$original_src = $src;
 
-			$src = $this->process_src( $image, $src );
+			$src = $this->process_src( $image, $src, false );
 
 			// Replace the src of the image with CDN link.
 			if ( ! empty( $src ) ) {
+				// Support for source in picture element.
+				if ( false !== strpos( $new_image, '<source' ) ) {
+					Helpers\Parser::remove_attribute( $new_image, 'srcset' );
+					Helpers\Parser::add_attribute( $new_image, 'srcset', $src );
+
+					// We can exit early, to avoid additional parsing.
+					return $new_image;
+				}
+
 				$new_image = preg_replace( '#(src=["|\'])' . $original_src . '(["|\'])#i', '\1' . $src . '\2', $new_image, 1 );
 			}
 
@@ -471,7 +490,7 @@ class CDN extends Abstract_Module {
 		}
 
 		// Support for 3rd party lazy loading plugins.
-		$lazy_attributes = array( 'data-src', 'data-lazy-src', 'data-lazyload' );
+		$lazy_attributes = array( 'data-src', 'data-lazy-src', 'data-lazyload', 'data-original' );
 		foreach ( $lazy_attributes as $attr ) {
 			$data_src = Helpers\Parser::get_attribute( $new_image, $attr );
 			$data_src = $this->is_supported_path( $data_src );
@@ -541,20 +560,28 @@ class CDN extends Abstract_Module {
 	 *
 	 * @since 3.2.1
 	 *
-	 * @param string $image  Image tag.
-	 * @param string $src    Image src attribute.
+	 * @param string $image     Image tag.
+	 * @param string $src       Image src attribute.
+	 * @param bool   $resizing  Add resizing arguments. Defaults to true.
+	 *                          We should never add resize arguments to the images from src. But we can and should
+	 *                          add them to the srcset and other possible attributes.
 	 *
 	 * @return string
 	 */
-	private function process_src( $image, $src ) {
-		/**
-		 * Filter hook to alter image src arguments before going through cdn.
-		 *
-		 * @param array  $args   Arguments.
-		 * @param string $src    Image src.
-		 * @param string $image  Image tag.
-		 */
-		$args = apply_filters( 'smush_image_cdn_args', array(), $image );
+	private function process_src( $image, $src, $resizing = true ) {
+		$args = array();
+
+		// Don't need to auto resize - return default args.
+		if ( $resizing && $this->settings->get( 'auto_resize' ) ) {
+			/**
+			 * Filter hook to alter image src arguments before going through cdn.
+			 *
+			 * @param array  $args   Arguments.
+			 * @param string $src    Image src.
+			 * @param string $image  Image tag.
+			 */
+			$args = apply_filters( 'smush_image_cdn_args', array(), $image );
+		}
 
 		/**
 		 * Filter hook to alter image src before going through cdn.
@@ -618,7 +645,7 @@ class CDN extends Abstract_Module {
 			list( $width, $height ) = $this->get_size_from_file_name( $source['url'] );
 
 			// The file already has a resized version as a thumbnail.
-			if ( 'w' === $source['descriptor'] && $width === $source['value'] ) {
+			if ( 'w' === $source['descriptor'] && $width === (int) $source['value'] ) {
 				$sources[ $i ]['url'] = $this->generate_cdn_url( $source['url'] );
 				continue;
 			}
@@ -684,13 +711,8 @@ class CDN extends Abstract_Module {
 	 * @return array $args
 	 */
 	public function update_cdn_image_src_args( $args, $image ) {
-		// Don't need to auto resize - return default args.
-		if ( ! $this->settings->get( 'auto_resize' ) ) {
-			return $args;
-		}
-
 		// Get registered image sizes.
-		$image_sizes = $this->get_image_sizes();
+		$image_sizes = WP_Smush::get_instance()->core()->image_dimensions();
 
 		// Find the width and height attributes.
 		$width  = false;
@@ -833,7 +855,6 @@ class CDN extends Abstract_Module {
 	 * @see get_url_without_dimensions()
 	 * @see max_content_width()
 	 * @see set_additional_srcset()
-	 * @see get_image_sizes()
 	 * @see generate_srcset()
 	 * @see maybe_generate_srcset()
 	 * @see is_supported_path()
@@ -941,18 +962,13 @@ class CDN extends Abstract_Module {
 	 */
 	private function max_content_width() {
 		// Get global content width (if content width is empty, set 1900).
-		$content_width = isset( $GLOBALS['content_width'] ) ? $GLOBALS['content_width'] : 1900;
+		$content_width = isset( $GLOBALS['content_width'] ) ? (int) $GLOBALS['content_width'] : 1900;
 
 		// Check to see if we are resizing the images (can not go over that value).
 		$resize_sizes = $this->settings->get_setting( WP_SMUSH_PREFIX . 'resize_sizes' );
 
 		if ( isset( $resize_sizes['width'] ) && $resize_sizes['width'] < $content_width ) {
 			return $resize_sizes['width'];
-		}
-
-		// Just in case something goes wrong with the above checks.
-		if ( ! $content_width ) {
-			$content_width = 1900;
 		}
 
 		return $content_width;
@@ -1037,6 +1053,7 @@ class CDN extends Abstract_Module {
 
 			// If a nearly sized image already exist, skip.
 			foreach ( $current_widths as $_width ) {
+				// If +- 50 pixel difference - skip.
 				if ( abs( $_width - $new_width ) < 50 || ( $new_width > $full_width ) ) {
 					continue 2;
 				}
@@ -1070,52 +1087,6 @@ class CDN extends Abstract_Module {
 	}
 
 	/**
-	 * Get registered image sizes and its sizes.
-	 *
-	 * Custom function to get all registered image sizes
-	 * and their width and height.
-	 *
-	 * @since 3.0
-	 *
-	 * @return array|bool|mixed
-	 */
-	private function get_image_sizes() {
-		// Get from cache if available to avoid duplicate looping.
-		$sizes = wp_cache_get( 'get_image_sizes', 'smush_image_sizes' );
-		if ( $sizes ) {
-			return $sizes;
-		}
-
-		// Get additional sizes registered by themes.
-		global $_wp_additional_image_sizes;
-
-		$sizes = array();
-
-		// Get intermediate image sizes.
-		$get_intermediate_image_sizes = get_intermediate_image_sizes();
-
-		// Create the full array with sizes and crop info.
-		foreach ( $get_intermediate_image_sizes as $_size ) {
-			if ( in_array( $_size, array( 'thumbnail', 'medium', 'large' ), true ) ) {
-				$sizes[ $_size ]['width']  = get_option( $_size . '_size_w' );
-				$sizes[ $_size ]['height'] = get_option( $_size . '_size_h' );
-				$sizes[ $_size ]['crop']   = (bool) get_option( $_size . '_crop' );
-			} elseif ( isset( $_wp_additional_image_sizes[ $_size ] ) ) {
-				$sizes[ $_size ] = array(
-					'width'  => $_wp_additional_image_sizes[ $_size ]['width'],
-					'height' => $_wp_additional_image_sizes[ $_size ]['height'],
-					'crop'   => $_wp_additional_image_sizes[ $_size ]['crop'],
-				);
-			}
-		}
-
-		// Set cache to avoid this loop next time.
-		wp_cache_set( 'get_image_sizes', $sizes, 'smush_image_sizes' );
-
-		return $sizes;
-	}
-
-	/**
 	 * Try to generate the srcset for the image.
 	 *
 	 * @since 3.0
@@ -1125,7 +1096,13 @@ class CDN extends Abstract_Module {
 	 * @return array|bool
 	 */
 	private function generate_srcset( $src ) {
-		// Try to get the attachment URL.
+		/**
+		 * Try to get the attachment URL.
+		 *
+		 * TODO: attachment_url_to_postid() can be resource intensive and cause 100% CPU spikes.
+		 *
+		 * @see https://core.trac.wordpress.org/ticket/41281
+		 */
 		$attachment_id = attachment_url_to_postid( $src );
 
 		// Try to get width and height from image.
@@ -1135,13 +1112,13 @@ class CDN extends Abstract_Module {
 			// Revolution slider fix: images will always return 0 height and 0 width.
 			if ( 0 === $width && 0 === $height ) {
 				// Try to get the dimensions directly from the file.
-				list( $width, $height ) = getimagesize( $src );
+				list( $width, $height ) = $this->get_image_size( $src );
 			}
 
 			$image_meta = wp_get_attachment_metadata( $attachment_id );
 		} else {
 			// Try to get the dimensions directly from the file.
-			list( $width, $height ) = getimagesize( $src );
+			list( $width, $height ) = $this->get_image_size( $src );
 
 			// This is an image placeholder - do not generate srcset.
 			if ( $width === $height && 1 === $width ) {
@@ -1236,7 +1213,41 @@ class CDN extends Abstract_Module {
 
 		$mapped_domain = $this->check_mapped_domain();
 
-		if ( false === strpos( $src, content_url() ) || ( is_multisite() && $mapped_domain && false === strpos( $src, $mapped_domain ) ) ) {
+		/**
+		 * There are chances for a custom uploads directory using UPLOADS constant.
+		 *
+		 * But some security plugins (for example, WP Hide & Security Enhance) will allow replacing paths via Nginx/Apache
+		 * rules. So for this reason, we don't want the path to be replaced everywhere with the custom UPLOADS constant,
+		 * we just want to let the user redefine it here, in the CDN.
+		 *
+		 * @since 3.4.0
+		 *
+		 * @param array $uploads {
+		 *     Array of information about the upload directory.
+		 *
+		 *     @type string       $path    Base directory and subdirectory or full path to upload directory.
+		 *     @type string       $url     Base URL and subdirectory or absolute URL to upload directory.
+		 *     @type string       $subdir  Subdirectory if uploads use year/month folders option is on.
+		 *     @type string       $basedir Path without subdir.
+		 *     @type string       $baseurl URL path without subdir.
+		 *     @type string|false $error   False or error message.
+		 * }
+		 *
+		 * Usage (replace /wp-content/uploads/ with /media/ directory):
+		 *
+		 * add_filter(
+		 *     'smush_cdn_custom_uploads_dir',
+		 *     function( $uploads ) {
+		 *         $uploads['baseurl'] = 'https://example.com/media';
+		 *         return $uploads;
+		 *     }
+		 * );
+		 */
+		$uploads = apply_filters( 'smush_cdn_custom_uploads_dir', wp_get_upload_dir() );
+		// Check if the src is within custom uploads directory.
+		$uploads = isset( $uploads['baseurl'] ) ? false !== strpos( $src, $uploads['baseurl'] ) : true;
+
+		if ( ( false === strpos( $src, content_url() ) && ! $uploads ) || ( is_multisite() && $mapped_domain && false === strpos( $src, $mapped_domain ) ) ) {
 			return false;
 		}
 
@@ -1294,9 +1305,20 @@ class CDN extends Abstract_Module {
 		}
 
 		$this->parser->enable( 'cdn' );
+	}
 
-		// Make sure we always continue page parsing if CDN is enabled.
-		add_filter( 'wp_smush_should_skip_parse', '__return_false', 15 );
+	/**
+	 * Try to get the image dimensions from a local file.
+	 *
+	 * @since 3.4.0
+	 * @param string $url  Image URL.
+	 *
+	 * @return array|false
+	 */
+	private function get_image_size( $url ) {
+		$path = wp_make_link_relative( $url );
+		$path = wp_normalize_path( ABSPATH . $path );
+		return getimagesize( $path );
 	}
 
 }

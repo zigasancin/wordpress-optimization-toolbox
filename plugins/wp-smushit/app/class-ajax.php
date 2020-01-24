@@ -13,7 +13,6 @@ namespace Smush\App;
 use Smush\Core\Core;
 use Smush\Core\Helper;
 use Smush\Core\Modules\CDN;
-use Smush\Core\Modules\DB;
 use Smush\Core\Modules\Helpers\Parser;
 use Smush\Core\Modules\Smush;
 use Smush\Core\Settings;
@@ -276,16 +275,22 @@ class Ajax {
 		@error_reporting( 0 );
 
 		if ( ! current_user_can( 'upload_files' ) ) {
-			wp_die( esc_html__( "You don't have permission to work with uploaded files.", 'wp-smushit' ) );
+			wp_send_json_error(
+				array(
+					'error_msg' => __( "You don't have permission to work with uploaded files.", 'wp-smushit' ),
+				)
+			);
 		}
 
 		if ( ! isset( $_GET['attachment_id'] ) ) {
-			wp_die( esc_html__( 'No attachment ID was provided.', 'wp-smushit' ) );
+			wp_send_json_error(
+				array(
+					'error_msg' => __( 'No attachment ID was provided.', 'wp-smushit' ),
+				)
+			);
 		}
 
 		$attachment_id = intval( $_GET['attachment_id'] );
-
-		$core = WP_Smush::get_instance()->core();
 
 		/**
 		 * Filter: wp_smush_image.
@@ -300,13 +305,13 @@ class Ajax {
 			wp_send_json_error(
 				array(
 					'error_msg'    => sprintf( '<p class="wp-smush-error-message">%s</p>', $error ),
-					'show_warning' => intval( $core->mod->smush->show_warning() ),
+					'show_warning' => intval( WP_Smush::get_instance()->core()->mod->smush->show_warning() ),
 				)
 			);
 		}
 
 		// Pass on the attachment id to smush single function.
-		$core->mod->smush->smush_single( $attachment_id );
+		WP_Smush::get_instance()->core()->mod->smush->smush_single( $attachment_id );
 	}
 
 	/**
@@ -384,7 +389,7 @@ class Ajax {
 		}
 
 		// If there aren't any images in the library, return the notice.
-		if ( 0 == $core->db()->get_media_attachments( true ) && 'nextgen' !== $type ) {
+		if ( 0 === count( $core->get_media_attachments() ) && 'nextgen' !== $type ) {
 			$notice = esc_html__( 'We haven’t found any images in your media library yet so there’s no smushing to be done! Once you upload images, reload this page and start playing!', 'wp-smushit' );
 			$resp   = '<div class="sui-notice-top sui-notice-success sui-can-dismiss">
 					<div class="sui-notice-content">
@@ -411,7 +416,7 @@ class Ajax {
 						<p>' . $message . '</p>
 					</div>
 					<span class="sui-notice-dismiss">
-						<a role="button" href="#" aria-label="' . __( 'Dismiss', 'wp-smushit' ) . '" class="sui-icon-check"></a>
+						<a role="button" href="#" aria-label="' . __( 'Dismiss', 'wp-smushit' ) . '" class="sui-icon-check" id="bulk-smush-top-notice-close"></a>
 					</span>
 				</div>';
 
@@ -450,7 +455,7 @@ class Ajax {
 		// Get Smushed Attachments.
 		if ( 'nextgen' !== $type ) {
 			// Get list of Smushed images.
-			$attachments = ! empty( $core->smushed_attachments ) ? $core->smushed_attachments : $core->db()->smushed_count( true );
+			$attachments = ! empty( $core->smushed_attachments ) ? $core->smushed_attachments : $core->get_smushed_attachments();
 		} else {
 			// Get smushed attachments list from nextgen class, We get the meta as well.
 			$attachments = $core->nextgen->ng_stats->get_ngg_images();
@@ -506,7 +511,7 @@ class Ajax {
 					if ( empty( $image_sizes ) ) {
 						$image_sizes = array_keys( WP_Smush::get_instance()->core()->image_dimensions() );
 					}
-					
+
 					/**
 					 * This is a too complicated way to check if the attachment needs a resmush.
 					 * Basically, smaller images might not have all the image sizes. And if, let's say, image does not
@@ -608,7 +613,7 @@ class Ajax {
 		}
 
 		$resmush_count = $count = count( $resmush_list );
-		$count        += 'nextgen' == $type ? $core->nextgen->ng_admin->remaining_count : $core->remaining_count;
+		$count        += 'nextgen' === $type ? $core->nextgen->ng_admin->remaining_count : $core->remaining_count;
 
 		// Return the Remsmush list and UI to be appended to Bulk Smush UI.
 		if ( $return_ui ) {
@@ -621,13 +626,18 @@ class Ajax {
 			}
 
 			if ( $resmush_count ) {
-				$ajax_response = WP_Smush::get_instance()->admin()->bulk_resmush_content( $count, false );
+				$ajax_response = WP_Smush::get_instance()->admin()->bulk_resmush_content( $count );
 			}
 		}
 
 		if ( ! empty( $count ) ) {
 			/* translators: %1$d - number of images, %2$s - opening a tag, %3$s - closing a tag */
-			$message = sprintf( esc_html__( 'Image check complete, you have %1$d images that need smushing. %2$sBulk smush now!%3$s', 'wp-smushit' ), $count, '<a href="#" class="wp-smush-trigger-bulk">', '</a>' );
+			$message = sprintf(
+				esc_html__( 'Image check complete, you have %1$d images that need smushing. %2$sBulk smush now!%3$s', 'wp-smushit' ),
+				$count,
+				'<a href="#" class="wp-smush-trigger-bulk" data-type="' . $type . '">',
+				'</a>'
+			);
 			$resp    = '<div class="sui-notice-top sui-notice-warning sui-can-dismiss">
 					<div class="sui-notice-content">
 						<p>' . $message . '</p>
@@ -679,7 +689,7 @@ class Ajax {
 		$return['notice']      = $resp;
 		$return['super_smush'] = WP_Smush::is_pro() && $this->settings->get( 'lossy' );
 		if ( WP_Smush::is_pro() && $this->settings->get( 'lossy' ) && 'nextgen' === $type ) {
-			$ss_count                    = $core->db()->super_smushed_count( 'nextgen', $core->nextgen->ng_stats->get_ngg_images( 'smushed' ) );
+			$ss_count                    = $core->nextgen->ng_stats->nextgen_super_smushed_count( $core->nextgen->ng_stats->get_ngg_images( 'smushed' ) );
 			$return['super_smush_stats'] = sprintf( '<strong><span class="smushed-count">%d</span>/%d</strong>', $ss_count, $core->nextgen->ng_admin->total_count );
 		}
 
@@ -701,7 +711,7 @@ class Ajax {
 		if ( 'nextgen' !== $_POST['type'] ) {
 			$resmush_list = get_option( $key );
 			if ( ! empty( $resmush_list ) && is_array( $resmush_list ) ) {
-				$stats = WP_Smush::get_instance()->core()->db()->get_stats_for_attachments( $resmush_list );
+				$stats = WP_Smush::get_instance()->core()->get_stats_for_attachments( $resmush_list );
 			}
 		} else {
 			// For Nextgen. Get the stats (get the re-Smush IDs).
@@ -852,7 +862,7 @@ class Ajax {
 		// Download if not exists.
 		do_action( 'smush_file_exists', $attachment_file_path, $attachment_id );
 
-		$smush->check_animated_status( $attachment_file_path, $attachment_id );
+		Helper::check_animated_status( $attachment_file_path, $attachment_id );
 
 		WP_Smush::get_instance()->core()->mod->backup->create_backup( $attachment_file_path, '', $attachment_id );
 

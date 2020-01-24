@@ -85,13 +85,11 @@ class Smush extends Abstract_Module {
 	 * Set send button status
 	 *
 	 * @param int  $id        Attachment ID.
-	 * @param bool $echo      Echo or return.
 	 * @param bool $text_only Returns the stats text instead of button.
-	 * @param bool $wrapper   Required for `column_html`, to include the wrapper div or not.
 	 *
 	 * @return string|array
 	 */
-	public function set_status( $id, $echo = true, $text_only = false, $wrapper = true ) {
+	public function set_status( $id, $text_only = false ) {
 		$status_txt  = $button_txt = $stats = $links = '';
 		$show_button = $show_resmush = false;
 
@@ -100,7 +98,6 @@ class Smush extends Abstract_Module {
 		$conversion_savings = get_post_meta( $id, WP_SMUSH_PREFIX . 'pngjpg_savings', true );
 
 		$combined_stats = $this->combined_stats( $wp_smush_data, $wp_resize_savings );
-
 		$combined_stats = $this->combine_conversion_stats( $combined_stats, $conversion_savings );
 
 		// Remove Smush s3 hook, as it downloads the file again.
@@ -121,14 +118,14 @@ class Smush extends Abstract_Module {
 			// Show resmush link, if the settings were changed.
 			$show_resmush = $this->show_resmush( $id, $wp_smush_data, $attachment_data );
 
-			if ( empty( $wp_resize_savings['bytes'] ) && isset( $wp_smush_data['stats']['size_before'] ) && $wp_smush_data['stats']['size_before'] == 0 && ! empty( $wp_smush_data['sizes'] ) ) {
+			if ( empty( $wp_resize_savings['bytes'] ) && isset( $wp_smush_data['stats']['size_before'] ) && 0 === $wp_smush_data['stats']['size_before'] && ! empty( $wp_smush_data['sizes'] ) ) {
 				$status_txt = __( 'Already Optimized', 'wp-smushit' );
 				if ( $show_resmush ) {
 					$links .= $this->get_resmsuh_link( $id );
 				}
 				$show_button = false;
 			} else {
-				if ( $bytes == 0 || $percent == 0 ) {
+				if ( 0 === $bytes || 0 === $percent ) {
 					$status_txt = __( 'Already Optimized', 'wp-smushit' );
 
 					if ( $show_resmush ) {
@@ -139,7 +136,7 @@ class Smush extends Abstract_Module {
 					$status_txt = $image_count > 1 ? sprintf( __( '%d images reduced ', 'wp-smushit' ), $image_count ) : __( 'Reduced ', 'wp-smushit' );
 
 					$stats_percent = number_format_i18n( $percent, 2 );
-					$stats_percent = $stats_percent > 0 ? sprintf( '(  %01.1f%% )', $stats_percent ) : '';
+					$stats_percent = $stats_percent > 0 ? sprintf( '(%01.1f%%)', $stats_percent ) : '';
 					/* translators: %1$s: bytes in readable format, %2$s: percent */
 					$status_txt .= sprintf( __( 'by %1$s %2$s', 'wp-smushit' ), $bytes_readable, $stats_percent );
 
@@ -185,9 +182,7 @@ class Smush extends Abstract_Module {
 						// Stats.
 						$stats = $this->get_detailed_stats( $id, $wp_smush_data, $attachment_data );
 
-						if ( ! $text_only ) {
-							$links .= $stats;
-						}
+						$links .= $stats;
 					}
 				}
 			}
@@ -198,8 +193,7 @@ class Smush extends Abstract_Module {
 			// IF current compression is lossy.
 			$is_lossy = false;
 			if ( ! empty( $wp_smush_data ) && ! empty( $wp_smush_data['stats'] ) ) {
-				$lossy    = ! empty( $wp_smush_data['stats']['lossy'] ) ? $wp_smush_data['stats']['lossy'] : '';
-				$is_lossy = $lossy == 1;
+				$is_lossy = ! empty( $wp_smush_data['stats']['lossy'] ) ? $wp_smush_data['stats']['lossy'] : false;
 			}
 
 			// Check image type.
@@ -224,7 +218,6 @@ class Smush extends Abstract_Module {
 			// The button text.
 			$button_txt = '';
 		} else {
-
 			// Show status text.
 			$wp_smush_data = true;
 
@@ -259,10 +252,7 @@ class Smush extends Abstract_Module {
 			$status_txt .= $this->progress_bar();
 		}
 
-		$text = $this->column_html( $id, $status_txt, $button_txt, $show_button, $wp_smush_data, $echo, $wrapper );
-		if ( ! $echo ) {
-			return $text;
-		}
+		return $this->column_html( $id, $status_txt, $button_txt, $show_button );
 	}
 
 	/**
@@ -427,7 +417,6 @@ class Smush extends Abstract_Module {
 			}
 		}
 
-
 		return false;
 	}
 
@@ -484,7 +473,7 @@ class Smush extends Abstract_Module {
 		// If we still don't have a backup path, use traditional method to get it.
 		if ( empty( $backup ) ) {
 			// Check backup for Full size.
-			$backup = $this->get_image_backup_path( $file );
+			$backup = WP_Smush::get_instance()->core()->mod->backup->get_image_backup_path( $file );
 		} else {
 			// Get the full path for file backup.
 			$backup = str_replace( wp_basename( $file ), wp_basename( $backup ), $file );
@@ -510,30 +499,6 @@ class Smush extends Abstract_Module {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Returns the backup path for attachment
-	 *
-	 * @param string $attachment_path  Attachment path.
-	 *
-	 * @return bool|string
-	 */
-	public function get_image_backup_path( $attachment_path ) {
-		// If attachment id is not available, return false.
-		if ( empty( $attachment_path ) ) {
-			return false;
-		}
-		$path = pathinfo( $attachment_path );
-
-		// If we don't have complete filename return false.
-		if ( empty( $path['extension'] ) ) {
-			return false;
-		}
-
-		$backup_name = trailingslashit( $path['dirname'] ) . $path['filename'] . '.bak.' . $path['extension'];
-
-		return $backup_name;
 	}
 
 	/**
@@ -593,7 +558,12 @@ class Smush extends Abstract_Module {
 		$size_stats = $wp_smush_data['sizes'];
 
 		// Reorder Sizes as per the maximum savings.
-		uasort( $size_stats, array( $this, 'cmp' ) );
+		uasort(
+			$size_stats,
+			function( $a, $b ) {
+				return $a->bytes < $b->bytes;
+			}
+		);
 
 		if ( ! empty( $attachment_metadata['sizes'] ) ) {
 			// Get skipped images.
@@ -728,62 +698,40 @@ class Smush extends Abstract_Module {
 	 * @param string  $html         Status text.
 	 * @param string  $button_txt   Button label.
 	 * @param boolean $show_button  Whether to shoe the button.
-	 * @param bool    $smushed      Whether image is smushed or not.
-	 * @param bool    $echo         If true, it directly outputs the HTML.
-	 * @param bool    $wrapper      Whether to return the button with wrapper div or not.
 	 *
 	 * @return string
 	 */
-	private function column_html( $id, $html = '', $button_txt = '', $show_button = true, $smushed = false, $echo = true, $wrapper = true ) {
+	private function column_html( $id, $html = '', $button_txt = '', $show_button = true ) {
 		$allowed_images = array( 'image/jpeg', 'image/jpg', 'image/x-citrix-jpeg', 'image/png', 'image/x-png', 'image/gif' );
 
 		// Don't proceed if attachment is not image, or if image is not a jpg, png or gif.
-		if ( ! wp_attachment_is_image( $id ) || ! in_array( get_post_mime_type( $id ), $allowed_images ) ) {
+		if ( ! wp_attachment_is_image( $id ) || ! in_array( get_post_mime_type( $id ), $allowed_images, true ) ) {
 			$status_txt = __( 'Not processed', 'wp-smushit' );
-			if ( $echo ) {
-				echo esc_html( $status_txt );
-				return;
-			}
-
 			return $status_txt;
 		}
 
 		// If we aren't showing the button.
 		if ( ! $show_button ) {
-			if ( $echo ) {
-				echo wp_kses_post( $html );
-				return;
-			}
-
-			$class = $smushed ? ' smushed' : ' currently-smushing';
-
-			return $wrapper ? '<div class="smush-wrap' . $class . '">' . $html . '</div>' : $html;
+			return $html;
 		}
 
-		$html .= '
-		<a href="#" class="wp-smush-send" data-id="' . $id . '">
-            ' . $button_txt . '
-		</a>';
+		if ( 'Super-Smush' === $button_txt ) {
+			$html .= ' | ';
+		}
+
+		$html .= "<a href='#' class='wp-smush-send' data-id='{$id}'>{$button_txt}</a>";
 
 		$skipped = get_post_meta( $id, WP_SMUSH_PREFIX . 'ignore-bulk', true );
 		if ( 'true' === $skipped ) {
 			$nonce = wp_create_nonce( 'wp-smush-remove-skipped' );
-			$html .= '
-			<a  class="wp-smush-remove-skipped" data-id="' . $id . '" data-nonce="' . $nonce . '">
-                ' . __( 'Show in bulk Smush', 'wp-smushit' ) . '
-			</a>';
+			$html .= " | <a href='#' class='wp-smush-remove-skipped' data-id={$id} data-nonce={$nonce}>" . __( 'Show in bulk Smush', 'wp-smushit' ) . '</a>';
+		} else {
+			$html .= " | <a href='#' class='smush-ignore-image' data-id='{$id}'>" . esc_html__( 'Ignore', 'wp-smushit' ) . '</a>';
 		}
 
 		$html .= $this->progress_bar();
 
-		if ( ! $echo ) {
-			$class = $smushed ? ' smushed' : ' unsmushed';
-			$html  = $wrapper ? '<div class="smush-wrap' . $class . '">' . $html . '</div>' : $html;
-
-			return $html;
-		}
-
-		echo wp_kses_post( $html );
+		return $html;
 	}
 
 	/**
@@ -900,12 +848,10 @@ class Smush extends Abstract_Module {
 			$show_button = false;
 			$button_txt  = __( 'Smush Now!', 'wp-smushit' );
 
-			return $this->column_html( $id, $status_txt, $button_txt, $show_button, true, false, true );
+			return $this->column_html( $id, $status_txt, $button_txt, $show_button );
 		}
 		// Else Return the normal status.
-		$response = trim( $this->set_status( $id, false ) );
-
-		return $response;
+		return trim( $this->set_status( $id ) );
 	}
 
 	/**
@@ -1088,7 +1034,7 @@ class Smush extends Abstract_Module {
 		);
 
 		// Check if premium member, add API key.
-		$api_key = $this->_get_api_key();
+		$api_key = $this->get_api_key();
 		if ( ! empty( $api_key ) && WP_Smush::is_pro() ) {
 			$headers['apikey'] = $api_key;
 		}
@@ -1213,7 +1159,7 @@ class Smush extends Abstract_Module {
 	 *
 	 * @return array
 	 */
-	public function _array_fill_placeholders( array $placeholders, array $data ) {
+	public function array_fill_placeholders( array $placeholders, array $data ) {
 		$placeholders['percent']     = $data['compression'];
 		$placeholders['bytes']       = $data['bytes_saved'];
 		$placeholders['size_before'] = $data['before_size'];
@@ -1228,7 +1174,7 @@ class Smush extends Abstract_Module {
 	 *
 	 * @return array
 	 */
-	public function _get_size_signature() {
+	public function get_size_signature() {
 		return array(
 			'percent'     => 0,
 			'bytes'       => 0,
@@ -1259,7 +1205,7 @@ class Smush extends Abstract_Module {
 		$errors = new WP_Error();
 		$stats  = array(
 			'stats' => array_merge(
-				$this->_get_size_signature(),
+				$this->get_size_signature(),
 				array(
 					'api_version' => - 1,
 					'lossy'       => - 1,
@@ -1321,8 +1267,7 @@ class Smush extends Abstract_Module {
 				 * @param bool , Smush image or not
 				 * @$size string, Size of image being smushed
 				 */
-				$smush_image = apply_filters( 'wp_smush_media_image', true, $size_key );
-				if ( ! $smush_image ) {
+				if ( ! apply_filters( 'wp_smush_media_image', true, $size_key ) ) {
 					continue;
 				}
 
@@ -1345,7 +1290,7 @@ class Smush extends Abstract_Module {
 
 				// All Clear, Store the stat.
 				// TODO: Move the existing stats code over here, we don't need to do the stats part twice.
-				$stats['sizes'][ $size_key ] = (object) $this->_array_fill_placeholders( $this->_get_size_signature(), (array) $response['data'] );
+				$stats['sizes'][ $size_key ] = (object) $this->array_fill_placeholders( $this->get_size_signature(), (array) $response['data'] );
 
 				if ( empty( $stats['stats']['api_version'] ) || $stats['stats']['api_version'] == - 1 ) {
 					$stats['stats']['api_version'] = $response['data']->api_version;
@@ -1388,7 +1333,7 @@ class Smush extends Abstract_Module {
 			}
 
 			if ( $store_stats ) {
-				$stats['sizes']['full'] = (object) $this->_array_fill_placeholders( $this->_get_size_signature(), (array) $full_image_response['data'] );
+				$stats['sizes']['full'] = (object) $this->array_fill_placeholders( $this->get_size_signature(), (array) $full_image_response['data'] );
 			}
 
 			// Api version and lossy, for some images, full image i skipped and for other images only full exists
@@ -1549,7 +1494,7 @@ class Smush extends Abstract_Module {
 		// Get the file path for backup.
 		$attachment_file_path = Helper::get_attached_file( $id );
 
-		$this->check_animated_status( $attachment_file_path, $id );
+		Helper::check_animated_status( $attachment_file_path, $id );
 
 		// Take backup.
 		WP_Smush::get_instance()->core()->mod->backup->create_backup( $attachment_file_path, '', $id );
@@ -1600,7 +1545,7 @@ class Smush extends Abstract_Module {
 		// If the smushing option is already set, return the status.
 		if ( get_option( "smush-in-progress-{$attachment_id}", false ) || get_option( "wp-smush-restore-{$attachment_id}", false ) ) {
 			// Get the button status.
-			$status = $this->set_status( $attachment_id, false, true );
+			$status = $this->set_status( $attachment_id, true );
 			if ( $return ) {
 				return $status;
 			}
@@ -1619,7 +1564,7 @@ class Smush extends Abstract_Module {
 		// Download file if not exists.
 		do_action( 'smush_file_exists', $attachment_file_path, $attachment_id );
 
-		$this->check_animated_status( $attachment_file_path, $attachment_id );
+		Helper::check_animated_status( $attachment_file_path, $attachment_id );
 
 		// Take backup.
 		WP_Smush::get_instance()->core()->mod->backup->create_backup( $attachment_file_path, '', $attachment_id );
@@ -1654,7 +1599,7 @@ class Smush extends Abstract_Module {
 		wp_update_attachment_metadata( $attachment_id, $original_meta );
 
 		// Get the button status.
-		$status = $this->set_status( $attachment_id, false, true );
+		$status = $this->set_status( $attachment_id, true );
 
 		// Delete the transient after attachment meta is updated.
 		delete_option( 'smush-in-progress-' . $attachment_id );
@@ -1686,7 +1631,7 @@ class Smush extends Abstract_Module {
 	 *
 	 * @return mixed
 	 */
-	private function _get_api_key() {
+	private function get_api_key() {
 		$api_key = false;
 
 		// If API key defined manually, get that.
@@ -1698,21 +1643,6 @@ class Smush extends Abstract_Module {
 		}
 
 		return $api_key;
-	}
-
-	/**
-	 * Returns size saved from the api call response
-	 *
-	 * @param string $message  Message.
-	 *
-	 * @return string|bool
-	 */
-	private function get_saved_size( $message ) {
-		if ( preg_match( '/\((.*)\)/', $message, $matches ) ) {
-			return isset( $matches[1] ) ? $matches[1] : false;
-		}
-
-		return false;
 	}
 
 	/**
@@ -1778,10 +1708,10 @@ class Smush extends Abstract_Module {
 	 */
 	public function delete_images( $image_id ) {
 		// Update the savings cache.
-		WP_Smush::get_instance()->core()->db()->resize_savings( true );
+		WP_Smush::get_instance()->core()->get_savings( 'resize' );
 
 		// Update the savings cache.
-		WP_Smush::get_instance()->core()->db()->conversion_savings( true );
+		WP_Smush::get_instance()->core()->get_savings( 'pngjpg' );
 
 		// If no image id provided.
 		if ( empty( $image_id ) ) {
@@ -1789,59 +1719,20 @@ class Smush extends Abstract_Module {
 		}
 
 		// Check and Update resmush list.
-		if ( $resmush_list = get_option( 'wp-smush-resmush-list' ) ) {
+		$resmush_list = get_option( 'wp-smush-resmush-list' );
+		if ( $resmush_list ) {
 			$this->update_resmush_list( $image_id, 'wp-smush-resmush-list' );
 		}
 
 		/** Delete Backups  */
 		// Check if we have any smush data for image.
-		$this->delete_backup_files( $image_id );
-	}
-
-	/**
-	 * Clear up all the backup files for the image, if any.
-	 *
-	 * @param int $image_id  Attachment ID.
-	 */
-	private function delete_backup_files( $image_id ) {
-		$smush_meta = get_post_meta( $image_id, self::$smushed_meta_key, true );
-		if ( empty( $smush_meta ) ) {
-			// Return if we don't have any details.
-			return;
-		}
-
-		// Get the attachment details.
-		$meta = wp_get_attachment_metadata( $image_id );
-
-		// Attachment file path.
-		$file = get_attached_file( $image_id );
-
-		// Get the backup path.
-		$backup_name = $this->get_image_backup_path( $file );
-
-		// If file exists, corresponding to our backup path, delete it.
-		@unlink( $backup_name );
-
-		// Check meta for rest of the sizes.
-		if ( ! empty( $meta ) && ! empty( $meta['sizes'] ) ) {
-			foreach ( $meta['sizes'] as $size ) {
-				// Get the file path.
-				if ( empty( $size['file'] ) ) {
-					continue;
-				}
-
-				// Image Path and Backup path.
-				$image_size_path  = path_join( dirname( $file ), $size['file'] );
-				$image_bckup_path = $this->get_image_backup_path( $image_size_path );
-				@unlink( $image_bckup_path );
-			}
-		}
+		WP_Smush::get_instance()->core()->mod->backup->delete_backup_files( $image_id );
 	}
 
 	/**
 	 * Calculate saving percentage for a given size stats
 	 *
-	 * @param $stats
+	 * @param object $stats  Stats object.
 	 *
 	 * @return float|int
 	 */
@@ -1857,14 +1748,15 @@ class Smush extends Abstract_Module {
 
 			return $percentage;
 		}
+
+		return 0;
 	}
 
 	/**
 	 * Perform the resize operation for the image
 	 *
-	 * @param $attachment_id
-	 *
-	 * @param $meta
+	 * @param int   $attachment_id  Attachment ID.
+	 * @param array $meta           Attachment meta.
 	 *
 	 * @return mixed
 	 */
@@ -1897,9 +1789,8 @@ class Smush extends Abstract_Module {
 		 *
 		 * Whether to smush the given attachment id or not
 		 *
-		 * @param $skip bool, whether to Smush image or not
-		 *
-		 * @param $Attachment Id, Attachment id of the image being processed
+		 * @param bool $skip  Whether to Smush image or not.
+		 * @param int  $id    Attachment id of the image being processed.
 		 */
 		if ( ! apply_filters( 'wp_smush_image', true, $id ) ) {
 			return;
@@ -1974,14 +1865,14 @@ class Smush extends Abstract_Module {
 		$stats_full->percent          = $this->calculate_percentage_from_stats( $stats_full );
 		$smush_stats['sizes']['full'] = $stats_full;
 
-		// Update Stats
+		// Update stats.
 		update_post_meta( $post_data['postid'], self::$smushed_meta_key, $smush_stats );
 	}
 
 	/**
 	 * Registers smush action for HUB API
 	 *
-	 * @param $actions
+	 * @param array $actions  Array of registered actions.
 	 *
 	 * @return mixed
 	 */
@@ -2023,18 +1914,6 @@ class Smush extends Abstract_Module {
 	}
 
 	/**
-	 * Compare Values
-	 *
-	 * @param object $a
-	 * @param object $b
-	 *
-	 * @return bool
-	 */
-	public static function cmp( $a, $b ) {
-		return $a->bytes < $b->bytes;
-	}
-
-	/**
 	 * Remove paths that should not be re-uploaded to an S3 bucket.
 	 *
 	 * See as3cf_attachment_file_paths filter description for more information.
@@ -2061,49 +1940,6 @@ class Smush extends Abstract_Module {
 		}
 
 		return $paths;
-	}
-
-	/**
-	 * Check to see if file is animated.
-	 *
-	 * @since 3.0  Moved from class-resize.php
-	 *
-	 * @param string $file_path  Image file path.
-	 * @param int    $id         Attachment ID.
-	 */
-	public function check_animated_status( $file_path, $id ) {
-		// Only do this for GIFs.
-		if ( 'image/gif' !== get_post_mime_type( $id ) || ! isset( $file_path ) ) {
-			return;
-		}
-
-		$filecontents = file_get_contents( $file_path );
-
-		$str_loc = 0;
-		$count   = 0;
-
-		// There is no point in continuing after we find a 2nd frame.
-		while ( $count < 2 ) {
-			$where1 = strpos( $filecontents, "\x00\x21\xF9\x04", $str_loc );
-			if ( false === $where1 ) {
-				break;
-			} else {
-				$str_loc = $where1 + 1;
-				$where2  = strpos( $filecontents, "\x00\x2C", $str_loc );
-				if ( false === $where2 ) {
-					break;
-				} else {
-					if ( $where2 === $where1 + 8 ) {
-						$count++;
-					}
-					$str_loc = $where2 + 1;
-				}
-			}
-		}
-
-		if ( $count > 1 ) {
-			update_post_meta( $id, WP_SMUSH_PREFIX . 'animated', true );
-		}
 	}
 
 }

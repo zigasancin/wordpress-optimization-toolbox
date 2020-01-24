@@ -2,7 +2,17 @@
 
 @include body-class {
 
+	/** Override WP Footer Styling, Hide it on WPMU pages only, if we really need to **/
+	#wpfooter {
+		display: block;
+	}
+
 	.sui-wrap {
+		#smush-submit-description {
+			color: #9B9B9B;
+			font-size: 13px;
+			margin-right: 20px;
+		}
 
 		/**
 		 * Upesll notices.
@@ -69,6 +79,28 @@
 				.smush-stats-item:nth-child(2) {
 					margin: 20px 0;
 				}
+			}
+		}
+
+		/**
+		 * Integrations
+		 *
+		 * @since 3.4.0
+		 */
+		.sui-integrations {
+			.sui-settings-label {
+				display: flex;
+				align-items: center;
+
+				.sui-tag { margin-left: 10px; }
+			}
+
+			.sui-toggle-content .sui-notice {
+				margin-top: 10px;
+			}
+
+			.sui-box-settings-row.sui-disabled {
+				margin-bottom: 0;
 			}
 		}
 
@@ -208,42 +240,10 @@
 		}
 
 		/**
-		 * Bulk restore modal
-		 *
-		 * @since 3.2.2
-		 */
-		.smush-restore-images-dialog {
-			.sui-image {
-				margin-top: 20px;
-			}
-
-			.sui-notice {
-				text-align: left;
-			}
-		}
-
-		/**
 		 * Onboarding modals
 		 *
 		 * @since 3.1
 		 */
-		.smush-restore-images-dialog,
-		.checking-files-dialog {
-			.sui-box { background-color: #fff; }
-
-			.sui-box-title {
-				display: flex !important;
-				flex-direction: column !important;
-
-				.sui-icon-check,
-				.sui-icon-loader {
-					margin-bottom: 20px;
-					margin-right: 0 !important;
-					color: #AAAAAA;
-				}
-			}
-		}
-
 		.smush-onboarding-dialog {
 			@keyframes fadeInLeft {
 				from {
@@ -267,80 +267,19 @@
 				}
 			}
 
-			.sui-dialog-content {
-				max-width: 560px;
+			.sui-box { background-color: transparent; }
 
-				.sui-box { background-color: transparent; }
+			#smush-onboarding-content {
+				opacity: 0;
+				background-color: #fff;
+				animation-duration: 0.7s;
+				animation-fill-mode: both;
+				transform-origin: center;
+				transform-style: preserve-3d;
 
-				#smush-onboarding-content {
-					opacity: 0;
-					background-color: #fff;
-					animation-duration: 0.7s;
-					animation-fill-mode: both;
-					transform-origin: center;
-					transform-style: preserve-3d;
-
-					&.loaded {
-						opacity: 1;
-					}
-
-					&.fadeInLeft {
-						opacity: 1;
-						animation-name: fadeInLeft;
-					}
-
-					&.fadeInRight {
-						opacity: 1;
-						animation-name: fadeInRight;
-					}
-				}
-			}
-
-			// Start overwrite sui styles.
-			.sui-box .sui-box-header {
-				padding: 0 !important;
-
-				.sui-dialog-image {
-					width: 100% !important;
-					height: auto !important;
-					margin-left: -50% !important;
-					border: 0 !important;
-					position: relative !important;
-				}
-
-				.sui-box-title {
-					font: bold 22px/30px "Roboto", Arial, sans-serif !important;
-				}
-			}
-			// End overwrite styles.
-
-			.sui-box-body {
-				p {
-					color: #888;
-					max-width: 340px;
-					margin: 0 auto 30px;
-
-					&.smush-onboarding-note {
-						margin-top: 30px;
-						margin-bottom: 0;
-					}
-				}
-
-				.smush-onboarding-toggle {
-					background-color: #F8F8F8;
-					height: 60px;
-					margin: 20px -20px 5px;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					font-size: 13px;
-				}
-
-				.sui-button { margin: 0; }
-
-				.sui-button-gray { margin-top: 30px; }
-
-				button[type=submit] { margin-top: 25px; }
+				&.loaded, &.fadeInLeft, &.fadeInRight { opacity: 1; }
+				&.fadeInLeft { animation-name: fadeInLeft; }
+				&.fadeInRight { animation-name: fadeInRight; }
 			}
 
 			.smush-onboarding-arrows a {
@@ -372,54 +311,10 @@
 				i:before { color: #fff; }
 			}
 
-			.smush-onboarding-dots {
-				display: flex;
-				margin-top: 15px;
-				margin-bottom: 10px;
-
-				a { margin: 0 5px; }
-
-				span {
-					height: 7px;
-					width: 7px;
-					border-radius: 50%;
-					background-color: #E6E6E6;
-					display: block;
-
-					&.active { background-color: #666; }
-				}
-			}
-
-			.smush-onboarding-skip-link {
-				position: absolute;
-				bottom: -50px;
-				opacity: 0.7;
-				font-size: 13px;
-				color: #fff !important;
-				letter-spacing: -0.25px;
-				line-height: 22px;
-				text-align: center;
-				width: 100%;
-			}
-
 			@media screen and (max-width: 782px) {
-				.sui-dialog-content { padding: 0 30px; }
-				.sui-dialog-image { display: block !important; }
 				.smush-onboarding-arrows { display: none; }
 			}
-			@media screen and (max-width: 320px) {
-				.sui-box { margin: 46px 0 0 !important; }
-				.smush-onboarding-skip-link { bottom: -30px; }
-				.sui-dialog-content { padding: 0 10px; }
-				.sui-box-body > * { margin-bottom: 10px !important; }
-				.sui-box-footer { padding: 0 0 10px !important; }
-			}
 		} // End .smush-onboarding-dialog
-
-		// Overwrite extra padding on progress bars in modals.
-		.sui-dialog-content .sui-progress-block {
-			margin-bottom: 0;
-		}
 
 		// Bulk smush and directory smush (overwrite when the limit is exceeded)
 		.wp-smush-exceed-limit {
@@ -468,7 +363,6 @@
 		}
 
 		.wp-smush-bulk-progress-bar-wrapper {
-			margin-bottom: 30px;
 			.sui-progress-state {
 				span {
 					display: inline-block;
@@ -482,6 +376,7 @@
 
 		// Bulk Smush error messages: Start.
 		.smush-final-log {
+			margin-top: 30px;
 
 			.smush-bulk-error-row {
 				align-content: center;
@@ -819,17 +714,33 @@
 			}
 		}
 
+		.sui-summary-segment {
+			overflow: visible;
+		}
+
 		.sui-summary-details {
 			.sui-summary-detail {
 				font-size: 15px;
 				font-weight: 500;
 				line-height: 22px;
 				display: inline-flex;
-				.wp-smush-stats-percent {
+
+				.wp-smush-stats-percent { margin-left: 5px; }
+				.wp-smush-stats-human { margin-right: 5px; }
+			}
+
+			.sui-tooltip {
+				position: absolute;
+				margin-top: 25px;
+				margin-left: -5px;
+
+				&:before {
+					margin-bottom: 20px;
 					margin-left: 5px;
 				}
-				.wp-smush-stats-human {
-					margin-right: 5px;
+				&:after {
+					margin-bottom: 30px;
+					margin-left: 5px;
 				}
 			}
 		}

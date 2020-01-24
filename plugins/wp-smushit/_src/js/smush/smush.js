@@ -1,13 +1,12 @@
 /* global WP_Smush */
 /* global ajaxurl */
 /* global wp_smushit_data */
-/* global wp_smush_msgs */
+
 /**
  * Smush class.
  *
  * @since 2.9.0  Moved from admin.js into a dedicated ES6 class.
  */
-
 class Smush {
 	/**
 	 * Class constructor.
@@ -117,7 +116,7 @@ class Smush {
 			type: 'GET',
 			data: param,
 			url: sendUrl,
-			/** @var {array} wp_smushit_data */
+			/** @param {Array} wp_smushit_data */
 			timeout: wp_smushit_data.timeout,
 			dataType: 'json',
 		} );
@@ -167,7 +166,7 @@ class Smush {
 		if ( this.is_bulk ) {
 			return;
 		}
-		Smush.progressBar( this.button, wp_smush_msgs.smushing, 'show' );
+		Smush.progressBar( this.button, window.wp_smush_msgs.smushing, 'show' );
 		this.status.removeClass( 'error' );
 	}
 
@@ -195,8 +194,8 @@ class Smush {
 		if ( 'show' === state ) {
 			progressButton.html( txt );
 		} else {
-			/** @var {string} wp_smush_msgs.all_done */
-			progressButton.html( wp_smush_msgs.all_done );
+			/** @param {string} wp_smush_msgs.all_done */
+			progressButton.html( window.wp_smush_msgs.all_done );
 		}
 
 		progressButton.toggleClass( 'visible' );
@@ -210,7 +209,7 @@ class Smush {
 			return;
 		}
 
-		Smush.progressBar( this.button, wp_smush_msgs.smushing, 'hide' );
+		Smush.progressBar( this.button, window.wp_smush_msgs.smushing, 'hide' );
 
 		const self = this;
 
@@ -223,6 +222,8 @@ class Smush {
 				if ( response.data.status ) {
 					//remove Links
 					parent.find( '.smush-status-links' ).remove();
+					// TODO: this should be removed
+					parent.find( '.smush-ignore-image' ).remove();
 					self.status.replaceWith( response.data.status );
 				}
 
@@ -231,11 +232,10 @@ class Smush {
 
 				if ( response.success && 'Not processed' !== response.data ) {
 					self.status.removeClass( 'sui-hidden' );
-					self.button.parent().removeClass( 'unsmushed' ).addClass( 'smushed' );
 					self.button.remove();
 				} else {
 					self.status.addClass( 'error' );
-					/** @var {string} response.data.error_msg */
+					/** @param {string} response.data.error_msg */
 					self.status.html( response.data.error_msg );
 					self.status.show();
 				}
@@ -244,7 +244,8 @@ class Smush {
 
 				/**
 				 * Update image size in attachment info panel.
-				 * @var {string|int} response.data.new_size
+				 *
+				 * @param {string|number} response.data.new_size
 				 */
 				Smush.updateImageStats( response.data.new_size );
 			}
@@ -439,8 +440,8 @@ class Smush {
 		const messageHolder = jQuery( 'div.wp-smush-bulk-progress-bar-wrapper div.wp-smush-count.tc' );
 		// Store the existing content in a variable.
 		const progressMessage = messageHolder.html();
-		/** @var {string} wp_smush_msgs.sync_stats */
-		messageHolder.html( wp_smush_msgs.sync_stats );
+		/** @param {string} wp_smush_msgs.sync_stats */
+		messageHolder.html( window.wp_smush_msgs.sync_stats );
 
 		// Send ajax.
 		jQuery.ajax( {
@@ -568,7 +569,7 @@ class Smush {
 	 */
 	static updateLocalizedStats( imageStats, type ) {
 		// Increase the Smush count.
-		if ( 'undefined' === typeof wp_smushit_data ) {
+		if ( 'undefined' === typeof window.wp_smushit_data ) {
 			return;
 		}
 
@@ -629,7 +630,7 @@ class Smush {
 			return;
 		}
 
-		let progress = '';
+		let progress = 0;
 
 		// Update localized stats.
 		if ( _res && ( 'undefined' !== typeof _res.data && 'undefined' !== typeof _res.data.stats ) ) {
@@ -749,7 +750,7 @@ class Smush {
 				if ( 'undefined' === typeof res.success || ( 'undefined' !== typeof res.success && false === res.success && 'undefined' !== typeof res.data && 'limit_exceeded' !== res.data.error ) ) {
 					self.errors.push( self.current_id );
 
-					/** @var {string} res.data.file_name */
+					/** @param {string} res.data.file_name */
 					const errorMsg = Smush.prepareErrorRow( res.data.error_message, res.data.file_name, res.data.thumbnail, self.current_id, self.smush_type );
 
 					self.log.show();
@@ -834,7 +835,7 @@ class Smush {
 		if ( 'media' === type ) {
 			tableDiv = tableDiv +
 				'<div class="smush-bulk-image-actions">' +
-					'<button type="button" class="sui-button-icon sui-tooltip sui-tooltip-constrained sui-tooltip-top-right smush-ignore-image" data-tooltip="' + wp_smush_msgs.error_ignore + '" data-id="' + id + '">' +
+					'<button type="button" class="sui-button-icon sui-tooltip sui-tooltip-constrained sui-tooltip-top-right smush-ignore-image" data-tooltip="' + window.wp_smush_msgs.error_ignore + '" data-id="' + id + '">' +
 						'<i class="sui-icon-eye-hide" aria-hidden="true"></i>' +
 					'</button>' +
 				'</div>';
@@ -869,8 +870,8 @@ class Smush {
 			self.button.removeAttr( 'continue_smush' );
 
 			if ( self.errors.length ) {
-				/** @var {string} wp_smush_msgs.error_in_bulk */
-				const msg = wp_smush_msgs.error_in_bulk
+				/** @param {string} wp_smush_msgs.error_in_bulk */
+				const msg = window.wp_smush_msgs.error_in_bulk
 					.replace( '{{errors}}', self.errors.length )
 					.replace( '{{total}}', self.total )
 					.replace( '{{smushed}}', self.smushed );

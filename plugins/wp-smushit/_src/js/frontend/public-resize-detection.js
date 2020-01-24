@@ -11,52 +11,52 @@
 ( function() {
 	'use strict';
 
-	const WP_Smush_IRS = {
-		bar: document.getElementById('smush-image-bar'),
-		toggle: document.getElementById('smush-image-bar-toggle'),
+	const SmushIRS = {
+		bar: document.getElementById( 'smush-image-bar' ),
+		toggle: document.getElementById( 'smush-image-bar-toggle' ),
 		images: {
 			bigger: [],
-			smaller: []
+			smaller: [],
 		},
 
 		/**
 		 * Init scripts.
 		 */
-		init: function () {
-			/** @var {array} wp_smush_resize_vars */
-			if ( wp_smush_resize_vars ) {
-				this.strings = wp_smush_resize_vars;
-			}
+		init() {
+			/** @param {Array} wp_smush_resize_vars */
+			this.strings = window.wp_smush_resize_vars || {};
 
 			/**
 			 * Make sure these are set, before we proceed.
 			 */
-			if ( ! this.bar )
-				this.bar = document.getElementById('smush-image-bar');
-			if ( ! this.toggle )
-				this.toggle = document.getElementById('smush-image-bar-toggle');
+			if ( ! this.bar ) {
+				this.bar = document.getElementById( 'smush-image-bar' );
+			}
+			if ( ! this.toggle ) {
+				this.toggle = document.getElementById( 'smush-image-bar-toggle' );
+			}
 
 			this.detectImages();
-			this.generateMarkup('bigger');
-			this.generateMarkup('smaller');
+			this.generateMarkup( 'bigger' );
+			this.generateMarkup( 'smaller' );
 			this.removeEmptyDivs();
 
-            this.toggle.querySelector('i').classList.add('sui-icon-info');
-            this.toggle.querySelector('i').classList.remove('sui-icon-loader');
+			this.toggle.querySelector( 'i' ).classList.add( 'sui-icon-info' );
+			this.toggle.querySelector( 'i' ).classList.remove( 'sui-icon-loader' );
 
 			// Register the event handler after everything is done.
-            this.toggle.addEventListener('click', this.handleToggleClick.bind(this));
+			this.toggle.addEventListener( 'click', this.handleToggleClick.bind( this ) );
 		},
 
 		/**
 		 * Various checks to see if the image should be processed.
 		 *
-		 * @param {object} image
-		 * @returns {boolean}
+		 * @param {Object} image
+		 * @return {boolean}  Should skip image or not.
 		 */
-		shouldSkipImage: function(image) {
+		shouldSkipImage( image ) {
 			// Skip avatars.
-			if ( image.classList.contains('avatar') ) {
+			if ( image.classList.contains( 'avatar' ) ) {
 				return true;
 			}
 
@@ -72,22 +72,22 @@
 		/**
 		 * Get tooltip text.
 		 *
-		 * @param {object} props
-		 * @returns {string}
+		 * @param {Object} props
+		 * @return {string}  Tooltip.
 		 */
-		getTooltipText: function(props) {
-			let tooltip_text = '';
+		getTooltipText( props ) {
+			let tooltipText = '';
 
 			if ( props.bigger_width || props.bigger_height ) {
-				/** @var {string} strings.large_image */
-				tooltip_text = this.strings.large_image;
+				/** @param {string} strings.large_image */
+				tooltipText = this.strings.large_image;
 			} else if ( props.smaller_width || props.smaller_height ) {
-				/** @var {string} strings.small_image */
-				tooltip_text = this.strings.small_image;
+				/** @param {string} strings.small_image */
+				tooltipText = this.strings.small_image;
 			}
 
-			return tooltip_text.replace('width', props.real_width)
-				.replace('height', props.real_height);
+			return tooltipText.replace( 'width', props.real_width )
+				.replace( 'height', props.real_height );
 		},
 
 		/**
@@ -95,80 +95,81 @@
 		 *
 		 * @param {string} type  Accepts: 'bigger' or 'smaller'.
 		 */
-		generateMarkup: function(type) {
-			this.images[type].forEach((image, index) => {
-				const item = document.createElement('div'),
-					tooltip = this.getTooltipText(image.props);
+		generateMarkup( type ) {
+			this.images[ type ].forEach( ( image, index ) => {
+				const item = document.createElement( 'div' ),
+					tooltip = this.getTooltipText( image.props );
 
-				item.setAttribute('class', 'smush-resize-box smush-tooltip smush-tooltip-constrained');
-				item.setAttribute('data-tooltip', tooltip);
-				item.setAttribute('data-image', image.class);
-				item.addEventListener('click', (e) => this.highlightImage(e));
+				item.setAttribute( 'class', 'smush-resize-box smush-tooltip smush-tooltip-constrained' );
+				item.setAttribute( 'data-tooltip', tooltip );
+				item.setAttribute( 'data-image', image.class );
+				item.addEventListener( 'click', ( e ) => this.highlightImage( e ) );
 
 				item.innerHTML = `
 					<div class="smush-image-info">
-						<span>${index + 1}</span>
-						<span class="smush-tag">${image.props.computed_width} x ${image.props.computed_height}px</span>
+						<span>${ index + 1 }</span>
+						<span class="smush-tag">${ image.props.computed_width } x ${ image.props.computed_height }px</span>
 						<i class="smush-front-icons smush-front-icon-arrows-in" aria-hidden="true">&nbsp;</i>
-						<span class="smush-tag smush-tag-success">${image.props.real_width} × ${image.props.real_height}px</span>					
+						<span class="smush-tag smush-tag-success">${ image.props.real_width } × ${ image.props.real_height }px</span>					
 					</div>
-					<div class="smush-image-description">${tooltip}</div>
+					<div class="smush-image-description">${ tooltip }</div>
 				`;
 
-				document.getElementById('smush-image-bar-items-'+type).appendChild(item);
-			});
+				document.getElementById( 'smush-image-bar-items-' + type ).appendChild( item );
+			} );
 		},
 
 		/**
 		 * Remove sections that don't have images.
 		 */
-		removeEmptyDivs: function() {
-			const types = ['bigger', 'smaller'];
-			types.forEach(type => {
-				if ( 0 === this.images[type].length ) {
-					const div = document.getElementById('smush-image-bar-items-'+type);
+		removeEmptyDivs() {
+			const types = [ 'bigger', 'smaller' ];
+			types.forEach( ( type ) => {
+				if ( 0 === this.images[ type ].length ) {
+					const div = document.getElementById( 'smush-image-bar-items-' + type );
 					div.style.display = 'none';
 				}
-
-			});
+			} );
 		},
 
 		/**
 		 * Scroll the selected image into view and highlight it.
+		 *
+		 * @param {Object} e
 		 */
-		highlightImage: function(e) {
+		highlightImage( e ) {
 			this.removeSelection();
 
-			const el = document.getElementsByClassName(e.currentTarget.dataset.image);
-			if ('undefined' !== typeof el[0]) {
+			const el = document.getElementsByClassName( e.currentTarget.dataset.image );
+			if ( 'undefined' !== typeof el[ 0 ] ) {
 				// Display description box.
-				e.currentTarget.classList.toggle('show-description');
+				e.currentTarget.classList.toggle( 'show-description' );
 
 				// Scroll and flash image.
-				el[0].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'nearest'});
-				el[0].style.opacity = '0.5';
-				setTimeout(() => {
-					el[0].style.opacity = '1';
-				}, 1000);
+				el[ 0 ].scrollIntoView( { behavior: 'smooth', block: 'center', inline: 'nearest' } );
+				el[ 0 ].style.opacity = '0.5';
+				setTimeout( () => {
+					el[ 0 ].style.opacity = '1';
+				}, 1000 );
 			}
 		},
 
 		/**
 		 * Handle click on the toggle item.
 		 */
-		handleToggleClick: function() {
-			this.bar.classList.toggle('closed');
-			this.toggle.classList.toggle('closed');
+		handleToggleClick() {
+			this.bar.classList.toggle( 'closed' );
+			this.toggle.classList.toggle( 'closed' );
 			this.removeSelection();
 		},
 
 		/**
 		 * Remove selected items.
 		 */
-		removeSelection: function() {
-			const items = document.getElementsByClassName('show-description');
+		removeSelection() {
+			const items = document.getElementsByClassName( 'show-description' );
 			if ( items.length > 0 ) {
-				Array.from(items).forEach(div => div.classList.remove('show-description'));
+				Array.from( items ).forEach( ( div ) => div.classList.remove( 'show-description' ) );
 			}
 		},
 
@@ -178,26 +179,26 @@
 		 * Add yellow border and then show one small box to
 		 * resize the images as per the required size, on fly.
 		 */
-		detectImages: function() {
-			const images = document.getElementsByTagName('img');
+		detectImages() {
+			const images = document.getElementsByTagName( 'img' );
 
-            Object.keys(images).map( e => {
-            	const image = images[e];
+			Object.keys( images ).map( ( e ) => {
+				const image = images[ e ];
 
-				if ( this.shouldSkipImage(image) ) {
+				if ( this.shouldSkipImage( image ) ) {
 					return;
 				}
 
 				// Get defined width and height.
 				const props = {
-					real_width:      image.clientWidth,
-					real_height:     image.clientHeight,
-					computed_width:  image.naturalWidth,
+					real_width: image.clientWidth,
+					real_height: image.clientHeight,
+					computed_width: image.naturalWidth,
 					computed_height: image.naturalHeight,
-					bigger_width:  ( image.clientWidth * 1.5 ) < image.naturalWidth,
+					bigger_width: ( image.clientWidth * 1.5 ) < image.naturalWidth,
 					bigger_height: ( image.clientHeight * 1.5 ) < image.naturalHeight,
-					smaller_width:   image.clientWidth > image.naturalWidth,
-					smaller_height:  image.clientHeight > image.naturalHeight
+					smaller_width: image.clientWidth > image.naturalWidth,
+					smaller_height: image.clientHeight > image.naturalHeight,
 				};
 
 				// In case image is in correct size, do not continue.
@@ -206,30 +207,29 @@
 				}
 
 				const imgType = props.bigger_width || props.bigger_height ? 'bigger' : 'smaller',
-					imageClass =  'smush-image-'+(this.images[imgType].length + 1);
+					imageClass = 'smush-image-' + ( this.images[ imgType ].length + 1 );
 
 				// Fill the images arrays.
-				this.images[imgType].push({
+				this.images[ imgType ].push( {
 					src: image,
-					props: props,
-					class: imageClass
-				});
+					props,
+					class: imageClass,
+				} );
 
 				/**
 				 * Add class to original image.
 				 * Can't add two classes in single add(), because no support in IE11.
 				 * image.classList.add('smush-detected-img', imageClass);
 				 */
-				image.classList.add('smush-detected-img');
-				image.classList.add(imageClass);
-			});
-		} // End detectImages()
+				image.classList.add( 'smush-detected-img' );
+				image.classList.add( imageClass );
+			} );
+		}, // End detectImages()
 
 	}; // End WP_Smush_IRS
 
 	/**
 	 * After page load, initialize toggle event.
 	 */
-    window.addEventListener('load', () => WP_Smush_IRS.init());
-
-}());
+	window.addEventListener( 'load', () => SmushIRS.init() );
+}() );

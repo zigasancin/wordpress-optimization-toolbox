@@ -1,3 +1,6 @@
+/* global WP_Smush */
+/* global ajaxurl */
+
 /**
  * Bulk Smush functionality.
  *
@@ -10,9 +13,7 @@ import Smush from '../smush/smush';
 	'use strict';
 
 	WP_Smush.bulk = {
-
 		init: () => {
-
 			/**
 			 * Handle the Bulk Smush/Bulk re-Smush button click.
 			 */
@@ -21,14 +22,14 @@ import Smush from '../smush/smush';
 
 				$( '.sui-notice-top.sui-notice-success' ).remove();
 
-				const bulkWarning = document.getElementById('bulk_smush_warning');
-				bulkWarning.classList.add('sui-hidden');
+				const bulkWarning = document.getElementById( 'bulk_smush_warning' );
+				bulkWarning.classList.add( 'sui-hidden' );
 
 				// Remove limit exceeded styles.
 				const progress = $( '.wp-smush-bulk-progress-bar-wrapper' );
 				progress.removeClass( 'wp-smush-exceed-limit' );
-				progress.find( '.sui-progress-block .wp-smush-all' ).addClass('sui-hidden');
-				progress.find( '.sui-progress-block .wp-smush-cancel-bulk' ).removeClass('sui-hidden');
+				progress.find( '.sui-progress-block .wp-smush-all' ).addClass( 'sui-hidden' );
+				progress.find( '.sui-progress-block .wp-smush-cancel-bulk' ).removeClass( 'sui-hidden' );
 				if ( bulkWarning ) {
 					document.getElementById( 'bulk-smush-resume-button' ).classList.add( 'sui-hidden' );
 				}
@@ -38,9 +39,9 @@ import Smush from '../smush/smush';
 				$( '.wp-resmush.wp-smush-action, .wp-smush-scan, .wp-smush-all:not(.sui-progress-close), a.wp-smush-lossy-enable, button.wp-smush-resize-enable, button#wp-smush-save-settings' ).attr( 'disabled', 'disabled' );
 
 				// Check for IDs, if there is none (unsmushed or lossless), don't call Smush function.
-				/** @var {array} wp_smushit_data.unsmushed */
-				if ( 'undefined' === typeof wp_smushit_data ||
-					( 0 === wp_smushit_data.unsmushed.length && 0 === wp_smushit_data.resmush.length )
+				/** @param {Array} wp_smushit_data.unsmushed */
+				if ( 'undefined' === typeof window.wp_smushit_data ||
+					( 0 === window.wp_smushit_data.unsmushed.length && 0 === window.wp_smushit_data.resmush.length )
 				) {
 					return false;
 				}
@@ -48,9 +49,9 @@ import Smush from '../smush/smush';
 				$( '.wp-smush-remaining' ).hide();
 
 				// Show loader.
-				progress.find('i.sui-icon-info').removeClass('sui-icon-info')
-					.addClass('sui-loading')
-					.addClass('sui-icon-loader');
+				progress.find( 'i.sui-icon-info' ).removeClass( 'sui-icon-info' )
+					.addClass( 'sui-loading' )
+					.addClass( 'sui-icon-loader' );
 
 				new Smush( $( this ), true );
 			} );
@@ -60,22 +61,30 @@ import Smush from '../smush/smush';
 			 *
 			 * @since 2.9.0
 			 */
-			$( 'body' ).on( 'click', '.smush-ignore-image', function() {
-				$(this).attr( 'disabled', true );
-				$(this).attr( 'data-tooltip' );
-				$(this).removeClass( 'sui-tooltip' );
+			$( 'body' ).on( 'click', '.smush-ignore-image', function( e ) {
+				e.preventDefault();
 
+				const self = $( this );
+
+				self.attr( 'disabled', true );
+				self.attr( 'data-tooltip' );
+				self.removeClass( 'sui-tooltip' );
 				$.post( ajaxurl, {
 					action: 'ignore_bulk_image',
-					id: $(this).attr( 'data-id' )
-				} );
-
+					id: self.attr( 'data-id' ),
+				} )
+					.done( () => {
+						if ( self.is( 'a' ) ) {
+							e.target.classList.remove( 'smush-ignore-image' );
+							e.target.classList.add( 'wp-smush-remove-skipped' );
+							e.target.text = window.wp_smush_msgs.bulkShow;
+							self.parent().find( '.smush-status' ).text( window.wp_smush_msgs.ignored );
+						}
+					} );
 			} );
-
-		}
+		},
 
 	};
 
 	WP_Smush.bulk.init();
-
-}( jQuery ));
+}( jQuery ) );

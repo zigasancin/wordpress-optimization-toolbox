@@ -311,7 +311,13 @@ class Resize extends Abstract_Module {
 
 		// If the image wasn't resized.
 		if ( empty( $data['file'] ) || is_wp_error( $data ) ) {
-			return false;
+			if ( $this->try_gd_fallback() ) {
+				$data = image_make_intermediate_size( $file_path, $sizes['width'], $sizes['height'] );
+			}
+
+			if ( empty( $data['file'] ) || is_wp_error( $data ) ) {
+				return false;
+			}
 		}
 
 		// Check if file size is lesser than original image.
@@ -332,6 +338,25 @@ class Resize extends Abstract_Module {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Fix for WP Engine 'width or height exceeds limit' Imagick error.
+	 *
+	 * If unable to resize with Imagick, try to fallback to GD.
+	 *
+	 * @since 3.4.0
+	 */
+	private function try_gd_fallback() {
+		if ( ! function_exists( 'gd_info' ) ) {
+			return false;
+		}
+
+		return add_filter( 'wp_image_editors', function( $editors ) {
+			$editors = array_diff( $editors, array( 'WP_Image_Editor_GD' ) );
+			array_unshift( $editors, 'WP_Image_Editor_GD' );
+			return $editors;
+		} );
 	}
 
 	/**

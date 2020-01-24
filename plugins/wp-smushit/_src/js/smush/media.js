@@ -1,5 +1,5 @@
 /* global smush_vars */
-/* global wp */
+/* global _ */
 
 /**
  * Adds a Smush Now button and displays stats in Media Attachment Details Screen
@@ -9,7 +9,10 @@
 
 	// Local reference to the WordPress media namespace.
 	const smushMedia = wp.media,
-		sharedTemplate = "<label class='setting smush-stats' data-setting='description'><span class='name'><%= label %></span><span class='value'><%= value %></span></label>",
+		sharedTemplate = "<span class='setting smush-stats' data-setting='smush'>" +
+				"<span class='name'><%= label %></span>" +
+				"<span class='value'><%= value %></span>" +
+			'</span>',
 		template = _.template( sharedTemplate );
 
 	/**
@@ -20,8 +23,8 @@
 	 */
 	const prepareTemplate = function( smushHTML ) {
 		/**
-		 * @var {array}  smush_vars.strings  Localization strings.
-		 * @var {object} smush_vars          Object from wp_localize_script()
+		 * @param {Array}  smush_vars.strings  Localization strings.
+		 * @param {Object} smush_vars          Object from wp_localize_script()
 		 */
 		return template( {
 			label: smush_vars.strings.stats_label,

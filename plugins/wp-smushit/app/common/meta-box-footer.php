@@ -13,8 +13,8 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 $current_tab = $this->get_current_tab();
-$button_msg  = 'bulk' === $current_tab ? '' : __( 'Saving changes...', 'wp-smushit' );
-$button_text = __( 'Save changes', 'wp-smushit' );
+$button_msg  = 'bulk' === $current_tab ? '' : __( 'Updating settings...', 'wp-smushit' );
+$button_text = __( 'Update settings', 'wp-smushit' );
 
 /**
  * Filter to enable/disable submit button in integration settings.
@@ -30,16 +30,16 @@ if ( 'cdn' === $current_tab && ! WP_Smush::get_instance()->core()->mod->cdn->get
 ?>
 
 <div class="sui-actions-right">
+	<?php if ( 'integrations' === $current_tab || 'bulk' === $current_tab ) : ?>
+		<label id="smush-submit-description">
+			<?php esc_html_e( 'Smush will automatically check for any images that need re-smushing.', 'wp-smushit' ); ?>
+		</label>
+	<?php endif; ?>
+
 	<button type="submit" class="sui-button sui-button-blue" id="wp-smush-save-settings" aria-describedby="smush-submit-description" data-msg="<?php echo esc_attr( $button_msg ); ?>" <?php disabled( $disabled, false, false ); ?>>
 		<i class="sui-icon-save" aria-hidden="true"></i>
 		<?php echo esc_html( $button_text ); ?>
 	</button>
 
 	<span class="sui-icon-loader sui-loading sui-hidden"></span>
-
-	<?php if ( 'integrations' === $current_tab || 'bulk' === $current_tab ) : ?>
-	<span class="smush-submit-note" id="smush-submit-description">
-		<?php esc_html_e( 'Smush will automatically check for any images that need re-smushing.', 'wp-smushit' ); ?>
-	</span>
-	<?php endif; ?>
 </div>

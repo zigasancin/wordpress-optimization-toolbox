@@ -142,13 +142,11 @@ class Png2jpg extends Abstract_Module {
 	 * @return bool Whether to convert the PNG or not
 	 */
 	private function should_convert( $id, $file ) {
-		$should_convert = false;
-
 		// Get the Transparency conversion settings.
 		$convert_png = $this->settings->get( 'png_to_jpg' );
 
 		if ( ! $convert_png ) {
-			return $should_convert;
+			return false;
 		}
 
 		// Whether to convert transparent images or not.
@@ -161,10 +159,10 @@ class Png2jpg extends Abstract_Module {
 
 		// If we are suppose to convert transparent images, skip is transparent check.
 		if ( $convert_transparent || ! $this->is_transparent ) {
-			$should_convert = true;
+			return true;
 		}
 
-		return $should_convert;
+		return false;
 	}
 
 	/**

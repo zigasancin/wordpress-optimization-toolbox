@@ -34,7 +34,7 @@ if ( ! defined( 'WPINC' ) ) {
 			<?php esc_html_e( 'In addition to smushing your media uploads, you may want to smush non WordPress images that are outside of your uploads directory. Get started by adding files and folders you wish to optimize.', 'wp-smushit' ); ?>
 		</p>
 
-		<button type="button" class="sui-button sui-button-blue wp-smush-browse tc" data-a11y-dialog-show="wp-smush-list-dialog">
+		<button class="sui-button sui-button-blue wp-smush-browse" data-modal-open="wp-smush-list-dialog" data-modal-open-focus="wp-smush-select-dir" data-modal-mask="true">
 			<?php esc_html_e( 'CHOOSE DIRECTORY', 'wp-smushit' ); ?>
 		</button>
 	</div>
