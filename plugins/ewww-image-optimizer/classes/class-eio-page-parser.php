@@ -158,12 +158,31 @@ if ( ! class_exists( 'EIO_Page_Parser' ) ) {
 		 * Try to determine height and width from strings WP appends to resized image filenames.
 		 *
 		 * @param string $src The image URL.
+		 * @param bool   $use_params Check ExactDN image parameters for additional size information. Default to false.
 		 * @return array An array consisting of width and height.
 		 */
-		function get_dimensions_from_filename( $src ) {
+		function get_dimensions_from_filename( $src, $use_params = false ) {
 			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
 			$width_height_string = array();
 			$this->debug_message( "looking for dimensions in $src" );
+			$width_param  = false;
+			$height_param = false;
+			if ( $use_params && strpos( $src, '?' ) ) {
+				$url_params = urldecode( $this->parse_url( $src, PHP_URL_QUERY ) );
+				if ( $url_params && false !== strpos( $url_params, 'resize=' ) ) {
+					preg_match( '/resize=(\d+),(\d+)/', $url_params, $resize_matches );
+					if ( is_array( $resize_matches ) && ! empty( $resize_matches[1] ) && ! empty( $resize_matches[2] ) ) {
+						$width_param  = (int) $resize_matches[1];
+						$height_param = (int) $resize_matches[2];
+					}
+				} elseif ( false !== strpos( $url_params, 'fit=' ) ) {
+					preg_match( '/fit=(\d+),(\d+)/', $url_params, $fit_matches );
+					if ( is_array( $fit_matches ) && ! empty( $fit_matches[1] ) && ! empty( $fit_matches[2] ) ) {
+						$width_param  = (int) $fit_matches[1];
+						$height_param = (int) $fit_matches[2];
+					}
+				}
+			}
 			if ( preg_match( '#-(\d+)x(\d+)(@2x)?\.(?:' . implode( '|', $this->extensions ) . '){1}(?:\?.+)?$#i', $src, $width_height_string ) ) {
 				$width  = (int) $width_height_string[1];
 				$height = (int) $width_height_string[2];
@@ -173,11 +192,17 @@ if ( ! class_exists( 'EIO_Page_Parser' ) ) {
 					$height = 2 * $height;
 				}
 				if ( $width && $height ) {
+					if ( $width_param && $width_param < $width ) {
+						$width = $width_param;
+					}
+					if ( $height_param && $height_param < $height ) {
+						$height = $height_param;
+					}
 					$this->debug_message( "found w$width h$height" );
 					return array( $width, $height );
 				}
 			}
-			return array( false, false );
+			return array( $width_param, $height_param ); // These may be false, unless URL parameters were found.
 		}
 
 		/**
@@ -194,8 +219,34 @@ if ( ! class_exists( 'EIO_Page_Parser' ) ) {
 				if ( $max_width_string[1] && ( ! $width || $max_width_string[1] < $width ) ) {
 					$width = $max_width_string[1];
 				}
+			} elseif ( $style && preg_match( '#width:\s?(\d+)px#', $style, $width_string ) ) {
+				if ( $width_string[1] && ( ! $width || $width_string[1] < $width ) ) {
+					$width = $width_string[1];
+				}
 			}
 			return $width;
+		}
+
+		/**
+		 * Get the height from an image element.
+		 *
+		 * @param string $img The full image element.
+		 * @return string The height found or an empty string.
+		 */
+		public function get_img_height( $img ) {
+			$height = $this->get_attribute( $img, 'height' );
+			// Then check for an inline max-height directive.
+			$style = $this->get_attribute( $img, 'style' );
+			if ( $style && preg_match( '#max-height:\s?(\d+)px#', $style, $max_height_string ) ) {
+				if ( $max_height_string[1] && ( ! $height || $max_height_string[1] < $height ) ) {
+					$height = $max_height_string[1];
+				}
+			} elseif ( $style && preg_match( '#height:\s?(\d+)px#', $style, $height_string ) ) {
+				if ( $height_string[1] && ( ! $height || $height_string[1] < $height ) ) {
+					$height = $height_string[1];
+				}
+			}
+			return $height;
 		}
 
 		/**
