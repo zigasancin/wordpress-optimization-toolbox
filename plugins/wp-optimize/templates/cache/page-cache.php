@@ -11,6 +11,9 @@
 </div>
 <div class="wpo-fieldgroup wpo-first-child cache-options">
 	<div class="notice error below-h2 wpo-error wpo-error__enabling-cache wpo_hidden"><p></p></div>
+
+	<pre id="wpo_advanced_cache_output" style="display: none;"></pre>
+
 	<div class="switch-container">
 		<label class="switch">
 			<input name="enable_page_caching" id="enable_page_caching" class="cache-settings" type="checkbox" value="true" <?php checked($wpo_cache_options['enable_page_caching']); ?>>			
@@ -33,7 +36,6 @@
 	<?php } ?>
 
 </div>
-
 
 <h3 class="purge-cache" <?php echo $display; ?>> <?php _e('Purge the cache', 'wp-optimize'); ?></h3>
 <div class="wpo-fieldgroup cache-options purge-cache" <?php echo $display; ?> >

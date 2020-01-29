@@ -66,6 +66,11 @@ class WP_Optimize_Cache_Commands {
 		$return['result'] = $save_settings_result;
 		$return['enabled'] = !empty($data['cache-settings']['enable_page_caching']);
 
+		if (is_wp_error($enabled) && WPO_Page_Cache::instance()->advanced_cache_file_writing_error) {
+			$return['advanced_cache_file_writing_error'] = true;
+			$return['advanced_cache_file_content'] = WPO_Page_Cache::instance()->advanced_cache_file_content;
+		}
+
 		return $return;
 
 	}

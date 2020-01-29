@@ -84,6 +84,8 @@ class WPO_Cache_Config {
 
 		$config['wpo_cache_cookies'] = $wpo_cache_cookies;
 		$config['wpo_cache_query_variables'] = $wpo_query_variables;
+		
+		$config = apply_filters('wpo_cache_update_config', $config);
 
 		if (is_multisite()) {
 			update_site_option('wpo_cache_config', $config);

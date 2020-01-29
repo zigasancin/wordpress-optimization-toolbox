@@ -528,10 +528,12 @@ div#wpoptimize_table_list_tables_not_found + h3 {
 }
 
 #wpo_browser_cache_output,
-#wpo_gzip_compression_output {
+#wpo_gzip_compression_output,
+#wpo_advanced_cache_output {
 	background: #F0F0F0;
 	padding: 10px;
 	border: 1px solid #CCC;
+	white-space: pre-wrap;
 }
 
 #wpo_gzip_compression_error_message,
@@ -540,6 +542,7 @@ div#wpoptimize_table_list_tables_not_found + h3 {
 }
 
 .notice.wpo-error__enabling-cache {
+	white-space: pre;
 	margin-bottom: 15px;
 }
 
@@ -945,6 +948,25 @@ body.rtl .wpo-page {
 		margin-right: 0;
 }
 
+.notice.notice-warning.wpo-warning {
+	margin-bottom: 18px;
+}
+
+.notice.notice-warning.wpo-warning p {
+	padding-left: 36px;
+	position: relative;
+}
+
+.notice.notice-warning.wpo-warning p > .dashicons {
+	position: absolute;
+	left: 0;
+	font-size: 26px;
+	top: 50%;
+	transform: translateY(-50%);
+	height: 26px;
+	color: #FFB900;
+}
+
 .button.button-block {
 	display: block;
 	width: 100%;
@@ -961,8 +983,8 @@ body.rtl .wpo-page {
 
 .wpo-refresh-button .dashicons {
 	text-decoration: none;
-    line-height: inherit;
-    font-size: inherit;
+	line-height: inherit;
+	font-size: inherit;
 }
 
 /* Helper classes */
@@ -1008,7 +1030,7 @@ p.wpo-take-a-backup {
 /* Postbox */
 
 #wp-optimize-wrap .nav-tab-wrapper ~ .wp-optimize-nav-tab-contents > .postbox {
-    border: none;
+	border: none;
 
 }
 
@@ -1028,8 +1050,8 @@ p.wpo-take-a-backup {
 /* Field group */
 
 .wpo-fieldgroup {
-    background: #F2F4F5;
-    border-radius: 8px;
+	background: #F2F4F5;
+	border-radius: 8px;
 	padding: 20px
 }
 
@@ -2310,3 +2332,13 @@ textarea.cache-settings {
 #wp-optimize-nav-tab-wpo_cache-advanced-contents label, #wp-optimize-nav-tab-wpo_cache-preload-contents label, #wp-optimize-nav-tab-wpo_cache-cache-contents label {
     font-weight: 600;
   }
+
+.wpo-gzip-already-enabled span.dashicons.dashicons-yes,
+.wpo-enabled > span.dashicons.dashicons-yes {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  vertical-align: middle;
+  color: green;
+}
