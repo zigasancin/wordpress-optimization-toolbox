@@ -3,7 +3,7 @@
 Plugin Name: Redis Object Cache Drop-In
 Plugin URI: http://wordpress.org/plugins/redis-cache/
 Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, HHVM, replication, clustering and WP-CLI.
-Version: 1.5.4
+Version: 1.5.6
 Author: Till Krüss
 Author URI: https://till.im/
 License: GPLv3
@@ -550,7 +550,7 @@ class WP_Object_Cache
                     $options['cluster'] = 'redis';
 				}
 
-                if ($parameters['read_timeout']) {
+                if (isset($parameters['read_timeout']) && $parameters['read_timeout']) {
                     $parameters['read_write_timeout'] = $parameters['read_timeout'];
                 }
 
@@ -572,11 +572,14 @@ class WP_Object_Cache
                 $this->redis->ping();
             }
 
-            $server_info = $this->redis->info( 'SERVER' );
-            if (isset($server_info['redis_version'])) {
-                $this->redis_version = $server_info['redis_version'];
-            } elseif (isset( $server_info['Server']['redis_version'])) {
-                $this->redis_version = $server_info['Server']['redis_version'];
+            if ( ! isset( $options['replication'] ) || ! $options['replication'] ) {
+                $server_info = $this->redis->info( 'SERVER' );
+
+                if (isset($server_info['redis_version'])) {
+                    $this->redis_version = $server_info['redis_version'];
+                } elseif (isset( $server_info['Server']['redis_version'])) {
+                    $this->redis_version = $server_info['Server']['redis_version'];
+                }
             }
 
             $this->redis_connected = true;
@@ -1264,7 +1267,7 @@ LUA;
 
         $prefix = trim($prefix, '_-:$');
 
-        return strtolower("{$salt}{$prefix}:{$group}:{$key}");
+        return "{$salt}{$prefix}:{$group}:{$key}";
     }
 
     /**
@@ -1316,6 +1319,10 @@ LUA;
      */
     public function add_to_internal_cache($derived_key, $value)
     {
+        if (is_object($value)) {
+            $value = clone $value;
+        }
+
         $this->cache[$derived_key] = $value;
     }
 

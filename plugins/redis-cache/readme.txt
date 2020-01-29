@@ -5,7 +5,7 @@ Tags: redis, predis, phpredis, hhvm, pecl, caching, cache, object cache, perform
 Requires at least: 3.3
 Tested up to: 5.3
 Requires PHP: 5.4
-Stable tag: 1.5.4
+Stable tag: 1.5.6
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -27,9 +27,10 @@ A **business class** Redis object cache backend. Truly reliable, highly optimize
 * Rewritten for raw performance
 * WordPress object cache API compliant
 * Easy debugging & logging
+* Cache analytics and preloading
 * Fully unit tested (100% code coverage)
 * Secure connections with TLS
-* Seamless WP CLI & Debug Bar integration
+* Health checks via WordPress, WP CLI & Debug Bar
 * Optimized for WooCommerce, Jetpack & Yoast SEO
 
 Learn more about [Redis Cache Pro](https://wprediscache.com/?utm_source=wp-plugin&amp;utm_medium=readme).
@@ -140,7 +141,7 @@ To adjust the configuration, define any of the following constants in your `wp-c
 
   * `WP_REDIS_DISABLE_BANNERS` (default: _not set_)
 
-    Set to `false` to disable promotions for [Redis Cache Pro](https://wprediscache.com/).
+    Set to `true` to disable promotions for [Redis Cache Pro](https://wprediscache.com/).
 
 == Replication & Clustering ==
 
@@ -217,14 +218,27 @@ The following commands are supported:
 
 == Changelog ==
 
+= 1.5.6 =
+
+- Added object cloning to in-memory cache
+- Fixed PHP notice related to `read_timeout` parameter
+
+= 1.5.5 =
+
+Please flush the object cache after updating the drop to v1.5.5 to avoid dead keys filling up Redis memory.
+
+  * Removed lowercasing keys
+  * Remove scheduled metrics event
+  * Fixed Redis version call when using replication
+
 = 1.5.4 =
 
-- Removed metrics
+  * Removed metrics
 
 = 1.5.3 =
 
-- Fixed: Call to undefined function `get_plugin_data()`
-- Fixed: Call to undefined method `WP_Object_Cache::redis_version()`
+  * Fixed: Call to undefined function `get_plugin_data()`
+  * Fixed: Call to undefined method `WP_Object_Cache::redis_version()`
 
 = 1.5.2 =
 
