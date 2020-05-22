@@ -100,10 +100,20 @@ if ( ! defined( 'WPINC' ) ) {
 
 				<div data-panes>
 					<div class="sui-notice sui-notice-info <?php echo ! $networkwide ? 'active' : ''; ?>">
-						<p><?php esc_html_e( "Subsite admins can't override any module settings and will always inherit your network settings.", 'wp-smushit' ); ?></p>
+						<div class="sui-notice-content">
+							<div class="sui-notice-message">
+								<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+								<p><?php esc_html_e( "Subsite admins can't override any module settings and will always inherit your network settings.", 'wp-smushit' ); ?></p>
+							</div>
+						</div>
 					</div>
 					<div class="sui-notice sui-notice-info <?php echo '1' === $networkwide ? 'active' : ''; ?>">
-						<p><?php esc_html_e( 'Subsite admins can override all module settings.', 'wp-smushit' ); ?></p>
+						<div class="sui-notice-content">
+							<div class="sui-notice-message">
+								<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+								<p><?php esc_html_e( 'Subsite admins can override all module settings.', 'wp-smushit' ); ?></p>
+							</div>
+						</div>
 					</div>
 					<div class="sui-tab-boxed <?php echo is_array( $networkwide ) ? 'active' : ''; ?>">
 						<p class="sui-description">
@@ -158,7 +168,7 @@ if ( ! defined( 'WPINC' ) ) {
 				printf(
 					/* translators: %1$s - <a> link, %2$s - </a> */
 					esc_html__( 'Navigate to %1$sTools%2$s to begin the process.', 'wp-smushit' ),
-					'<a href="' . esc_url( menu_page_url( 'smush', false ) ) . '&view=tools">',
+					'<a href="' . esc_url( $this->get_page_url() ) . '&view=tools">',
 					'</a>'
 				);
 				?>

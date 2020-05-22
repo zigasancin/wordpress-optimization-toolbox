@@ -9,7 +9,7 @@ namespace Smush\App\Pages;
 
 use Smush\App\Abstract_Page;
 use Smush\App\Admin;
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;

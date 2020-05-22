@@ -81,8 +81,10 @@ class Modules {
 		$this->resize  = new Modules\Resize();
 
 		$page_parser = new Modules\Helpers\Parser();
-		$this->cdn   = new Modules\CDN( $page_parser );
-		$this->lazy  = new Modules\Lazy( $page_parser );
+		$page_parser->init();
+
+		$this->cdn  = new Modules\CDN( $page_parser );
+		$this->lazy = new Modules\Lazy( $page_parser );
 	}
 
 }

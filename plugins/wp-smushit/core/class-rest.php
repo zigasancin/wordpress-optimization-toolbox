@@ -12,7 +12,7 @@
 
 namespace Smush\Core;
 
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -84,8 +84,8 @@ class Rest {
 		$wp_resize_savings  = get_post_meta( $image['id'], WP_SMUSH_PREFIX . 'resize_savings', true );
 		$conversion_savings = get_post_meta( $image['id'], WP_SMUSH_PREFIX . 'pngjpg_savings', true );
 
-		$combined_stats = WP_Smush::get_instance()->core()->mod->smush->combined_stats( $wp_smush_data, $wp_resize_savings );
-		$combined_stats = WP_Smush::get_instance()->core()->mod->smush->combine_conversion_stats( $combined_stats, $conversion_savings );
+		$combined_stats = WP_Smush::get_instance()->core()->combined_stats( $wp_smush_data, $wp_resize_savings );
+		$combined_stats = WP_Smush::get_instance()->core()->combine_conversion_stats( $combined_stats, $conversion_savings );
 
 		return $combined_stats;
 	}

@@ -32,6 +32,7 @@ if ( ! defined( 'WPINC' ) ) {
 				</p>
 			</div>
 			<div class="sui-box-body sui-content-center">
+				<input type="hidden" id="wp_smush_reset" name="_wpnonce" value="<?php echo esc_attr( wp_create_nonce( 'wp_smush_reset' ) ); ?>">
 				<a class="sui-button sui-button-ghost" data-modal-close="">
 					<?php esc_html_e( 'Cancel', 'wp-smushit' ); ?>
 				</a>

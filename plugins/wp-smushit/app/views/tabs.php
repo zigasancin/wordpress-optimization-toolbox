@@ -3,6 +3,8 @@
  * Tabs layout
  *
  * @package WP_Smush
+ *
+ * @var \Smush\App\Abstract_Page $this
  */
 
 if ( ! defined( 'WPINC' ) ) {

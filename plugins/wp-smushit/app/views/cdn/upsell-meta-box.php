@@ -22,9 +22,7 @@ if ( ! defined( 'WPINC' ) ) {
 	<p>
 		<?php
 		esc_html_e(
-			"Automatically compress and resize your images with bulk Smush, or upload them to the WPMU DEV's
-			blazing-fast CDN with multi-pass lossy compression and auto resize features.. This is the ultimate tool for
-			boosting your pagespeed by taking the load off your server. Try it today with a WPMU DEV Membership!",
+			'Multiply the speed and savings! Upload huge images and the Smush CDN will perfectly resize the files, safely convert to a Next-Gen format (WebP), and delivers them directly to your visitors from our blazing-fast multi-location globe servers.',
 			'wp-smushit'
 		);
 		?>

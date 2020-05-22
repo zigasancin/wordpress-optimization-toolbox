@@ -12,7 +12,6 @@
  */
 
 use Smush\Core\Settings;
-use Smush\WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -22,7 +21,12 @@ if ( ! defined( 'WPINC' ) ) {
 
 <?php if ( WP_Smush::is_pro() && $cdn_enabled && Settings::can_access( 'bulk' ) ) : ?>
 	<div class="sui-notice sui-notice-info">
-		<p><?php esc_html_e( 'Your images are currently being served via the WPMU DEV CDN. Bulk smush will continue to operate as per your settings below and is treated completely separately in case you ever want to disable the CDN.', 'wp-smushit' ); ?></p>
+		<div class="sui-notice-content">
+			<div class="sui-notice-message">
+				<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+				<p><?php esc_html_e( 'Your images are currently being served via the WPMU DEV CDN. Bulk smush will continue to operate as per your settings below and is treated completely separately in case you ever want to disable the CDN.', 'wp-smushit' ); ?></p>
+			</div>
+		</div>
 	</div>
 <?php endif; ?>
 

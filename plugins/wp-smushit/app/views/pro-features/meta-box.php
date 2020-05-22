@@ -4,7 +4,8 @@
  *
  * @package WP_Smush
  *
- * @var string $upsell_url  Upsell URL.
+ * @var string $upgrade_url  Upgrade URL.
+ * @var string $upsell_url   Upsell URL.
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -14,6 +15,59 @@ if ( ! defined( 'WPINC' ) ) {
 ?>
 
 <ul class="smush-pro-features">
+
+	<div class="smush-pro-features-header">
+		<div>
+			<h2><?php esc_html_e( 'Optimize unlimited images with Smush Pro', 'wp-smushit' ); ?></h2>
+			<p class="sui-description"><?php esc_html_e( 'Get Smush Pro and bulk optimize every image you’ve ever added to your site with one-click and fix your Google PageSpeed with the best image optimizer WordPress has ever known. Upgrade to unlock all Pro features today!', 'wp-smushit' ); ?></p>
+			<div>
+				<a href="<?php echo esc_url( $upgrade_url ); ?>" target="_blank" class="sui-button sui-button-purple">
+					<?php esc_html_e( 'Try Pro for Free', 'wp-smushit' ); ?>
+				</a>
+				<div>
+					<button role="button" class="sui-button sui-button-ghost sui-button-purple" id="wistia-play-button">
+						<i class="sui-icon-play" aria-hidden="true"></i> <?php esc_html_e( 'Watch Video', 'wp-smushit' ); ?>
+					</button>
+					<small><?php esc_html_e( 'less than 2 minutes', 'wp-smushit' ); ?></small>
+				</div>
+			</div>
+		</div>
+
+		<span id="wistia_oegnwrdag1"></span>
+
+		<script>
+			document.addEventListener("DOMContentLoaded", function() {
+				var trigger = document.getElementById("wistia-play-button");
+
+				window.wistiaSmushEmbed = null;
+				window.wistiaInit = function(Wistia) {
+					window.wistiaSmushEmbed = Wistia.embed("oegnwrdag1", {
+						version: "v2",
+						videoWidth: 1280,
+						videoHeight: 720,
+						playerColor: "14485f",
+						videoQuality: "hd-only",
+						popover: true,
+						popoverPreventScroll: true
+					});
+				};
+
+				if (trigger) {
+					trigger.addEventListener("click", function(e) {
+						e.preventDefault();
+						if (window.wistiaSmushEmbed) {
+							window.wistiaSmushEmbed.play();
+						}
+					});
+				}
+			});
+		</script>
+	</div>
+
+	<div class="sui-description" style="margin-bottom: 20px">
+		<?php esc_html_e( 'Upgrading to Pro will get you the following benefits.', 'wp-smushit' ); ?>
+	</div>
+
 	<li class="smush-pro-feature-row">
 		<div class="smush-pro-feature-title">
 			<?php esc_html_e( 'Super-smush lossy compression', 'wp-smushit' ); ?></div>
@@ -44,7 +98,7 @@ if ( ! defined( 'WPINC' ) ) {
 		<div class="smush-pro-feature-desc">
 			<?php
 			esc_html_e(
-				"Need a one-click bulk optimization solution for compressing your entire existing image library fast and easy? Pro unlocks unlimited bulk smushing, and lifts the image size limit from 5Mb to 32Mb. Did somebody say 'retina'? Yes, please.",
+				'Need a one-click bulk optimization solution for compressing your entire existing image library fast and easy? Pro unlocks unlimited bulk smushing, and lifts the image size limit from 5Mb to 32Mb.',
 				'wp-smushit'
 			);
 			?>
@@ -86,36 +140,38 @@ if ( ! defined( 'WPINC' ) ) {
 			?>
 		</div>
 	</li>
-	<li class="smush-pro-feature-row">
-		<div class="smush-pro-feature-title">
-			<?php esc_html_e( 'NextGen Gallery Integration', 'wp-smushit' ); ?></div>
-		<div class="smush-pro-feature-desc">
-			<?php
-			esc_html_e( 'Allow smushing images directly through NextGen Gallery settings.', 'wp-smushit' );
-			?>
-		</div>
-	</li>
+	<?php if ( class_exists( '\C_NextGEN_Bootstrap' ) ) : ?>
+		<li class="smush-pro-feature-row">
+			<div class="smush-pro-feature-title">
+				<?php esc_html_e( 'NextGen Gallery Integration', 'wp-smushit' ); ?></div>
+			<div class="smush-pro-feature-desc">
+				<?php
+				esc_html_e( 'Allow smushing images directly through NextGen Gallery settings.', 'wp-smushit' );
+				?>
+			</div>
+		</li>
+	<?php endif; ?>
 </ul>
 <div class="sui-upsell-row">
 	<img class="sui-image sui-upsell-image sui-upsell-image-smush" src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/smush-promo.png' ); ?>">
 	<div class="sui-notice sui-notice-purple smush-upsell-notice">
-		<p>
-			<?php
-			printf(
-				/* translators: %1$s: starting a tag, %2$s: ending a tag */
-				esc_html__(
-					'Smush Pro gives you all these extra settings and absolutely no limits on smushing your images. Did we mention Smush Pro also gives you up to 2x better compression too? %1$sTry it all free with a WPMU DEV membership today!%2$s',
-					'wp-smushit'
-				),
-				'<strong>',
-				'</strong>'
-			);
-			?>
-		</p>
-		<div class="sui-notice-buttons">
-			<a href="<?php echo esc_url( $upsell_url ); ?>" class="sui-button sui-button-purple" target="_blank">
-				<?php esc_html_e( 'Try Smush Pro for Free', 'wp-smushit' ); ?>
-			</a>
+		<div class="sui-notice-content">
+			<div class="sui-notice-message">
+				<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+				<p>
+					<?php
+					esc_html_e(
+						'Smush Pro gives you all these extra settings and absolutely no limits on smushing your images. Did we mention Smush Pro also gives you up to 2x better compression too? Try it all free with a WPMU DEV membership today!',
+						'wp-smushit'
+					);
+					?>
+				</p>
+				<p>
+					<a href="<?php echo esc_url( $upsell_url ); ?>" class="sui-button sui-button-purple" target="_blank">
+						<?php esc_html_e( 'Learn More', 'wp-smushit' ); ?>
+					</a>
+				</p>
+			</div>
 		</div>
 	</div>
 </div>

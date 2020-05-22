@@ -38,6 +38,7 @@ class Upgrade extends Abstract_Page {
 			'admin_enqueue_scripts',
 			function() {
 				wp_enqueue_script( 'smush-sui', WP_SMUSH_URL . 'app/assets/js/smush-sui.min.js', array( 'jquery' ), WP_SHARED_UI_VERSION, true );
+				wp_enqueue_script( 'smush-wistia', '//fast.wistia.com/assets/external/E-v1.js', array(), WP_SMUSH_VERSION, true );
 				wp_enqueue_style( 'smush-admin', WP_SMUSH_URL . 'app/assets/css/smush-admin.min.css', array(), WP_SMUSH_VERSION );
 			}
 		);

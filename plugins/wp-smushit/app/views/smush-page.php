@@ -7,12 +7,17 @@
 
 namespace Smush\App\Views;
 
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+/**
+ * Prevent warnings.
+ *
+ * @var \Smush\App\Abstract_Page $this
+ */
 $this->do_meta_boxes( 'summary' );
 ?>
 

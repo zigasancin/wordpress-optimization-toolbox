@@ -8,7 +8,7 @@
 namespace Smush\Core\Modules\Helpers;
 
 use RecursiveFilterIterator;
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

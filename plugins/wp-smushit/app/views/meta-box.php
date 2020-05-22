@@ -4,6 +4,8 @@
  *
  * @package WP_Smush
  *
+ * @var \Smush\App\Abstract_Page $this
+ *
  * @var array  $callback         Callback for meta box content.
  * @var array  $callback_footer  Callback for meta box footer.
  * @var array  $callback_header  Callback for meta box header.

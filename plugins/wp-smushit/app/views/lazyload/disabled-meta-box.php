@@ -12,7 +12,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 ?>
 
-<?php if ( ! $this->hide_wpmudev_branding() ) : ?>
+<?php if ( ! apply_filters( 'wpmudev_branding_hide_branding', false ) ) : ?>
 	<img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-lazyload-default.png' ); ?>"
 		srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-lazyload-default@2x.png' ); ?> 2x"
 		alt="<?php esc_html_e( 'Smush CDN', 'wp-smushit' ); ?>">
@@ -22,8 +22,7 @@ if ( ! defined( 'WPINC' ) ) {
 	<p>
 		<?php
 		esc_html_e(
-			'This feature defers the loading of below the fold imagery until the page has loaded. This reduces
-			load on your server and speeds up the page load time.',
+			'This feature stops offscreen images from loading until a visitor scrolls to them. Make your page load faster, use less bandwidth and fix the “defer offscreen images” recommendation from a Google PageSpeed test.',
 			'wp-smushit'
 		);
 		?>

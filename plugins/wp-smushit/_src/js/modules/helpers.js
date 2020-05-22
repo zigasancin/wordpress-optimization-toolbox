@@ -1,7 +1,6 @@
 /* global WP_Smush */
 /* global ajaxurl */
 /* global wp_smush_msgs */
-/* global smush_vars */
 
 /**
  * Helpers functions.
@@ -70,7 +69,10 @@
 			const sign = num >= 0 ? 1 : -1;
 			// Keep the percentage below 100.
 			num = num > 100 ? 100 : num;
-			return ( Math.round( ( num * Math.pow( 10, decimals ) ) + ( sign * 0.001 ) ) / Math.pow( 10, decimals ) );
+			return (
+				Math.round( num * Math.pow( 10, decimals ) + sign * 0.001 ) /
+				Math.pow( 10, decimals )
+			);
 		},
 
 		/**
@@ -79,9 +81,13 @@
 		 * @since 3.2.0
 		 */
 		resetSettings: () => {
+			const _nonce = document.getElementById( 'wp_smush_reset' );
 			const xhr = new XMLHttpRequest();
 			xhr.open( 'POST', ajaxurl + '?action=reset_settings', true );
-			xhr.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded' );
+			xhr.setRequestHeader(
+				'Content-type',
+				'application/x-www-form-urlencoded'
+			);
 			xhr.onload = () => {
 				if ( 200 === xhr.status ) {
 					const res = JSON.parse( xhr.response );
@@ -89,13 +95,14 @@
 						window.location.href = wp_smush_msgs.smush_url;
 					}
 				} else {
-					window.console.log( 'Request failed.  Returned status of ' + xhr.status );
+					window.console.log(
+						'Request failed.  Returned status of ' + xhr.status
+					);
 				}
 			};
-			xhr.send( '_ajax_nonce=' + smush_vars.nonce.get_smush_status );
+			xhr.send( '_ajax_nonce=' + _nonce.value );
 		},
-
 	};
 
 	WP_Smush.helpers.init();
-}() );
+} )();

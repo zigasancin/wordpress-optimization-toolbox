@@ -23,7 +23,9 @@
 					e.currentTarget.classList.add( 'sui-button-onload' );
 
 					// Force repaint of the spinner.
-					const loader = e.currentTarget.querySelector( '.sui-icon-loader' );
+					const loader = e.currentTarget.querySelector(
+						'.sui-icon-loader'
+					);
 					loader.style.display = 'none';
 					loader.style.display = 'flex';
 
@@ -52,11 +54,16 @@
 		 * @param {boolean} enable
 		 */
 		toggle_cdn( enable ) {
-			const nonceField = document.getElementsByName( 'wp_smush_options_nonce' );
+			const nonceField = document.getElementsByName(
+				'wp_smush_options_nonce'
+			);
 
 			const xhr = new XMLHttpRequest();
 			xhr.open( 'POST', ajaxurl + '?action=smush_toggle_cdn', true );
-			xhr.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded' );
+			xhr.setRequestHeader(
+				'Content-type',
+				'application/x-www-form-urlencoded'
+			);
 			xhr.onload = () => {
 				if ( 200 === xhr.status ) {
 					const res = JSON.parse( xhr.response );
@@ -66,10 +73,14 @@
 						this.showNotice( res.data.message );
 					}
 				} else {
-					this.showNotice( 'Request failed. Returned status of ' + xhr.status );
+					this.showNotice(
+						'Request failed. Returned status of ' + xhr.status
+					);
 				}
 			};
-			xhr.send( 'param=' + enable + '&_ajax_nonce=' + nonceField[ 0 ].value );
+			xhr.send(
+				'param=' + enable + '&_ajax_nonce=' + nonceField[ 0 ].value
+			);
 		},
 
 		/**
@@ -105,7 +116,10 @@
 		 * @since 3.0
 		 */
 		updateStatsBox() {
-			if ( 'undefined' === typeof this.cdnStatsBox || ! this.cdnStatsBox ) {
+			if (
+				'undefined' === typeof this.cdnStatsBox ||
+				! this.cdnStatsBox
+			) {
 				return;
 			}
 
@@ -127,7 +141,9 @@
 						this.showNotice( res.data.message );
 					}
 				} else {
-					this.showNotice( 'Request failed. Returned status of ' + xhr.status );
+					this.showNotice(
+						'Request failed. Returned status of ' + xhr.status
+					);
 				}
 			};
 			xhr.send();
@@ -139,8 +155,12 @@
 		 * @since 3.1  Moved out from updateStatsBox()
 		 */
 		toggleElements() {
-			const spinner = this.cdnStatsBox.querySelector( '.sui-icon-loader' );
-			const elements = this.cdnStatsBox.querySelectorAll( '.wp-smush-stats > :not(.sui-icon-loader)' );
+			const spinner = this.cdnStatsBox.querySelector(
+				'.sui-icon-loader'
+			);
+			const elements = this.cdnStatsBox.querySelectorAll(
+				'.wp-smush-stats > :not(.sui-icon-loader)'
+			);
 
 			for ( let i = 0; i < elements.length; i++ ) {
 				elements[ i ].classList.toggle( 'sui-hidden' );
@@ -148,8 +168,7 @@
 
 			spinner.classList.toggle( 'sui-hidden' );
 		},
-
 	};
 
 	WP_Smush.CDN.init();
-}() );
+} )();

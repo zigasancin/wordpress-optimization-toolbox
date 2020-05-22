@@ -16,7 +16,6 @@
 
 use Smush\Core\Helper;
 use Smush\Core\Integrations\Nextgen\Admin;
-use Smush\WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -29,13 +28,13 @@ if ( ! defined( 'WPINC' ) ) {
 
 <?php
 // Get the counts.
-if ( $count > 0 ) {
-	echo WP_Smush::get_instance()->admin()->bulk_resmush_content( $count );
+if ( $count > 0 && 0 === $resmush_ids ) {
+	echo wp_kses_post( WP_Smush::get_instance()->admin()->bulk_resmush_content( $count ) );
 }
 
 // If there are no images in Media Library.
 if ( 0 === $total_count ) {
-	if ( ! $this->hide_wpmudev_branding() ) :
+	if ( ! apply_filters( 'wpmudev_branding_hide_branding', false ) ) :
 		?>
 		<span class="wp-smush-no-image tc">
 			<img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/smush-no-media.png' ); ?>" alt="<?php esc_attr_e( 'No attachments found - Upload some images', 'wp-smushit' ); ?>">
@@ -65,7 +64,12 @@ if ( 0 === $total_count ) {
 
 <!-- Hide All done div if there are images pending -->
 <div class="sui-notice sui-notice-success wp-smush-all-done<?php echo $all_done ? '' : ' sui-hidden'; ?>">
-	<p><?php esc_html_e( 'All images are smushed and up to date. Awesome!', 'wp-smushit' ); ?></p>
+	<div class="sui-notice-content">
+		<div class="sui-notice-message">
+			<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+			<p><?php esc_html_e( 'All images are smushed and up to date. Awesome!', 'wp-smushit' ); ?></p>
+		</div>
+	</div>
 </div>
 
 <?php $this->view( 'progress-bar', array( 'count' => $ng ), 'common' ); ?>
@@ -83,27 +87,30 @@ if ( 0 === $total_count ) {
 <div class="wp-smush-bulk-wrapper <?php echo $all_done ? ' sui-hidden' : ''; ?>">
 	<!-- Do not show the remaining notice if we have resmush ids -->
 	<div class="sui-notice sui-notice-warning wp-smush-remaining  <?php echo count( $resmush_ids ) > 0 ? ' sui-hidden' : ''; ?>">
-		<p>
-			<span class="wp-smush-notice-text">
-				<?php
-				printf(
-					/* translators: %1$s: user name, %2$s: strong opening tag, %3$s: span opening tag, %4$d: remaining count, %5$s: closing span tag, %6$s: closing strong tag */
-					_n(
-						'%1$s, you have %2$s%3$s%4$d%5$s attachment%6$s that needs smushing!',
-						'%1$s, you have %2$s%3$s%4$d%5$s attachments%6$s that need smushing!',
-						$remaining_count,
-						'wp-smushit'
-					),
-					esc_html( Helper::get_user_name() ),
-					'<strong>',
-					'<span class="wp-smush-remaining-count">',
-					absint( $remaining_count ),
-					'</span>',
-					'</strong>'
-				);
-				?>
-			</span>
-		</p>
+		<div class="sui-notice-content">
+			<div class="sui-notice-message">
+				<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+				<p>
+					<?php
+					printf(
+						/* translators: %1$s: user name, %2$s: strong opening tag, %3$s: span opening tag, %4$d: remaining count, %5$s: closing span tag, %6$s: closing strong tag */
+						_n(
+							'%1$s, you have %2$s%3$s%4$d%5$s attachment%6$s that needs smushing!',
+							'%1$s, you have %2$s%3$s%4$d%5$s attachments%6$s that need smushing!',
+							$remaining_count,
+							'wp-smushit'
+						),
+						esc_html( Helper::get_user_name() ),
+						'<strong>',
+						'<span class="wp-smush-remaining-count">',
+						absint( $remaining_count ),
+						'</span>',
+						'</strong>'
+					);
+					?>
+				</p>
+			</div>
+		</div>
 	</div>
 	<div class="sui-actions-right">
 		<button type="button" class="sui-button sui-button-blue wp-smush-nextgen-bulk">

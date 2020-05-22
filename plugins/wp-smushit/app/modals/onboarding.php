@@ -7,7 +7,6 @@
  */
 
 use Smush\Core\Helper;
-use Smush\WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -17,7 +16,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 <script type="text/template" id="smush-onboarding" data-type="<?php echo WP_Smush::is_pro() ? 'pro' : 'free'; ?>">
 	<div class="sui-box-header sui-flatten sui-content-center sui-spacing-sides--90">
-		<?php if ( ! $this->hide_wpmudev_branding() ) : ?>
+		<?php if ( ! apply_filters( 'wpmudev_branding_hide_branding', false ) ) : ?>
 		<figure class="sui-box-banner" aria-hidden="true">
 			<img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding-' ); ?>{{{ data.slide }}}.png"
 				srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding-' ); ?>{{{ data.slide }}}.png 1x, <?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/onboarding/graphic-onboarding-' ); ?>{{{ data.slide }}}@2x.png 2x"
@@ -55,11 +54,11 @@ if ( ! defined( 'WPINC' ) ) {
 			<# } else if ( 'lossy' === data.slide ) { #>
 			<?php esc_html_e( 'Optimize images up to 2x more than regular smush with our multi-pass lossy compression.', 'wp-smushit' ); ?>
 			<# } else if ( 'strip_exif' === data.slide ) { #>
-			<?php esc_html_e( 'Whenever you take a photo, your camera stores metadata, such as focal length, date, time and location, within the image. Removing this data will reduce your image sizes.', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'Photos often store camera settings in the file, i.e., focal length, date, time and location. Removing EXIF data reduces the file size. Note: it does not strip SEO metadata.', 'wp-smushit' ); ?>
 			<# } else if ( 'original' === data.slide ) { #>
 			<?php esc_html_e( 'You can also have Smush compress your original images - this is helpful if your theme serves full size images.', 'wp-smushit' ); ?>
 			<# } else if ( 'lazy_load' === data.slide ) { #>
-			<?php esc_html_e( 'This feature defers the loading of below the fold imagery until the page has loaded. This reduces load on your server and speeds up the page load time.', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'This feature stops offscreen images from loading until a visitor scrolls to them. Make your page load faster, use less bandwidth and fix the “defer offscreen images” recommendation from a Google PageSpeed test.', 'wp-smushit' ); ?>
 			<# } else if ( 'usage' === data.slide ) { #>
 			<?php esc_html_e( 'Help us improve Smush by letting our product designers gain insight into what features need improvement. We don’t track any personalized data, it’s all basic stuff.', 'wp-smushit' ); ?>
 			<# } #>
@@ -75,24 +74,24 @@ if ( ! defined( 'WPINC' ) ) {
 		</a>
 		<# } else { #>
 		<div class="sui-box-selectors">
-			<label class="sui-toggle">
-				<input type="checkbox" id="{{{ data.slide }}}" <# if ( data.value ) { #>checked<# } #>>
-				<span class="sui-toggle-slider"> </span>
-			</label>
-			<label for="{{{ data.slide }}}">
-				<# if ( 'auto' === data.slide ) { #>
-				<?php esc_html_e( 'Automatically optimize new uploads', 'wp-smushit' ); ?>
-				<# } else if ( 'lossy' === data.slide ) { #>
-				<?php esc_html_e( 'Enable enhanced multi-pass lossy compression', 'wp-smushit' ); ?>
-				<# } else if ( 'strip_exif' === data.slide ) { #>
-				<?php esc_html_e( 'Strip my image metadata', 'wp-smushit' ); ?>
-				<# } else if ( 'original' === data.slide ) { #>
-				<?php esc_html_e( 'Compress my full size images', 'wp-smushit' ); ?>
-				<# } else if ( 'lazy_load' === data.slide ) { #>
-				<?php esc_html_e( 'Enable Lazy Loading', 'wp-smushit' ); ?>
-				<# } else if ( 'usage' === data.slide ) { #>
-				<?php esc_html_e( 'Allow usage data tracking', 'wp-smushit' ); ?>
-				<# } #>
+			<label for="{{{ data.slide }}}" class="sui-toggle">
+				<input type="checkbox" id="{{{ data.slide }}}" aria-labelledby="{{{ data.slide }}}-label" <# if ( data.value ) { #>checked<# } #>>
+				<span class="sui-toggle-slider" aria-hidden="true"> </span>
+				<span id="{{{ data.slide }}}-label" class="sui-toggle-label">
+					<# if ( 'auto' === data.slide ) { #>
+					<?php esc_html_e( 'Automatically optimize new uploads', 'wp-smushit' ); ?>
+					<# } else if ( 'lossy' === data.slide ) { #>
+					<?php esc_html_e( 'Enable enhanced multi-pass lossy compression', 'wp-smushit' ); ?>
+					<# } else if ( 'strip_exif' === data.slide ) { #>
+					<?php esc_html_e( 'Strip my image metadata', 'wp-smushit' ); ?>
+					<# } else if ( 'original' === data.slide ) { #>
+					<?php esc_html_e( 'Compress my full size images', 'wp-smushit' ); ?>
+					<# } else if ( 'lazy_load' === data.slide ) { #>
+					<?php esc_html_e( 'Enable Lazy Loading', 'wp-smushit' ); ?>
+					<# } else if ( 'usage' === data.slide ) { #>
+					<?php esc_html_e( 'Allow usage data tracking', 'wp-smushit' ); ?>
+					<# } #>
+				</span>
 			</label>
 		</div>
 		<# } #>
@@ -101,14 +100,14 @@ if ( ! defined( 'WPINC' ) ) {
 		<p class="sui-description" style="padding: 0 90px">
 			<?php esc_html_e( 'Note: By default we will store a copy of your original uploads just in case you want to revert in the future - you can turn this off at any time.', 'wp-smushit' ); ?>
 		</p>
-		<# } else if ( 'lazy_load' === data.slide ) { #>
+		<# } else if ( 'usage' === data.slide ) { #>
 		<button type="submit" class="sui-button sui-button-blue sui-button-icon-left" data-modal-close="">
 			<i class="sui-icon-check" aria-hidden="true"> </i>
 			<?php esc_html_e( 'Finish setup wizard', 'wp-smushit' ); ?>
 		</button>
 		<# } #>
 
-		<# if ( 'start' !== data.slide && 'lazy_load' !== data.slide ) { #>
+		<# if ( 'start' !== data.slide && 'usage' !== data.slide ) { #>
 		<a class="sui-button sui-button-gray next" onclick="WP_Smush.onboarding.next(this)">
 			<?php esc_html_e( 'Next', 'wp-smushit' ); ?>
 		</a>
@@ -148,11 +147,9 @@ if ( ! defined( 'WPINC' ) ) {
 			<button onclick="WP_Smush.onboarding.goTo('lazy_load')" class="<# if ( 'lazy_load' === data.slide ) { #>sui-current<# } #>" <# if ( 'lazy_load' === data.slide ) { #>disabled<# } #>>
 				<?php esc_html_e( 'Lazy Load', 'wp-smushit' ); ?>
 			</button>
-			<!--
 			<button onclick="WP_Smush.onboarding.goTo('usage')" class="<# if ( 'usage' === data.slide ) { #>sui-current<# } #>" <# if ( 'usage' === data.slide ) { #>disabled<# } #>>
 				<?php esc_html_e( 'Usage Data', 'wp-smushit' ); ?>
 			</button>
-			-->
 		</div>
 	</div>
 </script>
@@ -168,7 +165,7 @@ if ( ! defined( 'WPINC' ) ) {
 	>
 		<div class="sui-box">
 			<div id="smush-onboarding-content" aria-live="polite"></div>
-			<?php wp_nonce_field( 'smush_quick_setup' ); ?>
+			<input type="hidden" id="smush_quick_setup_nonce" name="_wpnonce" value="<?php echo wp_create_nonce( 'smush_quick_setup' ); ?>">
 		</div>
 		<button class="sui-modal-skip smush-onboarding-skip-link">
 			<?php esc_html_e( 'Skip this, I’ll set it up later', 'wp-smushit' ); ?>

@@ -12,7 +12,7 @@
 
 namespace Smush\Core\Integrations;
 
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -81,15 +81,18 @@ class Composer extends Abstract_Integration {
 	 * @param string $name  Setting name.
 	 */
 	public function additional_notice( $name ) {
-		if ( 'js_builder' === $name && ! $this->enabled ) {
+		if ( $this->module === $name && ! $this->enabled ) {
 			?>
-            <div class="sui-toggle-content">
-                <div class="sui-notice sui-notice-sm">
-                    <p>
-                        <?php esc_html_e( 'To use this feature you need be using WPBakery Page Builder.', 'wp-smushit' ); ?>
-                    </p>
-                </div>
-            </div>
+			<div class="sui-toggle-content">
+				<div class="sui-notice">
+					<div class="sui-notice-content">
+						<div class="sui-notice-message">
+							<i class="sui-notice-icon sui-icon-info" aria-hidden="true"></i>
+							<p><?php esc_html_e( 'To use this feature you need be using WPBakery Page Builder.', 'wp-smushit' ); ?></p>
+						</div>
+					</div>
+				</div>
+			</div>
 			<?php
 		}
 	}
@@ -135,7 +138,15 @@ class Composer extends Abstract_Integration {
 		$vc_editable = filter_input( INPUT_GET, 'vc_editable', FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
 		$vc_action   = filter_input( INPUT_POST, 'action', FILTER_SANITIZE_STRING );
 
-		if ( ! $vc_editable || 'vc_load_shortcode' !== $vc_action ) {
+		global $pagename, $vc_manager;
+
+		/**
+		 * There are three types of situations:
+		 * 1. $vc_editable and $vc_action will be set in the frontend page builder
+		 * 2. $pagename in the backend.
+		 * 3. $vc_manager is a fallback (could possibly cause issues).
+		 */
+		if ( ( ! $vc_editable || 'vc_load_shortcode' !== $vc_action ) && ( ! isset( $pagename ) || 'page-builder' !== $pagename ) && ( ! $vc_manager || ! is_object( $vc_manager ) ) ) {
 			return $image_src;
 		}
 
@@ -182,7 +193,6 @@ class Composer extends Abstract_Integration {
 	 */
 	private function check_for_js_builder() {
 		if ( ! function_exists( 'is_plugin_active' ) ) {
-			/* @noinspection PhpIncludeInspection */
 			include_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 

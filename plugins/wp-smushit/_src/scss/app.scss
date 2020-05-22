@@ -8,6 +8,7 @@ $upgrade-image-mobile: '../../app/assets/images/hero.png';
 @import "~@wpmudev/shared-ui/scss/functions";
 @import "~@wpmudev/shared-ui/scss/colors";
 @import "~@wpmudev/shared-ui/scss/variables";
+$sui-font-path: '~@wpmudev/shared-ui/dist/fonts/';
 @import "~@wpmudev/shared-ui/scss/mixins";
 @import "~@wpmudev/shared-ui/scss/accessibility";
 @import "~@wpmudev/shared-ui/scss/animations";

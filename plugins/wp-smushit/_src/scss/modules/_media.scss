@@ -48,7 +48,7 @@ $sui-wrap-class: false;
 		border: 1px solid #E6E6E6;
 		border-radius: 4px;
 		margin-top: 6px;
-		border-collapse: separate;
+		border-collapse: collapse;
 		border-spacing: 0;
 		thead {
 			th.smush-stats-header {
@@ -61,6 +61,9 @@ $sui-wrap-class: false;
 				line-height: 16px;
 				text-align: left;
 			}
+		}
+		tr {
+			border: 1px solid #E6E6E6;
 		}
 		td {
 			vertical-align: middle;

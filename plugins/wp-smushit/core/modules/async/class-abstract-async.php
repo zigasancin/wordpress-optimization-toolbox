@@ -168,7 +168,7 @@ abstract class Abstract_Async {
 				$cookies[] = "$name=" . urlencode( is_array( $value ) ? serialize( $value ) : $value );
 			}
 
-			// TODO: We've set sslverify to false
+			// TODO: We've set sslverify to false.
 			$request_args = array(
 				'timeout'   => apply_filters( 'smush_async_time_out', 0 ),
 				'blocking'  => false,

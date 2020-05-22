@@ -8,8 +8,9 @@
 
 namespace Smush\Core;
 
-use Smush\WP_Smush;
+use stdClass;
 use WP_Query;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -153,7 +154,7 @@ class Stats {
 	 */
 	public function get_savings( $type, $force_update = true, $format = false, $return_count = false ) {
 		$key       = WP_SMUSH_PREFIX . $type . '_savings';
-		$key_count = WP_SMUSH_PREFIX . $type . '_count';
+		$key_count = WP_SMUSH_PREFIX . 'resize_count';
 
 		if ( ! $force_update ) {
 			$savings = wp_cache_get( $key, 'wp-smush' );
@@ -162,7 +163,7 @@ class Stats {
 			}
 
 			$count = wp_cache_get( $key_count, 'wp-smush' );
-			if ( $return_count && $count ) {
+			if ( $return_count && false !== $count ) {
 				return $count;
 			}
 		}
@@ -171,10 +172,18 @@ class Stats {
 		$count      = 0;
 		$offset     = 0;
 		$query_next = true;
-		$savings    = array(
-			'bytes'       => 0,
-			'size_before' => 0,
-			'size_after'  => 0,
+
+		$savings = array(
+			'resize' => array(
+				'bytes'       => 0,
+				'size_before' => 0,
+				'size_after'  => 0,
+			),
+			'pngjpg' => array(
+				'bytes'       => 0,
+				'size_before' => 0,
+				'size_after'  => 0,
+			),
 		);
 
 		global $wpdb;
@@ -209,18 +218,18 @@ class Stats {
 				$meta = maybe_unserialize( $data->meta_value );
 
 				// Resize mete already contains all the stats.
-				if ( 'resize' === $type && ! empty( $meta ) && ! empty( $meta['bytes'] ) ) {
-					$savings['bytes']       += $meta['bytes'];
-					$savings['size_before'] += $meta['size_before'];
-					$savings['size_after']  += $meta['size_after'];
+				if ( ! empty( $meta ) && ! empty( $meta['bytes'] ) ) {
+					$savings['resize']['bytes']       += $meta['bytes'];
+					$savings['resize']['size_before'] += $meta['size_before'];
+					$savings['resize']['size_after']  += $meta['size_after'];
 				}
 
 				// PNG - JPG conversion meta contains stats by attachment size.
-				if ( 'pngjpg' === $type && is_array( $meta ) ) {
+				if ( is_array( $meta ) ) {
 					foreach ( $meta as $size ) {
-						$savings['bytes']       += isset( $size['bytes'] ) ? $size['bytes'] : 0;
-						$savings['size_before'] += isset( $size['size_before'] ) ? $size['size_before'] : 0;
-						$savings['size_after']  += isset( $size['size_after'] ) ? $size['size_after'] : 0;
+						$savings['pngjpg']['bytes']       += isset( $size['bytes'] ) ? $size['bytes'] : 0;
+						$savings['pngjpg']['size_before'] += isset( $size['size_before'] ) ? $size['size_before'] : 0;
+						$savings['pngjpg']['size_after']  += isset( $size['size_after'] ) ? $size['size_after'] : 0;
 					}
 				}
 			}
@@ -233,13 +242,14 @@ class Stats {
 		}
 
 		if ( $format ) {
-			$savings['bytes'] = size_format( $savings['bytes'], 1 );
+			$savings[ $type ]['bytes'] = size_format( $savings[ $type ]['bytes'], 1 );
 		}
 
-		wp_cache_set( $key, $savings, 'wp-smush' );
+		wp_cache_set( WP_SMUSH_PREFIX . 'resize_savings', $savings['resize'], 'wp-smush' );
+		wp_cache_set( WP_SMUSH_PREFIX . 'pngjpg_savings', $savings['pngjpg'], 'wp-smush' );
 		wp_cache_set( $key_count, $count, 'wp-smush' );
 
-		return $return_count ? $count : $savings;
+		return $return_count ? $count : $savings[ $type ];
 	}
 
 	/**
@@ -383,10 +393,6 @@ class Stats {
 	 * @return array
 	 */
 	public function get_unsmushed_attachments() {
-		if ( isset( $_REQUEST['ids'] ) ) {
-			return array_map( 'intval', explode( ',', $_REQUEST['ids'] ) );
-		}
-
 		// Check if we can get the unsmushed attachments from the other two variables.
 		if ( ! empty( $this->attachments ) && ! empty( $this->smushed_attachments ) ) {
 			$attachments = array_diff( $this->attachments, $this->smushed_attachments );
@@ -584,6 +590,107 @@ class Stats {
 				'savings' => size_format( $savings_bytes, 1 ),
 			);
 		}
+	}
+
+	/**
+	 * Smush and Resizing Stats Combined together.
+	 *
+	 * @param array $smush_stats     Smush stats.
+	 * @param array $resize_savings  Resize savings.
+	 *
+	 * @return array Array of all the stats
+	 */
+	public function combined_stats( $smush_stats, $resize_savings ) {
+		if ( empty( $smush_stats ) || empty( $resize_savings ) ) {
+			return $smush_stats;
+		}
+
+		// Initialize key full if not there already.
+		if ( ! isset( $smush_stats['sizes']['full'] ) ) {
+			$smush_stats['sizes']['full']              = new stdClass();
+			$smush_stats['sizes']['full']->bytes       = 0;
+			$smush_stats['sizes']['full']->size_before = 0;
+			$smush_stats['sizes']['full']->size_after  = 0;
+			$smush_stats['sizes']['full']->percent     = 0;
+		}
+
+		// Full Image.
+		if ( ! empty( $smush_stats['sizes']['full'] ) ) {
+			$smush_stats['sizes']['full']->bytes       = ! empty( $resize_savings['bytes'] ) ? $smush_stats['sizes']['full']->bytes + $resize_savings['bytes'] : $smush_stats['sizes']['full']->bytes;
+			$smush_stats['sizes']['full']->size_before = ! empty( $resize_savings['size_before'] ) && ( $resize_savings['size_before'] > $smush_stats['sizes']['full']->size_before ) ? $resize_savings['size_before'] : $smush_stats['sizes']['full']->size_before;
+			$smush_stats['sizes']['full']->percent     = ! empty( $smush_stats['sizes']['full']->bytes ) && $smush_stats['sizes']['full']->size_before > 0 ? ( $smush_stats['sizes']['full']->bytes / $smush_stats['sizes']['full']->size_before ) * 100 : $smush_stats['sizes']['full']->percent;
+
+			$smush_stats['sizes']['full']->size_after = $smush_stats['sizes']['full']->size_before - $smush_stats['sizes']['full']->bytes;
+
+			$smush_stats['sizes']['full']->percent = round( $smush_stats['sizes']['full']->percent, 1 );
+		}
+
+		$smush_stats = $this->total_compression( $smush_stats );
+
+		return $smush_stats;
+	}
+
+	/**
+	 * Combine Savings from PNG to JPG conversion with smush stats
+	 *
+	 * @param array $stats               Savings from Smushing the image.
+	 * @param array $conversion_savings  Savings from converting the PNG to JPG.
+	 *
+	 * @return Object|array Total Savings
+	 */
+	public function combine_conversion_stats( $stats, $conversion_savings ) {
+		if ( empty( $stats ) || empty( $conversion_savings ) ) {
+			return $stats;
+		}
+
+		foreach ( $conversion_savings as $size_k => $savings ) {
+			// Initialize Object for size.
+			if ( empty( $stats['sizes'][ $size_k ] ) ) {
+				$stats['sizes'][ $size_k ]              = new stdClass();
+				$stats['sizes'][ $size_k ]->bytes       = 0;
+				$stats['sizes'][ $size_k ]->size_before = 0;
+				$stats['sizes'][ $size_k ]->size_after  = 0;
+				$stats['sizes'][ $size_k ]->percent     = 0;
+			}
+
+			if ( ! empty( $stats['sizes'][ $size_k ] ) && ! empty( $savings ) ) {
+				$stats['sizes'][ $size_k ]->bytes       = $stats['sizes'][ $size_k ]->bytes + $savings['bytes'];
+				$stats['sizes'][ $size_k ]->size_before = $stats['sizes'][ $size_k ]->size_before > $savings['size_before'] ? $stats['sizes'][ $size_k ]->size_before : $savings['size_before'];
+				$stats['sizes'][ $size_k ]->percent     = ! empty( $stats['sizes'][ $size_k ]->bytes ) && $stats['sizes'][ $size_k ]->size_before > 0 ? ( $stats['sizes'][ $size_k ]->bytes / $stats['sizes'][ $size_k ]->size_before ) * 100 : $stats['sizes'][ $size_k ]->percent;
+				$stats['sizes'][ $size_k ]->percent     = round( $stats['sizes'][ $size_k ]->percent, 1 );
+			}
+		}
+
+		$stats = $this->total_compression( $stats );
+
+		return $stats;
+	}
+
+	/**
+	 * Iterate over all the size stats and calculate the total stats
+	 *
+	 * @param array $stats  Stats array.
+	 *
+	 * @return mixed
+	 */
+	public function total_compression( $stats ) {
+		$stats['stats']['size_before'] = 0;
+		$stats['stats']['size_after']  = 0;
+		$stats['stats']['time']        = 0;
+
+		foreach ( $stats['sizes'] as $size_stats ) {
+			$stats['stats']['size_before'] += ! empty( $size_stats->size_before ) ? $size_stats->size_before : 0;
+			$stats['stats']['size_after']  += ! empty( $size_stats->size_after ) ? $size_stats->size_after : 0;
+			$stats['stats']['time']        += ! empty( $size_stats->time ) ? $size_stats->time : 0;
+		}
+
+		$stats['stats']['bytes'] = ! empty( $stats['stats']['size_before'] ) && $stats['stats']['size_before'] > $stats['stats']['size_after'] ? $stats['stats']['size_before'] - $stats['stats']['size_after'] : 0;
+
+		if ( ! empty( $stats['stats']['bytes'] ) && ! empty( $stats['stats']['size_before'] ) ) {
+			$stats['stats']['percent'] = ( $stats['stats']['bytes'] / $stats['stats']['size_before'] ) * 100;
+		}
+
+		return $stats;
 	}
 
 	/**

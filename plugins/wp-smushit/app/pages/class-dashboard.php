@@ -11,7 +11,7 @@ namespace Smush\App\Pages;
 use Smush\App\Abstract_Page;
 use Smush\Core\Core;
 use Smush\Core\Settings;
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -166,9 +166,9 @@ class Dashboard extends Abstract_Page {
 			if ( ! WP_Smush::is_pro() ) {
 				$this->add_meta_box(
 					'pro-features',
-					__( 'Pro Features', 'wp-smushit' ),
+					__( 'Upgrade to Smush Pro', 'wp-smushit' ),
 					array( $this, 'pro_features_metabox' ),
-					array( $this, 'pro_features_metabox_header' ),
+					null,
 					null,
 					'bulk'
 				);
@@ -191,9 +191,7 @@ class Dashboard extends Abstract_Page {
 
 		if ( 'integrations' === $this->get_current_tab() && $this->should_render() ) {
 			// Show integrations box.
-			$class          = WP_Smush::is_pro() ? 'smush-integrations-wrapper wp-smush-pro' : 'smush-integrations-wrapper';
-			$box_body_class = WP_Smush::is_pro() ? '' : 'sui-upsell-items';
-
+			$class = WP_Smush::is_pro() ? 'smush-integrations-wrapper wp-smush-pro' : 'smush-integrations-wrapper';
 			$this->add_meta_box(
 				'integrations',
 				__( 'Integrations', 'wp-smushit' ),
@@ -203,7 +201,7 @@ class Dashboard extends Abstract_Page {
 				'integrations',
 				array(
 					'box_class'         => "sui-box {$class}",
-					'box_content_class' => "sui-box-body {$box_body_class}",
+					'box_content_class' => 'sui-box-body sui-upsell-items',
 				)
 			);
 		}
@@ -267,13 +265,17 @@ class Dashboard extends Abstract_Page {
 		}
 
 		if ( 'tools' === $this->get_current_tab() && $this->should_render() ) {
+			$box_body_class = WP_Smush::is_pro() ? '' : 'sui-upsell-items';
 			$this->add_meta_box(
 				'tools',
 				__( 'Tools', 'wp-smushit' ),
 				array( $this, 'tools_metabox' ),
 				null,
 				array( $this, 'common_metabox_footer' ),
-				'tools'
+				'tools',
+				array(
+					'box_content_class' => "sui-box-body {$box_body_class}",
+				)
 			);
 		}
 
@@ -380,17 +382,22 @@ class Dashboard extends Abstract_Page {
 					'</strong>'
 				);
 				?>
-			</div>
-			<div class="sui-description sui-notice sui-notice-info wp-smush-update-width sui-no-margin-bottom sui-hidden" tabindex="0">
-				<p>
-					<?php esc_html_e( "Just to let you know, the width you've entered is less than your largest image and may result in pixelation.", 'wp-smushit' ); ?>
-				</p>
-
-			</div>
-			<div class="sui-description sui-notice sui-notice-info wp-smush-update-height sui-no-margin-bottom sui-hidden" tabindex="0">
-				<p>
-					<?php esc_html_e( 'Just to let you know, the height you’ve entered is less than your largest image and may result in pixelation.', 'wp-smushit' ); ?>
-				</p>
+				<div class="sui-notice sui-notice-info wp-smush-update-width sui-no-margin-bottom sui-hidden">
+					<div class="sui-notice-content">
+						<div class="sui-notice-message">
+							<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+							<p><?php esc_html_e( "Just to let you know, the width you've entered is less than your largest image and may result in pixelation.", 'wp-smushit' ); ?></p>
+						</div>
+					</div>
+				</div>
+				<div class="sui-notice sui-notice-info wp-smush-update-height sui-no-margin-bottom sui-hidden">
+					<div class="sui-notice-content">
+						<div class="sui-notice-message">
+							<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+							<p><?php esc_html_e( 'Just to let you know, the height you’ve entered is less than your largest image and may result in pixelation.', 'wp-smushit' ); ?></p>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<span class="sui-description sui-toggle-description">
@@ -453,40 +460,51 @@ class Dashboard extends Abstract_Page {
 			?>
 			<?php if ( $this->settings->get( 'detection' ) ) : ?>
 				<?php if ( $this->settings->get( 'cdn' ) && $this->settings->get( 'auto_resize' ) ) : ?>
-					<div class="sui-notice smush-notice-sm smush-highlighting-notice">
-						<p>
-							<?php
-							esc_html_e(
-								'Note: Images served via the Smush CDN are automatically resized to fit their containers, these will be skipped.',
-								'wp-smushit'
-							);
-							?>
-						</p>
+					<div class="sui-notice smush-highlighting-notice">
+						<div class="sui-notice-content">
+							<div class="sui-notice-message">
+								<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+								<p>
+									<?php
+									esc_html_e(
+										'Note: Images served via the Smush CDN are automatically resized to fit their containers, these will be skipped.',
+										'wp-smushit'
+									);
+									?>
+								</p>
+							</div>
+						</div>
 					</div>
 				<?php else : ?>
-					<div class="sui-notice sui-notice-info smush-notice-sm smush-highlighting-notice">
-						<p>
-							<?php
-							printf(
-								/* translators: %1$s: opening a tag, %2$s: closing a tag */
-								esc_html__(
-									'Incorrect image size highlighting is active. %1$sView the frontend%2$s of your website to see if any images aren\'t the correct size for their containers.',
-									'wp-smushit'
-								),
-								'<a href="' . esc_url( home_url() ) . '" target="_blank">',
-								'</a>'
-							);
-							?>
-						</p>
+					<div class="sui-notice sui-notice-info smush-highlighting-notice">
+						<div class="sui-notice-content">
+							<div class="sui-notice-message">
+								<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+								<p>
+									<?php
+									printf(
+										/* translators: %1$s: opening a tag, %2$s: closing a tag */
+										esc_html__(
+											'Incorrect image size highlighting is active. %1$sView the frontend%2$s of your website to see if any images aren\'t the correct size for their containers.',
+											'wp-smushit'
+										),
+										'<a href="' . esc_url( home_url() ) . '" target="_blank">',
+										'</a>'
+									);
+									?>
+								</p>
+							</div>
+						</div>
 					</div>
 				<?php endif; ?>
 			<?php elseif ( 'detection' === $name ) : ?>
-				<div class="sui-notice sui-notice-warning smush-notice-sm smush-highlighting-warning sui-hidden">
-					<p>
-						<?php
-						esc_html_e( 'Almost there! To finish activating this feature you must save your settings.', 'wp-smushit' );
-						?>
-					</p>
+				<div class="sui-notice sui-notice-warning smush-highlighting-warning sui-hidden">
+					<div class="sui-notice-content">
+						<div class="sui-notice-message">
+							<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+							<p><?php esc_html_e( 'Almost there! To finish activating this feature you must save your settings.', 'wp-smushit' ); ?></p>
+						</div>
+					</div>
 				</div>
 			<?php endif; ?>
 		</span>
@@ -537,13 +555,11 @@ class Dashboard extends Abstract_Page {
 				<span class="sui-list-label">
 					<?php esc_html_e( 'Super-Smush Savings', 'wp-smushit' ); ?>
 					<?php if ( ! $this->settings->get( 'lossy' ) ) { ?>
-						<p class="wp-smush-stats-label-message">
+						<p class="wp-smush-stats-label-message sui-hidden-sm sui-hidden-md sui-hidden-lg">
 							<?php
 							$link_class = 'wp-smush-lossy-enable-link';
-							if ( is_multisite() && Settings::can_access( 'bulk' ) ) {
-								$settings_link = WP_Smush::get_instance()->admin()->settings_link( array(), true, true ) . '#enable-lossy';
-							} elseif ( 'bulk' !== $this->get_current_tab() ) {
-								$settings_link = WP_Smush::get_instance()->admin()->settings_link( array(), true ) . '#enable-lossy';
+							if ( ( is_multisite() && Settings::can_access( 'bulk' ) ) || 'bulk' !== $this->get_current_tab() ) {
+								$settings_link = $this->get_page_url() . '#enable-lossy';
 							} else {
 								$settings_link = '#';
 								$link_class    = 'wp-smush-lossy-enable';
@@ -552,19 +568,25 @@ class Dashboard extends Abstract_Page {
 								/* translators: %1$s; starting a tag, %2$s: ending a tag */
 								esc_html__( 'Compress images up to 2x more than regular smush with almost no visible drop in quality. %1$sEnable Super-Smush%2$s', 'wp-smushit' ),
 								'<a role="button" class="' . esc_attr( $link_class ) . '" href="' . esc_url( $settings_link ) . '">',
-								'<span class="sui-screen-reader-text">' . esc_html__( 'Clicking this link will toggle the Super Smush checkbox.', 'wp-smushit' ) . '</span></a>'
+								'</a>'
 							);
 							?>
 						</p>
 					<?php } ?>
 				</span>
-				<?php if ( WP_Smush::is_pro() && $this->settings->get( 'lossy' ) ) { ?>
+				<?php if ( WP_Smush::is_pro() ) : ?>
 					<span class="sui-list-detail wp-smush-stats">
 						<span class="smushed-savings">
-							<?php echo esc_html( size_format( $compression_savings, 1 ) ); ?>
+							<?php if ( ! $this->settings->get( 'lossy' ) ) : ?>
+								<a role="button" class="sui-hidden-xs <?php echo esc_attr( $link_class ); ?>" href="<?php echo esc_url( $settings_link ); ?>">
+									<?php esc_html_e( 'Enable Super-Smush', 'wp-smushit' ); ?>
+								</a>
+							<?php else : ?>
+								<?php echo esc_html( size_format( $compression_savings, 1 ) ); ?>
+							<?php endif; ?>
 						</span>
 					</span>
-				<?php } ?>
+				<?php endif; ?>
 			</li>
 			<?php
 		}
@@ -609,7 +631,7 @@ class Dashboard extends Abstract_Page {
 	 */
 	public function settings_row( $setting_m_key, $label, $name, $setting_val, $disable = false, $upsell = false ) {
 		?>
-		<div class="sui-box-settings-row wp-smush-basic <?php echo $upsell ? 'sui-disabled' : ''; ?>">
+		<div class="sui-box-settings-row wp-smush-basic <?php echo $upsell || $disable ? 'sui-disabled' : ''; ?>">
 			<div class="sui-box-settings-col-1">
 				<span class="sui-settings-label <?php echo 'gutenberg' === $name ? 'sui-settings-label-with-tag' : ''; ?>">
 					<?php echo esc_html( $label ); ?>
@@ -617,18 +639,27 @@ class Dashboard extends Abstract_Page {
 				</span>
 
 				<span class="sui-description">
-					<?php echo WP_Smush::get_instance()->core()->settings[ $name ]['desc']; ?>
+					<?php echo wp_kses_post( WP_Smush::get_instance()->core()->settings[ $name ]['desc'] ); ?>
 				</span>
 			</div>
 			<div class="sui-box-settings-col-2" id="column-<?php echo esc_attr( $setting_m_key ); ?>">
 				<div class="sui-form-field">
 					<?php if ( isset( WP_Smush::get_instance()->core()->settings[ $name ]['label'] ) ) : ?>
-						<label class="sui-toggle">
-							<input type="checkbox" aria-describedby="<?php echo esc_attr( $setting_m_key . '-desc' ); ?>" id="<?php echo esc_attr( $setting_m_key ); ?>" name="<?php echo esc_attr( $setting_m_key ); ?>" <?php checked( $setting_val, 1, true ); ?> value="1" <?php disabled( $disable ); ?>>
-							<span class="sui-toggle-slider"></span>
-						</label>
-						<label for="<?php echo esc_attr( $setting_m_key ); ?>">
-							<?php echo esc_html( WP_Smush::get_instance()->core()->settings[ $name ]['label'] ); ?>
+						<label for="<?php echo esc_attr( $setting_m_key ); ?>" class="sui-toggle">
+							<input
+								type="checkbox"
+								value="1"
+								id="<?php echo esc_attr( $setting_m_key ); ?>"
+								name="<?php echo esc_attr( $setting_m_key ); ?>"
+								aria-labelledby="<?php echo esc_attr( $setting_m_key . '-label' ); ?>"
+								aria-describedby="<?php echo esc_attr( $setting_m_key . '-desc' ); ?>"
+								<?php checked( $setting_val, 1, true ); ?>
+								<?php disabled( $disable ); ?>
+							/>
+							<span class="sui-toggle-slider" aria-hidden="true"></span>
+							<span id="<?php echo esc_attr( $setting_m_key . '-label' ); ?>" class="sui-toggle-label">
+								<?php echo esc_html( WP_Smush::get_instance()->core()->settings[ $name ]['label'] ); ?>
+							</span>
 						</label>
 					<?php endif; ?>
 					<!-- Print/Perform action in right setting column -->
@@ -661,6 +692,31 @@ class Dashboard extends Abstract_Page {
 			return;
 		}
 
+		if ( 'png_to_jpg' === $setting_key ) {
+			?>
+			<div class="sui-toggle-content">
+				<div class="sui-notice sui-notice-info" style="margin-top: 10px">
+					<div class="sui-notice-content">
+						<div class="sui-notice-message">
+							<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+							<p>
+								<?php
+								printf(
+									/* translators: %1$s - <strong>, %2$s - </strong> */
+									wp_kses( 'Note: Any PNGs with transparency will be ignored. Smush will only convert PNGs if it results in a smaller file size. The resulting file will have a new filename and extension (JPEG), and %1$sany hard-coded URLs on your site that contain the original PNG filename will need to be updated manually%2$s.', 'wp-smushit' ),
+									'<strong>',
+									'</strong>'
+								);
+								?>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<?php
+			return;
+		}
+
 		global $wp_version;
 
 		?>
@@ -685,15 +741,6 @@ class Dashboard extends Abstract_Page {
 					esc_html_e(
 						'Note: This data adds to the size of the image. While this information might be
 					important to photographers, it’s unnecessary for most users and safe to remove.',
-						'wp-smushit'
-					);
-					break;
-				case 'png_to_jpg':
-					esc_html_e(
-						'Note: Any PNGs with transparency will be ignored. Smush will only convert PNGs
-					if it results in a smaller file size. The resulting file will have a new filename and extension
-					(JPEG), and any hard-coded URLs on your site that contain the original PNG filename will need
-					to be updated.',
 						'wp-smushit'
 					);
 					break;
@@ -724,10 +771,15 @@ class Dashboard extends Abstract_Page {
 		$setting_status = $this->settings->get( 'auto' );
 
 		?>
-		<div class="sui-notice smush-notice-sm auto-smush-notice <?php echo $setting_status ? '' : ' sui-hidden'; ?>">
-			<p>
-				<?php esc_html_e( 'Note: We will only automatically compress the image sizes selected above.', 'wp-smushit' ); ?>
-			</p>
+		<div class="sui-toggle-content">
+			<div class="sui-notice <?php echo $setting_status ? '' : ' sui-hidden'; ?>" style="margin-top: 10px">
+				<div class="sui-notice-content">
+					<div class="sui-notice-message">
+						<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+						<p><?php esc_html_e( 'Note: We will only automatically compress the image sizes selected above.', 'wp-smushit' ); ?></p>
+					</div>
+				</div>
+			</div>
 		</div>
 		<?php
 	}
@@ -816,13 +868,20 @@ class Dashboard extends Abstract_Page {
 		$setting_key = WP_SMUSH_PREFIX . 'backup';
 		?>
 		<div class="sui-form-field">
-			<label class="sui-toggle">
-				<input type="checkbox" aria-describedby="<?php echo esc_attr( $setting_key ); ?>-desc" id="<?php echo esc_attr( $setting_key ); ?>" name="<?php echo esc_attr( $setting_key ); ?>" <?php checked( $setting_val, 1 ); ?> value="1">
-				<span class="sui-toggle-slider"></span>
-				<label class="toggle-label <?php echo esc_attr( $setting_key . '-label' ); ?>" for="<?php echo esc_attr( $setting_key ); ?>" aria-hidden="true"></label>
-			</label>
-			<label for="<?php echo esc_attr( $setting_key ); ?>">
-				<?php echo esc_html( WP_Smush::get_instance()->core()->settings['backup']['label'] ); ?>
+			<label for="<?php echo esc_attr( $setting_key ); ?>" class="sui-toggle">
+				<input
+					type="checkbox"
+					value="1"
+					id="<?php echo esc_attr( $setting_key ); ?>"
+					name="<?php echo esc_attr( $setting_key ); ?>"
+					aria-labelledby="<?php echo esc_attr( $setting_key . '-label' ); ?>"
+					aria-describedby="<?php echo esc_attr( $setting_key ); ?>-desc"
+					<?php checked( $setting_val, 1 ); ?>
+				/>
+				<span class="sui-toggle-slider" aria-hidden="true"></span>
+				<span id="<?php echo esc_attr( $setting_key . '-label' ); ?>" class="sui-toggle-label">
+					<?php echo esc_html( WP_Smush::get_instance()->core()->settings['backup']['label'] ); ?>
+				</span>
 			</label>
 			<span class="sui-description sui-toggle-description">
 				<?php echo esc_html( WP_Smush::get_instance()->core()->settings['backup']['desc'] ); ?>
@@ -841,44 +900,94 @@ class Dashboard extends Abstract_Page {
 	 */
 	public function smush_result_notice() {
 		// Get the counts from transient.
-		$items          = get_transient( 'wp-smush-show-dir-scan-notice' );
-		$failed_items   = get_transient( 'wp-smush-dir-scan-failed-items' );
-		$notice_message = esc_html__( 'All images failed to optimize.', 'wp-smushit' );
-		$notice_class   = 'sui-notice-error';
+		$items          = (int) get_transient( 'wp-smush-show-dir-scan-notice' );
+		$failed_items   = (int) get_transient( 'wp-smush-dir-scan-failed-items' );
+		$skipped_items  = (int) get_transient( 'wp-smush-dir-scan-skipped-items' );
+		$notice_message = esc_html__( 'Image compression complete.', 'wp-smushit' ) . ' ';
+		$notice_class   = 'error';
 
-		// Not all images optimized.
-		if ( ! empty( $failed_items ) && ! empty( $items ) ) {
-			$notice_message = sprintf(
-				/* translators: %1$d: number of images smushed and %1$d number of failed. */
-				esc_html__( '%1$d images were successfully optimized and %2$d images failed.', 'wp-smushit' ),
-				absint( $items ),
-				absint( $failed_items )
+		$total = $items + $failed_items + $skipped_items;
+
+		/**
+		 * 1 image was successfully optimized / 10 images were successfully optimized
+		 * 1 image was skipped because it couldn't be optimized / 5/10 images were skipped because they couldn't be optimized
+		 * 1 image resulted in an error / 5/10 images resulted in an error, check the logs for more information
+		 *
+		 * 2/10 images were skipped because they couldn't be optimized and 4/10 resulted in an error
+		 */
+
+		if ( 0 === $failed_items && 0 === $skipped_items ) {
+			$notice_message .= sprintf(
+				/* translators: %d - number of images */
+				_n(
+					'%d image was successfully optimized',
+					'%d images were successfully optimized',
+					$items,
+					'wp-smushit'
+				),
+				$items
 			);
-			$notice_class = 'sui-notice-warning';
-		} elseif ( ! empty( $items ) && empty( $failed_items ) ) {
-			// Yay! All images were optimized.
-			$notice_message = sprintf(
-				/* translators: %d: number of images */
-				esc_html__( '%d images were successfully optimized.', 'wp-smushit' ),
-				absint( $items )
+			$notice_class = 'success';
+		} elseif ( 0 <= $skipped_items && 0 === $failed_items ) {
+			$notice_message .= sprintf(
+				/* translators: %1$d - number of skipped images, %2$d - total number of images */
+				_n(
+					'%d image was skipped because it couldn\'t be optimized',
+					'%1$d/%2$d images were skipped because they couldn\'t be optimized',
+					$skipped_items,
+					'wp-smushit'
+				),
+				$skipped_items,
+				$total
 			);
-			$notice_class = 'sui-notice-success';
+			$notice_class = 'success';
+		} elseif ( 0 === $skipped_items && 0 <= $failed_items ) {
+			$notice_message .= sprintf(
+				/* translators: %1$d - number of failed images, %2$d - total number of images */
+				_n(
+					'%d resulted in an error',
+					'%1$d/%2$d images resulted in an error, check the logs for more information',
+					$failed_items,
+					'wp-smushit'
+				),
+				$failed_items,
+				$total
+			);
+		} elseif ( 0 <= $skipped_items && 0 <= $failed_items ) {
+			$notice_message .= sprintf(
+				/* translators: %1$d - number of skipped images, %2$d - total number of images, %3$d - number of failed images */
+				esc_html__( '%1$d/%2$d images were skipped because they couldn\'t be optimized and %3$d/%2$d resulted in an error', 'wp-smushit' ),
+				$skipped_items,
+				$total,
+				$failed_items
+			);
+			$notice_class = 'warning';
 		}
 
 		// If we have counts, show the notice.
-		if ( ! empty( $items ) || ! empty( $failed_items ) ) {
+		if ( 0 < $total ) {
 			// Delete the transients.
 			delete_transient( 'wp-smush-show-dir-scan-notice' );
 			delete_transient( 'wp-smush-dir-scan-failed-items' );
+			delete_transient( 'wp-smush-dir-scan-skipped-items' );
 			?>
-			<div class="sui-notice-top sui-can-dismiss <?php echo esc_attr( $notice_class ); ?>">
-				<p class="sui-notice-content">
-					<?php echo $notice_message; ?>
-				</p>
-				<span class="sui-notice-dismiss">
-					<a role="button" href="#" aria-label="<?php esc_attr_e( 'Dismiss', 'wp-smushit' ); ?>" class="sui-icon-check"></a>
-				</span>
-			</div>
+			<script>
+				document.addEventListener("DOMContentLoaded", function() {
+					window.SUI.openNotice(
+						'wp-smush-ajax-notice',
+						'<p><?php echo $notice_message; ?></p>',
+						{
+							type: '<?php echo $notice_class; ?>',
+							icon: 'info',
+							dismiss: {
+								show: true,
+								label: '<?php esc_html_e( 'Dismiss', 'wp-smushit' ); ?>',
+								tooltip: '<?php esc_html_e( 'Dismiss', 'wp-smushit' ); ?>',
+							},
+						}
+					);
+				});
+			</script>
 			<?php
 		}
 	}
@@ -988,11 +1097,11 @@ class Dashboard extends Abstract_Page {
 		$this->view(
 			'bulk-settings/meta-box',
 			array(
-				'basic_features'      => Settings::$basic_features,
-				'cdn_enabled'         => $this->settings->get( 'cdn' ),
-				'grouped_settings'    => $fields,
-				'settings'            => $this->settings->get(),
-				'settings_data'       => WP_Smush::get_instance()->core()->settings,
+				'basic_features'   => Settings::$basic_features,
+				'cdn_enabled'      => $this->settings->get( 'cdn' ),
+				'grouped_settings' => $fields,
+				'settings'         => $this->settings->get(),
+				'settings_data'    => WP_Smush::get_instance()->core()->settings,
 			)
 		);
 	}
@@ -1011,33 +1120,21 @@ class Dashboard extends Abstract_Page {
 			$this->upgrade_url
 		);
 
-		$this->view(
-			'pro-features/meta-box',
-			array(
-				'upsell_url' => $upsell_url,
-			)
-		);
-	}
-
-	/**
-	 * Pro features meta box header.
-	 */
-	public function pro_features_metabox_header() {
 		// Upgrade url with analytics keys.
 		$upgrade_url = add_query_arg(
 			array(
 				'utm_source'   => 'smush',
 				'utm_medium'   => 'plugin',
-				'utm_campaign' => 'smush_advancedsettings_profeature_tag',
+				'utm_campaign' => 'smush-advanced-settings-video-button',
 			),
 			$this->upgrade_url
 		);
 
 		$this->view(
-			'pro-features/meta-box-header',
+			'pro-features/meta-box',
 			array(
-				'title'       => __( 'Smush Pro', 'wp-smushit' ),
 				'upgrade_url' => $upgrade_url,
+				'upsell_url'  => $upsell_url,
 			)
 		);
 	}
@@ -1234,10 +1331,9 @@ class Dashboard extends Abstract_Page {
 
 		$site_locale = get_locale();
 
-		if ( 'en_US' === $site_locale ) {
+		if ( 'en' === $site_locale || 'en_US' === $site_locale ) {
 			$site_language = 'English';
 		} else {
-			/* @noinspection PhpIncludeInspection */
 			require_once ABSPATH . 'wp-admin/includes/translation-install.php';
 			$translations  = wp_get_available_translations();
 			$site_language = isset( $translations[ $site_locale ] ) ? $translations[ $site_locale ]['native_name'] : __( 'Error detecting language', 'wp-smushit' );
@@ -1277,8 +1373,20 @@ class Dashboard extends Abstract_Page {
 	 * @since 3.2.0
 	 */
 	public function lazyload_metabox() {
-		$settings = $this->settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
-		$this->view( 'lazyload/meta-box', array( 'settings' => $settings ) );
+		$this->view(
+			'lazyload/meta-box',
+			array(
+				'settings' => $this->settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' ),
+				'cpts'     => get_post_types( // custom post types.
+					array(
+						'public'   => true,
+						'_builtin' => false,
+					),
+					'objects',
+					'and'
+				),
+			)
+		);
 	}
 
 	/**
@@ -1302,6 +1410,7 @@ class Dashboard extends Abstract_Page {
 				'grouped_settings' => $this->settings->get_tools_fields(),
 				'settings'         => $this->settings->get(),
 				'settings_data'    => WP_Smush::get_instance()->core()->settings,
+				'backups_count'    => WP_Smush::get_instance()->core()->mod->backup->get_attachments_with_backups(),
 			)
 		);
 	}

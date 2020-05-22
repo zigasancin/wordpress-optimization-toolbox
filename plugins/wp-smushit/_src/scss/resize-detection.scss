@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:400,500,700');
 @import "modules/variables";
+$font--path: '~@wpmudev/shared-ui/dist/fonts/';
 
 @font-face {
 	font-family: "wpmudev-plugin-icons";
@@ -29,11 +30,11 @@
 
 	#smush-image-bar-toggle {
 		position: fixed;
-		top: 50px;
+		top: 60px;
 		right: 330px;
 		height: 50px;
 		width: 60px;
-		z-index: 999999;
+		z-index: 9999999;
 		border-radius: 4px 0 0 4px;
 		background-color: #FFF;
 		box-shadow: inset 2px 0 0 0 #FECF2F, -13px 5px 20px 0 rgba(0, 0, 0, 0.1);
@@ -47,6 +48,10 @@
 			right: 0;
 		}
 
+		&.smush-toggle-success {
+			box-shadow: inset 2px 0 0 0 #1abc9c, -13px 5px 20px 0 rgba(0, 0, 0, 0.1);
+		}
+
 		i.sui-icon-info,
 		i.sui-icon-loader {
 			font-family: "wpmudev-plugin-icons" !important;
@@ -56,9 +61,14 @@
 			color: #FECF2F;
 		}
 
-		i.sui-icon-info {
+		i.sui-icon-info:before {
+			content: "I";
+		}
+
+		&.smush-toggle-success i.sui-icon-info {
+			color: #1abc9c;
 			&:before {
-				content: "I";
+				content: "_";
 			}
 		}
 
@@ -128,6 +138,7 @@
 			line-height: 30px;
 			background-color: #FAFAFA;
 			padding: 15px 20px;
+			margin: 0;
 		}
 
 		p {
@@ -324,6 +335,25 @@
 					border-color: #FECF2F;
 					&:before { color: #333; }
 				}
+			}
+		}
+
+		#smush-image-bar-notice {
+			display: none;
+			margin: 20px;
+			border: 1px solid #E6E6E6;
+			border-left: 2px solid #1abc9c;
+			border-radius: 4px;
+			padding: 15px 20px 0 25px;
+
+			p:before {
+				position: absolute;
+				left: 42px;
+				font-family: "wpmudev-plugin-icons" !important;
+				font-weight: 400;
+				content: "_";
+				color: #1abc9c;
+				margin-right: -7px;
 			}
 		}
 	}

@@ -8,7 +8,7 @@
 
 namespace Smush\Core;
 
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -69,6 +69,7 @@ class Settings {
 		'keep_data'         => true,
 		'lazy_load'         => false,
 		'background_images' => true,
+		'rest_api_support'  => false, // CDN option.
 	);
 
 	/**
@@ -84,15 +85,7 @@ class Settings {
 	 *
 	 * @var array $basic_features
 	 */
-	public static $basic_features = array(
-		'bulk',
-		'auto',
-		'strip_exif',
-		'resize',
-		'gutenberg',
-		'js_builder',
-		'lazy_load',
-	);
+	public static $basic_features = array( 'bulk', 'auto', 'strip_exif', 'resize', 'gutenberg', 'js_builder', 'lazy_load' );
 
 	/**
 	 * List of fields in bulk smush form.
@@ -119,7 +112,7 @@ class Settings {
 	 *
 	 * @var array
 	 */
-	private $cdn_fields = array( 'background_images', 'auto_resize', 'webp' );
+	private $cdn_fields = array( 'cdn', 'background_images', 'auto_resize', 'webp', 'rest_api_support' );
 
 	/**
 	 * List of fields in Settings form.
@@ -486,7 +479,7 @@ class Settings {
 	 * @since 3.2.0
 	 */
 	public function reset() {
-		check_ajax_referer( 'get-smush-status' );
+		check_ajax_referer( 'wp_smush_reset' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			die();
@@ -509,6 +502,8 @@ class Settings {
 	 * Save settings.
 	 *
 	 * @param bool $json_response  Send a JSON response.
+	 *
+	 * @TODO: Refactor. Why do we have two different methods for mu and single?
 	 */
 	public function save( $json_response = true ) {
 		check_ajax_referer( 'save_wp_smush_options', 'wp_smush_options_nonce' );
@@ -654,6 +649,7 @@ class Settings {
 			'exclude-pages'   => FILTER_SANITIZE_STRING,
 			'exclude-classes' => FILTER_SANITIZE_STRING,
 			'footer'          => FILTER_VALIDATE_BOOLEAN,
+			'native'          => FILTER_VALIDATE_BOOLEAN,
 		);
 
 		$settings = filter_input_array( INPUT_POST, $args );
@@ -795,6 +791,7 @@ class Settings {
 			'exclude-pages'   => array(),
 			'exclude-classes' => array(),
 			'footer'          => true,
+			'native'          => false,
 		);
 
 		$this->set_setting( WP_SMUSH_PREFIX . 'lazy_load', $defaults );

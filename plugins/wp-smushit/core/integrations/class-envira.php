@@ -36,10 +36,15 @@ class Envira {
 	 * @param CDN $cdn  CDN module.
 	 */
 	public function __construct( CDN $cdn ) {
+		if ( is_admin() ) {
+			return;
+		}
+
 		$settings = Settings::get_instance();
 
 		if ( $settings->get( 'lazy_load' ) ) {
 			add_filter( 'smush_skip_image_from_lazy_load', array( $this, 'skip_lazy_load' ), 10, 3 );
+			add_filter( 'envira_gallery_indexable_images', array( $this, 'add_no_lazyload_class' ) );
 		}
 
 		if ( $settings->get( 'cdn' ) ) {
@@ -113,6 +118,38 @@ class Envira {
 		}
 
 		return $img;
+	}
+
+	/**
+	 * Galleries in Envira will use a noscript tag with images. Smush can't filter the DOM tree, so we will add
+	 * a no-lazyload class to every image.
+	 *
+	 * @since 3.5.0
+	 *
+	 * @param string $images  String of img tags that will go inside nocscript element.
+	 *
+	 * @return string
+	 */
+	public function add_no_lazyload_class( $images ) {
+		$parsed = ( new Parser() )->get_images_from_content( $images );
+
+		if ( empty( $parsed ) ) {
+			return $images;
+		}
+
+		foreach ( $parsed[0] as $image ) {
+			$original = $image;
+			$class    = Parser::get_attribute( $image, 'class' );
+			if ( ! $class ) {
+				Parser::add_attribute( $image, 'class', 'no-lazyload' );
+			} else {
+				Parser::add_attribute( $image, 'class', $class . ' no-lazyload' );
+			}
+
+			$images = str_replace( $original, $image, $images );
+		}
+
+		return $images;
 	}
 
 	/**

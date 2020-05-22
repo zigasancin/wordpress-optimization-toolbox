@@ -17,7 +17,7 @@ use Exception;
 use Imagick;
 use ImagickPixel;
 use Smush\Core\Helper;
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -618,12 +618,11 @@ class Png2jpg extends Abstract_Module {
 		$editor = wp_get_image_editor( $file );
 
 		if ( ! is_wp_error( $editor ) ) {
-
 			$quality = $editor->get_quality();
 		}
 
-		// Choose the default quaity if we didn't get it.
-		if ( ! $quality || $quality < 1 || $quality > 100 ) {
+		// Choose the default quality if we didn't get it.
+		if ( ! isset( $quality ) || $quality < 1 || $quality > 100 ) {
 			// The default quality.
 			$quality = 82;
 		}

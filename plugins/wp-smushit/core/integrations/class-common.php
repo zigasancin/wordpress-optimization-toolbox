@@ -13,7 +13,7 @@
 namespace Smush\Core\Integrations;
 
 use Smush\Core\Modules\Smush;
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -44,6 +44,12 @@ class Common {
 
 		// ReCaptcha lazy load.
 		add_filter( 'smush_skip_iframe_from_lazy_load', array( $this, 'exclude_recaptcha_iframe' ), 10, 2 );
+
+		// Compatibility modules for lazy loading.
+		add_filter( 'smush_skip_image_from_lazy_load', array( $this, 'lazy_load_compat' ), 10, 3 );
+
+		// Soliloquy slider CDN support.
+		add_filter( 'soliloquy_image_src', array( $this, 'soliloquy_image_src' ) );
 	}
 
 	/**
@@ -220,7 +226,7 @@ class Common {
 		}
 
 		// Calculate the total compression.
-		$stats = $smush->total_compression( $stats );
+		$stats = WP_Smush::get_instance()->core()->total_compression( $stats );
 
 		update_post_meta( $id, Smush::$smushed_meta_key, $stats );
 	}
@@ -240,7 +246,7 @@ class Common {
 	 *
 	 * @since 3.0
 	 *
-	 * @param int    $id   Attachment ID.
+	 * @param int   $id    Attachment ID.
 	 * @param array $stats Smushed stats.
 	 * @param array $meta  New meta data.
 	 */
@@ -320,6 +326,71 @@ class Common {
 	 */
 	public function exclude_recaptcha_iframe( $skip, $src ) {
 		return false !== strpos( $src, 'recaptcha/api' );
+	}
+
+	/**************************************
+	 *
+	 * Soliloquy slider
+	 *
+	 * @since 3.6.2
+	 */
+
+	/**
+	 * Replace slider image links with CDN links.
+	 *
+	 * @param string $src  Image source.
+	 *
+	 * @return string
+	 */
+	public function soliloquy_image_src( $src ) {
+		$cdn = WP_Smush::get_instance()->core()->mod->cdn;
+
+		if ( ! $cdn->get_status() || empty( $src ) ) {
+			return $src;
+		}
+
+		if ( $cdn->is_supported_path( $src ) ) {
+			return $cdn->generate_cdn_url( $src );
+		}
+
+		return $src;
+	}
+
+	/**************************************
+	 *
+	 * Various modules
+	 *
+	 * @since 3.5
+	 */
+
+	/**
+	 * Lazy loading compatibility checks.
+	 *
+	 * @since 3.5.0
+	 *
+	 * @param bool   $skip   Should skip? Default: false.
+	 * @param string $src    Image url.
+	 * @param string $image  Image.
+	 *
+	 * @return bool
+	 */
+	public function lazy_load_compat( $skip, $src, $image ) {
+		// Avoid conflicts if attributes are set (another plugin, for example).
+		if ( false !== strpos( $image, 'data-src' ) ) {
+			return true;
+		}
+
+		// Compatibility with Essential Grid lazy loading.
+		if ( false !== strpos( $image, 'data-lazysrc' ) ) {
+			return true;
+		}
+
+		// Compatibility with JetPack lazy loading.
+		if ( false !== strpos( $image, 'jetpack-lazy-image' ) ) {
+			return true;
+		}
+
+		return $skip;
 	}
 
 }

@@ -8,7 +8,7 @@
 
 namespace Smush\Core;
 
-use Smush\WP_Smush;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -65,6 +65,8 @@ class Core extends Stats {
 		'gallery_page_wp-smush-nextgen-bulk',
 		'post',
 		'post-new',
+		'page',
+		'edit-page',
 		'upload',
 		'toplevel_page_smush-network',
 		'toplevel_page_smush',
@@ -254,9 +256,9 @@ class Core extends Stats {
 				'desc'        => esc_html__( 'WordPress generates multiple image thumbnails for each image you upload. Choose which of those thumbnail sizes you want to include when bulk smushing.', 'wp-smushit' ),
 			),
 			'auto'              => array(
-				'label'       => esc_html__( 'Automatically smush my images on upload', 'wp-smushit' ),
+				'label'       => esc_html__( 'Automatically compress my images on upload', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Automatic compression', 'wp-smushit' ),
-				'desc'        => esc_html__( 'When you upload images to your site, we can automatically optimize and compress them for you without you needing to do it yourself.', 'wp-smushit' ),
+				'desc'        => esc_html__( 'When you upload images to your site, we will automatically optimize and compress them for you.', 'wp-smushit' ),
 			),
 			'lossy'             => array(
 				'label'       => esc_html__( 'Super-Smush my images', 'wp-smushit' ),
@@ -266,7 +268,7 @@ class Core extends Stats {
 			'strip_exif'        => array(
 				'label'       => esc_html__( 'Strip my image metadata', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Metadata', 'wp-smushit' ),
-				'desc'        => esc_html__( 'Whenever you take a photo, your camera stores metadata, such as focal length, date, time and location, within the image.', 'wp-smushit' ),
+				'desc'        => esc_html__( 'Photos often store camera settings in the file, i.e., focal length, date, time and location. Removing EXIF data reduces the file size. Note: it does not strip SEO metadata.', 'wp-smushit' ),
 			),
 			'resize'            => array(
 				'label'       => esc_html__( 'Resize my full size images', 'wp-smushit' ),
@@ -302,11 +304,11 @@ class Core extends Stats {
 				'short_label' => esc_html__( 'Subsite Controls', 'wp-smushit' ),
 				'desc'        => esc_html__( 'By default, subsites will inherit your network settings. Choose which modules you want to allow subsite admins to override.', 'wp-smushit' ),
 			),
-			/*'usage'             => array(
+			'usage'             => array(
 				'label'       => esc_html__( 'Help us make Smush better by allowing usage tracking', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Usage Tracking', 'wp-smushit' ),
 				'desc'        => esc_html__( 'Help make Smush better by letting our designers learn how you’re using the plugin.', 'wp-smushit' ),
-			),*/
+			),
 			'keep_data'         => array(
 				'label'       => esc_html__( 'Uninstallation', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Data', 'wp-smushit' ),
@@ -320,7 +322,12 @@ class Core extends Stats {
 			'bulk_restore'      => array(
 				'label'       => esc_html__( 'Bulk Restore', 'wp-smushit' ),
 				'short_label' => esc_html__( 'Bulk Restore', 'wp-smushit' ),
-				'desc'        => esc_html__( 'Made a mistake? Use this feature to restore your image thumbnails to their original state.', 'wp-smushit' ),
+				'desc'        => sprintf(
+					/* translators: %1$s - a tag, %2$s - closing a tag */
+					__( 'Made a mistake? Use this feature to restore your image thumbnails to their original state. Please note, that you need to have “%1$sStore a copy of my full size images%2$s” option enabled to bulk restore the images. ', 'wp-smushit' ),
+					'<a href="' . network_admin_url( 'admin.php?page=smush' ) . '">',
+					'</a>'
+				),
 			),
 		);
 
@@ -377,9 +384,9 @@ class Core extends Stats {
 			'smush_now'               => esc_html__( 'Smush Now', 'wp-smushit' ),
 			'error_in_bulk'           => $error_in_bulk,
 			'all_resmushed'           => esc_html__( 'All images are fully optimized.', 'wp-smushit' ),
-			'restore'                 => esc_html__( 'Restoring image..', 'wp-smushit' ),
-			'smushing'                => esc_html__( 'Smushing image..', 'wp-smushit' ),
-			'checking'                => esc_html__( 'Checking images..', 'wp-smushit' ),
+			'restore'                 => esc_html__( 'Restoring image...', 'wp-smushit' ),
+			'smushing'                => esc_html__( 'Smushing image...', 'wp-smushit' ),
+			'checking'                => esc_html__( 'Checking images...', 'wp-smushit' ),
 			'membership_valid'        => esc_html__( 'We successfully verified your membership, all the Pro features should work completely. ', 'wp-smushit' ),
 			'membership_invalid'      => esc_html__( "Your membership couldn't be verified.", 'wp-smushit' ),
 			'missing_path'            => esc_html__( 'Missing file path.', 'wp-smushit' ),
@@ -403,10 +410,11 @@ class Core extends Stats {
 			// Errors.
 			'error_ignore'            => esc_html__( 'Ignore this image from bulk smushing', 'wp-smushit' ),
 			// Ignore text.
-			'ignore'                  => esc_html__( 'Ignore', 'wp-smushit' ),
-			'ignored'                 => esc_html__( 'Ignored in Bulk Smush', 'wp-smushit' ),
+			'ignored'                 => esc_html__( 'Ignored from auto-smush', 'wp-smushit' ),
 			'not_processed'           => esc_html__( 'Not processed', 'wp-smushit' ),
-			'bulkShow'                => esc_html__( ' Show in bulk Smush', 'wp-smushit' ),
+			// Notices.
+			'noticeDismiss'           => esc_html__( 'Dismiss', 'wp-smushit' ),
+			'noticeDismissTooltip'    => esc_html__( 'Dismiss notice', 'wp-smushit' ),
 		);
 
 		wp_localize_script( $handle, 'wp_smush_msgs', $wp_smush_msgs );
@@ -420,8 +428,10 @@ class Core extends Stats {
 				$this->resmush_ids = $resmush_ids;
 			}
 
-			// Setup all the stats.
-			$this->setup_global_stats( true );
+			if ( ! defined( 'WP_SMUSH_DISABLE_STATS' ) || ! WP_SMUSH_DISABLE_STATS ) {
+				// Setup all the stats.
+				$this->setup_global_stats( true );
+			}
 
 			// Localize smushit_IDs variable, if there are fix number of IDs.
 			$this->unsmushed_attachments = ! empty( $_REQUEST['ids'] ) ? array_map( 'intval', explode( ',', $_REQUEST['ids'] ) ) : array();
@@ -478,14 +488,6 @@ class Core extends Stats {
 		$data['timeout'] = WP_SMUSH_TIMEOUT * 1000;
 
 		wp_localize_script( $handle, 'wp_smushit_data', $data );
-
-		// Check if settings were changed for a multisite, and localize whether to run re-check on page load.
-		if ( Settings::can_access( 'bulk' ) ) {
-			// If not same, Set a variable to run re-check on page load.
-			if ( get_site_option( WP_SMUSH_PREFIX . 'run_recheck', false ) ) {
-				wp_localize_script( $handle, 'wp_smush_run_re_check', array( 1 ) );
-			}
-		}
 	}
 
 	/**
@@ -667,7 +669,7 @@ class Core extends Stats {
 			return $threshold;
 		}
 
-		return $resize_sizes['width'];
+		return $resize_sizes['width'] > $resize_sizes['height'] ? $resize_sizes['width'] : $resize_sizes['height'];
 	}
 
 }
