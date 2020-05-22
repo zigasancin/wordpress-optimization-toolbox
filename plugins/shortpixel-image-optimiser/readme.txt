@@ -2,9 +2,9 @@
 Contributors: ShortPixel
 Tags: compressor, image, compression, optimize, image optimizer, image optimiser, image compression, resize, compress pdf, compress jpg, compress png, image compression
 Requires at least: 3.2.0
-Tested up to: 5.3
+Tested up to: 5.4.1
 Requires PHP: 5.3
-Stable tag: 4.15.3
+Stable tag: 4.18.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,7 +34,7 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 * option to automatically convert PNG to JPG if that will result in smaller images. Ideal for large images in PNG format.
 * no file size limit
 * option to freely convert any JPEG, PNG or GIF (even animated ones!) to **WebP** for more Google love. <a href="http://blog.shortpixel.com/how-webp-images-can-speed-up-your-site/" target="_blank">How to enable WebP?</a>
-* option to include the generated WebP images into the front-end pages by using the &lt;picture&gt; tag instead of &lt;img&gt;
+* option to include the generated WebP images into the front-end pages by using the `<picture>` tag instead of `<img>`
 * compatible with WP Retina 2x - all **retina images** are automatically compressed. <a href="http://blog.shortpixel.com/how-to-use-optimized-retina-images-on-your-wordpress-site-for-best-user-experience-on-apple-devices/" target="_blank">How to benefit from Retina displays?</a>
 * optimize thumbnails as well as featured images. You can also **select individual thumbnails to exclude** from optimization.
 * ability to optimize any image on your site including images in **NextGEN Gallery** and any other image galleries or sliders
@@ -58,7 +58,7 @@ Make an instant <a href="http://shortpixel.com/image-compression-test" target="_
 * option to deactivate auto-optimizing images on upload
 * images that are optimized less that 5% are bonus
 * WooCommerce, WP offload S3 and WP Stateless compatible
-* 40 days optimization report with all image details and overall statistics
+* 30 days optimization report with all image details and overall statistics
 * We are GDPR compliant! <a href="https://shortpixel.com/privacy#gdpr" target="_blank">Read more.</a>
 * **free optimization credits for non-profits**, <a href="https://shortpixel.com/contact" target="_blank">contact us</a> for details
 
@@ -91,7 +91,7 @@ Help us spread the word by recommending ShortPixel to your friends and collect *
 Let's get ShortPixel plugin running on your WordPress website:
 
 
-1. Sign up using your email at https://shortpixel.com/wp-apikey
+1. Sign up using your email at <a href="https://shortpixel.com/wp-apikey" target="_blank">https://shortpixel.com/wp-apikey</a>.
 2. You will receive your personal API key in a confirmation email, to the address you provided.
 3. Upload the ShortPixel plugin to the /wp-content/plugins/ directory
 4. Use your unique API key to activate ShortPixel plugin in the 'Plugins' menu in WordPress.
@@ -151,15 +151,17 @@ Let's get ShortPixel plugin running on your WordPress website:
 
 = How do I activate the API key on a multisite? =
     You have to activate the plugin in the network admin and then activate it manually on each individual site in the multisite. Once you have done that, the Settings menu appears and you can add the API key for each individual site.
-    As an alternative, you can edit wp-config.php and add this line
-    define(‘SHORTPIXEL_API_KEY’, ‘APIKEY’)
-    where ‘APIKEY’ is the API Key received upon sign up.
+    As an alternative, you can edit wp-config.php and add this line:
+
+`define('SHORTPIXEL_API_KEY', 'APIKEY');`
+where `APIKEY` is the API Key received upon sign up.
     If configured that way, the API key will be used for all the sites of the multisite but will only be visible on the main site’s Settings page, being hidden for the rest of the sites.
 
 = I am not the only one working in the WordPress Dashboard. How can I hide my API key? =
     There is a simple way to hide the API key, all you need to do is to add these two lines in your wp-config.php:
-    define('SHORTPIXEL_API_KEY', '<<your api key here>>');
-    define('SHORTPIXEL_HIDE_API_KEY', true);
+
+`define('SHORTPIXEL_API_KEY', '<<your api key here>>');`
+`define('SHORTPIXEL_HIDE_API_KEY', true);`
 
 = How much is a credit? =
     A credit is used each time ShortPixel optimizes an image or thumbnail by at least 5%. If we're not able to optimize an image or thumbnail by at least 5% then no credit will be used :-)
@@ -213,31 +215,49 @@ The ShortPixel team is here to help. <a href="https://shortpixel.com/contact">Co
 == Actions and Filters for Developers ==
 
 The ShortPixel Image Optimiser plugin calls the following actions and filters:
-> do_action( 'shortpixel_image_optimised', $post_id ); //upon successful optimization
 
-> do_action("shortpixel_before_restore_image", $post_id); //before restoring an image from backup
+`do_action( 'shortpixel_image_optimised', $post_id );`
+upon successful optimization;
 
-> do_action("shortpixel_after_restore_image", $post_id); //after succesful restore
+`do_action("shortpixel_before_restore_image", $post_id);`
+before restoring an image from backup;
 
-> apply_filters("shortpixel_backup_folder", $backup_folder, $main_file_path, $sizes); //just before returning the ShortPixel backup folder, usually /wp-content/uploads/ShortpixelBackups. The $sizes are the sizes array from metadata.
+`do_action("shortpixel_after_restore_image", $post_id);`
+after succesful restore;
 
-> apply_filters('shortpixel_image_exists', file_exists($path), $path, $post_id); //post ID is not always set, only if it's an image from Media Library
+`apply_filters("shortpixel_backup_folder", $backup_folder, $main_file_path, $sizes);`
+just before returning the ShortPixel backup folder, usually /wp-content/uploads/ShortpixelBackups. The `$sizes` are the sizes array from metadata;
 
-> apply_filters('shortpixel_image_urls', $URLs, $post_id) // filters the URLs that will be sent to optimization, $URLs is a plain array
+`apply_filters('shortpixel_image_exists', file_exists($path), $path, $post_id);`
+post ID is not always set, only if it's an image from Media Library;
 
-> apply_filters('shortpixel/db/chunk_size', $chunk); //the $chunk is the value ShortPixel chooses to use as number of selected records in one query (based on total table size), some hosts work better with a different value
+`apply_filters('shortpixel_image_urls', $URLs, $post_id);`
+filters the URLs that will be sent to optimization, `$URLs` is a plain array;
+
+`apply_filters('shortpixel/db/chunk_size', $chunk);`
+the `$chunk` is the value ShortPixel chooses to use as number of selected records in one query (based on total table size), some hosts work better with a different value;
 
 In order to define custom thumbnails to be picked up by the optimization you have two options, both comma separated defines:
 
-define('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES', '_tl,_tr'); will handle custom thumbnails like image-100x100_tl.jpg
+`define('SHORTPIXEL_CUSTOM_THUMB_SUFFIXES', '_tl,_tr');`
+will handle custom thumbnails like image-100x100_tl.jpg;
 
-define('SHORTPIXEL_CUSTOM_THUMB_INFIXES', '-uae'); will handle custom thumbnails like image-uae-100x100.jpg
-define('SHORTPIXEL_USE_DOUBLE_WEBP_EXTENSION', true); will tell the plugin to create double extensions for the WebP image counterparts, for example image.jpg.webp for image.jpg
+`define('SHORTPIXEL_CUSTOM_THUMB_INFIXES', '-uae');`
+ will handle custom thumbnails like image-uae-100x100.jpg;
 
-define("SHORTPIXEL_NOFLOCK", true); // don't use flock queue, only activate this when you have flock() denied errors on your installation.
-.
-define("SHORTPIXEL_EXPERIMENTAL_SECURICACHE", true);  // adds timestamps to URLS, to prevent hitting the cache. Useful for persistent caches.
+`define('SHORTPIXEL_USE_DOUBLE_WEBP_EXTENSION', true);` 
+will tell the plugin to create double extensions for the WebP image counterparts, for example image.jpg.webp for image.jpg;
 
+`define("SHORTPIXEL_NOFLOCK", true);`
+don't use flock queue, only activate this when you have `flock()` denied errors on your installation;
+
+`define("SHORTPIXEL_EXPERIMENTAL_SECURICACHE", true);`
+adds timestamps to URLS, to prevent hitting the cache. Useful for persistent caches.
+
+Hide the Cloudflare settings by defining these constants in wp-config.php:
+
+`define('SHORTPIXEL_CFTOKEN', 'the Cloudflare API token that has Purge Cache right');`
+`define('SHORTPIXEL_CFZONE', 'The Zone ID from the domain settings in Cloudflare');`
 
 == Screenshots ==
 
@@ -260,6 +280,129 @@ define("SHORTPIXEL_EXPERIMENTAL_SECURICACHE", true);  // adds timestamps to URLS
 9. Check other optimized images status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 4.18.1 =
+
+Release date 20th May 2020
+* Fix for a situation when running the bulk could result in duplicate images;
+* Updated some old docs links;
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted.    
+
+= 4.18.0 =
+
+Release date 7th May 2020
+* Added a warning for the case when Imagik library isn't available and "Keep EXIF data is enabled";
+* Added a check to prevent the bulk process to be called in multiple browsers in order to decrease the load on admin-heavy sites;
+* Fix for the situation when the bulk process would enter a loop in certain situations;
+* Fix for the notices after bulk restore that would duplicate the files missing form backups;
+* Fix for multisite when DB tables were created even for sub-sites without the plugin being active;
+* Language – 1 new strings added, 0 updated, 0 fuzzied, and 5 obsoleted.
+
+= 4.17.4 =
+
+Release date: 22nd April 2020
+* Fix 400 errors response on admin-ajax.php when using a fontend uploader plugin;
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted.
+
+= 4.17.3 =
+
+Release date: 16th April 2020
+* Added a collapsable details feature to notifications, in order to avoid filling up the screen with them;
+* Added a filter to completely disable the plugin, when necessary (for certain user roles for example);
+* Hide the API key from the support chat module in settings, when the API key is entered via wp-config.php;
+* Prevent fatal errors if multiple versions of the plugin are active simultaneously;
+* Fix for API key that could be leaked in the frontend through JS;
+* Fix for situations where the plugin was crashing if the API key was added via wp-config.php;
+* Fix missing optimize button on Edit Media screen;
+* Fix for time stamp in Other Media screen when the server is set on another time zone than UTC;
+* Fix for JSON parsing errors when `set_time_limit` function is forbidden;
+* Fix for notifications not showing correctly the number of credits available;
+* Fix for images stuck in "Pending Restore" in Other Media, when there was no backup for them;
+* Fix for hamburger menu in Other Media not displaying options centered;
+* Language – 4 new strings added, 2 updated, 0 fuzzied, and 4 obsoleted.
+
+= 4.17.2 =
+
+Release date: 10th April 2020
+* Fix for Over Quota notification that didn't go away even if there were enough credits;
+* From now on other ShortPixel notifications will only show up on ShortPixel related pages (Media Library, ShortPixel settings, Other Media page, Bulk Optimize page);
+* Added a constant which can be used to completely disable all ShortPixel notifications. To be used with care as in certain cases it can hide important notifications;
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted.
+
+= 4.17.1 =
+
+Release date: 6th April 2020
+* Fix for MySQL index errors for MySQL 5.6;
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted.
+
+= 4.17.0 =
+
+Release date: 2nd April 2020
+* Complete rewrite of the Other Media part of the plugin. It now looks closer to the standard Media Library, having thumbnails and actions like Compare, Re-optimize and Restore from backup for all images when you have Backups activated;
+* Added notification to activate the integration with NextGen Gallery, when the plugin is active and the integration is not activated;
+* Improved the way Other Media folders are added and it should not crash anymore for folders with a very large number of images;
+* Fix for the extra information (i) next to each Other Media folder in the Advanced Settings;
+* Fixes for multiple issues reagrding the NextGen Gallery plugin integration;
+* Fix for notififcations showing up when they're not supposed to show up;
+* Fix for multiple notifications when backup files are not found. These are now merged together;
+* Fix for notifications that were crashing outside ShortPixel screens;
+* Fix for the report that was wrongly stating 40 days, when actually the report is only for 30 days;
+* Fix for the exclude regex section that was returning true even if no matches were found;
+* Removed from the plugin the files that are not used anymore;
+* Language – 15 new strings added, 0 updated, 0 fuzzied, and 8 obsoleted.
+
+= 4.16.4 =
+
+Release date: 26th March 2020
+* Fix for some notices that could not be dismissed
+* Fix for "Confirm new credits" notification
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
+
+= 4.16.3 =
+
+Release date: 9th March 2020
+* Fix missing button to choose a plan when running out of credits.
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
+
+= 4.16.2 =
+
+Release date: 27th February 2020
+* Fix notices javascript.
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
+
+= 4.16.1 =
+
+Release date: 14th February 2020
+* Fix non-dismissable alerts.
+* Reference to the Website Speed Optimization service.
+* Fixed: deleteItemCache in wrong place ( before save ) thus resetting data
+* Fixed: NextGen integration
+* Language – 3 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
+
+= 4.16.0 =
+
+Release date: 4th February 2020
+* New - Token support for Cloudflare via config constant or settings.
+* Backup setting - add orange warning when backups are off.
+* Button to dismiss the top bar notification of missing files.
+* Shortpixel now loads scripts with 'defer' on front site, if it's configured to be loaded there.
+* Hiding Cloudflare details via wp-config.php.
+* Hide the option "Process in front-end" when "Optimize media on upload" is not checked.
+* Fixes for multibyte filenames with mixed locales.
+* Fixes for combination of S3-offload, webp pictures and cnames.
+* Reworked Notifications.
+* Fixed - PNG2JPG Retry button didn't work, now properly resets retry counter.
+* Fixed - Realpath in directory model throws off installations with symlinks.
+* Fixed - Thrown Exception in API with corrupted images now caught.
+* Fixed - Debug window link was visible when it should not.
+* Fixed - ExcludePattern without value would result in notices.
+* Language – 7 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
+
+= 4.15.4 =
+
+Release date: 29th January 2020
+* Change the Help beacon to V2.
+* Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
 
 = 4.15.3 =
 
@@ -321,7 +464,7 @@ Release date: 27th November 2019
 = 4.14.6 =
 
 Release date: 9th October 2019
-* Don't convert to &lt;picture&gt; the &lt;img&gt;s with backgrounds.
+* Don't convert to `<picture>` the `<img>`s with backgrounds.
 * Remove unused eval() call.
 * Restore the validate button next to API Key but change label to "Save and validate"
 * Fixed: PNGtoJPG issue with already uploaded images
@@ -358,11 +501,11 @@ Release date: 19th August 2019
 * Fixed: Warning: count() Parameter must be an array.
 * Language – 0 new strings added, 0 updated, 0 fuzzied, and 0 obsoleted
 
-== 4.14.3 ==
+= 4.14.3 =
 
 Release date: 22nd July 2019
 * Compatibility with Flywheel hosting by not using flock if Flywheel detected
-* When using the PICTURE tag to deliver WebP, keep the width and height at <IMG> level
+* When using the PICTURE tag to deliver WebP, keep the width and height at `<IMG>` level
 * Refactoring of the API Key settings page, refactoring of Other media
 * Performance improvements for selecting from large wp_posts and wp_postmeta tables when doing bulk optimization
 * Display a message when bulk is skipping many processed images, if bulk processing is ran again.
@@ -371,17 +514,17 @@ Release date: 22nd July 2019
 * Conflict message: align the text vertically and provide space between text and button when displayed on any admin page
 * Fixed: Other media Restore fails when original file is readable, not writable
 
-== 4.14.2 ==
+= 4.14.2 =
 
 Release date: 1st July 2019
 * add the possibility to define custom infixes for thumbnails (like image-uai-150x150.jpg for image.jpg) - comma separated define SHORTPIXEL_CUSTOM_THUMB_INFIXES
 
-== 4.14.1 ==
+= 4.14.1 =
 
 Release date: 17th June 2019
 * Fix errors when DOMDocument not present
 
-== 4.14.0 ==
+= 4.14.0 =
 
 Release date: 17th June 2019
 * Add new filters proposed by WP Stateless: shortpixel_backup_folder, shortpixel_image_exists, shortpixel_image_urls
@@ -393,7 +536,7 @@ Release date: 17th June 2019
 * Adaptive Max execution time and capped to 90 sec. for the bulk background AJAX calls. (Kinsta has a max_execution_time of 300 sec. in PHP but the HTTP connection is cut after 180 sec.)
 * Fix custom 404 page for missing images not working when using .htaccess for WebP
 * Fix WebP picture tag with relative URLs not working in some circumstances
-* Fix replacing the <img> inside an existing <picture> tag with another <picture> tag.
+* Fix replacing the `<img>` inside an existing `<picture>` tag with another `<picture>` tag.
 * Clear SP optimization cache in order to be able to optimize an image which initially had permissions error, after changing the permissions.
 * Fix being able to list the contents of ShortpixelBackups on some badly configured servers.
 * Fix error when inputting D'Artagnan in the AUTH pass field of settings.
@@ -418,7 +561,7 @@ Release date: 10th April 2019
 * resolve the Settings inconsistency in Other Media (settings displayed were from when adding the folder not from when actually optimizing)
 * Make pressing Escape or clicking outside of any popup close it.
 * Fixed: Restoring an Other Media item and then Optimizing it again optimizes it Lossless
-* fix generating the WebP <picture> tags when the images are either on a subdomain or on a CDN domain having the same root domain as the main site.
+* fix generating the WebP `<picture>` tags when the images are either on a subdomain or on a CDN domain having the same root domain as the main site.
 
 = EARLIER VERSIONS =
 * please refer to the changelog.txt file inside the plugin archive.

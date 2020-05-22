@@ -20,7 +20,7 @@ class DirectoryModel extends ShortPixelModel
   protected $is_writable = false;
   protected $is_readable = false;
 
-
+  protected $fields = array();
 
   protected $new_directory_permission = 0755;
 
@@ -31,20 +31,16 @@ class DirectoryModel extends ShortPixelModel
   */
   public function __construct($path)
   {
-      /* Check if realpath improves things. We support non-existing paths, which realpath fails on, so only apply on result.
-      */
-      $testpath = realpath($path);
-      if ($testpath)
-        $path = $testpath;
-
       $path = wp_normalize_path($path);
-      if (! is_dir($path)) // path is wrong, *or* simply doesn't exist.
+
+      if (! is_dir($path) ) // path is wrong, *or* simply doesn't exist.
       {
         /* Test for file input.
         * If pathinfo is fed a fullpath, it rips of last entry without setting extension, don't further trust.
         * If it's a file extension is set, then trust.
         */
         $pathinfo = pathinfo($path);
+
         if (isset($pathinfo['extension']))
         {
           $path = $pathinfo['dirname'];
@@ -53,8 +49,22 @@ class DirectoryModel extends ShortPixelModel
           $path = dirname($path);
       }
 
+      if (! is_dir($path))
+      {
+        /* Check if realpath improves things. We support non-existing paths, which realpath fails on, so only apply on result.
+        Moved realpath to check after main pathinfo is set. Reason is that symlinked directories which don't include the WordPress upload dir will start to fail in file_model on processpath ( doesn't see it as a wp path, starts to try relative path). Not sure if realpath should be used anyhow in this model /BS
+        */
+        $testpath = realpath($path);
+        if ($testpath)
+          $path = $testpath;
+      }
+
       $this->path = trailingslashit($path);
-      $this->name = basename($this->path);
+
+      // Basename doesn't work properly on non-latin ( cyrillic, greek etc )  directory names, returning the parent path instead.
+      $dir = new \SplFileInfo($path);
+      //basename($this->path);
+      $this->name = $dir->getFileName();
 
       if (file_exists($this->path))
       {
@@ -290,8 +300,8 @@ class DirectoryModel extends ShortPixelModel
     $dirIt = new \DirectoryIterator($this->path);
     $dirArray = array();
     foreach($dirIt as $fileInfo)
-    {
-       if ($fileInfo->isDir() && $fileInfo->isReadable() && ! $fileInfo->isDot() )
+    { // IsDot must go first here, or there is possiblity to run into openbasedir restrictions.
+       if (! $fileInfo->isDot() && $fileInfo->isDir() && $fileInfo->isReadable()  )
        {
          $dir = new DirectoryModel($fileInfo->getRealPath());
          if ($dir->exists())
@@ -316,6 +326,17 @@ class DirectoryModel extends ShortPixelModel
       return true;
     }
     return false;
+  }
+
+  /** Get this paths parent */
+  public function getParent()
+  {
+      $path = $this->getPath();
+      $parentPath = dirname($path);
+
+      $parentDir = new DirectoryModel($parentPath);
+
+      return $parentDir;
   }
 
 }

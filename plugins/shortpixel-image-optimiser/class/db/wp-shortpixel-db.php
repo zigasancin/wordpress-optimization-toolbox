@@ -11,6 +11,7 @@ class WpShortPixelDb implements ShortPixelDb {
     const QTYPE_INSERT = 1;
     const QTYPE_DELETE = 2;
     const QTYPE_UPDATE = 3;
+    const QTYPE_QUERY = 4;
 
     public function __construct($prefix = null) {
         $this->prefix = $prefix;
@@ -27,21 +28,52 @@ class WpShortPixelDb implements ShortPixelDb {
 
     public static function checkCustomTables() {
         global $wpdb;
-        if(function_exists("is_multisite") && is_multisite()) {
-            $sites = function_exists("get_sites") ? get_sites() : wp_get_sites();
+
+        /*$slug = \wpSPIO()->env()->getRelativePluginSlug();
+        $network_active = \wpSPIO()->env()->is_multisite && function_exists('is_plugin_active_for_network') && is_plugin_active_for_network($slug) ? true : false;
+
+        if($network_active)
+        {
+          if (! function_exists("get_sites") )
+          { exit('get_sites fail'); return null;  }
+
+            $sites = get_sites();
             foreach($sites as $site) {
-                if(!is_array($site)) {
-                    $site = (array)$site;
-                }
-                $prefix = $wpdb->get_blog_prefix($site['blog_id']);
-                $spMetaDao = new ShortPixelCustomMetaDao(new WpShortPixelDb($prefix));
-                $spMetaDao->createUpdateShortPixelTables();
+                  $site_id = $site->blog_id;
+                  $prefix = $wpdb->get_blog_prefix($site_id);
+
+
+                  $spMetaDao = new ShortPixelCustomMetaDao(new WpShortPixelDb($prefix));
+                  $spMetaDao->createUpdateShortPixelTables();
             }
 
-        } else {
-            $spMetaDao = new ShortPixelCustomMetaDao(new WpShortPixelDb());
-            $spMetaDao->createUpdateShortPixelTables();
-        }
+        } else { */
+
+      /*  if (! $spMetaDao->tablesExist())
+        {
+
+        } */
+        /* **** **** **** **** **** **** **** **** **** ***** **** **** **** ****
+        * Check why database is not created like this.
+        */
+        $spMetaDao = new ShortPixelCustomMetaDao(new WpShortPixelDb());
+
+        $spMetaDao->createUpdateShortPixelTables();
+        //}
+    }
+
+    private static function activeOnBlog($site, $slug)
+    {
+      $option = get_blog_option($site, 'active_plugins');
+
+      var_dump($option);
+      foreach($option as $active_slug)
+      {
+         if ($active_slug == $slug)
+          return true;
+      }
+
+      return false;
     }
 
     public function getCharsetCollate() {
@@ -51,7 +83,8 @@ class WpShortPixelDb implements ShortPixelDb {
 
     public function getPrefix() {
         global $wpdb;
-        return $this->prefix ? $this->prefix : $wpdb->prefix;
+      //  return $this->prefix ? $this->prefix : $wpdb->prefix;
+       return $wpdb->prefix;
     }
 
     public function getDbName() {
@@ -64,7 +97,14 @@ class WpShortPixelDb implements ShortPixelDb {
         if($params) {
             $sql = $wpdb->prepare($sql, $params);
         }
-        return $wpdb->get_results($sql);
+        $result = $wpdb->get_results($sql);
+
+        if (count($result) == 0 && strlen($wpdb->last_error) > 0)
+        {
+           $this->handleError(self::QTYPE_QUERY);
+        }
+
+        return $result;
     }
 
     public function insert($table, $params, $format = null) {
@@ -72,7 +112,10 @@ class WpShortPixelDb implements ShortPixelDb {
 
         $num_inserted = $wpdb->insert($table, $params, $format);
         if ($num_inserted === false)
-          $this->handleError(self::QTYPE_INSERT);
+        {
+            $this->handleError(self::QTYPE_INSERT);
+            return false;
+        }
 
         return $wpdb->insert_id;
     }
@@ -92,9 +135,14 @@ class WpShortPixelDb implements ShortPixelDb {
 
     public function handleError($error_type)
     {
-        Log::addError('WP Database error: ' . $wpdb->last_error);
-
         global $wpdb;
+
+        Log::addError('WP Database error: ' . $wpdb->last_error, $wpdb->last_query );
+        self::checkCustomTables(); // on error, test if tables are fine.
+
+        if (strlen($wpdb->last_error) > 0)
+        {    $wpdb->last_error = ''; }
+
         switch($error_type)
         {
             case self::QTYPE_INSERT:

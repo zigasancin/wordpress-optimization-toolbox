@@ -151,7 +151,7 @@ class ShortPixelPng2Jpg {
             }
             //unlink($image);
             $params['file'] = $newPath;
-            WPShortPixel::log("original_file should be PNG: $image");
+            Log::addDebug("Original_file should be PNG: $image");
             $params['original_file'] = $image;
             $params['url'] = $newUrl;
             $params['type'] = 'image/jpeg';
@@ -261,7 +261,7 @@ class ShortPixelPng2Jpg {
         }
         if($this->isExcluded($meta)) { return; }
 
-        WPShortPixel::log("Send to processing: Convert Media PNG to JPG #{$ID} META: " . json_encode($meta));
+        Log::addDebug("Send to processing: Convert Media PNG to JPG #{$ID} META: " . json_encode($meta));
 
         $image = $meta['file']; // This is not a full path!
         $imageFile = $fs->getAttachedFile($ID);
@@ -482,7 +482,7 @@ class ShortPixelPng2Jpg {
                     $timeElapsed = microtime(true) - $startTime;
                     if($timeElapsed > SHORTPIXEL_MAX_EXECUTION_TIME / 2) {
                         //try to add some time or get out if not
-                        if(set_time_limit(SHORTPIXEL_MAX_EXECUTION_TIME)) {
+                        if(\wpSPIO()->env()->is_function_usable('set_time_limit') && set_time_limit(SHORTPIXEL_MAX_EXECUTION_TIME)) {
                             $startTime += SHORTPIXEL_MAX_EXECUTION_TIME / 2;
                         } else {
                             break;
@@ -515,7 +515,7 @@ class ShortPixelPng2Jpg {
      * @param bool|false $serialised
      * @return array|mixed|string
      */
-    static function png2JpgUnserializeReplace( $from = '', $to = '', $data = '', $serialised = false ) {
+    public static function png2JpgUnserializeReplace( $from = '', $to = '', $data = '', $serialised = false ) {
         $replaced = false;
         try {
             if ( false !== is_serialized( $data ) ) {

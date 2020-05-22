@@ -76,7 +76,10 @@ class ApiKeyModel extends ShortPixelModel
       update_option($this->model['verifiedKey']['key'], $this->verifiedKey);
       update_option($this->model['redirectedSettings']['key'], $this->redirectedSettings);
       update_option($this->model['apiKeyTried']['key'], $this->apiKeyTried);
+
+
       Log::addDebug('Update Verified', array($this->apiKey, $this->verifiedKey));
+
   }
 
   /** Resets the last APIkey that was attempted with validation
@@ -183,6 +186,10 @@ class ApiKeyModel extends ShortPixelModel
     $this->key_is_verified = false;
     Log::addDebug('Clearing API Key');
 
+    adminNoticesController::resetAPINotices();
+    adminNoticesController::resetQuotaNotices();
+    adminNoticesController::resetIntegrationNotices();
+
     $this->update();
 
   }
@@ -216,8 +223,9 @@ class ApiKeyModel extends ShortPixelModel
   /** Process some things when key has been added. This is from original wp-short-pixel.php */
   protected function processNewKey($quotaData)
   {
-    $settingsObj = $this->shortPixel->getSettings();
+    $settingsObj = \wpSPIO()->settings();
     $lastStatus = $settingsObj->bulkLastStatus;
+
     if(isset($lastStatus['Status']) && $lastStatus['Status'] == \ShortPixelAPI::STATUS_NO_KEY) {
         $settingsObj->bulkLastStatus = null;
     }
@@ -231,7 +239,7 @@ class ApiKeyModel extends ShortPixelModel
             $notice = __("Great, your API Key is valid! <br>You seem to be running a multisite, please note that API Key can also be configured in wp-config.php like this:",'shortpixel-image-optimiser')
                 . "<BR> <b>define('SHORTPIXEL_API_KEY', '". $this->apiKey ."');</b>";
         else
-            $notice = __('Great, your API Key is valid. Please take a few moments to review the plugin settings below before starting to optimize your images.','shortpixel-image-optimiser');
+            $notice = __('Great, your API Key is valid. Please take a few moments to review the plugin settings before starting to optimize your images.','shortpixel-image-optimiser');
 
         Notice::addSuccess($notice);
     }
@@ -243,6 +251,8 @@ class ApiKeyModel extends ShortPixelModel
                              WP_CONTENT_DIR . '/' . SHORTPIXEL_UPLOADS_NAME );
        Notice::addError($notice);
     }
+
+    adminNoticesController::resetAPINotices();
   }
 
 
@@ -268,8 +278,7 @@ class ApiKeyModel extends ShortPixelModel
   // Does remote Validation of key. In due time should be replaced with something more lean.
   private function remoteValidate($key)
   {
-
-    return $this->shortPixel->getQuotaInformation($key, true, true);
+    return \wpSPIO()->getShortPixel()->getQuotaInformation($key, true, true);
   }
 
   protected function checkRedirect()

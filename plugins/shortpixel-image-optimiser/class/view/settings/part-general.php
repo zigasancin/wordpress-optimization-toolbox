@@ -6,7 +6,6 @@
 
     <div class="wp-shortpixel-options wp-shortpixel-tab-content" style="visibility: hidden">
 
-    <p><?php printf(__('New images uploaded to the Media Library will be optimized automatically.<br/>If you have existing images you would like to optimize, you can use the <a href="%supload.php?page=wp-short-pixel-bulk">Bulk Optimization Tool</a>.','shortpixel-image-optimiser'),get_admin_url());?></p>
     <table class="form-table">
         <tbody>
             <tr>
@@ -120,6 +119,10 @@
                     <p class="settings-info"><?php _e('You <strong>need to have backup active</strong> in order to be able to restore images to originals or to convert from Lossy to Lossless and back.','shortpixel-image-optimiser');?></p>
                 </td>
             </tr>
+            <tr class='view-notice-row backup_warning'>
+              <th scope='row'>&nbsp;</th>
+              <td><div class='view-notice warning'><p><?php _e('Make sure you have a backup in place. When optimizing Shortpixel will overwrite your images without recovery. This may result in lost images.', 'shortpixel-image-optimiser') ?></p></div></td>
+            </tr>
             <tr>
                 <th scope="row"><?php _e('Remove EXIF','shortpixel-image-optimiser');?></th>
                 <td>
@@ -127,6 +130,7 @@
                     <label for="removeExif"><?php _e('Remove the EXIF tag of the image (recommended).','shortpixel-image-optimiser');?></label>
                     <p class="settings-info"> <?php _e('EXIF is a set of various pieces of information that are automatically embedded into the image upon creation. This can include GPS position, camera manufacturer, date and time, etc.
                         Unless you really need that data to be preserved, we recommend removing it as it can lead to <a href="http://blog.shortpixel.com/how-much-smaller-can-be-images-without-exif-icc" target="_blank">better compression rates</a>.','shortpixel-image-optimiser');?></p>
+
                 </td>
             </tr>
             <tr class='exif_warning view-notice-row'>
@@ -135,6 +139,15 @@
                   <div class='view-notice warning'><p><?php printf(__('Warning - Converting from PNG to JPG will %s not %s keep the EXIF-information!'), "<strong>","</strong>"); ?></p></div>
                 </td>
             </tr>
+
+            <?php $imagick = (\wpSPIO()->env()->hasImagick()) ? 1 : 0; ?>
+            <tr class='exif_imagick_warning view-notice-row' data-imagick="<?php echo $imagick ?>">
+                  <th scope="row">&nbsp;</th>
+                  <td>
+                    <div class='view-notice warning'><p><?php printf(__('Warning - Imagick library not detected on server. WordPress will use another library to resize images, which may result in loss of EXIF-information'), "<strong>","</strong>"); ?></p></div>
+                  </td>
+            </tr>
+
             <tr>
               <?php  $resizeDisabled = (! $this->view->data->resizeImages) ? 'disabled' : '';
                  // @todo Inline styling here can be decluttered.

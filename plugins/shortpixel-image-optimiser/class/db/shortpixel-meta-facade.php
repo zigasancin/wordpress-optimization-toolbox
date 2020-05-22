@@ -109,15 +109,15 @@ class ShortPixelMetaFacade {
     //  Update MetaData of Image.
     public function updateMeta($newMeta = null, $replaceThumbs = false) {
 
-        $this->deleteItemCache();
-
         if($newMeta) {
             $this->meta = $newMeta;
         }
         if($this->type == self::CUSTOM_TYPE) {
             $this->spMetaDao->update($this->meta);
             if($this->meta->getExtMetaId()) {
-                ShortPixelNextGenAdapter::updateImageSize($this->meta->getExtMetaId(), $this->meta->getPath());
+                $ng = \ShortPixel\NextGen::getInstance(); // @todo This needs reversing. Nextgen should listen to a filter to be implemented here.
+                if ($ng->has_nextGen()) // prevent fatal error when Nextgen is not activated
+                  $ng->updateImageSize($this->meta->getExtMetaId(), $this->meta->getPath());
             }
         }
         elseif($this->type == ShortPixelMetaFacade::MEDIA_LIBRARY_TYPE) {
@@ -223,6 +223,8 @@ class ShortPixelMetaFacade {
                 }
             } // duplicates loop
         }
+
+        $this->deleteItemCache();
     }
 
 
@@ -528,7 +530,7 @@ class ShortPixelMetaFacade {
       $cacheController = new Cache();
       Log::adDDebug('Removing Item Cache -> ' . $this->getCacheName() );
       $cacheController->deleteItem( $this->getCacheName());
-      $this->getMeta(true);  // reload the meta. 
+      $this->getMeta(true);  // reload the meta.
 
     }
 
@@ -584,7 +586,7 @@ class ShortPixelMetaFacade {
               return array("URLs" => array(), "PATHs" => array(), "sizesMissing" => array());
             }
             $urlList = array(); $filePaths = array();
-            Log::addDebug('attached file path: ' . (string) $fsFile, array( (string) $fsFile->getFileDir() )  );
+            Log::addDebug('attached file path: ' . (string) $fsFile);
             if ($no_exist_check)
               $mainExists = true;
 
@@ -637,8 +639,7 @@ class ShortPixelMetaFacade {
             $sizes = $meta->getThumbs();
 
             //it is NOT a PDF file and thumbs are processable
-            if (  /*  strtolower(substr($path,strrpos($path, ".")+1)) != "pdf"
-                 &&*/ ($processThumbnails || $onlyThumbs)
+            if (  $mainExists &&  ($processThumbnails || $onlyThumbs)
                  && count($sizes))
             {
                 $Tmp = explode("/", SHORTPIXEL_UPLOADS_BASE);
@@ -812,8 +813,18 @@ class ShortPixelMetaFacade {
             Log::addError('Secondary download failed', array($url, $response->get_error_messages(), $response->get_error_codes() ));
           }
         }
-        else { // success
+        else { // success, at least the download.
             $pathFile = $fs->getFile($response['filename']);
+
+            if ($pathFile->exists())
+            {
+                // It seems it can happen that remote_get returns a 0-byte response. That's not valid and should not remain on disk.
+                if ($pathFile->getFileSize() == 0)
+                  $pathFile->delete();
+                else
+                  $path = $pathFile->getFullPath();
+
+            }
         }
 
         $fsUrl = $fs->pathToUrl($pathFile);
@@ -896,6 +907,7 @@ class ShortPixelMetaFacade {
         return array_unique($duplicates);
     }
 
+/*  @todo . Was only in use by now defunct shortpixel-list-table */
     public static function pathToWebPath($path) {
         //$upl = wp_upload_dir();
         //return str_replace($upl["basedir"], $upl["baseurl"], $path);
@@ -909,6 +921,7 @@ class ShortPixelMetaFacade {
         $path = implode('/', $pathParts);
         return self::filenameToRootRelative($path);
     }
+
 
     public static function filenameToRootRelative($path) {
         return self::replaceHomePath($path, "");

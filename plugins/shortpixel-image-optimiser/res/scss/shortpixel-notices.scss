@@ -1,0 +1,104 @@
+
+.shortpixel.notice
+{
+   //padding: 18px;
+   min-height: 75px;
+   padding: 8px;
+   display: flex;
+   align-items: center;
+
+   img
+   {
+    // max-height: 50px;
+   }
+   .notice-dismiss
+   {
+     margin-top: 10px;
+   }
+   span
+   {
+     vertical-align: middle;
+     &.icon {
+       //float: left;
+       margin: 0 25px 0 0;
+      // display: inline-block;
+     }
+   }
+   .details-wrapper // open close mechanic.
+   {
+      margin: 8px 0 4px 0;
+      .detail-content-wrapper
+      {
+        max-height: 0;
+        overflow: hidden;
+
+        .detail-content {
+          opacity: 0;
+          transition: opacity 750ms linear;
+        }
+      }
+      label
+      {
+        opacity: 100;
+        transition: opacity 250ms ease-in;
+        span
+        {
+          cursor: pointer;
+          font-size: 14px;
+          color: #0085ba;
+          font-weight: 500;
+        }
+      }
+      input[name="detailhider"] { display: none; } // hidden checkbox
+      input[name="detailhider"]:checked ~ .detail-content-wrapper
+      {
+          max-height: none;
+      }
+      input[name="detailhider"]:checked ~ .detail-content-wrapper .detail-content
+      {
+          opacity: 100;
+
+      }
+      input[name="detailhider"]:checked ~ .show-details
+      {
+         opacity: 0;
+        transition: opacity 50ms ease-out;
+      }
+      input[name='detailhider']:not(:checked) ~ .hide-details
+      {
+         opacity: 0;
+         transition: opacity 50ms ease-out;
+      }
+   }
+}
+
+// compat list if.
+.shortpixel.notice
+{
+  .sp-conflict-plugins {
+      display: table;
+      border-spacing: 10px;
+      border-collapse: separate;
+      li {
+          display: table-row;
+      }
+      li > * {
+          display: table-cell;
+      }
+
+  }
+
+  .content button
+  { // gets overwritten in NGG.
+    background-color: #007cba;
+  }
+
+  li.sp-conflict-plugins-list {
+      line-height: 28px;
+      list-style: disc;
+      margin-left: 80px;
+  }
+  li.sp-conflict-plugins-list a.button {
+      margin-left: 10px;
+  }
+}

@@ -5,21 +5,16 @@ use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
 // Future contoller for the edit media metabox view.
 class editMediaController extends ShortPixelController
 {
-      //$this->model = new
       protected $template = 'view-edit-media';
       protected $model = 'image';
 
-      private $post_id;
-      private $actions_allowed;
-
-      private $legacyViewObj;
+      protected $post_id;
+      protected $legacyViewObj;
 
       public function __construct()
       {
-
-        $this->loadModel($this->model);
-      //  $this->loadModel('image');
         parent::__construct();
+        $this->loadModel($this->model);
       }
 
       // This data should be rendered by Image Model in the future.
@@ -39,7 +34,7 @@ class editMediaController extends ShortPixelController
           $this->view->id = $post_id;
           $this->view->status_message = null;
 
-          $this->actions_allowed = $this->checkUserPrivileges();
+        //  $this->actions_allowed = $this->checkUserPrivileges();
 
           $this->view->status_message = $this->getStatusMessage();
           $this->view->actions = $this->getActions();
@@ -85,7 +80,7 @@ class editMediaController extends ShortPixelController
       protected function getActions()
       {
           $actions = array();
-          if (! $this->actions_allowed)
+          if (! $this->userIsAllowed)
             return $actions;
 
           switch($this->data['status'])
@@ -257,7 +252,7 @@ class editMediaController extends ShortPixelController
              $debugInfo[] = array('',  __('Thumbnails were not generated', 'shortpixel-image-optimiser'));
           }
           else
-          {   
+          {
             foreach($meta['sizes'] as $size => $data)
             {
               $display_size = ucfirst(str_replace("_", " ", $size));
@@ -271,7 +266,6 @@ class editMediaController extends ShortPixelController
 
       protected function renderLegacyCell()
       {
-
         $data = $this->data;
 
         if ( $data['status'] != 'pdfOptimized' && $data['status'] != 'imgOptimized')
@@ -279,14 +273,6 @@ class editMediaController extends ShortPixelController
 
         $this->legacyViewObj->renderListCell($this->post_id, $data['status'], $data['showActions'], $data['thumbsToOptimize'],
                 $data['backup'], $data['type'], $data['invType'], '');
-      }
-
-      private function checkUserPrivileges()
-      {
-        if ((current_user_can( 'manage_options' ) || current_user_can( 'upload_files' ) || current_user_can( 'edit_posts' )))
-          return true;
-
-        return false;
       }
 
 } // controller .

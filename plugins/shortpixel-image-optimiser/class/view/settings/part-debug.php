@@ -1,7 +1,6 @@
 <?php
 namespace ShortPixel;
-
-$path = '/var/www/shortpixel/wp-content/uploads/2019/09/';
+use ShortPixel\Notices\NoticeController as Notices;
 
 ?>
 

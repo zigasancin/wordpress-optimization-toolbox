@@ -13,6 +13,7 @@ class EnvironmentModel extends ShortPixelModel
     public $is_apache;
     public $is_gd_installed;
     public $is_curl_installed;
+    private $disabled_functions = array();
 
     // MultiSite
     public $is_multisite;
@@ -29,6 +30,7 @@ class EnvironmentModel extends ShortPixelModel
     private $screen_is_set = false;
     public $is_screen_to_use = false; // where shortpixel optimizer loads
     public $is_our_screen = false; // where shortpixel hooks in more complicated functions.
+    public $is_bulk_page = false; // Shortpixel bulk screen.
 
     // Debug flag
     public $is_debug = false;
@@ -40,8 +42,8 @@ class EnvironmentModel extends ShortPixelModel
   {
      $this->setServer();
      $this->setWordPress();
-     $this->setIntegrations();
-     $this->setScreen();  // This might not be set on construct time!
+     add_action('plugins_loaded', array($this, 'setIntegrations') ); // not set on construct.
+     add_action('current_screen', array($this, 'setScreen') );  // Not set on construct
   }
 
   public static function getInstance()
@@ -49,10 +51,44 @@ class EnvironmentModel extends ShortPixelModel
     if (is_null(self::$instance))
         self::$instance = new EnvironmentModel();
 
-    if (! self::$instance->screen_is_set)
-      self::$instance->setScreen();
+    /*if (! self::$instance->screen_is_set)
+      self::$instance->setScreen(); */
 
     return self::$instance;
+  }
+
+  /** Check ENV is a specific function is allowed. Use this with functions that might be turned off on configurations
+  * @param $function String  The name of the function being tested
+  * Note: In future this function can be extended with other function edge cases.
+  */
+  public function is_function_usable($function)
+  {
+    if (count($this->disabled_functions) == 0)
+    {
+      $disabled = ini_get('disable_functions');
+      $this->disabled_functions = explode($disabled, ',');
+    }
+
+    if (isset($this->disabled_functions[$function]))
+      return false;
+
+    if (function_exists($function))
+      return true;
+
+    return false;
+
+  }
+
+  /* https://github.com/WordPress/WordPress/blob/master/wp-includes/class-wp-image-editor-imagick.php */
+  public function hasImagick()
+  {
+    $editor = wp_get_image_editor(\wpSPIO()->plugin_path('res/img/test.jpg'));
+    $className = get_class($editor);
+
+    if ($className == 'WP_Image_Editor_Imagick')
+      return true;
+    else
+      return false;
   }
 
   private function setServer()
@@ -91,16 +127,8 @@ class EnvironmentModel extends ShortPixelModel
 
   }
 
-  public function setScreen()
+  public function setScreen($screen)
   {
-    if (! function_exists('get_current_screen')) // way too early.
-      return false;
-
-    $screen = get_current_screen();
-
-    if (is_null($screen)) // too early
-      return false;
-
     // WordPress pages where we'll be active on.
     // https://codex.wordpress.org/Plugin_API/Admin_Screen_Reference
     $use_screens = array(
@@ -136,14 +164,33 @@ class EnvironmentModel extends ShortPixelModel
     {
        $this->is_screen_to_use = true;
        $this->is_our_screen = true;
+
+       if ($screen->id == 'media_page_wp-short-pixel-bulk')
+        $this->is_bulk_page = true;
     }
 
     $this->screen_is_set = true;
   }
 
-  private function setIntegrations()
+  public function setIntegrations()
   {
-    $this->has_nextgen = \ShortPixelNextGenAdapter::hasNextGen();
+    $ng = NextGen::getInstance();
+    $this->has_nextgen = $ng->has_nextgen();
+
+  }
+
+  public function getRelativePluginSlug()
+  {
+      $dir = SHORTPIXEL_PLUGIN_DIR;
+      $file = SHORTPIXEL_PLUGIN_FILE;
+
+      $fs = \wpSPIO()->filesystem();
+
+      $plugins_dir = $fs->getDirectory($dir)->getParent();
+
+      $slug = str_replace($plugins_dir->getPath(), '', $file);
+
+      return $slug;
 
   }
 }

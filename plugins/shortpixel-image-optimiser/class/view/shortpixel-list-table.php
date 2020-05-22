@@ -1,4 +1,5 @@
 <?php
+return; // not in use
 use ShortPixel\Notices\NoticeController as Notices;
 
 
@@ -86,29 +87,6 @@ class ShortPixelListTable extends WP_List_Table {
                 );
 
 
-                /*'optimize' => sprintf( '<a href="?page=%s&action=%s&image=%s&_wpnonce=%s&noheader=true">%s</a>',
-                        esc_attr( $_REQUEST['page'] ), 'optimize', absint( $item->id ), wp_create_nonce( 'sp_optimize_image' ),
-                        __('Optimize','shortpixel-image-optimiser')), */
-                /*'retry' => sprintf( '<a href="?page=%s&action=%s&image=%s&_wpnonce=%s&noheader=true">%s</a>',
-                        esc_attr( $_REQUEST['page'] ), 'optimize', absint( $item->id ), wp_create_nonce( 'sp_optimize_image' ),
-                        __('Retry','shortpixel-image-optimiser')), */
-
-                /*  'redolossless' => sprintf( '<a href="?page=%s&action=%s&type=%s&image=%s&_wpnonce=%s&noheader=true">%s</a>',
-                        esc_attr( $_REQUEST['page'] ), 'redo', 'lossless', absint( $item->id ), wp_create_nonce( 'sp_redo_image' ),
-                        __('Re-optimize lossless','shortpixel-image-optimiser')), */
-                /*  'redolossy' => sprintf( '<a href="?page=%s&action=%s&type=%s&image=%s&_wpnonce=%s&noheader=true">%s</a>',
-                        esc_attr( $_REQUEST['page'] ), 'redo', 'lossy', absint( $item->id ), wp_create_nonce( 'sp_redo_image' ),
-                        __('Re-optimize lossy','shortpixel-image-optimiser')), */
-                /*'redoglossy' => sprintf( '<a href="?page=%s&action=%s&type=%s&image=%s&_wpnonce=%s&noheader=true">%s</a>',
-                        esc_attr( $_REQUEST['page'] ), 'redo', 'glossy', absint( $item->id ), wp_create_nonce( 'sp_redo_image' ),
-                        __('Re-optimize glossy','shortpixel-image-optimiser')), */
-                /*'quota' => sprintf( '<a href="?page=%s&action=%s&image=%s&_wpnonce=%s&noheader=true">%s</a>',
-                            esc_attr( $_REQUEST['page'] ), 'quota', absint( $item->id ), wp_create_nonce( 'sp_check_quota' ),
-                            __('Check quota','shortpixel-image-optimiser')), */
-                /*'restore' => sprintf( '<a href="?page=%s&action=%s&image=%s&_wpnonce=%s&noheader=true">%s</a>',
-                              esc_attr( $_REQUEST['page'] ), 'restore', absint( $item->id ), wp_create_nonce( 'sp_restore_image' ),
-                            __('Restore','shortpixel-image-optimiser')), */
-
                 $has_backup = $this->ctrl->getBackupFolderAny($item->folder, array());
 
                 $settings = $this->ctrl->getSettings();
@@ -134,7 +112,7 @@ class ShortPixelListTable extends WP_List_Table {
                     }
                     //$actionsEnabled['redo'.($item->compression_type == 1 ? "lossless" : "lossy")] = true;
                 } elseif($item->status == ShortPixelMeta::FILE_STATUS_RESTORED || $item->status < ShortPixelMeta::FILE_STATUS_UNPROCESSED) {
-                    $actionsEnabled['retry'] = true;
+                    $actionsEnabled['retry'] = true; // This one can never hit on Status restored
                 }
                 $actionsEnabled['view'] = true;
                 $title = $title . $this->row_actions($actions, false, $item->id, $actionsEnabled );
@@ -176,7 +154,7 @@ class ShortPixelListTable extends WP_List_Table {
 
                 return  __($item->compression_type == 2 ? 'Glossy' : ($item->compression_type == 1 ? 'Lossy' : 'Lossless'),'shortpixel-image-optimiser')
                      . ($item->keep_exif == 0 ? "": ", " . __('Keep EXIF','shortpixel-image-optimiser'))
-                     . ($item->cmyk2rgb == 1 ? "": ", " . __('Preserve CMYK','shortpixel-image-optimiser'));
+                     . ($item->cmyk2rgb == 1 || is_null($item->cmyk2rgb) ? "": ", " . __('Preserve CMYK','shortpixel-image-optimiser'));
             case 'media_type':
                 return $item->$column_name;
             case 'date':
@@ -199,7 +177,7 @@ class ShortPixelListTable extends WP_List_Table {
     }
 
     public function no_items() {
-        echo(__('No images avaliable. Go to <a href="options-general.php?page=wp-shortpixel-settings&part=adv-settings">Advanced Settings</a> to configure additional folders to be optimized.','shortpixel-image-optimiser'));
+        echo(__('No images available. Go to <a href="options-general.php?page=wp-shortpixel-settings&part=adv-settings">Advanced Settings</a> to configure additional folders to be optimized.','shortpixel-image-optimiser'));
     }
 
     /**
@@ -282,7 +260,7 @@ class ShortPixelListTable extends WP_List_Table {
         switch($this->current_action()) {
             case 'optimize':
                 if (!wp_verify_nonce($nonce, 'sp_optimize_image')) {
-                    die('Error.');
+                    $this->badNonceDie();
                 } else {
                     $this->action_optimize_image(absint($_GET['image']));
                     wp_redirect($redirect_url);
@@ -291,7 +269,7 @@ class ShortPixelListTable extends WP_List_Table {
                 break;
             case 'restore':
                 if (!wp_verify_nonce($nonce, 'sp_restore_image')) {
-                    die('Error.');
+                    $this->badNonceDie();
                 } else {
                     if($this->action_restore_image(absint($_GET['image'])))
                     {
@@ -303,7 +281,7 @@ class ShortPixelListTable extends WP_List_Table {
                 break;
             case 'redo':
                 if (!wp_verify_nonce($nonce, 'sp_redo_image')) {
-                    die('Error.');
+                    $this->badNonceDie();
                 } else {
                     $this->action_redo_image(absint($_GET['image']), sanitize_text_field($_GET['type']));
                     wp_redirect($redirect_url);
@@ -326,6 +304,11 @@ class ShortPixelListTable extends WP_List_Table {
             wp_redirect(esc_url(add_query_arg()));
             exit;
         }
+    }
+
+    protected function badNonceDie()
+    {
+        die('Error. Nonce not verified. Do not call this function directly');
     }
 
     protected function row_actions($actions, $always_visible = false, $id = false, $actionsEnabled = false ) {
