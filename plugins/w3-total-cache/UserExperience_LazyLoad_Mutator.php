@@ -1,9 +1,7 @@
 <?php
 namespace W3TC;
 
-
-
-class LazyLoad_Mutator {
+class UserExperience_LazyLoad_Mutator {
 	private $config;
 	private $modified = false;
 	private $excludes;
@@ -22,7 +20,14 @@ class LazyLoad_Mutator {
 		$this->excludes = apply_filters( 'w3tc_lazyload_excludes',
 			$this->config->get_array( 'lazyload.exclude' ) );
 
-		$unmutable = new LazyLoad_Mutator_Unmutable();
+		$r = apply_filters( 'w3tc_lazyload_mutator_before', array(
+			'buffer' => $buffer,
+			'modified' => $this->modified
+		) );
+		$buffer = $r['buffer'];
+		$this->modified = $r['modified'];
+
+		$unmutable = new UserExperience_LazyLoad_Mutator_Unmutable();
 		$buffer = $unmutable->remove_unmutable( $buffer );
 
 		if ( $this->config->get_boolean( 'lazyload.process_img' ) ) {
@@ -63,7 +68,7 @@ class LazyLoad_Mutator {
 			return $content;
 		}
 
-		$m = new LazyLoad_Mutator_Picture( $this );
+		$m = new UserExperience_LazyLoad_Mutator_Picture( $this );
 		return $m->run( $content );
 	}
 

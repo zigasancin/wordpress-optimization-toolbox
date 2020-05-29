@@ -142,11 +142,11 @@ class Minify_HTML {
 			.'|canvas|caption|center|col(?:group)?|dd|dir|div|dl|dt|fieldset|figcaption|figure|footer|form'
 			.'|frame(?:set)?|h[1-6]|head|header|hgroup|hr|html|legend|li|link|main|map|menu|meta|nav'
 			.'|ol|opt(?:group|ion)|output|p|param|section|t(?:able|body|head|d|h||r|foot|itle)'
-			.'|ul|video)\\b[^>]*>)/iu', '$1', $this->_html);
+			.'|ul|video)\\b[^>]*>)/i', '$1', $this->_html);
 
 		// remove whitespaces outside of all elements
 		$this->_html = preg_replace(
-			'/>((\\s)(?:\\s*))?([^<]+?)((\\s)(?:\\s*))?</u'
+			'/>((\\s)(?:\\s*))?([^<]+?)((\\s)(?:\\s*))?</'
 			,'>$2$3$5<'
 			,$this->_html);
 
@@ -158,7 +158,7 @@ class Minify_HTML {
 
 		// remove trailing slash from void elements
 		$this->_html = preg_replace(
-			'~<(area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)([^>]*?)\\s*[/]?>~i'
+			'~<(area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)(([^\'">]|\"[^\"]*\"|\'[^\']*\'|)*?)\\s*[/]?>~i'
 			,'<$1$2>'
 			,$this->_html);
 
