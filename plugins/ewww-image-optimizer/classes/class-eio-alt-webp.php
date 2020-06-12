@@ -24,6 +24,14 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	protected $user_exclusions = array();
 
 	/**
+	 * A list of user-defined (element-type) exclusions, populated by validate_user_exclusions().
+	 *
+	 * @access protected
+	 * @var array $user_exclusions
+	 */
+	protected $user_element_exclusions = array();
+
+	/**
 	 * The Alt WebP inline script contents. Current length 11704.
 	 *
 	 * @access private
@@ -66,6 +74,7 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 		if ( ewww_image_optimizer_ce_webp_enabled() ) {
 			return false;
 		}
+		parent::__construct();
 		// Start an output buffer before any output starts.
 		/* add_action( 'template_redirect', array( $this, 'buffer_start' ), 0 ); */
 		add_filter( 'ewww_image_optimizer_filter_page_output', array( $this, 'filter_page_output' ), 20 );
@@ -75,10 +84,6 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 		// Load up the minified script so we can inline it.
 		$this->inline_script = file_get_contents( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'includes/load_webp.min.js' );
 
-		$this->home_url = trailingslashit( get_site_url() );
-		ewwwio_debug_message( "home url: $this->home_url" );
-		$this->relative_home_url = preg_replace( '/https?:/', '', $this->home_url );
-		ewwwio_debug_message( "relative home url: $this->relative_home_url" );
 		$upload_dir        = wp_get_upload_dir();
 		$this->content_url = trailingslashit( ! empty( $upload_dir['baseurl'] ) ? $upload_dir['baseurl'] : content_url( 'uploads' ) );
 		ewwwio_debug_message( "content_url: $this->content_url" );
@@ -106,11 +111,11 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 				$this->s3_active    = $s3_domain;
 				if ( $as3cf->get_setting( 'enable-object-prefix' ) ) {
 					$this->s3_object_prefix = $as3cf->get_setting( 'object-prefix' );
-					ewwwio_debug_message( $as3cf->get_setting( 'object-prefix' ) );
+					$this->debug_message( $as3cf->get_setting( 'object-prefix' ) );
 				}
 				if ( $as3cf->get_setting( 'object-versioning' ) ) {
 					$this->s3_object_version = true;
-					ewwwio_debug_message( 'object versioning enabled' );
+					$this->debug_message( 'object versioning enabled' );
 				}
 			}
 		}
@@ -121,14 +126,14 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 				$this->webp_domains[] = $webp_domain;
 			}
 		}
-		ewwwio_debug_message( 'checking any images matching these patterns for webp: ' . implode( ',', $this->webp_paths ) );
-		ewwwio_debug_message( 'rewriting any images matching these domains to webp: ' . implode( ',', $this->webp_domains ) );
-		if ( class_exists( 'ExactDN' ) && ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) ) {
+		$this->debug_message( 'checking any images matching these patterns for webp: ' . implode( ',', $this->webp_paths ) );
+		$this->debug_message( 'rewriting any images matching these domains to webp: ' . implode( ',', $this->webp_domains ) );
+		if ( class_exists( 'ExactDN' ) && $this->get_option( 'ewww_image_optimizer_exactdn' ) ) {
 			global $exactdn;
 			$this->exactdn_domain = $exactdn->get_exactdn_domain();
 			if ( $this->exactdn_domain ) {
 				$this->parsing_exactdn = true;
-				ewwwio_debug_message( 'parsing an exactdn page' );
+				$this->debug_message( 'parsing an exactdn page' );
 			}
 		}
 
@@ -346,59 +351,29 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	function filter_page_output( $buffer ) {
 		ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
 		// If any of this is true, don't filter the page.
-		$uri = $_SERVER['REQUEST_URI'];
+		$uri = add_query_arg( null, null );
+		$this->debug_message( "request uri is $uri" );
 		if (
 			empty( $buffer ) ||
 			is_admin() ||
-			! empty( $_GET['cornerstone'] ) ||
+			strpos( $uri, 'cornerstone=' ) !== false ||
 			strpos( $uri, 'cornerstone-endpoint' ) !== false ||
 			did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ||
-			! empty( $_GET['et_fb'] ) ||
-			! empty( $_GET['tatsu'] ) ||
-			( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === $_POST['action'] ) ||
+			'/print/' === substr( $uri, -7 ) ||
+			strpos( $uri, 'elementor-preview=' ) !== false ||
+			strpos( $uri, 'et_fb=' ) !== false ||
+			strpos( $uri, 'tatsu=' ) !== false ||
+			( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === sanitize_text_field( wp_unslash( $_POST['action'] ) ) ) || // phpcs:ignore WordPress.Security.NonceVerification
+			is_embed() ||
 			is_feed() ||
 			is_preview() ||
 			( defined( 'REST_REQUEST' ) && REST_REQUEST ) ||
 			preg_match( '/^<\?xml/', $buffer ) ||
 			strpos( $buffer, 'amp-boilerplate' ) ||
+			$this->is_amp() ||
 			ewww_image_optimizer_ce_webp_enabled()
 		) {
-			if ( empty( $buffer ) ) {
-				ewwwio_debug_message( 'empty buffer' );
-			}
-			if ( is_admin() ) {
-				ewwwio_debug_message( 'is_admin' );
-			}
-			if ( ! empty( $_GET['cornerstone'] ) || strpos( $uri, 'cornerstone-endpoint' ) !== false ) {
-				ewwwio_debug_message( 'cornerstone editor' );
-			}
-			if ( did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ) {
-				ewwwio_debug_message( 'cornerstone app/preview' );
-			}
-			if ( ! empty( $_GET['et_fb'] ) ) {
-				ewwwio_debug_message( 'et_fb' );
-			}
-			if ( ! empty( $_GET['tatsu'] ) || ( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === $_POST['action'] ) ) {
-				ewwwio_debug_message( 'tatsu' );
-			}
-			if ( is_feed() ) {
-				ewwwio_debug_message( 'is_feed' );
-			}
-			if ( is_preview() ) {
-				ewwwio_debug_message( 'is_preview' );
-			}
-			if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-				ewwwio_debug_message( 'rest request' );
-			}
-			if ( preg_match( '/^<\?xml/', $buffer ) ) {
-				ewwwio_debug_message( 'not html, xml tag found' );
-			}
-			if ( strpos( $buffer, 'amp-boilerplate' ) ) {
-				ewwwio_debug_message( 'AMP page processing' );
-			}
-			if ( ewww_image_optimizer_ce_webp_enabled() ) {
-				ewwwio_debug_message( 'Cache Enabler WebP enabled' );
-			}
+			ewwwio_debug_message( 'JS WebP disabled' );
 			return $buffer;
 		}
 
@@ -460,8 +435,10 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 					}
 					$nscript = $this->attr_copy( $image, $nscript );
 					$this->set_attribute( $nscript, 'class', 'ewww_webp' );
-					ewwwio_debug_message( "going to swap\n$image\nwith\n$nscript" . $image . '</noscript>' );
-					$buffer = str_replace( $image, $nscript . $image . '</noscript>', $buffer );
+					$ns_img = $image;
+					$this->set_attribute( $ns_img, 'data-eio', 'j', true );
+					ewwwio_debug_message( "going to swap\n$image\nwith\n$nscript" . $ns_img . '</noscript>' );
+					$buffer = str_replace( $image, $nscript . $ns_img . '</noscript>', $buffer );
 				} elseif ( ! empty( $file ) && strpos( $image, 'data-lazy-src=' ) ) {
 					// BJ Lazy Load & WP Rocket.
 					$new_image = $image;
@@ -858,7 +835,7 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 			if ( $webp_domain === $this->home_domain ) {
 				continue;
 			}
-			ewwwio_debug_message( "looking for $webp_domain in $url" );
+			ewwwio_debug_message( "looking for domain $webp_domain in $url" );
 			if (
 				! empty( $this->s3_active ) &&
 				false !== strpos( $url, $this->s3_active ) &&
@@ -879,10 +856,10 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 			}
 		}
 		foreach ( $this->webp_paths as $webp_path ) {
-			if ( false !== strpos( $webp_path, $this->home_domain ) || false === strpos( $webp_path, 'http' ) ) {
+			if ( false === strpos( $webp_path, 'http' ) ) {
 				continue;
 			}
-			ewwwio_debug_message( "looking for $webp_path in $url" );
+			ewwwio_debug_message( "looking for path $webp_path in $url" );
 			if (
 				! empty( $this->s3_active ) &&
 				false !== strpos( $url, $this->s3_active ) &&
@@ -939,26 +916,13 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	/**
 	 * Converts a URL to a file-system path and checks if the resulting path exists.
 	 *
-	 * @param string $image The image URL to mangle.
+	 * @param string $url The URL to mangle.
+	 * @param string $extension An optional extension to append during is_file().
 	 * @return bool True if a local file exists correlating to the URL, false otherwise.
 	 */
-	function url_to_path_exists( $image ) {
-		ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
-		$image = $this->maybe_strip_object_version( $image );
-		if ( 0 === strpos( $image, $this->relative_home_url ) ) {
-			$imagepath = str_replace( $this->relative_home_url, ABSPATH, $image );
-		} elseif ( 0 === strpos( $image, $this->home_url ) ) {
-			$imagepath = str_replace( $this->home_url, ABSPATH, $image );
-		} else {
-			ewwwio_debug_message( 'not a valid local image' );
-			return false;
-		}
-		$path_parts = explode( '?', $imagepath );
-		if ( ewwwio_is_file( $path_parts[0] . '.webp' ) || ewwwio_is_file( $imagepath . '.webp' ) ) {
-			ewwwio_debug_message( 'local .webp image found' );
-			return true;
-		}
-		return false;
+	function url_to_path_exists( $url, $extension = '' ) {
+		$url = $this->maybe_strip_object_version( $url );
+		return parent::url_to_path_exists( $url, '.webp' );
 	}
 
 	/**
@@ -1107,7 +1071,7 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	 * Load full webp script when SCRIPT_DEBUG is enabled.
 	 */
 	function debug_script() {
-		if ( ewww_image_optimizer_is_amp() ) {
+		if ( $this->is_amp() ) {
 			return;
 		}
 		if ( ! ewww_image_optimizer_ce_webp_enabled() ) {
@@ -1119,7 +1083,7 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	 * Load minified webp script when EWWW_IMAGE_OPTIMIZER_WEBP_EXTERNAL_SCRIPT is set.
 	 */
 	function min_external_script() {
-		if ( ewww_image_optimizer_is_amp() ) {
+		if ( $this->is_amp() ) {
 			return;
 		}
 		if ( ! ewww_image_optimizer_ce_webp_enabled() ) {
@@ -1134,11 +1098,11 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 		if ( defined( 'EWWW_IMAGE_OPTIMIZER_NO_JS' ) && EWWW_IMAGE_OPTIMIZER_NO_JS ) {
 			return;
 		}
-		if ( ewww_image_optimizer_is_amp() ) {
+		if ( $this->is_amp() ) {
 			return;
 		}
 		ewwwio_debug_message( 'loading webp script without wp_add_inline_script' );
-		echo '<script type="text/javascript">' . $this->inline_script . '</script>';
+		echo '<script data-cfasync="false" type="text/javascript">' . $this->inline_script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 }
 

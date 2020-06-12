@@ -80,6 +80,7 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			add_action( 'wp_head', array( $this, 'no_js_css' ) );
 
 			add_filter( $this->prefix . 'filter_page_output', array( $this, 'filter_page_output' ), 15 );
+			add_filter( 'vc_get_vc_grid_data_response', array( $this, 'filter_page_output' ) );
 
 			if ( class_exists( 'ExactDN' ) && $this->get_option( $this->prefix . 'exactdn' ) ) {
 				global $exactdn;
@@ -158,48 +159,58 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 				return $buffer;
 			}
 			// Don't lazy load in these cases...
-			$uri = $_SERVER['REQUEST_URI'];
+			$uri = add_query_arg( null, null );
+			$this->debug_message( "request uri is $uri" );
 			if (
 				empty( $buffer ) ||
-				! empty( $_GET['cornerstone'] ) ||
+				strpos( $uri, 'cornerstone=' ) !== false ||
 				strpos( $uri, 'cornerstone-endpoint' ) !== false ||
-				! empty( $_GET['ct_builder'] ) ||
+				strpos( $uri, 'ct_builder=' ) !== false ||
 				did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ||
-				! empty( $_GET['elementor-preview'] ) ||
-				! empty( $_GET['et_fb'] ) ||
-				! empty( $_GET['tatsu'] ) ||
-				( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === $_POST['action'] ) ||
+				'/print/' === substr( $uri, -7 ) ||
+				strpos( $uri, 'elementor-preview=' ) !== false ||
+				strpos( $uri, 'et_fb=' ) !== false ||
+				strpos( $uri, 'tatsu=' ) !== false ||
+				( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === sanitize_text_field( wp_unslash( $_POST['action'] ) ) ) || // phpcs:ignore WordPress.Security.NonceVerification
 				! apply_filters( 'eio_do_lazyload', true ) ||
+				is_embed() ||
 				is_feed() ||
 				is_preview() ||
 				( defined( 'REST_REQUEST' ) && REST_REQUEST ) ||
 				wp_script_is( 'twentytwenty-twentytwenty', 'enqueued' ) ||
 				preg_match( '/^<\?xml/', $buffer ) ||
-				strpos( $buffer, 'amp-boilerplate' )
+				strpos( $buffer, 'amp-boilerplate' ) ||
+				$this->is_amp()
 			) {
 				if ( empty( $buffer ) ) {
 					$this->debug_message( 'empty buffer' );
 				}
-				if ( ! empty( $_GET['cornerstone'] ) || strpos( $uri, 'cornerstone-endpoint' ) !== false ) {
+				if ( strpos( $uri, 'cornerstone=' ) !== false || strpos( $uri, 'cornerstone-endpoint' ) !== false ) {
 					$this->debug_message( 'cornerstone editor' );
 				}
-				if ( ! empty( $_GET['ct_builder'] ) ) {
+				if ( strpos( $uri, 'ct_builder=' ) !== false ) {
 					$this->debug_message( 'oxygen builder' );
 				}
 				if ( did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ) {
 					$this->debug_message( 'cornerstone app/preview' );
 				}
-				if ( ! empty( $_GET['elementor-preview'] ) ) {
+				if ( '/print/' === substr( $uri, -7 ) ) {
+					$this->debug_message( 'print page template' );
+				}
+				if ( strpos( $uri, 'elementor-preview=' ) !== false ) {
 					$this->debug_message( 'elementor preview' );
 				}
-				if ( ! empty( $_GET['et_fb'] ) ) {
+				if ( strpos( $uri, 'et_fb=' ) !== false ) {
 					$this->debug_message( 'et_fb' );
 				}
-				if ( ! empty( $_GET['tatsu'] ) || ( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === $_POST['action'] ) ) {
+				if ( strpos( $uri, 'tatsu=' ) !== false || ( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === $_POST['action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 					$this->debug_message( 'tatsu' );
 				}
 				if ( ! apply_filters( 'eio_do_lazyload', true ) ) {
 					$this->debug_message( 'do_lazyload short-circuit' );
+				}
+				if ( is_embed() ) {
+					$this->debug_message( 'is_embed' );
 				}
 				if ( is_feed() ) {
 					$this->debug_message( 'is_feed' );
@@ -218,6 +229,9 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 				}
 				if ( strpos( $buffer, 'amp-boilerplate' ) ) {
 					$this->debug_message( 'AMP page processing' );
+				}
+				if ( $this->is_amp() ) {
+					ewwwio_debug_message( 'AMP page processing (is_amp)' );
 				}
 				return $buffer;
 			}
@@ -242,8 +256,10 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 						$this->debug_message( 'found a valid image tag' );
 						$this->debug_message( "original image tag: $image" );
 						$orig_img = $image;
+						$ns_img   = $image;
 						$image    = $this->parse_img_tag( $image, $file );
-						$noscript = '<noscript>' . $orig_img . '</noscript>';
+						$this->set_attribute( $ns_img, 'data-eio', 'l', true );
+						$noscript = '<noscript>' . $ns_img . '</noscript>';
 						$buffer   = str_replace( $orig_img, $image . $noscript, $buffer );
 					}
 				} // End foreach().
@@ -295,8 +311,10 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 								if ( $this->validate_image_tag( $image ) ) {
 									$this->debug_message( 'found a valid image tag (inside picture)' );
 									$orig_img = $image;
+									$ns_img   = $image;
 									$image    = $this->parse_img_tag( $image, $file );
-									$noscript = '<noscript>' . $orig_img . '</noscript>';
+									$this->set_attribute( $ns_img, 'data-eio', 'l', true );
+									$noscript = '<noscript>' . $ns_img . '</noscript>';
 									$picture  = str_replace( $orig_img, $image . $noscript, $picture );
 									$this->debug_message( 'lazified sources for picture element' );
 									$buffer = str_replace( $pictures[ $index ], $picture, $buffer );
@@ -344,6 +362,30 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			$this->set_attribute( $image, 'data-src', $file, true );
 			$srcset = $this->get_attribute( $image, 'srcset' );
 
+			$disable_native_lazy = false;
+			// Ignore native lazy loading images.
+			$loading_attr = $this->get_attribute( $image, 'loading' );
+			if ( $loading_attr && in_array( trim( $loading_attr ), array( 'auto', 'eager', 'lazy' ), true ) ) {
+				$disable_native_lazy = true;
+			}
+			if (
+				( ! defined( 'EWWWIO_DISABLE_NATIVE_LAZY' ) || ! EWWWIO_DISABLE_NATIVE_LAZY ) &&
+				( ! defined( 'EASYIO_DISABLE_NATIVE_LAZY' ) || ! EASYIO_DISABLE_NATIVE_LAZY ) &&
+				! $disable_native_lazy
+			) {
+				$this->set_attribute( $image, 'loading', 'lazy' );
+			}
+
+			if (
+				! empty( $_POST['action'] ) && // phpcs:ignore WordPress.Security.NonceVerification
+				! empty( $_POST['vc_action'] ) && // phpcs:ignore WordPress.Security.NonceVerification
+				! empty( $_POST['tag'] ) && // phpcs:ignore WordPress.Security.NonceVerification
+				'vc_get_vc_grid_data' === $_POST['action'] && // phpcs:ignore WordPress.Security.NonceVerification
+				'vc_get_vc_grid_data' === $_POST['vc_action'] && // phpcs:ignore WordPress.Security.NonceVerification
+				'vc_media_grid' === $_POST['tag'] // phpcs:ignore WordPress.Security.NonceVerification
+			) {
+				return $image;
+			}
 			$width_attr      = $this->get_attribute( $image, 'width' );
 			$height_attr     = $this->get_attribute( $image, 'height' );
 			$placeholder_src = $this->placeholder_src;
@@ -422,20 +464,7 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			} else {
 				$this->set_attribute( $image, 'src', $placeholder_src, true );
 			}
-			$disable_native_lazy = false;
-			// Ignore native lazy loading images.
-			$loading_attr = $this->get_attribute( $image, 'loading' );
-			if ( $loading_attr && in_array( trim( $loading_attr ), array( 'auto', 'eager', 'lazy' ), true ) ) {
-				$disable_native_lazy = true;
-			}
 
-			if (
-				( ! defined( 'EWWWIO_DISABLE_NATIVE_LAZY' ) || ! EWWWIO_DISABLE_NATIVE_LAZY ) &&
-				( ! defined( 'EASYIO_DISABLE_NATIVE_LAZY' ) || ! EASYIO_DISABLE_NATIVE_LAZY ) &&
-				! $disable_native_lazy
-			) {
-				$this->set_attribute( $image, 'loading', 'lazy' );
-			}
 			$this->set_attribute( $image, 'class', $this->get_attribute( $image, 'class' ) . ' lazyload', true );
 			return $image;
 		}
@@ -448,6 +477,7 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		 * @return string The modified content with LL markup.
 		 */
 		function parse_background_images( $buffer, $tag_type ) {
+			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
 			if ( in_array( $tag_type, $this->user_element_exclusions, true ) ) {
 				return $buffer;
 			}
@@ -575,6 +605,7 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 						'gazette-featured-content-thumbnail',
 						'lazy-slider-img=',
 						'mgl-lazy',
+						'owl-lazy',
 						'skip-lazy',
 						'timthumb.php?',
 						'wpcf7_captcha/',
@@ -694,11 +725,11 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			if ( ! wp_doing_ajax() ) {
 				return $allow;
 			}
-			if ( ! empty( $_POST['action'] ) && 'vc_get_vc_grid_data' === $_POST['action'] ) {
+			if ( ! empty( $_POST['action'] ) && 'vc_get_vc_grid_data' === $_POST['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 				$this->debug_message( 'allowing lazy on vc grid' );
 				return true;
 			}
-			if ( ! empty( $_POST['action'] ) && 'Essential_Grid_Front_request_ajax' === $_POST['action'] ) {
+			if ( ! empty( $_POST['action'] ) && 'Essential_Grid_Front_request_ajax' === $_POST['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 				/* return true; */
 			}
 			return $allow;
