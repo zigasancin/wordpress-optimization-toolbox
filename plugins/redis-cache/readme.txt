@@ -1,11 +1,11 @@
 === Redis Object Cache ===
 Contributors: tillkruess
-Donate link: https://www.paypal.me/tillkruss
-Tags: redis, predis, phpredis, hhvm, pecl, caching, cache, object cache, performance, replication, clustering
+Donate link: https://github.com/sponsors/tillkruss
+Tags: redis, predis, phpredis, hhvm, pecl, caching, cache, object cache, performance, replication, clustering, keydb
 Requires at least: 3.3
-Tested up to: 5.3
+Tested up to: 5.4
 Requires PHP: 5.4
-Stable tag: 1.5.7
+Stable tag: 1.6.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -95,7 +95,7 @@ To adjust the connection parameters, define any of the following constants in yo
 	  Amount of time in milliseconds to retry a failed connection attempt.
 
 
-== Configuration Parameters ==
+== Configuration Options ==
 
 To adjust the configuration, define any of the following constants in your `wp-config.php` file.
 
@@ -142,6 +142,10 @@ To adjust the configuration, define any of the following constants in your `wp-c
   * `WP_REDIS_DISABLE_BANNERS` (default: _not set_)
 
     Set to `true` to disable promotions for [Redis Cache Pro](https://wprediscache.com/).
+
+  * `WP_REDIS_DISABLE_COMMENT` (default: _not set_)
+
+    Set to `true` to disable the HTML footer comment and it's optional debugging information when `WP_DEBUG` is enabled.
 
 == Replication & Clustering ==
 
@@ -218,6 +222,35 @@ The following commands are supported:
 
 == Changelog ==
 
+= 1.6.1 =
+
+- Fixed issue with footer comment showing during AJAX requests
+
+= 1.6.0 =
+
+- Improved group name sanitization (thanks @naxvog)
+- Prevent fatal error when replacing foreign dropin
+- Added HTML footer comment with optional debug information
+- Removed prefix suggestions
+
+_The HTML footer comment only prints debug information when `WP_DEBUG` is enabled. To disable the comment entirely, set the `WP_REDIS_DISABLE_COMMENT` constant to `true`._
+
+= 1.5.9 =
+
+- Fixed missing `$info` variable assignment in constructor
+- Fixed MaxTTL warning condition
+- Switched to using default button styles
+
+= 1.5.8 =
+
+- Added warning message about invalid MaxTTL
+- Added warning about unmaintained Predis library
+- Added suggestion about shorter, human-readable prefixes
+- Added Redis Cache Pro compatibility to settings
+- Fixed flushing the cache when the prefix contains special characters
+- Fixed calling Redis `INFO` when using clusters
+- Cleaned up the settings a little bit
+
 = 1.5.7 =
 
 - Added support for PhpRedis TLS connections
@@ -268,7 +301,7 @@ This plugin turned 5 years today (Nov 14th) and its only fitting to release the 
 
 = 1.5.0 =
 
-Since Predis isn't maintained any longer, it's highly recommended to switch over to PhpRedis (the Redis PECL extention).
+Since Predis isn't maintained any longer, it's highly recommended to switch over to PhpRedis (the Redis PECL extension).
 
   * Improved Redis key name builder
   * Added support for PhpRedis serializers
