@@ -206,6 +206,19 @@
 		</tr>
 		<tr>
 			<td>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/choice-n-flexibility.png';?>" alt="<?php esc_attr_e('More cache options', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('More caching options', 'wp-optimize');?></h4>
+				<p><?php _e('Exclude posts and pages from the cache, straight from the post edit screen.', 'wp-optimize');?></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/premium-support.png';?>" alt="<?php esc_attr_e('Premium support', 'wp-optimize');?>" class="wpo-premium-image">
 				<h4><?php _e('Premium support', 'wp-optimize');?></h4>
 				<p><?php _e('Get your specific queries addressed directly by our experts', 'wp-optimize');?></p>

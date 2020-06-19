@@ -16,7 +16,7 @@ class WP_Optimize_Install_Or_Update_Notice {
 	 *
 	 * @var string
 	 */
-	private $version = '1.0';
+	private $version = '1.1';
 
 	public function __construct() {
 		$this->options = WP_Optimize()->get_options();

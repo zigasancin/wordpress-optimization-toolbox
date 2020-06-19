@@ -2,7 +2,7 @@
 
 if (!defined('ABSPATH')) die('Access denied.');
 
-if (!class_exists('Updraft_Task_1_1')) require_once(WPO_PLUGIN_MAIN_PATH . 'vendor/updraft-tasks/class-updraft-task.php');
+if (!class_exists('Updraft_Task_1_1')) require_once(WPO_PLUGIN_MAIN_PATH . 'vendor/team-updraft/common-libs/src/updraft-tasks/class-updraft-task.php');
 
 if (!class_exists('WP_Optimize_Page_Cache_Preloader')) require_once(dirname(__FILE__) . '/class-wpo-cache-preloader.php');
 
@@ -32,6 +32,10 @@ class WP_Optimize_Load_Url_Task extends Updraft_Task_1_1 {
 		$cache_preloader->preload_desktop($url);
 		$cache_preloader->preload_mobile($url);
 		$cache_preloader->preload_amp($url);
+
+		if (defined('WP_CLI') && WP_CLI) {
+			WP_CLI::log($url);
+		}
 
 		/**
 		 * Action triggered after preloading a single url

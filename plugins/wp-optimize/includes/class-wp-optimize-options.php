@@ -254,6 +254,40 @@ class WP_Optimize_Options {
 	}
 
 	/**
+	 * Wipe all options from database options tables.
+	 *
+	 * @return bool|false|int
+	 */
+	public function wipe_settings() {
+		global $wpdb;
+
+		$keys = '"' . implode('", "', $this->get_additional_settings_keys()) . '"';
+
+		if (is_multisite()) {
+			$result = $wpdb->query("DELETE FROM {$wpdb->sitemeta} WHERE `meta_key` LIKE 'wp-optimize-mu-%' OR `meta_key` IN ({$keys})");
+		} else {
+			$result = $wpdb->query("DELETE FROM {$wpdb->options} WHERE `option_name` LIKE 'wp-optimize-%' OR `option_name` IN ({$keys})");
+		}
+
+		wp_cache_flush();
+
+		return $result;
+	}
+
+	/**
+	 * Get list of WP-Optimize settings database keys which are don't use default `wp-optimize-` prefix.
+	 *
+	 * @return array
+	 */
+	public function get_additional_settings_keys() {
+		return array(
+			'wpo_cache_config',
+			'wpo_minify_config',
+			'wpo_update_version',
+		);
+	}
+
+	/**
 	 * Saves auto optimization settings
 	 *
 	 * @param array $settings Auto optimization settings array submitted by user
@@ -408,7 +442,7 @@ class WP_Optimize_Options {
 		// Save additional auto backup option values.
 		foreach ($settings as $key => $value) {
 			if (preg_match('/enable\-auto\-backup\-/', $key)) {
-				$value = ('0' != $value) ? 'true' : 'false';
+				$value = ('true' == $value) ? 'true' : 'false';
 				$this->update_option($key, $value);
 			}
 		}

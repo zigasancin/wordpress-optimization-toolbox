@@ -186,6 +186,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 	public function run($type = 'scheduled', $response = null) {
 		if (!$this->is_cache_active()) {
 			return array(
+				'success' => false,
 				'error' => __('Page cache is disabled.', 'wp-optimize')
 			);
 		}
@@ -194,15 +195,35 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 			$response = array('success' => true);
 		}
 
+		$this->delete_cancel_flag();
+
+		// trying to lock semaphore.
+
+		$creating_tasks_semaphore = new Updraft_Semaphore_2_2('wpo_cache_preloader_creating_tasks');
+		$lock = $creating_tasks_semaphore->lock();
+
+		// if semaphore haven't locked then just return response.
+		if (!$lock) {
+			return array(
+				'success' => false,
+				'error' => __('Probably page cache preload is running already.', 'wp-optimize')
+			);
+		}
+
+		$is_wp_cli = defined('WP_CLI') && WP_CLI;
+
 		// close browser connection and continue work.
-		WP_Optimize()->close_browser_connection(json_encode($response));
+		// don't close connection for WP-CLI
+		if (false == $is_wp_cli) {
+			WP_Optimize()->close_browser_connection(json_encode($response));
+		}
 
 		// trying to change time limit.
 		WP_Optimize()->change_time_limit();
 
 		$status = $this->get_status($this->task_type);
 
-		if (0 == $status['all_tasks']) {
+		if (0 == $status['all_tasks'] && $lock) {
 			if (is_multisite()) {
 				$sites = WP_Optimize()->get_sites();
 
@@ -216,7 +237,14 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 			}
 		}
 
+		if ($lock) $creating_tasks_semaphore->unlock();
+
 		$this->process_tasks_queue();
+
+		// return $response in WP-CLI mode
+		if ($is_wp_cli) {
+			return $response;
+		}
 	}
 
 	/**
@@ -264,7 +292,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 
 		// update last cache preload time only if processing any tasks, else process was cancelled.
 		if ($this->is_running()) {
-			$this->options->update_option('wpo_last_page_cache_preload', time(), false);
+			$this->options->update_option('wpo_last_page_cache_preload', time());
 		}
 
 		$this->clean_up_old_tasks($this->task_type);
@@ -295,8 +323,41 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 	 * Delete all preload tasks from queue.
 	 */
 	public function cancel_preload() {
+		$this->set_cancel_flag();
 		$this->delete_tasks($this->task_type);
 		$this->delete_preload_continue_action();
+	}
+
+	/**
+	 * Set 'cancel' option to true.
+	 */
+	public function set_cancel_flag() {
+		$this->options->update_option('last_page_cache_preload_cancel', true);
+	}
+
+	/**
+	 * Delete 'cancel' option.
+	 */
+	public function delete_cancel_flag() {
+		$this->options->delete_option('last_page_cache_preload_cancel');
+	}
+
+	/**
+	 * Check if the last preload is cancelled.
+	 *
+	 * @return bool
+	 */
+	public function is_cancelled() {
+		return $this->options->get_option('last_page_cache_preload_cancel', false);
+	}
+
+	/**
+	 * Check if preloading queue is processing.
+	 *
+	 * @return bool
+	 */
+	public function is_busy() {
+		return $this->is_semaphore_locked($this->task_type) || $this->is_semaphore_locked('wpo_cache_preloader_creating_tasks');
 	}
 
 	/**
@@ -309,7 +370,15 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 		$status = $this->get_status($this->task_type);
 		$cache_size = WP_Optimize()->get_page_cache()->get_cache_size();
 
-		if ($status['complete_tasks'] == $status['all_tasks']) {
+		if ($this->is_semaphore_locked('wpo_cache_preloader_creating_tasks') && !$this->is_cancelled()) {
+			// we are still creating tasks.
+			return array(
+				'done' => false,
+				'message' => __('Loading URLs...', 'wp-optimize'),
+				'size' => WP_Optimize()->format_size($cache_size['size']),
+				'file_count' => $cache_size['file_count']
+			);
+		} elseif ($status['complete_tasks'] == $status['all_tasks']) {
 			$gmt_offset = (int) (3600 * get_option('gmt_offset'));
 
 			$last_preload_time = $this->options->get_option('wpo_last_page_cache_preload');
@@ -334,9 +403,13 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 		} else {
 			$preload_resuming_time = wp_next_scheduled('wpo_page_cache_preload_continue');
 			$preload_resuming_in = $preload_resuming_time ? $preload_resuming_time - time() : 0;
+			$preloaded_message = sprintf(_n('%1$s out of %2$s URL preloaded', '%1$s out of %2$s URLs preloaded', $status['all_tasks'], 'wp-optimize'), $status['complete_tasks'], $status['all_tasks']);
+			if ('sitemap' == $this->options->get_option('wpo_last_page_cache_preload_type', '')) {
+				$preloaded_message = __('Preloading posts found in sitemap:', 'wp-optimize') .' '. $preloaded_message;
+			}
 			$return = array(
 				'done' => false,
-				'message' => sprintf(_n('%1$s of %2$s URL preloaded', '%1$s of %2$s URLs preloaded', $status['all_tasks'], 'wp-optimize'), $status['complete_tasks'], $status['all_tasks']),
+				'message' => $preloaded_message,
 				'size' => WP_Optimize()->format_size($cache_size['size']),
 				'file_count' => $cache_size['file_count'],
 				'resume_in' => $preload_resuming_in
@@ -401,7 +474,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 
 				// this description is being used for internal purposes.
 				$description = 'Preload - '.$url;
-				$options = array('url' => $url, 'preload_type' => $type);
+				$options = array('url' => $url, 'preload_type' => $type, 'anonymous_user_allowed' => (defined('DOING_CRON') && DOING_CRON) || (defined('WP_CLI') && WP_CLI));
 
 				WP_Optimize_Load_Url_Task::create_task($this->task_type, $description, $options, 'WP_Optimize_Load_Url_Task');
 			}
@@ -493,10 +566,11 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 	 */
 	public function get_site_urls() {
 
-		if ($this->exists_sitemap_file()) {
-			$urls = $this->get_sitemap_urls();
+		if ($this->exists_sitemap_file() && (false !== ($urls = $this->get_sitemap_urls()))) {
+			$this->options->update_option('wpo_last_page_cache_preload_type', 'sitemap');
 		} else {
 			$urls = $this->get_post_urls();
+			$this->options->update_option('wpo_last_page_cache_preload_type', 'posts');
 		}
 
 		$this->log(sprintf(_n('%d url found.', '%d urls found.', count($urls), 'wp-optimize'), count($urls)));
@@ -511,7 +585,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 	 */
 	public function exists_sitemap_file() {
 
-		$response = wp_remote_get(site_url('/sitemap.xml'), array('timeout' => 10));
+		$response = wp_remote_get(site_url('/'.$this->get_sitemap_filename()), array('timeout' => 10));
 
 		if (is_wp_error($response) || '200' != wp_remote_retrieve_response_code($response)) {
 			$sitemap_file = $this->get_local_sitemap_file();
@@ -539,7 +613,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 		$urls = array();
 
 		// if sitemap url is empty then use main sitemap file name.
-		$sitemap_url = ('' === $sitemap_url) ? site_url('/sitemap.xml') : $sitemap_url;
+		$sitemap_url = ('' === $sitemap_url) ? site_url('/'.$this->get_sitemap_filename()) : $sitemap_url;
 
 		// if simplexml_load_string not available then we don't load sitemap.
 		if (!function_exists('simplexml_load_string')) {
@@ -562,11 +636,14 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 
 			if (empty($response)) return $urls;
 
-			$xml = simplexml_load_string($response);
+			$xml = @simplexml_load_string($response); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 		} else {
 			// parse xml answer.
-			$xml = simplexml_load_string(wp_remote_retrieve_body($response));
+			$xml = @simplexml_load_string(wp_remote_retrieve_body($response)); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 		}
+
+		// xml file has not valid xml content then return false.
+		if (false === $xml) return false;
 
 		// if exists urls then return them.
 		if (isset($xml->url)) {
@@ -579,7 +656,11 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 			foreach ($xml->sitemap as $element) {
 				if (!isset($element->loc)) continue;
 
-				$urls = array_merge($urls, $this->get_sitemap_urls($element->loc));
+				$sitemap_urls = $this->get_sitemap_urls($element->loc);
+
+				if (is_array($sitemap_urls)) {
+					$urls = array_merge($urls, $sitemap_urls);
+				}
 			}
 		}
 
@@ -587,7 +668,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 	}
 
 	/**
-	 * Get the path to a local sitemap.xml file
+	 * Get the path to a local sitemap file
 	 *
 	 * @return string
 	 */
@@ -595,7 +676,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 		if (!function_exists('get_home_path')) {
 			include_once ABSPATH . '/wp-admin/includes/file.php';
 		}
-		return trailingslashit(get_home_path()) . 'sitemap.xml';
+		return trailingslashit(get_home_path()) . $this->get_sitemap_filename();
 	}
 
 	/**
@@ -729,6 +810,32 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 		}
 
 		return self::$_instance;
+	}
+
+	/**
+	 * Get sitemap filename.
+	 *
+	 * @return string
+	 */
+	private function get_sitemap_filename() {
+		/**
+		 * Filter the sitemap file used to collect the URLs to preload
+		 *
+		 * @param string $filename - The sitemap name
+		 * @default sitemap.xml
+		 */
+		return apply_filters('wpo_cache_preload_sitemap_filename', 'sitemap.xml');
+	}
+
+	/**
+	 * Check if semaphore is locked.
+	 *
+	 * @param string $semaphore
+	 * @return bool
+	 */
+	private function is_semaphore_locked($semaphore) {
+		$semaphore = new Updraft_Semaphore_2_2($semaphore);
+		return $semaphore->is_locked();
 	}
 
 	/**

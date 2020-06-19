@@ -20,7 +20,7 @@
 				<span class="slider round"></span>
 			</label>
 			<label for="smush-automatically"><?php _e('Automatically compress newly-added images', 'wp-optimize');?>
-				<b data-tooltip="<?php _e('The images will be added to a background queue, which will start automatically within the next hour. This avoids the site from freezing during media uploads. The time taken to complete the compression will depend upon the size and quantity of the images.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
+				<span tabindex="0" data-tooltip="<?php _e('The images will be added to a background queue, which will start automatically within the next hour. This avoids the site from freezing during media uploads. The time taken to complete the compression will depend upon the size and quantity of the images.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 			</label>
 		</div>
 
@@ -31,7 +31,7 @@
 			</label>
 			<label for="smush-show-metabox" class="smush-options">
 				<?php _e('Show compression meta-box on an image\'s dashboard media page.', 'wp-optimize');?>
-				<b data-tooltip="<?php esc_attr_e('The image compression metabox allows you to compress specific images from the media library. But if you are using a solution other than WP-Optimize to compress your images, you can hide these metaboxes by disabling this switch.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
+				<span tabindex="0" data-tooltip="<?php esc_attr_e('The image compression metabox allows you to compress specific images from the media library. But if you are using a solution other than WP-Optimize to compress your images, you can hide these metaboxes by disabling this switch.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 			</label>
 		</div>
 		
@@ -39,11 +39,11 @@
 			<h3><?php _e('Compression options', 'wp-optimize');?></h3>
 			<input type="radio" id="enable_lossy_compression" name="compression_level" <?php checked($smush_options['image_quality'], 90); ?> class="smush-options compression_level"> 
 			<label for="enable_lossy_compression"><?php _e('Prioritize maximum compression', 'wp-optimize');?></label>
-			<b data-tooltip="<?php _e('Uses lossy compression to ensure maximum savings per image, the resulting images are of a slightly lower quality', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
+			<span tabindex="0" data-tooltip="<?php _e('Uses lossy compression to ensure maximum savings per image, the resulting images are of a slightly lower quality', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 			<br>						
 			<input type="radio" id="enable_lossless_compression" <?php checked($smush_options['image_quality'], 100); ?>name="compression_level" class="smush-options compression_level"> 
 			<label for="enable_lossless_compression"><?php _e('Prioritize retention of detail', 'wp-optimize');?></label>
-			<b data-tooltip="<?php _e('Uses lossless compression, which results in much better image quality but lower filesize savings per image', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
+			<span tabindex="0" data-tooltip="<?php _e('Uses lossless compression, which results in much better image quality but lower filesize savings per image', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 			<br>
 			<input id="enable_custom_compression" <?php checked($custom); ?> type="radio" name="compression_level" class="smush-options compression_level"> 
 			<label for="enable_custom_compression"><?php _e('Custom', 'wp-optimize');?></label>
@@ -62,8 +62,8 @@
 			</div>
 			<p><?php _e('Not sure what to choose?', 'wp-optimize'); ?> <a href="https://getwpo.com/lossy-vs-lossless-image-compression-a-guide-to-the-trade-off-between-image-size-and-quality/" target="_blank"><?php _e('Read our article "Lossy vs Lossless image compression"', 'wp-optimize'); ?></a></p>
 		</div>
-		<button type="button" class="button button-link toggle-smush-advanced"><span class="text"><span class="dashicons dashicons-arrow-down-alt2"></span> <span class="toggle-smush-advanced__text-show"><?php _e('Show advanced options', 'wp-optimize');?></span><span class="toggle-smush-advanced__text-hide"><?php _e('Hide advanced options', 'wp-optimize');?></span></span></button>
-		<div class="smush-advanced">
+		<button type="button" class="button button-link wpo-toggle-advanced-options"><span class="text"><span class="dashicons dashicons-arrow-down-alt2"></span> <span class="wpo-toggle-advanced-options__text-show"><?php _e('Show advanced options', 'wp-optimize');?></span><span class="wpo-toggle-advanced-options__text-hide"><?php _e('Hide advanced options', 'wp-optimize');?></span></span></button>
+		<div class="smush-advanced wpo-advanced-options">
 			<div class="compression_server">
 				<h3><?php _e('Compression service', 'wp-optimize');?></h3>
 				<div> <input type="radio" name="compression_server" id="resmushit" value="resmushit" <?php checked($smush_options['compression_server'], 'resmushit'); ?> >			  
@@ -89,7 +89,7 @@
 				<br>
 				<input type="checkbox" id="smush-backup-original" class="smush-options back_up_original" <?php checked($smush_options['back_up_original']); ?> > 
 				<label for="smush-backup-original"><?php _e('Backup original images', 'wp-optimize');?></label>
-				<b data-tooltip="<?php _e('The original images are stored alongside the compressed images, you can visit the edit screen of the individual images in the Media Library to restore them.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
+				<span tabindex="0" data-tooltip="<?php _e('The original images are stored alongside the compressed images, you can visit the edit screen of the individual images in the Media Library to restore them.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 				<br>
 				<input type="checkbox" id="smush-backup-delete" class="smush-options back_up_original" <?php checked($smush_options['back_up_delete_after']); ?> >
 				<label for="smush-backup-delete"><?php _e('Automatically delete image backups after', 'wp-optimize');?><input id="smush-backup-delete-days" type="number" min="1" value="<?php esc_attr_e($smush_options['back_up_delete_after_days']); ?>"><?php _e('days', 'wp-optimize');?></label><label> — <?php _e('or', 'wp-optimize'); ?></label> <button type="button" id="wpo_smush_delete_backup_btn" class="wpo_primary_small button"><?php _e('Delete all backup images now', 'wp-optimize'); ?></button>

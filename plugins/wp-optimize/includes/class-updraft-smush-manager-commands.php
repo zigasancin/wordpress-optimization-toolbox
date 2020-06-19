@@ -58,6 +58,11 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$image = isset($data['selected_image']) ? filter_var($data['selected_image']['attachment_id'], FILTER_SANITIZE_NUMBER_INT) : false;
 		$blog = isset($data['selected_image']) ? filter_var($data['selected_image']['blog_id'], FILTER_SANITIZE_NUMBER_INT) : false;
 
+		// A subsite administrator can only compress their own image. If the blog ID isn't theirs, return an error.
+		if ($blog && is_multisite() && get_current_blog_id() != $blog && !current_user_can('manage_network_options')) {
+			return new WP_Error('compression_not_permitted', __('The blog ID provided does not match the current blog.', 'wp-optimize'));
+		}
+
 		$server = filter_var($options['compression_server'], FILTER_SANITIZE_STRING);
 
 		$lossy = filter_var($options['lossy_compression'], FILTER_VALIDATE_BOOLEAN) ? true : false;
@@ -114,6 +119,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 
 		$response['status'] = true;
 		$response['operation'] = 'restore';
+		$response['blog_id'] = $blog_id;
 		$response['image']	 = $image_id;
 		$response['success'] = $success;
 		$response['summary'] = __('The image was restored successfully', 'wp-optimize');
@@ -418,7 +424,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	 * @return array
 	 */
 	public function clean_all_backup_images() {
-		$upload_dir = wp_get_upload_dir();
+		$upload_dir = wp_upload_dir(null, false);
 		$base_dir = $upload_dir['basedir'];
 
 		$this->task_manager->clear_backup_images_directory($base_dir, 0);

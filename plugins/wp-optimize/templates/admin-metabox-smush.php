@@ -13,12 +13,12 @@
 		<label for="enable_lossy_compression">
 			<input type="radio" id="enable_lossy_compression" name="compression_level" class="smush-options compression_level" <?php checked($smush_options['image_quality'], 90); ?>> 
 			<?php _e('Prioritize maximum compression', 'wp-optimize');?>
-			<b data-tooltip="<?php _e('Potentially uses lossy compression to ensure maximum savings per image, the resulting images are of a slightly lower quality', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
+			<span tabindex="0" data-tooltip="<?php _e('Potentially uses lossy compression to ensure maximum savings per image, the resulting images are of a slightly lower quality', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 		</label>
 		<label for="enable_lossless_compression">
 			<input type="radio" id="enable_lossless_compression" name="compression_level" class="smush-options compression_level" <?php checked($smush_options['image_quality'], 100); ?>> 
 			<?php _e('Prioritize retention of detail', 'wp-optimize');?>
-			<b data-tooltip="<?php _e('Uses lossless compression, which results in much better image quality but lower filesize savings per image', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </b>
+			<span tabindex="0" data-tooltip="<?php _e('Uses lossless compression, which results in much better image quality but lower filesize savings per image', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 		</label>
 		<label for="enable_custom_compression">
 			<input id="enable_custom_compression" type="radio" name="compression_level" class="smush-options compression_level" <?php checked($custom); ?>> 
@@ -37,8 +37,8 @@
 			<span class="alignright"><?php _e('Best image quality', 'wp-optimize');?></span>
 		</div>
 	</div>
-	<a href="#" class="toggle-smush-advanced wpo_smush_single_image" <?php echo $smush_display; ?>><?php _e('Show advanced options', 'wp-optimize');?></a>
-	<div class='smush-advanced'>
+	<a href="#" class="wpo-toggle-advanced-options wpo_smush_single_image" <?php echo $smush_display; ?>><?php _e('Show advanced options', 'wp-optimize');?></a>
+	<div class='smush-advanced wpo-advanced-options'>
 		<h4><?php _e('Service provider', 'wp-optimize');?></h4>
 		<fieldset class="compression_server">
 			<label for="resmushit"> 
@@ -97,3 +97,5 @@
 	<div class="smush-information"></div>
 	<input type="button" class="wpo_primary_small button-primary" value="<?php _e('Cancel', 'wp-optimize'); ?>" />
 </div>
+
+<script type="text/javascript">jQuery(document).trigger('admin-metabox-smush-loaded');</script>

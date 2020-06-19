@@ -27,7 +27,7 @@ abstract class Updraft_Task_Manager_1_2 {
 
 		if (!class_exists('Updraft_Task_1_1')) require_once('class-updraft-task.php');
 		if (!class_exists('Updraft_Task_Manager_Commands_1_0')) require_once('class-updraft-task-manager-commands.php');
-		if (!class_exists('Updraft_Semaphore_2_1')) require_once(dirname(__FILE__).'/../updraft-semaphore/class-updraft-semaphore.php');
+		if (!class_exists('Updraft_Semaphore_2_2')) require_once(dirname(__FILE__).'/../updraft-semaphore/class-updraft-semaphore.php');
 		if (!class_exists('Updraft_Tasks_Activation')) require_once(dirname(__FILE__).'/class-updraft-tasks-activation.php');
 
 		$this->commands = new Updraft_Task_Manager_Commands_1_0($this);
@@ -147,7 +147,7 @@ abstract class Updraft_Task_Manager_1_2 {
 			$this->log(sprintf('A total of %d tasks of type %s found and will be processed in this iteration', $total, $type));
 		}
 
-		$this->queue_semaphore = new Updraft_Semaphore_2_1($type);
+		$this->queue_semaphore = new Updraft_Semaphore_2_2($type);
 		
 		$this->queue_semaphore->set_loggers($this->loggers);
 

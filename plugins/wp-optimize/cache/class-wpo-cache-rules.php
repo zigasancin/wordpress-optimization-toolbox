@@ -38,11 +38,13 @@ class WPO_Cache_Rules {
 	 */
 	public function setup_hooks() {
 		add_action('save_post', array($this, 'purge_post_on_update'), 10, 1);
+		add_action('save_post', array($this, 'purge_archive_pages_on_post_update'), 10, 1);
 		add_action('wp_trash_post', array($this, 'purge_post_on_update'), 10, 1);
 		add_action('comment_post', array($this, 'purge_post_on_comment'), 10, 3);
 		add_action('wp_set_comment_status', array($this, 'purge_post_on_comment_status_change'), 10, 1);
 		add_action('edit_terms', array($this, 'purge_related_elements_on_term_updated'), 10, 2);
 		add_action('set_object_terms', array($this, 'purge_related_elements_on_post_terms_change'), 10, 6);
+		add_action('wpo_cache_config_updated', array($this, 'cache_config_updated'), 10, 1);
 
 		/**
 		 * List of hooks for which when executed, the cache will be purged
@@ -99,8 +101,9 @@ class WPO_Cache_Rules {
 	 */
 	public function purge_post_on_update($post_id) {
 		$post_type = get_post_type($post_id);
+		$post_type_object = get_post_type_object($post_type);
 
-		if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || 'revision' === $post_type) {
+		if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || 'revision' === $post_type || !$post_type_object->public) {
 			return;
 		}
 
@@ -117,6 +120,41 @@ class WPO_Cache_Rules {
 			if (apply_filters('wpo_delete_cached_homepage_on_post_update', true, $post_id)) WPO_Page_Cache::delete_homepage_cache();
 			WPO_Page_Cache::delete_single_post_cache($post_id);
 		}
+	}
+
+	/**
+	 * Purge archive pages on post update.
+	 *
+	 * @param integer $post_id
+	 */
+	public function purge_archive_pages_on_post_update($post_id) {
+		$post_type = get_post_type($post_id);
+
+		if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || 'revision' === $post_type) {
+			return;
+		}
+
+		$post_obj = get_post_type_object($post_type);
+
+		if ('post' == $post_type) {
+			// delete all archive pages for post.
+			$post_date = get_post_time('Y-m-j', false, $post_id);
+			list($year, $month, $day) = $post_date;
+
+			$archive_links = array(
+				get_year_link($year),
+				get_month_link($year, $month),
+				get_day_link($year, $month, $day),
+			);
+
+			foreach ($archive_links as $link) {
+				WPO_Page_Cache::delete_cache_by_url($link, true);
+			}
+		} elseif ($post_obj->has_archive) {
+			// delete archive page for custom post type.
+			WPO_Page_Cache::delete_cache_by_url(get_post_type_archive_link($post_type), true);
+		}
+
 	}
 
 	/**
@@ -172,9 +210,24 @@ class WPO_Cache_Rules {
 
 		$post_type = get_post_type($object_id);
 
-		if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || 'revision' === $post_type) {
+		if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || 'revision' === $post_type || 'product_type' === $taxonomy || 'action-group' === $taxonomy) {
 			return;
 		}
+
+		/**
+		 * Adds a way to exit the purge of terms permalink using the provided parameters.
+		 *
+		 * @param bool   $purge      The value filtered, whether or not to purge the related elements
+		 * @param int    $object_id  Object ID.
+		 * @param array  $terms      An array of object terms.
+		 * @param array  $tt_ids     An array of term taxonomy IDs.
+		 * @param string $taxonomy   Taxonomy slug.
+		 * @param bool   $append     Whether to append new terms to the old terms.
+		 * @param array  $old_tt_ids Old array of term taxonomy IDs.
+		 * @default true
+		 * @return boolean
+		 */
+		if (!apply_filters('wpo_cache_purge_related_elements_on_post_terms_change', true, $object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids)) return;
 
 		// get all affected terms.
 		$affected_terms_ids = array_unique(array_merge($tt_ids, $old_tt_ids));
@@ -187,6 +240,9 @@ class WPO_Cache_Rules {
 
 				$term_permalink = get_term_link($term['term_id']);
 				if (!is_wp_error($term_permalink)) {
+					$url = parse_url($term_permalink);
+					// Check if the permalink contains a valid path, to avoid deleting the whole cache.
+					if (!isset($url['path']) || '/' === $url['path']) return;
 					WPO_Page_Cache::delete_cache_by_url($term_permalink, true);
 				}
 			}
@@ -199,6 +255,18 @@ class WPO_Cache_Rules {
 	public function purge_cache() {
 		if (!empty($this->config['enable_page_caching'])) {
 			wpo_cache_flush();
+		}
+	}
+
+	/**
+	 * Triggered by wpo_cache_config_updated.
+	 *
+	 * @param array $config
+	 */
+	public function cache_config_updated($config) {
+		// delete front page form cache if defined in the settings
+		if (is_array($config['cache_exception_urls']) && in_array('/', $config['cache_exception_urls'])) {
+			WPO_Page_Cache::delete_cache_by_url(home_url());
 		}
 	}
 

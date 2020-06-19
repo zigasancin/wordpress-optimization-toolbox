@@ -36,10 +36,14 @@ if (!class_exists('WP_Optimize_Page_Cache_Preloader')) require_once(dirname(__FI
 if (!class_exists('WPO_Cache_Config')) require_once(dirname(__FILE__) . '/class-wpo-cache-config.php');
 if (!class_exists('WPO_Cache_Rules')) require_once(dirname(__FILE__) . '/class-wpo-cache-rules.php');
 
-if (!class_exists('Updraft_Abstract_Logger')) require_once(WPO_PLUGIN_MAIN_PATH.'/includes/class-updraft-abstract-logger.php');
-if (!class_exists('Updraft_PHP_Logger')) require_once(WPO_PLUGIN_MAIN_PATH.'/includes/class-updraft-php-logger.php');
+if (!class_exists('Updraft_Abstract_Logger')) require_once(WPO_PLUGIN_MAIN_PATH.'includes/class-updraft-abstract-logger.php');
+if (!class_exists('Updraft_PHP_Logger')) require_once(WPO_PLUGIN_MAIN_PATH.'includes/class-updraft-php-logger.php');
 
 require_once dirname(__FILE__) . '/file-based-page-cache-functions.php';
+
+if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+	require_once dirname(__FILE__) . '/php-5.3-functions.php';
+}
 
 wpo_cache_load_extensions();
 
@@ -77,11 +81,25 @@ class WPO_Page_Cache {
 	public $advanced_cache_file_writing_error;
 
 	/**
+	 * Store errors
+	 *
+	 * @var array
+	 */
+	private $_errors = array();
+
+	/**
 	 * Last advanced cache file content
 	 *
 	 * @var string
 	 */
 	public $advanced_cache_file_content;
+
+	/**
+	 * Store the latest advanced-cache.php version required
+	 *
+	 * @var string
+	 */
+	private $_minimum_advanced_cache_file_version = '3.0.17';
 
 	/**
 	 * Set everything up here
@@ -105,12 +123,15 @@ class WPO_Page_Cache {
 
 		// Handle single page purge.
 		add_action('wp_loaded', array($this, 'handle_purge_single_page_cache'));
+
+		add_action('admin_init', array($this, 'admin_init'));
 	}
 
 	/**
 	 * Do required actions on activate/deactivate any plugin.
 	 */
 	public function activate_deactivate_plugin() {
+
 		$this->update_cache_config();
 
 		/**
@@ -267,24 +288,30 @@ class WPO_Page_Cache {
 	 * @param string $type    error, warning, success, or info
 	 */
 	public function show_notice($message, $type) {
-		?>
-		<div class="notice notice-<?php echo $type; ?> is-dismissible">
-			<p><?php echo $message; ?></p>
-		</div>
-		<script>
-			window.addEventListener('load', function() {
-				(function(wp) {
-					wp.data.dispatch('core/notices').createNotice(
-						'<?php echo $type; ?>',
-						'<?php echo $message; ?>',
-						{
-							isDismissible: true,
+		global $current_screen;
+		
+		if ($current_screen && is_callable(array($current_screen, 'is_block_editor')) && $current_screen->is_block_editor()) : ?>
+			<script>
+				window.addEventListener('load', function() {
+					(function(wp) {
+						if (window.wp && wp.hasOwnProperty('data') && 'function' == typeof wp.data.dispatch) {
+							wp.data.dispatch('core/notices').createNotice(
+								'<?php echo $type; ?>',
+								'<?php echo $message; ?>',
+								{
+									isDismissible: true,
+								}
+							);
 						}
-					);
-				})(window.wp);
-			});
-		</script>
+					})(window.wp);
+				});
+			</script>
+		<?php else : ?>
+			<div class="notice wpo-notice notice-<?php echo $type; ?> is-dismissible">
+				<p><?php echo $message; ?></p>
+			</div>
 		<?php
+		endif;
 	}
 
 	/**
@@ -315,24 +342,28 @@ class WPO_Page_Cache {
 			return true;
 		}
 
-		if (!$this->write_advanced_cache() && $this->get_advanced_cache_version() != WPO_VERSION) {
+		if (!$this->write_advanced_cache() && version_compare($this->get_advanced_cache_version(), $this->_minimum_advanced_cache_file_version, '<')) {
 			$message = sprintf("The request to write the file %s failed. ", htmlspecialchars($this->get_advanced_cache_filename()));
 			$message .= ' '.__('Your WP install might not have permission to write inside the wp-content folder.', 'wp-optimize');
-			$message .= "\n\n".sprintf(__('1. Please navigate, via FTP, to the folder - %s', 'wp-optimize'), htmlspecialchars(dirname($this->get_advanced_cache_filename())));
-			$message .= "\n".__('2. Edit or create a file with the name advanced-cache.php', 'wp-optimize');
-			$message .= "\n".__('3. Copy and paste the following lines into the file:', 'wp-optimize');
+
+			if (!defined('WP_CLI') || !WP_CLI) {
+				$message .= "\n\n".sprintf(__('1. Please navigate, via FTP, to the folder - %s', 'wp-optimize'), htmlspecialchars(dirname($this->get_advanced_cache_filename())));
+				$message .= "\n".__('2. Edit or create a file with the name advanced-cache.php', 'wp-optimize');
+				$message .= "\n".__('3. Copy and paste the following lines into the file:', 'wp-optimize');
+			}
 
 			$already_ran_enable = new WP_Error("write_advanced_cache", $message);
 			return $already_ran_enable;
 		}
 
 		if (!$this->write_wp_config(true)) {
-			$already_ran_enable = new WP_Error("write_wp_config", "Could not toggle the WP_CACHE constant in wp-config.php. Check your permissions.");
+			$already_ran_enable = new WP_Error("write_wp_config", "Could not turn on the WP_CACHE constant in wp-config.php. Check your permissions.");
 			return $already_ran_enable;
 		}
 
 		if (!$this->verify_cache()) {
-			$already_ran_enable = new WP_Error("verify_cache", "Could not verify if the cache was enabled. Turn on logging to find the reason.");
+			$errors = $this->get_errors();
+			$already_ran_enable = new WP_Error("verify_cache", "Could not verify if the cache was enabled: \n".implode("\n- ", $errors));
 			return $already_ran_enable;
 		}
 
@@ -350,21 +381,28 @@ class WPO_Page_Cache {
 		$ret = true;
 
 		$advanced_cache_file = $this->get_advanced_cache_filename();
-		
+
+		// N.B. The only use of WP_CACHE in WP core is to include('advanced-cache.php') (and run a function if it's then defined); so, if the decision to leave it enable is, for some unexpected reason, technically incorrect, it still can't cause a problem.
+		$disabled_wp_config = $this->write_wp_config(false);
+		if (!$disabled_wp_config) {
+			$this->log("Could not turn off the WP_CACHE constant in wp-config.php");
+			$this->add_warning('error_disabling', __('Could not turn off the WP_CACHE constant in wp-config.php', 'wp-optimize'));
+		}
+
+		$disabled_advanced_cache = true;
+		// First try to remove (so that it doesn't look to any other plugin like the file is already 'claimed')
 		// We only touch advanched-cache.php and wp-config.php if it appears that we were in control of advanced-cache.php
 		if (!file_exists($advanced_cache_file) || false !== strpos(file_get_contents($advanced_cache_file), 'WP-Optimize advanced-cache.php')) {
-
-			// First try to remove (so that it doesn't look to any other plugin like the file is already 'claimed')
 			if (file_exists($advanced_cache_file) && (!unlink($advanced_cache_file) && false === file_put_contents($advanced_cache_file, "<?php\n// WP-Optimize: page cache disabled"))) {
+				$disabled_advanced_cache = false;
 				$this->log("The request to the filesystem to remove or empty advanced-cache.php failed");
-				$ret = false;
+				$this->add_warning('error_disabling', __('The request to the filesystem to remove or empty advanced-cache.php failed', 'wp-optimize'));
 			}
+		}
 
-			// N.B. The only use of WP_CACHE in WP core is to include('advanced-cache.php') (and run a function if it's then defined); so, if the decision to leave it enable is, for some unexpected reason, technically incorrect, it still can't cause a problem.
-			if (!$this->write_wp_config(false)) {
-				$this->log("Could not toggle the WP_CACHE constant in wp-config.php");
-				$ret = false;
-			}
+		// If both actions failed, the cache wasn't disabled. So we send an error. If only one succeeds, it will still be disabled.
+		if (!$disabled_wp_config && !$disabled_advanced_cache) {
+			$ret = new WP_Error('error_disabling_cache', __('The page caching could not be disabled: the WP_CACHE constant could not be removed from wp-config.php and the request to the filesystem to remove or empty advanced-cache.php failed.', 'wp-optimize'));
 		}
 
 		// Delete cache to avoid stale cache on next activation
@@ -426,7 +464,7 @@ class WPO_Page_Cache {
 			return false;
 		}
 
-		if (!$this->config->get_option('enable_page_caching', false)) {
+		if (!file_exists(WPO_CACHE_CONFIG_DIR . '/'.$this->get_cache_config_filename())) {
 			return false;
 		}
 
@@ -448,8 +486,12 @@ class WPO_Page_Cache {
 			return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s. Please check your file permissions.'), str_ireplace(ABSPATH, '', WPO_CACHE_CONFIG_DIR)));
 		}
 		
-		if (!is_dir(WPO_CACHE_FILES_DIR) && !wp_mkdir_p(WPO_CACHE_FILES_DIR)) {
-			return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s. Please check your file permissions.'), str_ireplace(ABSPATH, '', WPO_CACHE_FILES_DIR)));
+		if (!is_dir(WPO_CACHE_FILES_DIR)) {
+			if (!wp_mkdir_p(WPO_CACHE_FILES_DIR)) {
+				return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s. Please check your file permissions.'), str_ireplace(ABSPATH, '', WPO_CACHE_FILES_DIR)));
+			} else {
+				wpo_disable_cache_directories_viewing();
+			}
 		}
 
 		return true;
@@ -465,20 +507,28 @@ class WPO_Page_Cache {
 	}
 
 	/**
+	 * Get advanced-cache.php file name with full path.
+	 *
+	 * @return string
+	 */
+	public function get_cache_config_filename() {
+		$url = parse_url(network_site_url());
+
+		if (isset($url['port']) && '' != $url['port'] && 80 != $url['port']) {
+			return 'config-'.$url['host'].'-port'.$url['port'].'.php';
+		} else {
+			return 'config-'.$url['host'].'.php';
+		}
+	}
+
+	/**
 	 * Writes advanced-cache.php
 	 *
+	 * @param boolean $update_required - Whether the update is required or not.
 	 * @return bool
 	 */
-	private function write_advanced_cache() {
-
-		$url = parse_url(network_site_url());
-	
-		if (isset($url['port']) && '' != $url['port'] && 80 != $url['port']) {
-			$config_file_basename = 'config-'.$url['host'].'-port'.$url['port'].'.php';
-		} else {
-			$config_file_basename = 'config-'.$url['host'].'.php';
-		}
-
+	private function write_advanced_cache($update_required = false) {
+		$config_file_basename = $this->get_cache_config_filename();
 		$cache_file_basename = untrailingslashit(plugin_dir_path(__FILE__));
 		$plugin_basename = basename(WPO_PLUGIN_MAIN_PATH);
 		$cache_path = '/wpo-cache';
@@ -526,31 +576,78 @@ if (false !== \$plugin_location) {
 
 if (!@file_exists(WPO_CACHE_CONFIG_DIR . '/$config_file_basename')) { return; }
 
-\$GLOBALS['wpo_cache_config'] = json_decode(file_get_contents(WPO_CACHE_CONFIG_DIR . '/$config_file_basename'), true);
+\$GLOBALS['wpo_cache_config'] = @json_decode(file_get_contents(WPO_CACHE_CONFIG_DIR . '/$config_file_basename'), true);
+
+if (empty(\$GLOBALS['wpo_cache_config'])) {
+	include_once(WPO_CACHE_CONFIG_DIR . '/$config_file_basename');
+}
 
 if (empty(\$GLOBALS['wpo_cache_config']) || empty(\$GLOBALS['wpo_cache_config']['enable_page_caching'])) { return; }
 
 if (false !== \$plugin_location) { include_once(\$plugin_location.'/file-based-page-cache.php'); }
 
 EOF;
+
 		// phpcs:enable
 		$advanced_cache_filename = $this->get_advanced_cache_filename();
 
+		// If the file content is already up to date, success
+		if (is_file($advanced_cache_filename) && file_get_contents($advanced_cache_filename) === $this->advanced_cache_file_content) {
+			$this->advanced_cache_file_writing_error = false;
+			return true;
+		}
+
 		// check if we can't write the advanced cache file
 		// case 1: the directory is read-only and the file doesn't exist
-		// case 2: the file is already exists but it's read-only
-		if (!is_file($advanced_cache_filename) && !is_writable(dirname($advanced_cache_filename)) || (is_file($advanced_cache_filename) && !is_writable($advanced_cache_filename))) {
+		if (!is_file($advanced_cache_filename) && !is_writable(dirname($advanced_cache_filename))) {
 			$this->advanced_cache_file_writing_error = true;
 			return false;
 		}
 
-		if (file_put_contents($this->get_advanced_cache_filename(), $this->advanced_cache_file_content)) {
+		// case 2: the file already exists but it's read-only
+		if (is_file($advanced_cache_filename) && !is_writable($advanced_cache_filename)) {
+			if (version_compare($this->get_advanced_cache_version(), $this->_minimum_advanced_cache_file_version, '<') || $update_required) {
+				$this->advanced_cache_file_writing_error = true;
+				return false;
+			} else {
+				$this->advanced_cache_file_writing_error = false;
+				return true;
+			}
+		}
+
+		if (!file_put_contents($this->get_advanced_cache_filename(), $this->advanced_cache_file_content)) {
 			$this->advanced_cache_file_writing_error = true;
 			return false;
 		}
 
 		$this->advanced_cache_file_writing_error = false;
 		return true;
+	}
+
+	/**
+	 * Update advanced cache version if needed.
+	 */
+	public function maybe_update_advanced_cache() {
+
+		if (!$this->is_enabled()) return;
+
+		// from 3.0.17 we use more secure way to store cache config files and need update advanced-cache.php
+		$advanced_cache_current_version = $this->get_advanced_cache_version();
+		if ($advanced_cache_current_version && version_compare($advanced_cache_current_version, $this->_minimum_advanced_cache_file_version, '>=')) return;
+
+		if (!$this->write_advanced_cache()) {
+			add_action('admin_notices', array($this, 'notice_advanced_cache_autoupdate_error'));
+		} else {
+			$this->update_cache_config();
+		}
+	}
+
+	/**
+	 * Show notification when advanced-cache.php could not be updated.
+	 */
+	public function notice_advanced_cache_autoupdate_error() {
+		$this->show_notice(__('The file advanced-cache.php needs to be updated, but the automatic process failed.', 'wp_optimize').
+		' <a href="'.admin_url('admin.php?page=wpo_cache').'">'.__('Please try to disable and then re-enable the WP-Optimize cache manually.', 'wp-optimize').'</a>', 'error');
 	}
 
 	/**
@@ -578,8 +675,10 @@ EOF;
 	 * @return boolean true if the value was set, false otherwise
 	 */
 	private function write_wp_config($status = true) {
+		// If we changed the value in wp-config, save it, in case we need to change it again in the same run.
+		static $changed = false;
 
-		if (defined('WP_CACHE') && WP_CACHE === $status) {
+		if (defined('WP_CACHE') && WP_CACHE === $status && !$changed) {
 			return true;
 		}
 
@@ -628,7 +727,7 @@ EOF;
 		if (!file_put_contents($config_path, implode(PHP_EOL, $config_file))) {
 			return false;
 		}
-
+		$changed = true;
 		return true;
 	}
 
@@ -641,11 +740,12 @@ EOF;
 		if (function_exists('clearstatcache')) {
 			clearstatcache();
 		}
+		$errors = 0;
 
 		// First check wp-config.php.
 		if (!$this->_get_wp_config() && !is_writable($this->_get_wp_config())) {
 			$this->log("Unable to write to or find wp-config.php; please check file/folder permissions");
-			return false;
+			$this->add_warning('verify_cache', __("Unable to write to or find wp-config.php; please check file/folder permissions.", 'wp-optimize'));
 		}
 
 		$advanced_cache_file = untrailingslashit(WP_CONTENT_DIR).'/advanced-cache.php';
@@ -653,32 +753,31 @@ EOF;
 		// Now check wp-content. We need to be able to create files of the same user as this file.
 		if ((!file_exists($advanced_cache_file) || false === strpos(file_get_contents($advanced_cache_file), 'WP-Optimize advanced-cache.php')) && !is_writable($advanced_cache_file) && !is_writable(untrailingslashit(WP_CONTENT_DIR))) {
 			$this->log("Unable to write the file advanced-cache.php inside the wp-content folder; please check file/folder permissions");
-			return false;
-		}
-
-		// If the cache and config directories exist, make sure they're writeable.
-		if (file_exists(WPO_CACHE_DIR)) {
-			if (!is_writable(WPO_CACHE_DIR)) {
-				$this->log("Unable to write inside the cache folder; please check file/folder permissions");
-				return false;
-			}
+			$this->add_error('verify_cache', __("Unable to write the file advanced-cache.php inside the wp-content folder; please check file/folder permissions", 'wp-optimize'));
+			$errors++;
 		}
 
 		if (file_exists(WPO_CACHE_FILES_DIR)) {
 			if (!is_writable(WPO_CACHE_FILES_DIR)) {
 				$this->log("Unable to write inside the cache files folder; please check file/folder permissions");
-				return false;
+				$this->add_warning('verify_cache', sprintf(__("Unable to write inside the cache files folder (%s); please check file/folder permissions (no cache files will be able to be created otherwise)", 'wp-optimize'), WPO_CACHE_FILES_DIR));
 			}
 		}
-
+		
 		if (file_exists(WPO_CACHE_CONFIG_DIR)) {
 			if (!is_writable(WPO_CACHE_CONFIG_DIR)) {
 				$this->log("Unable to write inside the cache configuration folder; please check file/folder permissions");
-				return false;
+				// If the config exists, only send a warning. Otherwise send an error.
+				$type = 'warning';
+				if (!file_exists(WPO_CACHE_CONFIG_DIR . '/'.$this->get_cache_config_filename())) {
+					$type = 'error';
+					$errors++;
+				}
+				$this->add_error('verify_cache', sprintf(__("Unable to write inside the cache configuration folder (%s); please check file/folder permissions", 'wp-optimize'), WPO_CACHE_CONFIG_DIR), $type);
 			}
 		}
 
-		return true;
+		return !$errors;
 	}
 
 	/**
@@ -729,25 +828,31 @@ EOF;
 		$dir_size = 0;
 		$file_count = 0;
 
-		if (!is_dir($dir)) {
+		$handle = is_dir($dir) ? opendir($dir) : false;
+
+		if (false === $handle) {
 			return array('size' => 0, 'file_count' => 0);
 		}
 
-		$files = scandir($dir);
+		$file = readdir($handle);
 
-		foreach ($files as $file) {
-			if ('.' == $file || '..' == $file) continue;
+		while (false !== $file) {
 
-			$current_file = $dir.'/'.$file;
+			if ('.' != $file && '..' != $file) {
+				$current_file = $dir.'/'.$file;
 
-			if (is_dir($current_file)) {
-				$sub_dir_infos = $this->get_dir_infos($current_file);
-				$dir_size += $sub_dir_infos['size'];
-				$file_count += $sub_dir_infos['file_count'];
-			} elseif (is_file($current_file)) {
-				$dir_size += filesize($current_file);
-				$file_count++;
+				if (is_dir($current_file)) {
+					$sub_dir_infos = $this->get_dir_infos($current_file);
+					$dir_size += $sub_dir_infos['size'];
+					$file_count += $sub_dir_infos['file_count'];
+				} elseif (is_file($current_file)) {
+					$dir_size += filesize($current_file);
+					$file_count++;
+				}
 			}
+
+			$file = readdir($handle);
+
 		}
 
 		return array('size' => $dir_size, 'file_count' => $file_count);
@@ -767,6 +872,11 @@ EOF;
 				$config_path = $filename;
 				break;
 			}
+		}
+
+		// WP-CLI doesn't include wp-config.php that's why we use function from WP-CLI to locate config file.
+		if (!$config_path && is_callable('wpo_wp_cli_locate_wp_config')) {
+			$config_path = wpo_wp_cli_locate_wp_config();
 		}
 
 		return $config_path;
@@ -829,6 +939,18 @@ EOF;
 	}
 
 	/**
+	 * Admin actions
+	 *
+	 * @return void
+	 */
+	public function admin_init() {
+		// Maybe update the advanced cache.
+		if ((!defined('DOING_AJAX') || !DOING_AJAX) && current_user_can('update_plugins')) {
+			$this->maybe_update_advanced_cache();
+		}
+	}
+
+	/**
 	 * Logs error messages
 	 *
 	 * @param  string $message
@@ -852,6 +974,68 @@ EOF;
 			self::$instance = new self();
 		}
 		return self::$instance;
+	}
+
+	/**
+	 * Adds an error to the error store
+	 *
+	 * @param string $code    - The error code
+	 * @param string $message - The error's message
+	 * @param string $type    - The error's type (error, warning)
+	 * @return void
+	 */
+	public function add_error($code, $message, $type = 'error') {
+		if (!isset($this->_errors[$type])) {
+			$this->_errors[$type] = new WP_Error($code, $message);
+		} else {
+			$this->_errors[$type]->add($code, $message);
+		}
+	}
+
+	/**
+	 * Adds a warning to the error store
+	 *
+	 * @param string $code    - The error code
+	 * @param string $message - The error's message
+	 * @return void
+	 */
+	public function add_warning($code, $message) {
+		$this->add_error($code, $message, 'warning');
+	}
+
+	/**
+	 * Get all recorded errors
+	 *
+	 * @param string  $type              - The error type
+	 * @param boolean $get_messages_only - Whether to get only the messages, or the full WP_Error object
+	 * @return boolean|array|WP_Error
+	 */
+	public function get_errors($type = 'error', $get_messages_only = true) {
+		if (!$this->has_errors($type)) return false;
+		$errors = $this->_errors[$type];
+		if ($get_messages_only) {
+			return $errors->get_error_messages();
+		}
+		return $errors;
+	}
+
+	/**
+	 * Check if any errors were recorded
+	 *
+	 * @param string $type - The error type
+	 * @return boolean
+	 */
+	public function has_errors($type = 'error') {
+		return isset($this->_errors[$type]) && !empty($this->_errors[$type]) && $this->_errors[$type]->has_errors();
+	}
+
+	/**
+	 * Check if any warnings were recorded
+	 *
+	 * @return boolean
+	 */
+	public function has_warnings() {
+		return $this->has_errors('warning');
 	}
 }
 
