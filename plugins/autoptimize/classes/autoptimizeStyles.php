@@ -343,8 +343,9 @@ class autoptimizeStyles extends autoptimizeBase
                                 if ( ! empty( $minified_url ) ) {
                                     // Replace orig URL with cached minified URL.
                                     $new_tag = str_replace( $url, $minified_url, $tag );
-                                } else {
-                                    // Remove the original style tag, because cache content is empty.
+                                } elseif ( apply_filters( 'autoptimize_filter_ccsjs_remove_empty_minified_url', false ) ) {
+                                    // Remove the original style tag, because cache content is empty but only if
+                                    // filter is true-ed because $minified_url is also false if file is minified already.
                                     $new_tag = '';
                                 }
                             }
@@ -381,7 +382,7 @@ class autoptimizeStyles extends autoptimizeBase
     private function optionally_defer_excluded( $tag, $url = '' )
     {
         // Defer single CSS if "inline & defer" is ON and there is inline CSS.
-        if ( ! empty( $tag ) && $this->defer && ! empty( $this->defer_inline ) && apply_filters( 'autoptimize_filter_css_defer_excluded', true, $tag ) ) {
+        if ( ! empty( $tag ) && false === strpos( $tag, ' onload=' ) && $this->defer && ! empty( $this->defer_inline ) && apply_filters( 'autoptimize_filter_css_defer_excluded', true, $tag ) ) {
             // Get/ set (via filter) the JS to be triggers onload of the preloaded CSS.
             $_preload_onload = apply_filters(
                 'autoptimize_filter_css_preload_onload',
