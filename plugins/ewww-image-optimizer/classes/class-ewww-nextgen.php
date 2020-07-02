@@ -346,7 +346,10 @@ if ( ! class_exists( 'EWWW_Nextgen' ) ) {
 		 */
 		function ewww_ngg_manual_actions_script( $hook ) {
 			$screen = get_current_screen();
-			if ( is_null( $screen ) || 'nggallery-manage-images' !== $screen->id ) {
+			if ( is_null( $screen ) ) {
+				return;
+			}
+			if ( 'nextgen-gallery_page_nggallery-manage-gallery' !== $screen->id && 'nggallery-manage-images' !== $screen->id ) {
 				return;
 			}
 			if ( ! current_user_can( apply_filters( 'ewww_image_optimizer_manual_permissions', '' ) ) ) {
@@ -511,7 +514,7 @@ if ( ! class_exists( 'EWWW_Nextgen' ) ) {
 					// Display the optimization link with the appropriate text.
 					$this->ewww_render_optimize_action_link( $image->pid, null, true, $backup_available );
 				} elseif ( ewww_image_optimizer_image_is_pending( $image->pid, 'nextg-async' ) ) {
-					echo esc_html( 'In Progress', 'ewww-image-optimizer' ) . '<br>';
+					echo '<div>' . esc_html__( 'In Progress', 'ewww-image-optimizer' ) . '</div>';
 					// Otherwise, give the image size, and a link to optimize right now.
 				} else {
 					// Display the optimization link with the appropriate text.
