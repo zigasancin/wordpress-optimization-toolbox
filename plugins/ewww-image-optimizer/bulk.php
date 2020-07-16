@@ -89,6 +89,17 @@ function ewww_image_optimizer_display_tools() {
 	echo "<form id='ewww-clear-table' class='ewww-tool-form' method='post' action=''>\n" .
 		"<input type='submit' class='button-secondary action' value='" . esc_attr__( 'Erase Optimization History', 'ewww-image-optimizer' ) . "' />\n" .
 		"</form>\n</div>\n";
+
+	echo '<hr class="ewww-tool-divider">';
+	echo "<div>\n<p id='ewww-clean-converted-info' class='ewww-tool-info'>" .
+		esc_html__( 'If you have converted images (PNG to JPG and friends) without deleting the originals, you may remove them when ready.', 'ewww-image-optimizer' ) . "<br>\n" .
+		'<i>' . esc_html__( 'Please perform a site backup before proceeding.', 'ewww-image-optimizer' ) . "</i></p>\n";
+	echo "<form id='ewww-clean-converted' class='ewww-tool-form' method='post' action=''>\n" .
+		"<input type='submit' class='button-secondary action' value='" . esc_attr__( 'Remove Converted Originals', 'ewww-image-optimizer' ) . "' />\n" .
+		"</form>\n</div>\n";
+	echo "<div id='ewww-clean-converted-progressbar' style='display:none;'></div>";
+	echo "<div id='ewww-clean-converted-progress' style='display:none;'></div>";
+
 	$as3cf_remove = false;
 	if ( class_exists( 'Amazon_S3_And_CloudFront' ) ) {
 		global $as3cf;
@@ -107,6 +118,7 @@ function ewww_image_optimizer_display_tools() {
 		echo "<div id='ewww-clean-table-progressbar' style='display:none;'></div>";
 		echo "<div id='ewww-clean-table-progress' style='display:none;'></div>";
 	}
+
 	global $wpdb;
 	echo '<hr class="ewww-tool-divider">';
 	echo "<div>\n<p id='ewww-clean-meta-info' class='ewww-tool-info'>" .
@@ -442,9 +454,7 @@ function ewww_image_optimizer_reduce_query_count( $max_query ) {
  *     The image count(s) found during the search.
  *
  *     @type int $full_count The number of original uploads found.
- *     @type int $unoptimized_full The number of original uploads that have not been optimized.
  *     @type int $resize_count The number of thumbnails/resizes found.
- *     @type int $unoptimized_re The number of resizes that are not optimized.
  * }
  */
 function ewww_image_optimizer_count_optimized( $gallery ) {
@@ -452,8 +462,6 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 	ewwwio_debug_message( "scanning for $gallery" );
 	global $wpdb;
 	$full_count             = 0;
-	$unoptimized_full       = 0;
-	$unoptimized_re         = 0;
 	$resize_count           = 0;
 	$attachment_query       = '';
 	$started                = microtime( true ); // Retrieve the time when the counting starts.
@@ -498,17 +506,11 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 					if ( ! is_array( $meta ) ) {
 						continue;
 					}
-					if ( empty( $meta['ewww_image_optimizer'] ) ) {
-							$unoptimized_full++;
-					}
 					$ngg_sizes = $ewwwngg->maybe_get_more_sizes( $sizes, $meta );
 					if ( ewww_image_optimizer_iterable( $ngg_sizes ) ) {
 						foreach ( $ngg_sizes as $size ) {
 							if ( 'full' !== $size ) {
 								$resize_count++;
-								if ( empty( $meta[ $size ]['ewww_image_optimizer'] ) ) {
-									$unoptimized_re++;
-								}
 							}
 						}
 					}
@@ -547,20 +549,11 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 					if ( ! is_array( $meta ) ) {
 						continue;
 					}
-					if ( empty( $meta['ewww_image_optimizer'] ) ) {
-						$unoptimized_full++;
-					}
 					if ( ! empty( $meta['webview'] ) ) {
 						$resize_count++;
-						if ( empty( $meta['webview']['ewww_image_optimizer'] ) ) {
-							$unoptimized_re++;
-						}
 					}
 					if ( ! empty( $meta['thumbnail'] ) ) {
 						$resize_count++;
-						if ( empty( $meta['thumbnail']['ewww_image_optimizer'] ) ) {
-							$unoptimized_re++;
-						}
 					}
 				}
 				$full_count += count( $attachments );
@@ -585,9 +578,9 @@ function ewww_image_optimizer_count_optimized( $gallery ) {
 	}
 	$elapsed = microtime( true ) - $started;
 	ewwwio_debug_message( "counting images took $elapsed seconds" );
-	ewwwio_debug_message( "found $full_count fullsize ($unoptimized_full unoptimized), and $resize_count resizes ($unoptimized_re unoptimized)" );
+	ewwwio_debug_message( "found $full_count fullsize and $resize_count resizes" );
 	ewwwio_memory( __FUNCTION__ );
-	return array( $full_count, $unoptimized_full, $resize_count, $unoptimized_re );
+	return array( $full_count, $resize_count );
 }
 
 /**
@@ -841,6 +834,8 @@ function ewww_image_optimizer_fetch_metadata_batch( $attachments_in ) {
 			continue;
 		} elseif ( 'tiny_compress_images' === $attachment['meta_key'] ) {
 			$attachment_meta[ $attachment['post_id'] ]['tinypng'] = true;
+		} elseif ( 'wpml_media_processed' === $attachment['meta_key'] ) {
+			$attachment_meta[ $attachment['post_id'] ]['wpml_media_processed'] = (bool) $attachment['meta_value'];
 		}
 		if ( ! empty( $attachment['post_mime_type'] ) && empty( $attachment_meta[ $attachment['post_id'] ]['type'] ) ) {
 			$attachment_meta[ $attachment['post_id'] ]['type'] = $attachment['post_mime_type'];
@@ -1063,6 +1058,11 @@ function ewww_image_optimizer_media_scan( $hook = '' ) {
 			clearstatcache();
 			$pending     = false;
 			$remote_file = false;
+			if ( ! empty( $attachment_meta[ $selected_id ]['wpml_media_processed'] ) ) {
+				ewwwio_debug_message( "skipping WPML replica image $selected_id" );
+				$skipped_ids[] = $selected_id;
+				continue;
+			}
 			if ( in_array( $selected_id, $bad_attachments, true ) ) { // a known broken attachment, which would mean we already tried this once before...
 				ewwwio_debug_message( "skipping bad attachment $selected_id" );
 				$skipped_ids[] = $selected_id;

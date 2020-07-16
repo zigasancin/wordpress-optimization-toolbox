@@ -49,7 +49,13 @@ function ewww_image_optimizer_exec_init() {
 	if ( EWWW_IMAGE_OPTIMIZER_CLOUD ) {
 		ewwwio_debug_message( 'cloud options enabled, shutting off binaries' );
 		ewww_image_optimizer_disable_tools();
-	} elseif ( defined( 'WPCOMSH_VERSION' ) || ! empty( $_ENV['PANTHEON_ENVIRONMENT'] ) || defined( 'WPE_PLUGIN_VERSION' ) ) {
+	} elseif (
+		defined( 'WPCOMSH_VERSION' ) ||
+		! empty( $_ENV['PANTHEON_ENVIRONMENT'] ) ||
+		defined( 'WPE_PLUGIN_VERSION' ) ||
+		defined( 'FLYWHEEL_CONFIG_DIR' ) ||
+		defined( 'KINSTAMU_VERSION' )
+	) {
 		if (
 			! ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) &&
 			( ! is_object( $exactdn ) || ! $exactdn->get_exactdn_domain() )
@@ -60,7 +66,7 @@ function ewww_image_optimizer_exec_init() {
 		if ( ! defined( 'EWWW_IMAGE_OPTIMIZER_NOEXEC' ) ) {
 			define( 'EWWW_IMAGE_OPTIMIZER_NOEXEC', true );
 		}
-		ewwwio_debug_message( 'WPE/wp.com/pantheon site, disabling tools' );
+		ewwwio_debug_message( 'WPE/wp.com/pantheon/flywheel site, disabling tools' );
 		ewww_image_optimizer_disable_tools();
 		// Check if this is an unsupported OS (not Linux or Mac OSX or FreeBSD or Windows or SunOS).
 	} elseif ( 'Linux' !== PHP_OS && 'Darwin' !== PHP_OS && 'FreeBSD' !== PHP_OS && 'WINNT' !== PHP_OS && 'SunOS' !== PHP_OS ) {
@@ -160,14 +166,38 @@ function ewww_image_optimizer_notice_hosting_requires_api() {
 		$webhost = 'Pantheon';
 	} elseif ( defined( 'WPE_PLUGIN_VERSION' ) ) {
 		$webhost = 'WP Engine';
+	} elseif ( defined( 'FLYWHEEL_CONFIG_DIR' ) ) {
+		$webhost = 'Flywheel';
+	} elseif ( defined( 'KINSTAMU_VERSION' ) ) {
+		$webhost = 'Kinsta';
 	} else {
 		return;
 	}
-	echo "<div id='ewww-image-optimizer-cloud-key-required' class='notice notice-warning'><p><strong>" .
+	if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_dismiss_exec_notice' ) ) {
+		return;
+	}
+	echo "<div id='ewww-image-optimizer-warning-exec' class='notice notice-warning is-dismissible'><p>" .
 		/* translators: %s: Name of a web host, like WordPress.com or Pantheon. */
-		sprintf( esc_html__( 'The EWWW Image Optimizer needs an API key or Easy IO subscription to optimize images on %s sites.', 'ewww-image-optimizer-cloud' ), esc_html( $webhost ) ) .
-		"</strong> <a href='https://ewww.io/plans/'>" . esc_html__( 'Start your trial.', 'ewww-image-optimizer-cloud' ) .
-		"</a> <a href='" . esc_url( $settings_url ) . "'>" . esc_html__( 'Then, activate it on the settings page.', 'ewww-image-optimizer-cloud' ) . '</a></p></div>';
+		sprintf( esc_html__( 'Normally, %s sites require cloud-based optimization, because server-based optimization is disallowed. However, we are trying something new, and offering free cloud-based JPG compression. Those who upgrade to our premium service receive much higher compression, PNG/GIF/PDF compression, WebP conversion, and image backups.', 'ewww-image-optimizer' ), esc_html( $webhost ) ) .
+		'<br><strong>' .
+		/* translators: %s: link to 'start your free trial' */
+		sprintf( esc_html__( 'Dismiss this notice to continue with free cloud-based JPG compression or %s.', 'ewww-image-optimizer' ), "<a href='https://ewww.io/plans/'>" . esc_html__( 'start your premium trial', 'ewww-image-optimizer' ) . '</a>' );
+	ewwwio_help_link( 'https://docs.ewww.io/article/29-what-is-exec-and-why-do-i-need-it', '592dd12d0428634b4a338c39' );
+	echo '</strong></p></div>';
+	?>
+<script>
+	jQuery(document).on('click', '#ewww-image-optimizer-warning-exec .notice-dismiss', function() {
+		var ewww_dismiss_exec_data = {
+			action: 'ewww_dismiss_exec_notice',
+		};
+		jQuery.post(ajaxurl, ewww_dismiss_exec_data, function(response) {
+			if (response) {
+				console.log(response);
+			}
+		});
+	});
+</script>
+	<?php
 }
 
 /**
@@ -177,7 +207,9 @@ function ewww_image_optimizer_notice_os() {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	echo "<div id='ewww-image-optimizer-warning-os' class='notice notice-error'><p><strong>" .
 		esc_html__( 'The free mode of EWWW Image Optimizer is only supported on Linux, FreeBSD, Mac OSX, Solaris, and Windows.', 'ewww-image-optimizer' ) .
-		'</strong></p></div>';
+		'</strong><br>' .
+		"<a href='https://ewww.io/plans/'>" . esc_html__( 'Visit our site to start your free trial with cloud-based optimization.', 'ewww-image-optimizer' ) . '</a>' .
+		'</p></div>';
 }
 
 /**
@@ -450,7 +482,7 @@ function ewww_image_optimizer_skip_tools() {
 	$skip['pngquant'] = true;
 	$skip['webp']     = true;
 	// If the user has disabled a tool, we aren't going to bother checking to see if it is there.
-	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' ) || ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' ) > 10 ) {
+	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' ) || ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' ) > 10 || ( defined( 'EWWW_IMAGE_OPTIMIZER_NOEXEC' ) && EWWW_IMAGE_OPTIMIZER_NOEXEC ) ) {
 		$skip['jpegtran'] = true;
 	}
 	if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) || ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) && ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) > 10 ) ) {
@@ -503,10 +535,12 @@ function ewww_image_optimizer_dismiss_exec_notice() {
 	if ( ! current_user_can( apply_filters( 'ewww_image_optimizer_admin_permissions', 'manage_options' ) ) ) {
 		wp_die( esc_html__( 'Access denied.', 'ewww-image-optimizer' ) );
 	}
-	update_option( 'ewww_image_optimizer_jpg_level', 0 );
+	update_option( 'ewww_image_optimizer_jpg_level', 10 );
 	update_option( 'ewww_image_optimizer_png_level', 0 );
 	update_option( 'ewww_image_optimizer_gif_level', 0 );
 	update_option( 'ewww_image_optimizer_pdf_level', 0 );
+	update_option( 'ewww_image_optimizer_dismiss_exec_notice', 1 );
+	update_site_option( 'ewww_image_optimizer_dismiss_exec_notice', 1 );
 	wp_die();
 }
 
@@ -519,42 +553,42 @@ function ewww_image_optimizer_notice_utils( $quiet = null ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	// Check if exec is disabled.
 	if ( ewww_image_optimizer_exec_check() ) {
-		$no_compression = false;
-		if (
-			! ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' ) &&
-			! ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) &&
-			! ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_level' )
-		) {
-			$no_compression = true;
-		}
 		// Need to be a little particular with the quiet parameter.
-		if ( 'quiet' !== $quiet && ! $no_compression ) {
+		if ( 'quiet' !== $quiet && ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_dismiss_exec_notice' ) ) {
 			$exactdn_dismiss = ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) ? true : false;
 			ob_start();
-			$notice_class  = 'notice notice-error';
+			$notice_class  = 'notice notice-warning is-dismissible';
 			$notice_action = __( 'An API key or Easy IO subscription will allow you to offload the compression to our dedicated servers instead.', 'ewww-image-optimizer' );
+			/* translators: %s: link to 'start your free trial' */
+			$notice_action = sprintf( __( 'You may ask your system administrator to enable exec(), dismiss this notice to continue with free cloud-based compression or %s.', 'ewww-image-optimizer' ), "<a href='https://ewww.io/plans/'>" . __( 'start your premium trial', 'ewww-image-optimizer' ) . '</a>' ) . '</p></div>';
 			if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) ) {
-				$notice_class  = 'notice notice-warning is-dismissible';
 				$notice_action = __( 'Sites that use Easy IO already have built-in image optimization and may dismiss this notice to disable local compression.', 'ewww-image-optimizer' );
 			}
 			// Display a warning if exec() is disabled, can't run local tools without it.
 			echo "<div id='ewww-image-optimizer-warning-exec' class='" . esc_attr( $notice_class ) . "'><p>" .
-				esc_html__( 'EWWW Image Optimizer requires exec() to perform local compression. Your system administrator has disabled the exec() function, ask them to enable it.', 'ewww-image-optimizer' ) . '<br>' .
-				esc_html( $notice_action ) .
-				'</p></div>';
-				echo
-					"<script>\n" .
-					"jQuery(document).on('click', '#ewww-image-optimizer-warning-exec .notice-dismiss', function() {\n" .
-						"\tvar ewww_dismiss_exec_data = {\n" .
-							"\t\taction: 'ewww_dismiss_exec_notice',\n" .
-						"\t};\n" .
-						"\tjQuery.post(ajaxurl, ewww_dismiss_exec_data, function(response) {\n" .
-							"\t\tif (response) {\n" .
-								"\t\t\tconsole.log(response);\n" .
-							"\t\t}\n" .
-						"\t});\n" .
-					"});\n" .
-					"</script>\n";
+				esc_html__( ' Normally, sites where the exec() function is banned require cloud-based optimization, because free server-based optimization will not work. However, we are trying something new, and offering free cloud-based JPG compression. Those who upgrade to our premium service receive much higher compression, PNG/GIF/PDF compression, WebP conversion, and image backups.', 'ewww-image-optimizer' ) . '<br>' .
+				'<strong>' .
+				( ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) || get_option( 'easyio_exactdn' ) ?
+				esc_html__( 'Sites that use Easy IO already have built-in image optimization and may dismiss this notice to disable local compression.', 'ewww-image-optimizer' )
+				:
+				/* translators: %s: link to 'start your free trial' */
+				sprintf( esc_html__( 'You may ask your system administrator to enable exec(), dismiss this notice to continue with free cloud-based compression or %s.', 'ewww-image-optimizer' ), "<a href='https://ewww.io/plans/'>" . esc_html__( 'start your premium trial', 'ewww-image-optimizer' ) . '</a>' )
+			);
+			ewwwio_help_link( 'https://docs.ewww.io/article/29-what-is-exec-and-why-do-i-need-it', '592dd12d0428634b4a338c39' );
+			echo '</strong></p></div>';
+			echo
+				"<script>\n" .
+				"jQuery(document).on('click', '#ewww-image-optimizer-warning-exec .notice-dismiss', function() {\n" .
+					"\tvar ewww_dismiss_exec_data = {\n" .
+						"\t\taction: 'ewww_dismiss_exec_notice',\n" .
+					"\t};\n" .
+					"\tjQuery.post(ajaxurl, ewww_dismiss_exec_data, function(response) {\n" .
+						"\t\tif (response) {\n" .
+							"\t\t\tconsole.log(response);\n" .
+						"\t\t}\n" .
+					"\t});\n" .
+				"});\n" .
+				"</script>\n";
 			if (
 				ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) &&
 				! ewww_image_optimizer_get_option( 'ewww_image_optimizer_local_mode' )
@@ -1901,6 +1935,10 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 				} else {
 					$webp_result = ewww_image_optimizer_webp_create( $file, $new_size, $type, null, $orig_size !== $new_size );
 				}
+				break;
+			}
+			if ( 10 === (int) $compression_level && EWWW_IMAGE_OPTIMIZER_NOEXEC ) {
+				list( $file, $converted, $result, $new_size, $backup_hash ) = ewww_image_optimizer_cloud_optimizer( $file, $type );
 				break;
 			}
 			// If we get this far, we are using local (jpegtran) optimization, so do an autorotate on the image.
