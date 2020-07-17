@@ -1,13 +1,27 @@
 <?php
+/**
+ * WP CLI command class
+ *
+ * @package Rhubarb\RedisCache
+ */
 
-WP_CLI::add_command( 'redis', 'RedisObjectCache_CLI_Commands' );
+namespace Rhubarb\RedisCache\CLI;
+
+use WP_CLI;
+use WP_CLI_Command;
+
+use WP_Filesystem;
+
+use Rhubarb\RedisCache\Plugin;
+
+defined( '\\ABSPATH' ) || exit;
 
 /**
  * Enables, disabled, updates, and checks the status of the Redis object cache.
  *
  * @package wp-cli
  */
-class RedisObjectCache_CLI_Commands extends WP_CLI_Command {
+class Commands extends WP_CLI_Command {
 
     /**
      * Show the Redis object cache status and (when possible) client.
@@ -15,14 +29,12 @@ class RedisObjectCache_CLI_Commands extends WP_CLI_Command {
      * ## EXAMPLES
      *
      *     wp redis status
-     *
      */
     public function status() {
 
-        $plugin = $GLOBALS[ 'redisObjectCache' ];
+        $plugin = Plugin::instance();
         $status = $plugin->get_status();
         $client = $plugin->get_redis_client_name();
-
 
         switch ( $status ) {
             case __( 'Disabled', 'redis-cache' ):
@@ -53,32 +65,29 @@ class RedisObjectCache_CLI_Commands extends WP_CLI_Command {
      * ## EXAMPLES
      *
      *     wp redis enable
-     *
      */
     public function enable() {
 
         global $wp_filesystem;
 
-        $plugin = $GLOBALS[ 'redisObjectCache' ];
+        $plugin = Plugin::instance();
 
         if ( $plugin->object_cache_dropin_exists() ) {
 
             if ( $plugin->validate_object_cache_dropin() ) {
                 WP_CLI::line( __( 'Redis object cache already enabled.', 'redis-cache' ) );
             } else {
-                WP_CLI::error( __('An unknown object cache drop-in was found. To use Redis run: wp redis update-dropin.', 'redis-cache') );
+                WP_CLI::error( __( 'A foreign object cache drop-in was found. To use Redis for object caching, run: `wp redis update-dropin`.', 'redis-cache' ) );
             }
-
         } else {
 
             WP_Filesystem();
 
-            if ( $wp_filesystem->copy( WP_PLUGIN_DIR . '/redis-cache/includes/object-cache.php', WP_CONTENT_DIR . '/object-cache.php', true ) ) {
+            if ( $wp_filesystem->copy( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php', WP_CONTENT_DIR . '/object-cache.php', true ) ) {
                 WP_CLI::success( __( 'Object cache enabled.', 'redis-cache' ) );
             } else {
                 WP_CLI::error( __( 'Object cache could not be enabled.', 'redis-cache' ) );
             }
-
         }
 
     }
@@ -92,13 +101,12 @@ class RedisObjectCache_CLI_Commands extends WP_CLI_Command {
      * ## EXAMPLES
      *
      *     wp redis disable
-     *
      */
     public function disable() {
 
         global $wp_filesystem;
 
-        $plugin = $GLOBALS[ 'redisObjectCache' ];
+        $plugin = Plugin::instance();
 
         if ( ! $plugin->object_cache_dropin_exists() ) {
 
@@ -108,7 +116,7 @@ class RedisObjectCache_CLI_Commands extends WP_CLI_Command {
 
             if ( ! $plugin->validate_object_cache_dropin() ) {
 
-                WP_CLI::error( __( 'An unknown object cache drop-in was found. To use Redis run: wp redis update-dropin.', 'redis-cache' ) );
+                WP_CLI::error( __( 'A foreign object cache drop-in was found. To use Redis for object caching, run: `wp redis update-dropin`.', 'redis-cache' ) );
 
             } else {
 
@@ -119,9 +127,7 @@ class RedisObjectCache_CLI_Commands extends WP_CLI_Command {
                 } else {
                     WP_CLI::error( __( 'Object cache could not be disabled.', 'redis-cache' ) );
                 }
-
             }
-
         }
 
     }
@@ -143,7 +149,7 @@ class RedisObjectCache_CLI_Commands extends WP_CLI_Command {
 
         WP_Filesystem();
 
-        if ( $wp_filesystem->copy( WP_PLUGIN_DIR . '/redis-cache/includes/object-cache.php', WP_CONTENT_DIR . '/object-cache.php', true  )) {
+        if ( $wp_filesystem->copy( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php', WP_CONTENT_DIR . '/object-cache.php', true ) ) {
             WP_CLI::success( __( 'Updated object cache drop-in and enabled Redis object cache.', 'redis-cache' ) );
         } else {
             WP_CLI::error( __( 'Object cache drop-in could not be updated.', 'redis-cache' ) );
