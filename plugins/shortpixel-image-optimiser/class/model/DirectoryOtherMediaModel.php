@@ -1,7 +1,9 @@
 <?php
-namespace ShortPixel;
+namespace ShortPixel\Model;
 use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Notices\NoticeController as Notice;
+
+use \ShortPixel\Model\DirectoryModel as DirectoryModel;
 
 // extends DirectoryModel. Handles Shortpixel_meta database table
 // Replacing main parts of shortpixel-folder
@@ -82,9 +84,9 @@ class DirectoryOtherMediaModel extends DirectoryModel
       }
       else
       {
-        $this->updated = $this->DBtoTimestamp($folder->ts_updated);
-        $this->created = $this->DBtoTimestamp($folder->ts_created);
-        $this->fileCount = $folder->file_count;
+        $this->updated = isset($folder->ts_updated) ? $this->DBtoTimestamp($folder->ts_updated) : time();
+        $this->created = isset($folder->ts_created) ? $this->DBtoTimestamp($folder->ts_created) : time();
+        $this->fileCount = isset($folder->file_count) ? $folder->file_count : 0;
       }
       if (strlen($folder->name) == 0)
         $this->name = basename($folder->path);
@@ -310,7 +312,7 @@ class DirectoryOtherMediaModel extends DirectoryModel
     $args = wp_parse_args($args, $defaults);
 
     $fs =  \wpSPIO()->fileSystem();
-    $cache = new \ShortPixel\CacheController();
+    $cache = new \ShortPixel\Controller\CacheController();
 
     $spMetaDao = \wpSPIO()->getShortPixel()->getSpMetaDao();
 

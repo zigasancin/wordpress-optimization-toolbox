@@ -1,12 +1,12 @@
 <?php
-namespace ShortPixel;
+namespace ShortPixel\Model;
 use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
 
 /** Loads a few environment variables handy to have nearby
 *
 * Notice - This is meant to be loaded via the plugin class. Easy access with wpSPIO()->getEnv().
 */
-class EnvironmentModel extends ShortPixelModel
+class EnvironmentModel extends \ShortPixel\Model
 {
     // Server and PHP
     public $is_nginx;
@@ -136,6 +136,7 @@ class EnvironmentModel extends ShortPixelModel
         'upload', // media library
         'attachment', // edit media
         'post', // post screen
+        'page', // page editor
         'edit-post', // edit post
         'new-post',  // new post
         'edit-page', // all pages
@@ -174,7 +175,7 @@ class EnvironmentModel extends ShortPixelModel
 
   public function setIntegrations()
   {
-    $ng = NextGen::getInstance();
+    $ng = \ShortPixel\NextGen::getInstance();
     $this->has_nextgen = $ng->has_nextgen();
 
   }

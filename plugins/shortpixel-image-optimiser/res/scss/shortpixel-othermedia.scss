@@ -124,6 +124,8 @@
            min-height: 60px;
            display: inline-block;
            border: 1px solid #ccc;
+           background-size: cover;
+           background-position: center;
 
            img {
              max-width: 60px;
@@ -135,14 +137,47 @@
          .actions
          {
            min-width: 105px;
+
+           div
+           {
+            //float: right;
+           }
          }
-         .single-action.button-primary a
+         .single-action
          {
-           color: #fff;
-           text-decoration: none;
+           text-align: left;
+           a
+           {
+             color: #fff;
+             text-decoration: none;
+             text-align: center;
+             
+           }
+           .button-smaller
+           {
+             width: 110px;
+           }
+         }
+
+         .multi-action-wrapper
+         {
+           display: flex;
+           flex-direction: column;
+           .single-action
+           {
+             display: inline-block;
+             margin: 8px 0;
+             a
+             {
+               display: block;
+
+             }
+           }
+
          }
          .sp-column-info {
-           width: 400px;
+           max-width: 400px;
+           min-width: 250px;
            display: inline-block;
            @media(max-width: 1550px) {
                width: auto;

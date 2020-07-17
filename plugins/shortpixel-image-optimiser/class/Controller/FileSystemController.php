@@ -1,22 +1,21 @@
 <?php
-namespace ShortPixel;
+namespace ShortPixel\Controller;
 use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+use ShortPixel\Model\DirectoryModel as DirectoryModel;
+use ShortPixel\Model\FileModel as FileModel;
 
 
 /** Controller for FileSystem operations
 *
 * This controller is used for -compound- ( complex ) FS operations, using the provided models File en Directory.
 */
-Class FileSystemController extends ShortPixelController
+Class FileSystemController extends \ShortPixel\Controller
 {
     protected $env;
 
     public function __construct()
     {
-      $this->loadModel('file');
-      $this->loadModel('directory');
-    //  $this->loadModel('environment');
-
       $this->env = wpSPIO()->env();
 
     }
@@ -166,7 +165,23 @@ Class FileSystemController extends ShortPixelController
         if (is_null($url))
           return false;
 
-        $parsed = parse_url($url); // returns array, null, or false. 
+        $parsed = parse_url($url); // returns array, null, or false.
+
+        // Some hosts set the content dir to a relative path instead of a full URL. Api can't handle that, so add domain and such if this is the case.
+        if ( !isset($parsed['scheme']) ) {//no absolute URLs used -> we implement a hack
+
+           if (isset($parsed['host'])) // This is for URL's for // without http or https. hackhack.
+           {
+             $scheme = is_ssl() ? 'https:' : 'http:';
+             return $scheme. $url;
+           }
+           else
+           {
+           // From Metafacade. Multiple solutions /hacks.
+              $home_url = trailingslashit((function_exists("is_multisite") && is_multisite()) ? trim(network_site_url("/")) : trim(home_url()));
+              return $home_url . ltrim($url,'/');//get the file URL
+           }
+        }
 
         if (! is_null($parsed) && $parsed !== false)
           return $url;
