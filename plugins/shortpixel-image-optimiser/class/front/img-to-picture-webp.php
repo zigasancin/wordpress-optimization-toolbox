@@ -194,17 +194,23 @@ class ShortPixelImgToPictureWebp
         }
 
           //  $defs = explode(",", $srcset);
+          $mime = ''; // inint
 
         foreach ($definitions as $item) {
                 $parts = preg_split('/\s+/', trim($item));
 
                 $fileurl = $parts[0];
+                // A source that starts with data:, will not need processing.
+                if (strpos($fileurl, 'data:') === 0)
+                  continue;
                 $condition = isset($parts[1]) ? ' ' . $parts[1] : '';
 
                 Log::addDebug('Running item - ' . $item, $fileurl);
 
                 $fsFile = $fs->getFile($fileurl);
                 $extension = $fsFile->getExtension(); // trigger setFileinfo, which will resolve URL -> Path
+
+                $mime = $fsFile->getMime();
 
                 $fileWebp = $fs->getFile($imageBase . $fsFile->getFileBase() . '.webp');
                 $fileWebpCompat = $fs->getFile($imageBase . $fsFile->getFileName() . '.webp');
@@ -293,7 +299,7 @@ class ShortPixelImgToPictureWebp
 
         return '<picture ' . $this->create_attributes($imgpicture) . '>'
         .'<source ' . $srcsetPrefix . 'srcset="' . $srcsetWebP . '"' . ($sizes ? ' ' . $sizesPrefix . 'sizes="' . $sizes . '"' : '') . ' type="image/webp">'
-        .'<source ' . $srcsetPrefix . 'srcset="' . $srcset . '"' . ($sizes ? ' ' . $sizesPrefix . 'sizes="' . $sizes . '"' : '') . '>'
+        .'<source ' . $srcsetPrefix . 'srcset="' . $srcset . '"' . ($sizes ? ' ' . $sizesPrefix . 'sizes="' . $sizes . '"' : '') . ' type="' . $mime  . '">'
         .'<img ' . $srcPrefix . 'src="' . $src . '" ' . $this->create_attributes($img) . $idAttr . $altAttr . $heightAttr . $widthAttr
             . (strlen($srcset) ? ' srcset="' . $srcset . '"': '') . (strlen($sizes) ? ' sizes="' . $sizes . '"': '') . '>'
         .'</picture>';
@@ -415,6 +421,14 @@ class ShortPixelImgToPictureWebp
     **/
     public function getImageBase($src)
     {
+
+      $fs = \wpSPIO()->filesystem();
+      $fileObj = $fs->getFile($src);
+      $fileDir = $fileObj->getFileDir();
+
+      return $fileObj->getFileDir();  // Testing, the rest might be unneeded.
+/*
+
         $urlParsed = parse_url($src);
         if(!isset($urlParsed['host'])) {
             if($src[0] == '/') { //absolute URL, current domain
@@ -426,6 +440,8 @@ class ShortPixelImgToPictureWebp
             $urlParsed = parse_url($src);
         }
       $updir = wp_upload_dir();
+
+
       if(substr($src, 0, 2) == '//') {
           $src = (stripos($_SERVER['SERVER_PROTOCOL'],'https') === false ? 'http:' : 'https:') . $src;
       }
@@ -442,6 +458,7 @@ class ShortPixelImgToPictureWebp
       }
 
       $imageBase = str_replace($updir['baseurl'], SHORTPIXEL_UPLOADS_BASE, $src);
+
       if ($imageBase == $src) { //for themes images or other non-uploads paths
           $imageBase = str_replace(content_url(), WP_CONTENT_DIR, $src);
       }
@@ -464,7 +481,7 @@ class ShortPixelImgToPictureWebp
 
        Log::addDebug('Webp Image Base found: ' . $imageBase);
         $imageBase = trailingslashit(dirname($imageBase));
-        return $imageBase;
+        return $imageBase; */
     }
 
     public function get_attributes($image_node)

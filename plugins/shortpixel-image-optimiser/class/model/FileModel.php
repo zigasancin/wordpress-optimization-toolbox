@@ -21,6 +21,7 @@ class FileModel extends \ShortPixel\Model
   protected $filebase = null; // filename without extension
   protected $directory = null;
   protected $extension = null;
+  protected $mime = null;
 
   // File Status
   protected $exists = null;
@@ -59,7 +60,6 @@ class FileModel extends \ShortPixel\Model
 
 
       $info = $this->mb_pathinfo($this->fullpath);
-
       // Todo, maybe replace this with splFileINfo.
       if ($this->is_file()) // only set fileinfo when it's an actual file.
       {
@@ -161,11 +161,12 @@ class FileModel extends \ShortPixel\Model
   */
   public function getFileDir()
  {
+      $fullpath = $this->getFullPath(); // triggers a file lookup if needed.
       // create this only when needed.
-      if (is_null($this->directory) && strlen($this->fullpath) > 0)
+      if (is_null($this->directory) && strlen($fullpath) > 0)
       {
         // Feed to full path to DirectoryModel since it checks if input is file, or dir. Using dirname here would cause errors when fullpath is already just a dirpath ( faulty input )
-          $this->directory = new DirectoryModel($this->fullpath);
+          $this->directory = new DirectoryModel($fullpath);
       }
       return $this->directory;
   }
@@ -253,7 +254,7 @@ class FileModel extends \ShortPixel\Model
 
   public function getFullPath()
   {
-    if (is_null($this->filename))
+    if (is_null($this->filename)) // filename here since fullpath is set unchecked in constructor, but might be a different take
       $this->setFileInfo();
 
     return $this->fullpath;
@@ -269,20 +270,35 @@ class FileModel extends \ShortPixel\Model
 
   public function getFileBase()
   {
-    if (is_null($this->filename))
+    if (is_null($this->filebase))
       $this->setFileInfo();
 
     return $this->filebase;
   }
 
+
   public function getExtension()
   {
-    if (is_null($this->filename))
+    if (is_null($this->extension))
       $this->setFileInfo();
 
     return $this->extension;
   }
 
+  public function getMime()
+  {
+    if (is_null($this->mime))
+        $this->setFileInfo();
+
+    if ($this->exists())
+    {
+        $this->mime = wp_get_image_mime($this->fullpath);
+    }
+    else
+       $this->mime = false; 
+
+    return $this->mime;
+  }
   /* Util function to get location of backup Directory.
   * @return Boolean | DirectModel  Returns false if directory is not properly set, otherwhise with a new directoryModel
   */
@@ -330,13 +346,15 @@ class FileModel extends \ShortPixel\Model
 
     $path = wp_normalize_path($path);
 
-
     // if path does not contain basepath.
-    $uploadPath = wp_normalize_path($this->getUploadPath()); // mixed slashes and dashes can also be a config-error in WP.
-    $abspath = wp_normalize_path(ABSPATH); // yup, can also be wrong.
-    if (strpos($path, $abspath) === false && strpos($path, $uploadPath) === false)
-      $path = $this->relativeToFullPath($path);
+    $fs = \wpSPIO()->filesystem();
+    $uploadDir = $fs->getWPUploadBase();
+    $abspath = $fs->getWPAbsPath();
 
+    if (strpos($path, $abspath->getPath()) === false)
+    {
+      $path = $this->relativeToFullPath($path);
+    }
     $path = apply_filters('shortpixel/filesystem/processFilePath', $path, $original_path);
     /* This needs some check here on malformed path's, but can't be test for existing since that's not a requirement.
     if (file_exists($path) === false) // failed to process path to something workable.
@@ -352,7 +370,7 @@ class FileModel extends \ShortPixel\Model
   {
     $is_http = (substr($path, 0, 4) == 'http') ? true : false;
     $is_https = (substr($path, 0, 5) == 'https') ? true : false;
-    $is_neutralscheme = (substr($path, 0, 1) == '//') ? true : false; // when URL is relative like //wp-content/etc
+    $is_neutralscheme = (substr($path, 0, 2) == '//') ? true : false; // when URL is relative like //wp-content/etc
     $has_urldots = (strpos($path, '://') !== false) ? true : false;
 
     if ($is_http || $is_https || $is_neutralscheme || $has_urldots)
@@ -366,18 +384,23 @@ class FileModel extends \ShortPixel\Model
   private function UrlToPath($url)
   {
      //$uploadDir = wp_upload_dir();
+
      $site_url = str_replace('http:', '', get_site_url(null, '', 'http'));
      $url = str_replace(array('http:', 'https:'), '', $url);
 
      if (strpos($url, $site_url) !== false)
      {
        // try to replace URL for Path
-       $path = str_replace($site_url, rtrim(ABSPATH,'/'), $url);
+       $abspath =  \wpSPIO()->filesystem()->getWPAbsPath();
+       $path = str_replace($site_url, rtrim($abspath->getPath(),'/'), $url);
+
        if (! $this->pathIsUrl($path)) // test again.
        {
         return $path;
        }
      }
+
+
 
      return false; // seems URL from other server, can't file that.
   }
@@ -413,27 +436,39 @@ class FileModel extends \ShortPixel\Model
         return $path;
 
       // Path contains upload basedir. This happens when upload dir is outside of usual WP.
-      if (strpos($path, $this->getUploadPath()) !== false)
+      $fs = \wpSPIO()->filesystem();
+      $uploadDir = $fs->getWPUploadBase();
+      $abspath = $fs->getWPAbsPath();
+
+      if (strpos($path, $uploadDir->getPath()) !== false) // If upload Dir is feature in path, consider it ok.
       {
         return $path;
       }
-
+      elseif (file_exists($abspath->getPath() . $path)) // If upload dir is abspath plus return path. Exceptions.
+      {
+        return $abspath->getPath() . $path;
+      }
+      elseif(file_exists($uploadDir->getPath() . $path)) // This happens when upload_dir is not properly prepended in get_attachment_file due to WP errors
+      {
+          return $uploadDir->getPath() . $path;
+      }
 
       // this is probably a bit of a sharp corner to take.
       // if path starts with / remove it due to trailingslashing ABSPATH
       $path = ltrim($path, '/');
-      $fullpath = trailingslashit(ABSPATH) . $path;
+      $fullpath = $abspath->getPath() . $path;
       // We can't test for file_exists here, since file_model allows non-existing files.
       return $fullpath;
   }
 
-  private function getUploadPath()
+  /*private function getUploadPath()
   {
     $upload_dir = wp_upload_dir(null, false, false);
     $basedir = $upload_dir['basedir'];
 
     return $basedir;
-  }
+  } */
+
 
   /** Fix for multibyte pathnames and pathinfo which doesn't take into regard the locale.
   * This snippet taken from PHPMailer.
@@ -476,10 +511,3 @@ class FileModel extends \ShortPixel\Model
 
 
 } // FileModel Class
-
-/*
-// do this before putting the meta down, since maybeDump check for last timestamp
-$URLsAndPATHs = $itemHandler->getURLsAndPATHs(false);
-$this->maybeDumpFromProcessedOnServer($itemHandler, $URLsAndPATHs);
-
-*/
