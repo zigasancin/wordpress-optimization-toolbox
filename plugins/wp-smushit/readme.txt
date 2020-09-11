@@ -1,13 +1,13 @@
 === Smush - Compress, Optimize and Lazy Load Images ===
 Plugin Name: Smush - Compress, Optimize and Lazy Load Images
-Version: 3.6.3
+Version: 3.7.0
 Author: WPMU DEV
 Author URI: https://premium.wpmudev.org/
 Contributors: WPMUDEV, alexdunae
 Tags: optimize images, convert webp, lazy load, image, resize, optimize, optimise, compress, performance, optimisation, photography, optimizer
 Requires at least: 5.2
-Tested up to: 5.4.1
-Stable tag: 3.6.3
+Tested up to: 5.5
+Stable tag: 3.7.0
 Requires PHP: 5.6.20
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -36,6 +36,12 @@ Smush has been benchmarked and tested number one for speed and quality and is th
 - Super Servers - Smush images with no slowdown using WPMU DEV's fast, reliable Smush API
 - Convert to WebP (Pro Only) - Upgrade and automatically serve images in Next-Gen WebP
 - And many, many, more!
+
+### Learn The Ropes With These Hands-On Smush Tutorials
+
+- [How to Get the Most Out of Smush Image Optimization](https://premium.wpmudev.org/blog/how-to-get-the-most-out-of-smush/)
+- [How To Ace Google’s Image Page Speed Recommendations With Smush](https://premium.wpmudev.org/blog/smush-pagespeed-image-compression/)
+- [How To Bulk Optimize Images With Smush](https://premium.wpmudev.org/blog/smush-bulk-optimize-images/)
 
 ### Preserve Image Quality
 
@@ -175,9 +181,36 @@ It depends what side of the pond you live on...but whether you say optimize, opt
 
 == Changelog ==
 
+= 3.7.0 =
+
+- New: Option to disable noscript in lazy load
+- New: WordPress 5.5 lazy load compatibility
+- New: Integration with Translate Press
+- New: WP_SMUSH_CDN_DELAY_SRCSET constant to delay wp_calculate_image_srcset filter
+- New: WP_SMUSH_ASYNC_LAZY constant to utilize async loading for lazy load scripts
+- Enhance: Compatibility with S3-Uploads plugin
+- Enhance: Disable CDN and lazy load modules on customizer pages
+- Enhance: CDN parsing of background images
+- Enhance: Allow directory Smush in site directories
+- Enhance: Improve wording in directory Smush notices
+- Enhance: Async load lazy load scripts
+- Fix: Image resize detection styles
+- Fix: Fix errors detecting mime type of remote streams
+- Fix: Lazy loading integration with fusion galleries (Avada)
+- Fix: Lazy loading not working with images that have GET parameters
+- Fix: Lazy loading placeholders not visible on some themes
+- Fix: CDN background images not working with images that have GET parameters
+- Fix: CDN usage of content_width global
+- Fix: Skip iframes with invalid URLs from lazy loading
+- Fix: W3C validation warnings with CDN
+- Fix: Compatibility with Vimeography plugin
+- Fix: Soliloquy slider images' incorrect source
+- Fix: Soliloquy navigation misalignment when lazy loading
+- Fix: Smush page in NextGen Gallery plugin looking unstyled
+
 = 3.6.3 =
 
-Fix: CDN auto resize option causing issues with images
+- Fix: CDN auto resize option causing issues with images
 
 = 3.6.2 =
 

@@ -42,6 +42,7 @@ class Admin {
 	 */
 	public static $plugin_pages = array(
 		'gallery_page_wp-smush-nextgen-bulk',
+		'nextgen-gallery_page_wp-smush-nextgen-bulk', // Different since NextGen 3.3.6.
 		'toplevel_page_smush-network',
 		'toplevel_page_smush',
 		'smush_page_smush-upgrade-network',

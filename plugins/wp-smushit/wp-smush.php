@@ -13,7 +13,7 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
- * Version:           3.6.3
+ * Version:           3.7.0
  * Author:            WPMU DEV
  * Author URI:        https://profiles.wordpress.org/wpmudev/
  * License:           GPLv2
@@ -47,11 +47,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '3.6.3' );
+	define( 'WP_SMUSH_VERSION', '3.7.0' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
-	define( 'WP_SHARED_UI_VERSION', 'sui-2-7-0' );
+	define( 'WP_SHARED_UI_VERSION', 'sui-2-9-4' );
 }
 if ( ! defined( 'WP_SMUSH_BASENAME' ) ) {
 	define( 'WP_SMUSH_BASENAME', plugin_basename( __FILE__ ) );
@@ -264,6 +264,11 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 			$this->api = new Smush\Core\Api\API( self::get_api_key() );
 
 			self::$is_pro = $this->validate_install();
+
+			// Init hub endpoints.
+			if ( self::$is_pro ) {
+				new Smush\Core\Api\Hub();
+			}
 
 			$this->core    = new Smush\Core\Core();
 			$this->library = new Smush\App\Media_Library( $this->core() );
