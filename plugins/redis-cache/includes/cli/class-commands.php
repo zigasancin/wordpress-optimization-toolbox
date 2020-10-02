@@ -31,29 +31,9 @@ class Commands extends WP_CLI_Command {
      *     wp redis status
      */
     public function status() {
+        $roc = Plugin::instance();
 
-        $plugin = Plugin::instance();
-        $status = $plugin->get_status();
-        $client = $plugin->get_redis_client_name();
-
-        switch ( $status ) {
-            case __( 'Disabled', 'redis-cache' ):
-                $status = WP_CLI::colorize( "%y{$status}%n" );
-                break;
-            case __( 'Connected', 'redis-cache' ):
-                $status = WP_CLI::colorize( "%g{$status}%n" );
-                break;
-            case __( 'Not Connected', 'redis-cache' ):
-                $status = WP_CLI::colorize( "%r{$status}%n" );
-                break;
-        }
-
-        WP_CLI::line( 'Status: ' . $status );
-
-        if ( ! is_null( $client ) ) {
-            WP_CLI::line( 'Client: ' . $client );
-        }
-
+        require_once __DIR__ . '/../ui/diagnostics.php';
     }
 
     /**
@@ -83,7 +63,14 @@ class Commands extends WP_CLI_Command {
 
             WP_Filesystem();
 
-            if ( $wp_filesystem->copy( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php', WP_CONTENT_DIR . '/object-cache.php', true ) ) {
+            $copy = $wp_filesystem->copy(
+                WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php',
+                WP_CONTENT_DIR . '/object-cache.php',
+                true,
+                FS_CHMOD_FILE
+            );
+
+            if ( $copy ) {
                 WP_CLI::success( __( 'Object cache enabled.', 'redis-cache' ) );
             } else {
                 WP_CLI::error( __( 'Object cache could not be enabled.', 'redis-cache' ) );
@@ -149,7 +136,14 @@ class Commands extends WP_CLI_Command {
 
         WP_Filesystem();
 
-        if ( $wp_filesystem->copy( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php', WP_CONTENT_DIR . '/object-cache.php', true ) ) {
+        $copy = $wp_filesystem->copy(
+            WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php',
+            WP_CONTENT_DIR . '/object-cache.php',
+            true,
+            FS_CHMOD_FILE
+        );
+
+        if ( $copy ) {
             WP_CLI::success( __( 'Updated object cache drop-in and enabled Redis object cache.', 'redis-cache' ) );
         } else {
             WP_CLI::error( __( 'Object cache drop-in could not be updated.', 'redis-cache' ) );

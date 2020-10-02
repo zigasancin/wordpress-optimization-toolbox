@@ -3,9 +3,9 @@ Contributors: tillkruess
 Donate link: https://github.com/sponsors/tillkruss
 Tags: redis, predis, phpredis, credis, hhvm, pecl, caching, cache, object cache, performance, replication, clustering, keydb
 Requires at least: 3.3
-Tested up to: 5.4
+Tested up to: 5.5
 Requires PHP: 5.6
-Stable tag: 2.0.3
+Stable tag: 2.0.15
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -18,7 +18,7 @@ A persistent object cache backend powered by Redis. Supports [Predis](https://gi
 
 To adjust the connection parameters, prefix cache keys or configure replication/clustering, please see [Other Notes](http://wordpress.org/extend/plugins/redis-cache/other_notes/).
 
-= Redis Cache Pro =
+= Object Cache Pro =
 
 A **business class** Redis object cache backend. Truly reliable, highly optimized, fully customizable and with a dedicated engineer when you most need it.
 
@@ -32,7 +32,7 @@ A **business class** Redis object cache backend. Truly reliable, highly optimize
 * Health checks via WordPress & WP CLI
 * Optimized for WooCommerce, Jetpack & Yoast SEO
 
-Learn more about [Redis Cache Pro](https://wprediscache.com/?utm_source=wp-plugin&amp;utm_medium=readme).
+Learn more about [Object Cache Pro](https://objectcache.pro/?utm_source=wp-plugin&amp;utm_medium=readme).
 
 
 == Installation ==
@@ -83,9 +83,92 @@ To see a list of all available WP-CLI commands, please see the [WP CLI commands 
 
 == Changelog ==
 
-= 2.0.3 =
+= 2.0.15 =
+
+- Reverted `build_key()` changes due to issues in multisite environments
+
+= 2.0.14 =
+
+- Made Object Cache Pro card translatable
+- Added `WP_REDIS_SERIALIZER` to diagnostics
+- Improved speed of `build_key()`
+- Support settings `WP_REDIS_PREFIX` and `WP_REDIS_SELECTIVE_FLUSH` via environment variable
+- Added `WP_REDIS_METRICS_MAX_TIME` to adjust stored metrics timeframe
+- Delay loading of text domain and schedule until `init` hook
+- Upgraded bundled Predis library to v1.1.6
+- Prevent variable referencing issue in `connect_using_credis()`
+
+= 2.0.13 =
+
+- Updated bundled Predis library to v1.1.4
+- Made `redis-cache` a global group for improved metrics on multisite
+- Switched to short array syntax
+- Added `@since` tags to all hooks
+- Use `parse_url()` instead of `wp_parse_url()` in drop-in
+- Fixed plugin instance variable name in `wp redis status`
+
+= 2.0.12 =
+
+- Fixed bytes metrics calculation
+- Fixed an issue with non-standard Predis configurations
+- Improve WordPress Coding Standards
+
+= 2.0.11 =
+
+- Fixed an issue in `wp_cache_get_multiple()` when using Predis
+- Prevent undefined index notice in diagnostics
+
+= 2.0.10 =
+
+- Fixed unserializing values in `wp_cache_get_multiple()`
+
+= 2.0.9 =
+
+- Highlight current metric type using color
+- Show "Metrics" tab when metrics are disabled
+- Refactored connection and Redis status logic
+- Updated Predis to v1.1.2
+- Remove Predis deprecation notice
+- Fixed fetching derived keys in `wp_cache_get_multiple()`
+
+= 2.0.8 =
+
+- Fixed tabs not working in 2.0.6 and 2.0.7 due to WP.org SVN issue
+
+= 2.0.7 =
+
+- Fixed issue with `wp_cache_get_multiple()`
+
+= 2.0.6 =
+
+- Added experimental filesystem test to diagnostics
+- Refactored settings tab logic (fixed jumping, too)
+- Fixed issues with `wp_cache_get_multiple()`
+- Return boolean from `wp_cache_delete()`
+- Use `redis-cache` as JS event namespace
+- Hide Pro line in widget when banners are disabled
+- Renamed `redis_object_cache_get_multi` action to `redis_object_cache_get_multiple`
+
+= 2.0.5 =
 
 Version 2.0 is a significant rewrite of the plugin. Please read the v2.0.0 release notes.
+
+- Fixed multisite action buttons not working
+- Removed outdated PHP 5.4 warning
+- Added `read_timeout` support to Credis
+- Display connection parameters when using Credis
+- Added wiki link to Predis upgrade notice
+
+= 2.0.4 =
+
+- Attempt to reliably update the dropin when it's outdated
+- Show ACL username on settings screen
+- Show full diagnostics with `wp redis status`
+- Always set `FS_CHMOD_FILE` when copying the `object-cache.php`
+- Don't encode bullets in password diagnostics
+- Call `redis_object_cache_update_dropin` during dropin update
+
+= 2.0.3 =
 
 - Hide "Metrics" tab when metrics are disabled
 - Fixed `admin.js` not loading in multisite environments
@@ -112,6 +195,8 @@ Version 2.0 is a significant rewrite of the plugin. Please read the v2.0.0 relea
 Version 2.0 is a significant rewrite. The plugin now requires PHP 5.6, just like WordPress 5.2 does.
 
 The GitHub and Composer repository was moved from `tillkruss/redis-cache` to `rhubarbgroup/redis-cache`.
+
+On multisite networks, be sure to "Network Activate" the plugin after upgrading to v2.x.
 
 - Require PHP 5.6
 - Plugin is now "network-only"
@@ -205,7 +290,7 @@ Please flush the object cache after updating the drop to v1.5.5 to avoid dead ke
 = 1.5.1 =
 
 This plugin turned 5 years today (Nov 14th) and its only fitting to release the business edition today as well.
-[Redis Cache Pro](https://wprediscache.com/) is a truly reliable, highly optimized and easy to debug rewrite of this plugin for SMBs.
+[Object Cache Pro](https://objectcache.pro/) is a truly reliable, highly optimized and easy to debug rewrite of this plugin for SMBs.
 
   * Added execution times to actions
   * Added `WP_REDIS_VERSION` constant
@@ -389,82 +474,6 @@ Since Predis isn't maintained any longer, it's highly recommended to switch over
 
 == Upgrade Notice ==
 
-= 2.0.3 =
+= 2.0.15 =
 
 Version 2.0 is a significant rewrite of the plugin. Please read the v2.0.0 release notes.
-
-= 1.4.2 =
-
-This update renames the `redis_object_cache_get` filter to avoid conflicts. Update your code if necessary.
-
-= 1.4.0 =
-
-This update adds support for igbinary and `wp_suspend_cache_addition()`.
-
-= 1.3.9 =
-
-This update contains fixes for sharding.
-
-= 1.3.8 =
-
-This update contains a critical fix for Predis.
-
-= 1.3.7 =
-
-This update fixes an issue with Predis in some environments.
-
-= 1.3.6 =
-
-This update contains various improvements.
-
-= 1.3.5 =
-
-This update contains various changes, including performance improvements and better Batcache compatibility.
-
-= 1.3.4 =
-
-This update contains several improvements, including WP CLI and WordPress 4.6 support.
-
-= 1.3.3 =
-
-This update contains several improvements.
-
-= 1.3.2 =
-
-This update includes a critical fix for PhpRedis.
-
-= 1.3.1 =
-
-This update includes a critical connection issue fix.
-
-= 1.3 =
-
-This update includes a new admin interface and support for clustering and replication with Predis.
-
-= 1.2.3 =
-
-This updated includes several UI improvements.
-
-= 1.2.2 =
-
-This updated includes several bug fixes and improvements.
-
-= 1.2.1 =
-
-This update includes several improvements and compatibility fixes.
-
-= 1.1.1 =
-
-This update fixes critical bugs with the HHVM extension
-
-= 1.1 =
-
-This update includes bug fixes and adds supports for HHVM/PECL Redis extensions.
-
-= 1.0.2 =
-
-This update includes significant speed improvements and support for UNIX domain sockets.
-
-= 1.0.1 =
-
-This update includes several security, user interface and general code improvements.

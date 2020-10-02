@@ -18,29 +18,47 @@ defined( '\\ABSPATH' ) || exit;
         <?php esc_html_e( 'Redis Object Cache', 'redis-cache' ); ?>
     </h1>
 
+    <?php is_network_admin() && settings_errors(); ?>
+
     <div class="columns">
 
         <div class="content-column">
 
-            <h2 class="nav-tab-wrapper" id="redis-tabs">
+            <h2 class="nav-tab-wrapper">
                 <?php foreach ( UI::get_tabs() as $ui_tab ) : ?>
-                    <a class="nav-tab <?php echo $ui_tab->default ? 'nav-tab-active' : ''; ?>"
-                        id="<?php echo esc_attr( $ui_tab->slug ); ?>-tab"
-                        data-target="<?php echo esc_attr( $ui_tab->target ); ?>"
-                        href="<?php echo esc_attr( $ui_tab->target ); ?>"
-                    >
-                        <?php echo esc_html( $ui_tab->label ); ?>
-                    </a>
+                    <?php if ( $ui_tab->is_disabled() ) : ?>
+
+                        <span
+                            class="<?php echo esc_attr( $ui_tab->nav_classes() ); ?>"
+                            title="<?php echo esc_attr( $ui_tab->disabled_notice() ); ?>"
+                        >
+                            <?php echo esc_html( $ui_tab->label() ); ?>
+                        </span>
+
+                    <?php else : ?>
+
+                        <a
+                            id="<?php echo esc_attr( $ui_tab->nav_id() ); ?>"
+                            class="<?php echo esc_attr( $ui_tab->nav_classes() ); ?>"
+                            data-toggle="<?php echo esc_attr( $ui_tab->slug() ); ?>"
+                            href="#<?php echo esc_attr( $ui_tab->slug() ); ?>"
+                        >
+                            <?php echo esc_html( $ui_tab->label() ); ?>
+                        </a>
+
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </h2>
 
-            <div class="sections">
+            <div class="tab-content">
                 <?php foreach ( UI::get_tabs() as $ui_tab ) : ?>
-                    <div id="<?php echo esc_attr( $ui_tab->slug ); ?>"
-                        class="section section-<?php echo esc_attr( $ui_tab->slug ); ?> <?php echo $ui_tab->default ? ' active' : ''; ?>"
-                    >
-                        <?php include $ui_tab->file; ?>
-                    </div>
+                    <?php if ( ! $ui_tab->is_disabled() ) : ?>
+                        <div id="<?php echo esc_attr( $ui_tab->id() ); ?>"
+                            class="<?php echo esc_attr( $ui_tab->classes() ); ?>"
+                        >
+                            <?php $ui_tab->display(); ?>
+                        </div>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </div>
 
@@ -56,24 +74,24 @@ defined( '\\ABSPATH' ) || exit;
 
                 <div class="card">
                     <h2 class="title">
-                        Redis Cache Pro
+                        Object Cache Pro
                     </h2>
                     <p>
-                        <b>A business class object cache backend.</b> Truly reliable, highly-optimized and fully customizable, with a <u>dedicated engineer</u> when you most need it.
+                        <?php wp_kses_post( __( '<strong>A business class object cache backend.</strong> Truly reliable, highly-optimized and fully customizable, with a <u>dedicated engineer</u> when you most need it.', 'redis-cache' ) ); ?>
                     </p>
                     <ul>
-                        <li>Rewritten for raw performance</li>
-                        <li>100% WordPress API compliant</li>
-                        <li>Faster serialization and compression</li>
-                        <li>Easy debugging &amp; logging</li>
-                        <li>Cache analytics and preloading</li>
-                        <li>Fully unit tested (100% code coverage)</li>
-                        <li>Secure connections with TLS</li>
-                        <li>Health checks via WordPress &amp; WP CLI</li>
-                        <li>Optimized for WooCommerce, Jetpack &amp; Yoast SEO</li>
+                        <li><?php esc_html_e( 'Rewritten for raw performance', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( '100% WordPress API compliant', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( 'Faster serialization and compression', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( 'Easy debugging & logging', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( 'Cache analytics and preloading', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( 'Fully unit tested (100% code coverage)', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( 'Secure connections with TLS', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( 'Health checks via WordPress & WP CLI', 'redis-cache' ); ?></li>
+                        <li><?php esc_html_e( 'Optimized for WooCommerce, Jetpack & Yoast SEO', 'redis-cache' ); ?></li>
                     </ul>
                     <p>
-                        <a class="button button-primary" target="_blank" rel="noopener" href="https://wprediscache.com/?utm_source=wp-plugin&amp;utm_medium=settings">
+                        <a class="button button-primary" target="_blank" rel="noopener" href="https://objectcache.pro/?utm_source=wp-plugin&amp;utm_medium=settings">
                             <?php esc_html_e( 'Learn more', 'redis-cache' ); ?>
                         </a>
                     </p>
@@ -130,31 +148,6 @@ defined( '\\ABSPATH' ) || exit;
                 <?php endif; ?>
 
             </div>
-
-            <!-- <div class="section-support">
-
-                <div class="card">
-                    <h2 class="title">
-                        <?php esc_html_e('Support', 'redis-cache'); ?>
-                    </h2>
-                    <p>
-                        This plugin is maintained and supported <a target="_blank" rel="noopener" href="https://github.com/rhubarbgroup/redis-cache">on GitHub</a>,
-                        and its connection parameters and configuration options are outlined in the documentation.
-                    </p>
-                    <p>
-                        <a class="button button-secondary" target="_blank" rel="noopener" href="https://github.com/rhubarbgroup/redis-cache/wiki">
-                            <?php esc_html_e('Documentation', 'redis-cache'); ?>
-                        </a>
-
-                        &nbsp;
-
-                        <a class="button button-secondary" target="_blank" rel="noopener" href="https://github.com/rhubarbgroup/redis-cache/issues">
-                            <?php esc_html_e('Support', 'redis-cache'); ?>
-                        </a>
-                    </p>
-                </div>
-
-            </div> -->
 
         </div>
 

@@ -10,11 +10,11 @@
     border-bottom: 1px solid #ccc;
 }
 
-#rediscache .section {
+#rediscache .tab-pane {
     display: none;
 }
 
-#rediscache .section.active {
+#rediscache .tab-pane.active {
     display: block;
 }
 
@@ -33,31 +33,36 @@
     color: #d54e21;
 }
 
+#rediscache .form-table .description.is-notice a {
+    color: #d54e21;
+}
+
 #rediscache .card ul {
     list-style: circle;
     padding-left: 25px;
 }
 
-#rediscache .section-metrics .card {
+#rediscache .tab-pane-metrics .card {
     min-width: auto;
     max-width: 100%;
     padding: 0;
+}
+
+#rediscache .nav-tab-wrapper .nav-tab-disabled {
+    cursor: not-allowed;
+    background-color: #e5e5e5 !important;
 }
 
 #rediscache #redis-stats-chart {
     height: 300px;
 }
 
-#rediscache .section-diagnostics p {
+#rediscache .tab-pane-diagnostics p {
     margin-top: 20px;
 }
 
-#rediscache .section-diagnostics textarea {
+#rediscache .tab-pane-diagnostics textarea {
     width: 100%;
-}
-
-#rediscache .section-support {
-    margin-top: 3em;
 }
 
 #rediscache .compatiblity {
@@ -117,7 +122,7 @@
 
 #widget-redis-stats ul a:hover,
 #widget-redis-stats ul a.active {
-    color: #444;
+    color: #0073aa;
 }
 
 #redis-stats-chart .apexcharts-annotations {

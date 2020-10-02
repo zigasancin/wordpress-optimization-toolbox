@@ -329,104 +329,95 @@
     };
 
     var setup_charts = function () {
-        var time = rediscache.metrics.computed.map(
-            function ( entry ) {
-                return [ entry.date, entry.time ];
-            }
-        );
+        var metrics = {};
 
-        var bytes = rediscache.metrics.computed.map(
-            function ( entry ) {
-                return [ entry.date, entry.bytes ];
+        for ( var type in rediscache.charts ) {
+            if ( ! rediscache.charts.hasOwnProperty( type ) ) {
+                continue;
             }
-        )
 
-        var ratio = rediscache.metrics.computed.map(
-            function ( entry ) {
-                return [ entry.date, entry.ratio ];
-            }
-        );
-
-        var calls = rediscache.metrics.computed.map(
-            function ( entry ) {
-                return [ entry.date, entry.calls ];
-            }
-        );
-
-        rediscache.charts.time.series = [{
-            name: 'Time',
-            type: 'area',
-            data: time,
-        }, {
-            name: 'Pro',
-            type: 'line',
-            data: time.map(
+            metrics[type] = rediscache.metrics.computed.map(
                 function ( entry ) {
-                    return [ entry[0], entry[1] * 0.5 ];
+                    return [ entry.date, entry[type] ];
                 }
-            ),
-        } ];
+            );
 
-        rediscache.charts.bytes.series = [{
-            name: rediscache.l10n.bytes,
-            type: 'area',
-            data: bytes,
-        }, {
-            name: 'Pro',
-            type: 'line',
-            data: bytes.map(
-                function ( entry ) {
-                    return [ entry[0], entry[1] * 0.3 ];
+            rediscache.charts[type].series = [{
+                name: rediscache.l10n[type],
+                type: 'area',
+                data: metrics[type],
+            }];
+        }
+
+        if ( ! rediscache.disable_pro || ! rediscache.disable_banners ) {
+            var pro_charts = {
+                time: function ( entry ) {
+                    return [ entry[0], entry[1] * 0.5 ]
+                },
+                bytes: function ( entry ) {
+                    return [ entry[0], entry[1] * 0.3 ]
+                },
+                calls: function ( entry ) {
+                    return [ entry[0], Math.round( entry[1] / 50 ) + 5 ]
+                },
+            };
+
+            for ( var type in pro_charts ) {
+                if ( ! rediscache.charts[type] ) {
+                    continue;
                 }
-            ),
-        } ];
 
-        rediscache.charts.ratio.series = [{
-            name: rediscache.l10n.ratio,
-            type: 'area',
-            data: ratio,
-        }];
+                rediscache.charts[type].series.push({
+                    name: rediscache.l10n.pro,
+                    type: 'line',
+                    data: metrics[type].map( pro_charts[type] ),
+                });
+            }
 
-        rediscache.charts.calls.series = [{
-            name: rediscache.l10n.calls,
-            type: 'area',
-            data: calls,
-        }, {
-            name: 'Pro',
-            type: 'line',
-            data: calls.map(
-                function ( entry ) {
-                    return [ entry[0], Math.round( entry[1] / 50 ) + 5 ];
-                }
-            ),
-        } ];
+        }
     };
 
     // executed on page load
     $(function () {
-        var $tabs = $( '#redis-tabs' );
+        var $tabs = $( '#rediscache .nav-tab-wrapper' );
+        var $panes = $( '#rediscache .content-column .tab-content' );
 
         $tabs.find( 'a' ).on(
-            'click.redis',
-            function () {
-                var $this = $( this );
-                var $target = $( $this.data( 'target' ) );
+            'click.redis-cache',
+            function ( event ) {
+                var toggle = $( this ).data( 'toggle' );
 
-                $tabs.find( 'a' ).removeClass( 'nav-tab-active' );
-                $( '.section' ).removeClass( 'active' );
-                $target.addClass( 'active' );
-                $this.addClass( 'nav-tab-active' );
+                $( this ).blur();
+
+                show_tab( toggle );
+
+                if ( history.pushState ) {
+                    history.pushState( null, null, '#' + toggle );
+                }
+
+                return false;
             }
         );
 
-        var tabHash = window.location.hash.replace( '#', '' );
+        var show_tab = function ( name ) {
+            $tabs.find( '.nav-tab-active' ).removeClass( 'nav-tab-active' );
+            $panes.find( '.tab-pane.active' ).removeClass( 'active' );
 
-        if ( tabHash !== '' ) {
-            $tabs.find( 'a' ).removeClass( 'nav-tab-active' );
-            $( '.section' ).removeClass( 'active' );
-            $( '#' + tabHash ).addClass( 'active' );
-            $( '#' + tabHash + '-tab' ).addClass( 'nav-tab-active' ).trigger( 'click.redis' );
-        }
+            $( '#' + name + '-tab' ).addClass( 'nav-tab-active' );
+            $( '#' + name + '-pane' ).addClass( 'active' );
+        };
+
+        var show_current_tab = function () {
+            var tabHash = window.location.hash.replace( '#', '' );
+
+            if ( tabHash !== '' && $( '#' + tabHash + '-tab' ) ) {
+                show_tab( tabHash );
+            }
+        };
+
+        show_current_tab();
+
+        $( window ).on( 'hashchange', show_current_tab );
 
         if ( $( '#widget-redis-stats' ).length ) {
             rediscache.metrics.computed = compute_metrics(
@@ -439,7 +430,7 @@
         }
 
         $( '#widget-redis-stats ul a' ).on(
-            'click.redis',
+            'click.redis-cache',
             function ( event ) {
                 event.preventDefault();
 
@@ -458,9 +449,12 @@
             function ( event ) {
                 event.preventDefault();
 
+                var $parent = $( this ).parent();
+
                 $.post( ajaxurl, {
-                    notice: $( this ).parent().attr( 'data-dismissible' ),
+                    notice: $parent.data( 'dismissible' ),
                     action: 'roc_dismiss_notice',
+                    _ajax_nonce: $parent.data( 'nonce' ),
                 } );
             }
         );
