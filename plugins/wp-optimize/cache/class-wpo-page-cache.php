@@ -907,6 +907,8 @@ EOF;
 
 		$path = trailingslashit(WPO_CACHE_FILES_DIR) . trailingslashit(wpo_get_url_path($url));
 
+		do_action('wpo_delete_cache_by_url', $url, $recursive);
+
 		return wpo_delete_files($path, $recursive);
 	}
 
@@ -920,8 +922,12 @@ EOF;
 	public static function delete_single_post_cache($post_id) {
 	
 		if (!defined('WPO_CACHE_FILES_DIR')) return;
+
+		$post_url = get_permalink($post_id);
 	
-		$path = trailingslashit(WPO_CACHE_FILES_DIR) . trailingslashit(wpo_get_url_path(get_permalink($post_id)));
+		$path = trailingslashit(WPO_CACHE_FILES_DIR) . trailingslashit(wpo_get_url_path($post_url));
+
+		do_action('wpo_delete_cache_by_url', $post_url, false);
 
 		return wpo_delete_files($path, false);
 	}
@@ -932,8 +938,12 @@ EOF;
 	public static function delete_homepage_cache() {
 	
 		if (!defined('WPO_CACHE_FILES_DIR')) return;
-	
-		$path = trailingslashit(WPO_CACHE_FILES_DIR) . trailingslashit(wpo_get_url_path(get_home_url(get_current_blog_id())));
+
+		$homepage_url = get_home_url(get_current_blog_id());
+
+		$path = trailingslashit(WPO_CACHE_FILES_DIR) . trailingslashit(wpo_get_url_path($homepage_url));
+
+		do_action('wpo_delete_cache_by_url', $homepage_url, false);
 
 		wpo_delete_files($path, false);
 	}

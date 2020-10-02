@@ -43,7 +43,7 @@ class WP_Optimizer {
 	 * @param  string $sort_rule     Sort Rule.
 	 * @return array
 	 */
-	public function sort_optimizations($optimizations, $sort_on = 'ui_sort_order', $sort_rule = 'traditional') {
+	public function sort_optimizations($optimizations, $sort_on = 'ui_sort_order', $sort_rule = 'traditional') {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 		if ('run_sort_order' == $sort_on) {
 			uasort($optimizations, array($this, 'sort_optimizations_run_traditional'));
 		} else {
@@ -79,7 +79,7 @@ class WP_Optimizer {
 	 * Each array key is an optimization ID, and the value is an object,
 	 * as returned by get_optimization()
 	 *
-	 * @return [array] array of optimizations
+	 * @return [array] array of optimizations or WP_Error objects
 	 */
 	public function get_optimizations() {
 	
@@ -441,12 +441,12 @@ class WP_Optimizer {
 		switch ($type) {
 			case "trackbacks":
 			$thissql = "UPDATE `".$wpdb->posts."` SET ping_status='".$new_status."' WHERE post_status = 'publish' AND post_type = 'post';";
-			$trackbacks = $wpdb->query($thissql);
+			$wpdb->query($thissql);
 				break;
 
 			case "comments":
 			$thissql = "UPDATE `".$wpdb->posts."` SET comment_status='".$new_status."' WHERE post_status = 'publish' AND post_type = 'post';";
-			$comments = $wpdb->query($thissql);
+			$wpdb->query($thissql);
 				break;
 
 			default:
@@ -469,10 +469,8 @@ class WP_Optimizer {
 
 		$wp_optimize = WP_Optimize();
 
-		$wpdb = $GLOBALS['wpdb'];
 		$total_gain = 0;
 		$total_size = 0;
-		$no = 0;
 		$row_usage = 0;
 		$data_usage = 0;
 		$index_usage = 0;

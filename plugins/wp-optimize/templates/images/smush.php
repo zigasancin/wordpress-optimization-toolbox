@@ -11,7 +11,7 @@
 		</div>
 	</div>
 	<p>
-		<?php _e('Note: Currently this feature uses third party services from reSmush.it and Nitrosmush (by iSenseLabs). The performance of these free smushing services may be limited for large workloads. We are working on a premium service.', 'wp-optimize'); ?>
+		<?php _e('Note: Currently this feature uses third party services from reSmush.it. The performance of this free image compression service may be limited for large workloads. We are working on a premium service.', 'wp-optimize'); ?>
 	</p>
 	<div class="wpo-fieldgroup">
 		<div class="autosmush wpo-fieldgroup__subgroup<?php echo $smush_options['autosmush'] ? ' active' : ''; ?>">
@@ -73,13 +73,6 @@
 					<small><?php _e('Service provided by reSmush.it', 'wp-optimize'); ?></small>
 				  </label>
 				</div>
-				<div> <input type="radio" name="compression_server" id="nitrosmush" value="nitrosmush" <?php checked($smush_options['compression_server'], 'nitrosmush'); ?> >
-				  <label for="nitrosmush">
-					<h4><?php _e('Nitrosmush', 'wp-optimize');?></h4>
-					<p><?php _e('Max image size - 100MB', 'wp-optimize');?></p>
-					  <small> <?php _e('Service provided by iSenseLabs', 'wp-optimize'); ?></small>
-				  </label>
-				</div>
 			</div>
 			<br>
 			<h3><?php _e('More options', 'wp-optimize');?></h3>
@@ -97,6 +90,9 @@
 				<span id="wpo_smush_delete_backup_done" class="dashicons dashicons-yes display-none save-done"></span>
 				<br>
 				<button type="button" id="wpo_smush_mark_all_as_uncompressed_btn" class="wpo_primary_small button"><?php _e('Mark all images as uncompressed', 'wp-optimize'); ?></button>
+				<br>
+				<br>
+				<button type="button" id="wpo_smush_restore_all_compressed_images_btn" class="wpo_primary_small button"><?php _e('Restore all compressed images', 'wp-optimize'); ?></button> <span tabindex="0" data-tooltip="<?php _e('Only the original image will be restored. In order to restore the other sizes, you should use a plugin such as "Regenerate Thumbnails".', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 			</div>
 		</div>
 		<div class="save-options">

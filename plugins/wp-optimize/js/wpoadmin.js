@@ -995,6 +995,16 @@ var WP_Optimize = function () {
 
 		spinner.show();
 
+		// when optimizations list in the document - send information about selected optimizations.
+		if ($('#optimizations_list').length) {
+			$('#optimizations_list .optimization_checkbox:checked').each(function() {
+				var optimization_id = $(this).closest('.wp-optimize-settings').data('optimization_id');
+				if (optimization_id) {
+					form_data += '&optimization-options['+optimization_id+'][active]=1';
+				}
+			});
+		}
+
 		send_command('save_settings', form_data, function (resp) {
 
 			form.closest('form').find('.save-done').show().delay(5000).fadeOut();
@@ -1013,6 +1023,7 @@ var WP_Optimize = function () {
 					}
 				});
 			}
+
 			if (resp && resp.hasOwnProperty('optimizations_table')) {
 				$('#optimizations_list').replaceWith(resp.optimizations_table);
 			}

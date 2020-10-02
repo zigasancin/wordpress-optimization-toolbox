@@ -316,11 +316,11 @@ class WP_Optimize_Commands {
 	public function get_table_list($data = array()) {
 		if (isset($data['refresh_plugin_json']) && filter_var($data['refresh_plugin_json'], FILTER_VALIDATE_BOOLEAN)) WP_Optimize()->get_db_info()->update_plugin_json();
 
-		list ($total_size, $part2) = $this->optimizer->get_current_db_size();
+		$size = $this->optimizer->get_current_db_size();
 	
 		return apply_filters('wpo_get_tables_data', array(
 			'table_list' => WP_Optimize()->include_template('database/tables-body.php', true, array('optimize_db' => false)),
-			'total_size' => $total_size
+			'total_size' => $size[0]
 		));
 	}
 

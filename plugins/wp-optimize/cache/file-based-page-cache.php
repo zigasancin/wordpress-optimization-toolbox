@@ -65,13 +65,8 @@ if (!empty($_COOKIE)) {
 		}
 	}
 
-	if (!empty($_COOKIE['wpo_commented_posts'])) {
-		foreach ($_COOKIE['wpo_commented_posts'] as $path) {
-			if (rtrim($path, '/') === rtrim($_SERVER['REQUEST_URI'], '/')) {
-				$no_cache_because[] = 'The user has commented on a post (comment cookie set)';
-				break;
-			}
-		}
+	if (!empty($_COOKIE['wpo_commented_post'])) {
+		$no_cache_because[] = 'The user has commented on a post (comment cookie set)';
 	}
 
 	// get cookie exceptions from options.
@@ -109,23 +104,23 @@ if (!empty($_GET)) {
 	$get_variables = wpo_cache_maybe_ignore_query_variables(array_keys($_GET));
 
 	// if GET variables include one or more undefined variable names then we don't cache.
-	$diff = array_diff($get_variables, $get_variable_names);
-	if (!empty($diff)) {
+	$get_variables_diff = array_diff($get_variables, $get_variable_names);
+	if (!empty($get_variables_diff)) {
 		$no_cache_because[] = "In the settings, caching is disabled for matches for one of the current request's GET parameters";
 	}
 }
 
 if (!empty($no_cache_because)) {
-	$message = implode(', ', $no_cache_because);
+	$no_cache_because_message = implode(', ', $no_cache_because);
 
 	// Add http header
 	if (!defined('DOING_CRON') || !DOING_CRON) {
-		wpo_cache_add_nocache_http_header($message);
+		wpo_cache_add_nocache_http_header($no_cache_because_message);
 	}
 
 	// Only output if the user has turned on debugging output
 	if (((defined('WP_DEBUG') && WP_DEBUG) || isset($_GET['wpo_cache_debug'])) && (!defined('DOING_CRON') || !DOING_CRON)) {
-		wpo_cache_add_footer_output("Page not served from cache because: ".htmlspecialchars($message));
+		wpo_cache_add_footer_output("Page not served from cache because: ".htmlspecialchars($no_cache_because_message));
 	}
 	return;
 }

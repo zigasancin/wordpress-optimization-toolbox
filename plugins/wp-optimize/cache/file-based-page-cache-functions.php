@@ -20,7 +20,6 @@ if (!defined('WPO_CACHE_EXT_DIR')) define('WPO_CACHE_EXT_DIR', dirname(__FILE__)
  */
 if (!function_exists('wpo_cache')) :
 function wpo_cache($buffer, $flags) {
-	global $post;
 	
 	// This array records reasons why no cacheing took place. Be careful not to allow actions to proceed that should not - i.e. take note of its state appropriately.
 	$no_cache_because = array();
@@ -51,8 +50,8 @@ function wpo_cache($buffer, $flags) {
 		}
 	}
 
-	// If comments are opened and the user has saved his information
-	if (function_exists('comments_open') && comments_open()) {
+	// If comments are opened and the user has saved his information.
+	if (function_exists('comments_open') && function_exists('get_post') && get_post() && comments_open()) {
 		$commenter = wp_get_current_commenter();
 		// if any of the fields contain something, do not save to cache
 		if ('' != $commenter['comment_author'] || '' != $commenter['comment_author_email'] || '' != $commenter['comment_author_url']) {

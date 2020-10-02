@@ -59,71 +59,90 @@
 			</fieldset>
 		</div>
 
-		<?php if (WP_OPTIMIZE_SHOW_MINIFY_ADVANCED) : ?>
-			<h3><?php _e('Render-blocking JavaScript', 'wp-optimize'); ?></h3>
-			<div class="wpo-fieldgroup">
-				<p class="wpo_min-bold-green wpo_min-rowintro">
-					<?php _e('Some themes and plugins "need" render blocking scripts to work, so please take a look at the dev console for errors.', 'wp-optimize'); ?>
-				</p>
-				<fieldset>
-					<legend class="screen-reader-text">
-						<?php _e('Render-blocking', 'wp-optimize'); ?>
-					</legend>
-					<label for="enable_defer_js">
+		<h3><?php _e('Defer JavaScript', 'wp-optimize'); ?></h3>
+		<div class="wpo-fieldgroup">
+			<fieldset class="async-js-manual-list">
+				<h4><label>
+					<input
+						name="enable_defer_js"
+						type="radio" 
+						value="individual"
+						<?php echo checked($wpo_minify_options['enable_defer_js'], 'individual'); ?>
+					>
+					<?php _e('Defer selected JavaScript files', 'wp-optimize'); ?>
+					<span tabindex="0" data-tooltip="<?php esc_attr_e('The files in the list will be loaded asynchronously, and will not be minified or merged.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
+				</label>
+				</h4>
+				<div class="defer-js-settings">
+					<label for="async_js">
+						<?php _e('Any JavaScript files that match the paths below will be loaded asynchronously.', 'wp-optmize'); ?>
+						<br/>
+						<?php _e('Use this if you have a completely independent script or would like to exclude scripts from page speed tests (PageSpeed Insights, GTMetrix...)', 'wp-optmize'); ?>
+						<span tabindex="0" data-tooltip="<?php esc_attr_e('Independent scripts are for example \'analytics\' or \'pixel\' scripts. They are not required for the website to work', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
+					</label>
+					<textarea
+						name="async_js"
+						rows="7"
+						cols="50"
+						id="async_js"
+						class="large-text code"
+						placeholder="<?php esc_attr_e('e.g.: /js/main.js', 'wp-optimize'); ?>"
+					><?php echo $wpo_minify_options['async_js']; ?></textarea>
+				</div>
+			</fieldset>
+			
+			<fieldset>
+				<h4>
+					<label>
 						<input
 							name="enable_defer_js"
-							type="checkbox"
-							id="enable_defer_js"
-							value="1"
-							<?php echo checked($wpo_minify_options['enable_defer_js']); ?>
+							type="radio" 
+							value="all"
+							<?php echo checked($wpo_minify_options['enable_defer_js'], 'all'); ?>
 						>
-						<?php _e('Enable defer on processed JavaScript files', 'wp-optimize'); ?>
-						<span tabindex="0" data-tooltip="<?php _e('Not all browsers, themes or plugins support this. Beware of broken functionality and design', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
+						<?php _e('Defer all the JavaScript files', 'wp-optimize'); ?>
+						<span tabindex="0" data-tooltip="<?php esc_attr_e('All files - including the ones processed by WP-Optimize - will be deferred, except the ones in the exclusion list above.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
 					</label>
-					<label for="exclude_defer_login">
+				</h4>
+				<div class="defer-js-settings">
+					<div class="notice notice-warning below-h2">
+						<p class="wpo_min-bold-green wpo_min-rowintro">
+							<?php _e('Some themes and plugins need render blocking scripts to work.', 'wp-optimize'); ?> <?php _e('Please check the browser console for any eventual JavaScript errors caused by deferring the scripts.', 'wp-optimize'); ?>
+						</p>
+					</div>
+					<h4><?php _e('Defer method:', 'wp-optimize'); ?></h4>
+					<label>
 						<input
-							name="exclude_defer_login"
-							type="checkbox"
-							id="exclude_defer_login"
-							value="1"
-							<?php echo checked($wpo_minify_options['exclude_defer_login']); ?>
+							name="defer_js_type"
+							type="radio" 
+							value="defer"
+							<?php echo checked($wpo_minify_options['defer_js_type'], 'defer'); ?>
 						>
-						<?php _e('Skip deferring JavaScript on the login page', 'wp-optimize'); ?>
-						<span tabindex="0" data-tooltip="<?php _e('If selected, it will disable JavaScript deferring on your login page', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
-						</span>
+						<?php _e('Use the "defer" html attribute', 'wp-optimize'); ?>
+						<span tabindex="0" data-tooltip="<?php esc_attr_e('Supported by all modern browsers.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
 					</label>
-					<label for="defer_for_pagespeed">
+					<label>
 						<input
-							name="defer_for_pagespeed"
-							type="checkbox" 
-							id="defer_for_pagespeed"
-							value="1"
-							<?php echo checked($wpo_minify_options['defer_for_pagespeed']); ?>
+							name="defer_js_type"
+							type="radio" 
+							value="async_using_js"
+							<?php echo checked($wpo_minify_options['defer_js_type'], 'async_using_js'); ?>
 						>
-						<?php _e('Load all JavaScript files asynchronously apart from Jquery', 'wp-optimize'); ?>
-						<span tabindex="0" data-tooltip="<?php esc_attr_e('As jQuery is a common dependancy, it is loaded synchronously to stop \'jquery undefined\' errors', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
+						<?php _e('Defer using JavaScript', 'wp-optimize'); ?>
+						<em><?php printf(__('(Use this method if you require support for %solder browsers%s).', 'wp-optimize'), '<a href="https://www.w3schools.com/tags/att_script_defer.asp" target="_blank">', '</a>');?></em>
 					</label>
-				</fieldset>
-			</div>
-		<?php endif; ?>
-
-		<h3><?php _e('Load JavaScript asynchronously', 'wp-optimize'); ?></h3>
-		<div class="wpo-fieldgroup">
-			<fieldset>
-				<label for="async_js">
-					<?php _e('Any JavaScript files that match the paths below will be loaded asynchronously.', 'wp-optmize'); ?>
-					<br/>
-					<?php _e('Use this if you have a completely independent script or would like to exclude scripts from page speed tests (PageSpeed Insights, GTMetrix...)', 'wp-optmize'); ?>
-					<span tabindex="0" data-tooltip="<?php esc_attr_e('Independent scripts are for example \'analytics\' or \'pixel\' scripts. They are not required for the website to work', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
-				</label>
-				<textarea
-					name="async_js"
-					rows="7"
-					cols="50"
-					id="async_js"
-					class="large-text code"
-					placeholder="<?php esc_attr_e('e.g.: /js/main.js', 'wp-optimize'); ?>"
-				><?php echo $wpo_minify_options['async_js']; ?></textarea>
+					<label for="defer_jquery">
+						<input
+							name="defer_jquery"
+							type="checkbox"
+							id="defer_jquery"
+							value="1"
+							<?php echo checked($wpo_minify_options['defer_jquery']); ?>
+						>
+						<?php _e('Defer jQuery', 'wp-optimize'); ?> <em><?php _e('(Note that as jQuery is a common dependency, it probably needs to be loaded synchronously).', 'wp-optimize'); ?></em>
+						<span tabindex="0" data-tooltip="<?php esc_attr_e('Disable this setting if you have an error \'jQuery undefined\'.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
+					</label>
+				</div>
 			</fieldset>
 		</div>
 

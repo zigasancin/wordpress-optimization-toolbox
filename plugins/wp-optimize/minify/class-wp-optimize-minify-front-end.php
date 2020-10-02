@@ -86,9 +86,9 @@ class WP_Optimize_Minify_Front_End {
 				}
 
 				// add the LoadAsync JavaScript function
-				$async_js = array_map('trim', explode("\n", trim($wpo_minify_options['async_js'])));
+				$async_js = trim($wpo_minify_options['async_js']) ? array_map('trim', explode("\n", trim($wpo_minify_options['async_js']))) : array();
 				if (count($async_js) > 0
-					|| $wpo_minify_options['defer_for_pagespeed']
+					|| ( 'all' === $wpo_minify_options['enable_defer_js'] && 'async_using_js' === $wpo_minify_options['defer_js_type'] )
 				) {
 					add_action('wp_head', array('WP_Optimize_Minify_Print', 'add_load_async'), 0);
 				}
@@ -142,7 +142,7 @@ class WP_Optimize_Minify_Front_End {
 				add_action('wp_footer', array('WP_Optimize_Minify_Print', 'add_load_css'), PHP_INT_MAX);
 			}
 
-			// remove query from static assets and process defering (if enabled)
+			// remove query from static assets and process deferring (if enabled)
 			add_filter('style_loader_src', array('WP_Optimize_Minify_Functions', 'remove_cssjs_ver'), 10, 2);
 		}
 	}
@@ -192,9 +192,6 @@ class WP_Optimize_Minify_Front_End {
 		$async_css = array_map('trim', explode("\n", trim($wpo_minify_options['async_css'])));
 		$master_ignore = array_merge($ignore_list, $blacklist);
 
-		// current timestamp
-		$cache_time = $wpo_minify_options['last-cache-update'];
-		
 		// make sure href is complete
 		$href = WP_Optimize_Minify_Functions::get_hurl($href, $wp_domain, site_url());
 		
@@ -389,10 +386,8 @@ class WP_Optimize_Minify_Front_End {
 			$src = $srcf;
 		}
 
-		// return if defer option is not selected
-		if (!$wpo_minify_options['defer_for_pagespeed']
-			&& !$wpo_minify_options['enable_defer_js']
-		) {
+		// return if defer option is set to individual
+		if ('individual' === $wpo_minify_options['enable_defer_js']) {
 			return $tag;
 		}
 
@@ -401,10 +396,11 @@ class WP_Optimize_Minify_Front_End {
 			return $tag;
 		}
 
-		// Skip deferring the jQuery library option
-		if (false !== stripos($tag, '/jquery.js')
+		// Skip deferring the jQuery library option, if the defer jQuery option is disabled
+		if (!$wpo_minify_options['defer_jquery']
+			&& (false !== stripos($tag, '/jquery.js')
 			|| false !== stripos($tag, '/jquery.min.js')
-			|| (false !== stripos($tag, '/jquery-') && false !== stripos($tag, '.js'))
+			|| (false !== stripos($tag, '/jquery-') && false !== stripos($tag, '.js')))
 		) {
 			return $tag;
 		}
@@ -434,7 +430,7 @@ class WP_Optimize_Minify_Front_End {
 				$cdn_url = trim(trim(str_ireplace(array('http://', 'https://'), '', trim($wpo_minify_options['cdn_url'], '/'))), '/');
 				$src = str_ireplace($wp_domain, $cdn_url, $src);
 			}
-			if ($wpo_minify_options['defer_for_pagespeed']) {
+			if ('async_using_js' === $wpo_minify_options['defer_js_type']) {
 				return WP_Optimize_Minify_Print::async_script($src, false);
 			}
 
@@ -443,7 +439,22 @@ class WP_Optimize_Minify_Front_End {
 			if (count($ignore_list) > 0 && WP_Optimize_Minify_Functions::in_arrayi($src, $ignore_list)) {
 				return $tag;
 			} else {
-				return str_ireplace('<script ', '<script defer ', $tag);
+				/**
+				 * Filters whether to use the defer attribute or async.
+				 *
+				 * @default string 'defer' (any other value will be set to async)
+				 * @param string $value  - 'defer' or 'async'
+				 * @param string $tag    - The <script> tag
+				 * @param string $handle - The WP handle for the script
+				 * @param string $src    - The SRC for the script
+				 * @return string - 'defer' or 'async'
+				 */
+				$defer_or_async = apply_filters('wpo_minify_defer_or_async', 'defer', $tag, $handle, $src);
+				if ('defer' === $defer_or_async) {
+					return str_ireplace('<script ', '<script defer ', $tag);
+				} else {
+					return str_ireplace('<script ', '<script async ', $tag);
+				}
 			}
 		}
 
@@ -486,7 +497,6 @@ class WP_Optimize_Minify_Front_End {
 		$minify_css = $wpo_minify_options['enable_css_minification'];
 		$merge_css = $wpo_minify_options['enable_merging_of_css'];
 		$process_css = $minify_css || $merge_css;
-		$cache_time = $wpo_minify_options['last-cache-update'];
 		$styles = clone $wp_styles;
 		$styles->all_deps($styles->queue);
 		$done = $styles->done;
@@ -752,9 +762,6 @@ class WP_Optimize_Minify_Front_End {
 							// inlined scripts without file
 							if (empty($href)) continue;
 							
-							// print url
-							$print_url = str_ireplace(array(site_url(), home_url(), 'http:', 'https:'), '', $href);
-							
 							// download, minify, cache
 							$tkey = 'css-'.hash('adler32', $handle . $href).'.css';
 							$json = false;
@@ -801,9 +808,9 @@ class WP_Optimize_Minify_Front_End {
 				} else {
 					$log_file = $file.'.json';
 					if (file_exists($log_file)) {
-						$log = json_decode(file_get_contents($log_file));
-						if (property_exists($log, 'files')) {
-							$files = (array) $log->files;
+						$saved_log = json_decode(file_get_contents($log_file));
+						if (is_object($saved_log) && property_exists($saved_log, 'files')) {
+							$files = (array) $saved_log->files;
 							foreach ($header[$i]['handles'] as $handle) {
 								if (isset($files[$handle]) && $files[$handle]->success) {
 									$done[] = $handle;
@@ -873,7 +880,6 @@ class WP_Optimize_Minify_Front_End {
 		$exclude_js = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_js'])));
 		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_js);
 		$async_js = array_map('trim', explode("\n", trim($wpo_minify_options['async_js'])));
-		$cache_time = $wpo_minify_options['last-cache-update'];
 		$scripts = clone $wp_scripts;
 		$scripts->all_deps($scripts->queue);
 		$footer = array();
@@ -976,8 +982,6 @@ class WP_Optimize_Minify_Front_End {
 							if (empty($href)) {
 								continue;
 							}
-							// print url
-							$printurl = str_ireplace(array(site_url(), home_url(), 'http:', 'https:'), '', $href);
 							// download, minify, cache
 							$tkey = 'js-'.hash('adler32', $handle . $href).'.js';
 							$json = false;
@@ -1033,9 +1037,9 @@ class WP_Optimize_Minify_Front_End {
 				} else {
 					$log_file = $file.'.json';
 					if (file_exists($log_file)) {
-						$log = json_decode(file_get_contents($log_file));
-						if (property_exists($log, 'files')) {
-							$files = (array) $log->files;
+						$saved_log = json_decode(file_get_contents($log_file));
+						if (is_object($saved_log) && property_exists($saved_log, 'files')) {
+							$files = (array) $saved_log->files;
 							foreach ($footer[$i]['handles'] as $handle) {
 								if (isset($files[$handle]) && $files[$handle]->success) {
 									$done[] = $handle;
@@ -1102,30 +1106,28 @@ class WP_Optimize_Minify_Front_End {
 		$exclude_js = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_js'])));
 		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_js);
 		$async_js = array_map('trim', explode("\n", trim($wpo_minify_options['async_js'])));
-
 		$scripts = clone $wp_scripts;
 		$scripts->all_deps($scripts->queue);
-
-		$cache_time = $wpo_minify_options['last-cache-update'];
 		$minify_js = $wpo_minify_options['enable_js_minification'];
 		$merge_js = $wpo_minify_options['enable_merging_of_js'];
 		$process_js = $minify_js || $merge_js;
 		$header = array();
 		// mark as done (as we go)
 		$done = $scripts->done;
-		
+		$excluded_dependencies = array();
+
 		// Prepare and separate assets (get groups of handles)
 		foreach ($scripts->to_do as $handle) {
-			// is it a footer script?
-			if (!isset($wp_scripts->registered[$handle]->extra["group"]) && !isset($wp_scripts->registered[$handle]->args)) {
-				// get full url
-				$href = WP_Optimize_Minify_Functions::get_hurl($wp_scripts->registered[$handle]->src, $wp_domain, site_url());
-				// inlined scripts without file
-				if (empty($href)) {
-					wp_enqueue_script($handle, false);
-					continue;
-				}
+			// get full url
+			$href = WP_Optimize_Minify_Functions::get_hurl($wp_scripts->registered[$handle]->src, $wp_domain, site_url());
+			// inlined scripts without file
+			if (empty($href)) {
+				wp_enqueue_script($handle, false);
+				continue;
+			}
 
+			// Only go through items without a group
+			if (!$scripts->groups[$handle]) {
 				// Exclude JS files from PageSpeedIndex (Async) takes priority over the ignore list
 				// check for string match
 				$skipjs = false;
@@ -1144,8 +1146,9 @@ class WP_Optimize_Minify_Front_End {
 					continue;
 				}
 
-				// Skip jQuery from the merged files
-				if (($wpo_minify_options['enable_defer_js'] || $wpo_minify_options['defer_for_pagespeed'])
+				// Skip jQuery from the merged files if defering is ENABLED and defer_jquery is DISABLED
+				if ('all' === $wpo_minify_options['enable_defer_js']
+					&& !$wpo_minify_options['defer_jquery']
 					&& (false !== stripos($href, '/jquery.js')
 					|| false !== stripos($href, '/jquery.min.js')
 					|| (false !== stripos($href, '/jquery-') && false !== stripos($href, '.js')))
@@ -1161,6 +1164,27 @@ class WP_Optimize_Minify_Front_End {
 					if (isset($header[count($header)-1]['handle']) || !count($header) || !$merge_js) {
 						array_push($header, array('handles' => array()));
 					}
+
+					// Force loading of dependencies
+					foreach ($wp_scripts->registered[$handle]->deps as $dep) {
+						// If the handle is not present in $done yet, or excluded, enqueue it.
+						$dep_href = WP_Optimize_Minify_Functions::get_hurl($wp_scripts->registered[$dep]->src, $wp_domain, site_url());
+						if (!in_array($dep, $done) && !WP_Optimize_Minify_Functions::in_arrayi($dep_href, $ignore_list)) {
+							// Include any dependency
+							array_push($header[count($header)-1]['handles'], $dep);
+						} elseif (!in_array($dep, $done) && WP_Optimize_Minify_Functions::in_arrayi($dep_href, $ignore_list)) {
+							// The dependency is in the exclude list
+							array_push($header, array('handle' => $dep));
+							// Record dependency to be added to the minified script as dependency array
+							if (isset($excluded_dependencies[count($header)])) {
+								$excluded_dependencies[count($header)][] = $dep;
+							} else {
+								$excluded_dependencies[count($header)] = array($dep);
+							}
+							// Adds the 'handles' record for the main script
+							array_push($header, array('handles' => array()));
+						}
+					}
 					
 					// push it to the array
 					array_push($header[count($header)-1]['handles'], $handle);
@@ -1173,14 +1197,7 @@ class WP_Optimize_Minify_Front_End {
 
 				// make sure that the scripts skipped here, show up in the footer
 			} else {
-				$href = WP_Optimize_Minify_Functions::get_hurl($wp_scripts->registered[$handle]->src, $wp_domain, site_url());
-
-				// inlined scripts without file
-				if (empty($href)) {
-					wp_enqueue_script($handle, false);
-				} else {
-					wp_enqueue_script($handle, $href, array(), null, true);
-				}
+				wp_enqueue_script($handle, $href, array(), null, true);
 			}
 		}
 
@@ -1218,9 +1235,6 @@ class WP_Optimize_Minify_Front_End {
 							// get href per handle
 							$href = WP_Optimize_Minify_Functions::get_hurl($wp_scripts->registered[$handle]->src, $wp_domain, site_url());
 							if (empty($href)) continue;
-							// print url
-							$printurl = str_ireplace(array(site_url(), home_url(), 'http:', 'https:'), '', $href);
-
 							// download, minify, cache
 							$tkey = 'js-'.hash('adler32', $handle . $href).'.js';
 							$json = false;
@@ -1277,9 +1291,9 @@ class WP_Optimize_Minify_Front_End {
 				} else {
 					$log_file = $file.'.json';
 					if (file_exists($log_file)) {
-						$log = json_decode(file_get_contents($log_file));
-						if (property_exists($log, 'files')) {
-							$files = (array) $log->files;
+						$saved_log = json_decode(file_get_contents($log_file));
+						if (is_object($saved_log) && property_exists($saved_log, 'files')) {
+							$files = (array) $saved_log->files;
 							foreach ($header[$i]['handles'] as $handle) {
 								if (isset($files[$handle]) && $files[$handle]->success) {
 									$done[] = $handle;
@@ -1296,7 +1310,8 @@ class WP_Optimize_Minify_Front_End {
 				}
 
 				// register minified file
-				wp_register_script("wpo_min-header-$i", $file_url, array(), null, false);
+				$dependencies = isset($excluded_dependencies[$i]) ? $excluded_dependencies[$i] : array();
+				wp_register_script("wpo_min-header-$i", $file_url, $dependencies, null, false);
 
 				// add all extra data from wp_localize_script
 				$data = array();
@@ -1349,11 +1364,8 @@ class WP_Optimize_Minify_Front_End {
 		$minify_css = $wpo_minify_options['enable_css_minification'];
 		$merge_css = $wpo_minify_options['enable_merging_of_css'];
 		$process_css = $minify_css || $merge_css;
-
 		$log = "";
 		$code = "";
-
-		$cache_time = $wpo_minify_options['last-cache-update'];
 		$styles = clone $wp_styles;
 		$styles->all_deps($styles->queue);
 		$done = $styles->done;
@@ -1644,9 +1656,9 @@ class WP_Optimize_Minify_Front_End {
 				} else {
 					$log_file = $file.'.json';
 					if (file_exists($log_file)) {
-						$log = json_decode(file_get_contents($log_file));
-						if (property_exists($log, 'files')) {
-							$files = (array) $log->files;
+						$saved_log = json_decode(file_get_contents($log_file));
+						if (is_object($saved_log) && property_exists($saved_log, 'files')) {
+							$files = (array) $saved_log->files;
 							foreach ($footer[$i]['handles'] as $handle) {
 								if (isset($files[$handle]) && $files[$handle]->success) {
 									$done[] = $handle;
@@ -1672,7 +1684,7 @@ class WP_Optimize_Minify_Front_End {
 
 						// inline if the file is smaller than 20KB or option has been enabled
 						if (filesize($file) < 20000 && $wpo_minify_options['inline_css']) {
-							self::inline_css(file_get_contents($file), $handle, $file_url, $footer[$i]['media']);
+							$this->inline_css(file_get_contents($file), $handle, $file_url, $footer[$i]['media']);
 						} else {
 							// enqueue it
 							wp_enqueue_style("wpo_min-footer-$i", $file_url, array(), null, $footer[$i]['media']);
@@ -1793,7 +1805,7 @@ class WP_Optimize_Minify_Front_End {
 
 		// get host with multisite support and query strings
 		$host = htmlentities($_SERVER['SERVER_NAME']);
-		if (empty($hosts)) {
+		if (empty($host)) {
 			$host = htmlentities($_SERVER['HTTP_HOST']);
 		}
 		$request_query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
@@ -1925,7 +1937,7 @@ class WP_Optimize_Minify_Front_End {
 
 		// get host with multisite support and query strings
 		$host = htmlentities($_SERVER['SERVER_NAME']);
-		if (empty($hosts)) {
+		if (empty($host)) {
 			$host = htmlentities($_SERVER['HTTP_HOST']);
 		}
 		$request_query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);

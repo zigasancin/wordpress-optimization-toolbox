@@ -24,6 +24,7 @@ class WP_Optimize_Updates {
 		'3.0.12' => array('delete_old_locks'),
 		'3.0.17' => array('disable_cache_directories_viewing'),
 		'3.1.0' => array('reset_wpo_plugin_cron_tasks_schedule'),
+		'3.1.4' => array('enable_minify_defer'),
 	);
 
 	/**
@@ -77,6 +78,23 @@ class WP_Optimize_Updates {
 
 	public static function reset_wpo_plugin_cron_tasks_schedule() {
 		wp_clear_scheduled_hook('wpo_plugin_cron_tasks');
+	}
+
+	/**
+	 * Update Minify Defer option (The option was hidden until now, but we're changing the setting)
+	 *
+	 * @return void
+	 */
+	public static function enable_minify_defer() {
+		if (!function_exists('wp_optimize_minify_config')) {
+			include_once WPO_PLUGIN_MAIN_PATH . '/minify/class-wp-optimize-minify-config.php';
+		}
+		$current_setting = wp_optimize_minify_config()->get('enable_defer_js');
+		if (true === $current_setting) {
+			wp_optimize_minify_config()->update(array('enable_defer_js' => 'all'));
+		} else {
+			wp_optimize_minify_config()->update(array('enable_defer_js' => 'individual'));
+		}
 	}
 }
 

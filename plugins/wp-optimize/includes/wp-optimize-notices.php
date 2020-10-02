@@ -123,17 +123,6 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 				'supported_positions' => $this->anywhere,
 				'validity_function' => 'is_wpo_premium_installed',
 			),
-			// 'meta-slider' => array(
-			// 'prefix' => '',
-			// 'title' => __("MetaSlider: the world's #1 slider plugin from the makers of WP-Optimize", "wp-optimize"),
-			// 'text' => __("With MetaSlider, you can easily add style and flare with beautifully-designed sliders.", "wp-optimize"),
-			// 'button_link' => 'https://www.metaslider.com',
-			// 'button_meta' => 'metaslider',
-			// 'image' => 'notices/metaslider_logo.png',
-			// 'dismiss_time' => 'dismiss_notice',
-			// 'supported_positions' => $this->anywhere,
-			// 'validity_function' => 'is_metaslider_installed',
-			// ),
 
 			// The sale adverts content starts here
 			'blackfriday' => array(
@@ -205,6 +194,20 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 				'valid_to' => '2020-07-31 23:59:59',
 				'supported_positions' => $this->dashboard_top_or_report,
 				'validity_function' => 'is_wpo_premium_installed',
+			),
+			'collection' => array(
+				'prefix' => '',
+				'title' => __('The Updraft Plugin Collection Sale', 'wp-optimize'),
+				'text' => __('Get 20% off any of our plugins. But hurry - offer ends 30th September, use this discount code:', 'wp-optimize').' ',
+				'image' => 'notices/wp_optimize_logo.png',
+				'button_link' => 'https://teamupdraft.com',
+				'campaign' => 'collection',
+				'button_meta' => 'collection',
+				'dismiss_time' => 'dismiss_season',
+				'discount_code' => 'WPO2020',
+				'valid_from' => '2020-09-01 00:00:00',
+				'valid_to' => '2020-09-30 23:59:59',
+				'supported_positions' => $this->dashboard_top_or_report,
 			)
 		);
 
@@ -275,25 +278,13 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 	}
 
 	/**
-	 * This method will check to see if Meta Slider plugin is installed.
-	 *
-	 * @param  String  $product			    the plugin slug
-	 * @param  boolean $also_require_active a bool to indicate if the plugin should be active or not
-	 * @return boolean					    a bool to indicate if the notice should be displayed or not
-	 */
-	protected function is_metaslider_installed($product = 'ml-slider', $also_require_active = false) {
-		return parent::is_plugin_installed($product, $also_require_active);
-	}
-
-
-	/**
 	 * This method calls the parent verson and will work out if the user is using a non english language and if so returns true so that they can see the translation advert.
 	 *
 	 * @param  String $plugin_base_dir the plugin base directory
 	 * @param  String $product_name    the name of the plugin
 	 * @return Boolean                 returns true if the user is using a non english language and could translate otherwise false
 	 */
-	protected function translation_needed($plugin_base_dir = null, $product_name = null) {
+	protected function translation_needed($plugin_base_dir = null, $product_name = null) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 		return parent::translation_needed(WPO_PLUGIN_MAIN_PATH, 'wp-optimize');
 	}
 	

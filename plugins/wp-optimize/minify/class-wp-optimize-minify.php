@@ -125,6 +125,9 @@ class WP_Optimize_Minify {
 	 */
 	public function plugin_uninstall() {
 		// remove options from DB
+		if (!function_exists('wp_optimize_minify_config')) {
+			include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-config.php';
+		}
 		wp_optimize_minify_config()->purge();
 		// remove minified files
 		if (class_exists('WP_Optimize_Minify_Cache_Functions')) {

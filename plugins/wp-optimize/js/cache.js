@@ -236,6 +236,11 @@ var WP_Optimize_Cache = function () {
 		$.blockUI();
 
 		send_command('save_cache_settings', { 'cache-settings': gather_cache_settings() }, function(response) {
+
+			if (response.hasOwnProperty('js_trigger')) {
+				$(document).trigger(response.js_trigger, response);
+			}
+
 			if (response.hasOwnProperty('error')) {
 				// show error
 				console.log(response.error);
@@ -289,8 +294,16 @@ var WP_Optimize_Cache = function () {
 					});
 				}, 5000);
 			} else {
+				var tab_id = $('.wp-optimize-nav-tab-contents .notice:visible').closest('.wp-optimize-nav-tab-contents').attr('id'),
+				tab_name = 'cache';
+
+				if (/wpo_cache-(.+)-contents/.test(tab_id)) {
+					var match = /wpo_cache-(.+)-contents/.exec(tab_id);
+					tab_name = match[1];
+				}
+
 				// Navigate to the tab where the notice is shown
-				$('.wpo-page.active .nav-tab-wrapper a[data-tab="cache"]').trigger('click');
+				$('.wpo-page.active .nav-tab-wrapper a[data-tab="'+tab_name+'"]').trigger('click');
 				// If it's false, scroll to the top where the error is displayed.
 				var offset = $('.wpo-page.active').offset();
 				window.scroll(0, offset.top - 20);

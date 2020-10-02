@@ -24,6 +24,7 @@ var WP_Optimize_Smush = function() {
 		smush_single_image_btn = $('.wpo_smush_single_image .button'),
 		smush_single_restore_btn = $('.wpo_restore_single_image .button'),
 		smush_mark_all_as_uncompressed_btn = $('#wpo_smush_mark_all_as_uncompressed_btn'),
+		restore_all_compressed_images_btn = $('#wpo_smush_restore_all_compressed_images_btn'),
 		smush_view_logs_btn = $('.wpo_smush_get_logs'),
 		smush_delete_backup_images_btn = $('#wpo_smush_delete_backup_btn'),
 		compression_server_select = $('.compression_server'),
@@ -162,6 +163,19 @@ var WP_Optimize_Smush = function() {
 	});
 
 	/**
+	 * Handle "Restore all compressed images" click.
+	 */
+	restore_all_compressed_images_btn.on('click', function() {
+		if (!confirm(wposmush.restore_all_compressed_images)) return;
+
+		update_view_modal_message($('#smush-information-modal-cancel-btn'));
+		$('#smush-information-modal-cancel-btn .smush-information').text(wposmush.please_wait);
+
+		smush_mark_all_as_uncompressed = true;
+		run_mark_all_as_uncompressed(true, true);
+	});
+
+	/**
 	 * Handle "Cancel" button click for mark all images as uncompressed process
 	 */
 	$('#smush-information-modal-cancel-btn input[type="button"]').on('click', function() {
@@ -175,32 +189,38 @@ var WP_Optimize_Smush = function() {
 	 *
 	 * @param {bool} restore_backup if set to true then images will restored from backup if possible.
 	 */
-	function run_mark_all_as_uncompressed(restore_backup) {
+	function run_mark_all_as_uncompressed(restore_backup, delete_only_backups_meta) {
 		if (!smush_mark_all_as_uncompressed) return;
 
 		var info = $('#smush-information-modal-cancel-btn .smush-information');
-		smush_manager_send_command('mark_all_as_uncompressed', {restore_backup: restore_backup ? 1 : 0}, function(resp) {
-			// if cancel button pressed then exit
-			if (!smush_mark_all_as_uncompressed) return;
+		smush_manager_send_command('mark_all_as_uncompressed',
+			{
+				restore_backup: restore_backup ? 1 : 0,
+				delete_only_backups_meta: delete_only_backups_meta ? 1 : 0
+			},
+			function(resp) {
+				// if cancel button pressed then exit
+				if (!smush_mark_all_as_uncompressed) return;
 
-			// if we get an error then show it
-			if (resp.hasOwnProperty('error')) {
-				update_view_modal_message($('#smush-information-modal'), $.unblockUI);
-				$('#smush-information-modal .smush-information').text(resp.error);
-				get_info_from_smush_manager();
-				return;
-			}
+				// if we get an error then show it
+				if (resp.hasOwnProperty('error')) {
+					update_view_modal_message($('#smush-information-modal'), $.unblockUI);
+					$('#smush-information-modal .smush-information').text(resp.error);
+					get_info_from_smush_manager();
+					return;
+				}
 
-			// if completed then refresh uncompressed images list and show final message.
-			if (resp.completed) {
-				update_view_modal_message($('#smush-information-modal'), $.unblockUI);
-				$('#smush-information-modal .smush-information').text(resp.message);
-				get_info_from_smush_manager();
-			} else {
-				info.text(resp.message);
-				run_mark_all_as_uncompressed(restore_backup);
+				// if completed then refresh uncompressed images list and show final message.
+				if (resp.completed) {
+					update_view_modal_message($('#smush-information-modal'), $.unblockUI);
+					$('#smush-information-modal .smush-information').text(resp.message);
+					get_info_from_smush_manager();
+				} else {
+					info.text(resp.message);
+					run_mark_all_as_uncompressed(restore_backup);
+				}
 			}
-		});
+		);
 	}
 
 	/**

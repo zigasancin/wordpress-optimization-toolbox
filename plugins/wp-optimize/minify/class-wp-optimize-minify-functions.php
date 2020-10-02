@@ -11,10 +11,25 @@ if (function_exists('mb_internal_encoding')) {
 ini_set('pcre.backtrack_limit', 5000000);
 ini_set('pcre.recursion_limit', 5000000);
 
-require_once WPO_PLUGIN_MAIN_PATH.'/vendor/autoload.php';
-
-// Use PHP Minify - https://github.com/matthiasmullie/minify
+// Include PHP Minify [1.3.60] - https://github.com/matthiasmullie/minify
+if (!class_exists('\MatthiasMullie\Minify\Minify')) {
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Minify.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/CSS.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/JS.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Exception.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Exceptions/BasicException.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src//Exceptions/FileImportException.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Exceptions/IOException.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/path-converter/src/ConverterInterface.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/path-converter/src/Converter.php';
+}
+	
 use MatthiasMullie\Minify; // phpcs:ignore PHPCompatibility.Keywords.NewKeywords.t_useFound, PHPCompatibility.LanguageConstructs.NewLanguageConstructs.t_ns_separatorFound
+
+// Use HTML minification
+if (!class_exists('Minify_HTML')) {
+	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/mrclay/minify/lib/Minify/HTML.php';
+}
 
 if (!class_exists('WP_Optimize_Options')) {
 	include_once WPO_PLUGIN_MAIN_PATH.'/includes/class-wp-optimize-options.php';
@@ -32,10 +47,11 @@ class WP_Optimize_Minify_Functions {
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 
 		$locations = array(home_url(), site_url(), network_home_url(), network_site_url());
+		$async_using_js = 'all' === $wpo_minify_options['enable_defer_js'] && 'async_using_js' === $wpo_minify_options['defer_js_type'];
 		
 		// excluded from cdn because of https://www.chromestatus.com/feature/5718547946799104 (we use document.write to preserve render blocking)
 		if (!empty($wpo_minify_options['cdn_url'])
-			&& (!$wpo_minify_options['defer_for_pagespeed'] || $wpo_minify_options['cdn_force'])
+			&& (!$async_using_js || $wpo_minify_options['cdn_force'])
 		) {
 			array_push($locations, $wpo_minify_options['cdn_url']);
 		}
@@ -303,8 +319,14 @@ class WP_Optimize_Minify_Functions {
 			$js = '/* info: ' . $url . ' */' . "\n" . $js;
 		}
 
-		// return html
-		return $js . PHP_EOL;
+		/**
+		 * Filters the imported JavaScript
+		 *
+		 * @param string  $js                     - The imported JS
+		 * @param string  $url                    - The imported url
+		 * @param boolean $enable_js_minification - Whether to minify or not
+		 */
+		return apply_filters('wpo_minify_get_js', $js . "\n", $url, $enable_js_minification);
 	}
 
 	/**
@@ -327,6 +349,18 @@ class WP_Optimize_Minify_Functions {
 	}
 
 	/**
+	 * Wrapper to minify the inlined JS string - Adds an extra check for JSON
+	 *
+	 * @param string $js
+	 * @return string
+	 */
+	public static function minify_inline_js($js) {
+		// Do not minify JSON (JS minification will minify `true` to `!0`, which will break the JSON)
+		if (json_decode($js)) return $js;
+		return self::minify_js_string($js, true);
+	}
+
+	/**
 	 * Functions, minify html
 	 *
 	 * @param string $html
@@ -340,7 +374,7 @@ class WP_Optimize_Minify_Functions {
 			$options['cssMinifier'] = array('WP_Optimize_Minify_Functions', 'minify_css_string');
 		}
 		if ($minify_js && apply_filters('wpo_minify_inline_js', true)) {
-			$options['jsMinifier'] = array('WP_Optimize_Minify_Functions', 'minify_js_string');
+			$options['jsMinifier'] = array('WP_Optimize_Minify_Functions', 'minify_inline_js');
 		}
 		return Minify_HTML::minify($html, $options);
 	}
@@ -429,8 +463,14 @@ class WP_Optimize_Minify_Functions {
 			$css = '/* info: ' . $url . ' */' . "\n" . trim($css);
 		}
 
-		// return html
-		return $css;
+		/**
+		 * Filters the imported CSS
+		 *
+		 * @param string  $css                     - The imported CSS
+		 * @param string  $url                     - The imported url
+		 * @param boolean $enable_css_minification - Whether to minify or not
+		 */
+		return apply_filters('wpo_minify_get_css', $css, $url, $enable_css_minification);
 	}
 
 	/**
@@ -520,8 +560,6 @@ class WP_Optimize_Minify_Functions {
 	 * @return boolean|string
 	 */
 	public static function download_and_minify($hurl, $inline, $enable_minification, $type, $handle) {
-		$wp_home = site_url();
-
 		// must have
 		if (is_null($hurl) || empty($hurl)) {
 			return false;
@@ -725,8 +763,8 @@ class WP_Optimize_Minify_Functions {
 			
 			// for js files, we need to consider thew defer for insights option
 			if (substr($url, -3) == '.js') {
-				
-				if (!$wpo_minify_options['defer_for_pagespeed']
+				$async_using_js = 'all' === $wpo_minify_options['enable_defer_js'] && 'async_using_js' === $wpo_minify_options['defer_js_type'];
+				if (!$async_using_js
 					|| $wpo_minify_options['cdn_force']
 				) {
 					$url = str_ireplace($wp_domain, $cdn_url, $url);
@@ -911,24 +949,13 @@ class WP_Optimize_Minify_Functions {
 		);
 
 		$res_code = wp_remote_retrieve_response_code($response);
-		if ('200' == $res_code) {
+		if (200 == $res_code) {
 			$data = wp_remote_retrieve_body($response);
 			if (strlen($data) > 1) {
 				return $data;
 			}
 		}
 		
-		// verify
-		if (!isset($res_code) || empty($res_code) || false == $res_code || is_null($res_code)) {
-			return false;
-		}
-		
-		// stop here, error 4xx or 5xx
-		if ('4' == $res_code[0] || '5' == $res_code[0]) {
-			return false;
-		}
-		
-		// fallback fail
 		return false;
 	}
 	

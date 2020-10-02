@@ -198,6 +198,18 @@
 			$('#wp-optimize-nav-tab-wrapper__wpo_minify a[data-tab="status"]').trigger('click');
 		}
 
+		// Enable / disable defer_jquery
+		function check_defer_status( e ) {
+			$('input[name="enable_defer_js"]').each(function(index, element) {
+				$(element).closest('fieldset').removeClass('selected').find('.defer-js-settings').slideUp('fast');
+			});
+			$('input[name="enable_defer_js"]:checked').closest('fieldset').addClass('selected').find('.defer-js-settings').slideDown('fast');
+		}
+
+		$('input[name="enable_defer_js"]').on('change', check_defer_status);
+		
+		check_defer_status();
+
 		return this;
 	}
 

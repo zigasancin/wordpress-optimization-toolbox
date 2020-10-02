@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize - Clean, Compress, Cache
 Plugin URI: https://getwpo.com
 Description: WP-Optimize makes your site fast and efficient. It cleans the database, compresses images and caches pages. Fast sites attract more traffic and users.
-Version: 3.1.2
+Version: 3.1.4
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '3.1.2');
+define('WPO_VERSION', '3.1.4');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -84,6 +84,8 @@ class WP_Optimize {
 		 * Add action for display Images > Compress images tab.
 		 */
 		add_action('wp_optimize_admin_page_wpo_images_smush', array($this, 'admin_page_wpo_images_smush'));
+
+		include_once(WPO_PLUGIN_MAIN_PATH.'includes/helpers.php');
 
 		include_once(WPO_PLUGIN_MAIN_PATH.'includes/updraftcentral.php');
 
@@ -460,6 +462,7 @@ class WP_Optimize {
 
 		$active_plugins = $this->get_active_plugins();
 
+		$plugin_info = array();
 		$plugin_info['installed'] = false;
 		$plugin_info['active'] = false;
 
@@ -574,8 +577,6 @@ class WP_Optimize {
 			));
 		}
 		
-		$wp_optimize = $this;
-		$optimizer = $this->get_optimizer();
 		$options = $this->get_options();
 
 		$results = array();
@@ -1497,11 +1498,13 @@ class WP_Optimize {
 			echo __('Error:', 'wp-optimize').' '.__('template not found', 'wp-optimize')." (".$path.")";
 		} else {
 			extract($extract_these);
-			$wpdb = $GLOBALS['wpdb'];
-			$wp_optimize = $this;
-			$optimizer = $this->get_optimizer();
-			$options = $this->get_options();
-			$wp_optimize_notices = $this->get_notices();
+			// The following are useful variables which can be used in the template.
+			// They appear as unused, but may be used in the $template_file.
+			$wpdb = $GLOBALS['wpdb'];// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $wpdb might be used in the included template
+			$wp_optimize = $this;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $wp_optimize might be used in the included template
+			$optimizer = $this->get_optimizer();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $optimizer might be used in the included template
+			$options = $this->get_options();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $options might be used in the included template
+			$wp_optimize_notices = $this->get_notices();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $wp_optimize_notices might be used in the included template
 			include $template_file;
 		}
 
@@ -1545,8 +1548,8 @@ class WP_Optimize {
 		// This need to work on - currently not using the parameter values.
 		$my_time = current_time("timestamp", 0);
 		$my_date = gmdate(get_option('date_format') . ' ' . get_option('time_format'), $my_time);
-		$sendto = (!$options->get_option('email-address') ? get_bloginfo('admin_email') : $options->get_option('email-address'));
-		$subject = get_bloginfo('name').": ".__("Automatic Operation Completed", "wp-optimize")." ".$my_date;
+		$sendto = (!$options->get_option('email-address') ? get_bloginfo('admin_email') : $options->get_option('email-address'));// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $sendto is unused but function Not currently used.
+		$subject = get_bloginfo('name').": ".__("Automatic Operation Completed", "wp-optimize")." ".$my_date;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $subject is unused but function Not currently used.
 
 		$msg  = __("Scheduled optimization was executed at", "wp-optimize")." ".$my_date."\r\n"."\r\n";
 		$msg .= __("You can safely delete this email.", "wp-optimize")."\r\n";
@@ -1603,10 +1606,8 @@ class WP_Optimize {
 		if ('true' == $options->get_option('schedule')) {
 			$this_options = $options->get_option('auto');
 
-			$optimizations = $optimizer->get_optimizations();
-
 			// Currently the output of the optimizations is not saved/used/logged.
-			$results = $optimizer->do_optimizations($this_options, 'auto');
+			$optimizer->do_optimizations($this_options, 'auto');
 		}
 
 	}
@@ -1913,9 +1914,9 @@ class WP_Optimize {
 		$sites = array();
 		// check if function get_sites exists (since 4.6.0) else use wp_get_sites.
 		if (function_exists('get_sites')) {
-			$sites = get_sites(array('network_id' => null, 'number' => 999999));
+			$sites = get_sites(array('network_id' => null, 'deleted' => 0, 'number' => 999999));
 		} elseif (function_exists('wp_get_sites')) {
-			$sites = wp_get_sites(array('network_id' => null, 'limit' => 999999));
+			$sites = wp_get_sites(array('network_id' => null, 'deleted' => 0, 'limit' => 999999));
 		}
 		return $sites;
 	}
@@ -1994,7 +1995,7 @@ class WP_Optimize {
 		// 32MB
 		if ($mp < 33554432) {
 			$save = $wpdb->show_errors(false);
-			$req = @$wpdb->query("SET GLOBAL max_allowed_packet=33554432");// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+			@$wpdb->query("SET GLOBAL max_allowed_packet=33554432");// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 			$wpdb->show_errors($save);
 
 			$mp = (int) $wpdb->get_var("SELECT @@session.max_allowed_packet");

@@ -33,9 +33,16 @@ class WP_Optimize_Cache_Commands {
 			'message' => "WPO_Cache_Config class doesn't exist",
 		);
 
+		// filter for validate cache settings before save it.
+		$validation = apply_filters('wpo_save_cache_settings_validation', $data['cache-settings']);
+
+		if (!empty($validation) && false === $validation['result']) {
+			return $validation;
+		}
+
 		$enabled = false;
 		$disabled = false;
-		$return = array();
+		$return = !empty($validation) ? $validation : array();
 		$previous_settings = WPO_Cache_Config::instance()->get();
 
 		// Attempt to change current status if required
@@ -187,8 +194,6 @@ class WP_Optimize_Cache_Commands {
 	 * @return array|bool
 	 */
 	public function run_cache_preload_cli() {
-		global $wpdb;
-
 		if (!(defined('WP_CLI') && WP_CLI)) return false;
 
 		// define WPO_ADVANCED_CACHE constant as WP-CLI doesn't load advanced-cache.php file

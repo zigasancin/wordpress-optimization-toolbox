@@ -86,6 +86,14 @@ class WP_Optimize_Minify_Cache_Functions {
 	}
 
 	/**
+	 * Reset the cache (Increment + purge temp files)
+	 */
+	public static function reset() {
+		self::cache_increment();
+		self::purge_temp_files();
+	}
+
+	/**
 	 * Will delete temporary intermediate stuff but leave final css/js alone for compatibility
 	 *
 	 * @return Array

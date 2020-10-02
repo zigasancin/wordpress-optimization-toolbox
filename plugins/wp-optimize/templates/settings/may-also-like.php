@@ -246,12 +246,9 @@
 	<header>
 		<h2><?php _e("Our other plugins", 'wp-optimize');?></h2>
 		<p>
-		
 			<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/', 'UpdraftPlus'); ?> |
 			
 			<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/updraftcentral/', 'UpdraftCentral'); ?> |
-
-			<?php $wp_optimize->wp_optimize_url('https://metaslider.com/', 'MetaSlider'); ?>		
 		</p>
 	</header>
 	<div class="wpo-plugin-family__plugins">
@@ -293,25 +290,6 @@
 				<?php _e("With a wide range of useful features, including automated backup schedules and sophisticated one click updates, UpdraftCentral is sure to boost to your productivity and save you time.", 'wp-optimize');?>
 			</p>
 			<?php $wp_optimize->wp_optimize_url('https://updraftplus.com/updraftcentral/', null, __('Try for free', 'wp-optimize')); ?>
-		</div>
-		<div class="wpo-plugin-family__plugin">
-			<?php
-			$wp_optimize->wp_optimize_url('https://www.metaslider.com/', null, '<img class="addons" alt="'.__("Meta Slider", 'wp-optimize').'" src="'. WPO_PLUGIN_URL.'images/features/metaslider_logo.png' .'">');
-			$wp_optimize->wp_optimize_url('https://www.metaslider.com/', null, '<h3>'.__('MetaSlider - hold visitors’ attention to increase conversion and profits.', 'wp-optimize').'</h3>', 'class="other-plugin-title"');
-			?>
-			<p>
-				<?php _e("With Metaslider, WordPress’ most popular slider plugin, you can add unique, SEO-optimizing slideshow to your blog or website in a matter of seconds!", 'wp-optimize');?>
-			</p>
-			<p>
-				<?php _e("Sliders instantly make a web-page more eye-catching and engaging.", 'wp-optimize');?>
-			</p>
-			<p>
-				<?php _e("With Metaslider, creating them couldn’t be easier: simply select images from your WordPress Media Library, drag and drop them into place. You can then set the slide captions, links and SEO fields all from one page.", 'wp-optimize');?>
-			</p>
-			<p>
-				<?php _e("Easily improve the look of your site, your conversion rate and bottom line.", 'wp-optimize');?>
-			</p>
-			<?php $wp_optimize->wp_optimize_url('https://www.metaslider.com/', null, __('Try for free', 'wp-optimize')); ?>
 		</div>
 	</div><!-- END wpo-plugin-family__plugins -->
 </div>

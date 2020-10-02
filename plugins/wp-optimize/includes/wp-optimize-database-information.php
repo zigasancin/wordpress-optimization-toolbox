@@ -138,6 +138,16 @@ class WP_Optimize_Database_Information {
 	}
 
 	/**
+	 * Whether a table exists
+	 *
+	 * @return boolean
+	 */
+	public function table_exists($table_name, $use_default_prefix = true) {
+		global $wpdb;
+		return null !== $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($use_default_prefix ? $wpdb->prefix.$table_name : $table_name)));
+	}
+
+	/**
 	 * Returns result for query SHOW FULL TABLES as associative array [table_name] => table_type.
 	 *
 	 * @return array

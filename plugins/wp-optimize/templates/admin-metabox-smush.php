@@ -45,10 +45,6 @@
 				<input type="radio" id="resmushit" name="compression_server_<?php echo $post_id; ?>" value="resmushit" <?php checked($smush_options['compression_server'], 'resmushit'); ?>>
 				<a href="http://resmush.it" target="_blank"><?php _e('reSmush.it', 'wp-optimize');?></a>
 			</label>
-			<label for="nitrosmush">
-				<input type="radio" id="nitrosmush" name="compression_server_<?php echo $post_id; ?>" value="nitrosmush" <?php checked($smush_options['compression_server'], 'nitrosmush'); ?>>
-				<a href="http://nitrosmush.com" target="_blank"><?php _e('NitroSmush', 'wp-optimize');?></a>
-			</label>
 		</fieldset>
 		<h4><?php _e('Other options', 'wp-optimize');?></h4>			
 		<fieldset class="other_options">
@@ -62,6 +58,10 @@
 			</label>
 		</fieldset>
    </div>
+
+	<?php if ($compressed_by_another_plugin) { ?>
+		<p><b><?php _e('Note: This image is already compressed by another plugin', 'wp-optimize'); ?></b></p>
+	<?php } ?>
 
 	<div class='wpo_smush_single_image action_button' <?php echo $smush_display; ?> >
 		<input type='button' data-blog='<?php echo get_current_blog_id(); ?>' data-id="<?php echo $post_id; ?>" id='smush_compress_<?php echo $post_id; ?>' class='button-primary button' value='<?php _e('Compress', 'wp-optimize'); ?>'/>

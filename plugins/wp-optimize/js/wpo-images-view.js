@@ -178,15 +178,17 @@ WP_Optimize_Images_View = function(settings) {
 	 */
 	function hide_when_empty_elements() {
 		if (options.hide_when_empty) {
-			var images_count = $(['.', options.image_container_class].join(''), images_view_container).length;
+			var images_count = $(['.', options.image_container_class,':visible'].join(''), images_view_container).length;
 
 			if (0 === images_count) {
 				// show message - no images found.
 				if (0 == $('.wpo-images-view-empty', images_view_container).length) {
-					images_view_container.html($('<div class="wpo-images-view-empty wpo-fieldgroup" />').text(options.no_images_found_message));
+					images_view_container.append($('<div class="wpo-images-view-empty wpo-fieldgroup" />').text(options.no_images_found_message));
 				}
+
+				$('.wpo-images-view-empty', images_view_container).show();
 			} else {
-				$('.wpo-images-view-empty', images_view_container).remove();
+				$('.wpo-images-view-empty', images_view_container).hide();
 			}
 
 			$.each(options.hide_when_empty, function(i, el) {
@@ -286,6 +288,7 @@ WP_Optimize_Images_View = function(settings) {
 	function filter_by_site(blog_id) {
 		$(image_container_selector, images_view_container).hide();
 		$(['.',options.image_container_blog_class_prefix, blog_id].join(''), images_view_container).show();
+		update_view();
 	}
 
 	/**
@@ -331,8 +334,8 @@ WP_Optimize_Images_View = function(settings) {
 		// if no any selected images then exit.
 		if (0 == $('input[type="checkbox"]', images_view_container).length) return selected_images;
 
-		// build selected images list.
-		$('input:checked', images_view_container).each(function() {
+		// build list of visible selected images .
+		$(['.',options.image_container_class,':visible input:checked'].join(''), images_view_container).each(function() {
 			selected_images.push($(this).val());
 		});
 

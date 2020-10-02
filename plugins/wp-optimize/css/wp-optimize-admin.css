@@ -2700,6 +2700,12 @@ textarea.cache-settings {
 		margin-bottom: 0;
 	}
 
+#wp-optimize-wrap .defer-js-settings {
+		padding-left: 1em;
+		border-left: 2px solid #E2E2E2;
+		margin-left: 0.5em;
+	}
+
 /* Modal window */
 
 body.wpo-modal-is-opened {

@@ -164,8 +164,6 @@ class WP_Optimize_Options {
 
 	
 	public function save_settings($settings) {
-		$optimizer = WP_Optimize()->get_optimizer();
-	
 		$output = array('messages' => array(), 'errors' => array());
 		if (!empty($settings["enable-schedule"])) {
 			$this->update_option('schedule', 'true');
@@ -234,7 +232,9 @@ class WP_Optimize_Options {
 		$this->update_option('logging-additional', $logger_options);
 
 		// Save selected optimization settings.
-		$this->save_sent_manual_run_optimization_options($settings, true, false);
+		if (isset($settings['optimization-options'])) {
+			$this->save_sent_manual_run_optimization_options($settings['optimization-options'], false, false);
+		}
 
 		// Save auto backup option value.
 		$enable_auto_backup = (isset($settings['enable-auto-backup']) ? 'true' : 'false');
@@ -270,6 +270,12 @@ class WP_Optimize_Options {
 		}
 
 		wp_cache_flush();
+
+		// disable cache and clean any information related to WP-Optimize Cache.
+		WPO_Page_Cache::instance()->clean_up();
+		// delete settings from .htaccess
+		WP_Optimize::get_browser_cache()->disable();
+		WP_Optimize::get_gzip_compression()->disable();
 
 		return $result;
 	}
@@ -349,7 +355,7 @@ class WP_Optimize_Options {
 		foreach ($optimizations as $optimization_id => $optimization) {
 			// In current code, not all options can be saved.
 			// Revisions, drafts, spams, unapproved, optimize.
-			if ($available_for_saving_only && empty($optimization->available_for_saving)) continue;
+			if (is_wp_error($optimization) || ($available_for_saving_only && empty($optimization->available_for_saving))) continue;
 			$setting_id = $optimization->get_setting_id();
 			$id_in_sent = (($use_dom_id) ? $optimization->get_dom_id() : $optimization_id);
 			// 'true' / 'false' are indeed strings here; this is the historical state. It may be possible to change later using our abstraction interface.
@@ -424,6 +430,7 @@ class WP_Optimize_Options {
 			$new_settings = array();
 
 			foreach ($optimizations as $optimization) {
+				if (is_wp_error($optimization)) continue;
 				$setting_id = $optimization->get_setting_id();
 
 				$new_settings[$setting_id] = empty($optimization->setting_default) ? 'false' : 'true';

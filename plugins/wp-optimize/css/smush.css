@@ -906,3 +906,7 @@ img#wpo_smush_images_clear_stats_spinner {
 	}
 
 }
+
+#wpo_smush_restore_all_compressed_images_btn + span > span {
+	line-height: 28px;
+}

@@ -45,6 +45,7 @@ class WPO_Cache_Rules {
 		add_action('edit_terms', array($this, 'purge_related_elements_on_term_updated'), 10, 2);
 		add_action('set_object_terms', array($this, 'purge_related_elements_on_post_terms_change'), 10, 6);
 		add_action('wpo_cache_config_updated', array($this, 'cache_config_updated'), 10, 1);
+		add_action('wp_insert_comment', array($this, 'comment_inserted'), 10, 2);
 
 		/**
 		 * List of hooks for which when executed, the cache will be purged
@@ -89,6 +90,21 @@ class WPO_Cache_Rules {
 		if (!empty($this->config['enable_page_caching'])) {
 			$comment = get_comment($comment_id);
 			if (is_object($comment) && !empty($comment->comment_post_ID)) WPO_Page_Cache::delete_single_post_cache($comment->comment_post_ID);
+		}
+	}
+
+	/**
+	 * Action when a comment is inserted
+	 *
+	 * @param integer            $comment_id - The comment ID
+	 * @param boolean|WP_Comment $comment    - The comment object (from WP 4.4)
+	 * @return void
+	 */
+	public function comment_inserted($comment_id, $comment = false) {
+		if ($comment && is_a($comment, 'WP_Comment')) {
+			$url = get_permalink($comment->comment_post_ID);
+			$url_info = parse_url($url);
+			setcookie('wpo_commented_post', 1, time() + WEEK_IN_SECONDS, isset($url_info['path']) ? $url_info['path'] : '/');
 		}
 	}
 

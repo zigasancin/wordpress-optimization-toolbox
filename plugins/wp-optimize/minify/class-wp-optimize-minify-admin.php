@@ -24,6 +24,8 @@ class WP_Optimize_Minify_Admin {
 		// This function runs when WordPress updates or installs/remove something. Forces new cache
 		add_action('upgrader_process_complete', array('WP_Optimize_Minify_Cache_Functions', 'cache_increment'));
 		add_action('after_switch_theme', array('WP_Optimize_Minify_Cache_Functions', 'cache_increment'));
+		add_action('updraftcentral_version_updated', array('WP_Optimize_Minify_Cache_Functions', 'reset'));
+		add_action('elementor/editor/after_save', array('WP_Optimize_Minify_Cache_Functions', 'reset'));
 
 		add_action('wp_optimize_register_admin_content', array($this, 'register_content'));
 	}
@@ -50,7 +52,6 @@ class WP_Optimize_Minify_Admin {
 	 */
 	public function admin_enqueue_scripts($hook) {
 		$enqueue_version = (defined('WP_DEBUG') && WP_DEBUG) ? WPO_VERSION.'.'.time() : WPO_VERSION;
-		$min_or_not = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '.min';
 		$min_or_not_internal = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '-'. str_replace('.', '-', WPO_VERSION). '.min';
 		
 		wp_enqueue_script(
