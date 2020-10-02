@@ -6,7 +6,7 @@ Plugin URI: https://wordpress.org/plugins/hyperdb/
 Description: An advanced database class that supports replication, failover, load balancing, and partitioning.
 Author: Automattic
 License: GPLv2 or later
-Version: 1.6
+Version: 1.7
 */
 
 /** This file should be installed at ABSPATH/wp-content/db.php **/
@@ -266,7 +266,8 @@ class hyperdb extends wpdb {
 	}
 
 	/**
-	 * Find the first table name referenced in a query
+	 * Find the table to be used for query routing. Falls back on
+	 * core get_table_from_query after checking for special cases.
 	 * @param string query
 	 * @return string table
 	 */
@@ -279,54 +280,24 @@ class hyperdb extends wpdb {
 		// selects and use only 1500 chars of the query
 		$q = preg_replace( '/\((?!\s*select)[^(]*?\)/is', '()', substr( $q, 0, 1500 ) );
 
-		// Refer to the previous query
-		// wpdb doesn't implement last_table, so we run it first.
+		// SELECT FOUND_ROWS() refers to the previous SELECT query
 		if ( preg_match('/^\s*SELECT.*?\s+FOUND_ROWS\(\)/is', $q) )
 			return $this->last_table;
 
-		if( method_exists( get_parent_class( $this ), 'get_table_from_query' ) ) {
-			// WPDB has added support for get_table_from_query, which should take precedence
-			return parent::get_table_from_query( $q );
+		// SELECT FROM information_schema.* WHERE TABLE_NAME = 'wp_12345_foo'
+		if ( preg_match('/^\s*'
+				. 'SELECT.*?\s+FROM\s+`?information_schema`?\.'
+				. '.*\s+TABLE_NAME\s*=\s*["\']([\w-]+)["\']/is', $q, $maybe) )
+			return $maybe[1];
+
+		// Transaction support, requires a table hint via comment: IN_TABLE=table_name
+		if ( preg_match('/^\s*'
+				. '(?:START\s+TRANSACTION|COMMIT|ROLLBACK)\s*\/[*]\s*IN_TABLE\s*=\s*'
+				. "'?([\w-]+)'?/is", $q, $maybe) ) {
+			return $maybe[1];
 		}
 
-		// Quickly match most common queries
-		if ( preg_match('/^\s*(?:'
-				. 'SELECT.*?\s+FROM'
-				. '|INSERT(?:\s+IGNORE)?(?:\s+INTO)?'
-				. '|REPLACE(?:\s+INTO)?'
-				. '|UPDATE(?:\s+IGNORE)?'
-				. '|DELETE(?:\s+IGNORE)?(?:\s+FROM)?'
-				. ')\s+`?([\w-]+)`?/is', $q, $maybe) )
-			return $maybe[1];
-
-		// SHOW TABLE STATUS and SHOW TABLES
-		if ( preg_match('/^\s*(?:'
-				. 'SHOW\s+TABLE\s+STATUS.+(?:LIKE\s+|WHERE\s+Name\s*=\s*)'
-				. '|SHOW\s+(?:FULL\s+)?TABLES.+(?:LIKE\s+|WHERE\s+Name\s*=\s*)'
-				. ')\W([\w-]+)\W/is', $q, $maybe) )
-			return $maybe[1];
-
-		// Big pattern for the rest of the table-related queries in MySQL 5.0
-		if ( preg_match('/^\s*(?:'
-				. '(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM'
-				. '|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?'
-				. '|REPLACE(?:\s+LOW_PRIORITY|\s+DELAYED)?(?:\s+INTO)?'
-				. '|UPDATE(?:\s+LOW_PRIORITY)?(?:\s+IGNORE)?'
-				. '|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:\s+FROM)?'
-				. '|DESCRIBE|DESC|EXPLAIN|HANDLER'
-				. '|(?:LOCK|UNLOCK)\s+TABLE(?:S)?'
-				. '|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|OPTIMIZE|REPAIR).*\s+TABLE'
-				. '|TRUNCATE(?:\s+TABLE)?'
-				. '|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?'
-				. '|ALTER(?:\s+IGNORE)?\s+TABLE'
-				. '|DROP\s+TABLE(?:\s+IF\s+EXISTS)?'
-				. '|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON'
-				. '|DROP\s+INDEX.*\s+ON'
-				. '|LOAD\s+DATA.*INFILE.*INTO\s+TABLE'
-				. '|(?:GRANT|REVOKE).*ON\s+TABLE'
-				. '|SHOW\s+(?:.*FROM|.*TABLE)'
-				. ')\s+`?([\w-]+)`?/is', $q, $maybe) )
-			return $maybe[1];
+		return $this->last_table = parent::get_table_from_query( $q );
 	}
 
 	/**
@@ -379,7 +350,7 @@ class hyperdb extends wpdb {
 		if ( empty( $query ) )
 			return false;
 
-		$this->last_table = $this->table = $this->get_table_from_query($query);
+		$this->table = $this->get_table_from_query($query);
 
 		if ( isset($this->hyper_tables[$this->table]) ) {
 			$dataset = $this->hyper_tables[$this->table];

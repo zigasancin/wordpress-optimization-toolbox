@@ -1,9 +1,9 @@
 === HyperDB ===
 Contributors: matt, andy, ryan, mdawaffe, vnsavage, barry, westi, automattic
 Tags: mysql, scaling, performance, availability, WordPress.com
-Requires at least: 2.3
-Tested up to: 5.3
-Stable tag: 1.6
+Requires at least: 4.2
+Tested up to: 5.4
+Stable tag: 1.7
 License: GPLv2 or later
 
 HyperDB is an advanced database class that supports replication, failover, load balancing, and partitioning.
@@ -75,6 +75,10 @@ One way HyperDB differs from WPDB is that HyperDB does not attempt to connect to
 Since HyperDB attempts a connection only when a query is made, your WordPress installation will not kill the site with a database error, but will let the code decide what to do next on an unsuccessful query. If you want to do something different, like setting a custom error page or kill the site, you need to define the 'db_connection_error' callback in your db-config.php.
 
 == Changelog ==
+
+= 1.7 =
+* Add support for information_schema and transactions
+* Requires WordPress 4.2 for wpdb::get_table_from_query()
 
 = 1.6 = 
 * Add support for MYSQL_CLIENT_FLAGS which was added to wpdb in [21609]
