@@ -288,7 +288,13 @@ if ( ! class_exists( 'EWWW_Nextgen' ) ) {
 			$success = $this->ewww_manage_image_custom_column( '', $image );
 			if ( get_transient( 'ewww_image_optimizer_cloud_status' ) === 'exceeded' || ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_exceeded' ) > time() ) {
 				ewwwio_ob_clean();
-				wp_die( wp_json_encode( array( 'error' => esc_html__( 'License exceeded', 'ewww-image-optimizer' ) ) ) );
+				wp_die(
+					wp_json_encode(
+						array(
+							'error' => '<a href="https://ewww.io/buy-credits/" target="_blank">' . esc_html__( 'License exceeded', 'ewww-image-optimizer' ) . '</a>',
+						)
+					)
+				);
 			}
 			if ( ! wp_doing_ajax() ) {
 				// Get the referring page, and send the user back there.
@@ -849,7 +855,7 @@ if ( ! class_exists( 'EWWW_Nextgen' ) ) {
 		function ewww_ngg_bulk_init() {
 			$permissions = apply_filters( 'ewww_image_optimizer_bulk_permissions', '' );
 			$output      = array();
-			if ( empty( $_REQUEST['ewww_wpnonce'] ) && ! wp_verify_nonce( sanitize_key( $_REQUEST['ewww_wpnonce'] ), 'ewww-image-optimizer-bulk' ) || ! current_user_can( $permissions ) ) {
+			if ( empty( $_REQUEST['ewww_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['ewww_wpnonce'] ), 'ewww-image-optimizer-bulk' ) || ! current_user_can( $permissions ) ) {
 				$output['error'] = esc_html__( 'Access denied.', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );

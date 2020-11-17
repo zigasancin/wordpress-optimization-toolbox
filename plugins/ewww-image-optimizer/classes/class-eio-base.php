@@ -426,7 +426,7 @@ if ( ! class_exists( 'EIO_Base' ) ) {
 				// Unlimited, set to 32GB.
 				$memory_limit = '32000M';
 			}
-			if ( strpos( $memory_limit, 'G' ) ) {
+			if ( stripos( $memory_limit, 'g' ) ) {
 				$memory_limit = intval( $memory_limit ) * 1024 * 1024 * 1024;
 			} else {
 				$memory_limit = intval( $memory_limit ) * 1024 * 1024;
@@ -516,8 +516,8 @@ if ( ! class_exists( 'EIO_Base' ) ) {
 				return $this->site_url;
 			}
 			$this->site_url = get_home_url();
-			if ( class_exists( 'Amazon_S3_And_CloudFront' ) ) {
-				global $as3cf;
+			global $as3cf;
+			if ( class_exists( 'Amazon_S3_And_CloudFront' ) && is_object( $as3cf ) ) {
 				$s3_scheme = $as3cf->get_url_scheme();
 				$s3_region = $as3cf->get_setting( 'region' );
 				$s3_bucket = $as3cf->get_setting( 'bucket' );
