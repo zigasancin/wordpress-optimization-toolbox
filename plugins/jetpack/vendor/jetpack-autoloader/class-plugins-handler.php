@@ -5,7 +5,7 @@
  * @package automattic/jetpack-autoloader
  */
 
-namespace Automattic\Jetpack\Autoloader\jpbc71ca05c408d5422f20361a247087a1;
+namespace Automattic\Jetpack\Autoloader\jp2aa52323e0b287da03f99e87bcdacaad;
 
  // phpcs:ignore
 
@@ -130,7 +130,7 @@ class Plugins_Handler {
 	 * @return string The path of the current plugin.
 	 */
 	public function get_current_plugin_path() {
-		$vendor_path = str_replace( '\\', '/', dirname( dirname( __FILE__ ) ) );
+		$vendor_path = str_replace( '\\', '/', dirname( __DIR__ ) );
 		// Path to the plugin's folder (the parent of the vendor/jetpack-autoloader folder).
 		return substr( $vendor_path, 0, strrpos( $vendor_path, '/' ) );
 	}
