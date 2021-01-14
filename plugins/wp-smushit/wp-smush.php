@@ -13,7 +13,7 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://premium.wpmudev.org/">WPMU DEV</a> WordPress Smush API.
- * Version:           3.7.0
+ * Version:           3.8.2
  * Author:            WPMU DEV
  * Author URI:        https://profiles.wordpress.org/wpmudev/
  * License:           GPLv2
@@ -47,11 +47,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '3.7.0' );
+	define( 'WP_SMUSH_VERSION', '3.8.2' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
-	define( 'WP_SHARED_UI_VERSION', 'sui-2-9-4' );
+	define( 'WP_SHARED_UI_VERSION', 'sui-2-10-1' );
 }
 if ( ! defined( 'WP_SMUSH_BASENAME' ) ) {
 	define( 'WP_SMUSH_BASENAME', plugin_basename( __FILE__ ) );
@@ -207,7 +207,10 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		private function __construct() {
 			spl_autoload_register( array( $this, 'autoload' ) );
 
-			$this->register_actions();
+			add_action( 'admin_init', array( '\\Smush\\Core\\Installer', 'upgrade_settings' ) );
+			add_action( 'admin_init', array( $this, 'register_free_modules' ) );
+			add_action( 'admin_init', array( $this, 'register_pro_modules' ), 5 );
+
 			$this->init();
 		}
 
@@ -243,36 +246,24 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		}
 
 		/**
-		 * Register actions and filters.
-		 *
-		 * @since 2.9.0
-		 */
-		private function register_actions() {
-			add_action( 'admin_init', array( $this, 'register_free_modules' ) );
-			add_action( 'init', array( $this, 'register_pro_modules' ), 5 );
-
-			// Add upgrade schedule.
-			add_action( 'smush_upgrade_to_pro', array( $this, 'upgrade_to_pro' ) );
-		}
-
-		/**
 		 * Init core module.
 		 *
 		 * @since 2.9.0
 		 */
 		private function init() {
-			$this->api = new Smush\Core\Api\API( self::get_api_key() );
-
-			self::$is_pro = $this->validate_install();
-
-			// Init hub endpoints.
-			if ( self::$is_pro ) {
-				new Smush\Core\Api\Hub();
+			try {
+				$this->api = new Smush\Core\Api\API( self::get_api_key() );
+			} catch ( Exception $e ) {
+				$this->api = '';
 			}
+
+			$this->validate_install();
 
 			$this->core    = new Smush\Core\Core();
 			$this->library = new Smush\App\Media_Library( $this->core() );
-			$this->admin   = new Smush\App\Admin( $this->library() );
+			if ( is_admin() ) {
+				$this->admin = new Smush\App\Admin( $this->library() );
+			}
 
 			if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::add_command( 'smush', '\\Smush\\Core\\CLI' );
@@ -446,19 +437,17 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		 * Check if user is premium member, check for API key.
 		 *
 		 * @param bool $manual  Is it a manual check? Default: false.
-		 *
-		 * @return bool  True if a premium member, false if regular user.
 		 */
 		public function validate_install( $manual = false ) {
 			if ( isset( self::$is_pro ) && ! $manual ) {
-				return self::$is_pro;
+				return;
 			}
 
 			// No API key set, always false.
 			$api_key = self::get_api_key();
 
 			if ( empty( $api_key ) ) {
-				return false;
+				return;
 			}
 
 			// Flag to check if we need to revalidate the key.
@@ -523,8 +512,6 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 			}
 
 			self::$is_pro = isset( $valid ) && 'valid' === $valid;
-
-			return self::$is_pro;
 		}
 
 		/**

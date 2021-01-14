@@ -90,7 +90,7 @@ class Smush extends Abstract_Module {
 		}
 
 		// Show warning, if function says it's premium and api says not premium.
-		if ( isset( $this->api_headers['is_premium'] ) && ! intval( $this->api_headers['is_premium'] ) ) {
+		if ( isset( $this->api_headers['is_premium'] ) && ! (int) $this->api_headers['is_premium'] ) {
 			return true;
 		}
 
@@ -244,11 +244,14 @@ class Smush extends Abstract_Module {
 	/**
 	 * Process an image with Smush.
 	 *
-	 * @param string $file_path  Absolute path to the image.
+	 * @since 3.8.0 Added new param $convert_to_webp.
+	 *
+	 * @param string $file_path        Absolute path to the image.
+	 * @param bool   $convert_to_webp  Convert the image to webp.
 	 *
 	 * @return array|bool|WP_Error
 	 */
-	public function do_smushit( $file_path = '' ) {
+	public function do_smushit( $file_path = '', $convert_to_webp = false ) {
 		$errors   = new WP_Error();
 		$dir_name = trailingslashit( dirname( $file_path ) );
 
@@ -289,7 +292,7 @@ class Smush extends Abstract_Module {
 		$perms = fileperms( $file_path ) & 0777;
 
 		/** Send image for smushing, and fetch the response */
-		$response = $this->_post( $file_path, $file_size );
+		$response = $this->_post( $file_path, $file_size, $convert_to_webp );
 
 		if ( ! $response['success'] ) {
 			$errors->add( 'false_response', $response['message'] );
@@ -303,35 +306,48 @@ class Smush extends Abstract_Module {
 		}
 
 		// If there are no savings, or image returned is bigger in size.
-		if ( ( ! empty( $response['data']->bytes_saved ) && intval( $response['data']->bytes_saved ) <= 0 ) || empty( $response['data']->image ) ) {
+		if ( ( ! empty( $response['data']->bytes_saved ) && (int) $response['data']->bytes_saved ) <= 0 || empty( $response['data']->image ) ) {
 			return $response;
 		}
-		$tempfile = $file_path . '.tmp';
 
-		// Add the file as tmp.
-		file_put_contents( $tempfile, $response['data']->image );
+		if ( $convert_to_webp ) {
+			$webp      = WP_Smush::get_instance()->core()->mod->webp;
+			$webp_file = $webp->get_webp_file_path( $file_path, true );
+			// Add a new file as webp.
+			file_put_contents( $webp_file, $response['data']->image );
+		} else {
+			$tempfile = $file_path . '.tmp';
 
-		// Replace the file.
-		$success = @rename( $tempfile, $file_path );
+			// Add the file as tmp.
+			file_put_contents( $tempfile, $response['data']->image );
 
-		// If tempfile still exists, unlink it.
-		if ( file_exists( $tempfile ) ) {
-			@unlink( $tempfile );
+			// Replace the file.
+			$success = @rename( $tempfile, $file_path );
+
+			// If tempfile still exists, unlink it.
+			if ( file_exists( $tempfile ) ) {
+				@unlink( $tempfile );
+			}
+
+			// If file renaming failed.
+			if ( ! $success ) {
+				@copy( $tempfile, $file_path );
+				@unlink( $tempfile );
+			}
 		}
-
-		// If file renaming failed.
-		if ( ! $success ) {
-			@copy( $tempfile, $file_path );
-			@unlink( $tempfile );
-		}
-
 		// Some servers are having issue with file permission, this should fix it.
 		if ( empty( $perms ) || ! $perms ) {
 			// Source: WordPress Core.
 			$stat  = stat( dirname( $file_path ) );
 			$perms = $stat['mode'] & 0000666; // Same permissions as parent folder, strip off the executable bits.
 		}
-		@chmod( $file_path, $perms );
+
+		if ( $convert_to_webp ) {
+			@chmod( $webp_file, $perms );
+		} else {
+			@chmod( $file_path, $perms );
+		}
+
 
 		return $response;
 	}
@@ -339,18 +355,25 @@ class Smush extends Abstract_Module {
 	/**
 	 * Posts an image to Smush.
 	 *
-	 * @param string $file_path  Path of file to send to Smush.
-	 * @param int    $file_size  File size.
+	 * @since 3.8.0 Added new param $convert_to_webp.
+	 *
+	 * @param string $file_path        Path of file to send to Smush.
+	 * @param int    $file_size        File size.
+	 * @param bool   $convert_to_webp  Convert the image to webp.
 	 *
 	 * @return bool|array array containing success status, and stats
 	 */
-	private function _post( $file_path, $file_size ) {
+	private function _post( $file_path, $file_size, $convert_to_webp = false ) {
 		$headers = array(
 			'accept'       => 'application/json',   // The API returns JSON.
 			'content-type' => 'application/binary', // Set content type to binary.
 			'lossy'        => WP_Smush::is_pro() && $this->settings->get( 'lossy' ) ? 'true' : 'false',
 			'exif'         => $this->settings->get( 'strip_exif' ) ? 'false' : 'true',
 		);
+
+		if ( $convert_to_webp ) {
+			$headers['webp'] = 'true';
+		}
 
 		// Check if premium member, add API key.
 		$api_key = $this->get_api_key();
@@ -545,6 +568,10 @@ class Smush extends Abstract_Module {
 		// File path and URL for original image.
 		$attachment_file_path = Helper::get_attached_file( $id );
 
+		// Set a flag if any image got error during webp conversion.
+		$webp_has_error         = false;
+		$should_convert_to_webp = WP_Smush::get_instance()->core()->mod->webp->should_be_converted( $id );
+
 		// If images has other registered size, smush them first.
 		if ( ! empty( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $size_key => $size_data ) {
@@ -590,10 +617,41 @@ class Smush extends Abstract_Module {
 					continue;
 				}
 
+				/**
+				 * Convert to WebP
+				 *
+				 * @since 3.8.0
+				 */
+				if ( $should_convert_to_webp ) {
+					// Keep all new webp image path in this list.
+					$webp_files    = array();
+					$webp_response = WP_Smush::get_instance()->core()->mod->smush->do_smushit( $attachment_file_path_size, true );
+
+					if ( is_wp_error( $webp_response ) || ! $webp_response ) {
+						$webp_has_error = true;
+					} else {
+						$webp_files[] = WP_Smush::get_instance()->core()->mod->webp->get_webp_file_path( $attachment_file_path_size );
+					}
+				}
+
 				// Store details for each size key.
 				$response = $this->do_smushit( $attachment_file_path_size );
 
 				if ( is_wp_error( $response ) ) {
+					/**
+					 * If webp is active and some images have been converted to webp already
+					 * delete those new webp files.
+					 *
+					 * @since 3.8.0
+					 */
+					if ( $should_convert_to_webp && 0 < count( $webp_files ) ) {
+						foreach ( $webp_files as $webp_file ) {
+							if ( file_exists( $webp_file ) ) {
+								unlink( $webp_file );
+							}
+						}
+					}
+
 					return $response;
 				}
 
@@ -632,12 +690,41 @@ class Smush extends Abstract_Module {
 		// Whether to update the image stats or not.
 		$store_stats = true;
 
+		/**
+		 * Convert to WebP
+		 *
+		 * @since 3.8.0
+		 */
+		if ( $should_convert_to_webp && false === $webp_has_error ) {
+			$webp_response = WP_Smush::get_instance()->core()->mod->smush->do_smushit( $attachment_file_path, true );
+			if ( is_wp_error( $webp_response ) || ! $webp_response ) {
+				$webp_has_error = true;
+			} else {
+				$webp_files[] = WP_Smush::get_instance()->core()->mod->webp->get_webp_file_path( $attachment_file_path );
+			}
+		}
+
 		// If original size is supposed to be smushed.
 		if ( $smush_full && $smush_full_image ) {
 
 			$full_image_response = $this->do_smushit( $attachment_file_path );
 
 			if ( is_wp_error( $full_image_response ) ) {
+
+				/**
+				 * If webp is active and some images have been converted to webp already
+				 * delete those new webp files.
+				 *
+				 * @since 3.8.0
+				 */
+				if ( $should_convert_to_webp && 0 < count( $webp_files ) ) {
+					foreach ( $webp_files as $webp_file ) {
+						if ( file_exists( $webp_file ) ) {
+							unlink( $webp_file );
+						}
+					}
+				}
+
 				return $full_image_response;
 			}
 
@@ -680,7 +767,6 @@ class Smush extends Abstract_Module {
 						if ( empty( $stats['sizes'][ $size_name ] ) ) {
 							$stats['sizes'][ $size_name ] = $existing_stats['sizes'][ $size_name ];
 						} else {
-
 							$existing_stats_size = (object) $existing_stats['sizes'][ $size_name ];
 
 							// Store the original image size.
@@ -710,7 +796,30 @@ class Smush extends Abstract_Module {
 				 */
 				do_action( 'wp_smush_image_optimised', $id, $stats, $meta );
 			}
+
+			/**
+			 * If webp is active and all images have been converted to webp set a flag to meta.
+			 *
+			 * @since 3.8.0
+			 */
+			if ( $should_convert_to_webp && false === $webp_has_error ) {
+				$udir = WP_Smush::get_instance()->core()->mod->webp->get_upload_dir();
+				// Use the relative path of the first webp image as a flag.
+				$stats['webp_flag'] = substr( $webp_files[0], strlen( $udir['webp_path'] . '/' ) );
+			}
+
 			update_post_meta( $id, self::$smushed_meta_key, $stats );
+		} else {
+			/**
+			 * If webp is active and some images have been converted to webp already delete those new webp files.
+			 *
+			 * @since 3.8.0
+			 */
+			if ( $should_convert_to_webp && 0 < count( $webp_files ) ) {
+				foreach ( $webp_files as $webp_file ) {
+					unlink( $webp_file );
+				}
+			}
 		}
 
 		unset( $stats );
@@ -929,12 +1038,13 @@ class Smush extends Abstract_Module {
 			wp_send_json_error(
 				array(
 					'error_msg'    => '<p class="wp-smush-error-message">' . Helper::filter_error( $smush->get_error_message(), $attachment_id ) . '</p>',
-					'show_warning' => intval( $this->show_warning() ),
+					'show_warning' => (int) $this->show_warning(),
 				)
 			);
 		}
 
 		$this->update_resmush_list( $attachment_id );
+		\Smush\Core\Core::add_to_smushed_list( $attachment_id );
 		if ( $return ) {
 			return $status;
 		}
@@ -1007,6 +1117,13 @@ class Smush extends Abstract_Module {
 		/** Delete Backups  */
 		// Check if we have any smush data for image.
 		WP_Smush::get_instance()->core()->mod->backup->delete_backup_files( $image_id );
+
+		/**
+		 * Detete webp.
+		 * Run WebP::delete_images always even when the module is deactivated.
+		 * @since 3.8.0
+		 */
+		WP_Smush::get_instance()->core()->mod->webp->delete_images( $image_id , false );
 	}
 
 	/**

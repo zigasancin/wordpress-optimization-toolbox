@@ -18,7 +18,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 ?>
 
-<div class="sui-summary-image-space"></div>
+<div class="sui-summary-image-space" aria-hidden="true" style="background-image: url( '<?php echo esc_url( apply_filters( 'wpmudev_branding_hero_image', '' ) ); ?>' )"></div>
 <div class="sui-summary-segment">
 	<div class="sui-summary-details">
 		<span class="sui-summary-large wp-smush-total-optimised">
@@ -36,6 +36,7 @@ if ( ! defined( 'WPINC' ) ) {
 				<?php esc_html_e( 'Total savings', 'wp-smushit' ); ?>
 			</span>
 			<span class="sui-list-detail wp-smush-stats">
+				<?php wp_nonce_field( 'save_wp_smush_options', 'wp_smush_options_nonce', '' ); ?>
 				<span class="wp-smush-stats-percent">
 					<?php echo esc_html( $stats_percent ); ?>
 				</span>%
@@ -44,7 +45,6 @@ if ( ! defined( 'WPINC' ) ) {
 					<?php echo esc_html( $stats_human ); ?>
 				</span>
 			</span>
-			<?php wp_nonce_field( 'save_wp_smush_options', 'wp_smush_options_nonce', '' ); ?>
 		</li>
 		<?php if ( apply_filters( 'wp_smush_show_nextgen_lossy_stats', true ) ) : ?>
 			<li class="super-smush-attachments">
@@ -53,7 +53,7 @@ if ( ! defined( 'WPINC' ) ) {
 				</span>
 				<span class="sui-list-detail wp-smush-stats">
 					<?php if ( $lossy_enabled ) : ?>
-						<span class="smushed-count"><?php echo absint( $smushed_image_count ); ?></span> / <?php echo absint( $total_count ); ?>
+						<span class="smushed-count"><?php echo absint( $smushed_image_count ); ?></span>/<?php echo absint( $total_count ); ?>
 					<?php else : ?>
 						<span class="sui-tag sui-tag-disabled wp-smush-lossy-disabled">
 							<?php esc_html_e( 'Disabled', 'wp-smushit' ); ?>

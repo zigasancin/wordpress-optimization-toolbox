@@ -27,14 +27,6 @@
 				this.lazyloadEnableButton.addEventListener( 'click', ( e ) => {
 					e.currentTarget.classList.add( 'sui-button-onload' );
 
-					// Force repaint of the spinner.
-					const loader = e.currentTarget.querySelector(
-						'.sui-icon-loader'
-					);
-					loader.style.display = 'none';
-					loader.offsetHeight;
-					loader.style.display = 'flex';
-
 					this.toggle_lazy_load( true );
 				} );
 			}
@@ -45,6 +37,8 @@
 			if ( this.lazyloadDisableButton ) {
 				this.lazyloadDisableButton.addEventListener( 'click', ( e ) => {
 					e.preventDefault();
+					e.currentTarget.classList.add( 'sui-button-onload' );
+
 					this.toggle_lazy_load( false );
 				} );
 			}
@@ -95,6 +89,37 @@
 					} );
 				} );
 			}
+
+			this.handlePredefinedPlaceholders();
+		},
+
+		/**
+		 * Handle background color changes for the two predefined placeholders.
+		 *
+		 * @since 3.7.1
+		 */
+		handlePredefinedPlaceholders() {
+			const pl1 = document.getElementById( 'placeholder-icon-1' );
+			if ( pl1 ) {
+				pl1.addEventListener( 'click', () => this.changeColor( '#F3F3F3' ) );
+			}
+
+			const pl2 = document.getElementById( 'placeholder-icon-2' );
+			if ( pl2 ) {
+				pl2.addEventListener( 'click', () => this.changeColor( '#333333' ) );
+			}
+		},
+
+		/**
+		 * Set color.
+		 *
+		 * @since 3.7.1
+		 * @param {string} color
+		 */
+		changeColor( color ) {
+			document.getElementById( 'smush-color-picker' ).value = color;
+			document.querySelector( '.sui-colorpicker-hex .sui-colorpicker-value > span > span' ).style.backgroundColor = color;
+			document.querySelector( '.sui-colorpicker-hex .sui-colorpicker-value > input' ).value = color;
 		},
 
 		/**
@@ -125,44 +150,17 @@
 					if ( 'undefined' !== typeof res.success && res.success ) {
 						location.reload();
 					} else if ( 'undefined' !== typeof res.data.message ) {
-						this.showNotice( res.data.message );
+						WP_Smush.helpers.showErrorNotice( res.data.message );
+						document.querySelector( '.sui-button-onload' ).classList.remove( 'sui-button-onload' );
 					}
 				} else {
-					window.console.log(
-						'Request failed.  Returned status of ' + xhr.status
-					);
+					WP_Smush.helpers.showErrorNotice( 'Request failed.  Returned status of ' + xhr.status );
+					document.querySelector( '.sui-button-onload' ).classList.remove( 'sui-button-onload' );
 				}
 			};
 			xhr.send(
 				'param=' + enable + '&_ajax_nonce=' + nonceField[ 0 ].value
 			);
-		},
-
-		/**
-		 * Show message (notice).
-		 *
-		 * @since 3.0
-		 *
-		 * @param {string} message
-		 */
-		showNotice( message ) {
-			if ( 'undefined' === typeof message ) {
-				return;
-			}
-
-			const notice = document.getElementById( 'wp-smush-ajax-notice' );
-
-			notice.classList.add( 'sui-notice-error' );
-			notice.innerHTML = `<p>${ message }</p>`;
-
-			if ( this.cdnEnableButton ) {
-				this.cdnEnableButton.classList.remove( 'sui-button-onload' );
-			}
-
-			notice.style.display = 'block';
-			setTimeout( () => {
-				notice.style.display = 'none';
-			}, 5000 );
 		},
 
 		/**

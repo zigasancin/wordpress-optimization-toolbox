@@ -169,7 +169,7 @@ class Smush {
 	 * Show loader in button for single and bulk Smush.
 	 */
 	start() {
-		this.button.attr( 'disabled', 'disabled' );
+		this.button.prop( 'disabled', true );
 		this.button.addClass( 'wp-smush-started' );
 
 		this.bulkStart();
@@ -228,12 +228,12 @@ class Smush {
 	 * Enable button.
 	 */
 	enableButton() {
-		this.button.removeAttr( 'disabled' );
+		this.button.prop( 'disabled', false );
+		jQuery('.wp-smush-all').prop('disabled', false);
 		// For bulk process, enable other buttons.
-		jQuery( '.wp-smush-all' ).removeAttr( 'disabled' );
 		jQuery(
 			'button.wp-smush-scan, a.wp-smush-lossy-enable, button.wp-smush-resize-enable, button#wp-smush-save-settings'
-		).removeAttr( 'disabled' );
+		).prop('disabled', false);
 	}
 
 	/**
@@ -618,6 +618,21 @@ class Smush {
 			jQuery( '.wp-smush-bulk-wrapper' ).addClass( 'sui-hidden' );
 			// Hide the progress bar if scan is finished.
 			jQuery( '.wp-smush-bulk-progress-bar-wrapper' ).addClass( 'sui-hidden' );
+
+			// Display the upsell metabox.
+			if (document.getElementById('smush-box-bulk-upgrade')) {
+				document
+					.getElementById('smush-box-bulk-upgrade')
+					.classList.remove('sui-hidden');
+
+				document
+					.getElementById('wp-smush-all-smushed-text')
+					.classList.remove('sui-hidden');
+
+				document
+					.getElementById('wp-smush-pending-to-smush-text')
+					.classList.add('sui-hidden');
+			}
 		} else {
 			// Show loader.
 			statusIcon
@@ -636,7 +651,7 @@ class Smush {
 		}
 
 		// Enable re-Smush and scan button.
-		jQuery( '.wp-resmush.wp-smush-action, .wp-smush-scan' ).removeAttr(
+		jQuery( '.wp-resmush.wp-smush-action, .wp-smush-scan' ).removeProp(
 			'disabled'
 		);
 	}
@@ -663,6 +678,12 @@ class Smush {
 		document
 			.getElementById( 'bulk-smush-resume-button' )
 			.classList.remove( 'sui-hidden' );
+
+		if (document.getElementById('smush-box-bulk-upgrade')) {
+			document
+				.getElementById('smush-box-bulk-upgrade')
+				.classList.remove('sui-hidden');
+		}
 	}
 
 	/**
@@ -882,8 +903,11 @@ class Smush {
 			WP_Smush.helpers.precise_round( progress, 1 )
 		);
 
-		// Update stats and counts.
-		Smush.updateStats( this.smush_type );
+		// Avoid updating the stats twice when the bulk smush ends on Smush's page.
+		if (0 !== this.ids.length || 'nextgen' === this.smush_type) {
+			// Update stats and counts.
+			Smush.updateStats(this.smush_type);
+		}
 	}
 
 	/**
@@ -1141,7 +1165,7 @@ class Smush {
 		const self = this;
 
 		this.deferred.done( function() {
-			self.button.removeAttr( 'continue_smush' );
+			self.button.removeProp( 'continue_smush' );
 
 			if ( self.errors.length ) {
 				/** @param {string} wp_smush_msgs.error_in_bulk */
@@ -1162,7 +1186,7 @@ class Smush {
 			// Re-enable the buttons.
 			jQuery(
 				'.wp-smush-all:not(.wp-smush-finished), .wp-smush-scan'
-			).removeAttr( 'disabled' );
+			).prop('disabled', false);
 		} );
 	}
 
@@ -1178,7 +1202,6 @@ class Smush {
 			self.button.attr( 'continue_smush', false );
 			// Sync and update stats.
 			self.syncStats();
-			Smush.updateStats( this.smush_type );
 
 			self.request.abort();
 			self.enableButton();

@@ -352,7 +352,7 @@ class Media_Library extends Abstract_Module {
 
 		// Show Temporary Status, For Async Optimisation, No Good workaround.
 		if ( ! get_option( "wp-smush-restore-{$id}", false ) && 'upload-attachment' === $action && $this->settings->get( 'auto' ) ) {
-			$status_txt = '<p class="smush-status">' . __( 'Smushing in progress..', 'wp-smushit' ) . '</p>';
+			$status_txt = '<p class="smush-status">' . __( 'Smushing in progress...', 'wp-smushit' ) . '</p>';
 
 			// We need to show the smush button.
 			$show_button = false;
@@ -385,8 +385,12 @@ class Media_Library extends Abstract_Module {
 			'size_limit' => esc_html__( "Image couldn't be smushed as it exceeded the 5Mb size limit, Pro users can smush images with size up to 32Mb.", 'wp-smushit' ),
 		);
 
-		$skip_rsn = ! empty( $skip_msg[ $msg_id ] ) ? esc_html__( ' Skipped', 'wp-smushit' ) : '';
-		$skip_rsn = ! empty( $skip_rsn ) ? $skip_rsn . '<span class="sui-tooltip sui-tooltip-left sui-tooltip-constrained sui-tooltip-top-right-mobile" data-tooltip="' . $skip_msg[ $msg_id ] . '"><i class="dashicons dashicons-editor-help"></i></span>' : '';
+		$skip_rsn = '';
+		if ( ! empty( $skip_msg[ $msg_id ] ) ) {
+			$skip_rsn = '<a href="https://premium.wpmudev.org/project/wp-smush-pro/?utm_source=smush&utm_medium=plugin&utm_campaign=smush_medialibrary_savings" target="_blank">
+				<span class="sui-tooltip sui-tooltip-left sui-tooltip-constrained sui-tooltip-top-right-mobile" data-tooltip="' . $skip_msg[ $msg_id ] . '">
+				<span class="sui-tag sui-tag-purple sui-tag-sm">' . esc_html__( 'PRO', 'wp-smushit' ) .  '</span></span></a>';
+		}
 
 		return $skip_rsn;
 	}
@@ -435,7 +439,7 @@ class Media_Library extends Abstract_Module {
 	 * Get the image optimization status.
 	 *
 	 * Status                       Links                               Stats
-	 * - Smushing in progress..     No buttons                          false
+	 * - Smushing in progress...    No buttons                          false
 	 * - Already optimized          No buttons | Re-smush?              false
 	 * - Ignored from auto-smush    Undo                                false
 	 * - Not optimized              Smush | Ignore                      false
@@ -449,7 +453,7 @@ class Media_Library extends Abstract_Module {
 	 */
 	private function get_optimization_status( $id, $smush_data ) {
 		if ( get_option( 'smush-in-progress-' . $id, false ) ) {
-			return __( 'Smushing in progress..', 'wp-smushit' );
+			return __( 'Smushing in progress...', 'wp-smushit' );
 		}
 
 		if ( 'true' === get_post_meta( $id, WP_SMUSH_PREFIX . 'ignore-bulk', true ) ) {
@@ -582,6 +586,11 @@ class Media_Library extends Abstract_Module {
 
 		// PNG to JPEG.
 		if ( $this->core->mod->png2jpg->can_be_converted( $id ) ) {
+			return true;
+		}
+
+		// If the image needs to be converted to WebP.
+		if ( $this->core->mod->webp->should_be_converted( $id ) ) {
 			return true;
 		}
 
@@ -737,7 +746,10 @@ class Media_Library extends Abstract_Module {
 		uasort(
 			$size_stats,
 			function( $a, $b ) {
-				return $a->bytes < $b->bytes;
+				if ( $a->bytes === $b->bytes ) {
+					return 0;
+				}
+				return $a->bytes < $b->bytes ? 1 : -1;
 			}
 		);
 

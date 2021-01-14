@@ -4,7 +4,7 @@
  *
  * @package WP_Smush
  *
- * @var object $count  Core
+ * @var integer $count Total number of images to smush.
  */
 
 use Smush\Core\Core;
@@ -26,18 +26,20 @@ if ( ! defined( 'WPINC' ) ) {
 					<?php
 					$upgrade_url = add_query_arg(
 						array(
+							'coupon'       => 'SMUSH30OFF',
+							'checkout'     => 0,
 							'utm_source'   => 'smush',
 							'utm_medium'   => 'plugin',
-							'utm_campaign' => 'smush_bulksmush_limit_reached_notice',
+							'utm_campaign' => 'smush_bulksmush_limit_reached_upgradetopro',
 						),
-						esc_url( 'https://premium.wpmudev.org/project/wp-smush-pro/' )
+						$this->upgrade_url
 					);
 
 					printf(
 					/* translators: %s1$d - bulk smush limit, %2$s - upgrade link, %3$s - </a>, %4$s - <strong>, $5$s - </strong> */
 						esc_html__( 'The free version of Smush allows you to compress %1$d images at a time. %2$sUpgrade to Pro for FREE%3$s to compress unlimited images at once or click Resume to compress another %1$d images.', 'wp-smushit' ),
 						absint( Core::$max_free_bulk ),
-						'<a href="' . esc_url( $upgrade_url ) . '" target="_blank">',
+						'<a href="' . esc_url( $upgrade_url ) . '" target="_blank" style="color: #8D00B1;">',
 						'</a>'
 					)
 					?>
@@ -68,7 +70,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 	<div class="sui-progress-state">
 		<span class="sui-progress-state-text">
-			<span>0</span>/<span><?php echo absint( $count->remaining_count ); ?></span> <?php esc_html_e( 'images smushed', 'wp-smushit' ); ?>
+			<span>0</span>/<span class="wp-smush-total-count"><?php echo absint( $count ); ?></span> <?php esc_html_e( 'images smushed', 'wp-smushit' ); ?>
 		</span>
 	</div>
 

@@ -94,11 +94,11 @@ if ( ! defined( 'WPINC' ) ) {
 	</li>
 	<li class="smush-pro-feature-row">
 		<div class="smush-pro-feature-title">
-			<?php esc_html_e( 'No limits, no restrictions', 'wp-smushit' ); ?></div>
+			<?php esc_html_e( 'Serve next-gen WebP images (without Smush CDN)', 'wp-smushit' ); ?></div>
 		<div class="smush-pro-feature-desc">
 			<?php
 			esc_html_e(
-				'Need a one-click bulk optimization solution for compressing your entire existing image library fast and easy? Pro unlocks unlimited bulk smushing, and lifts the image size limit from 5Mb to 32Mb.',
+				'Rather not use Smush CDN? Our standalone WebP feature allows you to serve next-gen images that are around 26% smaller than JPG and PNG formats. All without sacrificing image quality.',
 				'wp-smushit'
 			);
 			?>

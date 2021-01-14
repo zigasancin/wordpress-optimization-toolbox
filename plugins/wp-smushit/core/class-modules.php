@@ -74,7 +74,15 @@ class Modules {
 	 * Modules constructor.
 	 */
 	public function __construct() {
-		$this->dir     = new Modules\Dir();
+		new Api\Hub(); // Init hub endpoints.
+
+		new Modules\Resize_Detection();
+		new Rest();
+
+		if ( is_admin() ) {
+			$this->dir = new Modules\Dir();
+		}
+
 		$this->smush   = new Modules\Smush();
 		$this->backup  = new Modules\Backup();
 		$this->png2jpg = new Modules\Png2jpg();
@@ -84,6 +92,7 @@ class Modules {
 		$page_parser->init();
 
 		$this->cdn  = new Modules\CDN( $page_parser );
+		$this->webp = new Modules\WebP();
 		$this->lazy = new Modules\Lazy( $page_parser );
 	}
 

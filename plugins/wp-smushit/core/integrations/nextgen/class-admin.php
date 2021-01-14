@@ -208,16 +208,13 @@ class Admin extends NextGen {
 		}
 
 		$wp_smush_msgs = array(
-			'resmush'          => esc_html__( 'Super-Smush', 'wp-smushit' ),
-			'smush_now'        => esc_html__( 'Smush Now', 'wp-smushit' ),
-			'error_in_bulk'    => $error_in_bulk,
-			'all_resmushed'    => esc_html__( 'All images are fully optimized.', 'wp-smushit' ),
-			'restore'          => esc_html__( 'Restoring image...', 'wp-smushit' ),
-			'smushing'         => esc_html__( 'Smushing image...', 'wp-smushit' ),
-			'checking'         => esc_html__( 'Checking images...', 'wp-smushit' ),
-			// Button text.
-			'resmush_check'    => esc_html__( 'RE-CHECK IMAGES', 'wp-smushit' ),
-			'resmush_complete' => esc_html__( 'CHECK COMPLETE', 'wp-smushit' ),
+			'resmush'       => esc_html__( 'Super-Smush', 'wp-smushit' ),
+			'smush_now'     => esc_html__( 'Smush Now', 'wp-smushit' ),
+			'error_in_bulk' => $error_in_bulk,
+			'all_resmushed' => esc_html__( 'All images are fully optimized.', 'wp-smushit' ),
+			'restore'       => esc_html__( 'Restoring image...', 'wp-smushit' ),
+			'smushing'      => esc_html__( 'Smushing image...', 'wp-smushit' ),
+			'checking'      => esc_html__( 'Checking images...', 'wp-smushit' ),
 		);
 
 		wp_localize_script( $handle, 'wp_smush_msgs', $wp_smush_msgs );
@@ -451,6 +448,9 @@ class Admin extends NextGen {
 
 		// Count of images ( Attachments ), Does not includes additioanl sizes that might have been created.
 		$this->smushed_count = isset( $smushed_images ) && is_array( $smushed_images ) ? count( $smushed_images ) : $smushed_images;
+
+		$this->super_smushed = get_option( 'wp-smush-super_smushed_nextgen', array() );
+		$this->super_smushed = ! empty( $this->super_smushed['ids'] ) ? count( $this->super_smushed['ids'] ) : 0;
 
 		$this->remaining_count = $this->ng_stats->get_ngg_images( 'unsmushed', true );
 	}

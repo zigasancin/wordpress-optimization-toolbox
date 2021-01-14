@@ -485,6 +485,9 @@ class Png2jpg extends Abstract_Module {
 
 			WP_Smush::get_instance()->core()->mod->backup->add_to_image_backup_sizes( $id, $o_file, 'smush_png_path' );
 
+			// Remove webp images created from the png version, if any.
+			WP_Smush::get_instance()->core()->mod->webp->delete_images( $id, true, $o_file );
+
 			/**
 			 * Do action, if the PNG to JPG conversion was successful
 			 */

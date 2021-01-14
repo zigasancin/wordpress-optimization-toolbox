@@ -1,7 +1,7 @@
 /**
  * Common styles that are used on all the WP pages in the backend
  */
-@import "/modules/media";
+@import "modules/media";
 
 /**
  * Media details (grid layout)
@@ -102,6 +102,21 @@
 	margin-left: 5px;
 }
 
+.smush-skipped {
+	a:focus { box-shadow: 0 0 black; }
+	.sui-tag.sui-tag-purple {
+		min-height: 18px;
+		padding: 2px 10px;
+		font-size: 10px;
+		line-height: 12px;
+		font-weight: 700;
+		background-color: #8d00b1;
+		color: #fff;
+		border: 2px solid transparent;
+		border-radius: 13px;
+	}
+}
+
 /** Help Tip **/
 .ui-tooltip-content {
 	font-size: 12px;
@@ -155,14 +170,18 @@
 }
 
 div.smush-notice-cta a.smush-notice-act.button-primary {
+	padding: 3px 23px;
 	background-color: #00B0DB;
 	box-shadow: none;
-	border: 1px solid #0087B9;
-	border-radius: 2px;
+	border-radius: 4px;
+	border: none;
 	text-shadow: none;
 	font-weight: normal;
-	box-shadow: inset 0 1px 0 0 #4BC4E4, 0 1px 0 0 #DBDBDB;
 	-webkit-font-smoothing: antialiased;
+
+	&:hover {
+		border: none;
+	}
 }
 
 .wp-smush-resmush-message,
@@ -173,30 +192,110 @@ div.smush-notice-cta a.smush-notice-act.button-primary {
 	text-align: center;
 }
 
-div.wp-smush-pagespeed-recommendation {
-	background-color: #F8F8F8;
-	margin: 0 -30px 20px;
-	padding: 20px 30px;
-}
-
-ol.smush-recommendation-list {
-	color: #888;
-	font-size: 13px;
-	margin-left: 13px;
-	line-height: 16px;
-}
-
 a.wp-smush-resize-enable:hover,
 a.wp-smush-lossy-enable:hover {
 	color: #0A9BD6;
 }
 
-ol.smush-recommendation-list li {
-	line-height: 1.5;
-}
-
 .wp-smush-bulk-wrapper {
-	overflow: hidden;
+	#wp-smush-bulk-image-count {
+		color: #333333;
+		font-size: 28px;
+		line-height: 40px;
+		letter-spacing: -0.5px;
+		font-weight: 600;
+	}
+
+	#wp-smush-bulk-image-count-description {
+		color: #333333;
+		font-size: 13px;
+		margin-top: 0;
+		margin-bottom: 0;
+	}
+
+	#wp-smush-all-button-container {
+		text-align: right;
+	}
+
+	.sui-tooltip,
+	.sui-tooltip > .sui-icon-info {
+		vertical-align: top;
+	}
+
+	#wp-smush-bulk-smush-upsell-row {
+		margin-top: 30px;
+		margin-right: 0;
+		margin-left: 0;
+		border-top: 1px solid #F2F2F2;
+		padding-top: 30px;
+
+
+		.sui-col-sm-6 {
+
+			&:first-child {
+				padding-right: 30px;
+				padding-left: 0;
+
+				@media only screen and (max-width: 782px) {
+					margin-bottom: 5px;
+				}
+			}
+
+			&.wp-smush-hidden-xl {
+				@media only screen and (max-width: 782px) {
+					padding-left: 0;
+					margin-bottom: 10px;
+				}
+			}
+		}
+
+		.sui-col-sm-3:last-child {
+			padding-right: 0;
+		}
+
+		h3 {
+			font-size: 20px;
+			line-height: 24px;
+			margin-bottom: 20px;
+		}
+
+		p {
+			margin-top: 0;
+			font-size: 13px;
+			line-height: 22px;
+
+			small {
+				color: #333333;
+				font-size: 11px;
+				line-height: 14px;
+				margin-top: 10px;
+			}
+		}
+
+		.smush-pro-features {
+			margin-bottom: 0;
+
+			.smush-pro-feature-row {
+				margin-bottom: 0;
+
+				.smush-pro-feature-title {
+					font-size: 12px;
+					line-height: 16px;
+					color: #8D00B1;
+
+					&:before {
+						font-size: 12px;
+					}
+				}
+
+				&:not(:last-child) {
+					padding-bottom: 15px;
+					margin-bottom: 15px;
+					border-bottom: 1px solid #F2F2F2;
+				}
+			}
+		}
+	}
 }
 
 /** Image Remaining **/
@@ -471,11 +570,6 @@ div.wp-smush-info.notice {
 	padding: 15px;
 }
 
-/* Bulk Smush button*/
-button.wp-smush-all {
-	float: right;
-}
-
 /** Media Queries **/
 
 @media screen and (max-width: 1024px) and (min-width: 800px) {
@@ -505,6 +599,7 @@ button.wp-smush-all {
  * CSS styles used Admin notice
  */
 .smush-notice.notice {
+	max-width: 1000px;
 	padding: 0;
 	margin: 5px 0 10px;
 	border: 1px solid #E5E5E5;
@@ -518,7 +613,12 @@ button.wp-smush-all {
 	z-index: 1;
 	min-height: 80px;
 	display: table; /* The magic ingredient! */
-	font: 13px "Open Sans", sans-serif;
+	font: 13px "Roboto", sans-serif;
+
+	.smush-notice-only-admins {
+		line-height: 22px;
+		color: #888888;
+	}
 }
 
 .smush-notice.notice.loading:before {
@@ -552,12 +652,7 @@ button.wp-smush-all {
 }
 
 .smush-notice-logo {
-	background: transparent url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+Cjxzdmcgd2lkdGg9IjU2cHgiIGhlaWdodD0iNTZweCIgdmlld0JveD0iMCAwIDU2IDU2IiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPgogICAgPCEtLSBHZW5lcmF0b3I6IFNrZXRjaCAzLjguMyAoMjk4MDIpIC0gaHR0cDovL3d3dy5ib2hlbWlhbmNvZGluZy5jb20vc2tldGNoIC0tPgogICAgPHRpdGxlPndwbXVkZXYtc3ZnPC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGRlZnM+PC9kZWZzPgogICAgPGcgaWQ9IlBhZ2UtMSIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9ImlQYWQtUHJvLUxhbmRzY2FwZSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTIzLjAwMDAwMCwgLTIyLjAwMDAwMCkiPgogICAgICAgICAgICA8ZyBpZD0id3BtdWRldi1zdmciIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIzLjAwMDAwMCwgMjIuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMjgsNTYgQzEyLjUzNTg3MSw1NiAwLDQzLjQ2NDEyOSAwLDI4IEMwLDEyLjUzNjc3NDIgMTIuNTM1ODcxLDAgMjgsMCBDNDMuNDY0MTI5LDAgNTYsMTIuNTM2Nzc0MiA1NiwyOCBDNTYsNDMuNDY0MTI5IDQzLjQ2NDEyOSw1NiAyOCw1NiBMMjgsNTYgWiIgaWQ9IkZpbGwtMSIgZmlsbD0iI0ZGRDAwNSI+PC9wYXRoPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTUxLjQ4Mzg3MSwyOCBDNTEuNDgzODcxLDQwLjk2OTQxOTQgNDAuOTY5NDE5NCw1MS40ODM4NzEgMjgsNTEuNDgzODcxIEMxNS4wMzA1ODA2LDUxLjQ4Mzg3MSA0LjUxNjEyOTAzLDQwLjk2OTQxOTQgNC41MTYxMjkwMywyOCBDNC41MTYxMjkwMywxNS4wMzA1ODA2IDE1LjAzMDU4MDYsNC41MTYxMjkwMyAyOCw0LjUxNjEyOTAzIEM0MC45Njk0MTk0LDQuNTE2MTI5MDMgNTEuNDgzODcxLDE1LjAzMDU4MDYgNTEuNDgzODcxLDI4IiBpZD0iRmlsbC0zIiBmaWxsPSIjMzMzMzMzIj48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNNDIuNzc4ODUxNiwzMi42NzY2MzIzIEw0Mi43Nzg4NTE2LDEyLjUzMTA4MzkgTDM5LjUzMDg1MTYsMTUuMDU4MzA5NyBMMzkuNTMwODUxNiwzMi42NzY2MzIzIEwzOS41MjcyMzg3LDMyLjY3NjYzMjMgQzM5LjUyNzIzODcsMzMuNzA4MTE2MSAzOC43ODI5ODA2LDM0LjU0NDUwMzIgMzcuODY2MjA2NSwzNC41NDQ1MDMyIEMzNi45NDY3MjI2LDM0LjU0NDUwMzIgMzYuMjAyNDY0NSwzMy43MDgxMTYxIDM2LjIwMjQ2NDUsMzIuNjc2NjMyMyBMMzYuMjA3ODgzOSwyMy4zMjM3MjkgQzM2LjIwNzg4MzksMjAuMjc0NDM4NyAzNC4wMDU4MTk0LDE3LjgwMTQwNjUgMzEuMjkwNzIyNiwxNy44MDE0MDY1IEMyOC41NzM4MTk0LDE3LjgwMTQwNjUgMjYuMzcyNjU4MSwyMC4yNzQ0Mzg3IDI2LjM3MjY1ODEsMjMuMzIzNzI5IEwyNi4zNzI2NTgxLDMyLjY3NjYzMjMgQzI2LjM3MjY1ODEsMzMuNzA4MTE2MSAyNS42Mjg0LDM0LjU0NDUwMzIgMjQuNzA4OTE2MSwzNC41NDQ1MDMyIEMyMy43OTIxNDE5LDM0LjU0NDUwMzIgMjMuMDQ1MTc0MiwzMy43MDgxMTYxIDIzLjA0NTE3NDIsMzIuNjc2NjMyMyBMMjMuMDUyNCwyMy4zMjM3MjkgQzIzLjA1MjQsMjAuMjc0NDM4NyAyMC44NTEyMzg3LDE3LjgwMTQwNjUgMTguMTM2MTQxOSwxNy44MDE0MDY1IEMxNS40MjEwNDUyLDE3LjgwMTQwNjUgMTMuMjE4OTgwNiwyMC4yNzQ0Mzg3IDEzLjIxODk4MDYsMjMuMzIzNzI5IEwxMy4yMjA3ODcxLDIzLjMyMzcyOSBMMTMuMjIwNzg3MSw0My40NjkyNzc0IEwxNi40Njg3ODcxLDQwLjk0MTE0ODQgTDE2LjQ3MjQsMjMuMzIzNzI5IEMxNi40NzI0LDIyLjI5MjI0NTIgMTcuMjE2NjU4MSwyMS40NTU4NTgxIDE4LjEzNjE0MTksMjEuNDU1ODU4MSBDMTkuMDU0NzIyNiwyMS40NTU4NTgxIDE5Ljc5OTg4MzksMjIuMjkyMjQ1MiAxOS43OTk4ODM5LDIzLjMyMzcyOSBMMTkuNzkyNjU4MSwzMi42NzY2MzIzIEMxOS43OTI2NTgxLDM1LjcyNTkyMjYgMjEuOTkzODE5NCwzOC4xOTg5NTQ4IDI0LjcwODkxNjEsMzguMTk4OTU0OCBDMjcuNDI0MDEyOSwzOC4xOTg5NTQ4IDI5LjYyNTE3NDIsMzUuNzI1OTIyNiAyOS42MjUxNzQyLDMyLjY3NjYzMjMgTDI5LjYyNDI3MSwzMi42NzY2MzIzIEwyOS42MjY5ODA2LDIzLjMyMzcyOSBDMjkuNjI2OTgwNiwyMi4yOTIyNDUyIDMwLjM3MjE0MTksMjEuNDU1ODU4MSAzMS4yOTA3MjI2LDIxLjQ1NTg1ODEgQzMyLjIwODQsMjEuNDU1ODU4MSAzMi45NTI2NTgxLDIyLjI5MjI0NTIgMzIuOTUyNjU4MSwyMy4zMjM3MjkgTDMyLjk0NzIzODcsMzIuNjc2NjMyMyBDMzIuOTQ3MjM4NywzNS43MjU5MjI2IDM1LjE0OTMwMzIsMzguMTk4OTU0OCAzNy44NjYyMDY1LDM4LjE5ODk1NDggQzQwLjU4MDQsMzguMTk4OTU0OCA0Mi43ODA2NTgxLDM1LjcyNTkyMjYgNDIuNzgwNjU4MSwzMi42NzY2MzIzIEw0Mi43Nzg4NTE2LDMyLjY3NjYzMjMgTDQyLjc3ODg1MTYsMzIuNjc2NjMyMyBaIiBpZD0iRmlsbC01IiBmaWxsPSIjRjlFQzFDIj48L3BhdGg+CiAgICAgICAgICAgIDwvZz4KICAgICAgICA8L2c+CiAgICA8L2c+Cjwvc3ZnPg==) no-repeat 50% 50%;
-}
-
-.smush-notice-logo span {
-	display: block;
-	width: 80px;
+	padding-left: 30px;
 }
 
 .smush-notice-message {
@@ -565,13 +660,12 @@ button.wp-smush-all {
 	font-size: 13px;
 	font-weight: normal;
 	line-height: 20px;
-	padding: 10px;
+	padding: 20px;
 	-webkit-font-smoothing: antialiased;
 	width: 100%;
 }
 
 .smush-notice-cta {
-	border-left: 1px solid #E5E5E5;
 	background: #F8F8F8;
 	padding: 0 30px;
 	position: relative;
@@ -606,6 +700,19 @@ button.wp-smush-all {
 	color: #666;
 }
 
+.wp-smush-show-xl {
+	display: none;
+}
+
+@media only all and (min-width: 1700px) {
+	.wp-smush-hidden-xl {
+		display: none;
+	}
+	.wp-smush-show-xl {
+		display: block;
+	}
+}
+
 @media only all and (max-width: 1200px) {
 	.smush-notice-dismiss {
 		display: block;
@@ -633,7 +740,6 @@ button.wp-smush-all {
 	.smush-notice > .smush-notice-message {
 		width: auto;
 		display: block;
-		padding: 10px;
 		min-height: 80px;
 	}
 

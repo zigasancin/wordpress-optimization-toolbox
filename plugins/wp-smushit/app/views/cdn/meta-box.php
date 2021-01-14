@@ -34,7 +34,7 @@ if ( ! defined( 'WPINC' ) ) {
 	<div class="sui-notice sui-notice-<?php echo esc_attr( $class ); ?>">
 		<div class="sui-notice-content">
 			<div class="sui-notice-message">
-				<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
+				<i class="sui-notice-icon sui-icon-<?php echo 'enabled' === $status ? 'check-tick' : 'info'; ?> sui-md" aria-hidden="true"></i>
 				<p><?php echo wp_kses_post( $status_msg ); ?></p>
 				<?php if ( 'error' === $class && 'overcap' === $status ) : ?>
 					<p>
@@ -115,8 +115,11 @@ if ( ! defined( 'WPINC' ) ) {
 		</div>
 		<div class="sui-box-settings-col-2">
 			<button class="sui-button sui-button-ghost" id="smush-cancel-cdn">
-				<i class="sui-icon-power-on-off" aria-hidden="true"></i>
-				<?php esc_html_e( 'Deactivate', 'wp-smushit' ); ?>
+				<span class="sui-loading-text">
+					<i class="sui-icon-power-on-off" aria-hidden="true"></i>
+					<?php esc_html_e( 'Deactivate', 'wp-smushit' ); ?>
+				</span>
+				<i class="sui-icon-loader sui-loading" aria-hidden="true"></i>
 			</button>
 			<span class="sui-description">
 			<?php

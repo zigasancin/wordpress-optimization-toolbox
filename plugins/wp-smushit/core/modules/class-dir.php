@@ -70,7 +70,45 @@ class Dir extends Abstract_Module {
 		 *
 		 * This needs to be before self::should_continue so that the request from network admin is processed.
 		 */
-		add_action( 'wp_ajax_smush_get_directory_list', array( $this, 'directory_list' ) );
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+			if ( ! $this->scanner ) {
+				$this->scanner = new Helpers\DScanner();
+			}
+
+			add_action( 'wp_ajax_smush_get_directory_list', array( $this, 'directory_list' ) );
+
+			// Scan the given directory path for the list of images.
+			add_action( 'wp_ajax_image_list', array( $this, 'image_list' ) );
+
+			/**
+			 * Scanner ajax actions.
+			 *
+			 * @since 2.8.1
+			 */
+			add_action( 'wp_ajax_directory_smush_start', array( $this, 'directory_smush_start' ) );
+			add_action( 'wp_ajax_directory_smush_check_step', array( $this, 'directory_smush_check_step' ) );
+			add_action( 'wp_ajax_directory_smush_finish', array( $this, 'directory_smush_finish' ) );
+			add_action( 'wp_ajax_directory_smush_cancel', array( $this, 'directory_smush_cancel' ) );
+		}
+
+		add_action( 'current_screen', array( $this, 'initialize' ), 10 );
+	}
+
+	/**
+	 * To get access to get_current_screen(), we need to move this under the current_screen action.
+	 *
+	 * @since 2.8.0
+	 */
+	public function initialize() {
+		$current_page = '';
+		if ( function_exists( 'get_current_screen' ) ) {
+			$current_screen = get_current_screen();
+			$current_page   = ! empty( $current_screen ) ? $current_screen->base : '';
+		}
+
+		if ( 'toplevel_page_smush' !== $current_page && 'toplevel_page_smush-network' !== $current_page ) {
+			return;
+		}
 
 		if ( ! self::should_continue() ) {
 			// Remove directory smush from tabs if not required.
@@ -79,7 +117,9 @@ class Dir extends Abstract_Module {
 			return;
 		}
 
-		$this->scanner = new Helpers\DScanner();
+		if ( ! $this->scanner ) {
+			$this->scanner = new Helpers\DScanner();
+		}
 
 		if ( ! $this->scanner->is_scanning() ) {
 			$this->scanner->reset_scan();
@@ -95,19 +135,6 @@ class Dir extends Abstract_Module {
 
 		// Check to see if the scanner should be running.
 		add_action( 'admin_footer', array( $this, 'check_scan' ) );
-
-		// Scan the given directory path for the list of images.
-		add_action( 'wp_ajax_image_list', array( $this, 'image_list' ) );
-
-		/**
-		 * Scanner ajax actions.
-		 *
-		 * @since 2.8.1
-		 */
-		add_action( 'wp_ajax_directory_smush_start', array( $this, 'directory_smush_start' ) );
-		add_action( 'wp_ajax_directory_smush_check_step', array( $this, 'directory_smush_check_step' ) );
-		add_action( 'wp_ajax_directory_smush_finish', array( $this, 'directory_smush_finish' ) );
-		add_action( 'wp_ajax_directory_smush_cancel', array( $this, 'directory_smush_cancel' ) );
 	}
 
 	/**

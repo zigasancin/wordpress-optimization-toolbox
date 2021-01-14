@@ -121,9 +121,9 @@ class Nextgen extends Abstract_Page {
 
 		$resmush_ids = get_option( 'wp-smush-nextgen-resmush-list', false );
 
-		$count = $resmush_ids ? count( $resmush_ids ) : 0;
+		$resmush_count = $resmush_ids ? count( $resmush_ids ) : 0;
 
-		$count += $ng->remaining_count;
+		$count = $resmush_count + $ng->remaining_count;
 
 		$url = add_query_arg(
 			array(
@@ -135,14 +135,13 @@ class Nextgen extends Abstract_Page {
 		$this->view(
 			'nextgen/meta-box',
 			array(
-				'all_done'        => ( $ng->smushed_count == $ng->total_count ) && 0 == count( $ng->resmush_ids ),
-				'count'           => $count,
-				'lossy_enabled'   => WP_Smush::is_pro() && $this->settings->get( 'lossy' ),
-				'ng'              => $ng,
-				'remaining_count' => $ng->remaining_count,
-				'resmush_ids'     => $ng->resmush_ids,
-				'total_count'     => $ng->total_count,
-				'url'             => $url,
+				'total_images_to_smush' => $count,
+				'lossy_enabled'         => WP_Smush::is_pro() && $this->settings->get( 'lossy' ),
+				'ng'                    => $ng,
+				'remaining_count'       => $ng->remaining_count,
+				'resmush_count'         => $resmush_count,
+				'total_count'           => $ng->total_count,
+				'url'                   => $url,
 			)
 		);
 	}

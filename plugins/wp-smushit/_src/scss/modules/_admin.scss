@@ -13,7 +13,7 @@
 			background-size: auto 80%;
 		}
 		.sui-wrap .sui-summary.sui-rebranded {
-			background-repeat: no-repeat;
+			background-image: none !important;
 		}
 	}
 
@@ -741,10 +741,8 @@
 				background: #d1f1ea !important;
 				color: #1abc9c !important;
 				pointer-events: none;
-				@include icon(before, check-tick);
 
 				&:before {
-					padding-right: 5px;
 					color: $notice-success-icon-color;
 				}
 			}
@@ -761,21 +759,237 @@
 		.sui-toggle + label {
 			font-weight: 500;
 		}
+
+		#smush-box-bulk-upgrade {
+			border-left: 2px solid #8D00B1;
+
+			#wp-smush-bulk-smush-upgrade-text-container {
+
+				p {
+					color: #333333;
+					font-size: 13px;
+					line-height: 22px;
+					margin-bottom: 10px;
+				}
+
+				@media screen and (min-width: 783px) {
+					margin-left: 100px;
+				}
+			}
+
+			@media screen and (min-width: 783px) {
+				background: #FFFFFF url('#{$img--path}/smush-graphic-bulksmush-upsell@2x.png') top 25px left 30px no-repeat;
+				background-size: 73px 119px;
+			}
+		}
 	}
 
 	.wp-smush-pagespeed-recommendation {
 		font-size: 13px;
 
-		.smush-recommendation-title,
-		.dismiss-recommendation {
+		.smush-recommendation-title {
+			color: #333333;
 			font-weight: 500;
 		}
 
 		.dismiss-recommendation {
+			font-size: 12px;
+			color: #AAAAAA;
 			cursor: pointer;
-			@include icon(before, close);
-			&:before {
+
+			.sui-icon-close:before {
+				color: #AAAAAA;
+			}
+		}
+
+		ol.smush-recommendation-list {
+			margin-left: 0;
+			list-style: none;
+			counter-reset: custom-counter;
+			li {
+				counter-increment: custom-counter;
+				margin: 0 0 10px;
+				padding: 13px 20px;
+				background-color: #FAFAFA;
+				color: #333;
+				border-radius: 4px;
+				&:before {
+					content: counter(custom-counter) ".";
+					margin-right: 3px;
+				}
+				&:last-child {
+					margin-bottom: 0;
+				}
+			}
+		}
+	}
+
+	// Upgrade dialog.
+	#smush-updated-dialog {
+		#wp-smush-yearly-plan-highlight {
+			margin-bottom: 0;
+			padding: 20px 0 18px 13px;
+			border-radius: 4px 4px 0 0;
+			background: linear-gradient(90deg, #6B217D 40%, #EFA00B 150%);
+
+			.wp-smush-icon-container {
+				float: left;
 				margin-right: 5px;
+				border-radius: 4px;
+				width: 33px;
+				height: 33px;
+				background-color: #FFFFFF;
+
+				.sui-icon-smush::before {
+					vertical-align: middle;
+					color: #8D00B1;
+				}
+			}
+
+			.wp-smush-plan-highlight-text-container {
+				text-align: left;
+			}
+
+			h4 {
+				margin: 0;
+				color: #FFFFFF;
+				line-height: 21px;
+			}
+
+			small {
+				display: block;
+				font-size: 10px;
+				line-height: 13px;
+				color: #FFFFFF;
+			}
+		}
+		.sui-border-frame {
+			margin-top: 0;
+			padding: 0;
+
+			#wp-smush-plan-comparison {
+				margin: 0;
+
+				.sui-col-sm-6 {
+					min-height: 100%;
+					padding-top: 20px;
+					padding-bottom: 30px;
+
+					.wp-smush-plan-wrapper {
+						display: flex;
+						min-height: 100%;
+						flex-flow: column wrap;
+
+						.wp-smush-plan-content {
+							flex: 1;
+						}
+					}
+
+					.wp-smush-plan-cta-container {
+						margin-top: 30px;
+						flex: 0 0 auto;
+					}
+
+					&:first-child {
+						border-right: 1px solid #F2F2F2;
+					}
+				}
+
+				h4 {
+					margin: 0;
+					line-height: 25px;
+				}
+
+				.wp-smush-plan-description, .wp-smush-price-description {
+					margin-top: 0;
+					margin-bottom: 30px;
+					font-size: 11px;
+					line-height: 18px;
+				}
+
+				.wp-smush-plan-price {
+					font-size: 33px;
+					font-weight: 700;
+					color: #333333;
+				}
+
+				.wp-smush-plan-period {
+					font-size: 17px;
+					color: #333333;
+				}
+
+				del {
+					font-size: 18px;
+					line-height: 24px;
+					font-weight: 700;
+					color: #FF6D6D;
+				}
+
+				.wp-smush-price-description {
+					margin-top: 10px;
+					margin-bottom: 0;
+				}
+			}
+
+			#wp-smush-pro-benefits-title {
+				background-color: #F8F8F8;
+				padding: 5px;
+
+				.sui-icon-smush:before {
+					color: #000000;
+					vertical-align: middle;
+					margin-right: 2px;
+				}
+
+				span {
+					font-size: 11px;
+					line-height: 15px;
+					font-weight: 500;
+					color: #000000;
+				}
+			}
+
+			.smush-pro-features {
+
+				.smush-pro-feature-row {
+					text-align: left;
+					margin-bottom: 0;
+					margin-top: 20px;
+
+					&:not(:last-child) {
+						padding-bottom: 20px;
+						border-bottom: 1px solid #F2F2F2;
+					}
+				}
+				.smush-pro-feature-title {
+					padding-left: 20px;
+					font-size: 13px;
+					line-height: 18px;
+					color: #000000;
+
+					&::before {
+						margin-left: 0;
+						font-size: 12px;
+						line-height: 12px;
+					}
+				}
+
+				@media screen and (min-width: 783px) {
+					.sui-col-md-6:first-child {
+						padding-right: 0;
+					}
+
+					.sui-col-md-6:last-child {
+						padding-left: 0;
+					}
+				}
+
+				@media screen and (max-width: 782px) {
+					.sui-col-md-6:first-child {
+						margin-bottom: 0;
+						border-bottom: 1px solid #F2F2F2;
+					}
+				}
 			}
 		}
 	}

@@ -5,6 +5,7 @@
  * @since 3.2.1
  * @package WP_Smush
  *
+ * @var array $settings
  * @var array $settings_data
  * @var array $grouped_settings
  * @var int   $backups_count
@@ -56,7 +57,7 @@ if ( ! defined( 'WPINC' ) ) {
 				<?php
 				printf(
 					/* translators: %1$s - a tag, %2$s - closing a tag */
-					wp_kses( 'Note: This feature uses your original image uploads to regenerate thumbnails. If you have “%1$sSmush my original images%2$s” enabled, we can still restore your thumbnails, but the quality will reflect your compressed original image. ', 'wp-smushit' ),
+					wp_kses( 'Note: This feature uses your original image uploads to regenerate thumbnails. If you have “%1$sSmush my original full size images%2$s” enabled, we can still restore your thumbnails, but the quality will reflect your compressed original image. ', 'wp-smushit' ),
 					'<a href="' . esc_url( network_admin_url( 'admin.php?page=smush' ) ) . '">',
 					'</a>'
 				);
@@ -64,6 +65,7 @@ if ( ! defined( 'WPINC' ) ) {
 			</span>
 		</div>
 	</div>
+
 </form>
 
 <?php $this->view( 'restore-images', array(), 'modals' ); ?>

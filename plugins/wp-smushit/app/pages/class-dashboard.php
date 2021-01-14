@@ -63,10 +63,17 @@ class Dashboard extends Abstract_Page {
 				'integrations' => __( 'Integrations', 'wp-smushit' ),
 				'lazy_load'    => __( 'Lazy Load', 'wp-smushit' ),
 				'cdn'          => __( 'CDN', 'wp-smushit' ),
+				'webp'         => __( 'WebP', 'wp-smushit' ),
 				'tools'        => __( 'Tools', 'wp-smushit' ),
 				'settings'     => __( 'Settings', 'wp-smushit' ),
+				'tutorials'    => __( 'Tutorials', 'wp-smushit' ),
 			)
 		);
+
+		// Don't display if Dashboard's whitelabel is hiding the documentation.
+		if ( apply_filters( 'wpmudev_branding_hide_doc_link', false ) ) {
+			unset( $this->tabs['tutorials'] );
+		}
 
 		$access = Settings::can_access();
 
@@ -76,6 +83,7 @@ class Dashboard extends Abstract_Page {
 			unset( $this->tabs['lazy_load'] );
 			unset( $this->tabs['cdn'] );
 			unset( $this->tabs['tools'] );
+			unset( $this->tabs['tutorials'] );
 		}
 
 		if ( is_network_admin() && is_array( $access ) ) {
@@ -100,6 +108,7 @@ class Dashboard extends Abstract_Page {
 
 		// Disabled on all subsites.
 		if ( is_multisite() && ! is_network_admin() ) {
+			unset( $this->tabs['webp'] );
 			unset( $this->tabs['settings'] );
 		}
 	}
@@ -145,6 +154,21 @@ class Dashboard extends Abstract_Page {
 					'bulk',
 					array(
 						'box_class' => "sui-box bulk-smush-wrapper {$class}",
+					)
+				);
+			}
+
+			// Only for the Free version and when there aren't images to smush.
+			if ( ! WP_Smush::is_pro() ) {
+				$this->add_meta_box(
+					'bulk/upgrade',
+					'',
+					null,
+					null,
+					null,
+					'bulk',
+					array(
+						'box_class' => 'sui-box sui-hidden',
 					)
 				);
 			}
@@ -264,6 +288,50 @@ class Dashboard extends Abstract_Page {
 			}
 		}
 
+		if ( 'webp' === $this->get_current_tab() && $this->should_render() ) {
+			if ( ! WP_Smush::is_pro() ) {
+				$this->add_meta_box(
+					'webp/upsell',
+					__( 'WebP', 'wp-smushit' ),
+					null,
+					array( $this, 'webp_upsell_metabox_header' ),
+					null,
+					'webp'
+				);
+			} else {
+				if ( ! $this->settings->get( 'webp_mod' ) ) {
+					$this->add_meta_box(
+						'webp/disabled',
+						__( 'WebP', 'wp-smushit' ),
+						null,
+						array( $this, 'webp_metabox_header' ),
+						null,
+						'webp'
+					);
+				} else {
+					$this->add_meta_box(
+						'webp/webp',
+						__( 'WebP', 'wp-smushit' ),
+						null,
+						array( $this, 'webp_metabox_header' ),
+						null,
+						'webp'
+					);
+
+					if ( ! WP_Smush::get_instance()->core()->mod->webp->is_configured() ) {
+						$this->add_meta_box(
+							'webp_config',
+							__( 'Configurations', 'wp-smushit' ),
+							array( $this, 'webp_config_metabox' ),
+							null,
+							null,
+							'webp'
+						);
+					}
+				}
+			}
+		}
+
 		if ( 'tools' === $this->get_current_tab() && $this->should_render() ) {
 			$box_body_class = WP_Smush::is_pro() ? '' : 'sui-upsell-items';
 			$this->add_meta_box(
@@ -289,6 +357,17 @@ class Dashboard extends Abstract_Page {
 				'settings'
 			);
 		}
+
+		if ( 'tutorials' === $this->get_current_tab() && $this->should_render() ) {
+			$this->add_meta_box(
+				'tutorials',
+				__( 'Tutorials', 'wp-smushit' ),
+				array( $this, 'tutorials_metabox' ),
+				null,
+				null,
+				'tutorials'
+			);
+		}
 	}
 
 	/**
@@ -297,10 +376,11 @@ class Dashboard extends Abstract_Page {
 	 * @param string $tab  Current tab.
 	 */
 	public function after_tab( $tab ) {
-		if ( 'bulk' === $tab ) {
-			$remaining = WP_Smush::get_instance()->core()->remaining_count;
-				echo '<span class="sui-tag sui-tag-warning wp-smush-remaining-count' . ( 0 < $remaining ? '' : ' sui-hidden' ) . '">' . absint( $remaining ) . '</span>';
-				echo '<i class="sui-icon-check-tick sui-success' . ( 0 < $remaining ? ' sui-hidden' : '' ) . '" aria-hidden="true"></i>';
+		// Don't display the count on the network admin for MU.
+		if ( 'bulk' === $tab && ! is_network_admin() ) {
+			$remaining = $this->get_total_images_to_smush();
+			echo '<span class="sui-tag sui-tag-warning wp-smush-remaining-count' . ( 0 < $remaining ? '' : ' sui-hidden' ) . '">' . absint( $remaining ) . '</span>';
+			echo '<i class="sui-icon-check-tick sui-success' . ( 0 < $remaining ? ' sui-hidden' : '' ) . '" aria-hidden="true"></i>';
 		} elseif ( 'cdn' === $tab ) {
 			$status = WP_Smush::get_instance()->core()->mod->cdn->status();
 			if ( 'overcap' === $status ) {
@@ -308,10 +388,20 @@ class Dashboard extends Abstract_Page {
 			} elseif ( 'upgrade' === $status || 'activating' === $status ) {
 				echo '<i class="sui-icon-warning-alert sui-warning" aria-hidden="true"></i>';
 			} elseif ( 'enabled' === $status ) {
-				echo '<i class="sui-icon-check-tick sui-info" aria-hidden="true"></i>';
+				echo '<i class="sui-icon-check-tick sui-success" aria-hidden="true"></i>';
 			}
 		} elseif ( 'lazy_load' === $tab && $this->settings->get( 'lazy_load' ) ) {
-			echo '<i class="sui-icon-check-tick sui-info" aria-hidden="true"></i>';
+			echo '<i class="sui-icon-check-tick sui-success" aria-hidden="true"></i>';
+		} elseif ( 'webp' === $tab ) {
+			if ( ! WP_Smush::is_pro() || ! $this->settings->get( 'webp_mod' ) ) {
+				return;
+			}
+
+			if ( WP_Smush::get_instance()->core()->mod->webp->is_configured() ) {
+				echo '<i id="webp-tab-icon" class="sui-icon-check-tick sui-success" aria-hidden="true"></i>';
+			} else {
+				echo '<i id="webp-tab-icon" class="sui-icon-warning-alert sui-warning" aria-hidden="true"></i>';
+			}
 		}
 	}
 
@@ -525,7 +615,7 @@ class Dashboard extends Abstract_Page {
 				$core->set_pro_savings();
 			}
 			$pro_savings      = $core->stats['pro_savings'];
-			$show_pro_savings = $pro_savings['savings'] > 0 ? true : false;
+			$show_pro_savings = $pro_savings['savings'] > 0;
 			if ( $show_pro_savings ) {
 				?>
 				<li class="smush-avg-pro-savings" id="smush-avg-pro-savings">
@@ -899,7 +989,7 @@ class Dashboard extends Abstract_Page {
 		// Get the counts from transient.
 		$items          = (int) get_transient( 'wp-smush-show-dir-scan-notice' );
 		$failed_items   = (int) get_transient( 'wp-smush-dir-scan-failed-items' );
-		$skipped_items  = (int) get_transient( 'wp-smush-dir-scan-skipped-items' ); //skipped because already optimized
+		$skipped_items  = (int) get_transient( 'wp-smush-dir-scan-skipped-items' ); // Skipped because already optimized.
 		$notice_message = esc_html__( 'Image compression complete.', 'wp-smushit' ) . ' ';
 		$notice_class   = 'error';
 
@@ -1015,13 +1105,48 @@ class Dashboard extends Abstract_Page {
 			array(
 				'human_format'    => empty( $human[1] ) ? 'B' : $human[1],
 				'human_size'      => empty( $human[0] ) ? '0' : $human[0],
-				'remaining'       => $core->remaining_count,
+				'remaining'       => $this->get_total_images_to_smush(),
 				'resize_count'    => ! $resize_count ? 0 : $resize_count,
 				'resize_enabled'  => (bool) $this->settings->get( 'resize' ),
 				'resize_savings'  => $resize_savings,
 				'stats_percent'   => $core->stats['percent'] > 0 ? number_format_i18n( $core->stats['percent'], 1 ) : 0,
 				'total_optimized' => $core->stats['total_images'],
 			)
+		);
+	}
+
+	/**
+	 * Returns the tutorials data to display.
+	 *
+	 * @since 3.7.1
+	 * @return array
+	 */
+	protected function get_tutorials_data() {
+		return array(
+			array(
+				'title'             => __( 'How to Get the Most Out of Smush Image Optimization', 'wp-smushit' ),
+				'content'           => __( 'Set your site up for maximum success. Learn how to get the most out of Smush and streamline your images for peak site performance.', 'wp-smushit' ),
+				'thumbnail_full'    => 'tutorial-1-thumbnail.png',
+				'thumbnail_full_2x' => 'tutorial-1-thumbnail@2x.png',
+				'url'               => 'https://premium.wpmudev.org/blog/how-to-get-the-most-out-of-smush/',
+				'read_time'         => 5,
+			),
+			array(
+				'title'             => __( "How To Ace Google's Image Page Speed Recommendations", 'wp-smushit' ),
+				'content'           => __( "See how toggling specific Smush settings can easily help you resolve all 4 of Google's 'image-related' page speed recommendations.", 'wp-smushit' ),
+				'thumbnail_full'    => 'tutorial-2-thumbnail.png',
+				'thumbnail_full_2x' => 'tutorial-2-thumbnail@2x.png',
+				'url'               => 'https://premium.wpmudev.org/blog/smush-pagespeed-image-compression/',
+				'read_time'         => 6,
+			),
+			array(
+				'title'             => __( 'How To Bulk Optimize Images With Smush', 'wp-smushit' ),
+				'content'           => __( 'Skip the hassle of compressing all your images manually. Learn how Smush can easily help you do it in bulk.', 'wp-smushit' ),
+				'thumbnail_full'    => 'tutorial-3-thumbnail.png',
+				'thumbnail_full_2x' => 'tutorial-3-thumbnail@2x.png',
+				'url'               => 'https://premium.wpmudev.org/blog/smush-bulk-optimize-images/',
+				'read_time'         => 6,
+			),
 		);
 	}
 
@@ -1034,29 +1159,28 @@ class Dashboard extends Abstract_Page {
 	public function bulk_smush_metabox() {
 		$core = WP_Smush::get_instance()->core();
 
+		$total_images_to_smush = $this->get_total_images_to_smush();
+
+		// This is the same calculation used for $core->remaining_count,
+		// except that we don't add the re-smushed count here.
+		$unsmushed_count = $core->total_count - $core->smushed_count - $core->skipped_count;
+
 		$upgrade_url = add_query_arg(
 			array(
 				'utm_source'   => 'smush',
 				'utm_medium'   => 'plugin',
-				'utm_campaign' => 'smush_stats_enable_lossy',
+				'utm_campaign' => 'smush_bulksmush_completed_pagespeed_upgradetopro',
 			),
 			$this->upgrade_url
 		);
 
 		$bulk_upgrade_url = add_query_arg(
 			array(
+				'coupon'       => 'SMUSH30OFF',
+				'checkout'     => 0,
 				'utm_source'   => 'smush',
 				'utm_medium'   => 'plugin',
-				'utm_campaign' => 'smush_bulksmush_limit_notice',
-			),
-			$this->upgrade_url
-		);
-
-		$pro_upgrade_url = add_query_arg(
-			array(
-				'utm_source'   => 'smush',
-				'utm_medium'   => 'plugin',
-				'utm_campaign' => 'smush_bulksmush_upsell_notice',
+				'utm_campaign' => Core::$max_free_bulk < $total_images_to_smush ? 'smush_bulksmush_morethan50images_tryproforfree' : 'smush_bulksmush_lessthan50images_tryproforfree',
 			),
 			$this->upgrade_url
 		);
@@ -1064,14 +1188,15 @@ class Dashboard extends Abstract_Page {
 		$this->view(
 			'bulk/meta-box',
 			array(
-				'all_done'         => absint( $core->smushed_count ) + absint( $core->skipped_count ) === absint( $core->total_count ) && empty( $core->resmush_ids ),
-				'bulk_upgrade_url' => $bulk_upgrade_url,
-				'core'             => $core,
-				'hide_pagespeed'   => get_site_option( WP_SMUSH_PREFIX . 'hide_pagespeed_suggestion' ),
-				'is_pro'           => WP_Smush::is_pro(),
-				'lossy_enabled'    => WP_Smush::is_pro() && $this->settings->get( 'lossy' ),
-				'pro_upgrade_url'  => $pro_upgrade_url,
-				'upgrade_url'      => $upgrade_url,
+				'core'                  => $core,
+				'hide_pagespeed'        => get_site_option( WP_SMUSH_PREFIX . 'hide_pagespeed_suggestion' ),
+				'is_pro'                => WP_Smush::is_pro(),
+				'lossy_enabled'         => WP_Smush::is_pro() && $this->settings->get( 'lossy' ),
+				'unsmushed_count'       => $unsmushed_count > 0 ? $unsmushed_count : 0,
+				'resmush_count'         => count( get_option( 'wp-smush-resmush-list', array() ) ),
+				'total_images_to_smush' => $total_images_to_smush,
+				'upgrade_url'           => $upgrade_url,
+				'bulk_upgrade_url'      => $bulk_upgrade_url,
 			)
 		);
 	}
@@ -1283,7 +1408,7 @@ class Dashboard extends Abstract_Page {
 		);
 
 		$status_color = array(
-			'enabled'    => 'info',
+			'enabled'    => 'success',
 			'disabled'   => 'error',
 			'activating' => 'warning',
 			'upgrade'    => 'warning',
@@ -1314,6 +1439,63 @@ class Dashboard extends Abstract_Page {
 			array(
 				'title'   => __( 'CDN', 'wp-smushit' ),
 				'tooltip' => __( 'This feature is likely to work without issue, however our CDN is in beta stage and some issues are still present.', 'wp-smushit' ),
+			)
+		);
+	}
+
+	/**
+	 * Upsell meta box header.
+	 *
+	 * @since 3.8.0
+	 */
+	public function webp_upsell_metabox_header() {
+		$this->view( 'webp/upsell-meta-box-header' );
+	}
+
+	/**
+	 * WebP meta box header.
+	 *
+	 * @since 3.8.0
+	 */
+	public function webp_metabox_header() {
+		$this->view(
+			'webp/meta-box-header',
+			array(
+				'is_disabled'   => ! $this->settings->get( 'webp_mod' ) || ! WP_Smush::get_instance()->core()->s3->setting_status(),
+				'is_configured' => WP_Smush::get_instance()->core()->mod->webp->is_configured(),
+			)
+		);
+	}
+
+	/**
+	 * WebP meta box.
+	 *
+	 * @since 3.8.0
+	 */
+	public function webp_config_metabox() {
+		$webp    = WP_Smush::get_instance()->core()->mod->webp;
+		$servers = $webp->get_servers();
+		// WebP module does not support iss and cloudflare server.
+		unset( $servers['iis'], $servers['cloudflare'] );
+
+		$server_type          = strtolower( $webp->get_server_type() );
+		$detected_server      = '';
+		$detected_server_name = '';
+
+		if ( isset( $servers[ $server_type ] ) ) {
+			$detected_server      = $server_type;
+			$detected_server_name = $servers[ $server_type ];
+		}
+
+		$this->view(
+			'webp/config-meta-box',
+			array(
+				'servers'              => $servers,
+				'detected_server'      => $detected_server,
+				'detected_server_name' => $detected_server_name,
+				'nginx_config_code'    => $webp->get_nginx_code(),
+				'apache_htaccess_code' => $webp->get_apache_code( true ),
+				'is_htaccess_written'  => $webp->is_htaccess_written(),
 			)
 		);
 	}
@@ -1387,6 +1569,15 @@ class Dashboard extends Abstract_Page {
 	}
 
 	/**
+	 * Tutorials meta box.
+	 *
+	 * @since 3.7.1
+	 */
+	public function tutorials_metabox() {
+		$this->view( 'tutorials/meta-box' );
+	}
+
+	/**
 	 * Common footer meta box.
 	 *
 	 * @since 3.2.0
@@ -1410,6 +1601,34 @@ class Dashboard extends Abstract_Page {
 				'backups_count'    => WP_Smush::get_instance()->core()->mod->backup->get_attachments_with_backups(),
 			)
 		);
+	}
+
+	/**
+	 * Calculates the total images to be smushed.
+	 * This is all unsmushed images + all images to re-smush.
+	 *
+	 * We're not using $core->remaining_count because it excludes the resmush count
+	 * when the amount of unsmushed images and amount of images to re-smush are the same.
+	 * So, if you have 2 images to re-smush and 2 unsmushed images, it'll return 2 and no 4.
+	 * We might need to check that there, it's used everywhere so we must be careful. Using this in the meantime.
+	 *
+	 * @since 3.7.2
+	 *
+	 * @return integer
+	 */
+	protected function get_total_images_to_smush() {
+		$images_to_resmush = count( get_option( 'wp-smush-resmush-list', array() ) );
+
+		// This is the same calculation used for $core->remaining_count,
+		// except that we don't add the re-smushed count here.
+		$unsmushed_count = WP_Smush::get_instance()->core()->total_count - WP_Smush::get_instance()->core()->smushed_count - WP_Smush::get_instance()->core()->skipped_count;
+
+		// Sometimes this number can be negative, if there are weird issues with meta data.
+		if ( $unsmushed_count > 0 ) {
+			return $images_to_resmush + $unsmushed_count;
+		}
+
+		return $images_to_resmush;
 	}
 
 }

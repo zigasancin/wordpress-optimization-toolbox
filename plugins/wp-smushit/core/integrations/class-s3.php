@@ -39,8 +39,9 @@ class S3 extends Abstract_Integration {
 
 		// Hook at the end of setting row to output a error div.
 		add_action( 'smush_setting_column_right_inside', array( $this, 's3_setup_message' ), 15 );
+
 		// Show S3 integration message, if user hasn't enabled it.
-		add_action( 'wp_ajax_smush_notice_s3_support_required', array( $this, 's3_support_required_notice' ) );
+		add_action( 'wp_smush_header_notices', array( $this, 'show_s3_support_required_notice' ) );
 
 		// Add Pro tag.
 		if ( ! WP_Smush::is_pro() || ! $this->enabled ) {
@@ -176,7 +177,7 @@ class S3 extends Abstract_Integration {
 	 * Show a error message to admins, if they need to enable S3 support. If "remove files from
 	 * server" option is enabled in WP Offload Media plugin, we need WP Smush Pro to enable S3 support.
 	 */
-	public function s3_support_required_notice() {
+	public function show_s3_support_required_notice() {
 		// Do not display it for other users. Do not display on network screens, if network-wide option is disabled.
 		if ( ! current_user_can( 'manage_options' ) || ! Settings::can_access( 'integrations' ) ) {
 			return;
@@ -212,30 +213,26 @@ class S3 extends Abstract_Integration {
 			: menu_page_url( 'smush', false );
 
 		if ( WP_Smush::is_pro() ) {
+			/**
+			 * If premium user, but S3 support is not enabled.
+			 */
 			$message = sprintf(
-				/**
-				 * If premium user, but S3 support is not enabled.
-				 *
-				 * Translators: %1$s: opening strong tag, %2$s: closing strong tag, %s: settings link,
-				 * %3$s: opening a and strong tags, %4$s: closing a and strong tags
-				 */
+				/* Translators: %1$s: opening strong tag, %2$s: closing strong tag, %s: settings link, %3$s: opening a and strong tags, %4$s: closing a and strong tags */
 				__(
-					"We can see you have WP Offload Media installed with the %1\$sRemove Files From Server%2\$s option activated. If you want to optimize your S3 images you'll need to enable the %3\$sAmazon S3 Support%4\$s feature in Smush's settings.",
+					'We can see you have WP Offload Media installed with the %1$sRemove Files From Server%2$s option activated. If you want to optimize your S3 images, you’ll need to enable the %3$sAmazon S3 Support%4$s feature in Smush’s Integrations.',
 					'wp-smushit'
 				),
 				'<strong>',
 				'</strong>',
-				"<a href='{$settings_link}'><strong>",
+				"<a href='{$settings_link}&view=integrations'><strong>",
 				'</strong></a>'
 			);
 		} else {
+			/**
+			 * If not a premium user.
+			 */
 			$message = sprintf(
-				/**
-				 * If not a premium user.
-				 *
-				 * Translators: %1$s: opening strong tag, %2$s: closing strong tag, %s: settings link,
-				 * %3$s: opening a and strong tags, %4$s: closing a and strong tags
-				 */
+				/* Translators: %1$s: opening strong tag, %2$s: closing strong tag, %s: settings link, %3$s: opening a and strong tags, %4$s: closing a and strong tags */
 				__(
 					"We can see you have WP Offload Media installed with the %1\$sRemove Files From Server%2\$s option activated. If you want to optimize your S3 images you'll need to %3\$supgrade to Smush Pro%4\$s",
 					'wp-smushit'
@@ -246,8 +243,8 @@ class S3 extends Abstract_Integration {
 				'</strong></a>'
 			);
 		}
-
-		wp_send_json_success( array( '<p>' . wp_kses_post( $message ) . '</p>' ) );
+		$message = '<p>' . $message . '</p>';
+		echo '<div role="alert" id="wp-smush-s3support-alert" class="sui-notice" data-message="' . esc_attr( $message ) . '" aria-live="assertive"></div>';
 	}
 
 	/**

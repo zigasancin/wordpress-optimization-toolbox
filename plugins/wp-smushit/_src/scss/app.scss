@@ -44,11 +44,15 @@ $sui-font-path: '~@wpmudev/shared-ui/dist/fonts/';
 // Upgrade page (since 3.2.3).
 @import "~@wpmudev/shared-ui/scss/upgrade-page";
 @import "~@wpmudev/shared-ui/scss/reviews";
+// Used on WebP page ( since 3.8.0 )
+@import "~@wpmudev/shared-ui/scss/_code-snippet.scss";
 
 // App styles
 @import "modules/admin";
 @import "modules/directory-smush";
 @import "modules/cdn";
+@import "modules/tutorials";
+@import "modules/webp";
 
 // SUI Color Accessibility
 @import "~@wpmudev/shared-ui/scss/color-accessibility";

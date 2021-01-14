@@ -21,14 +21,6 @@
 			if ( this.cdnEnableButton ) {
 				this.cdnEnableButton.addEventListener( 'click', ( e ) => {
 					e.currentTarget.classList.add( 'sui-button-onload' );
-
-					// Force repaint of the spinner.
-					const loader = e.currentTarget.querySelector(
-						'.sui-icon-loader'
-					);
-					loader.style.display = 'none';
-					loader.style.display = 'flex';
-
 					this.toggle_cdn( true );
 				} );
 			}
@@ -39,6 +31,8 @@
 			if ( this.cdnDisableButton ) {
 				this.cdnDisableButton.addEventListener( 'click', ( e ) => {
 					e.preventDefault();
+					e.currentTarget.classList.add( 'sui-button-onload' );
+
 					this.toggle_cdn( false );
 				} );
 			}
@@ -70,44 +64,15 @@
 					if ( 'undefined' !== typeof res.success && res.success ) {
 						location.reload();
 					} else if ( 'undefined' !== typeof res.data.message ) {
-						this.showNotice( res.data.message );
+						WP_Smush.helpers.showErrorNotice( res.data.message );
 					}
 				} else {
-					this.showNotice(
-						'Request failed. Returned status of ' + xhr.status
-					);
+					WP_Smush.helpers.showErrorNotice( 'Request failed.  Returned status of ' + xhr.status );
 				}
 			};
 			xhr.send(
 				'param=' + enable + '&_ajax_nonce=' + nonceField[ 0 ].value
 			);
-		},
-
-		/**
-		 * Show message (notice).
-		 *
-		 * @since 3.0
-		 *
-		 * @param {string} message
-		 */
-		showNotice( message ) {
-			if ( 'undefined' === typeof message ) {
-				return;
-			}
-
-			const notice = document.getElementById( 'wp-smush-ajax-notice' );
-
-			notice.classList.add( 'sui-notice-error' );
-			notice.innerHTML = `<p>${ message }</p>`;
-
-			if ( this.cdnEnableButton ) {
-				this.cdnEnableButton.classList.remove( 'sui-button-onload' );
-			}
-
-			notice.style.display = 'block';
-			setTimeout( () => {
-				notice.style.display = 'none';
-			}, 5000 );
 		},
 
 		/**
@@ -138,12 +103,10 @@
 					if ( 'undefined' !== typeof res.success && res.success ) {
 						this.toggleElements();
 					} else if ( 'undefined' !== typeof res.data.message ) {
-						this.showNotice( res.data.message );
+						WP_Smush.helpers.showErrorNotice( res.data.message );
 					}
 				} else {
-					this.showNotice(
-						'Request failed. Returned status of ' + xhr.status
-					);
+					WP_Smush.helpers.showErrorNotice( 'Request failed.  Returned status of ' + xhr.status );
 				}
 			};
 			xhr.send();

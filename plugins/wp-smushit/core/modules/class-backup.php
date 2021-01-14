@@ -178,6 +178,16 @@ class Backup extends Abstract_Module {
 		// Set a Option to avoid the smush-restore-smush loop.
 		update_option( "wp-smush-restore-$attachment_id", true );
 
+		/**
+		 * Delete webp.
+		 *
+		 * Run WebP::delete_images always even when the module is deactivated.
+		 *
+		 * @since 3.8.0
+		 */
+		WP_Smush::get_instance()->core()->mod->webp->delete_images( $attachment_id );
+
+
 		// Restore Full size -> get other image sizes -> restore other images.
 		// Get the Original Path.
 		$file_path = Helper::get_attached_file( $attachment_id );
@@ -284,6 +294,8 @@ class Backup extends Abstract_Module {
 
 			// Remove the transient.
 			delete_option( "wp-smush-restore-$attachment_id" );
+
+			\Smush\Core\Core::remove_from_smushed_list( $attachment_id );
 
 			if ( ! $resp ) {
 				return true;

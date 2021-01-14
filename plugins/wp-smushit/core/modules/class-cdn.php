@@ -44,6 +44,22 @@ class CDN extends Abstract_Module {
 	private $status;
 
 	/**
+	 * Site URL.
+	 *
+	 * @since 3.8.0
+	 * @var string
+	 */
+	private $site_url;
+
+	/**
+	 * Home URL.
+	 *
+	 * @since 3.8.0
+	 * @var string
+	 */
+	private $home_url;
+
+	/**
 	 * Supported file extensions.
 	 *
 	 * @var array $supported_extensions
@@ -112,6 +128,10 @@ class CDN extends Abstract_Module {
 			$this->schedule_cron();
 			return;
 		}
+
+		// We do this to save extra checks when we load images later on in code.
+		$this->site_url = get_site_url();
+		$this->home_url = get_home_url();
 
 		$this->init_parser();
 
@@ -240,7 +260,14 @@ class CDN extends Abstract_Module {
 					);
 					break;
 				case 'auto_resize':
-					esc_html_e( 'Having trouble with Google PageSpeeds ‘properly size images’ suggestion? This feature will fix this without any coding needed! Note: No resizing is done on your actual images, only what is served from the CDN - so your original images will remain untouched.', 'wp-smushit' );
+					esc_html_e( 'Having trouble with Google PageSpeeds ‘properly size images’ suggestion? This feature will fix this without any coding needed!', 'wp-smushit' );
+					echo '<br>';
+					printf(
+						/* translators: %1$s - opening tag, %2$s - closing tag */
+						esc_html__( 'Note: Smush will pre-fill the srcset attribute with missing image sizes so for this feature to work, those must be declared properly by your theme and page builder using the %1$scontent width%2$s variable.', 'wp-smushit' ),
+						'<a href="https://developer.wordpress.com/themes/content-width/" target="_blank">',
+						'</a>'
+					);
 					break;
 				case 'background_images':
 					printf(
@@ -304,7 +331,7 @@ class CDN extends Abstract_Module {
 					<span><?php esc_html_e( 'Activating', 'wp-smushit' ); ?></span>
 				<?php else : ?>
 					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php esc_attr_e( 'Your media is currently being served from the WPMU DEV CDN. Bulk and Directory smush features are treated separately and will continue to run independently.', 'wp-smushit' ); ?>">
-						<i class="sui-icon-check-tick sui-info sui-md" aria-hidden="true"></i>
+						<i class="sui-icon-check-tick sui-success sui-md" aria-hidden="true"></i>
 					</span>
 					<span><?php esc_html_e( 'Active', 'wp-smushit' ); ?></span>
 				<?php endif; ?>
@@ -689,7 +716,7 @@ class CDN extends Abstract_Module {
 	 * @return array $sources
 	 */
 	public function update_image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id = 0 ) {
-		if ( ! is_array( $sources ) ) {
+		if ( ! is_array( $sources ) || ! $this->is_supported_path( $image_src ) ) {
 			return $sources;
 		}
 
@@ -757,6 +784,10 @@ class CDN extends Abstract_Module {
 	 * @return string
 	 */
 	public function update_image_sizes( $sizes, $size ) {
+		if ( ! doing_filter( 'the_content' ) ) {
+			return $sizes;
+		}
+
 		// Get maximum content width.
 		$content_width = $this->max_content_width();
 
@@ -892,7 +923,7 @@ class CDN extends Abstract_Module {
 	 *
 	 * @since 3.1.0
 	 */
-	public function unschedule_cron() {
+	public static function unschedule_cron() {
 		$timestamp = wp_next_scheduled( 'smush_update_cdn_stats' );
 		wp_unschedule_event( $timestamp, 'smush_update_cdn_stats' );
 	}
@@ -1160,7 +1191,7 @@ class CDN extends Abstract_Module {
 		// Loop through each multipliers and generate image.
 		foreach ( $additional_multipliers as $multiplier ) {
 			// New width by multiplying with original size.
-			$new_width = intval( $base_width * $multiplier );
+			$new_width = (int) ( $base_width * $multiplier );
 
 			// In most cases - going over the current width is not recommended and probably not what the user is expecting.
 			if ( $new_width > $current_width ) {
@@ -1445,8 +1476,17 @@ class CDN extends Abstract_Module {
 	 * @return array|false
 	 */
 	private function get_image_size( $url ) {
+		if ( $this->site_url !== $this->home_url ) {
+			$url = str_replace( $this->site_url, $this->home_url, $url );
+		}
+
 		$path = wp_make_link_relative( $url );
 		$path = wp_normalize_path( ABSPATH . $path );
+
+		if ( ! file_exists( $path ) ) {
+			return false;
+		}
+
 		return getimagesize( $path );
 	}
 

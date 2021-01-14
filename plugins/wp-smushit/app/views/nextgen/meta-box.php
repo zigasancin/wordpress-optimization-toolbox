@@ -4,14 +4,12 @@
  *
  * @package WP_Smush
  *
- * @var bool   $all_done         If all the images are smushed.
- * @var int    $count            Resmush + unsmushed image count.
- * @var bool   $lossy_enabled    Lossy compression status.
- * @var Admin  $ng               NextGen admin class.
- * @var int    $remaining_count  Remaining images.
- * @var array  $resmush_ids      Resmush ID.
- * @var int    $total_count      Total count.
- * @var string $url              Media library URL.
+ * @var int    $total_images_to_smush Resmush + unsmushed image count.
+ * @var bool   $lossy_enabled         Lossy compression status.
+ * @var Admin  $ng                    NextGen admin class.
+ * @var int    $remaining_count       Remaining images.
+ * @var array  $resmush_ids           Resmush ID.
+ * @var string $url                   Media library URL.
  */
 
 use Smush\Core\Helper;
@@ -27,11 +25,6 @@ if ( ! defined( 'WPINC' ) ) {
 <?php endif; ?>
 
 <?php
-// Get the counts.
-if ( $count > 0 && 0 === $resmush_ids ) {
-	echo wp_kses_post( WP_Smush::get_instance()->admin()->bulk_resmush_content( $count ) );
-}
-
 // If there are no images in Media Library.
 if ( 0 === $total_count ) {
 	if ( ! apply_filters( 'wpmudev_branding_hide_branding', false ) ) :
@@ -62,17 +55,9 @@ if ( 0 === $total_count ) {
 }
 ?>
 
-<!-- Hide All done div if there are images pending -->
-<div class="sui-notice sui-notice-success wp-smush-all-done<?php echo $all_done ? '' : ' sui-hidden'; ?>">
-	<div class="sui-notice-content">
-		<div class="sui-notice-message">
-			<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
-			<p><?php esc_html_e( 'All images are smushed and up to date. Awesome!', 'wp-smushit' ); ?></p>
-		</div>
-	</div>
-</div>
+<?php $this->view( 'all-images-smushed-notice', array( 'all_done' => empty( $total_images_to_smush ) ), 'common' ); ?>
 
-<?php $this->view( 'progress-bar', array( 'count' => $ng ), 'common' ); ?>
+<?php $this->view( 'progress-bar', array( 'count' => $ng->remaining_count ), 'common' ); ?>
 
 <div class="smush-final-log sui-hidden">
 	<div class="smush-bulk-errors"></div>
@@ -84,41 +69,13 @@ if ( 0 === $total_count ) {
 	</div>
 </div>
 
-<div class="wp-smush-bulk-wrapper <?php echo $all_done ? ' sui-hidden' : ''; ?>">
-	<!-- Do not show the remaining notice if we have resmush ids -->
-	<div
-		class="wp-smush-unsmushed-images-notice sui-notice sui-notice-warning wp-smush-remaining  <?php echo count( $resmush_ids ) > 0 ? ' sui-hidden' : ''; ?>"
-		<?php /* translators: %1$s: user name, %2$s: starting strong tag, %3$s: number placeholder, %4$s: ending strong tag */ ?>
-		data-singular="<?php echo sprintf( esc_attr__( '%1$s, you have %2$s%3$s attachment%4$s that needs smushing!', 'wp-smushit' ), esc_attr( Helper::get_user_name() ), '<strong>', '{count}', '</strong>' ); ?>"
-		<?php /* translators: %1$s: user name, %2$s: starting strong tag, %3$s: number placeholder, %4$s: ending strong tag */ ?>
-		data-plural="<?php echo sprintf( esc_attr__( '%1$s, you have %2$s%3$s attachments%4$s that need smushing!', 'wp-smushit' ), esc_attr( Helper::get_user_name() ), '<strong>', '{count}', '</strong>' ); ?>"
-	>
-		<div class="sui-notice-content">
-			<div class="sui-notice-message">
-				<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
-				<p class="wp-smush-unsmushed-notice-count-text">
-					<?php
-					printf(
-						/* translators: %1$s: user name, %2$s: strong opening tag, %3$s: span opening tag, %4$d: remaining count, %5$s: closing span tag, %6$s: closing strong tag */
-						_n(
-							'%1$s, you have %2$s%3$s%4$d%5$s attachment%6$s that needs smushing!',
-							'%1$s, you have %2$s%3$s%4$d%5$s attachments%6$s that need smushing!',
-							$remaining_count,
-							'wp-smushit'
-						),
-						esc_html( Helper::get_user_name() ),
-						'<strong>',
-						'<span class="wp-smush-remaining-count">',
-						absint( $remaining_count ),
-						'</span>',
-						'</strong>'
-					);
-					?>
-				</p>
-			</div>
-		</div>
+<div class="wp-smush-bulk-wrapper sui-border-frame<?php echo empty( $total_images_to_smush ) ? ' sui-hidden' : ''; ?>">
+
+	<div id="wp-smush-bulk-content">
+		<?php WP_Smush::get_instance()->admin()->print_pending_bulk_smush_content( $total_images_to_smush, $resmush_count, $ng->remaining_count ); ?>
 	</div>
-	<div class="sui-actions-right">
+
+	<div id="wp-smush-all-button-container">
 		<button type="button" class="sui-button sui-button-blue wp-smush-nextgen-bulk">
 			<?php esc_html_e( 'BULK SMUSH', 'wp-smushit' ); ?>
 		</button>

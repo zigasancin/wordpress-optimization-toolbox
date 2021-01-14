@@ -2,7 +2,11 @@
 /**
  * Show Updated Features modal.
  *
+ * @package WP_Smush
+ *
  * @since 3.7.0
+ *
+ * @var string $cta_url URL for the modal's CTA button.
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -34,7 +38,12 @@ if ( ! defined( 'WPINC' ) ) {
 
 			<div class="sui-box-body sui-content-center sui-spacing-sides--50 sui-spacing-top--0">
 				<h3 class="sui-box-title sui-lg" id="smush-title-updated-dialog" style="white-space: normal">
-					<?php esc_html_e( 'NEW: Serve WebP Images Without Smush CDN', 'wp-smushit' ); ?>
+					<?php
+					esc_html_e( 'NEW: Serve WebP Images Without Smush CDN', 'wp-smushit' );
+					if ( ! WP_Smush::is_pro() ) {
+						echo '<span class="sui-tag sui-tag-pro" style="margin-left: 5px">' . esc_html__( 'Pro', 'wp-smushit' ) . '</span>';
+					}
+					?>
 				</h3>
 
 				<p class="sui-description">
@@ -48,17 +57,17 @@ if ( ! defined( 'WPINC' ) ) {
 				<p class="sui-description">
 					<?php
 					printf(
-						/* translators: %1$s - opening link, %2$s - closing link */
+						/* translators: 1. opening link, 2. closing link. */
 						esc_html__( 'With Smush Pro’s new integrated %1$sWebP feature%2$s, you can now easily serve compressed next-gen images to supported browsers. You can also gracefully fallback to JPGs and PNGs for browsers that aren’t compatible.', 'wp-smushit' ),
-						'<a href="' . esc_url( menu_page_url( 'smush', false ) ) . '&view=webp" onclick="WP_Smush.onboarding.hideUpgradeModal()">',
+						'<a href="' . esc_url( $cta_url ) . '" onclick="WP_Smush.onboarding.hideUpgradeModal()">',
 						'</a>'
 					);
 					?>
 				</p>
 
-				<button class="sui-button sui-button-icon-right next" data-modal-close="" onclick="WP_Smush.onboarding.hideUpgradeModal()">
+				<a href="<?php echo esc_url( $cta_url ); ?>" class="sui-button" onclick="WP_Smush.onboarding.hideUpgradeModal()">
 					<?php esc_html_e( 'Got it', 'wp-smushit' ); ?>
-				</button>
+				</a>
 			</div>
 		</div>
 	</div>

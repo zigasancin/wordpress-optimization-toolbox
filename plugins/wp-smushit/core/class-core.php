@@ -164,18 +164,6 @@ class Core extends Stats {
 	public static $max_free_bulk = 50;
 
 	/**
-	 * Enqueue scripts and initialize variables.
-	 */
-	public function admin_init() {
-		$this->init_settings();
-
-		// Handle notice dismiss.
-		if ( isset( $_GET['remove_smush_upgrade_notice'] ) && 1 == $_GET['remove_smush_upgrade_notice'] ) {
-			WP_Smush::get_instance()->admin()->ajax->dismiss_upgrade_notice( false );
-		}
-	}
-
-	/**
 	 * Initialize modules.
 	 *
 	 * @since 2.9.0
@@ -183,15 +171,8 @@ class Core extends Stats {
 	protected function init() {
 		$this->mod = new Modules();
 
-		new Modules\Resize_Detection();
-		new Rest();
-
-		if ( is_admin() ) {
-			add_action( 'admin_init', array( '\\Smush\\Core\\Installer', 'upgrade_settings' ) );
-		}
-
 		// Enqueue scripts and initialize variables.
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
+		add_action( 'admin_init', array( $this, 'init_settings' ) );
 
 		// Load integrations.
 		add_action( 'init', array( $this, 'load_integrations' ) );
@@ -219,9 +200,12 @@ class Core extends Stats {
 	 * Load plugin modules.
 	 */
 	public function load_libs() {
-		$this->s3 = new Integrations\S3();
 		$this->wp_smush_async();
-		$this->nextgen = new Integrations\Nextgen();
+
+		if ( is_admin() ) {
+			$this->s3      = new Integrations\S3();
+			$this->nextgen = new Integrations\Nextgen();
+		}
 
 		new Integrations\Gutenberg();
 		new Integrations\Composer();
@@ -251,7 +235,7 @@ class Core extends Stats {
 	/**
 	 * Init settings.
 	 */
-	private function init_settings() {
+	public function init_settings() {
 		$this->settings = array(
 			'bulk'              => array(
 				'short_label' => esc_html__( 'Image Sizes', 'wp-smushit' ),
@@ -326,7 +310,7 @@ class Core extends Stats {
 				'short_label' => esc_html__( 'Bulk Restore', 'wp-smushit' ),
 				'desc'        => sprintf(
 					/* translators: %1$s - a tag, %2$s - closing a tag */
-					__( 'Made a mistake? Use this feature to restore your image thumbnails to their original state. Please note, that you need to have “%1$sStore a copy of my full size images%2$s” option enabled to bulk restore the images. ', 'wp-smushit' ),
+					__( 'Made a mistake? Use this feature to restore your image thumbnails to their original state. Please note, that you need to have “%1$sStore a copy of my small originals%2$s” option enabled to bulk restore the images. ', 'wp-smushit' ),
 					'<a href="' . network_admin_url( 'admin.php?page=smush' ) . '">',
 					'</a>'
 				),
@@ -397,11 +381,9 @@ class Core extends Stats {
 			'unfinished_smush'        => esc_html__( 'images could not be smushed.', 'wp-smushit' ),
 			'already_optimised'       => esc_html__( 'Already Optimized', 'wp-smushit' ),
 			'ajax_error'              => esc_html__( 'Ajax Error', 'wp-smushit' ),
+			'generic_ajax_error'      => esc_html__( 'Something went wrong with the request. Please reload the page and try again.', 'wp-smushit' ),
 			'all_done'                => esc_html__( 'All Done!', 'wp-smushit' ),
 			'sync_stats'              => esc_html__( 'Give us a moment while we sync the stats.', 'wp-smushit' ),
-			// Button text.
-			'resmush_check'           => esc_html__( 'RE-CHECK IMAGES', 'wp-smushit' ),
-			'resmush_complete'        => esc_html__( 'CHECK COMPLETE', 'wp-smushit' ),
 			// Progress bar text.
 			'progress_smushed'        => esc_html__( 'images optimized', 'wp-smushit' ),
 			'directory_url'           => network_admin_url( 'admin.php?page=smush&view=directory' ),
@@ -503,6 +485,12 @@ class Core extends Stats {
 	public static function check_bulk_limit( $reset = false, $key = 'bulk_sent_count' ) {
 		$transient_name = WP_SMUSH_PREFIX . $key;
 
+		// If we JUST need to reset the transient.
+		if ( $reset ) {
+			set_transient( $transient_name, 0, 60 );
+			return;
+		}
+
 		$bulk_sent_count = (int) get_transient( $transient_name );
 
 		// Check if bulk smush limit is less than limit.
@@ -561,8 +549,8 @@ class Core extends Stats {
 
 		// Medium Large.
 		if ( ! isset( $sizes['medium_large'] ) || empty( $sizes['medium_large'] ) ) {
-			$width  = intval( get_option( 'medium_large_size_w' ) );
-			$height = intval( get_option( 'medium_large_size_h' ) );
+			$width  = (int) get_option( 'medium_large_size_w' );
+			$height = (int) get_option( 'medium_large_size_h' );
 
 			$sizes['medium_large'] = array(
 				'width'  => $width,

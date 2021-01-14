@@ -44,7 +44,8 @@ class Settings {
 	 * We don't want it to be edited directly, so we use public get_*, set_* and delete_* methods.
 	 *
 	 * @since 3.0    Improved structure.
-	 * @simce 3.2.2  Changed to be a default array.
+	 * @since 3.2.2  Changed to be a default array.
+	 * @since 3.8.0  Added webp_mod.
 	 *
 	 * @var array
 	 */
@@ -70,15 +71,17 @@ class Settings {
 		'lazy_load'         => false,
 		'background_images' => true,
 		'rest_api_support'  => false, // CDN option.
+		'webp_mod'          => false, // WebP module.
 	);
 
 	/**
 	 * Available modules.
 	 *
-	 * @sincr 3.2.2
+	 * @since 3.2.2
+	 * @since 3.8.0  Added webp.
 	 * @var array $modules
 	 */
-	private $modules = array( 'bulk', 'integrations', 'lazy_load', 'cdn', 'tools', 'settings' );
+	private $modules = array( 'bulk', 'integrations', 'lazy_load', 'cdn', 'webp', 'tools', 'settings' );
 
 	/**
 	 * List of features/settings that are free.
@@ -113,6 +116,17 @@ class Settings {
 	 * @var array
 	 */
 	private $cdn_fields = array( 'cdn', 'background_images', 'auto_resize', 'webp', 'rest_api_support' );
+
+	/**
+	 * List of fields in CDN form.
+	 *
+	 * @used-by save()
+	 *
+	 * @since 3.8.0
+	 *
+	 * @var array
+	 */
+	private $webp_fields = array( 'webp_mod' );
 
 	/**
 	 * List of fields in Settings form.
@@ -267,6 +281,7 @@ class Settings {
 				$site_settings['accessible_colors'] = isset( $global_settings['accessible_colors'] ) ? $global_settings['accessible_colors'] : $this->defaults['accessible_colors'];
 				$site_settings['usage']             = isset( $global_settings['usage'] ) ? $global_settings['usage'] : $this->defaults['usage'];
 				$site_settings['keep_data']         = isset( $global_settings['keep_data'] ) ? $global_settings['keep_data'] : $this->defaults['keep_data'];
+				$site_settings['webp_mod']          = isset( $global_settings['webp_mod'] ) ? $global_settings['webp_mod'] : $this->defaults['webp_mod'];
 			}
 		}
 
@@ -487,6 +502,7 @@ class Settings {
 
 		delete_site_option( WP_SMUSH_PREFIX . 'networkwide' );
 		delete_site_option( WP_SMUSH_PREFIX . 'hide_smush_welcome' );
+		delete_site_option( WP_SMUSH_PREFIX . 'hide_upgrade_notice' );
 		$this->delete_setting( WP_SMUSH_PREFIX . 'settings' );
 		$this->delete_setting( WP_SMUSH_PREFIX . 'image_sizes' );
 		$this->delete_setting( WP_SMUSH_PREFIX . 'resize_sizes' );
@@ -590,8 +606,8 @@ class Settings {
 		}
 
 		// Update Resize width and height settings if set.
-		$resize_sizes['width']  = isset( $_POST['wp-smush-resize_width'] ) ? intval( $_POST['wp-smush-resize_width'] ) : 0; // Input var ok.
-		$resize_sizes['height'] = isset( $_POST['wp-smush-resize_height'] ) ? intval( $_POST['wp-smush-resize_height'] ) : 0; // Input var ok.
+		$resize_sizes['width']  = isset( $_POST['wp-smush-resize_width'] ) ? (int) $_POST['wp-smush-resize_width'] : 0; // Input var ok.
+		$resize_sizes['height'] = isset( $_POST['wp-smush-resize_height'] ) ? (int) $_POST['wp-smush-resize_height'] : 0; // Input var ok.
 
 		$this->set_setting( WP_SMUSH_PREFIX . 'resize_sizes', $resize_sizes );
 	}

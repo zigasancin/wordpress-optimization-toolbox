@@ -130,13 +130,11 @@ $upgrade_url = add_query_arg(
 				<h3><?php esc_html_e( 'Auto-convert PNGs to JPEGs (lossy)', 'wp-smushit' ); ?></h3>
 				<p><?php esc_html_e( "Smush looks for additional savings and automatically converts PNG files to JPEG if it will further reduce the size without a visible drop in quality. Now that's smart image compression.", 'wp-smushit' ); ?></p>
 			</div>
-<!--
 			<div class="sui-upgrade-page-features__item">
 				<i class="sui-icon-photo-picture" aria-hidden="true"></i>
 				<h3><?php esc_html_e( 'Serve next-gen WebP images (without Smush CDN)', 'wp-smushit' ); ?></h3>
 				<p><?php esc_html_e( "Prefer not to use Smush CDN? Our standalone WebP feature allows you to serve next-gen images that are around 26% smaller than JPG and PNG formats. All without sacrificing image quality. You can also gracefully fallback to the older image formats for browsers that aren't compatible.", 'wp-smushit' ); ?></p>
 			</div>
--->
 			<div class="sui-upgrade-page-features__item">
 				<i class="sui-icon-gdpr" aria-hidden="true"></i>
 				<h3><?php esc_html_e( 'Premium WordPress plugins', 'wp-smushit' ); ?></h3>

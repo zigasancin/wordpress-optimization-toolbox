@@ -31,7 +31,11 @@ class Installer {
 	 * @since 3.1.0
 	 */
 	public static function smush_deactivated() {
-		WP_Smush::get_instance()->core()->mod->cdn->unschedule_cron();
+		if ( ! class_exists( '\\Smush\\Core\\Modules\\CDN' ) ) {
+			require_once __DIR__ . '/modules/class-cdn.php';
+		}
+
+		Modules\CDN::unschedule_cron();
 	}
 
 	/**
@@ -47,8 +51,7 @@ class Installer {
 		$version = get_site_option( WP_SMUSH_PREFIX . 'version' );
 
 		if ( ! class_exists( '\\Smush\\Core\\Settings' ) ) {
-			/* @noinspection PhpIncludeInspection */
-			require_once WP_SMUSH_DIR . 'core/class-settings.php';
+			require_once __DIR__ . '/class-settings.php';
 		}
 
 		Settings::get_instance()->init();
@@ -65,13 +68,8 @@ class Installer {
 				)
 			); // db call ok; no-cache ok.
 
-			if ( $results ) {
+			if ( $results || ( isset( $settings['auto'] ) && false !== $settings['auto'] ) ) {
 				update_site_option( 'wp-smush-install-type', 'existing' );
-			} else {
-				// Check for existing settings.
-				if ( false !== $settings['auto'] ) {
-					update_site_option( 'wp-smush-install-type', 'existing' );
-				}
 			}
 
 			// Create directory smush table.
@@ -100,21 +98,17 @@ class Installer {
 		}
 
 		if ( false !== $version && WP_SMUSH_VERSION !== $version ) {
-
 			if ( ! defined( 'WP_SMUSH_UPGRADING' ) ) {
 				define( 'WP_SMUSH_UPGRADING', true );
 			}
 
-			if ( version_compare( $version, '3.4.0', '<' ) ) {
-				self::upgrade_3_4();
-			}
-
-			if ( version_compare( $version, '3.6.2', '<' ) ) {
-				self::upgrade_3_6_2();
-			}
-
 			if ( version_compare( $version, '3.7.0', '<' ) ) {
 				self::upgrade_3_7_0();
+			}
+
+			if ( version_compare( $version, '3.8.0', '<' ) ) {
+				// Delete the flag for hiding the BF modal because it was removed.
+				delete_site_option( WP_SMUSH_PREFIX . 'hide_blackfriday_modal' );
 			}
 
 			// Create/upgrade directory smush table.
@@ -134,9 +128,12 @@ class Installer {
 	 * @since 2.9.0
 	 */
 	public static function directory_smush_table() {
-		// Create a class object, if doesn't exists.
-		if ( ! is_object( WP_Smush::get_instance()->core()->mod->dir ) ) {
-			WP_Smush::get_instance()->core()->mod->dir = new Modules\Dir();
+		if ( ! class_exists( '\\Smush\\Core\\Modules\\Abstract_Module' ) ) {
+			require_once __DIR__ . '/modules/class-abstract-module.php';
+		}
+
+		if ( ! class_exists( '\\Smush\\Core\\Modules\\Dir' ) ) {
+			require_once __DIR__ . '/modules/class-dir.php';
 		}
 
 		// No need to continue on sub sites.
@@ -144,36 +141,13 @@ class Installer {
 			return;
 		}
 
-		// Create/upgrade directory smush table.
-		WP_Smush::get_instance()->core()->mod->dir->create_table();
-	}
-
-	/**
-	 * Adds new lazy load iframe setting.
-	 *
-	 * @since 3.4.0
-	 * @deprecated
-	 */
-	private static function upgrade_3_4() {
-		// Add new lazy-load options.
-		$lazy = Settings::get_instance()->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
-
-		if ( ! $lazy ) {
-			return;
+		// Create a class object, if doesn't exists.
+		if ( ! is_object( WP_Smush::get_instance()->core()->mod->dir ) ) {
+			WP_Smush::get_instance()->core()->mod->dir = new Modules\Dir();
 		}
 
-		$lazy['format']['iframe'] = true;
-
-		Settings::get_instance()->set_setting( WP_SMUSH_PREFIX . 'lazy_load', $lazy );
-	}
-
-	/**
-	 * Upgrade to 3.6.2
-	 *
-	 * @since 3.6.2
-	 */
-	private static function upgrade_3_6_2() {
-		delete_site_option( WP_SMUSH_PREFIX . 'run_recheck' );
+		// Create/upgrade directory smush table.
+		WP_Smush::get_instance()->core()->mod->dir->create_table();
 	}
 
 	/**
@@ -182,6 +156,8 @@ class Installer {
 	 * @since 3.7.0
 	 */
 	private static function upgrade_3_7_0() {
+		delete_site_option( WP_SMUSH_PREFIX . 'run_recheck' );
+
 		// Fix the "None" animation in lazy-load options.
 		$lazy = Settings::get_instance()->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
 
@@ -194,5 +170,4 @@ class Installer {
 			Settings::get_instance()->set_setting( WP_SMUSH_PREFIX . 'lazy_load', $lazy );
 		}
 	}
-
 }

@@ -76,6 +76,32 @@
 		},
 
 		/**
+		 * Displays a floating error message using the #wp-smush-ajax-notice container.
+		 *
+		 * @since 3.8.0
+		 *
+		 * @param {string} message
+		 */
+		showErrorNotice: ( message ) => {
+			if ( 'undefined' === typeof message ) {
+				return;
+			}
+
+			const noticeMessage = `<p>${ message }</p>`,
+				noticeOptions = {
+					type: 'error',
+					icon: 'info',
+				};
+
+			SUI.openNotice( 'wp-smush-ajax-notice', noticeMessage, noticeOptions );
+
+			const loadingButton = document.querySelector( '.sui-button-onload' );
+			if ( loadingButton ) {
+				loadingButton.classList.remove( 'sui-button-onload' );
+			}
+		},
+
+		/**
 		 * Reset settings.
 		 *
 		 * @since 3.2.0

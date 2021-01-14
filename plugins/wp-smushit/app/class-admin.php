@@ -101,8 +101,25 @@ class Admin {
 	 * Register JS and CSS.
 	 */
 	private function register_scripts() {
-		// Share UI JS.
-		wp_register_script( 'smush-sui', WP_SMUSH_URL . 'app/assets/js/smush-sui.min.js', array( 'jquery' ), WP_SHARED_UI_VERSION, true );
+		global $wp_version;
+		/**
+		 * Queue clipboard.js from your plugin if WP's version is below 5.2.0
+		 * since it's only included from 5.2.0 on.
+		 *
+		 * Use 'clipboard' as the handle so it matches WordPress' handle for the script.
+		 *
+		 * @since 3.8.0
+		 */
+		if ( version_compare( $wp_version, '5.2', '<' ) ) {
+			wp_register_script( 'clipboard', WP_SMUSH_URL . 'app/assets/js/smush-clipboard.min.js', array(), WP_SMUSH_VERSION, true );
+		}
+
+		/**
+		 * Share UI JS.
+		 *
+		 * @since 3.8.0 added 'clipboard' dependency.
+		 */
+		wp_register_script( 'smush-sui', WP_SMUSH_URL . 'app/assets/js/smush-sui.min.js', array( 'jquery', 'clipboard' ), WP_SHARED_UI_VERSION, true );
 
 		// Main JS.
 		wp_register_script( 'smush-admin', WP_SMUSH_URL . 'app/assets/js/smush-admin.min.js', array( 'jquery', 'smush-sui', 'underscore', 'wp-color-picker' ), WP_SMUSH_VERSION, true );
@@ -182,6 +199,8 @@ class Admin {
 		if ( ! WP_Smush::is_pro() ) {
 			$upgrade_url = add_query_arg(
 				array(
+					'coupon'       => 'SMUSH30OFF',
+					'checkout'     => 0,
 					'utm_source'   => 'smush',
 					'utm_medium'   => 'plugin',
 					'utm_campaign' => 'wp-smush-pro/wp-smush.php' !== WP_SMUSH_BASENAME ? 'smush_pluginlist_upgrade' : 'smush_pluginlist_renew',
@@ -190,17 +209,17 @@ class Admin {
 			);
 
 			$label = 'wp-smush-pro/wp-smush.php' !== WP_SMUSH_BASENAME ? __( 'Upgrade to Smush Pro', 'wp-smushit' ) : __( 'Renew Membership', 'wp-smushit' );
-			$text  = 'wp-smush-pro/wp-smush.php' !== WP_SMUSH_BASENAME ? __( 'Upgrade', 'wp-smushit' ) : __( 'Renew Membership', 'wp-smushit' );
+			$text  = 'wp-smush-pro/wp-smush.php' !== WP_SMUSH_BASENAME ? __( 'Upgrade *New Pricing*', 'wp-smushit' ) : __( 'Renew Membership', 'wp-smushit' );
 
-			$links['upgrade'] = '<a href="' . esc_url( $upgrade_url ) . '" aria-label="' . esc_attr( $label ) . '" target="_blank" style="color: #8D00B1;">' . $text . '</a>';
+			$links['smush_upgrade'] = '<a href="' . esc_url( $upgrade_url ) . '" aria-label="' . esc_attr( $label ) . '" target="_blank" style="color: #8D00B1;">' . $text . '</a>';
 		}
 
 		// Documentation link.
-		$links['docs'] = '<a href="https://premium.wpmudev.org/docs/wpmu-dev-plugins/smush/?utm_source=smush&utm_medium=plugin&utm_campaign=smush_pluginlist_docs" aria-label="' . esc_attr( __( 'View Smush Documentation', 'wp-smushit' ) ) . '" target="_blank">' . esc_html__( 'Docs', 'wp-smushit' ) . '</a>';
+		$links['smush_docs'] = '<a href="https://premium.wpmudev.org/docs/wpmu-dev-plugins/smush/?utm_source=smush&utm_medium=plugin&utm_campaign=smush_pluginlist_docs" aria-label="' . esc_attr( __( 'View Smush Documentation', 'wp-smushit' ) ) . '" target="_blank">' . esc_html__( 'Docs', 'wp-smushit' ) . '</a>';
 
 		// Settings link.
 		$settings_page      = is_multisite() && is_network_admin() ? network_admin_url( 'admin.php?page=smush' ) : menu_page_url( 'smush', false );
-		$links['dashboard'] = '<a href="' . $settings_page . '" aria-label="' . esc_attr( __( 'Go to Smush Dashboard', 'wp-smushit' ) ) . '">' . esc_html__( 'Settings', 'wp-smushit' ) . '</a>';
+		$links['smush_dashboard'] = '<a href="' . $settings_page . '" aria-label="' . esc_attr( __( 'Go to Smush Dashboard', 'wp-smushit' ) ) . '">' . esc_html__( 'Settings', 'wp-smushit' ) . '</a>';
 
 		return array_reverse( $links );
 	}
@@ -329,50 +348,6 @@ class Admin {
 	}
 
 	/**
-	 * Shows a option to ignore the Image ids which can be resmushed while bulk smushing.
-	 *
-	 * @param bool|int $count  Resmush + unsmushed image count.
-	 *
-	 * @return mixed $notice
-	 */
-	public function bulk_resmush_content( $count = false ) {
-		// If we already have count, don't fetch it.
-		$resmush_ids = get_option( 'wp-smush-resmush-list' );
-		if ( false === $count && $resmush_ids ) {
-			// If we have the resmush ids list, Show Resmush notice and button.
-			// Get the actual remainaing count.
-			if ( ! isset( WP_Smush::get_instance()->core()->remaining_count ) && ( ! defined( 'WP_SMUSH_DISABLE_STATS' ) || ! WP_SMUSH_DISABLE_STATS ) ) {
-				WP_Smush::get_instance()->core()->setup_global_stats();
-			}
-
-			$count = WP_Smush::get_instance()->core()->remaining_count;
-		}
-
-		$notice = '';
-
-		// Show only if we have any images to ber resmushed.
-		if ( $count > 0 ) {
-			$notice  = '<div class="sui-notice sui-notice-warning wp-smush-resmush-notice wp-smush-remaining" tabindex="0">';
-			$notice .= '<div class="sui-notice-content"><div class="sui-notice-message">';
-			$notice .= '<i class="sui-notice-icon sui-icon-warning-alert" aria-hidden="true"></i><p>';
-			$notice .= sprintf(
-			/* translators: %1$s: user name, %2$s: strong tag, %3$s: span tag, %4$d: number of remaining umages, %5$s: closing span tag, %6$s: closing strong tag  */
-				_n( '%1$s, you have %2$s%3$s%4$d%5$s attachment%6$s that needs re-compressing!', '%1$s, you have %2$s%3$s%4$d%5$s attachments%6$s that need re-compressing!', $count, 'wp-smushit' ),
-				esc_html( Helper::get_user_name() ),
-				'<strong>',
-				'<span class="wp-smush-remaining-count">',
-				absint( $count ),
-				'</span>',
-				'</strong>'
-			);
-			$notice .= '</p></div></div></div>';
-
-		}
-
-		return $notice;
-	}
-
-	/**
 	 * Check for plugin conflicts cron.
 	 *
 	 * @since 3.6.0
@@ -423,8 +398,15 @@ class Admin {
 		}
 
 		$conflict_check = get_transient( WP_SMUSH_PREFIX . 'conflict_check' );
-		if ( false === $conflict_check || empty( $conflict_check ) ) {
+
+		// Have never checked before.
+		if ( false === $conflict_check ) {
 			wp_schedule_single_event( time(), 'smush_check_for_conflicts' );
+			return;
+		}
+
+		// No conflicting plugins detected.
+		if ( isset( $conflict_check ) && is_array( $conflict_check ) && empty( $conflict_check ) ) {
 			return;
 		}
 
@@ -452,4 +434,82 @@ class Admin {
 		<?php
 	}
 
+	/**
+	 * Prints the content for pending images for the Bulk Smush section.
+	 *
+	 * @since 3.7.2
+	 *
+	 * @param int $total_count     Resmush + unsmushed image count.
+	 * @param int $resmush_count   Resmush count.
+	 * @param int $unsmushed_count Unsmushed image count.
+	 */
+	public function print_pending_bulk_smush_content( $total_count, $resmush_count, $unsmushed_count ) {
+		$tooltip_message = sprintf(
+			/* translators: %d total number of images to smush. */
+			_n( 'You have %d attachment that needs smushing. Click Bulk Smush and compress the images in bulk.', 'You have %d attachments that need smushing. Click Bulk Smush and compress the images in bulk.', $total_count, 'wp-smushit' ),
+			$total_count
+		);
+
+		$unsmushed_message = '';
+		if ( 0 < $unsmushed_count ) {
+			$unsmushed_message = sprintf(
+				/* translators: 1. opening strong tag, 2: unsmushed images count,3. closing strong tag. */
+				esc_html( _n( '%1$s%2$d attachment%3$s that needs smushing', '%1$s%2$d attachments%3$s that need smushing', $unsmushed_count, 'wp-smushit' ) ),
+				'<strong>',
+				absint( $unsmushed_count ),
+				'</strong>'
+			);
+		}
+
+		$resmush_message = '';
+		if ( 0 < $resmush_count ) {
+			$resmush_message = sprintf(
+				/* translators: 1. opening strong tag, 2: re-smush images count,3. closing strong tag. */
+				esc_html( _n( '%1$s%2$d attachment%3$s that needs re-smushing', '%1$s%2$d attachments%3$s that need re-smushing', $resmush_count, 'wp-smushit' ) ),
+				'<strong>',
+				esc_html( $resmush_count ),
+				'</strong>'
+			);
+		}
+
+		$image_count_description = sprintf(
+			/* translators: 1. username, 2. unsmushed images message, 3. 'and' text for when having both unsmushed and re-smush images, 4. re-smush images message. */
+			__( '%1$s, you have %2$s%3$s%4$s!', 'wp-smushit' ),
+			esc_html( Helper::get_user_name() ),
+			$unsmushed_message,
+			( $unsmushed_message && $resmush_message ? esc_html__( ' and ', 'wp-smushit' ) : '' ),
+			$resmush_message
+		);
+
+		if ( ! WP_Smush::is_pro() && $total_count > Core::$max_free_bulk ) {
+			$upgrade_url = add_query_arg(
+				array(
+					'coupon'       => 'SMUSH30OFF',
+					'checkout'     => 0,
+					'utm_source'   => 'smush',
+					'utm_medium'   => 'plugin',
+					'utm_campaign' => 'smush_bulksmush_morethan50images_upgradetopro',
+				),
+				esc_url( 'https://premium.wpmudev.org/project/wp-smush-pro/' )
+			);
+
+			$image_count_description .= sprintf(
+				/* translators: 1. opening 'a' tag to the upgrade url, 2. closing 'a' tag, 3. bulk smush image limit for free */
+				esc_html__( ' %1$sUpgrade to Pro%2$s to bulk smush all images in one click. Free users can smush %3$d images per batch.', 'wp-smushit' ),
+				'<a href="' . esc_url( $upgrade_url ) . '" target="_blank" style="color: #8D00B1;">',
+				'</a>',
+				esc_html( Core::$max_free_bulk )
+			);
+		}
+
+		?>
+		<span id="wp-smush-bulk-image-count"><?php echo esc_html( $total_count ); ?></span>
+		<span class="sui-tooltip sui-tooltip-constrained" data-tooltip="<?php echo esc_attr( $tooltip_message ); ?>" style="--tooltip-width: 240px;">
+			<i class="sui-icon-info sui-warning" aria-hidden="true"></i>
+		</span>
+		<p id="wp-smush-bulk-image-count-description">
+			<?php echo $image_count_description; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+		</p>
+		<?php
+	}
 }

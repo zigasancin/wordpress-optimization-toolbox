@@ -52,6 +52,8 @@ $smushit_keys = array(
 	'cron_update_running',
 	'hide-conflict-notice',
 	'show_upgrade_modal',
+	// This could have been set in 3.7.1. The UI that set this was removed in 3.7.2.
+	'hide_tutorials_from_bulk_smush',
 );
 
 $db_keys = array(
@@ -169,6 +171,20 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}smush_dir_images" );
 
 // Delete directory scan data.
 delete_option( 'wp-smush-scan-step' );
+
+// Delete all WebP images.
+global $wp_filesystem;
+if ( is_null( $wp_filesystem ) ) {
+	WP_Filesystem();
+}
+
+$upload_dir = wp_get_upload_dir();
+$webp_dir   = dirname( $upload_dir['basedir'] ) . '/smush-webp';
+$wp_filesystem->delete( $webp_dir, true );
+
+// Delete WebP test image.
+$webp_img = $upload_dir['basedir'] . '/smush-webp-test.png';
+$wp_filesystem->delete( $webp_img );
 
 // TODO: Add procedure to delete backup files
 // TODO: Update NextGen Metadata to remove Smush stats on plugin deletion.
