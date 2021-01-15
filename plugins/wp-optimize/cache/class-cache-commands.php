@@ -161,6 +161,14 @@ class WP_Optimize_Cache_Commands {
 	 * @return array
 	 */
 	public function purge_page_cache() {
+
+		if (!WP_Optimize()->can_purge_the_cache()) {
+			return array(
+				'success' => false,
+				'message' => __('You do not have permission to purge the cache', 'wp-optimize'),
+			);
+		}
+
 		$purged = WP_Optimize()->get_page_cache()->purge();
 		$cache_size = WP_Optimize()->get_page_cache()->get_cache_size();
 		$wpo_page_cache_preloader = WP_Optimize_Page_Cache_Preloader::instance();

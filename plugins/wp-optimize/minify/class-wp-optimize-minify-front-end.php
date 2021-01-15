@@ -187,8 +187,8 @@ class WP_Optimize_Minify_Front_End {
 		$wp_domain = trim(str_ireplace(array('http://', 'https://'), '', trim(site_url(), '/')));
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 		$exclude_css = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_css'])));
-		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_css);
-		$blacklist = array_map('trim', explode("\n", trim($wpo_minify_options['blacklist'])));
+		$ignore_list = WP_Optimize_Minify_Functions::compile_ignore_list($exclude_css);
+		$blacklist = WP_Optimize_Minify_Functions::get_ie_blacklist();
 		$async_css = array_map('trim', explode("\n", trim($wpo_minify_options['async_css'])));
 		$master_ignore = array_merge($ignore_list, $blacklist);
 
@@ -376,9 +376,9 @@ class WP_Optimize_Minify_Front_End {
 		$wp_domain = trim(str_ireplace(array('http://', 'https://'), '', trim(site_url(), '/')));
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 		$exclude_js = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_js'])));
-		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_js);
+		$ignore_list = WP_Optimize_Minify_Functions::compile_ignore_list($exclude_js);
 		// Should this defer the Poly fills for IE?
-		$blacklist = array_map('trim', explode("\n", trim($wpo_minify_options['blacklist'])));
+		$blacklist = WP_Optimize_Minify_Functions::get_ie_blacklist();
 		// no query strings
 		if (false !== stripos($src, '?ver')) {
 			$srcf = stristr($src, '?ver', true); // phpcs:ignore PHPCompatibility.FunctionUse.NewFunctionParameters.stristr_before_needleFound
@@ -491,7 +491,7 @@ class WP_Optimize_Minify_Front_End {
 		$wp_domain = trim(str_ireplace(array('http://', 'https://'), '', trim(site_url(), '/')));
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 		$exclude_css = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_css'])));
-		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_css);
+		$ignore_list = WP_Optimize_Minify_Functions::compile_ignore_list($exclude_css);
 		$async_css = array_map('trim', explode("\n", trim($wpo_minify_options['async_css'])));
 
 		$minify_css = $wpo_minify_options['enable_css_minification'];
@@ -674,7 +674,7 @@ class WP_Optimize_Minify_Front_End {
 			$mediatype = $process[$handle]['mediatype'];
 			
 			// IE only files don't increment things
-			$ieonly = WP_Optimize_Minify_Functions::ie_blacklist($href);
+			$ieonly = WP_Optimize_Minify_Functions::is_url_in_ie_blacklist($href);
 			if ($ieonly) {
 				continue;
 			}
@@ -878,7 +878,7 @@ class WP_Optimize_Minify_Front_End {
 		$wp_domain = trim(str_ireplace(array('http://', 'https://'), '', trim(site_url(), '/')));
 
 		$exclude_js = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_js'])));
-		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_js);
+		$ignore_list = WP_Optimize_Minify_Functions::compile_ignore_list($exclude_js);
 		$async_js = array_map('trim', explode("\n", trim($wpo_minify_options['async_js'])));
 		$scripts = clone $wp_scripts;
 		$scripts->all_deps($scripts->queue);
@@ -921,7 +921,7 @@ class WP_Optimize_Minify_Front_End {
 			}
 			
 			// IE only files don't increment things
-			$ieonly = WP_Optimize_Minify_Functions::ie_blacklist($href);
+			$ieonly = WP_Optimize_Minify_Functions::is_url_in_ie_blacklist($href);
 			if ($ieonly) {
 				continue;
 			}
@@ -1104,7 +1104,7 @@ class WP_Optimize_Minify_Front_End {
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 		$wp_domain = trim(str_ireplace(array('http://', 'https://'), '', trim(site_url(), '/')));
 		$exclude_js = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_js'])));
-		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_js);
+		$ignore_list = WP_Optimize_Minify_Functions::compile_ignore_list($exclude_js);
 		$async_js = array_map('trim', explode("\n", trim($wpo_minify_options['async_js'])));
 		$scripts = clone $wp_scripts;
 		$scripts->all_deps($scripts->queue);
@@ -1141,7 +1141,7 @@ class WP_Optimize_Minify_Front_End {
 				}
 				// IE only files don't increment things
 				if ($skipjs
-					|| WP_Optimize_Minify_Functions::ie_blacklist($href)
+					|| WP_Optimize_Minify_Functions::is_url_in_ie_blacklist($href)
 				) {
 					continue;
 				}
@@ -1359,7 +1359,7 @@ class WP_Optimize_Minify_Front_End {
 		$cache_dir_url = $cache_path['cachedirurl'];
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 		$exclude_css = array_map('trim', explode("\n", trim($wpo_minify_options['exclude_css'])));
-		$ignore_list = WP_Optimize_Minify_Functions::default_ignore($exclude_css);
+		$ignore_list = WP_Optimize_Minify_Functions::compile_ignore_list($exclude_css);
 		$async_css = array_map('trim', explode("\n", trim($wpo_minify_options['async_css'])));
 		$minify_css = $wpo_minify_options['enable_css_minification'];
 		$merge_css = $wpo_minify_options['enable_merging_of_css'];
@@ -1496,7 +1496,7 @@ class WP_Optimize_Minify_Front_End {
 			}
 			
 			// IE only files don't increment things
-			$ieonly = WP_Optimize_Minify_Functions::ie_blacklist($href);
+			$ieonly = WP_Optimize_Minify_Functions::is_url_in_ie_blacklist($href);
 			if ($ieonly) {
 				continue;
 			}

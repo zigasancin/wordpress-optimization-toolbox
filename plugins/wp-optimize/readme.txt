@@ -2,9 +2,10 @@
 Contributors: DavidAnderson, ruhanirabin, DNutbourne, aporter, snightingale, lumberhack
 Donate link: https://david.dw-perspective.org.uk/donate
 Tags: cache, minify, database, image optimize, performance, clean, spam, speed, caching, smush, smushing
-Requires at least: 3.9
-Tested up to: 5.5
-Stable tag: 3.1.4
+Requires PHP: 5.6
+Requires at least: 4.4
+Tested up to: 5.6
+Stable tag: 3.1.6
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -359,7 +360,44 @@ If none of the above works, disable processing of JavaScript files in the minify
 8. Real world tests show the cache feature alone can make your site faster than any other caching plugin
 9. Features comparison
 
+
 == Changelog ==
+
+= 3.1.6 - 17/Dec/2020 =
+
+* FIX: Fix wrong class name
+
+= 3.1.5 - 17/Dec/2020 =
+
+* FEATURE: Introduction of Power tweaks (premium feature)
+* FEATURE: Power tweak - replace WooCommerce "Get total spent" query by a faster one
+* FIX: CloudFlare not detected on gzip and browser caching tabs
+* FIX: Cloudflare caching issue
+* FIX: Premium - Unused images - Download CSV warning
+* FIX: PHP 8 compatibility issue WP_Optimize_Browser_Cache->prepare_interval()
+* TWEAK: Upgrade jQuery code to deal with deprecations with the latest bundled version
+* TWEAK: Fix wrong usage of wp_localize_script to prevent warnings in PHP 8
+* TWEAK: Premium - Unused images - Update the data when moving images to the trash / deleting instead of doing a hard refresh
+* TWEAK: Change how default exclusions are handled
+* TWEAK: Now that PHP 8.0 has been released, bump minimum PHP version requirement from PHP 5.4 to 5.6.
+* TWEAK: Delete WP-O's .htaccess rules at deactivation
+* TWEAK: Premium - Unused images - Separate unused images and unused image sizes processes
+* TWEAK: Update jQuery document ready style to the one not deprecated in jQuery 3.0
+* TWEAK: Minify CSS - Possibility to toggle the google fonts `display=swap` parameter from the UI.
+* TWEAK: Fix small UI issues
+* TWEAK: Clean up all cron events when deactivating the plugin
+* TWEAK: Premium - Possibility to set permissions for purging page cache and minify files.
+* TWEAK: Bypass minify when editing a post using the Brizy editor
+* TWEAK: Renamed UpdraftCentral's command classes filter
+* TWEAK: Bump WP version requirement to 4.4+, and PHP version requirement to 5.4+
+* TWEAK: Purge caches when updating a plugin / theme (also when updating using a ZIP archive)
+* TWEAK: Improve the admin bar "cache" menu
+* TWEAK: Show information about Cloudflare support
+* TWEAK: Database optimization - Resume optimizing when a timeout occurs
+* TWEAK: Remove redundant code
+* TWEAK: Cache feature - Do not cache pages with fatal errors
+* TWEAK: Cache feature - Do not cache RSS feeds
+* TWEAK: Page cacheing - Prevent adding the "comment cookie" when ordering on WooCommerce
 
 = 3.1.4 - 15/Sep/2020 =
 
@@ -367,6 +405,7 @@ If none of the above works, disable processing of JavaScript files in the minify
 
 = 3.1.3 - 15/Sep/2020 =
 
+* TWEAK: Added Oasis Workflow Pro tables to the list
 * FIX: Unused images - restore from trash UI issue
 * FIX: Premium - Unused images - Images trash works on multisite
 * TWEAK: Prevent GLOB_BRACE warning on systems not supporting it
@@ -1009,4 +1048,4 @@ If none of the above works, disable processing of JavaScript files in the minify
 * Fix Interface
 
 == Upgrade Notice ==
-* 3.1.4: Minify - Only load the required vendor classes instead of using composer's autoload in order to prevent compatibility issues. Added filters `wpo_minify_get_js` and `wpo_minify_get_css` to enable users to do extra processing before saving the code. Prevent PHP warning when no log is present and prevent error when the function gzencode doesn't exist. Various other tweaks and fixes; a recommended update for all.
+* 3.1.6: Minify - * Cache feature - Do not cache pages with fatal errors,  Do not cache RSS feeds. Page cacheing - Prevent adding the "comment cookie" when ordering on WooCommerce; a recommended update for all.

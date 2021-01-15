@@ -52,7 +52,7 @@ class WPO_Cache_Rules {
 		 *
 		 * @param array $actions The actions
 		 */
-		$purge_on_action = apply_filters('wpo_purge_cache_hooks', array('after_switch_theme', 'wp_update_nav_menu', 'customize_save_after', array('wp_ajax_save-widget', 0), array('wp_ajax_update-widget', 0), 'autoptimize_action_cachepurged'));
+		$purge_on_action = apply_filters('wpo_purge_cache_hooks', array('after_switch_theme', 'wp_update_nav_menu', 'customize_save_after', array('wp_ajax_save-widget', 0), array('wp_ajax_update-widget', 0), 'autoptimize_action_cachepurged', 'upgrader_overwrote_package', 'wpo_active_plugin_or_theme_updated'));
 		foreach ($purge_on_action as $action) {
 			if (is_array($action)) {
 				add_action($action[0], array($this, 'purge_cache'), $action[1]);
@@ -102,6 +102,17 @@ class WPO_Cache_Rules {
 	 */
 	public function comment_inserted($comment_id, $comment = false) {
 		if ($comment && is_a($comment, 'WP_Comment')) {
+			/**
+			 * Filters whether to add a cookie when a comment is posted, in order to exclude the page from caching.
+			 * Regular comments have the property comment_type set to ''  or 'comment'. So by default, only add the cookie in those cases.
+			 *
+			 * @param boolean    $add_cookie
+			 * @param WP_Comment $comment
+			 * @return boolean
+			 */
+			$add_cookie = apply_filters('wpo_add_commented_post_cookie', '' == $comment->comment_type || 'comment' == $comment->comment_type, $comment);
+			if (!$add_cookie) return;
+
 			$url = get_permalink($comment->comment_post_ID);
 			$url_info = parse_url($url);
 			setcookie('wpo_commented_post', 1, time() + WEEK_IN_SECONDS, isset($url_info['path']) ? $url_info['path'] : '/');

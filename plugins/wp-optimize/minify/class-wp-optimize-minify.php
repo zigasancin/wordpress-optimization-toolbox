@@ -38,6 +38,8 @@ class WP_Optimize_Minify {
 		// Don't run the rest if PHP requirement isn't met
 		if (!WPO_MINIFY_PHP_VERSION_MET) return;
 
+		add_filter('wpo_cache_admin_bar_menu_items', array($this, 'admin_bar_menu'), 30, 2);
+
 		/**
 		 * Directory that stores the cache, including gzipped files and mobile specifc cache
 		 */
@@ -53,6 +55,39 @@ class WP_Optimize_Minify {
 		// cron job to delete old wpo_min cache
 		add_action('wpo_minify_purge_old_cache', array('WP_Optimize_Minify_Cache_Functions', 'purge_old'));
 		// front-end actions; skip on certain post_types or if there are specific keys on the url or if editor or admin
+	}
+
+	/**
+	 * Admin toolbar processing
+	 *
+	 * @param array        $menu_items
+	 * @param WP_Admin_Bar $wp_admin_bar
+	 * @return array
+	 */
+	public function admin_bar_menu($menu_items, $wp_admin_bar) {
+		$wpo_minify_options = wp_optimize_minify_config()->get();
+
+		if (!$wpo_minify_options['enabled'] || !current_user_can('manage_options') || !($wpo_minify_options['enable_css'] || $wpo_minify_options['enable_js'])) return $menu_items;
+		
+		$cache_path = WP_Optimize_Minify_Cache_Functions::cache_path();
+		$cache_size_info = '<h4>'.__('Minify cache', 'wp-optimize').'</h4><span><span class="label">'.__('Cache size:', 'wp-optimize').'</span> <span class="stats">'.esc_html(WP_Optimize_Minify_Cache_Functions::get_cachestats($cache_path['cachedir'])).'</span></span>';
+
+		$menu_items[] = array(
+			'id'    => 'wpo_minify_cache_stats',
+			'title' => $cache_size_info,
+			'meta'  => array(
+				'class' => 'wpo-cache-stats',
+			),
+			'parent' => 'wpo_purge_cache',
+		);
+
+		$menu_items[] = array(
+			'parent' => 'wpo_purge_cache',
+			'id' => 'purge_minify_cache',
+			'title' => __('Purge minify cache', 'wp-optimize'),
+			'href' => "#",
+		);
+		return $menu_items;
 	}
 
 	/**

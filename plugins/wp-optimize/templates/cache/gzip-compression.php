@@ -9,7 +9,7 @@
 		</span>
 	</p>
 
-	<?php if ($wpo_gzip_compression_enabled && !is_wp_error($wpo_gzip_compression_enabled) && false == $wpo_gzip_compression_settings_added) : ?>
+	<?php if ($wpo_gzip_compression_enabled && !is_wp_error($wpo_gzip_compression_enabled)) : ?>
 		<div class="wpo-fieldgroup wpo-gzip-already-enabled">
 			<p><span class="dashicons dashicons-yes"></span> 
 			<?php if ('brotli' == $wpo_gzip_headers_information['compression']) { ?>
@@ -17,7 +17,7 @@
 			<?php } else { ?>
 				<?php _e('Gzip compression is already enabled.', 'wp-optimize'); ?>
 			<?php } ?>
-			<?php if ('cloudflare' == $wpo_gzip_headers_information['server']) { ?>
+			<?php if ($is_cloudflare_site) { ?>
 				<em><?php _e('It seems to be handled by Cloudflare.', 'wp-optimize'); ?></em>
 			<?php } ?>
 

@@ -130,10 +130,10 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_2 {
 		$smushed_size = $smush_stats['smushed-size'];
 
 		if (0 == $original_size) {
-			$info = sprintf(__('The file was compressed to %s using WP-Optimize', 'wp-optimize'), wpo_format_filesize($smushed_size));
+			$info = sprintf(__('The file was compressed to %s using WP-Optimize', 'wp-optimize'), WP_Optimize()->format_size($smushed_size));
 		} else {
 			$saved = round((($original_size - $smushed_size) / $original_size * 100), 2);
-			$info = sprintf(__('The file was compressed from %s to %s, saving %s percent, using WP-Optimize', 'wp-optimize'), wpo_format_filesize($original_size), wpo_format_filesize($smushed_size), $saved);
+			$info = sprintf(__('The file was compressed from %s to %s, saving %s percent, using WP-Optimize', 'wp-optimize'), WP_Optimize()->format_size($original_size), WP_Optimize()->format_size($smushed_size), $saved);
 		}
 
 		echo htmlentities($info);

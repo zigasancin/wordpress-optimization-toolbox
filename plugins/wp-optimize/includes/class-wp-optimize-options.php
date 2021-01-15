@@ -14,9 +14,10 @@ class WP_Optimize_Options {
 		'retention-enabled' => 'false',
 		'retention-period' => '',
 		'enable-admin-menu' => 'false',
+		'enable_cache_in_admin_bar' => true,
 		'auto' => '',
 		'logging' => '',
-		'logging-additional' => ''
+		'logging-additional' => '',
 	);
 
 	/**
@@ -101,7 +102,7 @@ class WP_Optimize_Options {
 
 		return apply_filters(
 			'wp_optimize_option_keys',
-			array('defaults', 'weekly-schedule', 'schedule', 'retention-enabled', 'retention-period', 'last-optimized', 'enable-admin-menu', 'schedule-type', 'total-cleaned', 'current-cleaned', 'email-address', 'email', 'auto', 'settings', 'dismiss_page_notice_until', 'dismiss_dash_notice_until')
+			array('defaults', 'weekly-schedule', 'schedule', 'retention-enabled', 'retention-period', 'last-optimized', 'enable-admin-menu', 'schedule-type', 'total-cleaned', 'current-cleaned', 'email-address', 'email', 'auto', 'settings', 'dismiss_page_notice_until', 'dismiss_dash_notice_until', 'enable_cache_in_admin_bar')
 		);
 	}
 	
@@ -210,6 +211,13 @@ class WP_Optimize_Options {
 		// Check if the value is refreshed .
 		if ($saved_admin_bar != $updated_admin_bar) {
 			// Set refresh to true as the values have changed.
+			$output['refresh'] = true;
+		}
+
+		// Save cache toolbar display setting
+		$saved_enable_cache_in_admin_bar = $this->get_option('enable_cache_in_admin_bar', true);
+		if ($saved_enable_cache_in_admin_bar != $settings['enable_cache_in_admin_bar']) {
+			$this->update_option('enable_cache_in_admin_bar', $settings['enable_cache_in_admin_bar']);
 			$output['refresh'] = true;
 		}
 

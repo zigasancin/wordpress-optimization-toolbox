@@ -26,7 +26,7 @@
 		<img class="wpo-logo" src="<?php echo trailingslashit(WPO_PLUGIN_URL); ?>images/notices/wp_optimize_logo.png" alt="" />
 		<?php
 			$sqlversion = (string) $wp_optimize->get_db_info()->get_version();
-			echo '<strong>WP-Optimize '.($wp_optimize->is_premium() ? __('Premium', 'wp-optimize') : '' ).' <span class="wpo-version">'.WPO_VERSION.'</span></strong>';
+			echo '<strong>WP-Optimize '.(WP_Optimize::is_premium() ? __('Premium', 'wp-optimize') : '' ).' <span class="wpo-version">'.WPO_VERSION.'</span></strong>';
 		?>
 		<span class="wpo-subheader"><?php echo htmlspecialchars(__('Make your site fast & efficient', 'wp-optimize')); ?></span>
 	</div>
@@ -39,8 +39,3 @@
 		// This is to display the notices.
 		$wp_optimize_notices->do_notice();
 	}
-?>
-
-<script type="text/javascript">
-	var wp_optimize_ajax_nonce='<?php echo wp_create_nonce('wp-optimize-ajax-nonce'); ?>';
-</script>

@@ -200,7 +200,7 @@ span#wpo_smush_images_save_options_done {
 	clear: both;
 }
 
-span.close {
+#smush-complete-summary span.close {
 	display: block;
 	clear: both;
 	text-align: left;

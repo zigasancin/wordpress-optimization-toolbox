@@ -98,8 +98,6 @@ class WP_Optimize_Minify_Config {
 	 * @return array
 	 */
 	public function get_defaults() {
-		$blacklist = array('/html5shiv.js', '/html5shiv-printshiv.min.js', '/excanvas.js', '/avada-ie9.js', '/respond.js', '/respond.min.js', '/selectivizr.js', '/Avada/assets/css/ie.css', '/html5.js', '/IE9.js', '/fusion-ie9.js', '/vc_lte_ie9.min.css', '/old-ie.css', '/ie.css', '/vc-ie8.min.css', '/mailchimp-for-wp/assets/js/third-party/placeholders.min.js', '/assets/js/plugins/wp-enqueue/min/webfontloader.js', '/a.optnmstr.com/app/js/api.min.js', '/pixelyoursite/js/public.js', '/assets/js/wcdrip-drip.js', '/instantpage.js');
-		$ignore_list = array('/genericons.css', '/Avada/assets/js/main.min.js', '/woocommerce-product-search/js/product-search.js', '/includes/builder/scripts/frontend-builder-scripts.js', '/assets/js/jquery.themepunch.tools.min.js', '/js/TweenMax.min.js', '/jupiter/assets/js/min/full-scripts', '/wp-content/themes/Divi/core/admin/js/react-dom.production.min.js', '/LayerSlider/static/layerslider/js/greensock.js', '/themes/kalium/assets/js/main.min.js', '/elementor/assets/js/common.min.js', '/elementor/assets/js/frontend.min.js', '/elementor-pro/assets/js/frontend.min.js', '/wp-includes/js/mediaelement/wp-mediaelement.min.js');
 		$defaults = array(
 			// dev tab checkboxes
 			'debug' => false,
@@ -119,6 +117,7 @@ class WP_Optimize_Minify_Config {
 			'clean_header_one' => false,
 			'emoji_removal' => true,
 			'merge_google_fonts' => true,
+			'enable_display_swap' => true,
 			'remove_googlefonts' => false,
 			'gfonts_method' => 'inline', // inline, async, exclude
 			'fawesome_method' => 'inline', // inline, async, exclude
@@ -142,8 +141,8 @@ class WP_Optimize_Minify_Config {
 			'async_js' => '',
 			'disable_css_inline_merge' => true,
 			'ualist' => array('x11.*fox\/54', 'oid\s4.*xus.*ome\/62', 'x11.*ome\/62', 'oobot', 'ighth', 'tmetr', 'eadles', 'ingdo'),
-			'blacklist' => implode("\n", $blacklist),
-			'ignore_list' => implode("\n", $ignore_list),
+			'blacklist' => array(),
+			'ignore_list' => array(),
 			'exclude_js' => '',
 			'exclude_css' => '',
 			'edit_default_exclutions' => false,

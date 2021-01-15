@@ -251,7 +251,7 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 	 * @return boolean a bool to indicate if we should display the notice or not
 	 */
 	protected function is_wpo_premium_installed() {
-		if (WP_Optimize()->is_premium()) {
+		if (WP_Optimize::is_premium()) {
 			return false;
 		}
 

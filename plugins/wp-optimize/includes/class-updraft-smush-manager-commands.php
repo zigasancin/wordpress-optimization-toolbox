@@ -161,7 +161,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$ui_update['unsmushed_images'] = $this->task_manager->get_uncompressed_images();
 		$ui_update['admin_urls'] = $this->task_manager->get_admin_urls();
 		$ui_update['completed_task_count'] = $this->task_manager->options->get_option('completed_task_count', 0);
-		$ui_update['bytes_saved'] = wpo_format_filesize($this->task_manager->options->get_option('total_bytes_saved', 0));
+		$ui_update['bytes_saved'] = WP_Optimize()->format_size($this->task_manager->options->get_option('total_bytes_saved', 0));
 		$ui_update['percent_saved'] = number_format($this->task_manager->options->get_option('total_percent_saved', 1), 2).'%';
 		$ui_update['failed_task_count'] = $this->task_manager->get_failed_task_count();
 

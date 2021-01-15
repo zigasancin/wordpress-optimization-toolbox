@@ -125,10 +125,10 @@
 	<div class="wpo-fieldgroup">
 		<p class="actions">
 			<input
-				class="button button-primary purge_minify_cache"
+				class="button button-primary purge_minify_cache <?php echo $can_purge_the_cache ? '' : 'disabled'; ?>"
 				type="submit"
 				value="<?php esc_attr_e('Reset the minified files', 'wp-optimize'); ?>"
-				<?php echo WPO_MINIFY_PHP_VERSION_MET ? '' : 'disabled'; ?>
+				<?php echo WPO_MINIFY_PHP_VERSION_MET && $can_purge_the_cache ? '' : 'disabled'; ?>
 			 />
 			<img class="wpo_spinner" src="<?php echo esc_attr(admin_url('images/spinner-2x.gif')); ?>" alt="...">
 			<span class="save-done dashicons dashicons-yes display-none"></span>

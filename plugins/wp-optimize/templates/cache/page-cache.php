@@ -41,7 +41,7 @@
 <h3 class="purge-cache" <?php echo $display; ?>> <?php _e('Purge the cache', 'wp-optimize'); ?></h3>
 <div class="wpo-fieldgroup cache-options purge-cache" <?php echo $display; ?> >
 	<p class="wpo-button-wrap">
-		<input id="wp-optimize-purge-cache" class="button button-primary" type="submit" value="<?php _e('Purge cache', 'wp-optimize'); ?>">
+		<input id="wp-optimize-purge-cache" class="button button-primary <?php echo $can_purge_the_cache ? '' : 'disabled'; ?>" type="submit" value="<?php _e('Purge cache', 'wp-optimize'); ?>" <?php echo $can_purge_the_cache ? '' : 'disabled'; ?>>
 		<img class="wpo_spinner" src="<?php echo esc_attr(admin_url('images/spinner-2x.gif')); ?>" alt="...">
 		<span class="save-done dashicons dashicons-yes display-none"></span>
 	</p>

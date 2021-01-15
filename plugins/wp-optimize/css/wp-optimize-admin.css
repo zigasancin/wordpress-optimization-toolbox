@@ -1232,7 +1232,7 @@ p.wpo-take-a-backup {
 
 #wp-optimize-wrap .switch input:disabled + .slider,
 		#wp-optimize-wrap .switch input:disabled:checked + .slider {
-			background: #555d66;
+			background: transparentize(#555d66, 0.5);
 			border-color: #555d66;
 			opacity: 0.3;
 		}
@@ -1858,17 +1858,6 @@ body.rtl #wp-optimize-nav-page-menu {
 	.wpo-dashboard-pages-menu .postbox.wpo-dashboard-pages-menu__item p {
 				display: none;
 	}
-}
-
-/* Admin bar separator */
-
-#wpadminbar .quicklinks .menupop.hover ul li.separator .ab-item.ab-empty-item {
-    height: 2px;
-    line-height: 2px;
-    background: rgba(255, 255, 255, 0.0902);
-    margin: 5px 10px;
-    width: auto;
-    min-width: 0;
 }
 
 /* CSS for adverts */
@@ -2601,6 +2590,10 @@ textarea.cache-settings {
     font-weight: 600;
   }
 
+#wp-optimize-nav-tab-wpo_cache-advanced-contents label em, #wp-optimize-nav-tab-wpo_cache-preload-contents label em, #wp-optimize-nav-tab-wpo_cache-cache-contents label em {
+      font-weight: normal;
+    }
+
 .wpo-gzip-already-enabled span.dashicons.dashicons-yes,
 .wpo-enabled > span.dashicons.dashicons-yes {
   font-size: 40px;
@@ -2771,4 +2764,110 @@ body.wpo-modal-is-opened {
 
 .wpo-confirm .wpo-modal--content > h3 .dashicons.dashicons-warning {
 	color: #feb901;
+}
+
+@media (min-width: 780px) {
+
+	.power-tweaks--list {
+		display: -ms-flexbox;
+		display: flex;
+		-ms-flex-direction: row;
+		    flex-direction: row;
+		-ms-flex-wrap: wrap;
+		    flex-wrap: wrap;
+	}
+}
+
+.power-tweaks--list .wpo-power-tweak {
+		width: 100%;
+}
+
+@media (min-width: 780px) {
+
+	.power-tweaks--list .wpo-power-tweak {
+		width: calc(25% - 1em);
+		margin-right: 1em;
+	}
+}
+
+@media (min-width: 1080px) {
+
+	.power-tweaks--list .wpo-power-tweak {
+		width: calc(33.33333% - 1em);
+		margin-right: 1em;
+	}
+}
+
+.power-tweaks--list .wpo-power-tweak {
+	background: #f2f4f5;
+	border-radius: 1em;
+	padding: 1.5em;
+	margin-bottom: 1em;
+	box-sizing: border-box;
+}
+
+.power-tweaks--list .wpo-power-tweak h4 {
+			margin-top: 0;
+}
+
+.power-tweaks--list .wpo-power-tweak .description {
+			margin-bottom: 1em;
+}
+
+.power-tweaks--list .wpo-power-tweak .details {
+			padding: 1em;
+			background: #FFF;
+			box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+			margin-top: 1em;
+			margin-bottom: 1em;
+}
+
+.power-tweaks--list .wpo-power-tweak .actions {
+			margin-top: 1em;
+			margin-bottom: 1em;
+}
+
+.power-tweaks--list .wpo-power-tweak .last-run, .power-tweaks--list .wpo-power-tweak .last-updated {
+			margin-top: 1em;
+			font-size: 0.8em;
+			color: #a9a9a9;
+}
+
+.power-tweaks--list .wpo-power-tweak .tweak-is-running {
+			display: none;
+}
+
+.power-tweaks--list .wpo-power-tweak.running {
+	position: relative;
+}
+
+.power-tweaks--list .wpo-power-tweak.running .tweak-is-running {
+				display: -ms-flexbox;
+				display: flex;
+				-ms-flex-align: center;
+				    align-items: center;
+				-ms-flex-pack: center;
+				    justify-content: center;
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				background: rgb(242, 244, 245, 0.9);
+				z-index: 1;
+				border-radius: 1em;
+				font-size: 1.7em;
+}
+
+.power-tweaks--list .wpo-power-tweak.running .tweak-is-running .spinner {
+					visibility: visible;
+				}
+
+.power-tweaks--list a.show-faqs span.dashicons {
+		font-size: inherit;
+		height: auto;
+		width: auto;
+		line-height: inherit;
+		text-decoration: none;
+		margin-left: 4px;
 }

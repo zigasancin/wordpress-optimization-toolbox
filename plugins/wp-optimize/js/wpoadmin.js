@@ -1,4 +1,4 @@
-jQuery(document).ready(function ($) {
+jQuery(function ($) {
 	WP_Optimize = WP_Optimize();
 	if ('undefined' != typeof WP_Optimize_Cache) WP_Optimize_Cache = WP_Optimize_Cache();
 	if ('undefined' != typeof wp_optimize.minify) WP_Optimize_Minify = wp_optimize.minify.init();
@@ -47,6 +47,7 @@ var WP_Optimize = function () {
 	var queue = new Updraft_Queue();
 	var send_command = wp_optimize.send_command;
 	var optimization_force = false;
+	var optimization_logged_warnings = false;
 	var force_single_table_optimization = false;
 
 	/**
@@ -73,7 +74,7 @@ var WP_Optimize = function () {
 
 	enable_or_disable_schedule_options();
 
-	$('#enable-schedule').change(function () {
+	$('#enable-schedule').on('change', function () {
 		enable_or_disable_schedule_options();
 	});
 
@@ -237,19 +238,19 @@ var WP_Optimize = function () {
 		});
 	}
 	
-	$('#wp-optimize-disable-enable-trackbacks-enable').click(function () {
+	$('#wp-optimize-disable-enable-trackbacks-enable').on('click', function () {
 		enable_or_disable_feature('trackbacks', true);
 	});
 	
-	$('#wp-optimize-disable-enable-trackbacks-disable').click(function () {
+	$('#wp-optimize-disable-enable-trackbacks-disable').on('click', function () {
 		enable_or_disable_feature('trackbacks', false);
 	});
 	
-	$('#wp-optimize-disable-enable-comments-enable').click(function () {
+	$('#wp-optimize-disable-enable-comments-enable').on('click', function () {
 		enable_or_disable_feature('comments', true);
 	});
 	
-	$('#wp-optimize-disable-enable-comments-disable').click(function () {
+	$('#wp-optimize-disable-enable-comments-disable').on('click', function () {
 		enable_or_disable_feature('comments', false);
 	});
 
@@ -290,7 +291,7 @@ var WP_Optimize = function () {
 	}, 500);
 
 	// Tabs menu
-	$('.nav-tab-wrapper .nav-tab').click(function (e) {
+	$('.nav-tab-wrapper .nav-tab').on('click', function (e) {
 
 		e.preventDefault();
 
@@ -446,6 +447,8 @@ var WP_Optimize = function () {
 	 */
 	function process_done() {
 		send_command('optimizations_done', {}, function () {});
+		// Reset the warning flag
+		optimization_logged_warnings = false;
 	}
 	
 	/**
@@ -489,6 +492,38 @@ var WP_Optimize = function () {
 
 		$(document).trigger(['do_optimization_', id, '_start'].join(''));
 
+		if ('optimizetables' === id) {
+			// Display the table name being optimized
+			$('#optimization_info_' + id).html(wpoptimize.optimizing_table + ' ' + data.optimization_table);
+
+			// Set extra options for the request
+			var timeout = parseInt(wpoptimize.table_optimization_timeout) ? parseInt(wpoptimize.table_optimization_timeout) : 120000;
+			var request_options = {
+				timeout: timeout,
+				error: function(error, type) {
+
+					optimization_logged_warnings = true;
+					if ('timeout' === type) {
+						console.warn('The request to optimize the table ' + data.optimization_table + ' timed out after ' + (timeout / 1000) + ' seconds');
+					} else {
+						console.warn('There was an error when running the optimization "' + id + '".', type, error, data);
+					}
+					if (queue.is_empty()) {
+						$('#optimization_spinner_' + id).hide();
+						$('#optimization_checkbox_' + id).show();
+						$('.optimization_button_' + id).prop('disabled', false);
+						$('#optimization_info_' + id).html(wpoptimize.optimization_complete + ' ' + wpoptimize.with_warnings);
+					}
+
+					setTimeout(function () {
+						queue.unlock(); process_queue();
+					}, 500);
+				}
+			}
+		} else {
+			var request_options = {};
+		}
+
 		send_command('do_optimization', { optimization_id: id, data: data }, function (response) {
 
 			$('#optimization_spinner_' + id).hide();
@@ -525,7 +560,8 @@ var WP_Optimize = function () {
 						$('#optimization_spinner_' + id).hide();
 						$('#optimization_checkbox_' + id).show();
 						$('.optimization_button_' + id).prop('disabled', false);
-						$('#optimization_info_' + id).html(wpoptimize.optimization_complete);
+
+						$('#optimization_info_' + id).html(wpoptimize.optimization_complete + (optimization_logged_warnings ? (' ' + wpoptimize.with_warnings) : ''));
 					} else {
 						$('#optimization_checkbox_' + id).hide();
 						$('#optimization_spinner_' + id).show();
@@ -546,8 +582,8 @@ var WP_Optimize = function () {
 			}
 			setTimeout(function () {
 				queue.unlock(); process_queue();
-			}, 10);
-		});
+			}, 500);
+		}, true, request_options);
 	}
 	
 	/**
@@ -971,7 +1007,7 @@ var WP_Optimize = function () {
 		update_single_table_optimization_buttons(force_single_table_optimization);
 	}
 
-	$('#wp_optimize_table_list_refresh').click(function (e) {
+	$('#wp_optimize_table_list_refresh').on('click', function (e) {
 		
 		e.preventDefault();
 		var shade = $(this).closest('.wpo-tab-postbox').find('.wpo_shade');
@@ -1005,9 +1041,15 @@ var WP_Optimize = function () {
 			});
 		}
 
+		if ($('#purge_cache_permissions').length) {
+			if (!$('#purge_cache_permissions').val()) {
+				form_data += '&purge_cache_permissions[]';
+			}
+		}
+
 		send_command('save_settings', form_data, function (resp) {
 
-			form.closest('form').find('.save-done').show().delay(5000).fadeOut();
+			spinner.closest('div').find('.save-done').show().delay(5000).fadeOut();
 
 			if (resp && resp.hasOwnProperty('save_results') && resp.save_results && resp.save_results.hasOwnProperty('errors')) {
 				for (var i = 0, len = resp.save_results.errors.length; i < len; i++) {
@@ -1328,13 +1370,14 @@ var WP_Optimize = function () {
 				message = (resp && resp.result && resp.result.output) ? resp.result.output.join('<br>') : '...';
 
 			// trigger event about optimization get info in process.
-			$(document).trigger(['optimization_get_info_', optimization_id].join(''), message);
+			$(document).trigger(['optimization_get_info_', optimization_id].join(''), [message, meta]);
 			// update status message in optimizations list.
 			optimization_info_container.html(message);
 
 			if (!meta.finished) {
 				setTimeout(function() {
-					optimization_get_info(optimization_info_container, optimization_id, meta)
+					var xhr = optimization_get_info(optimization_info_container, optimization_id, meta);
+					$(document).trigger(['optimization_get_info_xhr_', optimization_id].join(''), [xhr, meta]);
 				}, 1);
 			} else {
 				// trigger event about optimization get info action done.
@@ -1348,7 +1391,7 @@ var WP_Optimize = function () {
 	 *
 	 * @return void
 	 */
-	$(document).ready(function() {
+	jQuery(function() {
 		$('.wp-optimize-optimization-info-ajax').each(function () {
 			var optimization_info = $(this),
 				optimization_info_container = optimization_info.parent(),
@@ -1669,7 +1712,7 @@ var WP_Optimize = function () {
 	}
 }; // END function WP_Optimize()
 
-jQuery(document).ready(function ($) {
+jQuery(function ($) {
 	/**
 	 * Show additional options section if optimization enabled
 	 *
@@ -1887,7 +1930,7 @@ jQuery(document).ready(function ($) {
 		for (i in options) {
 			if (!options.hasOwnProperty(i)) continue;
 
-			if ($.isArray(options[i])) {
+			if (Array.isArray(options[i])) {
 				placeholder = $.trim(options[i][0]);
 				validate = $.trim(options[i][1]);
 			} else {

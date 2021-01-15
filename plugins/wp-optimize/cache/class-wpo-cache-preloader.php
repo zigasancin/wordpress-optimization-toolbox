@@ -685,6 +685,7 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 	 * @return array
 	 */
 	public function get_post_urls() {
+		global $post;
 
 		$offset = 0;
 		$posts_per_page = 1000;
@@ -707,7 +708,22 @@ class WP_Optimize_Page_Cache_Preloader extends Updraft_Task_Manager_1_2 {
 
 			while ($query->have_posts()) {
 				$query->the_post();
-				$urls[] = get_permalink();
+				$permalink = get_permalink();
+				$urls[] = $permalink;
+
+				// check page separators in the post content
+				preg_match_all('/\<\!--nextpage--\>/', $post->post_content, $matches);
+				// if there any separators add urls for each page
+				if (count($matches[0])) {
+					$prefix = strpos($permalink, '?') ? '&page=' : '';
+					for ($page = 0; $page < count($matches[0]); $page++) {
+						if ('' != $prefix) {
+							$urls[] = $permalink . $prefix . ($page+2);
+						} else {
+							$urls[] = trailingslashit($permalink) . ($page+2);
+						}
+					}
+				}
 			}
 
 			$offset += $posts_loaded;

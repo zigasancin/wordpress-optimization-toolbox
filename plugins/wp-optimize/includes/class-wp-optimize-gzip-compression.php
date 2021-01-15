@@ -155,6 +155,15 @@ class WP_Optimize_Gzip_Compression {
 	}
 
 	/**
+	 * Check if gzip compression option is set to true then add section with gzip settings into .htaccess (used when plugin being activated).
+	 */
+	public function restore() {
+		$enabled = WP_Optimize()->get_options()->get_option('is_gzip_compression_enabled');
+
+		if ($enabled && $this->_htaccess->is_writable()) $this->enable();
+	}
+
+	/**
 	 * Handler for Gzip compression enable command, called from WP_Optimize_Commands.
 	 *
 	 * @param array $params - ['enable' => true|false]

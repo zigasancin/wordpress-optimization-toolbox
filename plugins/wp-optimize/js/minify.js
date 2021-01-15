@@ -29,7 +29,7 @@
 		/**
 		 * The standard handler for clearing the cache. Safe to use
 		 */
-		$('.purge_minify_cache').click(function() {
+		$('.purge_minify_cache').on('click', function() {
 			$.blockUI();
 			send_command('purge_minify_cache', null, function(response) {
 				minify.updateFilesLists(response.files);
@@ -43,7 +43,7 @@
 		 * Removes the entire cache dir.
 		 * Use with caution, as cached html may still reference those files.
 		 */
-		$('.purge_all_minify_cache').click(function() {
+		$('.purge_all_minify_cache').on('click', function() {
 			$.blockUI();
 			send_command('purge_all_minify_cache', null, function(response) {
 				minify.updateFilesLists(response.files);
@@ -56,7 +56,7 @@
 		/**
 		 * Forces minifiy to create a new cache, safe to use
 		 */
-		$('.minify_increment_cache').click(function() {
+		$('.minify_increment_cache').on('click', function() {
 			$.blockUI();
 			send_command('minify_increment_cache', null, function(response) {
 				if (response.hasOwnProperty('files')) {
@@ -131,7 +131,7 @@
 		});
 
 		// Save settings
-		$('.wp-optimize-save-minify-settings').click(function(e) {
+		$('.wp-optimize-save-minify-settings').on('click', function(e) {
 			e.preventDefault();
 			var btn = $(this),
 				form = btn.closest('form'),
@@ -142,13 +142,22 @@
 			$.blockUI();
 			
 			var data = $(form).serializeArray().reduce(function(collection, item) {
+				// Ignore items containing [], which we expect to be returned as arrays
+				if (item.name.includes('[]')) return collection;
 				collection[item.name] = item.value;
 				return collection;
 			}, {});
-			
+
 			$(form).find('input[type="checkbox"]').each(function(i) {
-				var name = $(this).attr("name");
-				data[name] = $(this).is(':checked') ? 'true' : 'false';
+				var name = $(this).prop("name");
+				if (name.includes('[]')) {
+					if (!$(this).is(':checked')) return;
+					var newName = name.replace('[]', '');
+					if (!data[newName]) data[newName] = [];
+					data[newName].push($(this).val());
+				} else {
+					data[name] = $(this).is(':checked') ? 'true' : 'false';
+				}
 			});
 
 			send_command('save_minify_settings', data, function(response) {

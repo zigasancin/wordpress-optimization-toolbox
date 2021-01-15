@@ -336,6 +336,15 @@ abstract class WP_Optimization {
 	public function register_meta($key, $value) {
 		$this->meta[$key] = $value;
 	}
+
+	/**
+	 * Get meta-data added to the registered output.
+	 *
+	 * @return array
+	 */
+	public function get_meta() {
+		return $this->meta;
+	}
 	
 	public function init() {
 	

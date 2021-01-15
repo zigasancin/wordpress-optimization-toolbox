@@ -11,7 +11,7 @@ var WP_Optimize_Cache = function () {
 	/**
 	 * Handle purge cache btn.
 	 */
-	purge_cache_btn.click(function() {
+	purge_cache_btn.on('click', function() {
 		var btn = $(this),
 			spinner = btn.next(),
 			success_icon = spinner.next();
@@ -41,7 +41,8 @@ var WP_Optimize_Cache = function () {
 	/**
 	 * Trigger click Browser cache button if user push Enter and form start submitting.
 	 */
-	browser_cache_enable_btn.closest('form').submit(
+	browser_cache_enable_btn.closest('form').on(
+		'submit',
 		function(e) {
 			e.preventDefault();
 			browser_cache_enable_btn.trigger('click');
@@ -227,7 +228,7 @@ var WP_Optimize_Cache = function () {
 	/**
 	 * Handle click on the save settings button for cache.
 	 */
-	$('#wp-optimize-save-cache-settings, #wp-optimize-save-cache-advanced-rules, #wp-optimize-save-cache-preload-settings').click(function() {
+	$('#wp-optimize-save-cache-settings, #wp-optimize-save-cache-advanced-rules, #wp-optimize-save-cache-preload-settings').on('click', function() {
 		var btn = $(this),
 			spinner = btn.next(),
 			success_icon = spinner.next();
@@ -336,7 +337,7 @@ var WP_Optimize_Cache = function () {
 		enable_schedule_preloading = $('#enable_schedule_preload'),
 		preloader_schedule_type_select = $('#preload_schedule_type');
 
-	enable_schedule_preloading.change(function() {
+	enable_schedule_preloading.on('change', function() {
 		if (enable_schedule_preloading.prop('checked')) {
 			preloader_schedule_type_select.prop('disabled', false);
 		} else {

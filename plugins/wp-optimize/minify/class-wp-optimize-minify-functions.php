@@ -870,6 +870,9 @@ class WP_Optimize_Minify_Functions {
 				// Divi builder
 				'et_fb',
 				'PageSpeed',
+				// Brizy Editor
+				'brizy-edit',
+				'brizy-edit-iframe',
 			);
 			return (bool) count(array_intersect($excluded_params, $get_params));
 		}
@@ -881,20 +884,100 @@ class WP_Optimize_Minify_Functions {
 	}
 
 	/**
+	 * Get the default files which are ignored / excluded from processing
+	 *
+	 * @return array
+	 */
+	public static function get_default_ignore() {
+		/**
+		 * Filters the default exclusions
+		 *
+		 * @param array The exclusions
+		 * @return array
+		 */
+		return apply_filters('wp-optimize-minify-default-exclusions', array(
+			'/genericons.css',
+			'/Avada/assets/js/main.min.js',
+			'/woocommerce-product-search/js/product-search.js',
+			'/includes/builder/scripts/frontend-builder-scripts.js',
+			'/assets/js/jquery.themepunch.tools.min.js',
+			'/js/TweenMax.min.js',
+			'/jupiter/assets/js/min/full-scripts',
+			'/wp-content/themes/Divi/core/admin/js/react-dom.production.min.js',
+			'/LayerSlider/static/layerslider/js/greensock.js',
+			'/themes/kalium/assets/js/main.min.js',
+			'/wp-includes/js/mediaelement/wp-mediaelement.min.js',
+			'elementor-admin-bar',
+			'pdfjs-dist',
+			'wordpress-popular-posts',
+		));
+	}
+
+	/**
 	 * Know files that should always be ignored
 	 *
 	 * @param array $ignore
 	 * @return array
 	 */
-	public static function default_ignore($ignore) {
+	public static function compile_ignore_list($ignore) {
+		$ignore_list = self::get_default_ignore();
+		$user_excluded_ignore_items = wp_optimize_minify_config()->get('ignore_list');
+		if (is_array($user_excluded_ignore_items)) $ignore_list = array_diff($ignore_list, $user_excluded_ignore_items);
 		if (is_array($ignore)) {
-			$wpo_minify_options = wp_optimize_minify_config()->get();
-			$ignore_list = array_map('trim', explode("\n", trim($wpo_minify_options['ignore_list'])));
 			$master_ignore = array_merge(array_map('strtolower', $ignore), array_map('strtolower', $ignore_list));
 			return array_unique($master_ignore);
 		} else {
-			return $ignore;
+			return $ignore_list;
 		}
+	}
+
+	/**
+	 * Get the files excluded for IE compatibility
+	 *
+	 * @return array
+	 */
+	public static function get_default_ie_blacklist() {
+		/**
+		 * Filters the default IE specific / blacklisted items
+		 *
+		 * @param array The blacklist
+		 * @return array
+		 */
+		return apply_filters('wp-optimize-minify-blacklist', array(
+			'/html5shiv.js',
+			'/html5shiv-printshiv.min.js',
+			'/excanvas.js',
+			'/avada-ie9.js',
+			'/respond.js',
+			'/respond.min.js',
+			'/selectivizr.js',
+			'/Avada/assets/css/ie.css',
+			'/html5.js',
+			'/IE9.js',
+			'/fusion-ie9.js',
+			'/vc_lte_ie9.min.css',
+			'/old-ie.css',
+			'/ie.css',
+			'/vc-ie8.min.css',
+			'/mailchimp-for-wp/assets/js/third-party/placeholders.min.js',
+			'/assets/js/plugins/wp-enqueue/min/webfontloader.js',
+			'/a.optnmstr.com/app/js/api.min.js',
+			'/pixelyoursite/js/public.js',
+			'/assets/js/wcdrip-drip.js',
+			'/instantpage.js',
+		));
+	}
+
+	/**
+	 * Get the files excluded for IE compatibility
+	 *
+	 * @return array
+	 */
+	public static function get_ie_blacklist() {
+		$user_excluded_blacklist_items = wp_optimize_minify_config()->get('blacklist');
+		$default_blacklist = self::get_default_ie_blacklist();
+		if (!is_array($user_excluded_blacklist_items)) return $default_blacklist;
+		return array_diff($default_blacklist, $user_excluded_blacklist_items);
 	}
 
 	/**
@@ -903,11 +986,9 @@ class WP_Optimize_Minify_Functions {
 	 * @param string $url
 	 * @return boolean
 	 */
-	public static function ie_blacklist($url) {
-		$wpo_minify_options = wp_optimize_minify_config()->get();
-
+	public static function is_url_in_ie_blacklist($url) {
 		// from the database
-		$blacklist = array_map('trim', explode("\n", trim($wpo_minify_options['blacklist'])));
+		$blacklist = self::get_ie_blacklist();
 		// must have
 		$blacklist[] = '/wpo_min/cache/';
 		
@@ -957,33 +1038,6 @@ class WP_Optimize_Minify_Functions {
 		}
 		
 		return false;
-	}
-	
-	/**
-	 * Turn a byte count into a human-readable text output
-	 *
-	 * @param integer $byte_count - byte count
-	 *
-	 * @return string
-	 */
-	public static function format_filesize($byte_count) {
-		if (is_numeric($byte_count)) {
-			if ($byte_count / 1099511627776 > 1) {
-				return number_format_i18n($byte_count/1099511627776, 1).' '.__('TiB', 'wp-optimize');
-			} elseif ($byte_count / 1073741824 > 1) {
-				return number_format_i18n($byte_count/1073741824, 1).' '.__('GiB', 'wp-optimize');
-			} elseif ($byte_count / 1048576 > 1) {
-				return number_format_i18n($byte_count/1048576, 1).' '.__('MiB', 'wp-optimize');
-			} elseif ($byte_count / 1024 > 1) {
-				return number_format_i18n($byte_count/1024, 1).' '.__('KiB', 'wp-optimize');
-			} elseif ($byte_count > 1) {
-				return number_format_i18n($byte_count, 0).' '.__('bytes', 'wp-optimize');
-			} else {
-				return __('N/A', 'wp-optimize');
-			}
-		} else {
-			return __('N/A', 'wp-optimize');
-		}
 	}
 
 	/**

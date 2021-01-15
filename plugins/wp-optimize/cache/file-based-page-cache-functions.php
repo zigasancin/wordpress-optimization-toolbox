@@ -76,6 +76,12 @@ function wpo_cache($buffer, $flags) {
 		$no_cache_because[] = __('This is a REST API request (identified by REST_REQUEST constant)', 'wp-optimize');
 	}
 
+	// Don't cache with fatal error pages.
+	$last_error = error_get_last();
+	if (is_array($last_error) && E_ERROR == $last_error['type']) {
+		$no_cache_because[] = __('This page has a fatal error', 'wp-optimize');
+	}
+
 	if (empty($no_cache_because)) {
 
 		$buffer = apply_filters('wpo_pre_cache_buffer', $buffer, $flags);
@@ -222,6 +228,11 @@ function wpo_restricted_cache_page_type($restricted) {
 	// Don't cache htacesss. Remember to properly escape any output to prevent injection.
 	if (strpos($_SERVER['REQUEST_URI'], '.htaccess') !== false) {
 		$restricted = 'The file path is unsuitable for caching ('.$_SERVER['REQUEST_URI'].')';
+	}
+
+	// Don't cache feeds.
+	if (function_exists('is_feed') && is_feed()) {
+		$restricted = __('We don\'t cache RSS feeds', 'wp-optimize');
 	}
 
 	return $restricted;

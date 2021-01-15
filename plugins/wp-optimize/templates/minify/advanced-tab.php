@@ -119,33 +119,42 @@
 				<label for="ignore_list">
 					<?php _e('List of files that can\'t or shouldn\'t be minified or merged.', 'wp-optimize'); ?>
 					<?php _e('Do not edit this if you are not sure what it is.', 'wp-optimize'); ?>
+					<br><?php _e('Tick the checkbox to merge / minify the corresponding file anyways.', 'wp-optimize'); ?>
 					<span tabindex="0" data-tooltip="<?php esc_attr_e('Files that have been consistently reported by other users to cause trouble when merged', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 				</label>
-				<textarea
-					name="ignore_list"
-					rows="7"
-					cols="50"
-					id="ignore_list"
-					class="large-text code"
-					placeholder="<?php esc_attr_e('e.g.: /wp-includes/js/jquery/jquery.js', 'wp-optimize'); ?>"
-				><?php echo $wpo_minify_options['ignore_list']; ?></textarea>
+				<?php
+					$user_excluded_ignorelist_items = is_array($wpo_minify_options['ignore_list']) ? $wpo_minify_options['ignore_list'] : array();
+					if (empty($default_ignore)) {
+						echo '<p>'.__('Refresh the page to see the list', 'wp-optimize').'</p>';
+					} else {
+						foreach ($default_ignore as $ignore_item) {
+				?>
+					<label class="ignore-list-item"><input type="checkbox" name="ignore_list[]" value="<?php echo esc_attr($ignore_item); ?>"<?php checked(in_array($ignore_item, $user_excluded_ignorelist_items)); ?>><span class="ignore-item"><?php echo $ignore_item; ?></span></label>
+				<?php
+						}
+					}
+				?>
 			</fieldset>
 
 			<h3><?php _e('IE incompatible files', 'wp-optimize'); ?></h3>
 			<fieldset>
 				<label for="blacklist">
 					<?php _e('List of excluded files used for IE compatibility.', 'wp-optimize'); ?>
-					<?php _e('Do not edit this if you\'re not sure what it is.', 'wp-optimize'); ?>
-					<span tabindex="0" data-tooltip="<?php esc_attr_e('Any CSS files that should always be ignored.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
+					<?php _e('Do not edit this if you are not sure what it is.', 'wp-optimize'); ?>
+					<br><?php _e('Tick the checkbox to merge / minify the corresponding file anyways.', 'wp-optimize'); ?>
 				</label>
-				<textarea
-					name="blacklist"
-					rows="7"
-					cols="50"
-					id="blacklist"
-					class="large-text code"
-					placeholder="<?php esc_attr_e('e.g.: /bootstrap.css', 'wp-optimize'); ?>"
-				><?php echo $wpo_minify_options['blacklist']; ?></textarea>
+				<?php
+					$user_excluded_blacklist_items = is_array($wpo_minify_options['blacklist']) ? $wpo_minify_options['blacklist'] : array();
+					if (empty($default_ie_blacklist)) {
+						echo '<p>'.__('Refresh the page to see the list', 'wp-optimize').'</p>';
+					} else {
+						foreach ($default_ie_blacklist as $blacklist_item) {
+				?>
+					<label class="black-list-item"><input type="checkbox" name="blacklist[]" value="<?php echo esc_attr($blacklist_item); ?>"<?php checked(in_array($blacklist_item, $user_excluded_blacklist_items)); ?>><span class="ignore-item"><?php echo $blacklist_item; ?></span></label>
+				<?php
+						}
+					}
+				?>
 			</fieldset>
 		</div>
 	</div>
@@ -325,5 +334,6 @@
 			<img class="wpo_spinner" src="<?php echo esc_attr(admin_url('images/spinner-2x.gif')); ?>" alt="...">
 			<span class="save-done dashicons dashicons-yes display-none"></span>
 		</p>
+		<input type="hidden" name="minify_advanced_tab" value="1">
 	</form>
 </div>

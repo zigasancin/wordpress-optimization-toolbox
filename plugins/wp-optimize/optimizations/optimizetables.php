@@ -101,7 +101,7 @@ class WP_Optimization_optimizetables extends WP_Optimization {
 				$this->optimizer->update_total_cleaned(strval($table_obj->Data_free));
 			}
 
-			$this->register_output(__('Optimizing Table:', 'wp-optimize') . ' ' . $table_obj->Name);
+			$this->register_output(__('Optimized table:', 'wp-optimize') . ' ' . $table_obj->Name);
 		}
 	}
 

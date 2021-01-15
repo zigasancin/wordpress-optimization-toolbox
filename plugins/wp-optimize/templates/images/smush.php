@@ -92,7 +92,7 @@
 				<button type="button" id="wpo_smush_mark_all_as_uncompressed_btn" class="wpo_primary_small button"><?php _e('Mark all images as uncompressed', 'wp-optimize'); ?></button>
 				<br>
 				<br>
-				<button type="button" id="wpo_smush_restore_all_compressed_images_btn" class="wpo_primary_small button"><?php _e('Restore all compressed images', 'wp-optimize'); ?></button> <span tabindex="0" data-tooltip="<?php _e('Only the original image will be restored. In order to restore the other sizes, you should use a plugin such as "Regenerate Thumbnails".', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
+				<button type="button" id="wpo_smush_restore_all_compressed_images_btn" class="wpo_primary_small button"><?php _e('Restore all compressed images', 'wp-optimize'); ?></button> <span tabindex="0" data-tooltip="<?php esc_attr_e('Only the original image will be restored. In order to restore the other sizes, you should use a plugin such as "Regenerate Thumbnails".', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 			</div>
 		</div>
 		<div class="save-options">

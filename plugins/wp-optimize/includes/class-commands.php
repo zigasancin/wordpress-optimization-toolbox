@@ -495,4 +495,46 @@ class WP_Optimize_Commands {
 
 		return $results;
 	}
+
+	/**
+	 * Power tweak handling
+	 *
+	 * @param array $params
+	 * @return mixed
+	 */
+	public function power_tweak($params) {
+		global $wp_optimize_premium;
+		if (!is_a($wp_optimize_premium, 'WP_Optimize_Premium') || !property_exists($wp_optimize_premium, 'power_tweaks') || !isset($params['sub_action'])) return array(
+			'errors' => array(__('No such command found', 'wp-optimize')),
+		);
+		
+		$action = $params['sub_action'];
+		$data = $params['data'] ? $params['data'] : array();
+		if (!isset($data['tweak'])) return array(
+			'errors' => array(__('No tweak provided', 'wp-optimize'))
+		);
+
+		$tweak = sanitize_title($data['tweak']);
+		$pt = $wp_optimize_premium->power_tweaks;
+		switch($action) {
+			case 'activate':
+				$result = $pt->activate($tweak);
+				break;
+			case 'deactivate':
+				$result = $pt->deactivate($tweak);
+				break;
+			case 'run':
+				$result = $pt->run($tweak);
+				break;
+		}
+		if ($result && !is_wp_error($result)) {
+			return is_array($result) ? array_merge(array('success' => true), $result) : array('success' => true, 'message' => $result);
+		} else {
+			$error_message = is_wp_error($result) ? $result->get_error_message() : sprintf(__('The command %s failed', 'wp-optimize'), $action);
+			return array(
+				'success' => false,
+				'errors' => array($error_message)
+			);
+		}
+	}
 }

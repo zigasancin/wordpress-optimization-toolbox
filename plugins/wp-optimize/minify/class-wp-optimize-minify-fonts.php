@@ -86,12 +86,13 @@ class WP_Optimize_Minify_Fonts {
 			if (count($subsets) > 0) {
 				$merge.= '&subset='.implode(',', array_unique($subsets));
 			}
+			$config = wp_optimize_minify_config();
 			/**
 			 * Filters wether to add display=swap to Google fonts urls
 			 *
 			 * @param boolean $display - Default to true
 			 */
-			if (apply_filters('wpo_minify_gfont_display_swap', true)) {
+			if (apply_filters('wpo_minify_gfont_display_swap', $config->get('enable_display_swap'))) {
 				/**
 				 * Filters the value of the display parameter.
 				 *

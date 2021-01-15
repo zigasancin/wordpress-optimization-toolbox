@@ -24,7 +24,7 @@ wp_optimize.send_command = function (action, data, callback, json_parse, options
 	var ajax_data = {
 		action: 'wp_optimize_ajax',
 		subaction: action,
-		nonce: wp_optimize_ajax_nonce,
+		nonce: wp_optimize_send_command_data.nonce,
 		data: data
 	};
 
@@ -60,6 +60,7 @@ wp_optimize.send_command = function (action, data, callback, json_parse, options
 	// Eventually merge options
 	if ('object' === typeof options) {
 		if (options.hasOwnProperty('timeout')) { args.timeout = options.timeout; }
+		if (options.hasOwnProperty('error') && 'function' === typeof options.error) { args.error = options.error; }
 	}
 
 	return jQuery.ajax(ajaxurl, args);

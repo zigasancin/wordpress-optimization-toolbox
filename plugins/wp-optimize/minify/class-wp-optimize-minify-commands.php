@@ -69,6 +69,8 @@ class WP_Optimize_Minify_Commands {
 	 */
 	public function purge_minify_cache() {
 		if (!WPO_MINIFY_PHP_VERSION_MET) return array('error' => __('WP-Optimize Minify requires a higher PHP version', 'wp-optimize'));
+		if (!WP_Optimize()->can_purge_the_cache()) return array('error' => __('You do not have permission to purge the cache', 'wp-optimize'));
+
 		// deletes temp files and old caches incase CRON isn't working
 		WP_Optimize_Minify_Cache_Functions::cache_increment();
 		$state = WP_Optimize_Minify_Cache_Functions::purge_temp_files();
@@ -110,6 +112,12 @@ class WP_Optimize_Minify_Commands {
 			} else {
 				$new_data[$key] = $value;
 			}
+		}
+
+		if (isset($data['minify_advanced_tab'])) {
+			// Make sure that empty settings are still saved
+			if (!isset($new_data['ignore_list'])) $new_data['ignore_list'] = array();
+			if (!isset($new_data['blacklist'])) $new_data['blacklist'] = array();
 		}
 
 		if (!class_exists('WP_Optimize_Minify_Config')) return array(

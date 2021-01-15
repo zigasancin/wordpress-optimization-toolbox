@@ -33,7 +33,7 @@
 
 	$scheduled_optimizations_enabled = false;
 
-	if ($wp_optimize->is_premium()) {
+	if (WP_Optimize::is_premium()) {
 		$scheduled_optimizations = WP_Optimize_Premium()->get_scheduled_optimizations();
 
 		if (!empty($scheduled_optimizations)) {
