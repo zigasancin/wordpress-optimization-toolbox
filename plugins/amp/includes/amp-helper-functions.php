@@ -7,6 +7,7 @@
 
 use AmpProject\AmpWP\Admin\ReaderThemes;
 use AmpProject\AmpWP\AmpWpPluginFactory;
+use AmpProject\AmpWP\Exception\InvalidService;
 use AmpProject\AmpWP\Icon;
 use AmpProject\AmpWP\Option;
 use AmpProject\AmpWP\QueryVar;
@@ -324,42 +325,35 @@ function amp_correct_query_when_is_front_page( WP_Query $query ) {
  *
  * Themes can register support for this with `add_theme_support( AMP_Theme_Support::SLUG )`:
  *
- *      add_theme_support( AMP_Theme_Support::SLUG );
+ * ```php
+ * add_theme_support( AMP_Theme_Support::SLUG );
+ * ```
  *
  * This will serve templates in AMP-first, allowing you to use AMP components in your theme templates.
  * If you want to make available in transitional mode, where templates are served in AMP or non-AMP documents, do:
  *
- *      add_theme_support( AMP_Theme_Support::SLUG, array(
- *          'paired' => true,
- *      ) );
+ * ```php
+ * add_theme_support( AMP_Theme_Support::SLUG, array(
+ *     'paired' => true,
+ * ) );
+ * ```
  *
- * Transitional mode is also implied if you define a template_dir:
+ * Transitional mode is also implied if you define a `template_dir`:
  *
- *      add_theme_support( AMP_Theme_Support::SLUG, array(
- *          'template_dir' => 'amp',
- *      ) );
+ * ```php
+ * add_theme_support( AMP_Theme_Support::SLUG, array(
+ *     'template_dir' => 'amp',
+ * ) );
+ * ```
  *
  * If you want to have AMP-specific templates in addition to serving AMP-first, do:
  *
- *      add_theme_support( AMP_Theme_Support::SLUG, array(
- *          'paired'       => false,
- *          'template_dir' => 'amp',
- *      ) );
- *
- * If you want to force AMP to always be served on a given template, you can use the templates_supported arg,
- * for example to always serve the Category template in AMP:
- *
- *      add_theme_support( AMP_Theme_Support::SLUG, array(
- *          'templates_supported' => array(
- *              'is_category' => true,
- *          ),
- *      ) );
- *
- * Or if you want to force AMP to be used on all templates:
- *
- *      add_theme_support( AMP_Theme_Support::SLUG, array(
- *          'templates_supported' => 'all',
- *      ) );
+ * ```php
+ * add_theme_support( AMP_Theme_Support::SLUG, array(
+ *     'paired'       => false,
+ *     'template_dir' => 'amp',
+ * ) );
+ * ```
  *
  * @see AMP_Theme_Support::read_theme_support()
  * @return boolean Whether this is in AMP 'canonical' mode, that is whether it is AMP-first and there is not a separate (paired) AMP URL.
@@ -417,9 +411,16 @@ function amp_is_available() {
 	$warn = static function () {
 		static $already_warned_sources = [];
 
-		$likely_culprit_detector = Services::get( 'dev_tools.likely_culprit_detector' );
+		try {
+			$likely_culprit_detector = Services::get( 'dev_tools.likely_culprit_detector' );
+			$closest_source          = $likely_culprit_detector->analyze_backtrace();
+		} catch ( InvalidService $e ) {
+			$closest_source = [
+				'type' => 'exception',
+				'name' => 'invalid_service',
+			];
+		}
 
-		$closest_source            = $likely_culprit_detector->analyze_backtrace();
 		$closest_source_identifier = $closest_source['type'] . ':' . $closest_source['name'];
 		if ( in_array( $closest_source_identifier, $already_warned_sources, true ) ) {
 			return;
@@ -433,10 +434,20 @@ function amp_is_available() {
 			'`is_amp_endpoint()`'
 		);
 
+		$current_hook = current_action();
+		if ( $current_hook ) {
+			/* translators: placeholder is the current hook */
+			$message .= ' ' . sprintf(
+				'WordPress is currently doing the %s hook.',
+				'`' . $current_hook . '`'
+			);
+		} else {
+			$message .= ' ' . __( 'WordPress is not currently doing any hook.', 'amp' );
+		}
+
 		$message .= ' ' . sprintf(
-			/* translators: 1: the current hook, 2: the wp action, 4: the WP_Query class, 4: the amp_skip_post() function */
-			__( 'WordPress is currently doing the %1$s hook. Calling this function before the %2$s action means it will not have access to %3$s and the queried object to determine if it is an AMP response, thus neither the %4$s filter nor the AMP enabled toggle will be considered.', 'amp' ),
-			'`' . current_action() . '`',
+			/* translators: 1: the wp action, 2: the WP_Query class, 3: the amp_skip_post() function */
+			__( 'Calling this function before the %1$s action means it will not have access to %2$s and the queried object to determine if it is an AMP response, thus neither the %3$s filter nor the AMP enabled toggle will be considered.', 'amp' ),
 			'`wp`',
 			'`WP_Query`',
 			'`amp_skip_post()`'
@@ -457,6 +468,9 @@ function amp_is_available() {
 				case 'theme':
 					/* translators: placeholder is the slug of the theme */
 					$translated_string = __( 'It appears the theme with slug %s is responsible; please contact the author.', 'amp' );
+					break;
+				case 'exception':
+					$translated_string = __( 'The function was called too early (before the plugins_loaded action) to determine the plugin source.', 'amp' );
 					break;
 			}
 
@@ -1429,7 +1443,7 @@ function amp_get_content_embed_handlers( $post = null ) {
 /**
  * Determine whether AMP dev mode is enabled.
  *
- * When enabled, the <html> element will get the data-ampdevmode attribute and the plugin will add the same attribute
+ * When enabled, the `<html>` element will get the data-ampdevmode attribute and the plugin will add the same attribute
  * to elements associated with the admin bar and other elements that are provided by the `amp_dev_mode_element_xpaths`
  * filter.
  *
@@ -1447,7 +1461,7 @@ function amp_is_dev_mode() {
 	 * queries for the expressions returned by the 'amp_dev_mode_element_xpaths' filter.
 	 *
 	 * @since 1.3
-	 * @param bool Whether AMP dev mode is enabled.
+	 * @param bool $is_dev_mode_enabled Whether AMP dev mode is enabled.
 	 */
 	return apply_filters(
 		'amp_dev_mode_enabled',
