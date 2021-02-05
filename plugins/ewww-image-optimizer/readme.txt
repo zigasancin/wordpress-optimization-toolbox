@@ -5,7 +5,7 @@ Tags: optimize, image, convert, webp, resize, compress, lazy load, optimization,
 Requires at least: 5.3
 Tested up to: 5.6
 Requires PHP: 5.6
-Stable tag: 6.0.0
+Stable tag: 6.0.1
 License: GPLv3
 
 Smaller Images, Faster Sites, Happier Visitors. Comprehensive image optimization that doesn't require a degree in rocket science.
@@ -131,6 +131,14 @@ That's not a question, but since I made it up, I'll answer it. See this resource
 
 * Feature requests can be viewed and submitted on our [feedback portal](https://feedback.ewww.io)
 * If you would like to help translate this plugin in your language, [join the team](https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/)
+
+= 6.0.1 =
+* changed: more reliable Cloudflare detection for WebP delivery methods
+* fixed: lazy load for external CSS breaking div elements in JS/JSON
+* fixed: call to undefined function from Imsanity
+* fixed: database upgrade check triggers error on MySQL 8.0.17+
+* fixed: delete originals tool is slow
+* fixed: wpdb error when attempting to run migration routine for fresh installs
 
 = 6.0.0 =
 * added: tool to delete originals from WP 5.3+ auto-scaling behavior (Tools menu)

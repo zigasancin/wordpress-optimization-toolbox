@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '600' );
+define( 'EWWW_IMAGE_OPTIMIZER_VERSION', '601' );
 
 // Initialize a couple globals.
 $eio_debug  = '';
@@ -206,9 +206,6 @@ add_action( 'shutdown', 'ewww_image_optimizer_debug_log' );
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'classes/class-ewwwio-cli.php' );
-}
-if ( 'done' !== get_option( 'ewww_image_optimizer_relative_migration_status' ) ) {
-	require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'classes/class-ewwwio-relative-migration.php' );
 }
 
 /**
@@ -963,6 +960,9 @@ function ewww_image_optimizer_admin_init() {
 	ewww_image_optimizer_cloud_init();
 	ewww_image_optimizer_upgrade();
 
+	if ( 'done' !== get_option( 'ewww_image_optimizer_relative_migration_status' ) ) {
+		require_once( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'classes/class-ewwwio-relative-migration.php' );
+	}
 	// Do settings validation for multi-site.
 	ewww_image_optimizer_save_network_settings();
 
@@ -1623,21 +1623,22 @@ function ewww_image_optimizer_install_table() {
 	 * trace: tracelog from the last optimization if debugging was enabled.
 	 */
 	$sql = "CREATE TABLE $wpdb->ewwwio_images (
-		id int(14) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-		attachment_id bigint(20) unsigned,
+		id int unsigned NOT NULL AUTO_INCREMENT,
+		attachment_id bigint unsigned,
 		gallery varchar(10),
 		resize varchar(75),
 		path text NOT NULL,
 		converted text NOT NULL,
 		results varchar(75) NOT NULL,
-		image_size int(10) unsigned,
-		orig_size int(10) unsigned,
+		image_size int unsigned,
+		orig_size int unsigned,
 		backup varchar(100),
-		level int(5) unsigned,
-		pending tinyint(1) NOT NULL DEFAULT 0,
-		updates int(5) unsigned,
+		level int unsigned,
+		pending tinyint NOT NULL DEFAULT 0,
+		updates int unsigned,
 		updated timestamp DEFAULT '1971-01-01 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
 		trace blob,
+		PRIMARY KEY  (id),
 		KEY path (path($path_index_size)),
 		KEY attachment_info (gallery(3),attachment_id)
 	) $db_collation;";
@@ -1654,11 +1655,12 @@ function ewww_image_optimizer_install_table() {
 	 * scanned: 1 if the image is queued for optimization, 0 if it still needs scanning.
 	 */
 	$sql = "CREATE TABLE $wpdb->ewwwio_queue (
-		id int(14) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-		attachment_id bigint(20) unsigned,
+		id int unsigned NOT NULL AUTO_INCREMENT,
+		attachment_id bigint unsigned,
 		gallery varchar(20),
-		scanned tinyint(3) NOT NULL DEFAULT 0,
-		new tinyint(1) NOT NULL DEFAULT 0,
+		scanned tinyint NOT NULL DEFAULT 0,
+		new tinyint NOT NULL DEFAULT 0,
+		PRIMARY KEY  (id),
 		KEY attachment_info (gallery(3),attachment_id)
 	) COLLATE utf8_general_ci;";
 
@@ -7236,7 +7238,6 @@ function ewwwio_remove_original_image( $id, $meta = null ) {
 
 	if (
 		$meta && is_array( $meta ) &&
-		imsanity_get_option( 'imsanity_delete_originals', false ) &&
 		! empty( $meta['original_image'] ) && function_exists( 'wp_get_original_image_path' )
 	) {
 		$original_image = ewwwio_get_original_image_path( $id, '', $meta );
@@ -10036,7 +10037,6 @@ function ewwwio_ip_in_range( $ip, $range ) {
 	}
 
 	list( $range, $netmask ) = explode( '/', $range, 2 );
-	ewwwio_debug_message( "testing $ip is in $range with net $netmask" );
 
 	$range_decimal    = ip2long( $range );
 	$ip_decimal       = ip2long( $ip );
@@ -10051,7 +10051,7 @@ function ewwwio_ip_in_range( $ip, $range ) {
  * @return bool True if it is, false if it ain't.
  */
 function ewwwio_is_cf_host() {
-	$cf_ips   = array(
+	$cf_ips = array(
 		'173.245.48.0/20',
 		'103.21.244.0/22',
 		'103.22.200.0/22',
@@ -10067,8 +10067,34 @@ function ewwwio_is_cf_host() {
 		'172.64.0.0/13',
 		'131.0.72.0/22',
 	);
+	if ( ! empty( $_SERVER['HTTP_CF_IPCOUNTRY'] ) ) {
+		ewwwio_debug_message( 'found Cloudflare host via HTTP_CF_IPCOUNTRY' );
+		return true;
+	}
+	if ( ! empty( $_SERVER['HTTP_CF_RAY'] ) ) {
+		ewwwio_debug_message( 'found Cloudflare host via HTTP_CF_RAY' );
+		return true;
+	}
+	if ( ! empty( $_SERVER['HTTP_CF_VISITOR'] ) ) {
+		ewwwio_debug_message( 'found Cloudflare host via HTTP_CF_VISITOR' );
+		return true;
+	}
+	if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+		ewwwio_debug_message( 'found Cloudflare host via HTTP_CF_CONNECTING_IP' );
+		return true;
+	}
+	if ( ! empty( $_SERVER['HTTP_CF_REQUEST_ID'] ) ) {
+		ewwwio_debug_message( 'found Cloudflare host via HTTP_CF_REQUEST_ID' );
+		return true;
+	}
+	if ( ! empty( $_SERVER['HTTP_CDN_LOOP'] ) && 'cloudflare' === $_SERVER['HTTP_CDN_LOOP'] ) {
+		ewwwio_debug_message( 'found Cloudflare host via HTTP_CDN_LOOP' );
+		return true;
+	}
 	$eio_base = new EIO_Base();
-	$home_ip  = gethostbyname( $eio_base->parse_url( get_site_url(), PHP_URL_HOST ) );
+	$hostname = $eio_base->parse_url( get_site_url(), PHP_URL_HOST );
+	$home_ip  = gethostbyname( $hostname );
+	ewwwio_debug_message( "checking $home_ip from gethostbyname" );
 	foreach ( $cf_ips as $cf_range ) {
 		if ( ewwwio_ip_in_range( $home_ip, $cf_range ) ) {
 			ewwwio_debug_message( "found Cloudflare host: $home_ip" );
@@ -10077,6 +10103,21 @@ function ewwwio_is_cf_host() {
 	}
 	ewwwio_debug_message( "not a Cloudflare host: $home_ip" );
 	return false;
+	// Double-check via Cloudflare DNS. Disabled for now, we'll see if we need to cross that bridge later.
+	$home_ip_lookup = wp_remote_get( 'https://cloudflare-dns.com/dns-query?name=' . urlencode( $hostname ) . '&type=A&ct=' . urlencode( 'application/dns-json' ) );
+	if ( ! is_wp_error( $home_ip_lookup ) && ! empty( $home_ip_lookup['body'] ) && is_string( $home_ip_lookup['body'] ) ) {
+		$home_ip_data = json_decode( $home_ip_lookup['body'], true );
+		if ( is_array( $home_ip_data ) && ! empty( $home_ip_data['Answer'][0]['data'] ) && filter_var( $home_ip_data['Answer'][0]['data'], FILTER_VALIDATE_IP ) ) {
+			$home_ip = $home_ip_data['Answer'][0]['data'];
+			ewwwio_debug_message( "checking $home_ip from CF DoH" );
+			foreach ( $cf_ips as $cf_range ) {
+				if ( ewwwio_ip_in_range( $home_ip, $cf_range ) ) {
+					ewwwio_debug_message( "found Cloudflare host: $home_ip" );
+					return true;
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -10250,7 +10291,7 @@ function ewwwio_debug_info() {
 	ewwwio_debug_message( 'forced gif2webp: ' . ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_force_gif2webp' ) ? 'on' : 'off' ) );
 	ewwwio_debug_message( 'enable help beacon: ' . ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_enable_help' ) ? 'yes' : 'no' ) );
 	if ( ! empty( $_SERVER['SERVER_ADDR'] ) ) {
-		ewwwio_debug_message( 'origin: ' . sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) );
+		ewwwio_debug_message( 'origin (SERVER_ADDR): ' . sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) );
 	}
 	if (
 		! ewwwio_is_cf_host() &&
