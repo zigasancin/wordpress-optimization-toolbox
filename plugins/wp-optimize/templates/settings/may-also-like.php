@@ -193,6 +193,19 @@
 		</tr>
 		<tr>
 			<td>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/geolocation.png';?>" alt="<?php esc_attr_e('Geolocation for WooCommerce', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Geolocation and tax country for WooCommerce', 'wp-optimize');?></h4>
+				<p><?php _e('Anyone running an international WooCommerce store needs this: serve country specific content to your customers, appropriate VAT, pricing, all cached for great performance', 'wp-optimize');?></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/more-settings.png';?>" alt="<?php esc_attr_e('Multilingual and multi-currency compatible', 'wp-optimize');?>" class="wpo-premium-image">
 				<h4><?php _e('Multilingual and multi-currency compatible', 'wp-optimize');?></h4>
 				<p><?php _e('Cache supports WPML multilingual plugin and multiple currencies for WooCommerce', 'wp-optimize');?></p>
@@ -206,9 +219,35 @@
 		</tr>
 		<tr>
 			<td>
-				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/choice-n-flexibility.png';?>" alt="<?php esc_attr_e('More cache options', 'wp-optimize');?>" class="wpo-premium-image">
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/choice-n-flexibility.png';?>" alt="<?php esc_attr_e('More caching options', 'wp-optimize');?>" class="wpo-premium-image">
 				<h4><?php _e('More caching options', 'wp-optimize');?></h4>
 				<p><?php _e('Exclude posts and pages from the cache, straight from the post edit screen.', 'wp-optimize');?></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/lazy-load.png';?>" alt="<?php esc_attr_e('Preload key requests', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Preload key requests', 'wp-optimize');?></h4>
+				<p><?php _e('Preload assets such as web fonts and icon fonts, as recommended by Google PageSpeed Insights', 'wp-optimize');?></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>
+			</td>
+			<td>
+				<p><span class="dashicons dashicons-yes" aria-label="<?php esc_attr_e('Yes', 'wp-optimize');?>"></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<img src="<?php echo WPO_PLUGIN_URL.'/images/features/advanced.png';?>" alt="<?php esc_attr_e('Power tweaks', 'wp-optimize');?>" class="wpo-premium-image">
+				<h4><?php _e('Power tweaks', 'wp-optimize');?></h4>
+				<p><?php _e('Catered towards more advanced users, the power tweaks will enable you to improve performance by targeting specific weak points, either in WordPress Core, or in popular plugins', 'wp-optimize');?></p>
 			</td>
 			<td>
 				<p><span class="dashicons dashicons-no-alt" aria-label="<?php esc_attr_e('No', 'wp-optimize');?>"></span></p>

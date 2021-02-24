@@ -10,7 +10,7 @@
 		?></span>
 	</p>
 	<span>
-		<?php _e('This action will trigger WP-Optimize to cache the site by visiting pages to pre-load them (so that they are ready the first time a human visitor wants them).', 'wp-optimize'); ?> 
+		<?php _e('This action will trigger WP-Optimize to cache the site by visiting pages to preload them (so that they are ready the first time a human visitor wants them).', 'wp-optimize'); ?>
 		<?php _e('If a sitemap is available, then it will be used to determine which content gets cached.', 'wp-optimize'); ?>
 	</span>
 </div>

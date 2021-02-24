@@ -120,6 +120,14 @@ class WP_Optimize_Minify_Commands {
 			if (!isset($new_data['blacklist'])) $new_data['blacklist'] = array();
 		}
 
+		/**
+		 * Filters the data before saving it
+		 *
+		 * @param array $new_data - The original data
+		 * @return array The data, altered or not
+		 */
+		$new_data = apply_filters('wpo_save_minify_settings', $new_data);
+
 		if (!class_exists('WP_Optimize_Minify_Config')) return array(
 			'success' => false,
 			'message' => "WP_Optimize_Minify_Config class doesn't exist",

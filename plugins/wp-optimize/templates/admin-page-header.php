@@ -36,6 +36,14 @@
 </header>
 <?php
 	if ($show_notices) {
+		
+		$installed = $wp_optimize->get_options()->get_option('installed-for', 0);
+		$installed_for = time() - $installed;
+		$advert = false;
+		if ($installed && $installed_for > 28*86400 && $installed_for < 84*86400) {
+			$advert = 'rate_plugin';
+		}
+		
 		// This is to display the notices.
-		$wp_optimize_notices->do_notice();
+		$wp_optimize_notices->do_notice($advert);
 	}

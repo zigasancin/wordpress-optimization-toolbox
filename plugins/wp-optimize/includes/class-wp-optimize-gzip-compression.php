@@ -51,7 +51,7 @@ class WP_Optimize_Gzip_Compression {
 			'server' => array_key_exists('server', $headers) ? $headers['server'] : '',
 		);
 
-		if (array_key_exists('content-encoding', $headers) && preg_match('/\Wbr\W/i', $headers['content-encoding'])) {
+		if (array_key_exists('content-encoding', $headers) && preg_match('/^(.*\W|)br(\W.*|)$/i', $headers['content-encoding'])) {
 			// check if there exists Content-encoding header with br(Brotli) value.
 			$headers_information['compression'] = 'brotli';
 		} elseif (array_key_exists('content-encoding', $headers) && preg_match('/gzip/i', $headers['content-encoding'])) {

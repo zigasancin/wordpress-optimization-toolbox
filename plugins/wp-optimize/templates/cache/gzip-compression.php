@@ -9,7 +9,7 @@
 		</span>
 	</p>
 
-	<?php if ($wpo_gzip_compression_enabled && !is_wp_error($wpo_gzip_compression_enabled)) : ?>
+	<?php if ($wpo_gzip_compression_enabled && !is_wp_error($wpo_gzip_compression_enabled) && !$wpo_gzip_compression_enabled_by_wpo) : ?>
 		<div class="wpo-fieldgroup wpo-gzip-already-enabled">
 			<p><span class="dashicons dashicons-yes"></span> 
 			<?php if ('brotli' == $wpo_gzip_headers_information['compression']) { ?>

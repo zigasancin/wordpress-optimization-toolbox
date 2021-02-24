@@ -38,7 +38,11 @@ class WP_Optimize_Minify {
 		// Don't run the rest if PHP requirement isn't met
 		if (!WPO_MINIFY_PHP_VERSION_MET) return;
 
-		add_filter('wpo_cache_admin_bar_menu_items', array($this, 'admin_bar_menu'), 30, 2);
+		add_filter('wpo_cache_admin_bar_menu_items', array($this, 'admin_bar_menu'), 30, 1);
+		
+		if (WP_Optimize::is_premium()) {
+			$this->load_premium();
+		}
 
 		/**
 		 * Directory that stores the cache, including gzipped files and mobile specifc cache
@@ -61,10 +65,9 @@ class WP_Optimize_Minify {
 	 * Admin toolbar processing
 	 *
 	 * @param array        $menu_items
-	 * @param WP_Admin_Bar $wp_admin_bar
 	 * @return array
 	 */
-	public function admin_bar_menu($menu_items, $wp_admin_bar) {
+	public function admin_bar_menu($menu_items) {
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 
 		if (!$wpo_minify_options['enabled'] || !current_user_can('manage_options') || !($wpo_minify_options['enable_css'] || $wpo_minify_options['enable_js'])) return $menu_items;
@@ -119,6 +122,18 @@ class WP_Optimize_Minify {
 	}
 
 	/**
+	 * Load the premium class
+	 *
+	 * @return void
+	 */
+	private function load_premium() {
+		if (!class_exists('WP_Optimize_Minify_Premium')) {
+			include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-premium.php';
+		}
+		$this->premium = new WP_Optimize_Minify_Premium();
+	}
+
+	/**
 	 * Run during activation
 	 * Increment cache first as it will save files to that dir
 	 *
@@ -143,6 +158,7 @@ class WP_Optimize_Minify {
 	 * @return void
 	 */
 	public function plugin_deactivate() {
+		if (defined('WPO_MINIFY_PHP_VERSION_MET') && !WPO_MINIFY_PHP_VERSION_MET) return;
 		if (class_exists('WP_Optimize_Minify_Cache_Functions')) {
 			WP_Optimize_Minify_Cache_Functions::purge_temp_files();
 			WP_Optimize_Minify_Cache_Functions::purge_old();
@@ -159,6 +175,7 @@ class WP_Optimize_Minify {
 	 * @return void
 	 */
 	public function plugin_uninstall() {
+		if (defined('WPO_MINIFY_PHP_VERSION_MET') && !WPO_MINIFY_PHP_VERSION_MET) return;
 		// remove options from DB
 		if (!function_exists('wp_optimize_minify_config')) {
 			include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-config.php';

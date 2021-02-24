@@ -537,4 +537,15 @@ class WP_Optimize_Commands {
 			);
 		}
 	}
+	
+	/**
+	 * Ignores the table delete warning for the current user
+	 *
+	 * @return boolean
+	 */
+	public function user_ignores_table_delete_warning() {
+		return array(
+			'success' => update_user_meta(get_current_user_id(), 'wpo-ignores-table-delete-warning', true)
+		);
+	}
 }

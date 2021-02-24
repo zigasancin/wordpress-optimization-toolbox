@@ -393,15 +393,29 @@ WP_Optimize_Images_View = function(settings) {
 	 * Show loader.
 	 */
 	function show_loader() {
+		show_custom_loader(wpoptimize.loading_data, '', options.loader_additional_html);
+	}
+
+	/**
+	 * Show loader with custom content.
+	 *
+	 * @param {string} title
+	 * @param {string} message
+	 * @param {string} custom_html
+	 */
+	function show_custom_loader(title, message, custom_html) {
+		message = message ? message : '';
+		custom_html = custom_html ? custom_html : '';
+
 		images_view_container.css({ 'min-height' : '220px' });
 		images_view_container.append([
 			'<div class="wpo_shade">',
-				'<div class="wpo_shade_inner">',
-					'<span class="dashicons dashicons-update-alt wpo-rotate"></span>',
-					'<h4>',wpoptimize.loading_data,'</h4>',
-					'<p class="wpo-shade-progress-message"></p>',
-					options.loader_additional_html,
-				'</div>',
+			'<div class="wpo_shade_inner">',
+			'<span class="dashicons dashicons-update-alt wpo-rotate"></span>',
+			'<h4>',title,'</h4>',
+			'<p class="wpo-shade-progress-message">',message,'</p>',
+			custom_html,
+			'</div>',
 			'</div>',
 		].join(''));
 
@@ -474,6 +488,7 @@ WP_Optimize_Images_View = function(settings) {
 		clear: clear,
 		reload: reload,
 		show_loader: show_loader,
+		show_custom_loader: show_custom_loader,
 		hide_loader: hide_loader,
 		loader_message: loader_message,
 		append_image: append_image,

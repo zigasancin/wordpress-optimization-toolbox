@@ -87,11 +87,19 @@
 				<label><input
 					type="radio"
 					name="fawesome_method"
-					value="inline"
-					<?php echo checked('inline' === $wpo_minify_options['fawesome_method']); ?>
+					value="inherit"
+					<?php echo checked('inherit' === $wpo_minify_options['fawesome_method']); ?>
 					>
 					<?php _e('Inherit from the CSS settings', 'wp-optimize'); ?>
 					<span tabindex="0" data-tooltip="<?php esc_attr_e('The stylesheets will be merged or inlined.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
+				</label>
+				<label><input
+					type="radio"
+					name="fawesome_method"
+					value="inline"
+					<?php echo checked('inline' === $wpo_minify_options['fawesome_method']); ?>
+					>
+					<?php _e('Inline the Font Awesome CSS file', 'wp-optimize'); ?>
 				</label>
 				<label>
 					<input

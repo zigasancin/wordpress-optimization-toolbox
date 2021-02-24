@@ -51,6 +51,9 @@ if ($optimize_db) {
 	<p>
 		<input type="checkbox" id="confirm_table_deletion"> <?php _e('I confirm that I have understood the risks in doing that, and that I know what I am doing.', 'wp-optimize'); ?>
 	</p>
+	<p>
+		<input type="checkbox" id="ignores_table_delete_warning"> <?php _e('Do not show this warning again.', 'wp-optimize'); ?>
+	</p>
 	<button type="button" class="button button-primary delete-table" disabled><?php _e('Remove the table', 'wp-optimize'); ?></button>
 	<button type="button" class="button cancel wpo-modal--close"><?php _e('Cancel', 'wp-optimize'); ?></button>
 </script>

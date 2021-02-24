@@ -1054,4 +1054,14 @@ class WP_Optimize_Minify_Functions {
 		}
 		return $script;
 	}
+
+	/**
+	 * Checks if an URL is a font-awesome resource (checks if it contains font-awesome or fontawesome)
+	 *
+	 * @param string $href
+	 * @return boolean
+	 */
+	public static function is_font_awesome($href) {
+		return (boolean) preg_match('/font[-_]?awesome/i', $href);
+	}
 }

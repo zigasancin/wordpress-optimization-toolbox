@@ -41,110 +41,114 @@ class WP_Optimize_Minify_Front_End {
 	 */
 	public function init() {
 		$wpo_minify_options = wp_optimize_minify_config()->get();
-		// fix page editors, admin, amp, etc
 
 		/**
-		 * Filters whether Minify is run on the current page
+		 * Check whether Minify is run on the current page
 		 */
-		if ($this->run_on_page()) {
-			// Emoji Handling
-			if ($wpo_minify_options['emoji_removal']) {
-				WP_Optimize_Minify_Functions::disable_wp_emojicons();
-				add_filter('tiny_mce_plugins', array('WP_Optimize_Minify_Functions', 'disable_emojis_tinymce' ));
-			}
+		if (!$this->run_on_page()) return;
 
-			// Header handling
-			if ($wpo_minify_options['clean_header_one']) {
-				// no resource hints, generator tag, shortlinks, manifest link, etc
-				remove_action('wp_head', 'wp_resource_hints', 2);
-				remove_action('wp_head', 'wp_generator');
-				remove_action('template_redirect', 'wp_shortlink_header', 11);
-				remove_action('wp_head', 'wlwmanifest_link');
-				remove_action('wp_head', 'rsd_link');
-				remove_action('wp_head', 'adjacent_posts_rel_link_wp_head', 10, 0);
-				remove_action('wp_head', 'feed_links', 2);
-				remove_action('wp_head', 'feed_links_extra', 3);
-				WP_Optimize_Minify_Functions::remove_redundant_shortlink();
-			}
-
-			// Headers & Preload JS/CSS/Extra
-			if ($wpo_minify_options['enabled_css_preload'] || $wpo_minify_options['enabled_js_preload']) {
-				add_action('wp_footer', array($this, 'generate_preload_headers'), PHP_INT_MAX);
-			}
-			
-			// JS Processing
-			if ($wpo_minify_options['enable_js']) {
-				add_action('wp_print_scripts', array($this, 'process_header_scripts'), PHP_INT_MAX);
-				add_action('wp_print_footer_scripts', array($this, 'process_footer_scripts'), 9);
-				
-				// Defer JS
-				add_filter('script_loader_tag', array($this, 'defer_js'), 10, 3);
-
-				// Preloading
-				if ($wpo_minify_options['enabled_js_preload']) {
-					add_filter('script_loader_tag', array($this, 'collect_js_preload_headers'), PHP_INT_MAX, 3);
-				}
-
-				// add the LoadAsync JavaScript function
-				$async_js = trim($wpo_minify_options['async_js']) ? array_map('trim', explode("\n", trim($wpo_minify_options['async_js']))) : array();
-				if (count($async_js) > 0
-					|| ( 'all' === $wpo_minify_options['enable_defer_js'] && 'async_using_js' === $wpo_minify_options['defer_js_type'] )
-				) {
-					add_action('wp_head', array('WP_Optimize_Minify_Print', 'add_load_async'), 0);
-				}
-			}
-
-			// CSS Processing - default is to merge
-			if ($wpo_minify_options['enable_css']) {
-
-				add_action('wp_head', array($this, 'add_critical_path'), 2);
-
-				// merge, if inline is selected but prevent optimization for these locations
-				if ($wpo_minify_options['inline_css']) {
-					// this prints the styles (not fonts) and checks the 'colllect google fonts'
-					add_filter('style_loader_tag', array($this, 'inline_css'), PHP_INT_MAX, 4);
-					// this prints the google fonts
-					add_action('wp_print_styles', array($this, 'add_google_fonts_merged'), PHP_INT_MAX);
-					add_action('wp_print_footer_scripts', array($this, 'add_google_fonts_merged'), PHP_INT_MAX);
-				} else {
-					// Preloading
-					if ($wpo_minify_options['enabled_css_preload']) {
-						add_filter('style_loader_tag', array($this, 'collect_css_preload_headers'), PHP_INT_MAX, 3);
-					}
-					// Optimize the css and collect the google fonts for merging
-					add_action('wp_print_styles', array($this, 'process_header_css'), PHP_INT_MAX);
-					add_action('wp_print_footer_scripts', array($this, 'process_footer_css'), 9);
-
-					/**
-					 * Filters whether or not to ignore the order of the CSS files, and group them by media type
-					 *
-					 * @param boolean $maintain_css_order
-					 * @return boolean
-					 * @default true
-					 */
-					if (!apply_filters('wpo_minify_maintain_css_order', true)) {
-						// Reorder stylesheets
-						add_filter('wpo_minify_stylesheets', array($this, 'order_stylesheets_per_media_type'), 10);
-					}
-				}
-			}
-
-			// HTML Processing
-			if ($wpo_minify_options['html_minification'] && !is_admin()) {
-				add_action('template_redirect', array('WP_Optimize_Minify_Functions', 'html_compression_start'), PHP_INT_MAX);
-			}
-
-			// add the LoadCSS polyfil
-			if ($wpo_minify_options['loadcss']
-				|| 'async' === $wpo_minify_options['fawesome_method']
-				|| 'async' === $wpo_minify_options['gfonts_method']
-			) {
-				add_action('wp_footer', array('WP_Optimize_Minify_Print', 'add_load_css'), PHP_INT_MAX);
-			}
-
-			// remove query from static assets and process deferring (if enabled)
-			add_filter('style_loader_src', array('WP_Optimize_Minify_Functions', 'remove_cssjs_ver'), 10, 2);
+		// Emoji Handling
+		if ($wpo_minify_options['emoji_removal']) {
+			WP_Optimize_Minify_Functions::disable_wp_emojicons();
+			add_filter('tiny_mce_plugins', array('WP_Optimize_Minify_Functions', 'disable_emojis_tinymce' ));
 		}
+
+		// Header handling
+		if ($wpo_minify_options['clean_header_one']) {
+			// no resource hints, generator tag, shortlinks, manifest link, etc
+			remove_action('wp_head', 'wp_resource_hints', 2);
+			remove_action('wp_head', 'wp_generator');
+			remove_action('template_redirect', 'wp_shortlink_header', 11);
+			remove_action('wp_head', 'wlwmanifest_link');
+			remove_action('wp_head', 'rsd_link');
+			remove_action('wp_head', 'adjacent_posts_rel_link_wp_head', 10, 0);
+			remove_action('wp_head', 'feed_links', 2);
+			remove_action('wp_head', 'feed_links_extra', 3);
+			WP_Optimize_Minify_Functions::remove_redundant_shortlink();
+		}
+
+		// Headers & Preload JS/CSS/Extra
+		if ($wpo_minify_options['enabled_css_preload'] || $wpo_minify_options['enabled_js_preload']) {
+			add_action('wp_footer', array($this, 'generate_preload_headers'), PHP_INT_MAX);
+		}
+		
+		// JS Processing
+		if ($wpo_minify_options['enable_js']) {
+			add_action('wp_print_scripts', array($this, 'process_header_scripts'), PHP_INT_MAX);
+			add_action('wp_print_footer_scripts', array($this, 'process_footer_scripts'), 9);
+			
+			// Defer JS
+			add_filter('script_loader_tag', array($this, 'defer_js'), 10, 3);
+
+			// Preloading
+			if ($wpo_minify_options['enabled_js_preload']) {
+				add_filter('script_loader_tag', array($this, 'collect_js_preload_headers'), PHP_INT_MAX, 3);
+			}
+
+			// add the LoadAsync JavaScript function
+			$async_js = trim($wpo_minify_options['async_js']) ? array_map('trim', explode("\n", trim($wpo_minify_options['async_js']))) : array();
+			if (count($async_js) > 0
+				|| ( 'all' === $wpo_minify_options['enable_defer_js'] && 'async_using_js' === $wpo_minify_options['defer_js_type'] )
+			) {
+				add_action('wp_head', array('WP_Optimize_Minify_Print', 'add_load_async'), 0);
+			}
+		}
+
+		// CSS Processing - default is to merge
+		if ($wpo_minify_options['enable_css']) {
+
+			add_action('wp_head', array($this, 'add_critical_path'), 2);
+
+			// merge, if inline is selected but prevent optimization for these locations
+			if ($wpo_minify_options['inline_css']) {
+				// this prints the styles (not fonts) and checks the 'colllect google fonts'
+				add_filter('style_loader_tag', array($this, 'inline_css'), PHP_INT_MAX, 4);
+				// this prints the google fonts
+				add_action('wp_print_styles', array($this, 'add_google_fonts_merged'), PHP_INT_MAX);
+				add_action('wp_print_footer_scripts', array($this, 'add_google_fonts_merged'), PHP_INT_MAX);
+			} else {
+				// Preloading
+				if ($wpo_minify_options['enabled_css_preload']) {
+					add_filter('style_loader_tag', array($this, 'collect_css_preload_headers'), PHP_INT_MAX, 3);
+				}
+				// Optimize the css and collect the google fonts for merging
+				add_action('wp_print_styles', array($this, 'process_header_css'), PHP_INT_MAX);
+				add_action('wp_print_footer_scripts', array($this, 'process_footer_css'), 9);
+
+				/**
+				 * Filters whether or not to ignore the order of the CSS files, and group them by media type
+				 *
+				 * @param boolean $maintain_css_order
+				 * @return boolean
+				 * @default true
+				 */
+				if (!apply_filters('wpo_minify_maintain_css_order', true)) {
+					// Reorder stylesheets
+					add_filter('wpo_minify_stylesheets', array($this, 'order_stylesheets_per_media_type'), 10);
+				}
+			}
+		}
+
+		// Preload tags
+		if (trim($wpo_minify_options['hpreload'])) {
+			add_action('wp_head', array($this, 'add_assets_preload'), 2);
+		}
+
+		// HTML Processing
+		if ($wpo_minify_options['html_minification'] && !is_admin()) {
+			add_action('template_redirect', array('WP_Optimize_Minify_Functions', 'html_compression_start'), PHP_INT_MAX);
+		}
+
+		// add the LoadCSS polyfil
+		if ($wpo_minify_options['loadcss']
+			|| 'async' === $wpo_minify_options['fawesome_method']
+			|| 'async' === $wpo_minify_options['gfonts_method']
+		) {
+			add_action('wp_footer', array('WP_Optimize_Minify_Print', 'add_load_css'), PHP_INT_MAX);
+		}
+
+		// remove query from static assets and process deferring (if enabled)
+		add_filter('style_loader_src', array('WP_Optimize_Minify_Functions', 'remove_cssjs_ver'), 10, 2);
 	}
 
 	/**
@@ -164,6 +168,7 @@ class WP_Optimize_Minify_Front_End {
 		return apply_filters(
 			'wpo_minify_run_on_page',
 			!is_admin()
+			&& (!defined('SCRIPT_DEBUG') || !SCRIPT_DEBUG)
 			&& !is_preview()
 			&& (!function_exists('is_customize_preview') || !is_customize_preview())
 			&& !($wpo_minify_options['disable_when_logged_in'] && is_user_logged_in())
@@ -235,7 +240,7 @@ class WP_Optimize_Minify_Front_End {
 		}
 
 		// check if working with a font awesom link
-		if (false !== stripos($href, 'font-awesome')) {
+		if (WP_Optimize_Minify_Functions::is_font_awesome($href)) {
 			// font awesome processing, async css
 			if ('async' == $wpo_minify_options['fawesome_method']) {
 				WP_Optimize_Minify_Print::async_style($href, $media);
@@ -477,6 +482,23 @@ class WP_Optimize_Minify_Front_End {
 	}
 
 	/**
+	 * Add critical assets preload
+	 *
+	 * @return void
+	 */
+	public function add_assets_preload() {
+		$wpo_minify_options = wp_optimize_minify_config()->get();
+		$preload = json_decode($wpo_minify_options['hpreload']);
+		if (is_array($preload)) {
+			foreach ($preload as $asset) {
+				if (!empty($asset)) {
+					echo '<link rel="preload" href="'.esc_url($asset->href).'" as="'.esc_attr($asset->type).'"'.($asset->crossorigin ? ' crossorigin' : '').'>';
+				}
+			}
+		}
+	}
+
+	/**
 	 * Process header CSS
 	 *
 	 * @return boolean
@@ -556,9 +578,11 @@ class WP_Optimize_Minify_Front_End {
 				continue;
 			}
 			// Fonts Awesome Processing
-			if (false !== stripos($href, 'font-awesome')) {
+			if (WP_Optimize_Minify_Functions::is_font_awesome($href)) {
 				if ('inline' === $wpo_minify_options['fawesome_method']) {
 					WP_Optimize_Minify_Print::inline_style($handle, $href);
+					$done = array_merge($done, array($handle));
+					continue;
 				} elseif ('async' === $wpo_minify_options['fawesome_method']) {
 					WP_Optimize_Minify_Print::async_style($href, $mediatype);
 					$done = array_merge($done, array($handle));
@@ -682,7 +706,7 @@ class WP_Optimize_Minify_Front_End {
 			// skip ignore list, conditional css, external css, font-awesome merge
 			if (($process_css && !WP_Optimize_Minify_Functions::in_arrayi($href, $ignore_list) && !isset($conditional) && WP_Optimize_Minify_Functions::internal_url($href, site_url()))
 				|| empty($href)
-				|| ($process_css && 'inline' == $wpo_minify_options['fawesome_method'] && false !== stripos($href, 'font-awesome'))
+				|| ($process_css && 'inline' == $wpo_minify_options['fawesome_method'] && WP_Optimize_Minify_Functions::is_font_awesome($href))
 			) {
 			
 				// colect inline css for this handle
@@ -1508,9 +1532,10 @@ class WP_Optimize_Minify_Front_End {
 				continue;
 			}
 
-			if (false !== stripos($href, 'font-awesome')) {
+			if (WP_Optimize_Minify_Functions::is_font_awesome($href)) {
 				if ('inline' === $wpo_minify_options['fawesome_method']) {
-					WP_Optimize_Minify_Print::exclude_style($href);
+					WP_Optimize_Minify_Print::inline_style($handle, $href);
+					$done = array_merge($done, array($handle));
 					continue;
 				} elseif ('async' === $wpo_minify_options['fawesome_method']) {
 					WP_Optimize_Minify_Print::async_style($href, $mediatype);
@@ -1716,7 +1741,7 @@ class WP_Optimize_Minify_Front_End {
 	public function order_stylesheets_per_media_type($list) {
 		// get unique mediatypes
 		$allmedia = array();
-		foreach ($list as $key => $array) {
+		foreach ($list as $array) {
 			if (isset($array['media'])) {
 				$allmedia[$array['media']] = '';
 			}
@@ -1976,17 +2001,7 @@ class WP_Optimize_Minify_Front_End {
 		$wpo_minify_options = wp_optimize_minify_config()->get();
 
 		// fetch headers
-		$pre_load = array_map('trim', explode("\n", trim($wpo_minify_options['hpreload'])));
 		$pre_connect = array_map('trim', explode("\n", trim($wpo_minify_options['hpreconnect'])));
-
-		// preconnect
-		if (is_array($pre_load) && count($pre_load) > 0) {
-			foreach ($pre_load as $h) {
-				if (!empty($h)) {
-					header($h, false);
-				}
-			}
-		}
 
 		// preload
 		if (is_array($pre_connect) && count($pre_connect) > 0) {

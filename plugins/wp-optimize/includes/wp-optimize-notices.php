@@ -59,14 +59,13 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 				'validity_function' => 'is_updraftcentral_installed',
 			),
 			'rate_plugin' => array(
-				'prefix' => '',
-				'title' => __('Like WP-Optimize and can spare one minute?', 'wp-optimize'),
-				'text' => __('Please help WP-Optimize by giving a positive review at wordpress.org.', 'wp-optimize'),
-				'image' => 'notices/wp_optimize_logo.png',
+				'text' => __("Hey - We noticed WP-Optimize has kept your site running fast for a while.  If you like us, please consider leaving a positive review to spread the word.  Or if you have any issues or questions please leave us a support message", 'wp-optimize') . ' <a href="https://wordpress.org/support/plugin/wp-optimize/" target="_blank">' . __('here', 'wp-optimize') . '.</a><br>' . __('Thank you so much!', 'wp-optimize') . ' - <b>WP-Optimize</b><br>',
+				'image' => 'notices/ud_smile.png',
 				'button_link' => 'https://wordpress.org/support/plugin/wp-optimize/reviews/?rate=5#new-post',
 				'button_meta' => 'review',
-				'dismiss_time' => 'dismiss_page_notice_until',
-				'supported_positions' => $this->anywhere,
+				'dismiss_time' => 'dismiss_review_notice',
+				'supported_positions' => $this->dashboard_top,
+				'validity_function' => 'show_rate_notice'
 			),
 			'translation_needed' => array(
 				'prefix' => '',
@@ -136,20 +135,6 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 				'discount_code' => 'blackfridaysale2020',
 				'valid_from' => '2020-11-20 00:00:00',
 				'valid_to' => '2020-11-30 23:59:59',
-				'supported_positions' => $this->dashboard_top_or_report,
-				'validity_function' => 'is_wpo_premium_installed',
-			),
-			'christmas' => array(
-				'prefix' => '',
-				'title' => __('Christmas sale - 20% off WP-Optimize Premium until December 25th', 'wp-optimize'),
-				'text' => __('To benefit, use this discount code:', 'wp-optimize').' ',
-				'image' => 'notices/christmas.png',
-				'button_link' => 'https://getwpo.com',
-				'button_meta' => 'wp-optimize',
-				'dismiss_time' => 'dismiss_season',
-				'discount_code' => 'christmassale2020',
-				'valid_from' => '2020-12-01 00:00:00',
-				'valid_to' => '2020-12-25 23:59:59',
 				'supported_positions' => $this->dashboard_top_or_report,
 				'validity_function' => 'is_wpo_premium_installed',
 			),
@@ -278,6 +263,24 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 	}
 
 	/**
+	 * This function will check if we should display the rate notice or not
+	 *
+	 * @return boolean - to indicate if we should show the notice or not
+	 */
+	protected function show_rate_notice() {
+		
+		$options = WP_Optimize()->get_options();
+		$installed = $options->get_option('installed-for', 0);
+		$installed_for = time() - $installed;
+		
+		if ($installed && $installed_for > 28*86400) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * This method calls the parent verson and will work out if the user is using a non english language and if so returns true so that they can see the translation advert.
 	 *
 	 * @param  String $plugin_base_dir the plugin base directory
@@ -297,7 +300,7 @@ class WP_Optimize_Notices extends Updraft_Notices_1_0 {
 	 * @param  String  $website_home a string to be displayed
 	 * @return String                returns a string of the completed url
 	 */
-	protected function url_start($html_allowed = false, $url, $https = false, $website_home = 'updraftplus.com/wp-optimize') {
+	protected function url_start($html_allowed, $url, $https = false, $website_home = 'updraftplus.com/wp-optimize') {
 		return parent::url_start($html_allowed, $url, $https, $website_home);
 	}
 

@@ -230,36 +230,6 @@
 				</fieldset>
 			</div>
 	
-			<h3><?php _e('Preload Headers', 'wp-optimize'); ?></h3>
-			<div class="wpo-fieldgroup">
-				<fieldset>
-					<legend class="screen-reader-text">
-					<?php _e('Preload Headers', 'wp-optimize'); ?>
-					</legend>
-					<label for="hpreload">
-						<span class="wpo_min-label-pad">
-							<?php _e('Insert your "complete PHP header code" here:', 'wp-optimize'); ?>
-						</span>
-					</label>
-					<textarea
-						name="hpreload"
-						rows="7"
-						cols="50"
-						id="hpreload"
-						class="large-text code"
-						disabled
-						placeholder="Link: &lt;https://cdn.example.com/s/font/v15/somefile.woff&gt;; rel=preload; as=font; crossorigin"
-					><?php echo $wpo_minify_options['hpreload']; ?></textarea>
-					<p>
-						<?php _e('Example of a "complete PHP header code" to paste above', 'wp-optmize'); ?>
-					</p>
-					<p>
-						<?php _e('Link: &lt;https://fonts.gstatic.com/s/opensans/v15/mem8YaGs126MiZpBA-UFVZ0d.woff&gt;; rel=preload; as=font; crossorigin</p>', 'wp-optmize'); ?>
-					<p>
-						<?php _e('Link: &lt;https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2&gt;; rel=preload; as=font; crossorigin</p>', 'wp-optmize'); ?>
-				</fieldset>
-			</div>
-	
 			<h3><?php _e('External URLs to merge', 'wp-optimize'); ?></h3>
 			<div class="wpo-fieldgroup">
 				<fieldset>

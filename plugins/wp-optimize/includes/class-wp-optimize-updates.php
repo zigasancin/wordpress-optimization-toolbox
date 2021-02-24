@@ -104,6 +104,7 @@ class WP_Optimize_Updates {
 	 * @return void
 	 */
 	public static function update_minify_excludes() {
+		if (!WPO_MINIFY_PHP_VERSION_MET) return;
 		if (!function_exists('wp_optimize_minify_config')) {
 			include_once WPO_PLUGIN_MAIN_PATH . '/minify/class-wp-optimize-minify-config.php';
 		}

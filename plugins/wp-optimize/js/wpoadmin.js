@@ -235,6 +235,9 @@ var WP_Optimize = function () {
 					temporarily_display_notice(new_html, '#' + type + '_notice');
 				}
 			}
+			if (resp && resp.hasOwnProperty('messages')) {
+					$('#' + type + '_actionmsg').html(resp.messages.join(' - '));
+			}
 		});
 	}
 	
@@ -1475,47 +1478,65 @@ var WP_Optimize = function () {
 	$('#wpoptimize_table_list').on('click', '.run-single-table-delete', function () {
 		table_to_remove_btn = $(this);
 		var take_backup_checkbox = $('#enable-auto-backup-1');
-		wp_optimize.modal.open({
-			className: 'wpo-confirm',
-			events: {
-				'click .wpo-modal--bg': 'close',
-				'click .delete-table': 'deleteTable',
-				'change #confirm_deletion_without_backup': 'changeConfirm',
-				'change #confirm_table_deletion': 'changeConfirm'
-			},
-			content: function() {
-				var content_template = wp.template('wpo-table-delete');
-				// Get the plugins list
-				var plugins_list = table_to_remove_btn.closest('tr').find('.table-plugins').html();
-				return content_template({
-					no_backup: !take_backup_checkbox.is(':checked'),
-					plugins_list: plugins_list,
-					table_name: table_to_remove_btn.data('table')
-				});
-			},
-			changeConfirm: function() {
-				var enable_button = true;
-				var backup_input = this.$('#confirm_deletion_without_backup');
-				var confirm_input = this.$('#confirm_table_deletion');
-				if (backup_input.length && !backup_input.is(':checked')) {
-					enable_button = false;
+		if ('' == wpoptimize.user_always_ignores_table_delete_warning || '1' !== wpoptimize.user_always_ignores_table_delete_warning) {
+			wp_optimize.modal.open({
+				className: 'wpo-confirm',
+				events: {
+					'click .wpo-modal--bg': 'close',
+					'click .delete-table': 'deleteTable',
+					'change #confirm_deletion_without_backup': 'changeConfirm',
+					'change #confirm_table_deletion': 'changeConfirm'
+				},
+				content: function() {
+					var content_template = wp.template('wpo-table-delete');
+					// Get the plugins list
+					var plugins_list = table_to_remove_btn.closest('tr').find('.table-plugins').html();
+					return content_template({
+						no_backup: !take_backup_checkbox.is(':checked'),
+						plugins_list: plugins_list,
+						table_name: table_to_remove_btn.data('table')
+					});
+				},
+				changeConfirm: function() {
+					var enable_button = true;
+					var backup_input = this.$('#confirm_deletion_without_backup');
+					var confirm_input = this.$('#confirm_table_deletion');
+					if (backup_input.length && !backup_input.is(':checked')) {
+						enable_button = false;
+					}
+					if (!confirm_input.is(':checked')) {
+						enable_button = false;
+					}
+					this.$('.delete-table').prop('disabled', !enable_button);
+				},
+				deleteTable: function() {
+					// check if user ignore table warning
+					var ignores_table_detele_warning_checkbox = this.$('#ignores_table_delete_warning');
+					if (ignores_table_detele_warning_checkbox.is(':checked')) {
+						send_command('user_ignores_table_delete_warning', {}, function(response) {
+							if (response.success) {
+								wpoptimize.user_always_ignores_table_delete_warning = '1';
+							}
+						});
+					}
+					// check if backup checkbox is checked for db tables
+					if (take_backup_checkbox.is(':checked')) {
+						take_a_backup_with_updraftplus(remove_single_db_table);
+					} else {
+						remove_single_db_table();
+					}
+					this.close();
+	
 				}
-				if (!confirm_input.is(':checked')) {
-					enable_button = false;
-				}
-				this.$('.delete-table').prop('disabled', !enable_button);
-			},
-			deleteTable: function() {
-				// check if backup checkbox is checked for db tables
-				if (take_backup_checkbox.is(':checked')) {
-					take_a_backup_with_updraftplus(remove_single_db_table);
-				} else {
-					remove_single_db_table();
-				}
-				this.close();
-
+			});
+		} else {
+			// check if backup checkbox is checked for db tables
+			if (take_backup_checkbox.is(':checked')) {
+				take_a_backup_with_updraftplus(remove_single_db_table);
+			} else {
+				remove_single_db_table();
 			}
-		});
+		}
 	});
 
 	/**

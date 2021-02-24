@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize - Clean, Compress, Cache
 Plugin URI: https://getwpo.com
 Description: WP-Optimize makes your site fast and efficient. It cleans the database, compresses images and caches pages. Fast sites attract more traffic and users.
-Version: 3.1.6
+Version: 3.1.7
 Author: David Anderson, Ruhani Rabin, Team Updraft
 Author URI: https://updraftplus.com
 Text Domain: wp-optimize
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '3.1.6');
+define('WPO_VERSION', '3.1.7');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PREMIUM_NOTIFICATION', false);
@@ -66,6 +66,8 @@ class WP_Optimize {
 		add_filter("plugin_action_links_".plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
 		add_action('wpo_cron_event2', array($this, 'cron_action'));
 		add_filter('cron_schedules', array($this, 'cron_schedules'));
+
+		if (!$this->get_options()->get_option('installed-for', false)) $this->get_options()->update_option('installed-for', time());
 
 		if (!self::is_premium()) {
 			add_action('auto_option_settings', array($this->get_options(), 'auto_option_settings'));
@@ -596,7 +598,7 @@ class WP_Optimize {
 	public function show_admin_notice_upgradead() {
 		$this->include_template('notices/thanks-for-using-main-dash.php');
 	}
-
+	
 	public function capability_required() {
 		return apply_filters('wp_optimize_capability_required', 'manage_options');
 	}
@@ -646,6 +648,12 @@ class WP_Optimize {
 			$options->update_option($subaction, (time() + 366 * 86400));
 		} elseif (in_array($subaction, array('dismiss_page_notice_until', 'dismiss_notice'))) {
 			$options->update_option($subaction, (time() + 84 * 86400));
+		} elseif ('dismiss_review_notice' == $subaction) {
+			if (empty($data['dismiss_forever'])) {
+				$options->update_option($subaction, time() + 84*86400);
+			} else {
+				$options->update_option($subaction, 100 * (365.25 * 86400));
+			}
 		} else {
 			// Other commands, available for any remote method.
 			if (!class_exists('WP_Optimize_Commands')) include_once(WPO_PLUGIN_MAIN_PATH . 'includes/class-commands.php');
@@ -1042,12 +1050,16 @@ class WP_Optimize {
 		$wpo_gzip_compression = $this->get_gzip_compression();
 		$wpo_gzip_compression_enabled = $wpo_gzip_compression->is_gzip_compression_enabled(true);
 		$wpo_gzip_headers_information = $wpo_gzip_compression->get_headers_information();
+		$is_cloudflare_site = $this->is_cloudflare_site();
+		$is_gzip_compression_section_exists = $wpo_gzip_compression->is_gzip_compression_section_exists();
+		$wpo_gzip_compression_enabled_by_wpo = $is_gzip_compression_section_exists && $wpo_gzip_compression_enabled && !$is_cloudflare_site && !('brotli' == $wpo_gzip_headers_information['compression']);
 
 		WP_Optimize()->include_template('cache/gzip-compression.php', false, array(
 			'wpo_gzip_headers_information' => $wpo_gzip_headers_information,
 			'wpo_gzip_compression_enabled' => $wpo_gzip_compression_enabled,
-			'is_cloudflare_site' => $this->is_cloudflare_site(),
-			'wpo_gzip_compression_settings_added' => $wpo_gzip_compression->is_gzip_compression_section_exists(),
+			'is_cloudflare_site' => $is_cloudflare_site,
+			'wpo_gzip_compression_enabled_by_wpo' => $wpo_gzip_compression_enabled_by_wpo,
+			'wpo_gzip_compression_settings_added' => $is_gzip_compression_section_exists,
 			'info_link' => 'https://getwpo.com/gzip-compression-explained/',
 			'faq_link' => 'https://getwpo.com/gzip-faq-link/',
 			'class_name' => (!is_wp_error($wpo_gzip_compression_enabled) && $wpo_gzip_compression_enabled ? 'wpo-enabled' : 'wpo-disabled')
@@ -1184,6 +1196,7 @@ class WP_Optimize {
 			'spinner_src' => esc_attr(admin_url('images/spinner-2x.gif')),
 			'settings_page_url' => admin_url('admin.php?page=wpo_settings'),
 			'sites' => $this->get_sites(),
+			'user_always_ignores_table_delete_warning' => (get_user_meta(get_current_user_id(), 'wpo-ignores-table-delete-warning', true)) ? true : false,
 		));
 	}
 
@@ -1657,28 +1670,6 @@ class WP_Optimize {
 		// Optimal hook for most extensions to hook into.
 		$this->template_directories = apply_filters('wp_optimize_template_directories', $template_directories);
 
-	}
-
-	/**
-	 * Not currently used; needs looking at.
-	 * N.B. The description does not match the actual function
-	 *
-	 * @param integer $date Date of when the optimization was executed.
-	 */
-	public function send_email($date) {
-		ob_start();
-		// This need to work on - currently not using the parameter values.
-		$my_time = current_time("timestamp", 0);
-		$my_date = gmdate(get_option('date_format') . ' ' . get_option('time_format'), $my_time);
-		$sendto = (!$options->get_option('email-address') ? get_bloginfo('admin_email') : $options->get_option('email-address'));// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $sendto is unused but function Not currently used.
-		$subject = get_bloginfo('name').": ".__("Automatic Operation Completed", "wp-optimize")." ".$my_date;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $subject is unused but function Not currently used.
-
-		$msg  = __("Scheduled optimization was executed at", "wp-optimize")." ".$my_date."\r\n"."\r\n";
-		$msg .= __("You can safely delete this email.", "wp-optimize")."\r\n";
-		$msg .= "\r\n";
-		$msg .= __("Regards,", "wp-optimize")."\r\n";
-		$msg .= __("WP-Optimize Plugin", "wp-optimize");
-		ob_end_clean();
 	}
 
 	/**
@@ -2290,6 +2281,33 @@ class WP_Optimize {
 	public function load_modal_template() {
 		$this->include_template('modal.php');
 	}
+
+	/**
+	 * Delete transients and semaphores data from options table.
+	 */
+	public function delete_transients_and_semaphores() {
+		global $wpdb;
+
+		$masks = array(
+			'updraft_locked_wpo_%',
+			'updraft_unlocked_wpo_%',
+			'updraft_last_lock_time_wpo_%',
+			'updraft_semaphore_wpo_%',
+			'wpo_locked_%',
+			'wpo_unlocked_%',
+			'wpo_last_lock_time_%',
+			'wpo_semaphore_%',
+			'_transient_timeout_wpo_%',
+			'_transient_wpo_%',
+		);
+
+		$where_parts = array();
+		foreach ($masks as $mask) {
+			$where_parts[] = "(`option_name` LIKE '{$mask}')";
+		}
+
+		$wpdb->query("DELETE FROM {$wpdb->options} WHERE " . join(' OR ', $where_parts));
+	}
 }
 
 /**
@@ -2349,6 +2367,8 @@ function wpo_uninstall_actions() {
 	WP_Optimize::get_browser_cache()->disable();
 	WP_Optimize()->get_options()->delete_all_options();
 	WP_Optimize()->get_minify()->plugin_uninstall();
+	WP_Optimize()->get_options()->wipe_settings();
+	WP_Optimize()->delete_transients_and_semaphores();
 }
 
 function WP_Optimize() {

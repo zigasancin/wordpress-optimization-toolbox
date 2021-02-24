@@ -5,7 +5,7 @@ Tags: cache, minify, database, image optimize, performance, clean, spam, speed, 
 Requires PHP: 5.6
 Requires at least: 4.4
 Tested up to: 5.6
-Stable tag: 3.1.6
+Stable tag: 3.1.7
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -117,6 +117,7 @@ Our free version of WP-Optimize is great, but we also have an even more powerful
 * <strong>WP-CLI support:</strong> provides a way to manage optimizations from command-line interface if you have lots of sites
 * <strong>Lazy Loading:</strong> load only the images and part of a web-page when it is visible to the user so they can see something very quickly.
 * <strong>Optimization Preview:</strong> gives users the ability to preview, select and remove data and records available for optimization from the database.
+* <strong>Preload key requests:</strong> preload assets such as web fonts and icon fonts, as recommended by Google PageSpeed Insights.
 * <strong>Premium support</strong> - caching is one of the most complex things you can do for a website, so premium support offers you peace of mind there’s someone to talk quickly to if you need any technical answers or help configuring the optimizations of cache settings for your website.
 
 = Translations =
@@ -362,6 +363,33 @@ If none of the above works, disable processing of JavaScript files in the minify
 
 
 == Changelog ==
+
+
+= 3.1.7 - 12/Feb/2021 =
+
+* FEATURE: Premium - Preload key requests (Preload fonts and other assets)
+* FIX: Detecting Brotli compression issue
+* FIX: Cache - PHP Warning in URLs to exclude from caching
+* FIX: Premium - Unused images - Unused Images Tool not recognising Greek characters
+* FIX: Button for disabling Gzip doesn't showing
+* TWEAK: Database optimization - Prevent fatal error due files missing
+* TWEAK: Skip minify when SCRIPT_DEBUG is set to true
+* TWEAK: Fixed Font-awesome settings
+* TWEAK: Add support for different spellings of "Font-awesome"
+* TWEAK: Update the feature comparison table
+* TWEAK: Added the option to not show the warning before deleting a table
+* TWEAK: Wipe all options upon plugin de-installation
+* TWEAK: Premium - Lazy-load - Lazy load support for background images
+* TWEAK: Minify - Add file size in the minify cache summary
+* TWEAK: Detect conflicting plugins for GZIP issue
+* TWEAK: Database optimization - Include all tables if database prefix is not set on WP install
+* TWEAK: Premium - Unused images - added "X of X images loaded" for unused trash images
+* TWEAK: Don't allow to remove actionscheduler_* tables
+* TWEAK: Premium - Unused images - Show a progression screen when doing any action with unused images
+* TWEAK: Cache - Enable cache for the old default permalink structure `domain.com/index.php/a-post-name` by creating a folder without the extention
+* TWEAK: Show previous action as message on Trackbacks or Comments enable or disable.
+* TWEAK: Prevent deprecation notice on PHP 8.0
+* TWEAK: Update notices
 
 = 3.1.6 - 17/Dec/2020 =
 
@@ -1048,4 +1076,4 @@ If none of the above works, disable processing of JavaScript files in the minify
 * Fix Interface
 
 == Upgrade Notice ==
-* 3.1.6: Minify - * Cache feature - Do not cache pages with fatal errors,  Do not cache RSS feeds. Page cacheing - Prevent adding the "comment cookie" when ordering on WooCommerce; a recommended update for all.
+* 3.1.7: Premium - Unused images - Unused Images Tool not recognising Greek characters. Button for disabling Gzip doesn't showing.

@@ -119,12 +119,14 @@ class WPO_Page_Cache {
 		add_action('wpo_cache_flush', array($this, 'delete_cache_size_information'));
 
 		// Add purge cache link to admin bar.
-		add_filter('wpo_cache_admin_bar_menu_items', array($this, 'admin_bar_purge_cache'), 20, 2);
+		add_filter('wpo_cache_admin_bar_menu_items', array($this, 'admin_bar_purge_cache'), 20, 1);
 
 		// Handle single page purge.
 		add_action('wp_loaded', array($this, 'handle_purge_single_page_cache'));
 
 		add_action('admin_init', array($this, 'admin_init'));
+
+		$this->check_compatibility_issues();
 	}
 
 	/**
@@ -156,10 +158,9 @@ class WPO_Page_Cache {
 	 * Add Purge from cache in admin bar.
 	 *
 	 * @param array        $menu_items
-	 * @param WP_Admin_Bar $wp_admin_bar
 	 * @return array
 	 */
-	public function admin_bar_purge_cache($menu_items, $wp_admin_bar) {
+	public function admin_bar_purge_cache($menu_items) {
 		global $pagenow;
 		if (!$this->can_purge_cache()) return $menu_items;
 
@@ -1047,6 +1048,58 @@ EOF;
 	 */
 	public function has_warnings() {
 		return $this->has_errors('warning');
+	}
+
+	/**
+	 * Check the cache compatibility issues.
+	 */
+	public function check_compatibility_issues() {
+		if (!$this->is_enabled()) return;
+
+		if ($this->is_pagespeedninja_gzip_active()) add_action('admin_notices', array($this, 'show_pagespeedninja_gzip_notice'));
+		if ($this->is_farfutureexpiration_gzip_active()) add_action('admin_notices', array($this, 'show_farfutureexpiration_gzip_notice'));
+	}
+
+	/**
+	 * Check if PageSpeed Ninja is active and GZIP compression option is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_pagespeedninja_gzip_active() {
+		if (!class_exists('PagespeedNinja')) return false;
+
+		$options = get_option('pagespeedninja_config');
+		$gzip = !empty($options) ? (bool) $options['psi_EnableGzipCompression'] && (bool) $options['html_gzip'] : false;
+
+		return $gzip;
+	}
+
+	/**
+	 * Output PageSpeed Ninja Gzip notice.
+	 */
+	public function show_pagespeedninja_gzip_notice() {
+		echo '<div id="wp-optimize-pagespeedninja-gzip-notice" class="error wpo-notice"><p><b>'.__('WP-Optimize:', 'wp-optimize').'</b> '.__('Please disable the feature "Gzip compression" in PageSpeed Ninja to prevent conflicts.', 'wp-optimize').'</p></div>';
+	}
+
+	/**
+	 * Check if Far Future Expiration is active and GZIP compression option is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_farfutureexpiration_gzip_active() {
+		if (!class_exists('farFutureExpiration')) return false;
+
+		$options = get_option('far_future_expiration_settings');
+		$gzip = !empty($options) ? (bool) $options['enable_gzip'] : false;
+
+		return $gzip;
+	}
+
+	/**
+	 * Output Far Future Expiration Gzip notice.
+	 */
+	public function show_farfutureexpiration_gzip_notice() {
+		echo '<div id="wp-optimize-pagespeedninja-gzip-notice" class="error wpo-notice"><p><b>'.__('WP-Optimize:', 'wp-optimize').'</b> '.__('Please disable the feature "Gzip compression" in Far Future Expiration to prevent conflicts.', 'wp-optimize').'</p></div>';
 	}
 }
 

@@ -561,6 +561,10 @@ if (!function_exists('wpo_get_url_path')) :
 function wpo_get_url_path($url = '') {
 	$url = '' == $url ? wpo_current_url() : $url;
 	$url_parts = parse_url($url);
+	
+	if (isset($url_parts['path']) && 0 === stripos($url_parts['path'], '/index.php')) {
+		$url_parts['path'] = str_replace('/index.php', '/index-php', $url_parts['path']);
+	}
 
 	if (!isset($url_parts['host'])) $url_parts['host'] = '';
 	if (!isset($url_parts['path'])) $url_parts['path'] = '';
@@ -703,7 +707,7 @@ function wpo_url_exception_match($url, $exception) {
 	// if we have no wildcat in the end of exception then add slash.
 	if (!preg_match('#\(\.\*\)$#', $exception)) $exception .= '/';
 
-	$exception = str_replace('/', '\/', $exception);
+	$exception = preg_quote($exception);
 
 	return preg_match('#^'.$exception.'$#i', $url) || preg_match('#^'.$sub_dir.$exception.'$#i', $url);
 }

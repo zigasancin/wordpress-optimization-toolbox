@@ -28,6 +28,8 @@ class WP_Optimize_Minify_Admin {
 		add_action('after_switch_theme', array('WP_Optimize_Minify_Cache_Functions', 'cache_increment'));
 		add_action('updraftcentral_version_updated', array('WP_Optimize_Minify_Cache_Functions', 'reset'));
 		add_action('elementor/editor/after_save', array('WP_Optimize_Minify_Cache_Functions', 'reset'));
+		// Output asset preload placeholder, replaced by premium
+		add_action('wpo_minify_settings_tabs', array($this, 'output_assets_preload_placeholder'), 10, 1);
 
 		add_action('wp_optimize_register_admin_content', array($this, 'register_content'));
 	}
@@ -216,6 +218,21 @@ class WP_Optimize_Minify_Admin {
 			array(
 				'wpo_minify_options' => $wpo_minify_options,
 				'default_protocol' => $url['scheme']
+			)
+		);
+	}
+
+	/**
+	 * Minify - Outputs the settings tab
+	 *
+	 * @return void
+	 */
+	public function output_assets_preload_placeholder($wpo_minify_options) {
+		WP_Optimize()->include_template(
+			'minify/asset-preload.php',
+			false,
+			array(
+				'wpo_minify_options' => $wpo_minify_options
 			)
 		);
 	}
