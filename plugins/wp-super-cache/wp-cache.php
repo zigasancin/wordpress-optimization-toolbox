@@ -3,7 +3,7 @@
 Plugin Name: WP Super Cache
 Plugin URI: https://wordpress.org/plugins/wp-super-cache/
 Description: Very fast caching plugin for WordPress.
-Version: 1.7.1
+Version: 1.7.2
 Author: Automattic
 Author URI: https://automattic.com/
 License: GPL2+
@@ -586,10 +586,11 @@ function wp_cache_manager_updates() {
 	if( isset( $_POST[ 'action' ] ) && $_POST[ 'action' ] == 'scupdates' ) {
 		if( isset( $_POST[ 'wp_cache_location' ] ) && $_POST[ 'wp_cache_location' ] != '' ) {
 			$dir = realpath( trailingslashit( dirname( $_POST[ 'wp_cache_location' ] ) ) );
-			if ( $dir == false )
+			if ( $dir === realpath( '.' ) || false === $dir ) {
 				$dir = WP_CONTENT_DIR . '/cache/';
-			else
+			} else {
 				$dir = trailingslashit( $dir ) . trailingslashit(wpsc_deep_replace( array( '..', '\\' ), basename( $_POST[ 'wp_cache_location' ] ) ) );
+			}
 			$new_cache_path = $dir;
 		} else {
 			$new_cache_path = WP_CONTENT_DIR . '/cache/';
@@ -598,7 +599,7 @@ function wp_cache_manager_updates() {
 			if ( file_exists( $new_cache_path ) == false )
 				rename( $cache_path, $new_cache_path );
 			$cache_path = $new_cache_path;
-			wp_cache_replace_line('^ *\$cache_path', "\$cache_path = '" . $cache_path . "';", $wp_cache_config_file);
+			wp_cache_replace_line('^ *\$cache_path', "\$cache_path = " . var_export( $cache_path, true ) . ";", $wp_cache_config_file);
 		}
 
 		if( isset( $_POST[ 'wp_super_cache_late_init' ] ) ) {
@@ -2567,8 +2568,12 @@ function wp_cache_create_advanced_cache() {
 	global $wpsc_advanced_cache_filename, $wpsc_advanced_cache_dist_filename;
 	if ( file_exists( ABSPATH . 'wp-config.php') ) {
 		$global_config_file = ABSPATH . 'wp-config.php';
+	} elseif ( file_exists( dirname( ABSPATH ) . '/wp-config.php' ) ) {
+		$global_config_file = dirname( ABSPATH ) . '/wp-config.php';
+	} elseif ( defined( 'DEBIAN_FILE' ) && file_exists( DEBIAN_FILE ) ) {
+		$global_config_file = DEBIAN_FILE;
 	} else {
-		$global_config_file = dirname(ABSPATH) . '/wp-config.php';
+		die('Cannot locate wp-config.php');
 	}
 
 	$line = 'define( \'WPCACHEHOME\', \'' . dirname( __FILE__ ) . '/\' );';
@@ -2607,7 +2612,7 @@ function wp_cache_create_advanced_cache() {
 			! strpos( $file, "WP SUPER CACHE 0.8.9.1" ) &&
 			! strpos( $file, "WP SUPER CACHE 1.2" )
 		) {
-			wp_die( '<div class="notice notice-error"><h4>' . __( 'Warning!', 'wp-super-cache' ) . "</h4><p>" . sprintf( __( 'The file %s already exists. Please manually delete it before using this plugin. If you continue to see this message after deleting it please contact your hosting support.', 'wp-super-cache' ), $wpsc_advanced_cache_filename ) . "</p></div>" );
+			return false;
 		}
 	}
 
@@ -2626,24 +2631,47 @@ function wpsc_check_advanced_cache() {
 	global $wpsc_advanced_cache_filename;
 
 	$ret = true;
+	$other_advanced_cache = false;
 	if ( file_exists( $wpsc_advanced_cache_filename ) ) {
 		$file = file_get_contents( $wpsc_advanced_cache_filename );
-		if( strpos( $file, "WP SUPER CACHE 0.8.9.1" ) || strpos( $file, "WP SUPER CACHE 1.2" ) ) {
+		if ( strpos( $file, "WP SUPER CACHE 0.8.9.1" ) || strpos( $file, "WP SUPER CACHE 1.2" ) ) {
 			return true;
 		} else {
+			$other_advanced_cache = true;
 			$ret = wp_cache_create_advanced_cache();
 		}
 	} else {
 		$ret = wp_cache_create_advanced_cache();
 	}
 
-	if( false == $ret ) {
-		echo '<div class="notice notice-error"><h4>' . __( 'Warning', 'wp-super-cache' ) . "! <em>" . sprintf( __( '%s/advanced-cache.php</em> does not exist or cannot be updated.', 'wp-super-cache' ), WP_CONTENT_DIR ) . "</h4>";
-		echo "<p><ol><li>" . __( 'If it already exists, please delete the file first.', 'wp-super-cache' ) . "</li>";
-		echo "<li>" . sprintf( __( 'Make %1$s writable using the chmod command through your ftp or server software. (<em>chmod 777 %1$s</em>) and refresh this page. This is only a temporary measure and you&#8217;ll have to make it read only afterwards again. (Change 777 to 755 in the previous command)', 'wp-super-cache' ), WP_CONTENT_DIR ) . "</li>";
-		echo "<li>" . sprintf( __( 'Refresh this page to update <em>%s/advanced-cache.php</em>', 'wp-super-cache' ), WP_CONTENT_DIR ) . "</li></ol>";
-		echo sprintf( __( 'If that doesn&#8217;t work, make sure the file <em>%s/advanced-cache.php</em> doesn&#8217;t exist:', 'wp-super-cache' ), WP_CONTENT_DIR ) . "<ol>";
-		echo "</ol>";
+	if ( false == $ret ) {
+		if ( $other_advanced_cache ) {
+			echo '<div style="width: 50%" class="notice notice-error"><h2>' . __( 'Warning! You may not be allowed to use this plugin on your site.', 'wp-super-cache' ) . "</h2>";
+			echo '<p>' .
+				sprintf(
+					__( 'The file %s was created by another plugin or by your system administrator. Please examine the file carefully by FTP or SSH and consult your hosting documentation. ', 'wp-super-cache' ),
+					$wpsc_advanced_cache_filename
+				) .
+				'</p>';
+			echo '<p>' .
+				__( 'If it was created by another caching plugin please uninstall that plugin first before activating WP Super Cache. If the file is not removed by that action you should delete the file manually.', 'wp-super-cache' ),
+				'</p>';
+			echo '<p><strong>' .
+				__( 'If you need support for this problem contact your hosting provider.', 'wp-super-cache' ),
+				'</strong></p>';
+		} elseif ( ! is_writeable_ACLSafe( $wpsc_advanced_cache_filename ) ) {
+			echo '<div class="notice notice-error"><h2>' . __( 'Warning', 'wp-super-cache' ) . "! <em>" . sprintf( __( '%s/advanced-cache.php</em> cannot be updated.', 'wp-super-cache' ), WP_CONTENT_DIR ) . "</h2>";
+			echo '<ol>';
+			echo "<li>" .
+				sprintf(
+					__( 'Make %1$s writable using the chmod command through your ftp or server software. (<em>chmod 777 %1$s</em>) and refresh this page. This is only a temporary measure and you&#8217;ll have to make it read only afterwards again. (Change 777 to 755 in the previous command)', 'wp-super-cache' ),
+					WP_CONTENT_DIR
+				) .
+				"</li>";
+			echo "<li>" . sprintf( __( 'Refresh this page to update <em>%s/advanced-cache.php</em>', 'wp-super-cache' ), WP_CONTENT_DIR ) . "</li></ol>";
+			echo sprintf( __( 'If that doesn&#8217;t work, make sure the file <em>%s/advanced-cache.php</em> doesn&#8217;t exist:', 'wp-super-cache' ), WP_CONTENT_DIR ) . "<ol>";
+			echo "</ol>";
+		}
 		echo "</div>";
 		return false;
 	}
@@ -3442,6 +3470,9 @@ function wpsc_get_htaccess_info() {
 
 	$gziprules =  "<IfModule mod_mime.c>\n  <FilesMatch \"\\.html\\.gz\$\">\n    ForceType text/html\n    FileETag None\n  </FilesMatch>\n  AddEncoding gzip .gz\n  AddType text/html .gz\n</IfModule>\n";
 	$gziprules .= "<IfModule mod_deflate.c>\n  SetEnvIfNoCase Request_URI \.gz$ no-gzip\n</IfModule>\n";
+
+	$vary_header = $cache_control_header = '';
+
 	if ( defined( 'WPSC_VARY_HEADER' ) ) {
 		if ( WPSC_VARY_HEADER != '' ) {
 			$vary_header = WPSC_VARY_HEADER;
@@ -3771,9 +3802,9 @@ function wp_cache_disable_plugin( $delete_config_file = true ) {
 
 	uninstall_supercache( WP_CONTENT_DIR . '/cache' );
 	$file_not_deleted = false;
+	wpsc_remove_advanced_cache();
 	if ( @file_exists( WP_CONTENT_DIR . "/advanced-cache.php" ) ) {
-		if ( false == @unlink( WP_CONTENT_DIR . "/advanced-cache.php" ) )
-			$file_not_deleted[] = 'advanced-cache.php';
+		$file_not_deleted[] = 'advanced-cache.php';
 	}
 	if ( $delete_config_file && @file_exists( WP_CONTENT_DIR . "/wp-cache-config.php" ) ) {
 		if ( false == unlink( WP_CONTENT_DIR . "/wp-cache-config.php" ) )
