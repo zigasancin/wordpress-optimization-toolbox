@@ -13,7 +13,8 @@ use AMP_Theme_Support;
 use AmpProject\AmpWP\Infrastructure\Conditional;
 use AmpProject\AmpWP\Infrastructure\Registerable;
 use AmpProject\AmpWP\Infrastructure\Service;
-use AmpProject\AmpWP\Option;
+use AmpProject\AmpWP\QueryVar;
+use AmpProject\AmpWP\Services;
 
 /**
  * OptionsMenu class.
@@ -134,6 +135,8 @@ class OptionsMenu implements Conditional, Service, Registerable {
 	 * Add menu.
 	 */
 	public function add_menu_items() {
+		require_once ABSPATH . '/wp-admin/includes/plugin.php';
+
 		/*
 		 * Note that the admin items for Validated URLs and Validation Errors will also be placed under this admin menu
 		 * page when the current user can manage_options.
@@ -180,6 +183,8 @@ class OptionsMenu implements Conditional, Service, Registerable {
 		/** This action is documented in includes/class-amp-theme-support.php */
 		do_action( 'amp_register_polyfills' );
 
+		$amp_slug_customization_watcher = Services::get( 'amp_slug_customization_watcher' );
+
 		$asset_file   = AMP__DIR__ . '/assets/js/' . self::ASSET_HANDLE . '.asset.php';
 		$asset        = require $asset_file;
 		$dependencies = $asset['dependencies'];
@@ -209,6 +214,7 @@ class OptionsMenu implements Conditional, Service, Registerable {
 		$is_reader_theme = $this->reader_themes->theme_data_exists( get_stylesheet() );
 
 		$js_data = [
+			'AMP_QUERY_VAR'               => amp_get_slug(),
 			'CURRENT_THEME'               => [
 				'name'            => $theme->get( 'Name' ),
 				'description'     => $theme->get( 'Description' ),
