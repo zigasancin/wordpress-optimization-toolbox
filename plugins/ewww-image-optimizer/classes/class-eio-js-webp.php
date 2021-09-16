@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Enables EWWW IO to filter the page content and replace img elements with WebP markup.
  */
-class EIO_Alt_Webp extends EIO_Page_Parser {
+class EIO_JS_Webp extends EIO_Page_Parser {
 
 	/**
 	 * A list of user-defined exclusions, populated by validate_user_exclusions().
@@ -32,36 +32,66 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	protected $user_element_exclusions = array();
 
 	/**
-	 * The Alt WebP inline script contents. Current length 11704.
+	 * Base64-encoded placeholder image.
 	 *
-	 * @access private
-	 * @var string $inline_script
+	 * @access protected
+	 * @var string $placeholder_src
 	 */
-	private $inline_script = '';
+	protected $placeholder_src = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
 	/**
-	 * Register (once) actions and filters for Alt WebP.
+	 * The 'check webp' script contents.
+	 *
+	 * @access private
+	 * @var string $check_webp_script
+	 */
+	private $check_webp_script = '';
+
+	/**
+	 * The 'load webp' script contents.
+	 *
+	 * @access private
+	 * @var string $load_webp_script
+	 */
+	private $load_webp_script = '';
+
+	/**
+	 * Register (once) actions and filters for JS WebP.
 	 */
 	function __construct() {
-		global $eio_alt_webp;
-		if ( is_object( $eio_alt_webp ) ) {
+		global $eio_js_webp;
+		if ( is_object( $eio_js_webp ) ) {
 			return 'you are doing it wrong';
-		}
-		if ( ewww_image_optimizer_ce_webp_enabled() ) {
-			return false;
 		}
 		parent::__construct();
 		$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
-		// Start an output buffer before any output starts.
-		/* add_action( 'template_redirect', array( $this, 'buffer_start' ), 0 ); */
+
+		$uri = add_query_arg( null, null );
+		$this->debug_message( "request uri is $uri" );
+
+		add_filter( 'eio_do_js_webp', array( $this, 'should_process_page' ), 10, 2 );
+
+		/**
+		 * Allow pre-empting JS WebP by page.
+		 *
+		 * @param bool Whether to parse the page for images to rewrite for WebP, default true.
+		 * @param string $uri The URL of the page.
+		 */
+		if ( ! apply_filters( 'eio_do_js_webp', true, $uri ) ) {
+			return;
+		}
+
+		// Hook into the output buffer callback function.
 		add_filter( 'ewww_image_optimizer_filter_page_output', array( $this, 'filter_page_output' ), 20 );
 		// Filter for NextGEN image urls within JSON.
 		add_filter( 'ngg_pro_lightbox_images_queue', array( $this, 'ngg_pro_lightbox_images_queue' ), 11 );
 		// Filter for WooCommerce product variations JSON.
 		add_filter( 'woocommerce_pre_json_available_variations', array( $this, 'woocommerce_pre_json_available_variations' ) );
 
+		// Load up the minified check script.
+		$this->check_webp_script = file_get_contents( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'includes/check-webp.min.js' );
 		// Load up the minified script so we can inline it.
-		$this->inline_script = file_get_contents( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'includes/load_webp.min.js' );
+		$this->load_webp_script = file_get_contents( EWWW_IMAGE_OPTIMIZER_PLUGIN_PATH . 'includes/load-webp.min.js' );
 
 		$allowed_urls = ewww_image_optimizer_get_option( 'ewww_image_optimizer_webp_paths' );
 		if ( $this->is_iterable( $allowed_urls ) ) {
@@ -75,17 +105,125 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 		$this->debug_message( 'checking any images matching these URLs/patterns for webp: ' . implode( ',', $this->allowed_urls ) );
 		$this->debug_message( 'rewriting any images matching these domains to webp: ' . implode( ',', $this->allowed_domains ) );
 
-		// Load the appropriate JS.
+		// Load the appropriate JS, in the footer, but as early as possible.
 		if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
 			// Load the non-minified, non-inline version of the webp rewrite script.
-			add_action( 'wp_enqueue_scripts', array( $this, 'debug_script' ) );
+			add_action( 'wp_enqueue_scripts', array( $this, 'debug_script' ), -99 );
 		} elseif ( defined( 'EWWW_IMAGE_OPTIMIZER_WEBP_EXTERNAL_SCRIPT' ) && EWWW_IMAGE_OPTIMIZER_WEBP_EXTERNAL_SCRIPT ) {
 			// Load the minified, non-inline version of the webp rewrite script.
-			add_action( 'wp_enqueue_scripts', array( $this, 'min_external_script' ) );
+			add_action( 'wp_enqueue_scripts', array( $this, 'min_external_script' ), -99 );
 		} else {
-			add_action( 'wp_head', array( $this, 'inline_script' ) );
+			add_action( 'wp_head', array( $this, 'inline_check_script' ), -99 );
+			if ( defined( 'EWWW_IMAGE_OPTIMIZER_WEBP_FOOTER_SCRIPT' ) && EWWW_IMAGE_OPTIMIZER_WEBP_FOOTER_SCRIPT ) {
+				add_action( 'wp_footer', array( $this, 'inline_load_script' ), -99 );
+			} else {
+				add_action( 'wp_head', array( $this, 'inline_load_script' ), -90 );
+			}
 		}
 		$this->validate_user_exclusions();
+	}
+
+	/**
+	 * Check if pages should be processed, especially for things like page builders.
+	 *
+	 * @since 6.2.2
+	 *
+	 * @param boolean $should_process Whether JS WebP should process the page.
+	 * @param string  $uri The URI of the page (no domain or scheme included).
+	 * @return boolean True to process the page, false to skip.
+	 */
+	function should_process_page( $should_process = true, $uri = '' ) {
+		// Don't foul up the admin side of things, unless a plugin needs to.
+		if ( is_admin() &&
+			/**
+			 * Provide plugins a way of running JS WebP for images in the WordPress Admin, usually for admin-ajax.php.
+			 *
+			 * @param bool false Allow JS WebP to run on the Dashboard. Defaults to false.
+			 */
+			false === apply_filters( 'eio_allow_admin_js_webp', false )
+		) {
+			$this->debug_message( 'is_admin' );
+			return false;
+		}
+		if ( ewww_image_optimizer_ce_webp_enabled() ) {
+			return false;
+		}
+		if ( empty( $uri ) ) {
+			$uri = add_query_arg( null, null );
+		}
+		if ( false !== strpos( $uri, '?brizy-edit' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, '&builder=true' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, 'cornerstone=' ) || false !== strpos( $uri, 'cornerstone-endpoint' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, 'ct_builder=' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, 'ct_render_shortcode=' ) || false !== strpos( $uri, 'action=oxy_render' ) ) {
+			return false;
+		}
+		if ( did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, 'elementor-preview=' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, 'et_fb=' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, 'fb-edit=' ) ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, '?fl_builder' ) ) {
+			return false;
+		}
+		if ( '/print/' === substr( $uri, -7 ) ) {
+			return false;
+		}
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return false;
+		}
+		if ( false !== strpos( $uri, 'tatsu=' ) ) {
+			return false;
+		}
+		if ( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === sanitize_text_field( wp_unslash( $_POST['action'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return false;
+		}
+		if ( is_customize_preview() ) {
+			$this->debug_message( 'is_customize_preview' );
+			return false;
+		}
+		global $wp_query;
+		if ( ! isset( $wp_query ) || ! ( $wp_query instanceof WP_Query ) ) {
+			return $should_process;
+		}
+		if ( ! did_action( 'parse_query' ) ) {
+			return $should_process;
+		}
+		if ( $this->is_amp() ) {
+			return false;
+		}
+		if ( is_embed() ) {
+			$this->debug_message( 'is_embed' );
+			return false;
+		}
+		if ( is_feed() ) {
+			$this->debug_message( 'is_feed' );
+			return false;
+		}
+		if ( is_preview() ) {
+			$this->debug_message( 'is_preview' );
+			return false;
+		}
+		if ( wp_script_is( 'twentytwenty-twentytwenty', 'enqueued' ) ) {
+			$this->debug_message( 'twentytwenty enqueued' );
+			return false;
+		}
+		return $should_process;
 	}
 
 	/**
@@ -98,117 +236,17 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	}
 
 	/**
-	 * Starts an output buffer and registers the callback function to do WebP replacement.
-	 */
-	function buffer_start() {
-		ob_start( array( $this, 'filter_page_output' ) );
-	}
-
-	/**
-	 * Copies attributes from the original img element to the noscript element.
-	 *
-	 * @param string $image The full text of the img element.
-	 * @param string $nscript A noscript element that will be given all the (known) attributes of $image.
-	 * @param string $prefix Optional. Value to prepend to all attribute names. Default 'data-'.
-	 * @return string The modified noscript tag.
-	 */
-	function attr_copy( $image, $nscript, $prefix = 'data-' ) {
-		if ( ! is_string( $image ) || ! is_string( $nscript ) ) {
-			return $nscript;
-		}
-		$attributes = array(
-			'accesskey',
-			'align',
-			'alt',
-			'border',
-			'class',
-			'contenteditable',
-			'contextmenu',
-			'crossorigin',
-			'dir',
-			'draggable',
-			'dropzone',
-			'height',
-			'hidden',
-			'hspace',
-			'id',
-			'ismap',
-			'lang',
-			'longdesc',
-			'sizes',
-			'spellcheck',
-			'style',
-			'tabindex',
-			'title',
-			'translate',
-			'usemap',
-			'vspace',
-			'width',
-			'data-animation',
-			'data-attachment-id',
-			'data-auto-height',
-			'data-caption',
-			'data-comments-opened',
-			'data-delay',
-			'data-event-trigger',
-			'data-flex_fx',
-			'data-height',
-			'data-hide-on-end',
-			'data-highlight-color',
-			'data-highlight-border-color',
-			'data-highlight-border-opacity',
-			'data-highlight-border-width',
-			'data-highlight-opacity',
-			'data-image-meta',
-			'data-image-title',
-			'data-image-description',
-			'data-interval',
-			'data-large_image_width',
-			'data-large_image_height',
-			'data-lazy',
-			'data-lazy-type',
-			'data-mode',
-			'data-name',
-			'data-no-lazy',
-			'data-orig-size',
-			'data-partial',
-			'data-per-view',
-			'data-permalink',
-			'data-pin-description',
-			'data-pin-id',
-			'data-pin-media',
-			'data-pin-url',
-			'data-rel',
-			'data-ride',
-			'data-shadow',
-			'data-shadow-direction',
-			'data-slide',
-			'data-slide-to',
-			'data-target',
-			'data-vc-zoom',
-			'data-width',
-			'data-wrap',
-		);
-		foreach ( $attributes as $attribute ) {
-			$attr_value = $this->get_attribute( $image, $attribute );
-			if ( $attr_value ) {
-				$this->set_attribute( $nscript, $prefix . $attribute, $attr_value );
-			}
-		}
-		return $nscript;
-	}
-
-	/**
 	 * Replaces images within a srcset attribute with their .webp derivatives.
 	 *
 	 * @param string $srcset A valid srcset attribute from an img element.
 	 * @return bool|string False if no changes were made, or the new srcset if any WebP images replaced the originals.
 	 */
 	function srcset_replace( $srcset ) {
+		$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
 		$srcset_urls = explode( ' ', $srcset );
 		$found_webp  = false;
 		if ( $this->is_iterable( $srcset_urls ) && count( $srcset_urls ) > 1 ) {
-			ewwwio_debug_message( 'parsing srcset urls' );
+			$this->debug_message( 'parsing srcset urls' );
 			foreach ( $srcset_urls as $srcurl ) {
 				if ( is_numeric( substr( $srcurl, 0, 1 ) ) ) {
 					continue;
@@ -218,10 +256,10 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 					$trailing = ',';
 					$srcurl   = rtrim( $srcurl, ',' );
 				}
-				ewwwio_debug_message( "looking for $srcurl from srcset" );
+				$this->debug_message( "looking for $srcurl from srcset" );
 				if ( $this->validate_image_url( $srcurl ) ) {
 					$srcset = str_replace( $srcurl . $trailing, $this->generate_url( $srcurl ) . $trailing, $srcset );
-					ewwwio_debug_message( "replaced $srcurl in srcset" );
+					$this->debug_message( "replaced $srcurl in srcset" );
 					$found_webp = true;
 				}
 			}
@@ -236,70 +274,65 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	}
 
 	/**
-	 * Replaces images with the Jetpack data attributes with their .webp derivatives.
+	 * Replaces images within the Jetpack data attributes with their .webp derivatives.
 	 *
 	 * @param string $image The full text of the img element.
-	 * @param string $nscript A noscript element that will be assigned the jetpack data attributes.
 	 * @return string The modified noscript tag.
 	 */
-	function jetpack_replace( $image, $nscript ) {
+	function jetpack_replace( $image ) {
+		$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
 		$data_orig_file = $this->get_attribute( $image, 'data-orig-file' );
 		if ( $data_orig_file ) {
-			ewwwio_debug_message( "looking for data-orig-file: $data_orig_file" );
+			$this->debug_message( "looking for data-orig-file: $data_orig_file" );
 			if ( $this->validate_image_url( $data_orig_file ) ) {
-				$this->set_attribute( $nscript, 'data-webp-orig-file', $this->generate_url( $data_orig_file ) );
-				ewwwio_debug_message( "replacing $data_orig_file in data-orig-file" );
+				$this->set_attribute( $image, 'data-webp-orig-file', $this->generate_url( $data_orig_file ), true );
+				$this->debug_message( "replacing $data_orig_file via data-webp-orig-file" );
 			}
-			$this->set_attribute( $nscript, 'data-orig-file', $data_orig_file, true );
 		}
 		$data_medium_file = $this->get_attribute( $image, 'data-medium-file' );
 		if ( $data_medium_file ) {
-			ewwwio_debug_message( "looking for data-medium-file: $data_medium_file" );
+			$this->debug_message( "looking for data-medium-file: $data_medium_file" );
 			if ( $this->validate_image_url( $data_medium_file ) ) {
-				$this->set_attribute( $nscript, 'data-webp-medium-file', $this->generate_url( $data_medium_file ) );
-				ewwwio_debug_message( "replacing $data_medium_file in data-medium-file" );
+				$this->set_attribute( $image, 'data-webp-medium-file', $this->generate_url( $data_medium_file ), true );
+				$this->debug_message( "replacing $data_medium_file via data-webp-medium-file" );
 			}
-			$this->set_attribute( $nscript, 'data-medium-file', $data_medium_file, true );
 		}
 		$data_large_file = $this->get_attribute( $image, 'data-large-file' );
 		if ( $data_large_file ) {
-			ewwwio_debug_message( "looking for data-large-file: $data_large_file" );
+			$this->debug_message( "looking for data-large-file: $data_large_file" );
 			if ( $this->validate_image_url( $data_large_file ) ) {
-				$this->set_attribute( $nscript, 'data-webp-large-file', $this->generate_url( $data_large_file ) );
-				ewwwio_debug_message( "replacing $data_large_file in data-large-file" );
+				$this->set_attribute( $image, 'data-webp-large-file', $this->generate_url( $data_large_file ), true );
+				$this->debug_message( "replacing $data_large_file via data-webp-large-file" );
 			}
-			$this->set_attribute( $nscript, 'data-large-file', $data_large_file, true );
 		}
-		return $nscript;
+		return $image;
 	}
 
 	/**
 	 * Replaces images with the WooCommerce data attributes with their .webp derivatives.
 	 *
 	 * @param string $image The full text of the img element.
-	 * @param string $nscript A noscript element that will be assigned the WooCommerce data attributes.
 	 * @return string The modified noscript tag.
 	 */
-	function woocommerce_replace( $image, $nscript ) {
+	function woocommerce_replace( $image ) {
+		$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
 		$data_large_image = $this->get_attribute( $image, 'data-large_image' );
 		if ( $data_large_image ) {
-			ewwwio_debug_message( "looking for data-large_image: $data_large_image" );
+			$this->debug_message( "looking for data-large_image: $data_large_image" );
 			if ( $this->validate_image_url( $data_large_image ) ) {
-				$this->set_attribute( $nscript, 'data-webp-large_image', $this->generate_url( $data_large_image ) );
-				ewwwio_debug_message( "replacing $data_large_image in data-large_image" );
+				$this->set_attribute( $image, 'data-webp-large_image', $this->generate_url( $data_large_image ), true );
+				$this->debug_message( "replacing $data_large_image via data-webp-large_image" );
 			}
-			$this->set_attribute( $nscript, 'data-large_image', $data_large_image );
 		}
 		$data_src = $this->get_attribute( $image, 'data-src' );
 		if ( $data_src ) {
-			ewwwio_debug_message( "looking for data-src: $data_src" );
+			$this->debug_message( "looking for data-src: $data_src" );
 			if ( $this->validate_image_url( $data_src ) ) {
-				$this->set_attribute( $nscript, 'data-webp-src', $this->generate_url( $data_src ) );
-				ewwwio_debug_message( "replacing $data_src in data-src" );
+				$this->set_attribute( $image, 'data-webp-src', $this->generate_url( $data_src ), true );
+				ewwwio_debug_message( "replacing $data_src via data-webp-src" );
 			}
-			$this->set_attribute( $nscript, 'data-src', $data_src );
 		}
-		return $nscript;
+		return $image;
 	}
 
 	/**
@@ -314,38 +347,37 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	 * @return string The altered buffer containing the full page with WebP images inserted.
 	 */
 	function filter_page_output( $buffer ) {
-		ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
-		// If any of this is true, don't filter the page.
-		$uri = add_query_arg( null, null );
-		$this->debug_message( "request uri is $uri" );
+		$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
 		if (
 			empty( $buffer ) ||
-			is_admin() ||
-			strpos( $uri, 'cornerstone=' ) !== false ||
-			strpos( $uri, 'cornerstone-endpoint' ) !== false ||
-			did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ||
-			'/print/' === substr( $uri, -7 ) ||
-			strpos( $uri, 'elementor-preview=' ) !== false ||
-			strpos( $uri, 'et_fb=' ) !== false ||
-			strpos( $uri, 'tatsu=' ) !== false ||
-			( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === sanitize_text_field( wp_unslash( $_POST['action'] ) ) ) || // phpcs:ignore WordPress.Security.NonceVerification
-			is_embed() ||
-			is_feed() ||
-			is_preview() ||
-			is_customize_preview() ||
-			( defined( 'REST_REQUEST' ) && REST_REQUEST ) ||
 			preg_match( '/^<\?xml/', $buffer ) ||
-			strpos( $buffer, 'amp-boilerplate' ) ||
-			$this->is_amp() ||
-			ewww_image_optimizer_ce_webp_enabled()
+			strpos( $buffer, 'amp-boilerplate' )
 		) {
-			ewwwio_debug_message( 'JS WebP disabled' );
+			$this->debug_message( 'JS WebP disabled' );
+			return $buffer;
+		}
+		if ( $this->is_json( $buffer ) ) {
+			return $buffer;
+		}
+		if ( ! $this->should_process_page() ) {
+			$this->debug_message( 'JS WebP should not process page' );
 			return $buffer;
 		}
 
+		$body_tags        = $this->get_elements_from_html( $buffer, 'body' );
+		$body_webp_script = '<script data-cfasync="false">if(ewww_webp_supported){document.body.classList.add("webp-support");}</script>';
+		if ( $this->is_iterable( $body_tags ) && ! empty( $body_tags[0] ) && false !== strpos( $body_tags[0], '<body' ) ) {
+			// Add the WebP script right after the opening tag.
+			$buffer = str_replace( $body_tags[0], $body_tags[0] . "\n" . $body_webp_script, $buffer );
+		} else {
+			$buffer = str_replace( '<body>', "<body>\n$body_webp_script", $buffer );
+		}
 		$images = $this->get_images_from_html( preg_replace( '/<(picture|noscript).*?\/\1>/s', '', $buffer ), false );
 		if ( ! empty( $images[0] ) && $this->is_iterable( $images[0] ) ) {
 			foreach ( $images[0] as $index => $image ) {
+				if ( false !== strpos( $image, 'ewww_webp' ) ) {
+					continue;
+				}
 				// Ignore 0-size Pinterest schema images.
 				if ( strpos( $image, 'data-pin-description=' ) && strpos( $image, 'width="0" height="0"' ) ) {
 					continue;
@@ -357,7 +389,7 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 				ewwwio_debug_message( "parsing an image: $file" );
 				if ( strpos( $image, 'jetpack-lazy-image' ) && $this->validate_image_url( $file ) ) {
 					$new_image = $image;
-					$new_image = $this->jetpack_replace( $image, $new_image );
+					$new_image = $this->jetpack_replace( $new_image );
 					$real_file = $this->get_attribute( $new_image, 'data-lazy-src' );
 					ewwwio_debug_message( 'checking webp for Jetpack Lazy Load data-lazy-src' );
 					if ( $real_file && $this->validate_image_url( $real_file ) ) {
@@ -377,31 +409,34 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 					}
 				} elseif ( $this->validate_image_url( $file ) && false === strpos( $image, 'lazyload' ) ) {
 					// If a CDN path match was found, or .webp image existence is confirmed, and this is not a lazy-load 'dummy' image.
-					ewwwio_debug_message( 'found a webp image or forced path' );
-					$nscript = '<noscript>';
-					$this->set_attribute( $nscript, 'data-img', $file );
-					$this->set_attribute( $nscript, 'data-webp', $this->generate_url( $file ) );
+					$this->debug_message( 'found a webp image or forced path' );
+					$new_image = $image;
+					$this->set_attribute( $new_image, 'data-src-img', $file );
+					$this->set_attribute( $new_image, 'data-src-webp', $this->generate_url( $file ) );
 					$srcset = $this->get_attribute( $image, 'srcset' );
 					if ( $srcset ) {
 						$srcset_webp = $this->srcset_replace( $srcset );
 						if ( $srcset_webp ) {
-							$this->set_attribute( $nscript, 'data-srcset-webp', $srcset_webp );
+							$this->set_attribute( $new_image, 'data-srcset-webp', $srcset_webp );
 						}
-						$this->set_attribute( $nscript, 'data-srcset-img', $srcset );
+						$this->set_attribute( $new_image, 'data-srcset-img', $srcset );
+						$this->remove_attribute( $new_image, 'srcset' );
 					}
 					if ( $this->get_attribute( $image, 'data-orig-file' ) && $this->get_attribute( $image, 'data-medium-file' ) && $this->get_attribute( $image, 'data-large-file' ) ) {
-						$nscript = $this->jetpack_replace( $image, $nscript );
+						$new_image = $this->jetpack_replace( $new_image );
 					}
 					if ( $this->get_attribute( $image, 'data-large_image' ) && $this->get_attribute( $image, 'data-src' ) ) {
-						$nscript = $this->woocommerce_replace( $image, $nscript );
+						$new_image = $this->woocommerce_replace( $new_image );
 					}
-					$nscript = $this->attr_copy( $image, $nscript );
-					$this->set_attribute( $nscript, 'class', 'ewww_webp' );
-					$ns_img = $image;
-					$this->set_attribute( $ns_img, 'data-eio', 'j', true );
-					ewwwio_debug_message( "going to swap\n$image\nwith\n$nscript" . $ns_img . '</noscript>' );
-					$buffer = str_replace( $image, $nscript . $ns_img . '</noscript>', $buffer );
-				} elseif ( ! empty( $file ) && strpos( $image, 'data-lazy-src=' ) ) {
+					$this->set_attribute( $new_image, 'src', $this->placeholder_src, true );
+					if ( $new_image !== $image ) {
+						$this->set_attribute( $new_image, 'data-eio', 'j', true );
+						$this->set_attribute( $new_image, 'class', $this->get_attribute( $new_image, 'class' ) . ' ewww_webp', true );
+						$this->debug_message( "going to swap\n$image\nwith\n$new_image" );
+						$noscript = '<noscript>' . $image . '</noscript>';
+						$buffer   = str_replace( $image, $new_image . $noscript, $buffer );
+					}
+				} elseif ( ! empty( $file ) && strpos( $image, ' data-lazy-src=' ) ) {
 					// BJ Lazy Load & WP Rocket.
 					$new_image = $image;
 					$real_file = $this->get_attribute( $new_image, 'data-lazy-src' );
@@ -421,7 +456,7 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 						$this->set_attribute( $new_image, 'class', $this->get_attribute( $new_image, 'class' ) . ' ewww_webp_lazy_load', true );
 						$buffer = str_replace( $image, $new_image, $buffer );
 					}
-				} elseif ( ! empty( $file ) && strpos( $image, 'data-src=' ) && ( strpos( $image, 'data-lazy-type="image' ) || strpos( $image, 'lazyload' ) ) ) {
+				} elseif ( ! empty( $file ) && strpos( $image, ' data-src=' ) && ( strpos( $image, ' data-lazy-type="image' ) || strpos( $image, 'lazyload' ) ) ) {
 					// a3 or EWWW IO Lazy Load.
 					$new_image = $image;
 					$real_file = $this->get_attribute( $new_image, 'data-src' );
@@ -740,7 +775,7 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 				}
 			}
 		}
-		$this->debug_message( 'all done parsing page for alt webp' );
+		$this->debug_message( 'all done parsing page for JS WebP' );
 		return $buffer;
 	}
 
@@ -913,13 +948,14 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	 * @return bool True if the file exists or matches a forced path, false otherwise.
 	 */
 	function validate_image_url( $image ) {
-		ewwwio_debug_message( "webp validation for $image" );
+		$this->debug_message( "webp validation for $image" );
 		if (
 			strpos( $image, 'base64,R0lGOD' ) ||
 			strpos( $image, 'lazy-load/images/1x1' ) ||
-			strpos( $image, '/assets/images/' )
+			strpos( $image, '/assets/images/' ) ||
+			strpos( $image, '/lazy/placeholder' )
 		) {
-			ewwwio_debug_message( 'lazy load placeholder' );
+			$this->debug_message( 'lazy load placeholder' );
 			return false;
 		}
 		$extension  = '';
@@ -969,43 +1005,59 @@ class EIO_Alt_Webp extends EIO_Page_Parser {
 	}
 
 	/**
-	 * Load full webp script when SCRIPT_DEBUG is enabled.
+	 * Load full WebP script when SCRIPT_DEBUG is enabled.
 	 */
 	function debug_script() {
-		if ( $this->is_amp() ) {
+		if ( ! $this->should_process_page() ) {
 			return;
 		}
 		if ( ! ewww_image_optimizer_ce_webp_enabled() ) {
-			wp_enqueue_script( 'ewww-webp-load-script', plugins_url( '/includes/load_webp.js', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE ), array(), EWWW_IMAGE_OPTIMIZER_VERSION );
+			wp_enqueue_script( 'ewww-webp-check-script', plugins_url( '/includes/check-webp.js', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE ), array(), EWWW_IMAGE_OPTIMIZER_VERSION );
+			wp_enqueue_script( 'ewww-webp-load-script', plugins_url( '/includes/load-webp.js', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE ), array(), EWWW_IMAGE_OPTIMIZER_VERSION, true );
 		}
 	}
 
 	/**
-	 * Load minified webp script when EWWW_IMAGE_OPTIMIZER_WEBP_EXTERNAL_SCRIPT is set.
+	 * Load minified WebP script when EWWW_IMAGE_OPTIMIZER_WEBP_EXTERNAL_SCRIPT is set.
 	 */
 	function min_external_script() {
-		if ( $this->is_amp() ) {
+		if ( ! $this->should_process_page() ) {
 			return;
 		}
 		if ( ! ewww_image_optimizer_ce_webp_enabled() ) {
-			wp_enqueue_script( 'ewww-webp-load-script', plugins_url( '/includes/load_webp.min.js', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE ), array(), EWWW_IMAGE_OPTIMIZER_VERSION );
+			wp_enqueue_script( 'ewww-webp-check-script', plugins_url( '/includes/check-webp.min.js', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE ), array(), EWWW_IMAGE_OPTIMIZER_VERSION );
+			wp_enqueue_script( 'ewww-webp-load-script', plugins_url( '/includes/load-webp.min.js', EWWW_IMAGE_OPTIMIZER_PLUGIN_FILE ), array(), EWWW_IMAGE_OPTIMIZER_VERSION, true );
 		}
 	}
 
 	/**
-	 * Load minified (jscompress.com) inline version of webp script.
+	 * Load minified inline version of check WebP script.
 	 */
-	function inline_script() {
+	function inline_check_script() {
+		if ( ! $this->should_process_page() ) {
+			return;
+		}
 		if ( defined( 'EWWW_IMAGE_OPTIMIZER_NO_JS' ) && EWWW_IMAGE_OPTIMIZER_NO_JS ) {
 			return;
 		}
-		if ( $this->is_amp() ) {
+		$this->debug_message( 'inlining check webp script' );
+		echo '<script data-cfasync="false" type="text/javascript">' . $this->check_webp_script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/**
+	 * Load minified inline version of load WebP script.
+	 */
+	function inline_load_script() {
+		if ( defined( 'EWWW_IMAGE_OPTIMIZER_NO_JS' ) && EWWW_IMAGE_OPTIMIZER_NO_JS ) {
 			return;
 		}
-		ewwwio_debug_message( 'loading webp script without wp_add_inline_script' );
-		echo '<script data-cfasync="false" type="text/javascript">' . $this->inline_script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		if ( ! $this->should_process_page() ) {
+			return;
+		}
+		$this->debug_message( 'inlining load webp script' );
+		echo '<script data-cfasync="false" type="text/javascript">' . $this->load_webp_script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 }
 
-global $eio_alt_webp;
-$eio_alt_webp = new EIO_Alt_Webp();
+global $eio_js_webp;
+$eio_js_webp = new EIO_JS_Webp();

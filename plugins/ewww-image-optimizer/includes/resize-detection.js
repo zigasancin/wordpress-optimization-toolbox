@@ -3,13 +3,17 @@ window.onload = function() {
 	var adminBarButton = document.getElementById('wp-admin-bar-resize-detection');
 	if (adminBarButton) {
 		adminBarButton.onclick = function() {
+			adminBarButton.classList.toggle('ewww-fade');
 			clearScaledImages();
 			checkImageSizes();
+			setTimeout(function() {
+				adminBarButton.classList.toggle('ewww-fade');
+			}, 500);
 		};
 	}
 }
 function checkImageSizes() {
-	// Find images which have width or height different than their natural
+	// Find images which have width or height greater than their natural
 	// width or height, and give them a stark and ugly marker, as well
 	// as a useful title.
 	var imgs = document.getElementsByTagName("img");
@@ -20,6 +24,17 @@ function checkImageSizes() {
 	return false;
 }
 function checkImageScale(img) {
+	if (!img.src) {
+		return;
+	}
+	if ('string' == typeof img.src && img.src.search(/\.svg/) > -1) {
+		console.log('not checking size of SVG: ' + img.src);
+		return;
+	}
+	if ('string' == typeof img.src && img.src.search(/data:image/) > -1) {
+		console.log('not checking size of data uri');
+		return;
+	}
 	console.log('checking size of: ' + img.src);
         if (img.naturalWidth) {
         	if (img.naturalWidth > 25 && img.naturalHeight > 25 && img.clientWidth > 25 && img.clientHeight > 25) {
@@ -45,6 +60,9 @@ function clearScaledImages() {
 }
 document.addEventListener('lazyloaded', function(e){
 	e.target.classList.remove('scaled-image');
-        e.target.title = '';
+	var current_title = e.target.title;
+	if (0 === current_title.search('Forced to wrong size')) {
+        	e.target.title = '';
+	}
 	checkImageScale(e.target);
 });
