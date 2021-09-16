@@ -316,7 +316,13 @@ class ShortPixelPng2Jpg {
             $toUnlink[] = $retMain->unlink;
             do_action('shortpixel/image/convertpng2jpg_before', $ID, $meta);
             //convert to the new URLs the urls in the existing posts.
-            $baseRelPath = trailingslashit(dirname($image));
+            $baseRelPath = dirname($image);
+            // this happens when image does not have a subdir structure like 2021/07
+			      if ($baseRelPath == '.')
+				     $baseRelPath = '';
+			         else
+				    $baseRelPath = trailingslashit($baseRelPath);
+
             $toReplace[self::removeUrlProtocol($imageUrl)] = $baseUrl . $baseRelPath . wp_basename($ret['file']);
             $pngSize = $ret['png_size'];
             $jpgSize = $ret['jpg_size'];
@@ -369,6 +375,7 @@ class ShortPixelPng2Jpg {
             update_post_meta($ID, '_wp_attachment_metadata', $meta);
             $itemHandler->deleteItemCache(); // remove cache since filetype changes.
             Log::addDebug("Updated meta: " . json_encode($meta));
+						wp_update_post(array('ID' => $ID, 'post_mime_type' => 'image/jpeg' ));
             do_action('shortpixel/image/convertpng2jpg_after', $ID, $meta);
         }
 
@@ -445,7 +452,7 @@ class ShortPixelPng2Jpg {
             'attachments' =>	array("UPDATE $wpdb->posts SET guid = replace(guid, %s, %s) WHERE post_type = 'attachment'",  __('Attachments','shortpixel-image-optimiser') ),
             'links' =>			array("UPDATE $wpdb->links SET link_url = replace(link_url, %s, %s)", __('Links','shortpixel-image-optimiser') ),
             'custom' =>			array("UPDATE $wpdb->postmeta SET meta_value = replace(meta_value, %s, %s)",  __('Custom Fields','shortpixel-image-optimiser') ),
-            'guids' =>			array("UPDATE $wpdb->posts SET guid = replace(guid, %s, %s)",  __('GUIDs','shortpixel-image-optimiser') )
+            'guids' =>			array("UPDATE $wpdb->posts SET guid = replace(guid, %s, %s) ",  __('GUIDs','shortpixel-image-optimiser') )
         );
         if(count($options) == 0) {
             $options = array_keys($queries);
@@ -494,7 +501,9 @@ class ShortPixelPng2Jpg {
             else {
                 foreach($map as $oldurl => $newurl) {
                     if(strlen($newurl)) {
-                        $result = $wpdb->query( $wpdb->prepare( $queries[$option][0], $oldurl, $newurl) );
+												$prepared = $wpdb->prepare( $queries[$option][0], $oldurl, $newurl);
+												Log::addDebug("Prepared Query", $prepared);
+                        $result = $wpdb->query( $prepared );
                         $results[$option] = array($result, $queries[$option][1]);
                     }
                 }

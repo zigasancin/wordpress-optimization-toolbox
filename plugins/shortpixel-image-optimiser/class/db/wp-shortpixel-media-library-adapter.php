@@ -532,8 +532,7 @@ class WpShortPixelMediaLbraryAdapter {
 
   public static function getThumbsToOptimize($data, $filepath)
   {
-          //  @todo weak call. See how in future settings might come via central provider.
-          $settings = new \WPShortPixelSettings();
+          $settings = \wpSPIO()->settings();
 
           $fs = \wpSPIO()->fileSystem();
           $mainfile = $fs->getFile($filepath);
@@ -558,6 +557,12 @@ class WpShortPixelMediaLbraryAdapter {
                   $file = $fs->getFile($basedir . $sizeFileCheck->getFileName());
 
                   if ($file->getExtension() !== $mainfile->getExtension())
+                  {
+                    continue;
+                  }
+
+                  // Drop @2x (retina) images from the size. Some plugins generate retinas, add them to the sizes without registering them, which leads to confusing of the plugin since retinas are not stored under the optimize thumbslist.
+                  if (strpos($size, '@2x') !== false || strpos($file->getFileName(), '@2x') !== false)
                   {
                     continue;
                   }
@@ -621,6 +626,7 @@ class WpShortPixelMediaLbraryAdapter {
         foreach($sizes as $key => $val) {
             if (strpos($key, ShortPixelMeta::WEBP_THUMB_PREFIX) === 0) continue;
             if (isset($val['mime-type']) && $val['mime-type'] == "image/webp") continue;
+            if (isset($val['mime-type']) && $val['mime-type'] == "image/avif") continue;
             if(!isset($val['file'])) continue;
             if (in_array($key, $exclude)) continue;
             $file = $val['file'];
@@ -690,6 +696,7 @@ class WpShortPixelMediaLbraryAdapter {
         $pattern = '/^' . preg_quote($base, '/') . '-\d+x\d+\.'. $ext .'/';
 
         $thumbs = array_merge($thumbs, self::getFilesByPattern($dirPath, $pattern));
+
 
         /*$dirIterator = new \DirectoryIterator($dirPath);
         $regExIterator = new \RegexIterator($dirIterator, $pattern);

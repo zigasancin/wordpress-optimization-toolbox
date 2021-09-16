@@ -96,6 +96,7 @@ class WPShortPixel {
         add_action( 'delete_attachment', array( &$this, 'onDeleteImage') );
 
         add_action('mime_types', array($this, 'addWebpMime'));
+        add_action('mime_types', array($this, 'addAvifMime'));
 
         // integration with WP/LR Sync plugin
         add_action( 'wplr_update_media', array( &$this, 'onWpLrUpdateMedia' ), 10, 2);
@@ -130,7 +131,7 @@ class WPShortPixel {
 
             //toolbar notifications
             add_action( 'admin_bar_menu', array( &$this, 'toolbar_shortpixel_processing'), 999 );
-            add_action( 'wp_head', array( $this, 'headCSS')); // for the front-end
+        //    add_action( 'wp_head', array( $this, 'headCSS')); // for the front-end
             //deactivate plugin
             add_action( 'admin_post_shortpixel_deactivate_plugin', array(&$this, 'deactivatePlugin'));
             //only if the key is not yet valid or the user hasn't bought any credits.
@@ -677,7 +678,7 @@ class WPShortPixel {
             if(   !is_plugin_active('image-watermark/image-watermark.php')
                && !is_plugin_active('amazon-s3-and-cloudfront/wordpress-s3.php')
                && !is_plugin_active('amazon-s3-and-cloudfront-pro/amazon-s3-and-cloudfront-pro.php')
-               && !is_plugin_active('easy-watermark/index.php')) {
+               && !is_plugin_active('easy-watermark/easy-watermark.php')) {
                 try {
                     $URLsAndPATHs = $this->getURLsAndPATHs($itemHandler);
                     //send a processing request right after a file was uploaded, do NOT wait for response
@@ -1421,7 +1422,7 @@ class WPShortPixel {
             //$prio = $this->prioQ->remove($ID);
             $prio = $this->prioQ->remove($itemId);
             if(isset($result["Code"])
-               && (   $result["Code"] == "write-fail" //could not write
+               && (   in_array($result["Code"], array("write-fail", "backup-fail")) //could not write
                    || (in_array(0+$result["Code"], array(-201)) && $meta->getRetries() >= 3))) { //for -201 (invalid image format) we retry only 3 times.
                 //put this one in the failed images list - to show the user at the end
                 $prio = $this->prioQ->addToFailed($itemHandler->getQueuedId());
@@ -1503,105 +1504,7 @@ class WPShortPixel {
         $result["BulkMsg"] = $this->bulkProgressMessage($deltaBulkPercent, $minutesRemaining);
     }
 
-    /** Check for unlisted thumbsnail settings and checks if this file has unlisted thumbs present.
-    * Will update meta. if any are found.
-    * @param ShortPixelMetaFacade $itemHandler ShortpixelMetaFacade item handler.
-    * @return int Number of additions to the sizes Metadata.
-    * @todo This function should Dis/pear. addUnlistedThumbs is now part of image model, to be called via proper controller.
-    */
-    private function addUnlistedThumbs($itemHandler)
-    {
-      // must be media library, setting must be on.
-      if($itemHandler->getType() != ShortPixelMetaFacade::MEDIA_LIBRARY_TYPE
-         || ! $this->_settings->optimizeUnlisted) {
-        return 0;
-      }
 
-      $itemHandler->removeSPFoundMeta(); // remove all found meta. If will be re-added here every time.
-      $meta = $itemHandler->getMeta();
-
-      Log::addDebug('Finding Thumbs on path' . $meta->getPath());
-      //$thumbs = WpShortPixelMediaLbraryAdapter::findThumbs($meta->getPath());
-
-      $fs = \wpSPIO()->fileSystem();
-      $mainFile = $fs->getFile($meta->getPath());
-
-      // Find Thumbs returns *full file path*
-      $foundThumbs = WpShortPixelMediaLbraryAdapter::findThumbs($mainFile->getFullPath());
-
-        // no thumbs, then done.
-      if (count($foundThumbs) == 0)
-      {
-        return 0;
-      }
-      //first identify which thumbs are not in the sizes
-      $sizes = $meta->getThumbs();
-      $mimeType = false;
-
-      $allSizes = array();
-      $basepath = $mainFile->getFileDir()->getPath();
-
-      foreach($sizes as $size) {
-        // Thumbs should have filename only. This is shortpixel-meta ! Not metadata!
-        // Provided filename can be unexpected (URL, fullpath), so first do check, get filename, then check the full path
-        $sizeFileCheck = $fs->getFile($size['file']);
-        $sizeFilePath = $basepath . $sizeFileCheck->getFileName();
-        $sizeFile = $fs->getFile($sizeFilePath);
-
-        //get the mime-type from one of the thumbs metas
-        if(isset($size['mime-type'])) { //situation from support case #9351 Ramesh Mehay
-            $mimeType = $size['mime-type'];
-        }
-        $allSizes[] = $sizeFile;
-      }
-
-      foreach($foundThumbs as $id => $found) {
-          $foundFile = $fs->getFile($found);
-
-          foreach($allSizes as $sizeFile) {
-              if ($sizeFile->getExtension() !== $foundFile->getExtension())
-              {
-                $foundThumbs[$id] = false;
-              }
-              elseif ($sizeFile->getFileName() === $foundFile->getFileName())
-              {
-                  $foundThumbs[$id] = false;
-              }
-          }
-      }
-          // add the unfound ones to the sizes array
-          $ind = 1;
-          $counter = 0;
-          // Assumption:: there is no point in adding to this array since findThumbs should find *all* thumbs that are relevant to this image.
-          /*while (isset($sizes[ShortPixelMeta::FOUND_THUMB_PREFIX . str_pad("".$start, 2, '0', STR_PAD_LEFT)]))
-          {
-            $start++;
-          } */
-      //    $start = $ind;
-
-          foreach($foundThumbs as $found) {
-              if($found !== false) {
-                  Log::addDebug('Adding File to sizes -> ' . $found);
-                  $size = getimagesize($found);
-                  Log::addDebug('Add Unlisted, add size' . $found );
-
-                  $sizes[ShortPixelMeta::FOUND_THUMB_PREFIX . str_pad("".$ind, 2, '0', STR_PAD_LEFT)]= array( // it's a file that has no corresponding thumb so it's the WEBP for the main file
-                      'file' => ShortPixelAPI::MB_basename($found),
-                      'width' => $size[0],
-                      'height' => $size[1],
-                      'mime-type' => $mimeType
-                  );
-                  $ind++;
-                  $counter++;
-              }
-          }
-          if($ind > 1) { // at least one thumbnail added, update
-              $meta->setThumbs($sizes);
-              $itemHandler->updateMeta($meta);
-          }
-
-        return $counter;
-  } // addUnlistedThumbs
 
     private function sendToProcessing($itemHandler, $compressionType = false, $onlyThumbs = false) {
         //conversion of PNG 2 JPG for existing images
@@ -1813,6 +1716,14 @@ class WPShortPixel {
                             if ($webpObj->exists())
                               $webpObj->delete();
 
+                        }
+
+                        if ($settings->createAvif)
+                        {
+                          $avifObj = $fs->getFile( (string) $fileObj->getFileDir() . $fileObj->getFileBase() .  '.avif');
+
+                          if ($avifObj->exists())
+                            $avifObj->delete();
                         }
 
                         $shortPixelMeta["thumbsOpt"] = max(0, $shortPixelMeta["thumbsOpt"] - 1); // this is a complicated count of number of thumbnails
@@ -2121,6 +2032,10 @@ class WPShortPixel {
             $fsFile = $fs->getFile($png2jpgMain); // original is non-existing at this time. :: Target
             $bkFile = $fs->getFile($bkFolder->getPath() . $fsFile->getFileName()); // Update this, because of filename (extension)
 
+						// Do the mime type
+						wp_update_post(array('ID' => $attachmentID, 'post_mime_type' => 'image/png' ));
+
+
         }
 
         //first check if the file is readable by the current user - otherwise it will be unaccessible for the web browser
@@ -2192,7 +2107,7 @@ class WPShortPixel {
                         if ($bkOrigFile && $bkOrigFile->exists())
                           $bkOrigFile->move($origFile);
 
-                        Log::addDebug('Restore result - Backup original file', array($bkOrigFile, $origFile));
+                        Log::addDebug('Restore result - Backup original file', array($bkOrigFile->getFullPath(), $origFile->getFullPath() ));
                     }
                     //$this->renameWithRetina($bkFile, $file);
                     if (! $bkFile->move($fsFile))
@@ -2264,7 +2179,15 @@ class WPShortPixel {
                     $crtMeta['height'] = $height;
                 }
                 if($png2jpgMain) {
-                    $crtMeta['file'] = trailingslashit(dirname($crtMeta['file'])) . $fsFile->getFileName();
+
+                    $dirname = dirname($crtMeta['file']);
+                    if ($dirname == '.')
+                      $dirname = '';
+                    else
+                      $dirname = trailingslashit($dirname);
+
+                    $crtMeta['file'] = $dirname . $fsFile->getFileName();
+
                     update_attached_file($ID, $crtMeta['file']);
 
                     if($png2jpgSizes && count($png2jpgSizes)) {
@@ -2299,7 +2222,7 @@ class WPShortPixel {
 
             if(isset($toUnlink['PATHs'])) foreach($toUnlink['PATHs'] as $unlink) {
                 if($png2jpgMain) {
-                    WPShortPixel::log("PNG2JPG unlink $unlink");
+                    Log::addDebug("PNG2JPG unlink $unlink");
                     $unlinkFile = $fs->getFile($unlink);
                     $unlinkFile->delete();
 
@@ -2307,21 +2230,30 @@ class WPShortPixel {
                 //try also the .webp
                 $unlinkWebpSymlink = trailingslashit(dirname($unlink)) . wp_basename($unlink, '.' . pathinfo($unlink, PATHINFO_EXTENSION)) . '.webp';
                 $unlinkWebp = $unlink . '.webp';
-                WPShortPixel::log("DoRestore webp unlink $unlinkWebp");
+              //  WPShortPixel::log("DoRestore webp unlink $unlinkWebp");
                 //@unlink($unlinkWebpSymlink);
+
 
                 $unlinkFile = $fs->getFile($unlinkWebpSymlink);
                 if ($unlinkFile->exists())
                 {
-                  Log::addDebug('DoRestore, Deleting - ', $unlinkWebpSymlink );
+                  Log::addDebug('DoRestore, Deleting Webp - ', $unlinkWebpSymlink );
                   $unlinkFile->delete();
                 }
 
-                $unlinkFile = $fs->getFile($unlinkWebp);
-                if ($unlinkFile->exists())
+                $unlinkFileDoubleExt = $fs->getFile($unlinkWebp);
+                if ($unlinkFileDoubleExt->exists())
                 {
-                    Log::addDebug('DoRestore, Deleting - ', $unlinkWebp );
-                    $unlinkFile->delete();
+                    Log::addDebug('DoRestore, Deleting DoubleWebp - ', $unlinkWebp );
+                    $unlinkFileDoubleExt->delete();
+                }
+
+                $unlinkAvif = $fs->getFile($unlinkFile->getFileDir() . $unlinkFile->getFileBase() . '.avif');
+
+                if ($unlinkAvif->exists())
+                {
+                   $unlinkAvif->delete();
+                   Log::addDebug('DoRestore, Deleting Avif :' . $unlinkAvif->getFullPath() );
                 }
 
             }
@@ -3091,7 +3023,7 @@ class WPShortPixel {
     /** Updates HTAccess files for Webp
     * @param boolean $clear Clear removes all statements from htaccess. For disabling webp.
     */
-    public static function alterHtaccess( $clear = false ){
+    public static function alterHtaccess($webp = false, $avif = false){
       // [BS] Backward compat. 11/03/2019 - remove possible settings from root .htaccess
       /* Plugin init is before loading these admin scripts. So it can happen misc.php is not yet loaded */
       if (! function_exists('insert_with_markers'))
@@ -3103,56 +3035,86 @@ class WPShortPixel {
         $upload_dir = wp_upload_dir();
         $upload_base = trailingslashit($upload_dir['basedir']);
 
-        if ( $clear ) {
+        if ( ! $webp && ! $avif ) {
             insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', '');
             insert_with_markers( $upload_base . '.htaccess', 'ShortPixelWebp', '');
             insert_with_markers( trailingslashit(WP_CONTENT_DIR) . '.htaccess', 'ShortPixelWebp', '');
         } else {
 
-            $rules = '
-<IfModule mod_rewrite.c>
-  RewriteEngine On
+        $avif_rules = '
+        <IfModule mod_rewrite.c>
+        RewriteEngine On
 
-  ##### TRY FIRST the file appended with .webp (ex. test.jpg.webp) #####
-  # Does browser explicitly support webp?
-  RewriteCond %{HTTP_USER_AGENT} Chrome [OR]
-  # OR Is request from Page Speed
-  RewriteCond %{HTTP_USER_AGENT} "Google Page Speed Insights" [OR]
-  # OR does this browser explicitly support webp
-  RewriteCond %{HTTP_ACCEPT} image/webp
-  # AND NOT MS EDGE 42/17 - doesnt work.
-  RewriteCond %{HTTP_USER_AGENT} !Edge/17
-  # AND is the request a jpg or png?
-  RewriteCond %{REQUEST_URI} ^(.+)\.(?:jpe?g|png)$
-  # AND does a .ext.webp image exist?
-  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.webp -f
-  # THEN send the webp image and set the env var webp
-  RewriteRule ^(.+)$ $1.webp [NC,T=image/webp,E=webp,L]
+        ##### IF try the file with replaced extension (test.avif) #####
+        RewriteCond %{HTTP_ACCEPT} image/avif
+        # AND is the request a jpg or png? (also grab the basepath %1 to match in the next rule)
+        RewriteCond %{REQUEST_URI} ^(.+)\.(?:jpe?g|png)$
+        # AND does a .avif image exist?
+        RewriteCond %{DOCUMENT_ROOT}/%1.avif -f
+        # THEN send the webp image and set the env var avif
+        RewriteRule (.+)\.(?:jpe?g|png)$ $1.avif [NC,T=image/avif,E=avif,L]
 
-  ##### IF NOT, try the file with replaced extension (test.webp) #####
-  RewriteCond %{HTTP_USER_AGENT} Chrome [OR]
-  RewriteCond %{HTTP_USER_AGENT} "Google Page Speed Insights" [OR]
-  RewriteCond %{HTTP_ACCEPT} image/webp
-  RewriteCond %{HTTP_USER_AGENT} !Edge/17
-  # AND is the request a jpg or png? (also grab the basepath %1 to match in the next rule)
-  RewriteCond %{REQUEST_URI} ^(.+)\.(?:jpe?g|png)$
-  # AND does a .ext.webp image exist?
-  RewriteCond %{DOCUMENT_ROOT}/%1.webp -f
-  # THEN send the webp image and set the env var webp
-  RewriteRule (.+)\.(?:jpe?g|png)$ $1.webp [NC,T=image/webp,E=webp,L]
+        </IfModule>
+        <IfModule mod_headers.c>
+        # If REDIRECT_webp env var exists, append Accept to the Vary header
+        Header append Vary Accept env=REDIRECT_avif
+        </IfModule>
 
-</IfModule>
-<IfModule mod_headers.c>
-  # If REDIRECT_webp env var exists, append Accept to the Vary header
-  Header append Vary Accept env=REDIRECT_webp
-</IfModule>
+        <IfModule mod_mime.c>
+        AddType image/avif .avif
+        </IfModule>
+              ';
 
-<IfModule mod_mime.c>
-  AddType image/webp .webp
-</IfModule>
+            $webp_rules = '
+        <IfModule mod_rewrite.c>
+          RewriteEngine On
+
+          ##### TRY FIRST the file appended with .webp (ex. test.jpg.webp) #####
+          # Does browser explicitly support webp?
+          RewriteCond %{HTTP_USER_AGENT} Chrome [OR]
+          # OR Is request from Page Speed
+          RewriteCond %{HTTP_USER_AGENT} "Google Page Speed Insights" [OR]
+          # OR does this browser explicitly support webp
+          RewriteCond %{HTTP_ACCEPT} image/webp
+          # AND NOT MS EDGE 42/17 - doesnt work.
+          RewriteCond %{HTTP_USER_AGENT} !Edge/17
+          # AND is the request a jpg or png?
+          RewriteCond %{REQUEST_URI} ^(.+)\.(?:jpe?g|png)$
+          # AND does a .ext.webp image exist?
+          RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.webp -f
+          # THEN send the webp image and set the env var webp
+          RewriteRule ^(.+)$ $1.webp [NC,T=image/webp,E=webp,L]
+
+          ##### IF NOT, try the file with replaced extension (test.webp) #####
+          RewriteCond %{HTTP_USER_AGENT} Chrome [OR]
+          RewriteCond %{HTTP_USER_AGENT} "Google Page Speed Insights" [OR]
+          RewriteCond %{HTTP_ACCEPT} image/webp
+          RewriteCond %{HTTP_USER_AGENT} !Edge/17
+          # AND is the request a jpg or png? (also grab the basepath %1 to match in the next rule)
+          RewriteCond %{REQUEST_URI} ^(.+)\.(?:jpe?g|png)$
+          # AND does a .ext.webp image exist?
+          RewriteCond %{DOCUMENT_ROOT}/%1.webp -f
+          # THEN send the webp image and set the env var webp
+          RewriteRule (.+)\.(?:jpe?g|png)$ $1.webp [NC,T=image/webp,E=webp,L]
+
+        </IfModule>
+        <IfModule mod_headers.c>
+          # If REDIRECT_webp env var exists, append Accept to the Vary header
+          Header append Vary Accept env=REDIRECT_webp
+        </IfModule>
+
+        <IfModule mod_mime.c>
+          AddType image/webp .webp
+        </IfModule>
         ' ;
 
-            insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', $rules);
+          $rules = '';
+      //    if ($avif)
+          $rules .= $avif_rules;
+        //  if ($webp)
+          $rules .= $webp_rules;
+
+          insert_with_markers( get_home_path() . '.htaccess', 'ShortPixelWebp', $rules);
 
  /** In uploads and on, it needs Inherit. Otherwise things such as the 404 error page will not be loaded properly
 * since the WP rewrite will not be active at that point (overruled) **/
@@ -3163,6 +3125,7 @@ class WPShortPixel {
 
         }
     }
+
 
     /** Gets the average compression
     * @return int Average compressions percentage
@@ -3184,7 +3147,16 @@ class WPShortPixel {
             if (! isset($mimes['webp']))
               $mimes['webp'] = 'image/webp';
         }
+        return $mimes;
+    }
 
+    public function addAvifMime($mimes)
+    {
+        if ($this->_settings->createAvif)
+        {
+            if (! isset($mimes['avif']))
+              $mimes['webp'] = 'image/avif';
+        }
         return $mimes;
     }
 
@@ -3432,21 +3404,39 @@ Log::addDebug('GetQuotaInformation Result ', $dataArray);
                 $renderData['date'] = isset($data['ShortPixel']['date']) ? $data['ShortPixel']['date'] : null;
                 $renderData['quotaExceeded'] = $quotaExceeded;
                 $webP = 0;
+                $avif = 0;
                 if($extended) {
                     if(file_exists(dirname($file->getFullPath()) . '/' . ShortPixelAPI::MB_basename($file->getFullPath(), '.'.$fileExtension) . '.webp' )){
                         $webP++;
+                    }
+                    elseif(file_exists($file->getFullPath() . '.webp'))
+                    {
+                      $webP++;
+                    }
+                    if(file_exists(dirname($file->getFullPath()) . '/' . ShortPixelAPI::MB_basename($file->getFullPath(), '.'.$fileExtension) . '.avif' )){
+                        $avif++;
                     }
                     if(isset($data['sizes'])) {
                     foreach($data['sizes'] as $key => $size) {
                         if (strpos($key, ShortPixelMeta::WEBP_THUMB_PREFIX) === 0) continue;
                         $sizeName = $size['file'];
+
                         if(file_exists(dirname($file->getFullPath()) . '/' . ShortPixelAPI::MB_basename($sizeName, '.'.$fileExtension) . '.webp' )){
                             $webP++;
+                        }
+                        elseif(file_exists(dirname($file->getFullPath()) . '/' . $sizeName . '.webp'))
+                        {
+                          $webP++;
+                        }
+
+                        if(file_exists(dirname($file->getFullPath()) . '/' . ShortPixelAPI::MB_basename($sizeName, '.'.$fileExtension) . '.avif' )){
+                            $avif++;
                         }
                     }
                     }
                 }
                 $renderData['webpCount'] = $webP;
+                $renderData['avifCount'] = $avif;
             }
 /*            elseif($data['ShortPixelImprovement'] == __('Optimization N/A','shortpixel-image-optimiser')) { //We don't optimize this
                 $renderData['status'] = 'n/a';
@@ -3695,6 +3685,17 @@ Log::addDebug('GetQuotaInformation Result ', $dataArray);
                 $file->delete();
                 $file = $fs->getFile(substr($path, 0, $pos) . "@2x.webp");
                 $file->delete();
+
+                // Check for double extension. Everything is going, so delete if it's not us anyhow.
+                $file = $fs->getFile($path . '.webp');
+                $file->delete();
+
+                $file = $fs->getFile($path . '.@2xwebp');
+                $file->delete();
+
+                $file = $fs->getFile($path . '.avif');
+                if ($file->exists())
+                  $file->delete();
             }
             //delte also the backups for image and retina correspondent
             $fileName = $pathFile->getFileName();
@@ -3991,6 +3992,8 @@ Log::addDebug('GetQuotaInformation Result ', $dataArray);
         } elseif(is_array($_wp_additional_image_sizes)) {
             $sizes = array_merge($sizes, $_wp_additional_image_sizes);
         }
+
+        $sizes = apply_filters('shortpixel/settings/image_sizes', $sizes);
         return $sizes;
     }
 

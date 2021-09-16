@@ -114,6 +114,16 @@ class ShortPixelAPI {
 
       // This filter, moved to facade GetuRls/Paths
       //  $URLs = apply_filters('shortpixel_image_urls', $URLs, $itemHandler->getId()) ;
+       $convertTo = array();
+       if ($this->_settings->createWebp)
+          $convertTo[]= urlencode("+webp");
+       if ($this->_settings->createAvif)
+          $convertTo[] = urlencode('+avif');
+
+        if (count($convertTo) > 0)
+          $convertTo = implode('|', $convertTo);
+        else
+          $convertTo = '';
 
         $requestParameters = array(
             'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
@@ -121,7 +131,7 @@ class ShortPixelAPI {
             'lossy' => $compressionType === false ? $this->_settings->compressionType : $compressionType,
             'cmyk2rgb' => $this->_settings->CMYKtoRGBconversion,
             'keep_exif' => ($this->_settings->keepExif ? "1" : "0"),
-            'convertto' => ($this->_settings->createWebp ? urlencode("+webp") : ""),
+            'convertto' => $convertTo,
             'resize' => $this->_settings->resizeImages ? 1 + 2 * ($this->_settings->resizeType == 'inner' ? 1 : 0) : 0,
             'resize_width' => $this->_settings->resizeWidth,
             'resize_height' => $this->_settings->resizeHeight,
@@ -357,16 +367,23 @@ class ShortPixelAPI {
 
     }
 
-    function fromArchive($path, $optimizedUrl, $optimizedSize, $originalSize, $webpUrl) {
+    function fromArchive($path, $optimizedUrl, $optimizedSize, $originalSize, $webpUrl, $avifUrl) {
         $webpTempFile = "NA";
         if($webpUrl !== "NA") {
             $webpTempFile = $path . '/' . wp_basename($webpUrl);
             $webpTempFile = file_exists($webpTempFile) ? $webpTempFile : 'NA';
         }
 
+        $avifTempFile = false;
+        if ($avifUrl !== "NA")
+        {
+          $avifTempFile = $path . '/' . wp_basename($avifUrl);
+          $avifTempFile = file_exists($avifTempFile) ? $avifTempFile : 'NA';
+        }
+
         //if there is no improvement in size then we do not download this file
         if ( $originalSize == $optimizedSize )
-            return array("Status" => self::STATUS_UNCHANGED, "Message" => "File wasn't optimized so we do not download it.", "WebP" => $webpTempFile);
+            return array("Status" => self::STATUS_UNCHANGED, "Message" => "File wasn't optimized so we do not download it.", "WebP" => $webpTempFile, 'Avif' => $avifTempFile);
 
         $correctFileSize = $optimizedSize;
         $tempFile = $path . '/' . wp_basename($optimizedUrl);
@@ -377,12 +394,13 @@ class ShortPixelAPI {
                $size = filesize($tempFile);
                @unlink($tempFile);
                @unlink($webpTempFile);
+               @unlink($avifTempFile);
                $returnMessage = array(
                    "Status" => self::STATUS_ERROR,
                    "Code" => self::ERR_INCORRECT_FILE_SIZE,
                    "Message" => sprintf(__('Error in archive - incorrect file size (downloaded: %s, correct: %s )','shortpixel-image-optimiser'),$size, $correctFileSize));
             } else {
-               $returnMessage = array("Status" => self::STATUS_SUCCESS, "Message" => $tempFile, "WebP" => $webpTempFile);
+               $returnMessage = array("Status" => self::STATUS_SUCCESS, "Message" => $tempFile, "WebP" => $webpTempFile, 'Avif' => $avifTempFile);
            }
         } else {
             $returnMessage = array("Status" => self::STATUS_ERROR,
@@ -401,7 +419,7 @@ class ShortPixelAPI {
      * @param string $webpUrl
      * @return array status /message array
      */
-    private function handleDownload($optimizedUrl, $optimizedSize, $originalSize, $webpUrl){
+    private function handleDownload($optimizedUrl, $optimizedSize, $originalSize, $webpUrl, $avifUrl){
 
         $downloadTimeout = max(ini_get('max_execution_time') - 10, 15);
 
@@ -412,9 +430,16 @@ class ShortPixelAPI {
             $webpTempFile = is_wp_error( $webpTempFile ) ? "NA" : $webpTempFile;
         }
 
+        $avifTempFile = "NA";
+        if($avifUrl !== "NA") {
+            $avifUrl = $this->setPreferredProtocol(urldecode($avifUrl));
+            $avifTempFile = download_url($avifUrl, $downloadTimeout);
+            $avifTempFile = is_wp_error( $avifTempFile ) ? "NA" : $avifTempFile;
+        }
+
         //if there is no improvement in size then we do not download this file
         if ( $originalSize == $optimizedSize )
-            return array("Status" => self::STATUS_UNCHANGED, "Message" => "File wasn't optimized so we do not download it.", "WebP" => $webpTempFile);
+            return array("Status" => self::STATUS_UNCHANGED, "Message" => "File wasn't optimized so we do not download it.", "WebP" => $webpTempFile, 'Avif' => $avifTempFile);
 
         $correctFileSize = $optimizedSize;
         $fileURL = $this->setPreferredProtocol(urldecode($optimizedUrl));
@@ -428,11 +453,12 @@ class ShortPixelAPI {
         }
 
         //on success we return this
-        $returnMessage = array("Status" => self::STATUS_SUCCESS, "Message" => $tempFile, "WebP" => $webpTempFile);
+        $returnMessage = array("Status" => self::STATUS_SUCCESS, "Message" => $tempFile, "WebP" => $webpTempFile, 'Avif' => $avifTempFile);
 
         if ( is_wp_error( $tempFile ) ) {
             @unlink($tempFile);
             @unlink($webpTempFile);
+            @unlink($avifTempFile);
             $returnMessage = array(
                 "Status" => self::STATUS_ERROR,
                 "Code" => self::ERR_DOWNLOAD,
@@ -448,11 +474,13 @@ class ShortPixelAPI {
             $size = filesize($tempFile);
             @unlink($tempFile);
             @unlink($webpTempFile);
+            @unlink($avifTempFile);
             $returnMessage = array(
                 "Status" => self::STATUS_ERROR,
                 "Code" => self::ERR_INCORRECT_FILE_SIZE,
                 "Message" => sprintf(__('Error downloading file - incorrect file size (downloaded: %s, correct: %s )','shortpixel-image-optimiser'),$size, $correctFileSize));
         }
+        Log::addDebug('HandleDownload ReturnMSG ', $returnMessage);
         return $returnMessage;
     }
 
@@ -469,6 +497,8 @@ class ShortPixelAPI {
         if(apply_filters('shortpixel_skip_backup', false, $mainPath, $PATHs)){
             return array("Status" => self::STATUS_SUCCESS);
         }
+
+        $PATHs = apply_filters('shortpixel/backup/paths', $PATHs, $mainPath);
 
         //$fullSubDir = str_replace(wp_normalize_path(get_home_path()), "", wp_normalize_path(dirname($itemHandler->getMeta()->getPath()))) . '/';
         //$SubDir = ShortPixelMetaFacade::returnSubDir($itemHandler->getMeta()->getPath(), $itemHandler->getType());
@@ -613,9 +643,10 @@ class ShortPixelAPI {
             $fileSize = "LossySize";
         } else {
             $fileType = "LosslessURL";
-            $fileSize = "LoselessSize";
+            $fileSize = "LosslessSize";
         }
         $webpType = "WebP" . $fileType;
+        $avifType = 'AVIF' . $fileType;
 
         $archive = /*false &&*/
             ($this->_settings->downloadArchive == 7 && class_exists('PharData') && isset($APIresponse[count($APIresponse) - 1]->ArchiveStatus))
@@ -636,11 +667,15 @@ class ShortPixelAPI {
                 } else { //count thumbnails only
                     $this->_settings->thumbsCount = $this->_settings->thumbsCount + 1;
                 }
+
+                $webpUrl = isset($fileData->$webpType) ? $fileData->$webpType : 'NA';
+                $avifUrl = isset($fileData->$avifType) ? $fileData->$avifType : 'NA';
+
                 //TODO la sfarsit sa faca fallback la handleDownload
                 if($archive) {
-                    $downloadResult = $this->fromArchive($archive['Path'], $fileData->$fileType, $fileData->$fileSize, $fileData->OriginalSize, isset($fileData->$webpType) ? $fileData->$webpType : 'NA');
+                    $downloadResult = $this->fromArchive($archive['Path'], $fileData->$fileType, $fileData->$fileSize, $fileData->OriginalSize, $webpUrl, $avifUrl );
                 } else {
-                    $downloadResult = $this->handleDownload($fileData->$fileType, $fileData->$fileSize, $fileData->OriginalSize, isset($fileData->$webpType) ? $fileData->$webpType : 'NA');
+                    $downloadResult = $this->handleDownload($fileData->$fileType, $fileData->$fileSize, $fileData->OriginalSize, $webpUrl, $avifUrl);
                 }
 
                 $tempFiles[$counter] = $downloadResult;
@@ -672,8 +707,7 @@ class ShortPixelAPI {
         if( $this->_settings->backupImages )
         {
             $backupStatus = self::backupImage($mainPath, $PATHs);
-            Log::addDebug('Status', $backupStatus);
-            if($backupStatus == self::STATUS_FAIL) {
+            if($backupStatus['Status'] == self::STATUS_FAIL) {
                 $itemHandler->incrementRetries(1, self::ERR_SAVE_BKP, $backupStatus["Message"]);
                 self::cleanupTemporaryFiles($archive, empty($tempFiles) ? array() : $tempFiles);
                 Log::addError('Failed to create image backup!', array('status' => $backupStatus));
@@ -767,6 +801,16 @@ class ShortPixelAPI {
                         $tempWebpFilePATH->move($targetWebPFile);
                     }
                 }
+
+                $tempAvifFilePATH = $fs->getFile($tempFile["Avif"]);
+                if( $tempAvifFilePATH->exists() ) {
+                    /*$targetAvifFileCompat = $fs->getFile($targetFile->getFileDir() . $targetFile->getFileName() . '.avif');*/
+
+                    $targetWebPFile = $fs->getFile($targetFile->getFileDir() . $targetFile->getFileBase() . '.avif');
+                    $tempAvifFilePATH->move($targetWebPFile);
+
+                }
+
             } // / For each tempFile
             self::cleanupTemporaryFiles($archive, $tempFiles);
 
@@ -848,6 +892,7 @@ class ShortPixelAPI {
 
         $itemHandler->updateMeta($meta);
         $itemHandler->optimizationSucceeded();
+        $itemHandler->deleteItemCache();  // remove cache when done, to prevent re-optimizing things.
         Log::addDebug("HANDLE SUCCESS: Metadata saved.");
 
         if(!$originalSpace) { //das kann nicht sein, alles klar?!
