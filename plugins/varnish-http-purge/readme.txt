@@ -1,9 +1,9 @@
 = Proxy Cache Purge =
 Contributors: Ipstenu, mikeschroder, techpriester, danielbachhuber
 Tags: proxy, purge, cache, varnish, nginx
-Requires at least: 4.7
-Tested up to: 5.2
-Stable tag: 4.8.1
+Requires at least: 5.0
+Tested up to: 5.8
+Stable tag: 5.0.3
 Requires PHP: 5.6
 
 Automatically empty proxy cached content when your site is modified.
@@ -50,17 +50,37 @@ That will break cache on page loads. It is _not_ recommended for production!
 
 = WP CLI =
 
-* `wp varnish purge` - Flush the entire cache
-* `wp varnish debug [<url>]` - Help for debugging how well your cache is (or isn't) working
+<strong>Purge</strong>
+
+Purge commands let you empty the cache.
+
+* `wp varnish purge` - Flush the cache for your front page
+* `wp varnish purge [<url>]` - Flush the cache for one URL
+
+You can use the parameter `--wildcard` to empty everything from that URL down. So if you wanted to empty cache for all themes, you would do this:
+
+* `wp varnish purge https://example.com/wp-content/themes --wildcard`
+
+<strong>Debug</strong>
+
+Debugging can help you figure out why your cache isn't working as well as it could. The default is for your home page, but you can pass any URL on your domain.
+
+* `wp varnish debug [<url>]`
+
+Available parameters:
+
+* `[--include-headers]` --  Include headers in debug check output
+* `[--include-grep]` -- Grep active theme and plugin directories for common issues
+
+<strong>DevMode</strong>
+
+Development mode allows you to disable the cache, temporarily.
+
 * `wp varnish devmode [<activate|deactivate|toggle>]` - Change development mode state
 
 = Privacy Policy =
 
-By default, no data is tracked. If you use the site scanner/debugging tool, your domain and IP address will access [a remote service hosted on DreamObjects](https://varnish-http-purge.objects-us-east-1.dream.io/readme.txt). No personally identifying transaction data is recorded or stored, only overall usage. IP addresses of the website making the request may be recorded by the service, but there is no way to access them and use it to correspond with individuals or processes.
-
-Use of this service is required for the cache checking in order to provide up to date compatibility checks on plugins and themes that may conflict with running a server based cache without needing to update the plugin every day.
-
-<em>No visitor information from your site is tracked.</em>
+As of version 5, this plugin no longer uses any remote data.
 
 == Installation ==
 
@@ -101,7 +121,7 @@ No. WordPress can't detect those file changes so it can't tell your cache what t
 
 = Does every WordPress plugin and theme work with a proxy cache? =
 
-No. Some of them have behavior that causes them not to cache, either by accident or design.
+No. Some of them have behaviours that causes them not to cache, either by accident or design. It's incredibly hard to debug those, since many of the related issues are contextual (like _if_ you save a page with a special setting). I've done my best to flag everything as possible issues with the debugger.
 
 = I'm a developer, can I tell your cache to empty in my plugin/theme? =
 
@@ -157,6 +177,10 @@ Replace `123.45.67.89` with the IP of your <em>Proxy Cache Server</em> (_not_ Cl
 
 If you want to use WP-CLI, you can set an option in the database. This will not take precedence over the define, and exists for people who want to use automation tools: `wp option update vhp_varnish_ip 123.45.67.890`
 
+= Why are my posts timing out/not showing when I'm using CloudFlare? =
+
+This is usually related to CloudFlare's APO setup. I have an open ticket with CloudFlare trying to debug this, but basically whatever they're doing with APO doesn't 'like' the flush command and times out (or crashes).
+
 = Why do I get a 503 or 504 error on every post update? =
 
 Your IP address is incorrect. Check the IP of your server and then the setting for your proxy cache IP. If they're _not_ the same, that's likely why.
@@ -171,15 +195,15 @@ If your web host set up your service, check their documentation.
 
 = What if I have multiple proxy cache IPs? =
 
-Multiple IPs are not supported at this time.
+You may enter them, separated by a comma, on the settings page.
 
 = What version of Varnish is supported? =
 
-This was built and tested on Varnish 3.x. While it is reported to work on 2.x and 4.x, it is only supported on v3 at this time.
+So far this plugin has been reported to successfully function on Varnish v 2 through v 6.5.
 
 = Does this work with Nginx caching? =
 
-It can, if you've configured Nginx caching to respect the curl PURGE request. If this doesn't work, I recommend setting your Varnish IP to `localhost` as Nginx requires a service control installed for the IP address to work.
+It can, if you've configured Nginx caching to respect the curl PURGE request. If this doesn't work, try setting your Varnish IP to `localhost` as Nginx requires a service control installed for the IP address to work.
 
 = What should my cache rules be? =
 
@@ -192,7 +216,7 @@ This is a question beyond the support of plugin. I do not have the resources ava
 
 = How can I see what the plugin is sending to the cache service? =
 
-Yes _IF_ the service has an interface. Sadly Nginx does not. [Detailed directions can be found on the debugging section on GitHub](https://github.com/Ipstenu/varnish-http-purge/wiki#debugging). Bear in mind, these interfaces tend to be command-line only.
+Yes _IF_ the service has an interface. Sadly Nginx does not. [Detailed directions can be found on the debugging section on GitHub](https://github.com/Ipstenu/varnish-http-purge/wiki). Bear in mind, these interfaces tend to be command-line only.
 
 = Don't you work at DreamHost? Is this Official or DreamHost only? =
 
@@ -203,17 +227,30 @@ This plugin is installed by default for _all_ DreamPress installs on DreamHost, 
 
 == Changelog ==
 
-= 4.8.1 =
-* May 2019
-* Compat with WP 5.2
-* Correct changes with DB cache flushing (props @mathieuhays)
-* Simplified logic for edge case debugging
+= 5.0.3 =
+* August 2021
+* PHP 8 Compat
 
-= 4.8 =
-* March 2019
-* Improve debugger
-* Clean code per standards
-* Improve callback on WP-CLI
+= 5.0.2 =
+* April 2021
+* Wrapping a function_exists check which shouldn't be needed, but it fataled for someone and an ounce of prevention yadda yadda.
+
+= 5.0.1 =
+* April 2021
+* Updating incompatibility lists
+* HHVM deprecation
+* Allow saving Proxy IP with ports
+* Add check for CloudFlare APO
+* Improve purge execution fails
+* Double check multiple varnish IPs
+
+= 5.0 =
+* March 2021
+* Now purges draft and pending posts (to account for people who un-publish) - props @jerlarke
+* Localhost the debugger json. They aren't updated that often, and the remote load is unnecessary.
+* More support for Health Check
+* Remove strtotime check on Age header - props Matt Fields
+* Support for multiple IPs (based on P.Brisson's work)
 
 == Screenshots ==
 
