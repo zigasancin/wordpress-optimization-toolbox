@@ -12,11 +12,13 @@ use AMP_Theme_Support;
 use AMP_Validation_Manager;
 use AMP_Validated_URL_Post_Type;
 use AmpProject\AmpWP\Infrastructure\Conditional;
+use AmpProject\AmpWP\Infrastructure\HasRequirements;
 use AmpProject\AmpWP\Infrastructure\Registerable;
 use AmpProject\AmpWP\Infrastructure\Service;
 use AmpProject\AmpWP\Option;
 use AmpProject\AmpWP\PairedRouting;
 use AmpProject\AmpWP\QueryVar;
+use AmpProject\AmpWP\Services;
 use AmpProject\DevMode;
 use WP_Post;
 use WP_Admin_Bar;
@@ -28,7 +30,7 @@ use AmpProject\AmpWP\DevTools\UserAccess;
  * @since 2.1
  * @internal
  */
-final class PairedBrowsing implements Service, Registerable, Conditional {
+final class PairedBrowsing implements Service, Registerable, Conditional, HasRequirements {
 
 	/**
 	 * Query var for requests to open the app.
@@ -58,14 +60,29 @@ final class PairedBrowsing implements Service, Registerable, Conditional {
 	 */
 	public static function is_needed() {
 		return (
-			AMP_Theme_Support::TRANSITIONAL_MODE_SLUG === AMP_Options_Manager::get_option( Option::THEME_SUPPORT )
-			||
+			Services::get( 'dependency_support' )->has_support()
+			&&
 			(
-				AMP_Theme_Support::READER_MODE_SLUG === AMP_Options_Manager::get_option( Option::THEME_SUPPORT )
-				&&
-				get_stylesheet() === AMP_Options_Manager::get_option( Option::READER_THEME )
+				AMP_Theme_Support::TRANSITIONAL_MODE_SLUG === AMP_Options_Manager::get_option( Option::THEME_SUPPORT )
+				||
+				(
+					AMP_Theme_Support::READER_MODE_SLUG === AMP_Options_Manager::get_option( Option::THEME_SUPPORT )
+					&&
+					get_stylesheet() === AMP_Options_Manager::get_option( Option::READER_THEME )
+				)
 			)
 		);
+	}
+
+	/**
+	 * Get the list of service IDs required for this service to be registered.
+	 *
+	 * @return string[] List of required services.
+	 */
+	public static function get_requirements() {
+		return [
+			'dependency_support',
+		];
 	}
 
 	/**
@@ -191,7 +208,7 @@ final class PairedBrowsing implements Service, Registerable, Conditional {
 		// Mark enqueued script for AMP dev mode so that it is not removed.
 		// @todo Revisit with <https://github.com/google/site-kit-wp/pull/505#discussion_r348683617>.
 		$dev_mode_handles = array_merge(
-			[ $handle, 'wp-i18n', 'wp-hooks' ],
+			[ $handle, 'wp-i18n', 'wp-hooks', 'regenerator-runtime' ],
 			$dependencies
 		);
 		add_filter(

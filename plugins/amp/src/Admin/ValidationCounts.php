@@ -9,6 +9,7 @@ namespace AmpProject\AmpWP\Admin;
 
 use AmpProject\AmpWP\Infrastructure\Conditional;
 use AmpProject\AmpWP\Infrastructure\Delayed;
+use AmpProject\AmpWP\Infrastructure\HasRequirements;
 use AmpProject\AmpWP\Infrastructure\Registerable;
 use AmpProject\AmpWP\Infrastructure\Service;
 use AmpProject\AmpWP\Services;
@@ -20,7 +21,7 @@ use AmpProject\AmpWP\Services;
  * @since 2.1
  * @internal
  */
-final class ValidationCounts implements Service, Registerable, Conditional, Delayed {
+final class ValidationCounts implements Service, Registerable, Conditional, Delayed, HasRequirements {
 
 	/**
 	 * Assets handle.
@@ -39,13 +40,24 @@ final class ValidationCounts implements Service, Registerable, Conditional, Dela
 	}
 
 	/**
+	 * Get the list of service IDs required for this service to be registered.
+	 *
+	 * @return string[] List of required services.
+	 */
+	public static function get_requirements() {
+		return [
+			'dependency_support',
+			'dev_tools.user_access',
+		];
+	}
+
+	/**
 	 * Check whether the conditional object is currently needed.
 	 *
 	 * @return bool Whether the conditional object is needed.
 	 */
 	public static function is_needed() {
-		$dev_tools_user_access = Services::get( 'dev_tools.user_access' );
-		return $dev_tools_user_access->is_user_enabled();
+		return Services::get( 'dependency_support' )->has_support() && Services::get( 'dev_tools.user_access' )->is_user_enabled();
 	}
 
 	/**
