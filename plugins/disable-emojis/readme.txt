@@ -3,8 +3,8 @@ Contributors: ryanhellyer
 Tags: emojis, gdpr, disable
 Donate link: https://geek.hellyer.kiwi/donate/
 Requires at least: 4.8
-Tested up to: 5.1
-Stable tag: 1.7.2
+Tested up to: 5.9
+Stable tag: 1.7.3
 
 
 This plugin disables the new WordPress emoji functionality. GDPR friendly.
@@ -34,6 +34,9 @@ Visit the <a href="https://geek.hellyer.kiwi/plugins/disable-emojis/">Disable Em
 
 
 == Changelog ==
+
+= 1.7.3 =
+* Unneeded version bump to shut the WordPress.org notice up.
 
 = 1.7.2 =
 * Subtle improvement to code cleanliness.
