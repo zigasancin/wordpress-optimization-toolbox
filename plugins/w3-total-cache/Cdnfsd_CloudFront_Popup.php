@@ -2,7 +2,7 @@
 namespace W3TC;
 
 if ( !defined( 'W3TC_SKIPLIB_AWS' ) ) {
-	require_once W3TC_LIB_DIR . '/Aws/aws-autoloader.php';
+	require_once W3TC_DIR . '/vendor/autoload.php';
 }
 
 
@@ -406,8 +406,12 @@ class Cdnfsd_CloudFront_Popup {
 
 
 	private function _api( $access_key, $secret_key ) {
-		$credentials = new \Aws\Credentials\Credentials(
-			$access_key, $secret_key );
+		if ( empty( $access_key ) && empty( $secret_key ) ) {
+			$credentials = \Aws\Credentials\CredentialProvider::defaultProvider();
+		} else {
+			$credentials = new \Aws\Credentials\Credentials(
+				$access_key, $secret_key );
+		}
 
 		return new \Aws\CloudFront\CloudFrontClient( array(
 				'credentials' => $credentials,

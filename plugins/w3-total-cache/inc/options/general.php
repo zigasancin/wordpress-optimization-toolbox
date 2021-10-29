@@ -17,7 +17,7 @@ echo sprintf( 'The plugin is currently %1$s If an option is disabled it means th
 		<?php Util_Ui::postbox_header( __( 'General', 'w3-total-cache' ), '' ); ?>
 		<table class="form-table">
 			<tr>
-				<th>Preview mode:</th>
+				<th><?php _e( 'Preview mode:', 'w3-total-cache' ); ?></th>
 				<td>
 					<?php echo Util_Ui::nonce_field( 'w3tc' ); ?>
 					<?php if ( $this->_config->is_preview() ): ?>
@@ -127,7 +127,7 @@ Util_Ui::config_overloading_button( array(
 	) );
 ?>
 		<p><?php w3tc_e( 'minify.general.header', 'Reduce load time by decreasing the size and number of <acronym title="Cascading Style Sheet">CSS</acronym> and <acronym title="JavaScript">JS</acronym> files. Automatically remove unnecessary data from <acronym title="Cascading Style Sheet">CSS</acronym>, <acronym title="JavaScript">JS</acronym>, feed, page and post <acronym title="Hypertext Markup Language">HTML</acronym>.' ) ?></p>
-
+		
 		<table class="form-table">
 			<?php
 Util_Ui::config_item(
@@ -356,7 +356,7 @@ Util_Ui::button_config_save( 'general_varnish',
 		<?php if ( $is_pro ): ?>
 		<?php Util_Ui::postbox_header( 'Message Bus', '', 'amazon_sns' ); ?>
 		<p>
-			Allows policy management to be shared between a dynamic pool of servers. For example, each server in a pool to use opcode caching (which is not a shared resource) and purging is then syncronized between any number of servers in real-time; each server therefore behaves identically even though resources are not shared.
+			<?php _e( 'Allows policy management to be shared between a dynamic pool of servers. For example, each server in a pool to use opcode caching (which is not a shared resource) and purging is then syncronized between any number of servers in real-time; each server therefore behaves identically even though resources are not shared.', 'w3-total-cache' ); ?>
 		</p>
 		<table class="form-table">
 			<tr>
@@ -508,6 +508,22 @@ Util_Ui::config_item( array(
 				</th>
 			</tr>
 			<?php
+
+				Util_Ui::config_item(
+					array(
+						'key'            => 'docroot_fix.enable',
+						'control'        => 'checkbox',
+						'checkbox_label' => __( 'Fix document root path', 'w3-total-cache' ),
+						'label_class'    => 'w3tc_single_column',
+						'description'    => sprintf(
+							// translators: 1: WordPress ABSPATH value, 2: Server document root value.
+							__( 'Fix incorrect server document root path.  Uses the WordPress ABSPATH ("%1$s") in place of the current server document root ("%2$s").', 'w3-total-cache' ),
+							esc_html( untrailingslashit( ABSPATH ) ),
+							esc_html( $_SERVER['DOCUMENT_ROOT'] )
+						),
+					)
+				);
+
 Util_Ui::config_item( array(
 		'key' => 'common.track_usage',
 		'control' => 'checkbox',
