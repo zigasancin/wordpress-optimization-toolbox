@@ -25,6 +25,7 @@
 			 */
 			if ( this.lazyloadEnableButton ) {
 				this.lazyloadEnableButton.addEventListener( 'click', ( e ) => {
+					e.preventDefault();
 					e.currentTarget.classList.add( 'sui-button-onload' );
 
 					this.toggle_lazy_load( true );
@@ -148,7 +149,7 @@
 				if ( 200 === xhr.status ) {
 					const res = JSON.parse( xhr.response );
 					if ( 'undefined' !== typeof res.success && res.success ) {
-						location.reload();
+						window.location.search = 'page=smush-lazy-load';
 					} else if ( 'undefined' !== typeof res.data.message ) {
 						WP_Smush.helpers.showErrorNotice( res.data.message );
 						document.querySelector( '.sui-button-onload' ).classList.remove( 'sui-button-onload' );

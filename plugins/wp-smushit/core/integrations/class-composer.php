@@ -41,9 +41,6 @@ class Composer extends Abstract_Integration {
 		// Hook at the end of setting row to output a error div.
 		add_action( 'smush_setting_column_right_inside', array( $this, 'additional_notice' ) );
 
-		// Add beta tag.
-		add_action( 'smush_setting_column_tag', array( $this, 'add_beta_tag' ) );
-
 		if ( $this->settings->get( 'js_builder' ) ) {
 			add_filter( 'image_make_intermediate_size', array( $this, 'process_image_resize' ) );
 		}
@@ -97,27 +94,6 @@ class Composer extends Abstract_Integration {
 		}
 	}
 
-	/**
-	 * Add a beta tag next to the setting title.
-	 *
-	 * @param string $setting_key  Setting key name.
-	 *
-	 * @since 2.9.0
-	 */
-	public function add_beta_tag( $setting_key ) {
-		// Return if not Gutenberg integration.
-		if ( $this->module !== $setting_key ) {
-			return;
-		}
-
-		$tooltip_text = __( 'This feature is likely to work without issue, however the integration is in beta stage and some issues are still present.', 'wp-smushit' );
-		?>
-		<span class="sui-tag sui-tag-beta sui-tooltip sui-tooltip-constrained" data-tooltip="<?php echo esc_attr( $tooltip_text ); ?>">
-			<?php esc_html_e( 'Beta', 'wp-smushit' ); ?>
-		</span>
-		<?php
-	}
-
 	/**************************************
 	 *
 	 * PUBLIC CLASSES
@@ -167,18 +143,19 @@ class Composer extends Abstract_Integration {
 		$attachment_id = attachment_url_to_postid( $image_url );
 
 		if ( ! wp_attachment_is_image( $attachment_id ) ) {
-			return $image_src;
+			return $vc_image;
 		}
 
 		$image = image_get_intermediate_size( $attachment_id, array( $size[1], $size[2] ) );
 
 		if ( $image ) {
-			return $image_src;
+			return $vc_image;
 		}
 
 		// Smush image. TODO: should we update the stats?
 		WP_Smush::get_instance()->core()->mod->smush->do_smushit( $vc_image );
-		return $image_src;
+
+		return $vc_image;
 	}
 
 	/**************************************
@@ -192,11 +169,10 @@ class Composer extends Abstract_Integration {
 	 * @since 3.2.1
 	 */
 	private function check_for_js_builder() {
-		if ( ! function_exists( 'is_plugin_active' ) ) {
-			include_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		$this->enabled = defined( 'WPB_VC_VERSION' ) && is_plugin_active( 'js_composer/js_composer.php' );
+		// This function exists since WPBakery 4.0 (02.03.2014) and is listed
+		// on their API docs. It should be stable enough to rely on it.
+		// @see https://kb.wpbakery.com/docs/inner-api/vc_disable_frontend/
+		$this->enabled = defined( 'WPB_VC_VERSION' ) && function_exists( 'vc_disable_frontend' );
 	}
 
 }

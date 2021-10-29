@@ -68,24 +68,19 @@ class Lazy extends Abstract_Module {
 			return;
 		}
 
-		$this->options = $this->settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
+		$this->options = $this->settings->get_setting( 'wp-smush-lazy_load' );
 
 		// Enabled without settings? Don't think so... Exit.
 		if ( ! $this->options ) {
 			return;
 		}
 
-		// If native compat is enabled, and we are on WordPress 5.5 - disable Smush lazy load.
-		if ( isset( $this->options['native'] ) && $this->options['native'] ) {
-			global $wp_version;
-			if ( version_compare( $wp_version, '5.4.999', '>' ) ) {
-				return;
-			}
-		}
+		// Disable WordPress native lazy load.
+		add_filter( 'wp_lazy_loading_enabled', '__return_false' );
 
 		// Load js file that is required in public facing pages.
 		add_action( 'wp_head', array( $this, 'add_inline_styles' ) );
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ), 99 );
 		if ( defined( 'WP_SMUSH_ASYNC_LAZY' ) && WP_SMUSH_ASYNC_LAZY ) {
 			add_filter( 'script_loader_tag', array( $this, 'async_load' ), 10, 2 );
 		}
@@ -223,7 +218,10 @@ class Lazy extends Abstract_Module {
 		);
 
 		$this->add_masonry_support();
-		$this->add_avada_support();
+		if ( defined( 'WP_SMUSH_LAZY_LOAD_AVADA' ) && WP_SMUSH_LAZY_LOAD_AVADA ) {
+			$this->add_avada_support();
+		}
+		$this->add_divi_support();
 		$this->add_soliloquy_support();
 	}
 
@@ -292,6 +290,21 @@ class Lazy extends Abstract_Module {
 	}
 
 	/**
+	 * Adds lazyload support to Divi & it's Waypoint library.
+	 *
+	 * @since 3.9.0
+	 */
+	private function add_divi_support() {
+		if ( ! defined( 'ET_BUILDER_THEME' ) || ! ET_BUILDER_THEME ) {
+			return;
+		}
+
+		$script = "function rw() { Waypoint.refreshAll(); } window.addEventListener( 'lazybeforeunveil', rw, false); window.addEventListener( 'lazyloaded', rw, false);";
+
+		wp_add_inline_script( 'smush-lazy-load', $script );
+	}
+
+	/**
 	 * Prevents the navigation from being missaligned in Soliloquy when lazy loading.
 	 *
 	 * @since 3.7.0
@@ -344,8 +357,8 @@ class Lazy extends Abstract_Module {
 	 * @return bool
 	 */
 	public function maybe_skip_parse( $skip ) {
-		// Don't lazy load for feeds, previews.
-		if ( is_feed() || is_preview() ) {
+		// Don't lazy load for feeds, previews, embeds.
+		if ( is_feed() || is_preview() || is_embed() ) {
 			$skip = true;
 		}
 
@@ -466,6 +479,7 @@ class Lazy extends Abstract_Module {
 		} else {
 			$class = 'lazyload';
 		}
+
 		Helpers\Parser::remove_attribute( $new_image, 'class' );
 		Helpers\Parser::add_attribute( $new_image, 'class', apply_filters( 'wp_smush_lazy_load_classes', $class ) );
 
@@ -500,13 +514,24 @@ class Lazy extends Abstract_Module {
 
 			// Add .no-lazyload class.
 			$class = Helpers\Parser::get_attribute( $new_image, 'class' );
+
 			if ( $class ) {
 				Helpers\Parser::remove_attribute( $new_image, 'class' );
 				$class .= ' no-lazyload';
 			} else {
 				$class = 'no-lazyload';
 			}
+
 			Helpers\Parser::add_attribute( $new_image, 'class', $class );
+
+			/**
+			 * Filters the no-lazyload image.
+			 *
+			 * @since 3.8.5
+			 *
+			 * @param string $text The image that can be filtered.
+			 */
+			$new_image = apply_filters( 'wp_smush_filter_no_lazyload_image', $new_image );
 
 			$content = str_replace( $image, $new_image, $content );
 		}
@@ -656,5 +681,4 @@ class Lazy extends Abstract_Module {
 	private function is_amp() {
 		return function_exists( 'is_amp_endpoint' ) && is_amp_endpoint();
 	}
-
 }

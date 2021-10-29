@@ -36,33 +36,17 @@ if ( ! defined( 'WPINC' ) ) {
 				</button>
 			</div>
 
-			<div class="sui-box-body sui-content-center sui-spacing-sides--50 sui-spacing-top--0">
+			<div class="sui-box-body sui-content-center sui-spacing-sides--30 sui-spacing-top--0 sui-spacing-bottom--50">
 				<h3 class="sui-box-title sui-lg" id="smush-title-updated-dialog" style="white-space: normal">
-					<?php
-					esc_html_e( 'NEW: Serve WebP Images Without Smush CDN', 'wp-smushit' );
-					if ( ! WP_Smush::is_pro() ) {
-						echo '<span class="sui-tag sui-tag-pro" style="margin-left: 5px">' . esc_html__( 'Pro', 'wp-smushit' ) . '</span>';
-					}
-					?>
+					<?php esc_html_e( 'Update: Manage Your Uploaded Images!', 'wp-smushit' ); ?>
 				</h3>
 
 				<p class="sui-description">
-					<?php esc_html_e( 'The ability to serve WebP images without utilizing Smush Pro’s CDN was highly requested, and we’re excited to announce it’s now possible!', 'wp-smushit' ); ?>
+					<?php esc_html_e( 'You now have greater control over your images, with new settings to override WordPress Core functionality. Compress uploaded images, backup uploaded images, scale images to a desired threshold, disable scaling altogether, and more.', 'wp-smushit' ); ?>
 				</p>
 
 				<p class="sui-description">
-					<?php esc_html_e( 'Speed up your site, consume less bandwidth, and serve streamlined images that are around 26% smaller than JPG and PNG formats. All without sacrificing image quality.', 'wp-smushit' ); ?>
-				</p>
-
-				<p class="sui-description">
-					<?php
-					printf(
-						/* translators: 1. opening link, 2. closing link. */
-						esc_html__( 'With Smush Pro’s new integrated %1$sWebP feature%2$s, you can now easily serve compressed next-gen images to supported browsers. You can also gracefully fallback to JPGs and PNGs for browsers that aren’t compatible.', 'wp-smushit' ),
-						'<a href="' . esc_url( $cta_url ) . '" onclick="WP_Smush.onboarding.hideUpgradeModal()">',
-						'</a>'
-					);
-					?>
+					<?php esc_html_e( 'Check out these new features in the Bulk Smush settings.', 'wp-smushit' ); ?>
 				</p>
 
 				<a href="<?php echo esc_url( $cta_url ); ?>" class="sui-button" onclick="WP_Smush.onboarding.hideUpgradeModal()">

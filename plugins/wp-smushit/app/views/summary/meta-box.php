@@ -12,6 +12,8 @@
  * @var int        $resize_savings
  * @var string|int $stats_percent
  * @var int        $total_optimized
+ *
+ * @var Smush\App\Abstract_Page $this  Page.
  */
 
 use Smush\Core\Settings;
@@ -37,9 +39,15 @@ $tooltip_plural = sprintf(
 	__( 'You have %s images that need smushing', 'wp-smushit' ),
 	'{count}'
 );
+
+$branded_image = apply_filters( 'wpmudev_branding_hero_image', '' );
 ?>
 
-<div class="sui-summary-image-space" aria-hidden="true" style="background-image: url( '<?php echo esc_url( apply_filters( 'wpmudev_branding_hero_image', '' ) ); ?>' )"></div>
+<?php if ( $branded_image ) : ?>
+	<div class="sui-summary-image-space" aria-hidden="true" style="background-image: url('<?php echo esc_url( $branded_image ); ?>')"></div>
+<?php else : ?>
+	<div class="sui-summary-image-space" aria-hidden="true"></div>
+<?php endif; ?>
 <div class="sui-summary-segment">
 	<div class="sui-summary-details">
 		<span class="sui-summary-large wp-smush-stats-human">
@@ -91,12 +99,12 @@ $tooltip_plural = sprintf(
 				<?php if ( ! $resize_enabled && $resize_savings <= 0 ) : ?>
 					<p class="wp-smush-stats-label-message sui-hidden-sm sui-hidden-md sui-hidden-lg">
 						<?php
-						$link_class = 'wp-smush-resize-enable-link';
-						if ( ( is_multisite() && Settings::can_access( 'bulk' ) ) || 'bulk' !== $this->get_current_tab() ) {
-							$settings_link = $this->get_page_url() . '#enable-resize';
-						} else {
-							$settings_link = '#';
-							$link_class    = 'wp-smush-resize-enable';
+						$settings_link = '#';
+						$link_class    = 'wp-smush-resize-enable';
+
+						if ( Settings::can_access( 'bulk' ) && 'smush-bulk' !== $this->get_slug() ) {
+							$settings_link = $this->get_url( 'smush-bulk' ) . '#enable-resize';
+							$link_class    = '';
 						}
 
 						printf(

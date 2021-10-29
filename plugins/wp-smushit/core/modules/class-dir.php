@@ -106,7 +106,7 @@ class Dir extends Abstract_Module {
 			$current_page   = ! empty( $current_screen ) ? $current_screen->base : '';
 		}
 
-		if ( 'toplevel_page_smush' !== $current_page && 'toplevel_page_smush-network' !== $current_page ) {
+		if ( false === strpos( $current_page, 'page_smush-directory' ) ) {
 			return;
 		}
 
@@ -125,8 +125,6 @@ class Dir extends Abstract_Module {
 			$this->scanner->reset_scan();
 		}
 
-		// Add stats to stats box.
-		add_action( 'stats_ui_after_resize_savings', array( $this, 'directory_stats_ui' ), 10 );
 		// Check and show missing directory smush table error.
 		add_action( 'wp_smush_header_notices', array( $this, 'show_table_error' ) );
 
@@ -531,10 +529,8 @@ class Dir extends Abstract_Module {
 	 */
 	private function get_directory_tree( $dir = null ) {
 		// Get the root path for a main site or subsite.
-		$root = realpath( $this->get_root_path() );
-
+		$root     = realpath( $this->get_root_path() );
 		$post_dir = strlen( $dir ) >= 1 ? path_join( $root, $dir ) : $root . $dir;
-		$post_dir = realpath( rawurldecode( $post_dir ) );
 
 		// If the final path doesn't contains the root path, bail out.
 		if ( ! $root || false === $post_dir || 0 !== strpos( $post_dir, $root ) ) {
@@ -591,6 +587,8 @@ class Dir extends Abstract_Module {
 				return $tree;
 			}
 		}
+
+		return array();
 	}
 
 	/**
@@ -610,9 +608,10 @@ class Dir extends Abstract_Module {
 			 * @see https://xnau.com/finding-the-wordpress-root-path-for-an-alternate-directory-structure/
 			 * @see https://app.asana.com/0/14491813218786/487682361460247/f
 			 */
-			$content_path = explode( '/', WP_CONTENT_DIR );
+			$content_path = explode( '/', wp_normalize_path( WP_CONTENT_DIR ) );
 			// Get root path and explod.
 			$root_path = explode( '/', get_home_path() );
+
 			// Find the length of the shortest one.
 			$end         = min( count( $content_path ), count( $root_path ) );
 			$i           = 0;
@@ -643,22 +642,26 @@ class Dir extends Abstract_Module {
 
 		// Verify that every directory in the path is allowed.
 		while ( $is_valid && dirname( $path_to_check ) !== $path_to_check ) {
-
-			$path_contents = $this->get_directory_tree( dirname( $path_to_check ) );
+			$path_contents = $this->get_directory_tree( $path_to_check );
 
 			if ( empty( $path_contents ) ) {
 				return false;
 			}
 
+			$is_valid = false;
 			foreach ( $path_contents as $tree_data ) {
-				$is_valid = false;
-				if ( $tree_data['key'] === $path_to_check && ! $tree_data['unselectable'] ) {
+				if ( false !== strpos( $tree_data['key'], $path_to_check ) && ! $tree_data['unselectable'] ) {
 					$is_valid = true;
 					break;
 				}
 			}
 
-			$path_to_check = dirname( $path_to_check );
+			if ( ! $is_valid ) {
+				$path_to_check = dirname( $path_to_check );
+			} else {
+				// Valid path, break out of the loop.
+				break;
+			}
 		}
 
 		return $is_valid;
@@ -761,14 +764,6 @@ class Dir extends Abstract_Module {
 				$validated_dirs[] = $relative_path;
 			}
 
-			// Yes, this is silly. The actual validation is done by self::validate_path(),
-			// this is just to keep RIPS happy.
-			$whitelisted_paths[] = $base_dir;
-			if ( ! in_array( $base_dir, $whitelisted_paths, true ) ) {
-				// The loop 'continues' before reaching this point. This won't execute.
-				throw new \Exception();
-			}
-
 			// Directory Iterator, Exclude . and ..
 			$filtered_dir = new Helpers\Iterator( new RecursiveDirectoryIterator( $base_dir ) );
 
@@ -808,21 +803,15 @@ class Dir extends Abstract_Module {
 			}
 		}
 
-		// Update rest of the images.
-		if ( ! empty( $images ) && $count > 0 ) {
-			$this->store_images( $values, $images );
+		if ( empty( $images ) || 0 === $count ) {
+			return array();
 		}
 
-		// Remove scanned images from cache.
-		wp_cache_delete( 'wp_smush_scanned_images' );
+		// Update rest of the images.
+		$this->store_images( $values, $images );
 
 		// Get the image ids.
-		$images = $this->get_scanned_images();
-
-		// Store scanned images in cache.
-		wp_cache_add( 'wp_smush_scanned_images', $images );
-
-		return $images;
+		return $this->get_scanned_images();
 	}
 
 	/**
@@ -893,7 +882,8 @@ class Dir extends Abstract_Module {
 			$this->send_error( __( 'Empty Directory Path', 'wp-smushit' ) );
 		}
 
-		$smush_path = filter_input( INPUT_POST, 'smush_path', FILTER_SANITIZE_URL, FILTER_REQUIRE_ARRAY );
+		// FILTER_SANITIZE_URL is trimming the space if a folder contains space.
+		$smush_path = filter_input( INPUT_POST, 'smush_path', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY );
 
 		try {
 			// This will add the images to the database and get the file list.
@@ -1009,7 +999,7 @@ class Dir extends Abstract_Module {
 		if ( false !== strpos( $path, $base_dir . '/sites' ) ) {
 			// If matches the current upload path contains one of the year sub folders of the media library.
 			$path_arr = explode( '/', str_replace( $base_dir.'/sites' . '/', '', $path ) );
-			if ( count( $path_arr ) >= 1
+			if ( is_array( $path_arr ) && count( $path_arr ) > 1
 			     && is_numeric( $path_arr[1] ) && $path_arr[1] > 1900 && $path_arr[1] < 2100 // Contains the year sub folder.
 			) {
 				$skip = true;
@@ -1066,7 +1056,7 @@ class Dir extends Abstract_Module {
 		// If not forced to update.
 		if ( ! $force_update ) {
 			// Get stats from cache.
-			$total_stats = wp_cache_get( WP_SMUSH_PREFIX . 'dir_total_stats', 'wp-smush' );
+			$total_stats = wp_cache_get( 'wp-smush-dir_total_stats', 'wp-smush' );
 			// If we have already calculated the stats and found in cache, return it.
 			if ( false !== $total_stats ) {
 				return $total_stats;
@@ -1132,7 +1122,7 @@ class Dir extends Abstract_Module {
 		$this->stats['optimised'] = $optimised;
 
 		// Set stats in cache.
-		wp_cache_set( WP_SMUSH_PREFIX . 'dir_total_stats', $this->stats, 'wp-smush' );
+		wp_cache_set( 'wp-smush-dir_total_stats', $this->stats, 'wp-smush' );
 
 		return $this->stats;
 	}
@@ -1224,7 +1214,7 @@ class Dir extends Abstract_Module {
 		$current_screen = get_current_screen();
 
 		// Only run on required pages.
-		if ( ! empty( $current_screen ) && ! in_array( $current_screen->id, Core::$pages, true ) ) {
+		if ( ! empty( $current_screen ) && false === strpos( $current_screen->id, 'page_smush' ) ) {
 			return;
 		}
 
@@ -1274,44 +1264,6 @@ class Dir extends Abstract_Module {
 		}
 
 		return $tabs;
-	}
-
-	/**
-	 * Set directory smush stats to stats box.
-	 *
-	 * @return void
-	 */
-	public function directory_stats_ui() {
-		$dir_smush_stats = get_option( 'dir_smush_stats' );
-		$human           = 0;
-		if ( ! empty( $dir_smush_stats ) && ! empty( $dir_smush_stats['dir_smush'] ) ) {
-			$human = ! empty( $dir_smush_stats['dir_smush']['bytes'] ) && $dir_smush_stats['dir_smush']['bytes'] > 0 ? $dir_smush_stats['dir_smush']['bytes'] : 0;
-		}
-		?>
-		<li class="smush-dir-savings">
-			<span class="sui-list-label"><?php esc_html_e( 'Directory Smush Savings', 'wp-smushit' ); ?>
-				<?php if ( $human <= 0 ) { ?>
-					<p class="wp-smush-stats-label-message sui-hidden-sm sui-hidden-md sui-hidden-lg">
-						<?php esc_html_e( "Smush images that aren't located in your uploads folder.", 'wp-smushit' ); ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=smush&view=directory' ) ); ?>" class="wp-smush-dir-link"
-						title="<?php esc_attr_e( "Select a directory you'd like to Smush.", 'wp-smushit' ); ?>">
-							<?php esc_html_e( 'Choose directory', 'wp-smushit' ); ?>
-						</a>
-					</p>
-				<?php } ?>
-			</span>
-			<span class="wp-smush-stats sui-list-detail">
-				<i class="sui-icon-loader sui-loading" aria-hidden="true" title="<?php esc_attr_e( 'Updating Stats', 'wp-smushit' ); ?>"></i>
-				<span class="wp-smush-stats-human"></span>
-				<span class="wp-smush-stats-sep sui-hidden">/</span>
-				<span class="wp-smush-stats-percent"></span>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=smush&view=directory' ) ); ?>" class="wp-smush-dir-link sui-hidden-xs sui-hidden"
-				   title="<?php esc_attr_e( "Select a directory you'd like to Smush.", 'wp-smushit' ); ?>">
-					<?php esc_html_e( 'Choose directory', 'wp-smushit' ); ?>
-				</a>
-			</span>
-		</li>
-		<?php
 	}
 
 	/**

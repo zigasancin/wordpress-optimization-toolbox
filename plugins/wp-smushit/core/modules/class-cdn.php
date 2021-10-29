@@ -69,6 +69,7 @@ class CDN extends Abstract_Module {
 		'jpg',
 		'jpeg',
 		'png',
+		'webp',
 	);
 
 	/**
@@ -108,9 +109,6 @@ class CDN extends Abstract_Module {
 
 		// Set auto resize flag.
 		$this->init_flags();
-
-		// Add stats to stats box.
-		add_action( 'stats_ui_after_resize_savings', array( $this, 'cdn_stats_ui' ), 20 );
 
 		/**
 		 * Main functionality.
@@ -182,7 +180,7 @@ class CDN extends Abstract_Module {
 			return 'disabled';
 		}
 
-		$cdn = $this->settings->get_setting( WP_SMUSH_PREFIX . 'cdn_status' );
+		$cdn = $this->settings->get_setting( 'wp-smush-cdn_status' );
 
 		if ( ! $cdn ) {
 			return 'disabled';
@@ -232,7 +230,7 @@ class CDN extends Abstract_Module {
 				'webp'              => array(
 					'label'       => __( 'Enable WebP conversion', 'wp-smushit' ),
 					'short_label' => __( 'WebP Conversion', 'wp-smushit' ),
-					'desc'        => __( 'Smush can automatically convert and serve your images as WebP to compatible browsers.', 'wp-smushit' ),
+					'desc'        => __( 'Smush can automatically convert and serve your images as WebP from the WPMU DEV CDN to compatible browsers.', 'wp-smushit' ),
 				),
 				'rest_api_support'  => array(
 					'label'       => __( 'Enable REST API support', 'wp-smushit' ),
@@ -255,7 +253,7 @@ class CDN extends Abstract_Module {
 			return;
 		}
 		?>
-		<span class="sui-description sui-toggle-description" id="<?php echo esc_attr( WP_SMUSH_PREFIX . $setting_key . '-desc' ); ?>">
+		<span class="sui-description sui-toggle-description" id="<?php echo esc_attr( 'wp-smush-' . $setting_key . '-desc' ); ?>">
 			<?php
 			switch ( $setting_key ) {
 				case 'webp':
@@ -286,7 +284,7 @@ class CDN extends Abstract_Module {
 					printf(
 						/* translators: %1$s - link, %2$s - closing link tag */
 						esc_html__( 'For any non-media library uploads, you can still use the %1$sDirectory Smush%2$s feature to compress them, they just won’t be served from the CDN.', 'wp-smushit' ),
-						'<a href="' . esc_url( network_admin_url( 'admin.php?page=smush&view=directory' ) ) . '">',
+						'<a href="' . esc_url( network_admin_url( 'admin.php?page=smush-directory' ) ) . '">',
 						'</a>'
 					);
 					break;
@@ -303,46 +301,6 @@ class CDN extends Abstract_Module {
 			}
 			?>
 		</span>
-		<?php
-	}
-
-	/**
-	 * Add CDN stats to stats meta box.
-	 *
-	 * @since 3.0
-	 */
-	public function cdn_stats_ui() {
-		$status = $this->status();
-
-		if ( 'disabled' === $status ) {
-			return;
-		}
-		?>
-		<li class="smush-cdn-stats">
-			<span class="sui-list-label"><?php esc_html_e( 'CDN', 'wp-smushit' ); ?></span>
-			<span class="wp-smush-stats sui-list-detail">
-				<i class="sui-icon-loader sui-loading sui-hidden" aria-hidden="true" title="<?php esc_attr_e( 'Updating Stats', 'wp-smushit' ); ?>"></i>
-				<?php if ( 'overcap' === $status ) : ?>
-					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php esc_attr_e( "You've gone through your CDN bandwidth limit, so we’ve stopped serving your images via the CDN. Contact your administrator to upgrade your Smush CDN plan to reactivate this service", 'wp-smushit' ); ?>">
-						<i class="sui-icon-warning-alert sui-error sui-md" aria-hidden="true"></i>
-					</span>
-					<span><?php esc_html_e( 'Overcap', 'wp-smushit' ); ?></span>
-				<?php elseif ( 'upgrade' === $status ) : ?>
-					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php esc_attr_e( "You're almost through your CDN bandwidth limit. Please contact your administrator to upgrade your Smush CDN plan to ensure you don't lose this service", 'wp-smushit' ); ?>">
-						<i class="sui-icon-warning-alert sui-warning sui-md" aria-hidden="true"></i>
-					</span>
-					<span><?php esc_html_e( 'Needs upgrade', 'wp-smushit' ); ?></span>
-				<?php elseif ( 'activating' === $status ) : ?>
-					<i class="sui-icon-check-tick sui-info sui-md" aria-hidden="true"></i>
-					<span><?php esc_html_e( 'Activating', 'wp-smushit' ); ?></span>
-				<?php else : ?>
-					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php esc_attr_e( 'Your media is currently being served from the WPMU DEV CDN. Bulk and Directory smush features are treated separately and will continue to run independently.', 'wp-smushit' ); ?>">
-						<i class="sui-icon-check-tick sui-success sui-md" aria-hidden="true"></i>
-					</span>
-					<span><?php esc_html_e( 'Active', 'wp-smushit' ); ?></span>
-				<?php endif; ?>
-			</span>
-		</li>
 		<?php
 	}
 
@@ -365,7 +323,12 @@ class CDN extends Abstract_Module {
 			return;
 		}
 
-		$this->status = $this->settings->get_setting( WP_SMUSH_PREFIX . 'cdn_status' );
+		// Disable CDN on staging.
+		if ( isset( $_SERVER['WPMUDEV_HOSTING_ENV'] ) && 'staging' === $_SERVER['WPMUDEV_HOSTING_ENV'] ) {
+			return;
+		}
+
+		$this->status = $this->settings->get_setting( 'wp-smush-cdn_status' );
 
 		// CDN is not enabled and not active.
 		if ( ! $this->status ) {
@@ -458,6 +421,45 @@ class CDN extends Abstract_Module {
 		return $url;
 	}
 
+	/**
+	 * Enables the CDN.
+	 *
+	 * @since 3.9.0
+	 *
+	 * @param bool $enable Whether to enable or disable the CDN.
+	 * @return true|WP_error
+	 */
+	public function toggle_cdn( $enable ) {
+		$this->settings->set( 'cdn', $enable );
+
+		if ( $enable ) {
+			$status = $this->settings->get_setting( 'wp-smush-cdn_status' );
+
+			if ( ! $status ) {
+				$status = WP_Smush::get_instance()->api()->check();
+				$data   = $this->process_cdn_status( $status );
+
+				if ( is_wp_error( $data ) ) {
+					return $data;
+				}
+
+				$this->settings->set_setting( 'wp-smush-cdn_status', $data );
+			}
+
+			$this->schedule_cron();
+
+			// Clear HB page cache.
+			do_action( 'wphb_clear_page_cache' );
+		} else {
+			// Remove CDN settings if disabling.
+			$this->settings->delete_setting( 'wp-smush-cdn_status' );
+
+			self::unschedule_cron();
+		}
+
+		return true;
+	}
+
 	/**************************************
 	 *
 	 * PUBLIC METHODS CDN
@@ -531,6 +533,14 @@ class CDN extends Abstract_Module {
 
 		// Store the original $src to be used later on.
 		$original_src = $src;
+
+		/**
+		 * Filter hook to alter image src at the earliest.
+		 *
+		 * @param string $src    Image src.
+		 * @param string $image  Image tag.
+		 */
+		$src = apply_filters( 'wp_smush_cdn_before_process_src', $src, $image );
 
 		// Make sure this image is inside a supported directory. Try to convert to valid path.
 		$src = $this->is_supported_path( $src );
@@ -730,7 +740,8 @@ class CDN extends Abstract_Module {
 
 		// Try to get image URL from attachment ID.
 		if ( empty( $attachment_id ) ) {
-			$url = $main_image_url = wp_get_attachment_url( $attachment_id );
+			$url            = wp_get_attachment_url( $attachment_id );
+			$main_image_url = $url;
 		}
 
 		foreach ( $sources as $i => $source ) {
@@ -868,36 +879,23 @@ class CDN extends Abstract_Module {
 	 *
 	 * @param array|WP_Error $status  Status in JSON format.
 	 *
-	 * @return mixed
+	 * @return stdClass|WP_Error
 	 */
 	public function process_cdn_status( $status ) {
 		if ( is_wp_error( $status ) ) {
-			wp_send_json_error(
-				array(
-					'message' => $status->get_error_message(),
-				)
-			);
+			return $status;
 		}
 
 		$status = json_decode( $status['body'] );
 
 		// Too many requests.
 		if ( is_null( $status ) ) {
-			wp_send_json_error(
-				array(
-					'message' => __( 'Too many requests, please try again in a moment.', 'wp-smushit' ),
-				)
-			);
+			return new \WP_Error( 'too_many_requests', __( 'Too many requests, please try again in a moment.', 'wp-smushit' ) );
 		}
 
 		// Some other error from API.
 		if ( ! $status->success ) {
-			wp_send_json_error(
-				array(
-					'message' => $status->data->message,
-				),
-				$status->data->error_code
-			);
+			return new \WP_Error( $status->data->error_code, $status->data->message );
 		}
 
 		return $status->data;
@@ -909,13 +907,24 @@ class CDN extends Abstract_Module {
 	 * @since 3.1.0
 	 */
 	public function update_stats() {
-		$status = $this->settings->get_setting( WP_SMUSH_PREFIX . 'cdn_status' );
+		$status = $this->settings->get_setting( 'wp-smush-cdn_status' );
 
 		$smush = WP_Smush::get_instance();
 
 		if ( isset( $status->cdn_enabling ) && $status->cdn_enabling ) {
 			$status = $this->process_cdn_status( $smush->api()->enable() );
-			$this->settings->set_setting( WP_SMUSH_PREFIX . 'cdn_status', $status );
+
+			if ( is_wp_error( $status ) ) {
+				$code = is_numeric( $status->get_error_code() ) ? $status->get_error_code() : null;
+				wp_send_json_error(
+					array(
+						'message' => $status->get_error_message(),
+					),
+					$code
+				);
+			}
+
+			$this->settings->set_setting( 'wp-smush-cdn_status', $status );
 		}
 
 		if ( ! wp_doing_cron() ) {
@@ -1118,7 +1127,7 @@ class CDN extends Abstract_Module {
 		}
 
 		// Check to see if we are resizing the images (can not go over that value).
-		$resize_sizes = $this->settings->get_setting( WP_SMUSH_PREFIX . 'resize_sizes' );
+		$resize_sizes = $this->settings->get_setting( 'wp-smush-resize_sizes' );
 
 		if ( isset( $resize_sizes['width'] ) && $resize_sizes['width'] < $content_width ) {
 			return $resize_sizes['width'];

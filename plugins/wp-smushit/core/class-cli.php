@@ -8,6 +8,7 @@
 
 namespace Smush\Core;
 
+use Smush\Core\Modules\Smush;
 use WP_CLI;
 use WP_CLI_Command;
 use WP_Smush;
@@ -182,7 +183,8 @@ class CLI extends WP_CLI_Command {
 			$attachment_id = array_pop( $images );
 
 			// Skip if already Smushed.
-			if ( ! in_array( (int) $attachment_id, $unsmushed_attachments, true ) ) {
+			$should_convert = $core->mod->webp->should_be_converted( $attachment_id );
+			if ( ! in_array( (int) $attachment_id, $unsmushed_attachments, true ) && ! $should_convert ) {
 				/* translators: %d - attachment ID */
 				$errors[] = sprintf( __( 'Image (ID: %d) already compressed', 'wp-smushit' ), $attachment_id );
 				continue;
@@ -334,11 +336,11 @@ class CLI extends WP_CLI_Command {
 		}
 
 		// Additional Backup Check for JPEGs converted from PNG.
-		$pngjpg_savings = get_post_meta( $image_id, WP_SMUSH_PREFIX . 'pngjpg_savings', true );
+		$pngjpg_savings = get_post_meta( $image_id, 'wp-smush-pngjpg_savings', true );
 		if ( ! empty( $pngjpg_savings ) ) {
 
 			// Get the original File path and check if it exists.
-			$backup = get_post_meta( $image_id, WP_SMUSH_PREFIX . 'original_file', true );
+			$backup = get_post_meta( $image_id, 'wp-smush-original_file', true );
 			$backup = Helper::original_file( $backup );
 
 			if ( ! empty( $backup ) && is_file( $backup ) ) {

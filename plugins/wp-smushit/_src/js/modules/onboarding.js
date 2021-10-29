@@ -329,11 +329,10 @@
 						'#smush-onboarding-dialog'
 					);
 					elem.parentNode.removeChild( elem );
-					window.SUI.closeModal();
 
 					if ( 200 === xhr.status ) {
 						setTimeout( function() {
-							location.reload();
+							window.location.search = 'page=smush-bulk';
 						}, 1000 );
 					} else {
 						window.console.log(

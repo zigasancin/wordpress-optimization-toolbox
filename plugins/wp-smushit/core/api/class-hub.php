@@ -10,6 +10,7 @@
 
 namespace Smush\Core\Api;
 
+use Smush\Core\Configs;
 use Smush\Core\Settings;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -29,6 +30,8 @@ class Hub {
 	 */
 	private $endpoints = array(
 		'get_stats',
+		'import_settings',
+		'export_settings',
 	);
 
 	/**
@@ -72,11 +75,11 @@ class Hub {
 		$status['cdn']   = $settings->get( 'cdn' );
 		$status['super'] = $settings->get( 'lossy' );
 
-		$lazy = $settings->get_setting( WP_SMUSH_PREFIX . 'lazy_load' );
+		$lazy = $settings->get_setting( 'wp-smush-lazy_load' );
 
 		$status['lazy'] = array(
 			'enabled' => $settings->get( 'lazy_load' ),
-			'native'  => $lazy['native'],
+			'native'  => is_array( $lazy ) && isset( $lazy['native'] ) ? $lazy['native'] : false,
 		);
 
 		$core = \WP_Smush::get_instance()->core();
@@ -92,10 +95,45 @@ class Hub {
 		$status['count_unsmushed'] = $core->remaining_count;
 		$status['savings']         = $core->stats;
 
-
 		$status['dir']   = $core->dir_stats;
 
 		wp_send_json_success( (object) $status );
 	}
 
+	/**
+	 * Applies the given config sent by the Hub via the Dashboard plugin.
+	 *
+	 * @since 3.8.5
+	 *
+	 * @param object $config_data The config sent by the Hub.
+	 */
+	public function action_import_settings( $config_data ) {
+		if ( empty( $config_data->configs ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Missing config data', 'wp-smushit' ),
+				)
+			);
+		}
+
+		// The Hub returns an object, we use an array.
+		$config_array = json_decode( wp_json_encode( $config_data->configs ), true );
+
+		$configs_handler = new \Smush\Core\Configs();
+		$configs_handler->apply_config( $config_array );
+
+		wp_send_json_success();
+	}
+
+	/**
+	 * Exports the current settings as a config for the Hub.
+	 *
+	 * @since 3.8.5
+	 */
+	public function action_export_settings() {
+		$configs_handler = new \Smush\Core\Configs();
+		$config          = $configs_handler->get_config_from_current();
+
+		wp_send_json_success( $config['config'] );
+	}
 }

@@ -191,7 +191,7 @@ class Png2jpg extends Abstract_Module {
 		}
 
 		// If already tried the conversion.
-		if ( get_post_meta( $id, WP_SMUSH_PREFIX . 'pngjpg_savings', true ) ) {
+		if ( get_post_meta( $id, 'wp-smush-pngjpg_savings', true ) ) {
 			return false;
 		}
 
@@ -459,22 +459,13 @@ class Png2jpg extends Abstract_Module {
 		if ( $result['converted'] ) {
 			if ( ! empty( $meta['sizes'] ) ) {
 				foreach ( $meta['sizes'] as $size_k => $data ) {
-
 					$s_file = path_join( dirname( $file ), $data['file'] );
 
-					// Whether to convert to jpg or not.
-					$should_convert = $this->can_be_converted( $id, $size_k, 'image/png', $s_file );
-
-					// Perform the conversion.
-					if ( ! $should_convert ) {
-						continue;
-					}
-
-					// Perform the conversion, and update path.
-					if ( ! $this->is_transparent ) {
-						// Perform the conversion, and update path.
-						$result = $this->convert_to_jpg( $id, $s_file, $result['meta'], $size_k );
-					}
+					/**
+					 * Since these sizes are derived from the main png file,
+					 * We can safely perform the conversion.
+					 */
+					$result = $this->convert_to_jpg( $id, $s_file, $result['meta'], $size_k );
 
 					if ( ! empty( $result['savings'] ) ) {
 						$savings[ $size_k ] = $result['savings'];
@@ -497,7 +488,7 @@ class Png2jpg extends Abstract_Module {
 		}
 
 		// Update the Final Stats.
-		update_post_meta( $id, WP_SMUSH_PREFIX . 'pngjpg_savings', $savings );
+		update_post_meta( $id, 'wp-smush-pngjpg_savings', $savings );
 
 		return $result['meta'];
 	}
@@ -529,36 +520,27 @@ class Png2jpg extends Abstract_Module {
 	}
 
 	/**
-	 * Check whether the given attachment was converted from PNG to JPG
+	 * Check whether the given attachment was converted from PNG to JPG.
 	 *
-	 * @param string $id  Attachment ID.
+	 * @param int $id  Attachment ID.
 	 *
-	 * @return bool True/False Whether the image was converted from PNG or not
+	 * @return bool  If the image was converted from PNG or not.
 	 */
-	public function is_converted( $id = '' ) {
+	public function is_converted( $id ) {
 		if ( empty( $id ) ) {
 			return false;
 		}
 
 		// Get the original file path and check if it exists.
-		$original_file = get_post_meta( $id, WP_SMUSH_PREFIX . 'original_file', true );
+		$original_file = get_post_meta( $id, 'wp-smush-original_file', true );
 
 		// If original file path is not stored, then it wasn't converted or was restored to original.
 		if ( empty( $original_file ) ) {
 			return false;
 		}
-		// Upload Directory.
-		$upload_dir = wp_upload_dir();
 
-		// Upload Path.
-		$upload_path = trailingslashit( $upload_dir['basedir'] );
-
-		// If file exists return true.
-		if ( file_exists( path_join( $upload_path, $original_file ) ) ) {
-			return true;
-		}
-
-		return false;
+		$uploads = wp_get_upload_dir();
+		return file_exists( path_join( $uploads['basedir'], $original_file ) );
 	}
 
 	/**
