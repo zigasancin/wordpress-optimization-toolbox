@@ -4,11 +4,11 @@
  * Plugin URI: https://jetpack.com
  * Description: Security, performance, and marketing tools made by WordPress experts. Jetpack keeps your site protected so you can focus on more important things.
  * Author: Automattic
- * Version: 9.9
+ * Version: 11.6
  * Author URI: https://jetpack.com
  * License: GPL2+
  * Text Domain: jetpack
- * Requires at least: 5.7
+ * Requires at least: 6.0
  * Requires PHP: 5.6
  *
  * @package automattic/jetpack
@@ -30,9 +30,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-define( 'JETPACK__MINIMUM_WP_VERSION', '5.7' );
+define( 'JETPACK__MINIMUM_WP_VERSION', '6.0' );
 define( 'JETPACK__MINIMUM_PHP_VERSION', '5.6' );
-define( 'JETPACK__VERSION', '9.9' );
+define( 'JETPACK__VERSION', '11.6' );
 
 /**
  * Constant used to fetch the connection owner token
@@ -58,7 +58,7 @@ defined( 'JETPACK_CLIENT__AUTH_LOCATION' ) || define( 'JETPACK_CLIENT__AUTH_LOCA
  */
 defined( 'JETPACK_CLIENT__HTTPS' ) || define( 'JETPACK_CLIENT__HTTPS', 'AUTO' );
 
-defined( 'JETPACK__GLOTPRESS_LOCALES_PATH' ) || define( 'JETPACK__GLOTPRESS_LOCALES_PATH', JETPACK__PLUGIN_DIR . 'locales.php' );
+defined( 'JETPACK__GLOTPRESS_LOCALES_PATH' ) || define( 'JETPACK__GLOTPRESS_LOCALES_PATH', JETPACK__PLUGIN_DIR . 'jetpack_vendor/automattic/jetpack-compat/lib/locales.php' );
 defined( 'JETPACK__API_BASE' ) || define( 'JETPACK__API_BASE', 'https://jetpack.wordpress.com/jetpack.' );
 defined( 'JETPACK_PROTECT__API_HOST' ) || define( 'JETPACK_PROTECT__API_HOST', 'https://api.bruteprotect.com/' );
 defined( 'JETPACK__WPCOM_JSON_API_BASE' ) || define( 'JETPACK__WPCOM_JSON_API_BASE', 'https://public-api.wordpress.com' );
@@ -135,16 +135,20 @@ if ( version_compare( $GLOBALS['wp_version'], JETPACK__MINIMUM_WP_VERSION, '<' )
  * - If it succeeds, we require load-jetpack.php, where all legacy files are required,
  *   and where we add on to various hooks that we expect to always run.
  */
-$jetpack_autoloader = JETPACK__PLUGIN_DIR . 'vendor/autoload_packages.php';
-if ( is_readable( $jetpack_autoloader ) ) {
-	require $jetpack_autoloader;
+$jetpack_autoloader           = JETPACK__PLUGIN_DIR . 'vendor/autoload_packages.php';
+$jetpack_module_headings_file = JETPACK__PLUGIN_DIR . 'modules/module-headings.php'; // This file is loaded later in load-jetpack.php, but let's check here to pause before half-loading Jetpack.
+if ( is_readable( $jetpack_autoloader ) && is_readable( $jetpack_module_headings_file ) ) {
+	require_once $jetpack_autoloader;
+	if ( method_exists( '\Automattic\Jetpack\Assets', 'alias_textdomains_from_file' ) ) {
+		\Automattic\Jetpack\Assets::alias_textdomains_from_file( JETPACK__PLUGIN_DIR . 'jetpack_vendor/i18n-map.php' );
+	}
 } else {
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 		error_log( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			sprintf(
 				/* translators: Placeholder is a link to a support document. */
 				__( 'Your installation of Jetpack is incomplete. If you installed Jetpack from GitHub, please refer to this document to set up your development environment: %1$s', 'jetpack' ),
-				'https://github.com/Automattic/jetpack/blob/master/docs/development-environment.md'
+				'https://github.com/Automattic/jetpack/blob/trunk/docs/development-environment.md'
 			)
 		);
 	}
@@ -154,7 +158,7 @@ if ( is_readable( $jetpack_autoloader ) ) {
 	 *
 	 * @since 7.4.0
 	 */
-	function jetpack_admin_missing_autoloader() {
+	function jetpack_admin_missing_files() {
 		?>
 		<div class="notice notice-error is-dismissible">
 			<p>
@@ -162,7 +166,7 @@ if ( is_readable( $jetpack_autoloader ) ) {
 				printf(
 					wp_kses(
 						/* translators: Placeholder is a link to a support document. */
-						__( 'Your installation of Jetpack is incomplete. If you installed Jetpack from GitHub, please refer to <a href="%1$s" target="_blank" rel="noopener noreferrer">this document</a> to set up your development environment.', 'jetpack' ),
+						__( 'Your installation of Jetpack is incomplete. If you installed Jetpack from GitHub, please refer to <a href="%1$s" target="_blank" rel="noopener noreferrer">this document</a> to set up your development environment. Jetpack must have Composer dependencies installed and built via the build command.', 'jetpack' ),
 						array(
 							'a' => array(
 								'href'   => array(),
@@ -171,7 +175,7 @@ if ( is_readable( $jetpack_autoloader ) ) {
 							),
 						)
 					),
-					'https://github.com/Automattic/jetpack/blob/master/docs/development-environment.md'
+					'https://github.com/Automattic/jetpack/blob/trunk/docs/development-environment.md#building-your-project'
 				);
 				?>
 			</p>
@@ -179,7 +183,7 @@ if ( is_readable( $jetpack_autoloader ) ) {
 		<?php
 	}
 
-	add_action( 'admin_notices', 'jetpack_admin_missing_autoloader' );
+	add_action( 'admin_notices', 'jetpack_admin_missing_files' );
 	return;
 }
 

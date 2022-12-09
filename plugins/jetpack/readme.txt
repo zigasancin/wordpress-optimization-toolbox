@@ -1,10 +1,10 @@
 === Jetpack - WP Security, Backup, Speed, & Growth ===
-Contributors: automattic, adamkheckler, aduth, akirk, allendav, alternatekev, andy, annezazu, apeatling, azaozz, batmoo, barry, beaulebens, biskobe, blobaugh, brbrr, cainm, cena, cfinke, chaselivingston, chellycat, clickysteve, csonnek, danielbachhuber, davoraltman, daniloercoli, delawski, designsimply, dllh, drawmyface, dsmart, dzver, ebinnion, egregor, eliorivero, enej, eoigal, erania-pinnera, ethitter, fgiannar, gcorne, georgestephanis, gibrown, goldsounds, hew, hugobaeta, hypertextranch, iammattthomas, iandunn, jblz, jasmussen, jeffgolenski, jeherve, jenhooks, jenia, jessefriedman, jgs, jkudish, jmdodd, joanrho, johnjamesjacoby, jshreve, kbrownkd, keoshi, koke, kraftbj, lancewillett, leogermani, lschuyler, macmanx, martinremy, matt, matveb, mattwiebe, maverick3x6, mcsf, mdawaffe, mdbitz, MichaelArestad, migueluy, mikeyarce, mkaz, nancythanki, nickmomrik, obenland, oskosk, pento, professor44, rachelsquirrel, rdcoll, ryancowles, richardmuscat, richardmtl, robertbpugh, roccotripaldi, samhotchkiss, scarstocea, scottsweb, sdquirk, sermitr, simison, stephdau, tmoorewp, tyxla, Viper007Bond, westi, yoavf, zinigor
-Tags: Security, backup, WooCommerce, malware, scan, spam, CDN, search, social
-Stable tag: 9.9
-Requires at least: 5.7
+Contributors: automattic, adamkheckler, adrianmoldovanwp, aduth, akirk, allendav, alternatekev, andy, annamcphee, annezazu, apeatling, arcangelini, azaozz, batmoo, barry, beaulebens, biskobe, blobaugh, bjorsch, brbrr, cainm, cena, cfinke, chaselivingston, chellycat, clickysteve, csonnek, danielbachhuber, davoraltman, daniloercoli, delawski, designsimply, dllh, drawmyface, dsmart, dzver, ebinnion, egregor, eliorivero, enej, eoigal, erania-pinnera, ethitter, fgiannar, gcorne, georgestephanis, gibrown, goldsounds, hew, hugobaeta, hypertextranch, iammattthomas, iandunn, jblz, jasmussen, jeffgolenski, jeherve, jenhooks, jenia, jessefriedman, jgs, jkudish, jmdodd, joanrho, johnjamesjacoby, jshreve, kbrownkd, keoshi, koke, kraftbj, lancewillett, leogermani, lschuyler, macmanx, martinremy, matt, matveb, mattwiebe, maverick3x6, mcsf, mdawaffe, mdbitz, MichaelArestad, migueluy, mikeyarce, mkaz, nancythanki, nickmomrik, obenland, oskosk, pento, professor44, rachelsquirrel, rdcoll, ryancowles, richardmuscat, richardmtl, robertbpugh, roccotripaldi, samhotchkiss, samiff, scarstocea, scottsweb, sdixon194, sdquirk, sermitr, simison, stephdau, tmoorewp, tyxla, Viper007Bond, westi, yoavf, zinigor
+Tags: Security, backup, Woo, malware, scan, spam, CDN, search, social
+Stable tag: 11.6
+Requires at least: 6.0
 Requires PHP: 5.6
-Tested up to: 5.8
+Tested up to: 6.1
 
 Improve your WP security with powerful one-click tools like backup and malware scan. Get essential free tools including stats, CDN and social sharing.
 
@@ -45,7 +45,7 @@ Create and customize your WordPress site, optimize it for visitors and revenue, 
 * Easily share Instagram posts on your pages and blog posts.
 * Collect a payment or donation, sell a product, service, or membership with simple integrations with PayPal and Stripe.
 * Grow traffic with SEO tools for Google, Bing, Twitter, Facebook, and WordPress.com. XML sitemap created automatically.
-* Advertise on your site to generate revenue. The Jetpack ad network automatically does the work for you to find high-quality ads that are placed on your site.
+* Advertise on your site to generate revenue. The ad network automatically does the work for you to find high-quality ads that are placed on your site.
 * Manage Jetpack features from anywhere with the official WordPress mobile app, available for Apple iOS (iPhone or iPad) and Google Android.
 * Looking for Customer Relationship Management? Check out the [Jetpack CRM plugin](https://jetpackcrm.com) which works alongside Jetpack to give you a simple and practical way to build relationships with your customers and leads.
 
@@ -242,51 +242,60 @@ Jetpack Backup can do a full website migration to a new host, migrate theme file
 4. Promote your newest posts, pages, and products across your social media channels.
 
 == Changelog ==
-### 9.9 - 2021-07-06
-#### Major Enhancements
-- Carousel: improve carousel usability, performance, accessibility, mobile friendliness.
-- Carousel: improve stability, fixes multiple bugs.
-
+### 11.6 - 2022-12-06
 #### Enhancements
-- Blocks: additional automated tests to improve reliability.
-- Carousel: Add comment indicator icon to carousel comments icon.
-- Dashboard: provide more useful information and an option to contact support when there are display issues in the Jetpack dashboard.
-- Editor: added Social Preview panel to the pre-publish sidebar to increase visibility.
-- Instant Search: improve modal animation and transition speed.
+- Editor: adds an experimental editor extension that displays a placeholder blogging prompt when starting a new post.
+- Form Block: add a new form variation and template for a Salesforce Lead form.
+- Form Block: add block alignment control for the form wrapper: center, wide and full
+- Form block: add support links to form type selector.
+- Form Block: enable editing placeholders on form input fields.
+- Form Block: feedback export function is now integrated with the feedback table filters
+- Form Block: fix form placeholder background color.
+- Form Block: improve the styling and formatting of the form submission page after a form block is submitted.
+- Form Block: move the 'check for spam' buttont to below the responses table on the feedback page in WP Admin.
+- Form block: register Jetpack forms in the pattern inserter.
+- Form Block: remove connection button from the Form block toolbar
+- Form block: update contact-form icon
+- Form block: update Contact Form Sidebar to include Manage Responses section and split Form Settings section into more specific sections
+- Form block: update Contact Form Toolbar to include a form settings dropdown
+- Form Block: update design for Feedback table in WP Admin.
+- Form Block: updates Form block placeholder to include pattern selection modal
+- Form Block: updates Form block to allow layout blocks
+- Form Block: updates URL validitity check
+- Pre-Publish Panel: split out the email subscribers & social followers count in the pre-publish panel.
+- SEO: add a 'noindex' checkbox for posts and pages.
+- SEO: add a per post/page HTML title option.
+- Stats: add stats option `enable_calypso_stats` to allow users to enable the new Calypso Stats experience
+- Stats: conditionally load the new Calypso Stats package
+- Stats: update mentions of "Site Stats" to "Jetpack Stats"
+- VideoPress: adds VideoPress feedback link to the VideoPress block.
+- VideoPress: detect if the video has a vtt chapters file
+- WordAds: add US Privacy support for additional states (Colorado, Connecticut, Utah, and Virginia).
 
 #### Improved compatibility
-- Blocks: make sure connection notices in blocks work with the widget and customizer block editors.
-- Carousel: Ensure refactored carousel is compatible with Twenty Nineteen theme styles.
-- Full Site Editing: disable admin bar in Jetpack notifications to prevent keystroke hijacking in the Site Editor.
-- Podcast Block: Ensure compatability with latest version of Gutenberg plugin and WordPress 5.8.
-- Search: improve Search Widget compatibility with WordPress 5.8 widget editor.
-- Shortcode Embeds: enable compatibility with WordPress' "Lazy Loading".
-- Site Logo: improve compatibility with WordPress 5.8's new Site Logo block.
-- Slideshow Block: update icon.
+- Form block: update Form child blocks to show the "Manage Responses" section on the Sidebar.
+- Improves compatibility with the Jetpack Protect standalone plugin.
+- Sitemaps: improve compatibility with recent Google Image Sitemap changes.
+- VideoPress (beta): introduce Video Chapters beta block.
 
 #### Bug fixes
-- AMP: Fix top AMP ad unit from being cropped on mobile devices
-- Blocks: GIF block supports the widget editor and customizer preview pane.
-- Carousel: Fix intermittent issue with unresponsive prev button.
-- Carousel: Fix image quality on carousel zoom.
-- Carousel: Set pagination font weight to normal to avoid conflicts with theme styles.
-- Carousel: disable transitions on prev/next images to prevent flash effect on pinch, zoom and swipe.
-- Custom CSS: allow leading decimal zeros.
-- Inline PDFs: Fix height of PDF embeds for greater theme compatability.
-- Instant Search: ensure alt text does not contain mark element.
-- Instant Search: fix render-breaking typo for Expanded search results.
-- Instant Search: prevent overlay from opening when composing text using an input method editor for Chinese, Japanese, Korean, and Indic languages.
-- Instant Search: prevent theme from overriding modal close button styles.
-- Instant Search: show correct count for paginated results.
-- Payments Block: prevent hiding block configuration instructions when block is nested.
-- Shortcode Embeds: correctly handle YouTube URLs that include a start time.
-- Story Block: improve navigation, fix issues with long press to pause and exiting story on last tap.
-- Widgets: avoid PHP notice when using the Milestone Widget within the upcoming widget management screen in WordPress 5.8.
-- WordPress.com API: properly allow requests to upgrade a plugin outside of autoupdates.
-
-#### General
-- Jetpack now requires WordPress 5.7 in anticipation of WordPress 5.8 coming later this month.
+- Customizer: make sure the menu item is shown for block themes.
+- Dashboard: fixes issue where default icon would be empty
+- Dashboard: prevent scrolling to the active settings menu item on page load.
+- Form block: add line breaks back to plain text email submissions.
+- Form block: fix contact Form view responses URL
+- Form block: fix form patterns modal scrollbar behavior
+- Image Editor: fix issue where users are not able to edit/crop and restore images.
+- Provide a fix for WPA click tracking in Agencies card
+- Related Posts Block: when 3 posts are output, increase the width closer to 100%.
+- Shortcodes: fix content_width handling for various shortcodes.
+- SSO: fix setting toggle inconsistency.
+- SSO: properly disable "match by email" by default.
+- Stats: stop stats loading indefinitely when a hashtag exists
+- VideoPress: fix issue with uploading VideoPress videos in the Full Site Editor.
+- Widget Visibility: fix error with WooCommerce Product Categories block
+- WordPress.com REST API: Fix fatal error in site ID endpoint.
 
 --------
 
-[See the previous changelogs here](https://github.com/Automattic/jetpack/blob/master/projects/plugins/jetpack/CHANGELOG.md#changelog)
+[See the previous changelogs here](https://github.com/Automattic/jetpack/blob/trunk/projects/plugins/jetpack/CHANGELOG.md#changelog)

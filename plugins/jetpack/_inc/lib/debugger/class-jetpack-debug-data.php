@@ -265,7 +265,7 @@ class Jetpack_Debug_Data {
 			if ( isset( $_SERVER[ $header ] ) ) {
 				$debug_info[ $header ] = array(
 					'label'   => 'Server Variable ' . $header,
-					'value'   => ( $_SERVER[ $header ] ) ? $_SERVER[ $header ] : 'false',
+					'value'   => empty( $_SERVER[ $header ] ) ? 'false' : filter_var( wp_unslash( $_SERVER[ $header ] ) ),
 					'private' => true, // This isn't really 'private' information, but we don't want folks to easily paste these into public forums.
 				);
 			}
@@ -344,7 +344,7 @@ class Jetpack_Debug_Data {
 		);
 		$debug_info['idc_optin']        = array(
 			'label'   => 'IDC Opt-in',
-			'value'   => Identity_Crisis::sync_idc_optin(),
+			'value'   => Identity_Crisis::should_handle_idc(),
 			'private' => false,
 		);
 

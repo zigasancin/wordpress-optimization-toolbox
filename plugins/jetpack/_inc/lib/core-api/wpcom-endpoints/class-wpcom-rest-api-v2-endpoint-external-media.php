@@ -21,32 +21,48 @@ class WPCOM_REST_API_V2_Endpoint_External_Media extends WP_REST_Controller {
 	 * @var array
 	 */
 	public $media_schema = array(
-		'type'       => 'object',
-		'required'   => true,
-		'properties' => array(
-			'caption' => array(
-				'type' => 'string',
-			),
-			'guid'    => array(
-				'items' => array(
-					'caption' => array(
-						'type' => 'string',
-					),
-					'name'    => array(
-						'type' => 'string',
-					),
-					'title'   => array(
-						'type' => 'string',
-					),
-					'url'     => array(
-						'format' => 'uri',
-						'type'   => 'string',
+		'type'  => 'array',
+		'items' => array(
+			'type'       => 'object',
+			'required'   => true,
+			'properties' => array(
+				'caption' => array(
+					'type' => 'string',
+				),
+				'guid'    => array(
+					'type'       => 'object',
+					'properties' => array(
+						'caption' => array(
+							'type' => 'string',
+						),
+						'name'    => array(
+							'type' => 'string',
+						),
+						'title'   => array(
+							'type' => 'string',
+						),
+						'url'     => array(
+							'format' => 'uri',
+							'type'   => 'string',
+						),
 					),
 				),
-				'type'  => 'array',
-			),
-			'title'   => array(
-				'type' => 'string',
+				'title'   => array(
+					'type' => 'string',
+				),
+				'meta'    => array(
+					'type'                 => 'object',
+					'additionalProperties' => false,
+					'properties'           => array(
+						'vertical_id'   => array(
+							'type'   => 'string',
+							'format' => 'text-field',
+						),
+						'pexels_object' => array(
+							'type' => 'object',
+						),
+					),
+				),
 			),
 		),
 	);
@@ -56,7 +72,7 @@ class WPCOM_REST_API_V2_Endpoint_External_Media extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	private static $services_regex = '(?P<service>google_photos|pexels)';
+	private static $services_regex = '(?P<service>google_photos|openverse|pexels)';
 
 	/**
 	 * Temporary filename.
@@ -467,6 +483,12 @@ class WPCOM_REST_API_V2_Endpoint_External_Media extends WP_REST_Controller {
 				'post_excerpt' => $item['caption'],
 			)
 		);
+
+		if ( ! empty( $item['meta'] ) ) {
+			foreach ( $item['meta'] as $meta_key => $meta_value ) {
+				update_post_meta( $id, $meta_key, $meta_value );
+			}
+		}
 	}
 
 	/**

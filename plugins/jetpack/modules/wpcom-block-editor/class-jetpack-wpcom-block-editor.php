@@ -8,6 +8,8 @@
  */
 
 use Automattic\Jetpack\Connection\Tokens;
+use Automattic\Jetpack\Status\Host;
+
 /**
  * WordPress.com Block editor for Jetpack
  */
@@ -64,11 +66,11 @@ class Jetpack_WPCOM_Block_Editor {
 
 		require_once __DIR__ . '/functions.editor-type.php';
 		add_action( 'edit_form_top', 'Jetpack\EditorType\remember_classic_editor' );
-		add_filter( 'block_editor_settings', 'Jetpack\EditorType\remember_block_editor', 10, 2 );
 		add_action( 'login_init', array( $this, 'allow_block_editor_login' ), 1 );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_assets' ), 9 );
 		add_action( 'enqueue_block_assets', array( $this, 'enqueue_block_assets' ) );
 		add_filter( 'mce_external_plugins', array( $this, 'add_tinymce_plugins' ) );
+		add_filter( 'block_editor_settings_all', 'Jetpack\EditorType\remember_block_editor', 10, 2 );
 
 		$this->enable_cross_site_auth_cookies();
 	}
@@ -89,8 +91,8 @@ class Jetpack_WPCOM_Block_Editor {
 	 * Prevents frame options header from firing if this is a allowed iframe request.
 	 */
 	public function disable_send_frame_options_header() {
-		// phpcs:ignore WordPress.Security.NonceVerification
-		if ( $this->framing_allowed( $_GET['frame-nonce'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
+		if ( isset( $_GET['frame-nonce'] ) && $this->framing_allowed( $_GET['frame-nonce'] ) ) {
 			remove_action( 'admin_init', 'send_frame_options_header' );
 		}
 	}
@@ -102,8 +104,8 @@ class Jetpack_WPCOM_Block_Editor {
 	 * @return string
 	 */
 	public function add_iframed_body_class( $classes ) {
-		// phpcs:ignore WordPress.Security.NonceVerification
-		if ( $this->framing_allowed( $_GET['frame-nonce'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
+		if ( isset( $_GET['frame-nonce'] ) && $this->framing_allowed( $_GET['frame-nonce'] ) ) {
 			$classes .= ' is-iframed ';
 		}
 
@@ -116,12 +118,12 @@ class Jetpack_WPCOM_Block_Editor {
 	 * force the editor to break out of the iFrame.
 	 */
 	private function check_iframe_cookie_setting() {
-		if ( ! isset( $_SERVER['QUERY_STRING'] ) || ! strpos( $_SERVER['QUERY_STRING'], 'calypsoify%3D1%26block-editor' ) || isset( $_COOKIE['wordpress_test_cookie'] ) ) {
+		if ( ! isset( $_SERVER['QUERY_STRING'] ) || ! strpos( filter_var( wp_unslash( $_SERVER['QUERY_STRING'] ) ), 'calypsoify%3D1%26block-editor' ) || isset( $_COOKIE['wordpress_test_cookie'] ) ) {
 			return;
 		}
 
-		if ( empty( $_GET['calypsoify_cookie_check'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			header( 'Location: ' . esc_url_raw( $_SERVER['REQUEST_URI'] . '&calypsoify_cookie_check=true' ) );
+		if ( isset( $_SERVER['REQUEST_URI'] ) && empty( $_GET['calypsoify_cookie_check'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			header( 'Location: ' . esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) . '&calypsoify_cookie_check=true' ) );
 			exit;
 		}
 
@@ -138,11 +140,12 @@ class Jetpack_WPCOM_Block_Editor {
 		if ( empty( $_REQUEST['redirect_to'] ) ) {
 			return;
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$redirect_to = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
 
 		$this->check_iframe_cookie_setting();
 
-		// phpcs:ignore WordPress.Security.NonceVerification
-		$query = wp_parse_url( urldecode( $_REQUEST['redirect_to'] ), PHP_URL_QUERY );
+		$query = wp_parse_url( urldecode( $redirect_to ), PHP_URL_QUERY );
 		$args  = wp_parse_args( $query );
 
 		// Check nonce and make sure this is a Gutenframe request.
@@ -151,7 +154,7 @@ class Jetpack_WPCOM_Block_Editor {
 			// If SSO is active, we'll let WordPress.com handle authentication...
 			if ( Jetpack::is_module_active( 'sso' ) ) {
 				// ...but only if it's not an Atomic site. They already do that.
-				if ( ! jetpack_is_atomic_site() ) {
+				if ( ! ( new Host() )->is_woa_site() ) {
 					add_filter( 'jetpack_sso_bypass_login_forward_wpcom', '__return_true' );
 				}
 			} else {
@@ -186,7 +189,7 @@ class Jetpack_WPCOM_Block_Editor {
 	 */
 	public function add_login_html() {
 		?>
-		<input type="hidden" name="redirect_to" value="<?php echo esc_url( $_REQUEST['redirect_to'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>" />
+		<input type="hidden" name="redirect_to" value="<?php echo isset( $_REQUEST['redirect_to'] ) ? esc_url( wp_unslash( $_REQUEST['redirect_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>" />
 		<script type="application/javascript">
 			document.getElementById( 'loginform' ).addEventListener( 'submit' , function() {
 				document.getElementById( 'wp-submit' ).setAttribute( 'disabled', 'disabled' );
@@ -304,6 +307,13 @@ class Jetpack_WPCOM_Block_Editor {
 	 * Enqueues the WordPress.com block editor integration assets for the editor.
 	 */
 	public function enqueue_block_editor_assets() {
+		global $pagenow;
+
+		// Bail if we're not in the post editor, but on the widget settings screen.
+		if ( is_customize_preview() || 'widgets.php' === $pagenow ) {
+			return;
+		}
+
 		$debug   = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
 		$version = gmdate( 'Ymd' );
 
@@ -337,7 +347,7 @@ class Jetpack_WPCOM_Block_Editor {
 			)
 		);
 
-		if ( jetpack_is_atomic_site() ) {
+		if ( ( new Host() )->is_woa_site() ) {
 			wp_enqueue_script(
 				'wpcom-block-editor-wpcom-editor-script',
 				$debug
@@ -405,7 +415,7 @@ class Jetpack_WPCOM_Block_Editor {
 		global $post;
 		if ( ! $post instanceof WP_Post ) {
 			return false;
-		};
+		}
 
 		if ( ! has_blocks( $post ) ) {
 			return false;
