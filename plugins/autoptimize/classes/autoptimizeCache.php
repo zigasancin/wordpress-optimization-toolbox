@@ -91,7 +91,7 @@ class autoptimizeCache
      * @param string $data Data to cache.
      * @param string $mime Mimetype.
      *
-     * @return void
+     * @return void|bool
      */
     public function cache( $data, $mime )
     {
@@ -382,7 +382,17 @@ class autoptimizeCache
      */
     public static function clearall( $propagate = true )
     {
-        if ( ! self::cacheavail() ) {
+        if ( defined( 'ET_CORE_VERSION' ) && 'Divi' === get_template() ) {
+            // see https://blog.futtta.be/2018/11/17/warning-divi-purging-autoptimizes-cache/ .
+            $dbt    = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 2 );
+            $caller = isset( $dbt[1]['function'] ) ? $dbt[1]['function'] : null;
+            if ( 'et_core_clear_wp_cache' === $caller ) {
+                _doing_it_wrong( 'autoptimizeCache::clearall', 'Divi devs: please don\'t clear Autoptimize\'s cache, it is unneeded and can break sites. You can contact me at futtta@gmail.com to discuss.', 'Autoptimize 2.9.6' );
+                return false;
+            }
+        }
+
+        if ( ! self::cacheavail() || true === apply_filters( 'autoptimize_filter_cache_clearall_disabled', false ) ) {
             return false;
         }
 
@@ -636,6 +646,10 @@ class autoptimizeCache
             $_fallback_php_contents = file_get_contents( AUTOPTIMIZE_PLUGIN_DIR . 'config/' . $_fallback_filename );
             $_fallback_php_contents = str_replace( '<?php exit;', '<?php', $_fallback_php_contents );
             $_fallback_php_contents = str_replace( '<!--ao-cache-dir-->', AUTOPTIMIZE_CACHE_DIR, $_fallback_php_contents );
+            $_fallback_php_contents = str_replace( '<!--ao-cachefile-prefix-->', AUTOPTIMIZE_CACHEFILE_PREFIX, $_fallback_php_contents );
+            if ( is_multisite() ) {
+                $_fallback_php_contents = str_replace( '$multisite = false;', '$multisite = true;', $_fallback_php_contents );
+            }
             if ( apply_filters( 'autoptimize_filter_cache_fallback_log_errors', false ) ) {
                 $_fallback_php_contents = str_replace( '// error_log', 'error_log', $_fallback_php_contents );
             }
@@ -681,7 +695,7 @@ class autoptimizeCache
 
             // prepare for Shakeeb's Unused CSS files to be 404-handled as well.
             if ( strpos( $original_request, 'uucss/uucss-' ) !== false ) {
-                $original_request = preg_replace( '/uucss\/uucss-[a-z0-9]{32}-/', 'css/', $original_request  );
+                $original_request = preg_replace( '/uucss\/uucss-[a-z0-9]{32}-/', 'css/', $original_request );
             }
 
             // set fallback URL.
@@ -809,11 +823,14 @@ class autoptimizeCache
             $_kinsta_clear_cache_url = 'https://localhost/kinsta-clear-cache-all';
             $_kinsta_response        = wp_remote_get(
                 $_kinsta_clear_cache_url,
-                array( 
+                array(
                     'sslverify' => false,
                     'timeout' => 5,
                     )
             );
+        } elseif ( class_exists( 'RaidboxesNginxCacheFunctions' ) ) {
+            $rb_cache_helper = new RaidboxesNginxCacheFunctions();
+            $rb_cache_helper->purge_cache();
         } elseif ( defined('NGINX_HELPER_BASENAME') ) {
             do_action( 'rt_nginx_helper_purge_all' );
         } elseif ( file_exists( WP_CONTENT_DIR . '/wp-cache-config.php' ) && function_exists( 'prune_super_cache' ) ) {

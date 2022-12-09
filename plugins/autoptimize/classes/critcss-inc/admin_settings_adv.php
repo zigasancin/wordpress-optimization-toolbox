@@ -7,16 +7,17 @@
  * Function to render the advanced panel.
  */
 function ao_ccss_render_adv() {
-    // Attach required globals.
-    global $ao_ccss_debug;
-    global $ao_ccss_finclude;
-    global $ao_ccss_rtimelimit;
-    global $ao_ccss_noptimize;
-    global $ao_ccss_loggedin;
-    global $ao_ccss_forcepath;
-    global $ao_ccss_deferjquery;
-    global $ao_ccss_domain;
-    global $ao_ccss_unloadccss;
+    $criticalcss = autoptimize()->criticalcss();
+
+    $ao_ccss_debug       = esc_attr( $criticalcss->get_option( 'debug' ) );
+    $ao_ccss_finclude    = esc_textarea( $criticalcss->get_option( 'finclude' ) );
+    $ao_ccss_rtimelimit  = esc_attr( $criticalcss->get_option( 'rtimelimit' ) );
+    $ao_ccss_noptimize   = esc_attr( $criticalcss->get_option( 'noptimize' ) );
+    $ao_ccss_loggedin    = esc_attr( $criticalcss->get_option( 'loggedin' ) );
+    $ao_ccss_forcepath   = esc_attr( $criticalcss->get_option( 'forcepath' ) );
+    $ao_ccss_deferjquery = esc_attr( $criticalcss->get_option( 'deferjquery' ) );
+    $ao_ccss_domain      = esc_attr( $criticalcss->get_option( 'domain' ) );
+    $ao_ccss_unloadccss  = esc_attr( $criticalcss->get_option( 'unloadccss' ) );
 
     // In case domain is not set yet (done in cron.php).
     if ( empty( $ao_ccss_domain ) ) {
@@ -24,8 +25,8 @@ function ao_ccss_render_adv() {
     }
 
     // Get viewport size.
-    $viewport = autoptimizeCriticalCSSCore::ao_ccss_viewport();
-?>
+    $viewport = $criticalcss->viewport();
+    ?>
     <ul id="adv-panel">
         <li class="itemDetail">
             <h2 class="itemTitle fleft"><?php _e( 'Advanced Settings', 'autoptimize' ); ?></h2>
@@ -101,6 +102,7 @@ function ao_ccss_render_adv() {
                             </p>
                         </td>
                     </tr>
+                    <?php if ( 1 == $ao_ccss_deferjquery ) { ?>
                     <tr>
                         <th scope="row">
                             <?php _e( 'Defer jQuery and other non-aggregated JS-files? (deprecated)', 'autoptimize' ); ?>
@@ -113,6 +115,7 @@ function ao_ccss_render_adv() {
                             </p>
                         </td>
                     </tr>
+                    <?php } ?>
                     <tr>
                         <th scope="row">
                             <?php _e( 'Unload critical CSS after page load?', 'autoptimize' ); ?>

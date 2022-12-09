@@ -34,9 +34,12 @@ class autoptimizePartners
 
     public function add_partner_tabs( $in )
     {
-        $in = array_merge( $in, array(
-            'ao_partners' => __( 'Optimize More!', 'autoptimize' ),
-        ) );
+        $in = array_merge(
+            $in,
+            array(
+                'ao_partners' => __( 'Optimize More!', 'autoptimize' ),
+            )
+        );
 
         return $in;
     }
@@ -44,7 +47,7 @@ class autoptimizePartners
     public function add_admin_menu()
     {
         if ( $this->enabled() ) {
-            add_submenu_page( null, 'AO partner', 'AO partner', 'manage_options', 'ao_partners', array( $this, 'ao_partners_page' ) );
+            add_submenu_page( '', 'AO partner', 'AO partner', 'manage_options', 'ao_partners', array( $this, 'ao_partners_page' ) );
         }
     }
 
@@ -92,7 +95,7 @@ class autoptimizePartners
 
     public function ao_partners_page()
     {
-?>
+        ?>
 <style>
     .itemDetail {
         background: #fff;
@@ -138,13 +141,13 @@ class autoptimizePartners
     </style>
     <script>document.title = "Autoptimize: <?php _e( 'Optimize More!', 'autoptimize' ); ?> " + document.title;</script>
     <div class="wrap">
-        <h1><?php _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
+        <h1><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? _e( 'Autoptimize Pro Settings', 'autoptimize' ) : _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
         <?php echo autoptimizeConfig::ao_admin_tabs(); ?>
         <?php echo '<h2>' . __( "These Autoptimize power-ups and related services will improve your site's performance even more!", 'autoptimize' ) . '</h2>'; ?>
         <div>
             <?php echo $this->get_ao_partner_feed_markup(); ?>
         </div>
     </div>
-<?php
+        <?php
     }
 }

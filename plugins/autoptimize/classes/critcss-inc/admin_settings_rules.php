@@ -8,9 +8,14 @@
  */
 function ao_ccss_render_rules() {
     // Attach required arrays.
-    global $ao_ccss_rules;
-    global $ao_ccss_types;
-?>
+    $criticalcss   = autoptimize()->criticalcss();
+    $ao_ccss_rules = sanitize_rules( $criticalcss->get_option( 'rules' ) );
+    $ao_ccss_types = $criticalcss->get_types();
+
+    if ( empty( $ao_ccss_types ) || ! is_array( $ao_ccss_types ) ) {
+        $ao_ccss_types = array( 'No conditionals, check CSS optimization settings.' );
+    }
+    ?>
     <ul id="rules-panel">
         <li class="itemDetail">
             <h2 class="itemTitle"><?php _e( 'Rules', 'autoptimize' ); ?></h2>
@@ -104,9 +109,9 @@ function ao_ccss_render_rules() {
                                                 $_type = str_replace( 'custom_post_', '', $type );
                                             } elseif ( substr( $type, 0, 9 ) === 'template_' ) {
                                                 $_type = str_replace( 'template_', '', $type );
-                                            } elseif ( 'bbp_is_bbpress' == $type ) {
+                                            } elseif ( 'bbp_is_bbpress' === $type ) {
                                                 $_type = str_replace( 'bbp_', '', $type );
-                                            } elseif ( 'bp_is_buddypress' == $type ) {
+                                            } elseif ( 'bp_is_buddypress' === $type ) {
                                                 $_type = str_replace( 'bp_', '', $type );
                                             } elseif ( substr( $type, 0, 4 ) === 'woo_' ) {
                                                 $_type = str_replace( 'woo_', '', $type );
@@ -199,6 +204,32 @@ function ao_ccss_render_rules() {
             <!-- END Rules UI -->
         </li>
     </ul>
-<?php
+    <?php
+}
+
+/**
+ * Sanitize rules before rendering.
+ *
+ * @param array $rules Array with rules to be sanitized.
+ */
+function sanitize_rules( $rules ) {
+    if ( apply_filters( 'autoptimize_filter_ccss_paths_clickable', true ) ) {
+        if ( array_key_exists( 'paths', $rules ) ) {
+            foreach ( $rules['paths'] as $key => $value ) {
+                $newkey = esc_url( $key );
+                if ( $newkey !== $key ) {
+                    if ( 0 === strpos( $newkey, 'http://' ) && 0 !== strpos( $key, 'http://' ) ) {
+                        // esc_url adds "http://" to any string that does not start with either a protocol or a
+                        // slash, see https://developer.wordpress.org/reference/functions/esc_url/#more-information
+                        // this removes that unneeded protocol again.
+                        $newkey = substr_replace( $newkey, '', 0, 7 );
+                    }
+                    unset( $rules['paths'][ $key ] );
+                    $rules['paths'][ $newkey ] = $value;
+                }
+            }
+        }
+    }
+    return $rules;
 }
 ?>

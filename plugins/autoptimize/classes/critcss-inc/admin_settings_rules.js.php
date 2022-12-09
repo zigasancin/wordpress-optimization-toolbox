@@ -55,6 +55,15 @@ function drawTable(critCssArray) {
             hash=nv.hash;
             file=nv.file;
             filest=nv.file;
+            auto_style = '';
+            <?php
+            $criticalcss = new autoptimizeCriticalCSSBase();
+            if ( $criticalcss->is_api_active() ) {
+                echo 'api_active = 1;' . "\n";
+            } else {
+                echo 'api_active = 0;' . "\n";
+            }
+            ?>
             if (file == 0) {
                 file='<?php _e( 'To be fetched from criticalcss.com in the next queue run...', 'autoptimize' ); ?>';
             }
@@ -64,6 +73,9 @@ function drawTable(critCssArray) {
             } else {
                 type='<?php _e( 'AUTO', 'autoptimize' ); ?>';
                 typeClass = 'auto';
+                if ( api_active != 1 ) {
+                    auto_style = ' style="opacity:.5;" '
+                }
             }
             if (file && typeof file == 'string') {
                 rmark_find=file.split('_');
@@ -72,12 +84,25 @@ function drawTable(critCssArray) {
                 }
             }
             if ( k == "paths" ) {
-                target = '<a href="<?php echo AUTOPTIMIZE_WP_SITE_URL; ?>' + i + '" target="_blank">' + i + '</a>';
+                <?php
+                if ( apply_filters( 'autoptimize_filter_ccss_paths_clickable', true ) ) {
+                    ?>
+                    target = '<a href="<?php echo AUTOPTIMIZE_WP_SITE_URL; ?>' + i + '" target="_blank">' + i + '</a>';
+                    <?php
+                } else {
+                    ?>
+                    target = i;
+                    <?php
+                }
+                ?>
             } else {
                 target = i.replace(/(woo_|template_|custom_post_|edd_|bp_|bbp_)/,'');
             }
-            jQuery("#rules-list").append("<tr class='rule "+k+"Rule'><td class='type'><span class='badge " + typeClass + "'>" + type + "</span></td><td class='target'>" + target + "</td><td class='file'>" + file + "</td><td class='btn edit'><span class=\"button-secondary\" id=\"" + nodeId + "_edit\"><?php _e( 'Edit', 'autoptimize' ); ?></span></td><td class='btn delete'><span class=\"button-secondary\" id=\"" + nodeId + "_remove\"><?php _e( 'Remove', 'autoptimize' ); ?></span></td></tr>");
-            jQuery("#" + nodeId + "_edit").click(function(){addEditRow(this.id);});
+
+            jQuery("#rules-list").append("<tr " + auto_style + "class='rule "+k+"Rule'><td class='type'><span class='badge " + typeClass + "'>" + type + "</span></td><td class='target'>" + target + "</td><td class='file'>" + file + "</td><td class='btn edit'><span class=\"button-secondary\" id=\"" + nodeId + "_edit\"><?php _e( 'Edit', 'autoptimize' ); ?></span></td><td class='btn delete'><span class=\"button-secondary\" id=\"" + nodeId + "_remove\"><?php _e( 'Remove', 'autoptimize' ); ?></span></td></tr>");
+            if ( typeClass == 'manual' || api_active == 1 ) {
+                jQuery("#" + nodeId + "_edit").click(function(){addEditRow(this.id);});
+            }
             jQuery("#" + nodeId + "_remove").click(function(){confirmRemove(this.id);});
         })
     });
@@ -85,22 +110,22 @@ function drawTable(critCssArray) {
         // R rules were found, show a notice!
         // and add some JS magic to ensure the notice works as a notice, but is shown inline 
         // in the rules panel instead of in the notice area where it would be too prominent.
-        <?php 
+        <?php
         $_ao_ccss_review_notice_id   = 'autoptimize-ccss-review-rules-notice-30';
         // Translators: before the 1st word a number + a space will be displayed, as in e.g. "2 of above rules".
-        $_ao_ccss_review_notice_copy = __('of the above rules got flagged by criticalcss.com as to be reviewed. This is often due to font-related issues which can be safely ignored, but you can log in to your account at https://criticalcss.com and compare screenshots for rules by clicking the red exclamation mark to confirm if all is OK.', 'autoptimize');
+        $_ao_ccss_review_notice_copy = __( 'of the above rules got flagged by criticalcss.com as possibly needing review. This is often due to font-related issues which can be safely ignored, but in case of doubt do a visual test or check for Cumulative Layout Shift issues in e.g. Pagespeed Insights.', 'autoptimize' );
         if ( PAnD::is_admin_notice_active( $_ao_ccss_review_notice_id ) ) {
-        ?>
+            ?>
             jQuery("#rules-notices").append( "&nbsp;<div class='rnotice notice notice-info is-dismissible hidden' data-dismissible='<?php echo $_ao_ccss_review_notice_id; ?>'><p>" + rnotice + " <?php echo $_ao_ccss_review_notice_copy; ?>" + "</p></div>");
             jQuery( document ).ready(function() {
                 jQuery("div.rnotice").detach().appendTo('#rules-notices');
                 jQuery("div.rnotice").show();
             });
-        <?php
-        } else {
-        ?>
+            <?php
+        } else if ( $ao_ccss_debug ) {
+            ?>
             console.log( "Autoptimize: " + rnotice + " <?php echo $_ao_ccss_review_notice_copy; ?>" );
-        <?php
+            <?php
         }
         ?>
     }
@@ -266,11 +291,15 @@ function addEditRow(idToEdit) {
                 rpath = jQuery("#critcss_addedit_path").val();
                 rtype = jQuery("#critcss_addedit_pagetype option:selected").val();
                 rccss = jQuery("#critcss_addedit_css").val();
+                <?php if ( $ao_ccss_debug ) { ?>
                 console.log('rpath: ' + rpath, 'rtype: ' + rtype, 'rccss: ' + rccss);
+                <?php } ?>
                 if (rpath === '' && rtype === '') {
-                    alert('<?php _e( "RULE VALIDATION ERROR!\\n\\nBased on your rule type, you SHOULD set a path or conditional tag.", 'autoptimize' ); ?>');
+                    alert('<?php _e( "Rule validation error:\\n\\nBased on your rule type, you should set a path or conditional tag.", 'autoptimize' ); ?>');
                 } else if (rtype !== '' && rccss == '') {
-                    alert('<?php _e( "RULE VALIDATION ERROR!\\n\\nType based rules REQUIRES a minified critical CSS.", 'autoptimize' ); ?>');
+                    alert('<?php _e( "Rule validation error:\\n\\nType based rules requires a minified critical CSS.", 'autoptimize' ); ?>');
+                } else if (rpath !== rpath.replace(/("|\'|<|>|\[|\]|{|}|\|)/,'')) {
+                    alert('<?php _e( "Path validation error:\\n\\nThe path contains characters that are not permitted, remove or encode the unsafe characters.", 'autoptimize' ); ?>');
                 } else {
                     saveEditCritCss();
                     jQuery(this).dialog('close');
@@ -384,7 +413,7 @@ function updateAfterChange() {
     <?php
     // autosave rules is on by default, but can be disabled with a filter.
     if ( apply_filters( 'autoptimize_filter_ccss_settings_rules_autosave', true ) ) {
-    ?>
+        ?>
     var data = {
         'action': 'ao_ccss_saverules',
         'ao_ccss_saverules_nonce': '<?php echo wp_create_nonce( 'ao_ccss_saverules_nonce' ); ?>',

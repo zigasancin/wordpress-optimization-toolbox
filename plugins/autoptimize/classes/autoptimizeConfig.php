@@ -62,9 +62,9 @@ class autoptimizeConfig
             }
 
             $this->settings_screen_do_remote_http = apply_filters( 'autoptimize_settingsscreen_remotehttp', $this->settings_screen_do_remote_http );
-            
+
             if ( $this->is_ao_meta_settings_active() ) {
-                $metaBox = new autoptimizeMetabox();
+                $meta_box = new autoptimizeMetabox();
             }
         }
 
@@ -100,6 +100,8 @@ class autoptimizeConfig
 
     public function show_config()
     {
+        // phpcs:disable Generic.WhiteSpace.ScopeIndent.IncorrectExact
+        // phpcs:disable Generic.WhiteSpace.ScopeIndent.Incorrect
         $conf = self::instance();
         ?>
 <style>
@@ -195,7 +197,7 @@ input[type=url]:invalid {color: red; border-color:red;} .form-table th{font-weig
 <?php } ?>
 
 <div id="autoptimize_main">
-    <h1 id="ao_title"><?php _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
+    <h1 id="ao_title"><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? _e( 'Autoptimize Pro Settings', 'autoptimize' ) : _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
     <?php echo $this->ao_admin_tabs(); ?>
 
 <form method="post" action="<?php echo admin_url( 'options.php' ); ?>">
@@ -219,14 +221,14 @@ if ( is_network_admin() && autoptimizeOptionWrapper::is_ao_active_for_network() 
     </li>
 <?php } else { ?>
     <input type="hidden" id="autoptimize_enable_site_config" name="autoptimize_enable_site_config" value="on" />
-<?php } ?>    
+<?php } ?>
 
 <li class="itemDetail">
 <h2 class="itemTitle"><?php _e( 'JavaScript Options', 'autoptimize' ); ?></h2>
 <table class="form-table">
 <tr valign="top">
 <th scope="row"><?php _e( 'Optimize JavaScript Code?', 'autoptimize' ); ?></th>
-<td><input type="checkbox" id="autoptimize_js" name="autoptimize_js" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_js' ) ? 'checked="checked" ' : ''; ?>/></td>
+<td><input type="checkbox" id="autoptimize_js" name="autoptimize_js" <?php echo $conf->get( 'autoptimize_js' ) ? 'checked="checked" ' : ''; ?>/></td>
 </tr>
 <tr valign="top" class="js_sub js_aggregate_master">
 <th scope="row"><?php _e( 'Aggregate JS-files?', 'autoptimize' ); ?></th>
@@ -235,17 +237,17 @@ if ( is_network_admin() && autoptimizeOptionWrapper::is_ao_active_for_network() 
 </tr>
 <tr valign="top" class="js_sub js_aggregate hidden">
 <th scope="row">&emsp;<?php _e( 'Also aggregate inline JS?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_include_inline" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_js_include_inline' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_include_inline" <?php echo $conf->get( 'autoptimize_js_include_inline' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Let Autoptimize also extract JS from the HTML (discouraged as it can make Autoptimize\'s cache size grow quickly)', 'autoptimize' ); ?></label></td>
 </tr>
 <tr valign="top" class="js_sub js_aggregate hidden">
 <th scope="row">&emsp;<?php _e( 'Force JavaScript in &lt;head&gt;?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_forcehead" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_js_forcehead' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_forcehead" <?php echo $conf->get( 'autoptimize_js_forcehead' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Load JavaScript early (discouraged as it makes the JS render blocking)', 'autoptimize' ); ?></label></td>
 </tr>
 <tr valign="top" class="js_sub js_aggregate hidden">
 <th scope="row">&emsp;<?php _e( 'Add try-catch wrapping?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_trycatch" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_js_trycatch' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_trycatch" <?php echo $conf->get( 'autoptimize_js_trycatch' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'If your aggregated scripts break because of a JS-error, you might want to try this, but generally discouraged.', 'autoptimize' ); ?></label></td>
 </tr>
 <tr valign="top" class="js_sub js_not_aggregate_master">
@@ -255,7 +257,7 @@ if ( is_network_admin() && autoptimizeOptionWrapper::is_ao_active_for_network() 
 </tr>
 <tr valign="top" id="js_defer_inline" class="js_sub js_not_aggregate hidden">
 <th scope="row">&emsp;<?php _e( 'Also defer inline JS?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_defer_inline" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_js_defer_inline' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_defer_inline" <?php echo $conf->get( 'autoptimize_js_defer_inline' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Also defer inline JS. Generally this will allow all JS to be deferred, so you should remove default exclusions, test and only exclude specific items if still needed.', 'autoptimize' ); ?></label></td>
 </tr>
 <?php if ( autoptimizeOptionWrapper::get_option( 'autoptimize_js_justhead' ) ) { ?>
@@ -266,13 +268,13 @@ if ( is_network_admin() && autoptimizeOptionWrapper::is_ao_active_for_network() 
     echo ' <i>' . __( '(deprecated)', 'autoptimize' ) . '</i>';
 ?>
 </th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_justhead" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_js_justhead' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_js_justhead" <?php echo $conf->get( 'autoptimize_js_justhead' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Mostly useful in combination with previous option when using jQuery-based templates, but might help keeping cache size under control.', 'autoptimize' ); ?></label></td>
 </tr>
 <?php } ?>
 <tr valign="top" class="js_sub">
 <th scope="row"><?php _e( 'Exclude scripts from Autoptimize:', 'autoptimize' ); ?></th>
-<td><label><input type="text" style="width:100%;" name="autoptimize_js_exclude" value="<?php echo esc_attr( autoptimizeOptionWrapper::get_option( 'autoptimize_js_exclude', 'wp-includes/js/dist/, wp-includes/js/tinymce/, js/jquery/jquery.js, js/jquery/jquery.min.js' ) ); ?>"/><br />
+<td><label><input type="text" style="width:100%;" name="autoptimize_js_exclude" value="<?php echo esc_attr( autoptimizeOptionWrapper::get_option( 'autoptimize_js_exclude', '' ) ); ?>"/><br />
 <?php
 echo __( 'A comma-separated list of scripts you do not want optimized, for example \'whatever.js, my_var\' (without the quotes).', 'autoptimize' ) . ' ' . __( 'Important: when "aggregate JS-files" is on, excluded non-minified files are still minified by Autoptimize unless that option under "misc" is disabled.', 'autoptimize' );
 ?>
@@ -290,7 +292,7 @@ echo __( 'A comma-separated list of scripts you do not want optimized, for examp
 <table class="form-table">
 <tr valign="top">
 <th scope="row"><?php _e( 'Optimize CSS Code?', 'autoptimize' ); ?></th>
-<td><input type="checkbox" id="autoptimize_css" name="autoptimize_css" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_css' ) ? 'checked="checked" ' : ''; ?>/></td>
+<td><input type="checkbox" id="autoptimize_css" name="autoptimize_css" <?php echo $conf->get( 'autoptimize_css' ) ? 'checked="checked" ' : ''; ?>/></td>
 </tr>
 <tr class="css_sub" valign="top">
 <th scope="row"><?php _e( 'Aggregate CSS-files?', 'autoptimize' ); ?></th>
@@ -299,12 +301,12 @@ echo __( 'A comma-separated list of scripts you do not want optimized, for examp
 </tr>
 <tr valign="top" class="css_sub css_aggregate">
 <th scope="row"><?php _e( 'Also aggregate inline CSS?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_include_inline" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_css_include_inline', '1' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_include_inline" <?php echo $conf->get( 'autoptimize_css_include_inline', '1' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Check this option for Autoptimize to also aggregate CSS in the HTML.', 'autoptimize' ); ?></label></td>
 </tr>
 <tr class="css_sub css_aggregate" valign="top">
 <th scope="row"><?php _e( 'Generate data: URIs for images?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_datauris" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_css_datauris' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_datauris" <?php echo $conf->get( 'autoptimize_css_datauris' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Enable this to include small background-images in the CSS itself instead of as separate downloads.', 'autoptimize' ); ?></label></td>
 </tr>
 <?php if ( autoptimizeOptionWrapper::get_option( 'autoptimize_css_justhead' ) ) { ?>
@@ -315,19 +317,19 @@ _e( 'Look for styles only in &lt;head&gt;?', 'autoptimize' );
 echo ' <i>' . __( '(deprecated)', 'autoptimize' ) . '</i>';
 ?>
 </th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_justhead" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_css_justhead' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_justhead" <?php echo $conf->get( 'autoptimize_css_justhead' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Don\'t autoptimize CSS outside the head-section. If the cache gets big, you might want to enable this.', 'autoptimize' ); ?></label></td>
 </tr>
 <?php } ?>
 <tr valign="top" class="css_sub">
 <th scope="row"><?php _e( 'Eliminate render-blocking CSS?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_defer" id="autoptimize_css_defer" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_css_defer' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_css_defer" id="autoptimize_css_defer" <?php echo $conf->get( 'autoptimize_css_defer' ) ? 'checked="checked" ' : ''; ?>/>
 <?php
 _e( 'Inline "above the fold CSS" while loading the main autoptimized CSS only after page load. <a href="https://wordpress.org/plugins/autoptimize/faq/" target="_blank">Check the FAQ</a> for more info.', 'autoptimize' );
 echo ' ';
 $critcss_settings_url = get_admin_url( null, 'options-general.php?page=ao_critcss' );
 // translators: links "autoptimize critical CSS" tab.
-echo sprintf( __( 'This can be fully automated for different types of pages on the %s tab.', 'autoptimize' ), '<a href="' . $critcss_settings_url . '">CriticalCSS</a>' );
+echo sprintf( __( 'You can manually create rules for different types of pages or have this done fully automated on the %s tab.', 'autoptimize' ), '<a href="' . $critcss_settings_url . '">CriticalCSS</a>' );
 ?>
 </label></td>
 </tr>
@@ -337,12 +339,12 @@ echo sprintf( __( 'This can be fully automated for different types of pages on t
 </tr>
 <tr valign="top" class="css_sub css_aggregate">
 <th scope="row"><?php _e( 'Inline all CSS?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" id="autoptimize_css_inline" name="autoptimize_css_inline" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_css_inline' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" id="autoptimize_css_inline" name="autoptimize_css_inline" <?php echo $conf->get( 'autoptimize_css_inline' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Inlining all CSS is an easy way to stop the CSS from being render-blocking, but is generally not recommended because the size of the HTML increases significantly. Additionally it might push meta-tags down to a position where e.g. Facebook and Whatsapp will not find them any more, breaking thumbnails when sharing.', 'autoptimize' ); ?></label></td>
 </tr>
 <tr valign="top" class="css_sub">
 <th scope="row"><?php _e( 'Exclude CSS from Autoptimize:', 'autoptimize' ); ?></th>
-<td><label><input type="text" style="width:100%;" name="autoptimize_css_exclude" value="<?php echo esc_attr( autoptimizeOptionWrapper::get_option( 'autoptimize_css_exclude', 'wp-content/cache/, wp-content/uploads/, admin-bar.min.css, dashicons.min.css' ) ); ?>"/><br />
+<td><label><input type="text" style="width:100%;" name="autoptimize_css_exclude" value="<?php echo esc_attr( $conf->get( 'autoptimize_css_exclude', '' ) ); ?>"/><br />
 <?php
 echo __( 'A comma-separated list of CSS you want to exclude from being optimized.', 'autoptimize' ) . ' ' . __( 'Important: excluded non-minified files are still minified by Autoptimize unless that option under "misc" is disabled.', 'autoptimize' );
 ?>
@@ -351,7 +353,7 @@ echo __( 'A comma-separated list of CSS you want to exclude from being optimized
 <?php if ( false === autoptimizeUtils::is_plugin_active( 'unusedcss/unusedcss.php' ) ) { ?>
 <tr valign="top">
 <th scope="row"><?php _e( 'Remove Unused CSS?', 'autoptimize' ); ?></th>
-<?php 
+<?php
 $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssettings&partner=rapidload';
 ?>
 <td><?php echo sprintf( __( 'If Google Pagespeed Insights detects unused CSS, consider using %s to <strong>reduce your site\'s CSS size to up to 90&#37;</strong>, resulting in a slimmer, faster site!', 'autoptimize' ), '<a href="' . $_rapidload_link . '" target="_blank">the premium Rapidload service</a>' ); ?></td>
@@ -365,11 +367,16 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
 <table class="form-table">
 <tr valign="top">
 <th scope="row"><?php _e( 'Optimize HTML Code?', 'autoptimize' ); ?></th>
-<td><input type="checkbox" id="autoptimize_html" name="autoptimize_html" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_html' ) ? 'checked="checked" ' : ''; ?>/></td>
+<td><input type="checkbox" id="autoptimize_html" name="autoptimize_html" <?php echo $conf->get( 'autoptimize_html' ) ? 'checked="checked" ' : ''; ?>/></td>
+</tr>
+<tr class="html_sub" valign="top">
+<th scope="row"><?php _e( 'Also minify inline JS/ CSS?', 'autoptimize' ); ?></th>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_html_minify_inline" <?php echo $conf->get( 'autoptimize_html_minify_inline' ) ? 'checked="checked" ' : ''; ?>/>
+<?php _e( 'Enable this if you want inline JS or CSS to be minified as well.', 'autoptimize' ); ?></label></td>
 </tr>
 <tr class="html_sub" valign="top">
 <th scope="row"><?php _e( 'Keep HTML comments?', 'autoptimize' ); ?></th>
-<td><label class="cb_label"><input type="checkbox" name="autoptimize_html_keepcomments" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_html_keepcomments' ) ? 'checked="checked" ' : ''; ?>/>
+<td><label class="cb_label"><input type="checkbox" name="autoptimize_html_keepcomments" <?php echo $conf->get( 'autoptimize_html_keepcomments' ) ? 'checked="checked" ' : ''; ?>/>
 <?php _e( 'Enable this if you want HTML comments to remain in the page.', 'autoptimize' ); ?></label></td>
 </tr>
 </table>
@@ -380,8 +387,21 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
 <table class="form-table">
 <tr valign="top">
 <th scope="row"><?php _e( 'CDN Base URL', 'autoptimize' ); ?></th>
-<td><label><input id="cdn_url" type="text" name="autoptimize_cdn_url" pattern="^(https?:)?\/\/([\da-z\.-]+)\.([\da-z\.]{2,6})([\/\w \.-]*)*(:\d{2,5})?\/?$" style="width:100%" value="<?php echo esc_url( autoptimizeOptionWrapper::get_option( 'autoptimize_cdn_url', '' ), array( 'http', 'https' ) ); ?>" /><br />
-<?php _e( 'Enter your CDN root URL to enable CDN for Autoptimized files. The URL can be http, https or protocol-relative (e.g. <code>//cdn.example.com/</code>). This is not needed for Cloudflare.', 'autoptimize' ); ?></label></td>
+<?php
+if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'autoptimize_filter_cdn_set_by_imgopt', false ) ) {
+    // cdn set by imgopt, not to be changealbe in the settings.
+    $cdn_editable    = 'disabled';
+    $cdn_placeholder = 'placeholder="' . __( 'The CDN has automatically been set to make use of the image optimization CDN.', 'autoptimize' ) . ' "';
+    $cdn_description = '';
+} else {
+    $cdn_editable    = '';
+    $cdn_placeholder = 'placeholder="' . __( 'example: //cdn.yoursite.com/', 'autoptimize' ) . ' "';
+    $cdn_description = __( 'Enter your CDN root URL to enable CDN for Autoptimized files. The URL can be http, https or protocol-relative. This is not needed for Cloudflare.', 'autoptimize' );
+}
+?>
+<td><label><input id="cdn_url" type="text" name="autoptimize_cdn_url" pattern="^(https?:)?\/\/([\da-z\.-]+)\.([\da-z\.]{2,6})([\/\w \.-]*)*(:\d{2,5})?\/?$" style="width:100%" <?php echo $cdn_placeholder . $cdn_editable; ?> value="<?php echo esc_url( autoptimizeOptionWrapper::get_option( 'autoptimize_cdn_url', '' ), array( 'http', 'https' ) ); ?>" /><br />
+<?php echo $cdn_description; ?>
+</label></td>
 </tr>
 </table>
 </li>
@@ -409,7 +429,7 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
             $details = ', ~' . $ao_cache_size . ' total';
         }
         // translators: Kilobytes + timestamp shown.
-        printf( __( '%1$s files, totalling %2$s (calculated at %3$s)', 'autoptimize' ), $ao_stat_arr[0], $ao_cache_size, date( 'H:i e', $ao_stat_arr[2] ) );
+        printf( __( '%1$s files, totalling %2$s (calculated at %3$s)', 'autoptimize' ), $ao_stat_arr[0], $ao_cache_size, date( 'H:i e', $ao_stat_arr[2] ) ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
     }
     ?>
 </td>
@@ -420,9 +440,9 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
 <li class="itemDetail">
 <h2 class="itemTitle"><?php _e( 'Misc Options', 'autoptimize' ); ?></h2>
 <table class="form-table">
-    <tr valign="top" >
+    <tr valign="top">
     <th scope="row"><?php _e( 'Save aggregated script/css as static files?', 'autoptimize' ); ?></th>
-    <td><label class="cb_label"><input type="checkbox" name="autoptimize_cache_nogzip" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_cache_nogzip', '1' ) ? 'checked="checked" ' : ''; ?>/>
+    <td><label class="cb_label"><input type="checkbox" name="autoptimize_cache_nogzip" <?php echo $conf->get( 'autoptimize_cache_nogzip' ) ? 'checked="checked" ' : ''; ?>/>
     <?php _e( 'By default files saved are static css/js, uncheck this option if your webserver doesn\'t properly handle the compression and expiry.', 'autoptimize' ); ?></label></td>
     </tr>
     <?php
@@ -433,17 +453,17 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
     ?>
     <tr valign="top" id="min_excl_row" class="<?php echo $_min_excl_class; ?>">
         <th scope="row"><?php _e( 'Minify excluded CSS and JS files?', 'autoptimize' ); ?></th>
-        <td><label class="cb_label"><input type="checkbox" name="autoptimize_minify_excluded" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_minify_excluded', '1' ) ? 'checked="checked" ' : ''; ?>/>
+        <td><label class="cb_label"><input type="checkbox" name="autoptimize_minify_excluded" <?php echo $conf->get( 'autoptimize_minify_excluded' ) ? 'checked="checked" ' : ''; ?>/>
         <?php _e( 'When aggregating JS or CSS, excluded files that are not minified (based on filename) are by default minified by Autoptimize despite being excluded. Uncheck this option if anything breaks despite excluding.', 'autoptimize' ); ?></label></td>
     </tr>
     <tr valign="top">
         <th scope="row"><?php _e( 'Enable 404 fallbacks?', 'autoptimize' ); ?></th>
-        <td><label class="cb_label"><input type="checkbox" name="autoptimize_cache_fallback" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_cache_fallback', '1' ) ? 'checked="checked" ' : ''; ?>/>
+        <td><label class="cb_label"><input type="checkbox" name="autoptimize_cache_fallback" <?php echo $conf->get( 'autoptimize_cache_fallback' ) ? 'checked="checked" ' : ''; ?>/>
         <?php _e( 'Sometimes Autoptimized JS/ CSS is referenced in cached HTML but is already removed, resulting in broken sites. With this option on, Autoptimize will try to redirect those not-found files to "fallback"-versions, keeping the page/ site somewhat intact. In some cases this will require extra web-server level configuration to ensure <code>wp-content/autoptimize_404_handler.php</code> is set to handle 404\'s in <code>wp-content/cache/autoptimize</code>.', 'autoptimize' ); ?></label></td>
     </tr>
     <tr valign="top">
     <th scope="row"><?php _e( 'Also optimize for logged in editors/ administrators?', 'autoptimize' ); ?></th>
-    <td><label class="cb_label"><input type="checkbox" name="autoptimize_optimize_logged" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_optimize_logged', '1' ) ? 'checked="checked" ' : ''; ?>/>
+    <td><label class="cb_label"><input type="checkbox" name="autoptimize_optimize_logged" <?php echo $conf->get( 'autoptimize_optimize_logged' ) ? 'checked="checked" ' : ''; ?>/>
     <?php _e( 'By default Autoptimize is also active for logged on editors/ administrators, uncheck this option if you don\'t want Autoptimize to optimize when logged in e.g. to use a pagebuilder.', 'autoptimize' ); ?></label></td>
     </tr>
     <?php
@@ -451,7 +471,7 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
     ?>
     <tr valign="top" >
         <th scope="row"><?php _e( 'Also optimize shop cart/ checkout?', 'autoptimize' ); ?></th>
-        <td><label class="cb_label"><input type="checkbox" name="autoptimize_optimize_checkout" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_optimize_checkout', '0' ) ? 'checked="checked" ' : ''; ?>/>
+        <td><label class="cb_label"><input type="checkbox" name="autoptimize_optimize_checkout" <?php echo $conf->get( 'autoptimize_optimize_checkout' ) ? 'checked="checked" ' : ''; ?>/>
             <?php _e( 'By default Autoptimize is also active on your shop\'s cart/ checkout, uncheck not to optimize those.', 'autoptimize' ); ?></label>
         </td>
     </tr>
@@ -461,8 +481,15 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
     ?>
     <tr valign="top">
     <th scope="row"><?php _e( 'Enable configuration per post/ page?', 'autoptimize' ); ?></th>
-    <td><label class="cb_label"><input type="checkbox" name="autoptimize_enable_meta_ao_settings" <?php echo autoptimizeOptionWrapper::get_option( 'autoptimize_enable_meta_ao_settings', '1' ) ? 'checked="checked" ' : ''; ?>/>
+    <td><label class="cb_label"><input type="checkbox" name="autoptimize_enable_meta_ao_settings" <?php echo $conf->get( 'autoptimize_enable_meta_ao_settings' ) ? 'checked="checked" ' : ''; ?>/>
     <?php _e( 'Add a "metabox" to the post/ page edit screen allowing different optimizations to be turned off on a per post/ page level?', 'autoptimize' ); ?></label></td>
+    </tr>
+    <?php } ?>
+    <?php if ( false !== (bool) autoptimizeOptionWrapper::get_option( 'autoptimize_installed_before_compatibility', false ) ) { ?>
+    <tr valign="top">
+    <th scope="row"><?php _e( 'Disable extra compatibilty logic?', 'autoptimize' ); ?></th>
+    <td><label class="cb_label"><input type="checkbox" name="autoptimize_installed_before_compatibility" checked="checked" />
+    <?php _e( 'In Autoptimize 3.0 extra compatibiity logic was added (e.g. for Gutenberg blocks, Revolution Slider, jQuery-heavy plugins, ...), but if you had Autoptimize installed already before the update to 3.0, this compatibility code was disabled. <strong>Untick this option to permanently enable the compatibility logic</strong>.', 'autoptimize' ); ?></label></td>
     </tr>
     <?php } ?>
 </table>
@@ -477,7 +504,8 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
 
 </form>
 </div>
-<div id="autoptimize_admin_feed" class="hidden">
+<div id="autoptimize_admin_feed">
+    <?php if ( apply_filters( 'autoptimize_filter_show_partner_tabs', true ) ) { ?>
     <div class="autoptimize_banner hidden">
     <ul>
     <?php
@@ -499,47 +527,26 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
         <li><?php _e( 'Happy with Autoptimize?', 'autoptimize' ); ?><br /><a href="<?php echo network_admin_url(); ?>plugin-install.php?tab=search&type=author&s=optimizingmatters"><?php _e( 'Try my other plugins!', 'autoptimize' ); ?></a></li>
     </ul>
     </div>
+    <?php } ?>
     <div style="margin-left:10px;margin-top:-5px;">
         <h2>
-            <?php _e( 'futtta about', 'autoptimize' ); ?>
-            <select id="feed_dropdown" >
-                <option value="1"><?php _e( 'Autoptimize', 'autoptimize' ); ?></option>
-                <option value="2"><?php _e( 'WordPress', 'autoptimize' ); ?></option>
-                <option value="3"><?php _e( 'Web Technology', 'autoptimize' ); ?></option>
-            </select>
+            <?php _e( 'Autoptimize news', 'autoptimize' ); ?>
         </h2>
         <div id="futtta_feed">
             <div id="autoptimizefeed">
                 <?php $this->get_futtta_feeds( 'http://feeds.feedburner.com/futtta_autoptimize' ); ?>
             </div>
-            <div id="wordpressfeed">
-                <?php $this->get_futtta_feeds( 'http://feeds.feedburner.com/futtta_wordpress' ); ?>
-            </div>
-            <div id="webtechfeed">
-                <?php $this->get_futtta_feeds( 'http://feeds.feedburner.com/futtta_webtech' ); ?>
-            </div>
         </div>
     </div>
+    <?php if ( apply_filters( 'autoptimize_filter_show_partner_tabs', true ) ) { ?>
     <div style="float:right;margin:50px 15px;"><a href="https://blog.futtta.be/2013/10/21/do-not-donate-to-me/" target="_blank"><img width="100px" height="85px" src="<?php echo plugins_url() . '/' . plugin_basename( dirname( __FILE__ ) ) . '/external/do_not_donate_smallest.png'; ?>" title="<?php _e( 'Do not donate for this plugin!', 'autoptimize' ); ?>"></a></div>
+    <?php } ?>
 </div>
-
 <script type="text/javascript">
-    var feed = new Array;
-    feed[1]="autoptimizefeed";
-    feed[2]="wordpressfeed";
-    feed[3]="webtechfeed";
-    cookiename="autoptimize_feed";
-
     jQuery(document).ready(function() {
         check_ini_state();
 
-        jQuery('#autoptimize_admin_feed').fadeTo("slow",1).show();
         jQuery('.autoptimize_banner').unslider({autoplay:true, delay:3500, infinite: false, arrows:{prev:'<a class="unslider-arrow prev"></a>', next:'<a class="unslider-arrow next"></a>'}}).fadeTo("slow",1).show();
-
-        jQuery( "#feed_dropdown" ).change(function() {
-            jQuery("#futtta_feed").fadeTo(0,0);
-            jQuery("#futtta_feed").fadeTo("slow",1);
-        });
 
         jQuery( "#autoptimize_html" ).change(function() {
             if (this.checked) {
@@ -565,15 +572,17 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
                 jQuery( ".js_not_aggregate_master:visible" ).fadeTo( 'slow', .33 ); // grey out "not aggregate"
                 jQuery( ".js_not_aggregate" ).hide( 'slow' ); // hide not aggregate sub-items
                 jQuery( "#min_excl_row" ).show(); // make sure "minify excluded" is visible
+                check_exclusions( "js", "on" );
             } else {
                 jQuery( ".js_aggregate" ).hide( 'slow' ); // hide sub-itmes
                 jQuery( ".js_not_aggregate_master:visible" ).fadeTo( 'slow', 1 ); // un-grey-out "not aggregate"
                 if ( jQuery( "#autoptimize_css_aggregate" ).prop( 'checked' ) == false ) { // hide "minify excluded"
                     jQuery( "#min_excl_row" ).hide();
                 }
+                check_exclusions( "js", "off" );
             }
         });
-        
+
         jQuery( "#autoptimize_js_defer_not_aggregate" ).change(function() {
             if (this.checked && jQuery("#autoptimize_js").prop('checked')) {
                 jQuery( "#autoptimize_js_aggregate" ).prop( 'checked', false ); // uncheck "aggregate JS"
@@ -581,6 +590,7 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
                 jQuery( ".js_not_aggregate" ).show( 'slow'); // show sub-items
                 jQuery( ".js_aggregate_master:visible" ).fadeTo( 'slow', .33 ); // grey out "aggregate"
                 jQuery( ".js_aggregate" ).hide( 'slow' ); // hide aggregate sub-items
+                check_exclusions( "js", "off" );
             } else {
                 jQuery( ".js_not_aggregate" ).hide( 'slow' ); // hide sub-items
                 jQuery( ".js_aggregate_master:visible" ).fadeTo( 'slow', 1 ); // un-grey-out "aggregate"
@@ -599,11 +609,13 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
             if (this.checked && jQuery("#autoptimize_css").prop('checked')) {
                 jQuery(".css_aggregate:visible").fadeTo("fast",1);
                 jQuery( "#min_excl_row" ).show();
+                check_exclusions( "css", "on" );
             } else {
                 jQuery(".css_aggregate:visible").fadeTo("fast",.33);
                 if ( jQuery( "#autoptimize_js_aggregate" ).prop('checked') == false ) {
                     jQuery( "#min_excl_row" ).hide();
                 }
+                check_exclusions( "css", "off" );
             }
         });
 
@@ -630,11 +642,6 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
                 jQuery("li.itemDetail:not(.multiSite)").fadeTo("fast",1);
             }
         });
-
-        jQuery("#feed_dropdown").change(function() { show_feed(jQuery("#feed_dropdown").val()) });
-        feedid=jQuery.cookie(cookiename);
-        if(typeof(feedid) !== "string") feedid=1;
-        show_feed(feedid);
     })
 
     // validate cdn_url.
@@ -662,9 +669,6 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
         if (!jQuery("#autoptimize_css_aggregate").prop('checked')) {
             jQuery(".css_aggregate:visible").fadeTo('fast',.33);
         }
-        if (!jQuery("#autoptimize_js").prop('checked')) {
-            jQuery(".js_sub:visible").fadeTo('fast',.33);
-        }
         if (jQuery("#autoptimize_js_aggregate").prop('checked')) {
             jQuery( ".js_aggregate" ).show( 'fast' );
             jQuery( ".js_not_aggregate_master:visible" ).fadeTo( 'fast', .33 );
@@ -676,13 +680,31 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
         if (jQuery("#autoptimize_enable_site_config").prop('checked')) {
             jQuery("li.itemDetail:not(.multiSite)").fadeTo('fast',.33);
         }
+        if (!jQuery("#autoptimize_js").prop('checked')) {
+            jQuery(".js_sub:visible").fadeTo('fast',.33);
+        }
     }
 
-    function show_feed(id) {
-        jQuery('#futtta_feed').children().hide();
-        jQuery('#'+feed[id]).show();
-        jQuery("#feed_dropdown").val(id);
-        jQuery.cookie(cookiename,id,{ expires: 365 });
+    function check_exclusions( what, state ) {
+        exclusion_node = 'input[name="autoptimize_' + what + '_exclude"]';
+        current_exclusion = jQuery( exclusion_node ).val();
+
+        if ( what == "js" ) {
+            default_exclusion = ", wp-includes/js/dist/, wp-includes/js/tinymce/, js/jquery/jquery.min.js";
+        } else if ( what == "css")  {
+            default_exclusion = ", admin-bar.min.css, dashicons.min.css, wp-content/cache/, wp-content/uploads/";
+        }
+
+        default_in_current = current_exclusion.indexOf(default_exclusion);
+
+        if ( state == "on" && default_in_current == -1 ) {
+            jQuery( exclusion_node ).val( current_exclusion + default_exclusion );
+        } else if ( state = "off" && current_exclusion == default_exclusion ) {
+            jQuery( exclusion_node ).val( "" );
+        } else if ( state = "off" && default_in_current != -1 ) {
+            new_exclusion = current_exclusion.substring( 0, default_in_current) + current_exclusion.substring( default_in_current + default_exclusion.length, current_exclusion.length );
+            jQuery( exclusion_node ).val( new_exclusion );
+        }
     }
 </script>
 </div>
@@ -692,15 +714,16 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
 
     public function addmenu()
     {
+        $_my_name = apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? __( 'Autoptimize Pro', 'autoptimize' ) : __( 'Autoptimize', 'autoptimize' );
         if ( is_multisite() && is_network_admin() && autoptimizeOptionWrapper::is_ao_active_for_network() ) {
             // multisite, network admin, ao network activated: add normal settings page at network level.
-            $hook = add_submenu_page( 'settings.php', __( 'Autoptimize Options', 'autoptimize' ), 'Autoptimize', 'manage_network_options', 'autoptimize', array( $this, 'show_config' ) );
+            $hook = add_submenu_page( 'settings.php', __( 'Autoptimize Options', 'autoptimize' ), $_my_name, 'manage_network_options', 'autoptimize', array( $this, 'show_config' ) );
         } elseif ( is_multisite() && ! is_network_admin() && autoptimizeOptionWrapper::is_ao_active_for_network() && 'on' !== autoptimizeOptionWrapper::get_option( 'autoptimize_enable_site_config' ) ) {
             // multisite, ao network activated, not network admin so site specific settings, but "autoptimize_enable_site_config" is off: show "sorry, ask network admin" message iso options.
-            $hook = add_options_page( __( 'Autoptimize Options', 'autoptimize' ), 'Autoptimize', 'manage_options', 'autoptimize', array( $this, 'show_network_message' ) );
+            $hook = add_options_page( __( 'Autoptimize Options', 'autoptimize' ), $_my_name, 'manage_options', 'autoptimize', array( $this, 'show_network_message' ) );
         } else {
             // default: show normal options page if not multisite, if multisite but not network activated, if multisite and network activated and "autoptimize_enable_site_config" is on.
-            $hook = add_options_page( __( 'Autoptimize Options', 'autoptimize' ), 'Autoptimize', 'manage_options', 'autoptimize', array( $this, 'show_config' ) );
+            $hook = add_options_page( __( 'Autoptimize Options', 'autoptimize' ), $_my_name, 'manage_options', 'autoptimize', array( $this, 'show_config' ) );
         }
 
         add_action( 'admin_print_scripts-' . $hook, array( $this, 'autoptimize_admin_scripts' ) );
@@ -709,7 +732,6 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
 
     public function autoptimize_admin_scripts()
     {
-        wp_enqueue_script( 'jqcookie', plugins_url( '/external/js/jquery.cookie.min.js', __FILE__ ), array( 'jquery' ), null, true );
         wp_enqueue_script( 'unslider', plugins_url( '/external/js/unslider-min.js', __FILE__ ), array( 'jquery' ), null, true );
     }
 
@@ -722,6 +744,7 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
     public function registersettings() {
         register_setting( 'autoptimize', 'autoptimize_html' );
         register_setting( 'autoptimize', 'autoptimize_html_keepcomments' );
+        register_setting( 'autoptimize', 'autoptimize_html_minify_inline' );
         register_setting( 'autoptimize', 'autoptimize_enable_site_config' );
         register_setting( 'autoptimize', 'autoptimize_js' );
         register_setting( 'autoptimize', 'autoptimize_js_aggregate' );
@@ -749,6 +772,7 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
         register_setting( 'autoptimize', 'autoptimize_minify_excluded' );
         register_setting( 'autoptimize', 'autoptimize_cache_fallback' );
         register_setting( 'autoptimize', 'autoptimize_enable_meta_ao_settings' );
+        register_setting( 'autoptimize', 'autoptimize_installed_before_compatibility' );
     }
 
     public function setmeta( $links, $file = null )
@@ -784,34 +808,36 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
     public static function get_defaults()
     {
         static $config = array(
-            'autoptimize_html'                      => 0,
-            'autoptimize_html_keepcomments'         => 0,
-            'autoptimize_enable_site_config'        => 1,
-            'autoptimize_js'                        => 0,
-            'autoptimize_js_aggregate'              => 1,
-            'autoptimize_js_defer_not_aggregate'    => 0,
-            'autoptimize_js_defer_inline'           => 0,
-            'autoptimize_js_exclude'                => 'wp-includes/js/dist/, wp-includes/js/tinymce/, js/jquery/jquery.js, js/jquery/jquery.min.js',
-            'autoptimize_js_trycatch'               => 0,
-            'autoptimize_js_justhead'               => 0,
-            'autoptimize_js_include_inline'         => 0,
-            'autoptimize_js_forcehead'              => 0,
-            'autoptimize_css'                       => 0,
-            'autoptimize_css_aggregate'             => 1,
-            'autoptimize_css_exclude'               => 'admin-bar.min.css, dashicons.min.css, wp-content/cache/, wp-content/uploads/',
-            'autoptimize_css_justhead'              => 0,
-            'autoptimize_css_include_inline'        => 1,
-            'autoptimize_css_defer'                 => 0,
-            'autoptimize_css_defer_inline'          => '',
-            'autoptimize_css_inline'                => 0,
-            'autoptimize_css_datauris'              => 0,
-            'autoptimize_cdn_url'                   => '',
-            'autoptimize_cache_nogzip'              => 1,
-            'autoptimize_optimize_logged'           => 1,
-            'autoptimize_optimize_checkout'         => 0,
-            'autoptimize_minify_excluded'           => 1,
-            'autoptimize_cache_fallback'            => 1,
-            'autoptimize_enable_meta_ao_settings'   => 1,
+            'autoptimize_html'                           => 0,
+            'autoptimize_html_keepcomments'              => 0,
+            'autoptimize_html_minify_inline'             => 0,
+            'autoptimize_enable_site_config'             => 1,
+            'autoptimize_js'                             => 0,
+            'autoptimize_js_aggregate'                   => 0,
+            'autoptimize_js_defer_not_aggregate'         => 1,
+            'autoptimize_js_defer_inline'                => 1,
+            'autoptimize_js_exclude'                     => '',
+            'autoptimize_js_trycatch'                    => 0,
+            'autoptimize_js_justhead'                    => 0,
+            'autoptimize_js_include_inline'              => 0,
+            'autoptimize_js_forcehead'                   => 0,
+            'autoptimize_css'                            => 0,
+            'autoptimize_css_aggregate'                  => 0,
+            'autoptimize_css_exclude'                    => '',
+            'autoptimize_css_justhead'                   => 0,
+            'autoptimize_css_include_inline'             => 0,
+            'autoptimize_css_defer'                      => 0,
+            'autoptimize_css_defer_inline'               => '',
+            'autoptimize_css_inline'                     => 0,
+            'autoptimize_css_datauris'                   => 0,
+            'autoptimize_cdn_url'                        => '',
+            'autoptimize_cache_nogzip'                   => 1,
+            'autoptimize_optimize_logged'                => 1,
+            'autoptimize_optimize_checkout'              => 0,
+            'autoptimize_minify_excluded'                => 1,
+            'autoptimize_cache_fallback'                 => 1,
+            'autoptimize_enable_meta_ao_settings'        => 1,
+            'autoptimize_installed_before_compatibility' => 0,
         );
 
         return $config;
@@ -831,6 +857,7 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
             'autoptimize_extra_text_field_2'     => '',
             'autoptimize_extra_text_field_3'     => '',
             'autoptimize_extra_text_field_7'     => '',
+            'autoptimize_extra_checkbox_field_8' => '0',
         );
 
         return $defaults;
@@ -850,7 +877,7 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
             'autoptimize_imgopt_checkbox_field_4' => '0', // webp off (might be removed).
             'autoptimize_imgopt_text_field_5'     => '',  // lazy load exclusions empty.
             'autoptimize_imgopt_text_field_6'     => '',  // optimization exclusions empty.
-            'autoptimize_imgopt_number_field_7'   => '0', // lazy load from nth image (0 = lazyload all).
+            'autoptimize_imgopt_number_field_7'   => '2', // lazy load from nth image (0 = lazyload all).
         );
         return $defaults;
     }
@@ -991,11 +1018,17 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
     /**
      * Returns the post meta AO settings for reuse in different optimizers.
      *
+     * @param string $optim What optimization we need meta setting for.
+     *
      * @return bool
      */
     public static function get_post_meta_ao_settings( $optim ) {
         if ( ! autoptimizeConfig::is_ao_meta_settings_active() ) {
             // Per page/post settings not active, so always return true (as in; can be optimized).
+            if ( in_array( $optim, array( 'ao_post_preload' ) ) ) {
+                // but make sure to return false for text input.
+                return false;
+            }
             return true;
         }
 
@@ -1004,14 +1037,40 @@ $_rapidload_link = 'https://misc.optimizingmatters.com/partners/?from=csssetting
             global $wp_query;
             if ( isset( $wp_query ) && ( is_page() || is_single() ) ) {
                 $_meta_value = get_post_meta( get_the_ID(), 'ao_post_optimize', true );
-            } else {
+            } else if ( isset( $wp_query ) ) {
                 $_meta_value = false;
             }
         }
-        
-        if ( ! empty( $_meta_value ) && is_array( $_meta_value ) && array_key_exists( $optim, $_meta_value ) && $_meta_value[$optim] !== 'on' ) {
+
+        // If autoptimize_post_optimize !== 'on' (except for ao_post_preload, which can have other values) then always return false as all is off.
+        // fixme: need unit tests to ensure below logic is sane!
+        if ( empty( $_meta_value ) || ! is_array( $_meta_value ) ) {
+            // no metabox values so all optimizations are a go.
+            if ( in_array( $optim, array( 'ao_post_preload' ) ) ) {
+                // but make sure to return false for text input.
+                return false;
+            }
+            return true;
+        } else if ( array_key_exists( 'ao_post_optimize', $_meta_value ) && 'on' !== $_meta_value['ao_post_optimize'] ) {
+            // ao entirely off for this page.
+            return false;
+        } else if ( array_key_exists( $optim, $_meta_value ) && empty( $_meta_value[ $optim ] ) ) {
+            // sub-optimization off for this page.
+            return false;
+        } else if ( array_key_exists( $optim, $_meta_value ) && 'on' === $_meta_value[ $optim ] ) {
+            // sub-optimization is explictly on.
+            return true;
+        } else if ( array_key_exists( $optim, $_meta_value ) && in_array( $optim, array( 'ao_post_preload' ) ) && ! empty( $_meta_value[ $optim ] ) ) {
+            // a non-bool metabox optimization (currently only preload field), return value instead of bool.
+            return $_meta_value[ $optim ];
+        } else if ( in_array( $optim, array( 'ao_post_preload' ) ) && ( ! array_key_exists( $optim, $_meta_value ) || empty( $_meta_value[ $optim ] ) ) ) {
+            // a non-bool metabox optimization not found or empty, so returning false.
             return false;
         } else {
+            // when in doubt "go" for optimization, but this should never happen?
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'AO metabox logic fallback; well, how did I get here? Maybe this helps: looking for ' . $optim . ' in ' . json_encode( $_meta_value ) );
+            }
             return true;
         }
     }

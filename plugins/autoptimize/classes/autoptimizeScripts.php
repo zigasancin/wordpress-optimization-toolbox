@@ -119,7 +119,7 @@ class autoptimizeScripts extends autoptimizeBase
      * @var bool
      */
     private $defer_not_aggregate = false;
-    
+
     /**
      * Setting; defer inline JS?
      *
@@ -220,7 +220,7 @@ class autoptimizeScripts extends autoptimizeBase
     public function read( $options )
     {
         $noptimize_js = false;
-        
+
         // If page/ post check post_meta to see if optimize is off.
         if ( false === autoptimizeConfig::get_post_meta_ao_settings( 'ao_post_js_optimize' ) ) {
             $noptimize_js = true;
@@ -228,7 +228,7 @@ class autoptimizeScripts extends autoptimizeBase
 
         // And a filter to enforce JS noptimize.
         $noptimize_js = apply_filters( 'autoptimize_filter_js_noptimize', $noptimize_js, $this->content );
-        
+
         // And finally bail if noptimize_js is true.
         if ( $noptimize_js ) {
             return false;
@@ -261,12 +261,14 @@ class autoptimizeScripts extends autoptimizeBase
         if ( $this->aggregate && apply_filters( 'autoptimize_filter_js_dontaggregate', false ) ) {
             $this->aggregate = false;
         }
-        
+        // and the filter that should have been there to begin with.
+        $this->aggregate = apply_filters( 'autoptimize_filter_js_aggregate', $this->aggregate );
+
         // Defer when not aggregating.
         if ( false === $this->aggregate && apply_filters( 'autoptimize_filter_js_defer_not_aggregate', $options['defer_not_aggregate'] ) ) {
             $this->defer_not_aggregate = true;
         }
-        
+
         // Defer inline JS?
         if ( ( true === $this->defer_not_aggregate && apply_filters( 'autoptimize_js_filter_defer_inline', $options['defer_inline'] ) ) || apply_filters( 'autoptimize_js_filter_force_defer_inline', false ) ) {
             $this->defer_inline = true;
@@ -375,7 +377,7 @@ class autoptimizeScripts extends autoptimizeBase
                         }
 
                         // not aggregating but deferring?
-                        if ( $this->defer_not_aggregate && false === $this->aggregate && ( str_replace( $this->dontmove, '', $path ) === $path || ( apply_filters( 'autoptimize_filter_js_defer_external', true ) && str_replace( $this->dontmove, '', $url ) === $url ) ) && strpos( $new_tag, ' defer' ) === false && strpos( $new_tag, ' async' ) === false ) {
+                        if ( $this->defer_not_aggregate && false === $this->aggregate && ( str_replace( $this->dontmove, '', $path ) === $path || ( apply_filters( 'autoptimize_filter_js_defer_external', true ) && str_replace( $this->dontmove, '', $orig_tag ) === $orig_tag ) ) && strpos( $new_tag, ' defer' ) === false && strpos( $new_tag, ' async' ) === false ) {
                             $new_tag = str_replace( '<script ', '<script defer ', $new_tag );
                         }
 
@@ -434,6 +436,8 @@ class autoptimizeScripts extends autoptimizeBase
                         $code            = preg_replace( '/(?:^\\s*<!--\\s*|\\s*(?:\\/\\/)?\\s*-->\\s*$)/', '', $code );
                         $this->scripts[] = 'INLINE;' . $code;
                     } else {
+                        $_inline_deferable = apply_filters( 'autoptimize_filters_js_inline_deferable', array( 'nonce', 'post_id', 'syntaxhighlighter' ) );
+                        $_inline_dontmove  = array_values( array_diff( $this->dontmove, $_inline_deferable ) );
                         if ( false === $this->defer_inline ) {
                             // Can we move this?
                             $autoptimize_js_moveable = apply_filters( 'autoptimize_js_moveable', '', $tag );
@@ -446,10 +450,16 @@ class autoptimizeScripts extends autoptimizeBase
                             } else {
                                 $tag = '';
                             }
-                        } elseif ( str_replace( $this->dontmove, '', $tag ) === $tag ) {
-                            // defer inline JS by base64 encoding it.
-                            preg_match( '#<script.*>(.*)</script>#Usmi', $tag, $match );
-                            $new_tag       = '<script defer src="data:text/javascript;base64,' . base64_encode( $match[1] ) . '"></script>';
+                        } else if ( str_replace( $_inline_dontmove, '', $tag ) === $tag && strlen( $tag ) < apply_filters( 'autoptimize_filter_script_defer_inline_maxsize', 200000 ) ) {
+                            // defer inline JS by base64 encoding it but only if string is not ridiculously huge (to avoid issues with below regex mainly).
+                            preg_match( '#<script(?:[^>](?!id=))*\s*(?:id=(["\'])([^"\']+)\1)*+[^>]*+>(.*?)<\/script>#is', $tag, $match );
+                            if ( $match[2] ) {
+                                $_id = 'id="' . $match[2] . '" ';
+                            } else {
+                                $_id = '';
+                            }
+
+                            $new_tag       = '<script defer ' . $_id . 'src="data:text/javascript;base64,' . base64_encode( $match[3] ) . '"></script>';
                             $this->content = str_replace( $tag, $new_tag, $this->content );
                             $tag           = '';
                         } else {
@@ -486,7 +496,7 @@ class autoptimizeScripts extends autoptimizeBase
      * @param string $tag Script node & child(ren).
      * @return bool
      */
-    public function should_aggregate( $tag )
+    public static function should_aggregate( $tag )
     {
         if ( empty( $tag ) ) {
             return false;

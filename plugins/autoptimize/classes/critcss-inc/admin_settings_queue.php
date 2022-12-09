@@ -8,7 +8,8 @@
  */
 function ao_ccss_render_queue() {
     // Attach required arrays.
-    global $ao_ccss_queue;
+    $criticalcss = autoptimize()->criticalcss();
+    $ao_ccss_queue = $criticalcss->get_option( 'queue' );
 
     // Prepare the queue object.
     if ( empty( $ao_ccss_queue ) ) {
@@ -16,7 +17,7 @@ function ao_ccss_render_queue() {
     } else {
         $ao_ccss_queue = json_encode( $ao_ccss_queue );
     }
-?>
+    ?>
 
     <ul id="queue-panel">
         <li class="itemDetail">
@@ -25,7 +26,7 @@ function ao_ccss_render_queue() {
                 <span class="toggle-indicator dashicons dashicons-arrow-up dashicons-arrow-down"></span>
             </button>
             <?php
-            if ( autoptimizeCriticalCSSSettings::ao_ccss_has_autorules() ) {
+            if ( $criticalcss->has_autorules() ) {
                 $_queue_visibility = 'hidden';
             } else {
                 $_queue_visibility = 'visible';
@@ -91,5 +92,5 @@ function ao_ccss_render_queue() {
             <!-- END Queue UI -->
         </li>
     </ul>
-<?php
+    <?php
 }

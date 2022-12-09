@@ -117,6 +117,8 @@ class autoptimizeExtra
     {
         if ( strpos( $src, '?ver=' ) ) {
             $src = remove_query_arg( 'ver', $src );
+        } elseif ( strpos( $src, '?v=' ) ) {
+            $src = remove_query_arg( 'v', $src );
         }
 
         return $src;
@@ -176,6 +178,15 @@ class autoptimizeExtra
             add_filter( 'wp_resource_hints', array( $this, 'filter_remove_gfonts_dnsprefetch' ), 10, 2 );
             add_filter( 'autoptimize_html_after_minify', array( $this, 'filter_optimize_google_fonts' ), 10, 1 );
             add_filter( 'autoptimize_extra_filter_tobepreconn', array( $this, 'filter_preconnect_google_fonts' ), 10, 1 );
+
+            if ( '2' === $options['autoptimize_extra_radio_field_4'] ) {
+                // remove Google Fonts, adding filters to also remove Google Fonts from 3rd party themes/ plugins.
+                // inspired by https://wordpress.org/plugins/disable-remove-google-fonts/.
+                remove_action( 'wp_footer', 'et_builder_print_font' ); // Divi.
+                remove_action( 'wp_footer', array( 'RevSliderFront', 'load_google_fonts' ) ); // Revslider.
+                add_filter( 'elementor/frontend/print_google_fonts', '__return_false' ); // Elementor.
+                add_filter( 'fl_builder_google_fonts_pre_enqueue', '__return_empty_array' ); // Beaver Builder.
+            }
         }
 
         // Preconnect!
@@ -184,8 +195,13 @@ class autoptimizeExtra
         }
 
         // Preload!
-        if ( ! empty( $options['autoptimize_extra_text_field_7'] ) || has_filter( 'autoptimize_filter_extra_tobepreloaded' ) ) {
+        if ( ! empty( $options['autoptimize_extra_text_field_7'] ) || has_filter( 'autoptimize_filter_extra_tobepreloaded' ) || ! empty( autoptimizeConfig::get_post_meta_ao_settings( 'ao_post_preload' ) ) ) {
             add_filter( 'autoptimize_html_after_minify', array( $this, 'filter_preload' ), 10, 2 );
+        }
+
+        // Remove global styles.
+        if ( ! empty( $options['autoptimize_extra_checkbox_field_8'] ) ) {
+            $this->disable_global_styles();
         }
     }
 
@@ -402,6 +418,15 @@ class autoptimizeExtra
         if ( array_key_exists( 'autoptimize_extra_text_field_7', $options ) ) {
             $preloads = array_filter( array_map( 'trim', explode( ',', wp_strip_all_tags( $options['autoptimize_extra_text_field_7'] ) ) ) );
         }
+
+        if ( false === autoptimizeImages::imgopt_active() && false === autoptimizeImages::should_lazyload_wrapper() ) {
+            // only do this here if imgopt/ lazyload are not active?
+            $metabox_preloads = array_filter( array_map( 'trim', explode( ',', wp_strip_all_tags( autoptimizeConfig::get_post_meta_ao_settings( 'ao_post_preload' ) ) ) ) );
+            if ( ! empty( $metabox_preloads ) ) {
+                $preloads = array_merge( $preloads, $metabox_preloads );
+            }
+        }
+
         $preloads = apply_filters( 'autoptimize_filter_extra_tobepreloaded', $preloads );
 
         // immediately return if nothing to be preloaded.
@@ -412,6 +437,9 @@ class autoptimizeExtra
         // iterate through array and add preload link to tmp string.
         $preload_output = '';
         foreach ( $preloads as $preload ) {
+            if ( filter_var( $preload, FILTER_VALIDATE_URL ) !== $preload ) {
+                continue;
+            }
             $preload     = esc_url_raw( $preload );
             $crossorigin = '';
             $preload_as  = '';
@@ -439,11 +467,32 @@ class autoptimizeExtra
         }
         $preload_output = apply_filters( 'autoptimize_filter_extra_preload_output', $preload_output );
 
+        return $this->inject_preloads( $preload_output, $in );
+    }
+
+    public static function inject_preloads( $preloads, $html ) {
         // add string to head (before first link node by default).
         $preload_inject = apply_filters( 'autoptimize_filter_extra_preload_inject', '<link' );
-        $position       = autoptimizeUtils::strpos( $in, $preload_inject );
+        $position       = autoptimizeUtils::strpos( $html, $preload_inject );
 
-        return autoptimizeUtils::substr_replace( $in, $preload_output . $preload_inject, $position, strlen( $preload_inject ) );
+        return autoptimizeUtils::substr_replace( $html, $preloads . $preload_inject, $position, strlen( $preload_inject ) );
+    }
+
+    public function disable_global_styles()
+    {
+        remove_action( 'wp_enqueue_scripts', 'wp_enqueue_global_styles' );
+        remove_action( 'wp_footer', 'wp_enqueue_global_styles', 1 );
+        remove_action( 'wp_body_open', 'wp_global_styles_render_svg_filters' );
+
+        if ( true === apply_filters( 'autoptimize_filter_extra_global_styles_and_block_css', true ) ) {
+            add_action(
+                'wp_enqueue_scripts',
+                function() {
+                    wp_dequeue_style( 'wp-block-library' );
+                    wp_dequeue_style( 'wp-block-library-theme' );
+                }
+            );
+        }
     }
 
     public function admin_menu()
@@ -451,7 +500,7 @@ class autoptimizeExtra
         // no acces if multisite and not network admin and no site config allowed.
         if ( autoptimizeConfig::should_show_menu_tabs() ) {
             add_submenu_page(
-                null,
+                '',
                 'autoptimize_extra',
                 'autoptimize_extra',
                 'manage_options',
@@ -473,6 +522,8 @@ class autoptimizeExtra
 
     public function options_page()
     {
+        // phpcs:disable Squiz.ControlStructures.ControlSignature.NewlineAfterOpenBrace
+
         // Working with actual option values from the database here.
         // That way any saves are still processed as expected, but we can still
         // override behavior by using `new autoptimizeExtra($custom_options)` and not have that custom
@@ -487,7 +538,7 @@ class autoptimizeExtra
     </style>
     <script>document.title = "Autoptimize: <?php _e( 'Extra', 'autoptimize' ); ?> " + document.title;</script>
     <div class="wrap">
-    <h1><?php _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
+    <h1><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? _e( 'Autoptimize Pro Settings', 'autoptimize' ) : _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
         <?php echo autoptimizeConfig::ao_admin_tabs(); ?>
         <?php if ( 'on' !== autoptimizeOptionWrapper::get_option( 'autoptimize_js' ) && 'on' !== autoptimizeOptionWrapper::get_option( 'autoptimize_css' ) && 'on' !== autoptimizeOptionWrapper::get_option( 'autoptimize_html' ) && ! autoptimizeImages::imgopt_active() ) { ?>
             <div class="notice-warning notice"><p>
@@ -522,6 +573,12 @@ class autoptimizeExtra
                 <th scope="row"><?php _e( 'Remove query strings from static resources', 'autoptimize' ); ?></th>
                 <td>
                     <label><input type='checkbox' name='autoptimize_extra_settings[autoptimize_extra_checkbox_field_0]' <?php if ( ! empty( $options['autoptimize_extra_checkbox_field_0'] ) && '1' === $options['autoptimize_extra_checkbox_field_0'] ) { echo 'checked="checked"'; } ?> value='1'><?php _e( 'Removing query strings (or more specifically the <code>ver</code> parameter) will not improve load time, but might improve performance scores.', 'autoptimize' ); ?></label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php _e( 'Remove WordPress block CSS', 'autoptimize' ); ?></th>
+                <td>
+                    <label><input type='checkbox' name='autoptimize_extra_settings[autoptimize_extra_checkbox_field_8]' <?php if ( ! empty( $options['autoptimize_extra_checkbox_field_8'] ) && '1' === $options['autoptimize_extra_checkbox_field_8'] ) { echo 'checked="checked"'; } ?> value='1'><?php _e( 'WordPress adds block CSS and global styles to improve easy styling of block-based sites, but which can add a significant amount of CSS and SVG. If you are sure your site can do without the block CSS and "global styles", you can disable them here.', 'autoptimize' ); ?></label>
                 </td>
             </tr>
             <tr>

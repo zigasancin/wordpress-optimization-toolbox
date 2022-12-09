@@ -15,8 +15,8 @@ class autoptimizeCriticalCSSSettings {
      */
     private $settings_screen_do_remote_http = true;
 
-    public function __construct()
-    {
+    public function __construct() {
+        $this->criticalcss = autoptimize()->criticalcss();
         $this->settings_screen_do_remote_http = apply_filters( 'autoptimize_settingsscreen_remotehttp', $this->settings_screen_do_remote_http );
         $this->run();
     }
@@ -39,12 +39,17 @@ class autoptimizeCriticalCSSSettings {
             }
 
             $criticalcss_ajax = new autoptimizeCriticalCSSSettingsAjax();
+
+            // if debug logging is off but the file is present, then remove the debug log file.
+            if ( empty( $this->criticalcss->get_option( 'debug' ) ) && file_exists( AO_CCSS_LOG ) ) {
+                unlink( AO_CCSS_LOG );
+            }
         }
     }
 
     public function add_critcss_tabs( $in )
     {
-        $in = array_merge( $in, array( 'ao_critcss' => '⚡ ' . __( 'Critical CSS', 'autoptimize' ) ) );
+        $in = array_merge( $in, array( 'ao_critcss' => apply_filters( 'autoptimize_filter_ccss_tab_text', '⚡ ' . __( 'Critical CSS', 'autoptimize' ) ) ) );
 
         return $in;
     }
@@ -70,7 +75,7 @@ class autoptimizeCriticalCSSSettings {
         register_setting( 'ao_ccss_options_group', 'autoptimize_ccss_unloadccss' );
 
         // And add submenu-page.
-        add_submenu_page( null, 'Critical CSS', 'Critical CSS', 'manage_options', 'ao_critcss', array( $this, 'ao_criticalcsssettings_page' ) );
+        add_submenu_page( '', 'Critical CSS', 'Critical CSS', 'manage_options', 'ao_critcss', array( $this, 'ao_criticalcsssettings_page' ) );
     }
 
     public function admin_assets( $hook ) {
@@ -100,71 +105,76 @@ class autoptimizeCriticalCSSSettings {
         require_once( 'critcss-inc/admin_settings_adv.php' );
         require_once( 'critcss-inc/admin_settings_explain.php' );
 
-        // fetch all options at once and populate them individually explicitely as globals.
-        $all_options = autoptimizeCriticalCSSBase::fetch_options();
-        foreach ( $all_options as $_option => $_value ) {
-            global ${$_option};
-            ${$_option} = $_value;
-        }
+        $ao_ccss_key           = $this->criticalcss->get_option( 'key' );
+        $ao_ccss_keyst         = $this->criticalcss->get_option( 'keyst' );
+        $ao_css_defer          = $this->criticalcss->get_option( 'css_defer' );
+        $ao_ccss_deferjquery   = $this->criticalcss->get_option( 'deferjquery' );
+        $ao_ccss_queue         = $this->criticalcss->get_option( 'queue' );
+        $ao_ccss_rules         = $this->criticalcss->get_option( 'rules' );
+        $ao_ccss_servicestatus = $this->criticalcss->get_option( 'servicestatus' );
+        $ao_ccss_finclude      = $this->criticalcss->get_option( 'finclude' );
+        $ao_ccss_rtimelimit    = $this->criticalcss->get_option( 'rtimelimit' );
+        $ao_ccss_debug         = $this->criticalcss->get_option( 'debug' );
+        $ao_ccss_noptimize     = $this->criticalcss->get_option( 'noptimize' );
+        $ao_css_defer_inline   = $this->criticalcss->get_option( 'css_defer_inline' );
+        $ao_ccss_loggedin      = $this->criticalcss->get_option( 'loggedin' );
+        $ao_ccss_forcepath     = $this->criticalcss->get_option( 'forcepath' );
+        $ao_ccss_domain        = $this->criticalcss->get_option( 'domain' );
         ?>
         <script>document.title = "Autoptimize: <?php _e( 'Critical CSS', 'autoptimize' ); ?> " + document.title;</script>
         <div class="wrap">
             <div id="autoptimize_main">
                 <div id="ao_title_and_button">
-                    <h1><?php _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
+                    <h1><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? _e( 'Autoptimize Pro Settings', 'autoptimize' ) : _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
                 </div>
 
                 <?php
                 // Print AO settings tabs.
                 echo autoptimizeConfig::ao_admin_tabs();
 
-                // Make sure dir to write ao_ccss exists and is writable.
-                if ( ! is_dir( AO_CCSS_DIR ) ) {
-                    $mkdirresp = @mkdir( AO_CCSS_DIR, 0775, true ); // @codingStandardsIgnoreLine
-                } else {
-                    $mkdirresp = true;
-                }
+                if ( autoptimizeUtils::is_local_server() && isset( $ao_ccss_key ) ) { ?>
+                    <div class="notice-warning notice"><p>
+                    <?php
+                    echo __( 'The Critical CSS service does not work on locally hosted sites or when the server is on a private network.', 'autoptimize' );
+                    ?>
+                    </p></div>
+                <?php }
 
-                // Make sure our index.html is there.
-                if ( ! is_file( AO_CCSS_DIR . 'index.html' ) ) {
-                    $fileresp = file_put_contents( AO_CCSS_DIR . 'index.html', '<html><head><meta name="robots" content="noindex, nofollow"></head><body>Generated by <a href="http://wordpress.org/extend/plugins/autoptimize/" rel="nofollow">Autoptimize</a></body></html>' );
-                } else {
-                    $fileresp = true;
-                }
+                $mkdirresult = $this->criticalcss->create_ao_ccss_dir();
 
                 // Warn if we could not create those files.
-                if ( ( ! $mkdirresp ) || ( ! $fileresp ) ) {
+                if ( ( true !== $mkdirresult ) ) {
                     ?>
                     <div class="notice-error notice"><p>
                     <?php
-                    _e( 'Could not create the required directory. Make sure the webserver can write to the wp-content directory.', 'autoptimize' );
+                    _e( 'Could not create the required directory. Make sure the webserver can write to the wp-content/uploads directory.', 'autoptimize' );
+                    ?>
+                    </p></div>
+                    <?php
+                }
+
+                // Check if CSS optimization is on.
+                if ( 'on' !== autoptimizeOptionWrapper::get_option( 'autoptimize_css' ) || 'on' !== autoptimizeOptionWrapper::get_option( 'autoptimize_css_defer' ) ) {
+                    ?>
+                    <div class="notice-info notice"><p>
+                    <?php
+                    _e( 'To be able to use Critical CSS you will have to enable CSS optimization and make sure "eliminate render-blocking CSS" is active on the main Autoptimize settings page.', 'autoptimize' );
                     ?>
                     </p></div>
                     <?php
                 }
 
                 // Check for "inline & defer CSS" being active in Autoptimize.
-                if ( ! empty( $ao_ccss_key ) && ! $ao_css_defer ) {
-                    if ( empty( $ao_ccss_keyst ) ) {
+                if ( ! empty( $ao_ccss_key ) && ! $ao_css_defer && empty( $ao_ccss_keyst ) ) {
                         // no keystate so likely in activation-process of CCSS, let's enable "inline & defer CSS" immediately to make things easier!
                         autoptimizeOptionWrapper::update_option( 'autoptimize_css_defer', 'on' );
-                        ?>
+                    ?>
                         <div class="notice-info notice"><p>
                         <?php
-                        _e( "The \"Eliminate render-blocking CSS\" option was activated to allow critical CSS to be used.", 'autoptimize' );
+                        _e( 'The "Eliminate render-blocking CSS" option was activated to allow critical CSS to be used.', 'autoptimize' );
                         ?>
                         </p></div>
                         <?php
-                    } else {
-                        // we have keystate, so "inline & defer CSS" was probably disabled for troubleshooting, warn but let users continue.
-                        ?>
-                        <div class="notice-warning notice"><p>
-                        <?php
-                        _e( "Please <strong>activate the \"Eliminate render-blocking CSS\" option</strong> on Autoptimize's main settings page to ensure critical CSS is used on the front-end.", 'autoptimize' );
-                        ?>
-                        </p></div>
-                        <?php
-                    }
                 }
 
                 // check if WordPress cron is disabled and warn if so.
@@ -264,8 +274,8 @@ class autoptimizeCriticalCSSSettings {
                 }
 
                 // warn if too many rules (based on length of ao_ccss_rules option) as that might cause issues at e.g. wpengine
-                // see https://wpengine.com/support/database-optimization-best-practices/#Autoloaded_Data
-                $_raw_rules_length = strlen( get_option( 'autoptimize_ccss_rules', '') );
+                // see https://wpengine.com/support/database-optimization-best-practices/#Autoloaded_Data .
+                $_raw_rules_length = strlen( get_option( 'autoptimize_ccss_rules', '' ) );
                 if ( $_raw_rules_length > apply_filters( 'autoptimize_ccss_rules_length_warning', 500000 ) ) {
                     ?>
                     <div class="notice-warning notice"><p>
@@ -283,7 +293,7 @@ class autoptimizeCriticalCSSSettings {
                     settings_fields( 'ao_ccss_options_group' );
 
                     // Get API key status.
-                    $key = autoptimizeCriticalCSSCore::ao_ccss_key_status( true );
+                    $key = $this->criticalcss->key_status( true );
 
                     if ( $this->is_multisite_network_admin() ) {
                         ?>
@@ -297,7 +307,7 @@ class autoptimizeCriticalCSSSettings {
                         </ul>
                         <?php
                     } else {
-                        if ( 'valid' == $key['status'] ) {
+                        if ( 'valid' == $key['status'] || ( defined( 'AO_PRO_VERSION' ) && has_filter( 'autoptimize_filter_ccss_key' ) ) ) {
                             // If key status is valid, render other panels.
                             // Render rules section.
                             ao_ccss_render_rules();
@@ -306,25 +316,32 @@ class autoptimizeCriticalCSSSettings {
                             // Render advanced panel.
                             ao_ccss_render_adv();
                         } else {
+                            if ( apply_filters( 'autoptimize_filter_ccss_rules_without_api', true ) ) {
+                                // Render rules section for manual rules.
+                                ao_ccss_render_rules();
+                            } else {
+                                echo "<input class='hidden' name='autoptimize_ccss_rules' value='" . json_encode( $ao_ccss_rules, JSON_FORCE_OBJECT ) . "'>";
+                            }
+
                             // But if key is other than valid, add hidden fields to persist settings when submitting form
                             // Show explanation of why and how to get a API key.
                             ao_ccss_render_explain();
 
                             // Get viewport size.
-                            $viewport = autoptimizeCriticalCSSCore::ao_ccss_viewport();
+                            $viewport = $this->criticalcss->viewport();
 
                             // Add hidden fields.
-                            echo "<input class='hidden' name='autoptimize_ccss_rules' value='" . $ao_ccss_rules_raw . "'>";
-                            echo "<input class='hidden' name='autoptimize_ccss_queue' value='" . $ao_ccss_queue_raw . "'>";
-                            echo '<input class="hidden" name="autoptimize_ccss_viewport[w]" value="' . $viewport['w'] . '">';
-                            echo '<input class="hidden" name="autoptimize_ccss_viewport[h]" value="' . $viewport['h'] . '">';
+                            echo "<input class='hidden' name='autoptimize_ccss_queue' value='" . json_encode( $ao_ccss_queue, JSON_FORCE_OBJECT ) . "'>";
+                            echo '<input class="hidden" name="autoptimize_ccss_viewport[w]" value="' . esc_attr( $viewport['w'] ) . '">';
+                            echo '<input class="hidden" name="autoptimize_ccss_viewport[h]" value="' . esc_attr( $viewport['h'] ) . '">';
                             echo '<input class="hidden" name="autoptimize_ccss_finclude" value="' . esc_attr( $ao_ccss_finclude ) . '">';
-                            echo '<input class="hidden" name="autoptimize_ccss_rtimelimit" value="' . $ao_ccss_rtimelimit . '">';
-                            echo '<input class="hidden" name="autoptimize_ccss_debug" value="' . $ao_ccss_debug . '">';
-                            echo '<input class="hidden" name="autoptimize_ccss_noptimize" value="' . $ao_ccss_noptimize . '">';
+                            echo '<input class="hidden" name="autoptimize_ccss_rtimelimit" value="' . esc_attr( $ao_ccss_rtimelimit ) . '">';
+                            echo '<input class="hidden" name="autoptimize_ccss_debug" value="' . esc_attr( $ao_ccss_debug ) . '">';
+                            echo '<input class="hidden" name="autoptimize_ccss_noptimize" value="' . esc_attr( $ao_ccss_noptimize ) . '">';
                             echo '<input class="hidden" name="autoptimize_css_defer_inline" value="' . esc_attr( $ao_css_defer_inline ) . '">';
-                            echo '<input class="hidden" name="autoptimize_ccss_loggedin" value="' . $ao_ccss_loggedin . '">';
-                            echo '<input class="hidden" name="autoptimize_ccss_forcepath" value="' . $ao_ccss_forcepath . '">';
+                            echo '<input class="hidden" name="autoptimize_ccss_loggedin" value="' . esc_attr( $ao_ccss_loggedin ) . '">';
+                            echo '<input class="hidden" name="autoptimize_ccss_forcepath" value="' . esc_attr( $ao_ccss_forcepath ) . '">';
+                            echo '<input class="hidden" name="autoptimize_ccss_domain" id="autoptimize_ccss_domain" value="' . esc_attr( $ao_ccss_domain ) . '">';
                         }
                         // Render key panel unconditionally.
                         ao_ccss_render_key( $ao_ccss_key, $key['status'], $key['stmsg'], $key['msg'], $key['color'] );
@@ -348,7 +365,7 @@ class autoptimizeCriticalCSSSettings {
                     });
                 }
                 </script>
-                <form id="importSettingsForm"<?php if ( $this->is_multisite_network_admin() ) { echo ' class="hidden"'; } ?>>
+                <form id="importSettingsForm"<?php if ( $this->is_multisite_network_admin() ) { echo ' class="hidden"'; } // @codingStandardsIgnoreLine ?>>
                     <span id="exportSettings" class="button-secondary"><?php _e( 'Export Settings', 'autoptimize' ); ?></span>
                     <input class="button-secondary" id="importSettings" type="button" value="<?php _e( 'Import Settings', 'autoptimize' ); ?>" onclick="upload();return false;" />
                     <input class="button-secondary" id="settingsfile" name="settingsfile" type="file" />
@@ -360,14 +377,14 @@ class autoptimizeCriticalCSSSettings {
         if ( ! $this->is_multisite_network_admin() ) {
             // Include debug panel if debug mode is enable.
             if ( $ao_ccss_debug ) {
-            ?>
+                ?>
                 <div id="debug">
                     <?php
                     // Include debug panel.
                     include( 'critcss-inc/admin_settings_debug.php' );
                     ?>
                 </div><!-- /#debug -->
-            <?php
+                <?php
             }
             echo '<script>';
             include( 'critcss-inc/admin_settings_rules.js.php' );
@@ -377,11 +394,11 @@ class autoptimizeCriticalCSSSettings {
         }
     }
 
-    public static function ao_ccss_has_autorules() {
+    public function ao_ccss_has_autorules() {
         static $_has_auto_rules = null;
 
         if ( null === $_has_auto_rules ) {
-            global $ao_ccss_rules;
+            $ao_ccss_rules = $this->criticalcss->get_option( 'rules' );
             $_has_auto_rules = false;
             if ( ! empty( $ao_ccss_rules ) ) {
                 foreach ( array( 'types', 'paths' ) as $_typat ) {
@@ -402,7 +419,7 @@ class autoptimizeCriticalCSSSettings {
         return $_has_auto_rules;
     }
 
-    public function is_multisite_network_admin() {
+    public static function is_multisite_network_admin() {
         static $_multisite_network_admin = null;
 
         if ( null === $_multisite_network_admin ) {

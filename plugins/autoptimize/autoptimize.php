@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Autoptimize
- * Plugin URI: https://autoptimize.com/
+ * Plugin URI: https://autoptimize.com/pro/
  * Description: Makes your site faster by optimizing CSS, JS, Images, Google fonts and more.
- * Version: 2.9.2
+ * Version: 3.1.4
  * Author: Frank Goossens (futtta)
- * Author URI: https://autoptimize.com/
+ * Author URI: https://autoptimize.com/pro/
  * Text Domain: autoptimize
  * License: GPLv2
  * Released under the GNU General Public License (GPL)
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'AUTOPTIMIZE_PLUGIN_VERSION', '2.9.2' );
+define( 'AUTOPTIMIZE_PLUGIN_VERSION', '3.1.4' );
 
 // plugin_dir_path() returns the trailing slash!
 define( 'AUTOPTIMIZE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -65,7 +65,7 @@ function autoptimize_autoload( $class_name ) {
     }
 
     // If we didn't match one of our rules, bail!
-    if ( ! isset( $filepath ) ) {
+    if ( ! isset( $filepath ) || ! is_readable( $filepath ) ) {
         return;
     }
 
