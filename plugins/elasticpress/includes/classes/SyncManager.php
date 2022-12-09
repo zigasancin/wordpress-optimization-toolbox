@@ -185,7 +185,7 @@ abstract class SyncManager {
 		}
 
 		// Bulk sync them all.
-		Indexables::factory()->get( $this->indexable_slug )->bulk_index( array_keys( $this->sync_queue ) );
+		Indexables::factory()->get( $this->indexable_slug )->bulk_index_dynamically( array_keys( $this->sync_queue ) );
 
 		/**
 		 * Make sure to reset sync queue in case an shutdown happens before a redirect
@@ -201,8 +201,9 @@ abstract class SyncManager {
 	 * @return boolean
 	 */
 	public function can_index_site() {
-		if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
-			return Utils\is_site_indexable();
+		if ( ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) && ! Utils\is_site_indexable() ) {
+			$this->tear_down();
+			return false;
 		}
 
 		return true;
@@ -253,10 +254,15 @@ abstract class SyncManager {
 		 * Filter to whether to keep index on site deletion
 		 *
 		 * @hook ep_keep_index
-		 * @param {bool} $keep True means don't delete index
-		 * @return {boolean} New value
+		 * @since 3.0
+		 * @since 3.6.2 Moved from Post\SyncManager to the main SyncManager class
+		 * @since 3.6.5 Added `$blog_id` and `$indexable_slug`
+		 * @param {bool}   $keep           True means don't delete index
+		 * @param {int}    $blog_id        WP Blog ID
+		 * @param {string} $indexable_slug Indexable slug
+		 * @return {bool} New value
 		 */
-		if ( $indexable->index_exists( $blog_id ) && ! apply_filters( 'ep_keep_index', false ) ) {
+		if ( $indexable->index_exists( $blog_id ) && ! apply_filters( 'ep_keep_index', false, $blog_id, $this->indexable_slug ) ) {
 			$indexable->delete_index( $blog_id );
 		}
 	}
@@ -267,4 +273,11 @@ abstract class SyncManager {
 	 * @since 3.0
 	 */
 	abstract public function setup();
+
+	/**
+	 * Implementation (for multisite) should un-setup hooks/filters if applicable.
+	 *
+	 * @since 4.0
+	 */
+	abstract public function tear_down();
 }
