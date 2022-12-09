@@ -31,7 +31,7 @@
 		<span class="wpo-subheader"><?php echo htmlspecialchars(__('Make your site fast & efficient', 'wp-optimize')); ?></span>
 	</div>
 	<?php
-	$wp_optimize->include_template('pages-menu.php', false, array('menu_items' => WP_Optimize()->get_submenu_items()));
+	$wp_optimize->include_template('pages-menu.php', false, array('menu_items' => WP_Optimize()->get_admin_instance()->get_submenu_items()));
 	?>
 </header>
 <?php
@@ -43,7 +43,9 @@
 		if ($installed && $installed_for > 28*86400 && $installed_for < 84*86400) {
 			$advert = 'rate_plugin';
 		}
-		
-		// This is to display the notices.
-		$wp_optimize_notices->do_notice($advert);
+
+		if ($installed && $installed_for > 14*86400) {
+			// This is to display the notices.
+			$wp_optimize_notices->do_notice($advert);
+		}
 	}

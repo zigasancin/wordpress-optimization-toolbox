@@ -11,7 +11,7 @@
 	<p>
 
 		<input name="enable-schedule" id="enable-schedule" type="checkbox" value ="true"  <?php checked($options->get_option('schedule'), 'true'); ?>>
-		<label for="enable-schedule"><?php _e('Enable scheduled clean-up and optimization (Beta feature)', 'wp-optimize'); ?></label>
+		<label for="enable-schedule"><?php _e('Enable scheduled clean-up and optimization', 'wp-optimize'); ?></label>
 
 	</p>
 

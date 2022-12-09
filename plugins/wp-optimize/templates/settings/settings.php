@@ -8,6 +8,7 @@
 		<?php WP_Optimize()->include_template('settings/settings-general.php'); ?>
 		<?php WP_Optimize()->include_template('settings/settings-trackback-and-comments.php'); ?>
 		<?php WP_Optimize()->include_template('settings/settings-logging.php'); ?>
+		<?php WP_Optimize()->include_template('settings/settings-export-import.php'); ?>
 
 		<?php do_action('wpo_after_general_settings'); ?>
 

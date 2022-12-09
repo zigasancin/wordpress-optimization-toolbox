@@ -174,7 +174,7 @@ td.wp-optimize-settings-optimization-checkbox {
 	padding: 0px;
 }
 
-#retention-period {
+#retention-period, #revisions-count {
 	width: 60px;
 }
 
@@ -283,6 +283,12 @@ div#wpoptimize_table_list_tables_not_found + h3 {
 #wpoptimize_table_list tr th:first-child,
 #wpoptimize_table_list tr td:first-child {
 	display: none;
+}
+
+#wpoptimize_table_list tr td.no-table {
+	display: table-cell !important;
+	background: #FB8787;
+	font-weight: bold;
 }
 
 #optimize_form .select2-container,

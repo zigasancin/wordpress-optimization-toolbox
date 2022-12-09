@@ -87,7 +87,7 @@
 						id="async_js"
 						class="large-text code"
 						placeholder="<?php esc_attr_e('e.g.: /js/main.js', 'wp-optimize'); ?>"
-					><?php echo $wpo_minify_options['async_js']; ?></textarea>
+					><?php echo esc_textarea($wpo_minify_options['async_js']); ?></textarea>
 				</div>
 			</fieldset>
 			

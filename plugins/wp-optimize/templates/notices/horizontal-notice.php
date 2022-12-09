@@ -71,6 +71,8 @@
 						$button_text = __('Find out more.', 'wp-optimize');
 					} elseif ('wp-optimize' == $button_meta) {
 						$button_text = __('Find out more.', 'wp-optimize');
+					} elseif ('collection' == $button_meta) {
+						$button_text = __('Read more.', 'wp-optimize');
 					}
 					$wp_optimize->wp_optimize_url($button_link, $button_text, null, 'class="updraft_notice_link"');
 					}

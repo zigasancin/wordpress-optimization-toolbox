@@ -17,6 +17,8 @@
 
 </div>
 
+<?php do_action('wpo_after_cache_exception_urls_fieldgroup'); ?>
+
 <h3 class="wpo-first-child"><?php _e('Cookies which, if present, will prevent caching (one per line)', 'wp-optimize'); ?></h3>
 
 <div class="wpo-fieldgroup">
@@ -25,6 +27,25 @@
 		<label for="cache_exception_cookies"><?php _e('List of cookies that will prevent caching when set.', 'wp-optimize'); ?></label>
 		<textarea name="cache_exception_cookies" id="cache_exception_cookies" class="cache-settings" placeholder="wordpress_*"><?php echo htmlspecialchars($cache_exception_cookies); ?></textarea>
 	</p>
+</div>
+
+<h3 class="wpo-first-child"><?php _e('Conditional tags to exclude from caching', 'wp-optimize'); ?></h3>
+
+<div class="wpo-fieldgroup">
+
+	<p>
+		<label for="cache_exception_conditional_tags">
+	<?php
+	printf(__('List conditional tags (e.g. %s) that should not be cached (one per line).', 'wp-optimize'), '<code>is_single</code>');
+	echo '&nbsp';
+	printf(__('You can find more details about condtional tags from %1$shere%2$s', 'wp-optimize'), '<a href="https://codex.wordpress.org/Conditional_Tags" target="_blank">', '</a>');
+	?>
+		</label>
+		<textarea name="cache_exception_conditional_tags" id="cache_exception_conditional_tags" class="cache-settings" placeholder="is_single"><?php echo esc_textarea($cache_exception_conditional_tags); ?></textarea>
+	</p>
+
+	<?php do_action('wpo_after_cache_conditional_tags'); ?>
+
 </div>
 
 <h3 class="wpo-first-child"><?php _e('List of browser agent strings which, if detected, will prevent caching', 'wp-optimize'); ?></h3>

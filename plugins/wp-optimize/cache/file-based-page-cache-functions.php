@@ -14,12 +14,16 @@ if (!defined('WPO_CACHE_EXT_DIR')) define('WPO_CACHE_EXT_DIR', dirname(__FILE__)
 /**
  * Cache output before it goes to the browser. If moving/renaming this function, then also change the check above.
  *
- * @param  string $buffer Page HTML.
- * @param  int    $flags  OB flags to be passed through.
- * @return string
+ * @param  String $buffer Page HTML.
+ * @param  Int    $flags  OB flags to be passed through.
+ *
+ * @return String
  */
 if (!function_exists('wpo_cache')) :
 function wpo_cache($buffer, $flags) {
+	
+	// This case appears to happen for unclear reasons without WP being fully loaded, e.g. https://wordpress.org/support/topic/fatal-error-since-wp-5-8-update/ . It is simplest just to short-circuit it.
+	if ('' === $buffer) return '';
 	
 	// This array records reasons why no cacheing took place. Be careful not to allow actions to proceed that should not - i.e. take note of its state appropriately.
 	$no_cache_because = array();
@@ -29,13 +33,18 @@ function wpo_cache($buffer, $flags) {
 	}
 
 	// Don't cache pages for logged in users.
-	if (!function_exists('is_user_logged_in') || is_user_logged_in()) {
+	if (empty($GLOBALS['wpo_cache_config']['enable_user_specific_cache']) && (!function_exists('wpo_we_cache_per_role') || !wpo_we_cache_per_role()) && (!function_exists('is_user_logged_in') || (function_exists('wp_get_current_user') && is_user_logged_in()))) {
 		$no_cache_because[] = __('User is logged in', 'wp-optimize');
 	}
 
 	$restricted_page_type_cache = apply_filters('wpo_restricted_cache_page_type', false);
 	if ($restricted_page_type_cache) {
 		$no_cache_because[] = $restricted_page_type_cache;
+	}
+
+		$conditional_tag_exceptions = apply_filters('wpo_url_in_conditional_tags_exceptions', false);
+	if ($conditional_tag_exceptions) {
+		$no_cache_because[] = $conditional_tag_exceptions;
 	}
 
 	// No root cache folder, so short-circuit here
@@ -59,17 +68,26 @@ function wpo_cache($buffer, $flags) {
 		}
 	}
 
-	$can_cache_page = (defined('DONOTCACHEPAGE') && DONOTCACHEPAGE) ? false : true;
+	$can_cache_page = true;
+	
+	if (defined('DONOTCACHEPAGE') && DONOTCACHEPAGE) {
+		$can_cache_page = false;
+	}
 
 	/**
 	 * Defines if the page can be cached or not
 	 *
 	 * @param boolean $can_cache_page
 	 */
-	$can_cache_page = apply_filters('wpo_can_cache_page', $can_cache_page);
+	$can_cache_page_filter = apply_filters('wpo_can_cache_page', $can_cache_page);
 
-	if (!$can_cache_page) {
-		$no_cache_because[] = __('DONOTCACHEPAGE constant or wpo_can_cache_page filter forbade it', 'wp-optimize');
+	if (!$can_cache_page_filter) {
+		if ($can_cache_page) {
+			$can_cache_page = false;
+			$no_cache_because[] = __('wpo_can_cache_page filter forbade it', 'wp-optimize');
+		} else {
+			$no_cache_because[] = __('DONOTCACHEPAGE constant forbade it and wpo_can_cache_page filter did not over-ride it', 'wp-optimize');
+		}
 	}
 
 	if (defined('REST_REQUEST') && REST_REQUEST) {
@@ -80,6 +98,12 @@ function wpo_cache($buffer, $flags) {
 	$last_error = error_get_last();
 	if (is_array($last_error) && E_ERROR == $last_error['type']) {
 		$no_cache_because[] = __('This page has a fatal error', 'wp-optimize');
+	}
+
+	if (http_response_code() >= 500) {
+		$no_cache_because[] = sprintf(__('This page has a critical error (HTTP code %s)', 'wp-optimize'), http_response_code());
+	} elseif (http_response_code() >= 400) {
+		$no_cache_because[] = sprintf(__('This page returned an HTTP unauthorised response code (%s)', 'wp-optimize'), http_response_code());
 	}
 
 	if (empty($no_cache_because)) {
@@ -155,19 +179,49 @@ function wpo_cache($buffer, $flags) {
 		/**
 		 * Save $buffer into cache file.
 		 */
-		$cache_filename = wpo_cache_filename();
+		$file_ext = '.html';
+
+		if (wpo_feeds_caching_enabled()) {
+			if (is_feed()) {
+				$file_ext = '.rss-xml';
+			}
+		}
+
+		$cache_filename = wpo_cache_filename($file_ext);
 		$cache_file = $path . '/' .$cache_filename;
 
+		if (defined('WPO_CACHE_FILENAME_DEBUG') && WPO_CACHE_FILENAME_DEBUG) {
+			$add_to_footer .= "\n<!-- WP Optimize page cache debug information -->\n";
+			if (!empty($GLOBALS['wpo_cache_filename_debug']) && is_array($GLOBALS['wpo_cache_filename_debug'])) {
+				$add_to_footer .= "<!-- \n" . join("\n", array_map('htmlspecialchars', $GLOBALS['wpo_cache_filename_debug'])) . "\n --->";
+			}
+		}
+
 		// if we can then cache gzipped content in .gz file.
-		if (function_exists('gzencode')) {
+		if (function_exists('gzencode') && apply_filters('wpo_allow_cache_gzip_files', true)) {
 			// Only replace inside the addition, not inside the main buffer (e.g. post content)
 			file_put_contents($cache_file . '.gz', gzencode($buffer.str_replace('by WP-Optimize', 'by WP-Optimize (gzip)', $add_to_footer), apply_filters('wpo_cache_gzip_level', 6)));
 		}
 
 		file_put_contents($cache_file, $buffer.$add_to_footer);
 
-		// delete cached information about cache size.
-		WP_Optimize()->get_page_cache()->delete_cache_size_information();
+		if (is_callable('WP_Optimize')) {
+			// delete cached information about cache size.
+			WP_Optimize()->get_page_cache()->delete_cache_size_information();
+		} else {
+			// If the shutdown occurs before plugins are loaded,
+			// then this will trigger a fatal error, so, we check first
+			if (!doing_action('shutdown')) {
+				error_log('[WPO_CACHE] WP_Optimize() is not callable.');
+				$message = 'Please report this to WP-O support: ';
+				if (function_exists('wp_debug_backtrace_summary')) {
+					$message .= wp_debug_backtrace_summary();
+				} else {
+					$message .= wpo_debug_backtrace_summary();
+				}
+				error_log($message);
+			}
+		}
 
 		header('Cache-Control: no-cache'); // Check back every time to see if re-download is necessary.
 		header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $modified_time) . ' GMT');
@@ -231,13 +285,35 @@ function wpo_restricted_cache_page_type($restricted) {
 	}
 
 	// Don't cache feeds.
-	if (function_exists('is_feed') && is_feed()) {
+	if (function_exists('is_feed') && is_feed() && !wpo_feeds_caching_enabled()) {
 		$restricted = __('We don\'t cache RSS feeds', 'wp-optimize');
 	}
 
 	return $restricted;
 }
 }
+
+/**
+ * Returns true if we need cache content for loggedin users.
+ *
+ * @return bool
+ */
+if (!function_exists('wpo_cache_loggedin_users')) :
+function wpo_cache_loggedin_users() {
+	return !empty($GLOBALS['wpo_cache_config']['enable_user_caching']) || !empty($GLOBALS['wpo_cache_config']['enable_user_specific_cache']) || (function_exists('wpo_we_cache_per_role') && wpo_we_cache_per_role());
+}
+endif;
+
+/**
+ * Returns true if we need to cache content for loggedin users.
+ *
+ * @return bool
+ */
+if (!function_exists('wpo_user_specific_cache_enabled')) :
+	function wpo_user_specific_cache_enabled() {
+		return !empty($GLOBALS['wpo_cache_config']['enable_user_specific_cache']) && !empty($GLOBALS['wpo_cache_config']['wp_salt_auth']) && !empty($GLOBALS['wpo_cache_config']['wp_salt_logged_in']);
+	}
+endif;
 
 /**
  * Get filename for store cache, depending on gzip, mobile and cookie settings.
@@ -247,10 +323,17 @@ function wpo_restricted_cache_page_type($restricted) {
  */
 if (!function_exists('wpo_cache_filename')) :
 function wpo_cache_filename($ext = '.html') {
+
+	$wpo_cache_filename_debug = array();
+
 	$filename = 'index';
 
 	if (wpo_cache_mobile_caching_enabled() && wpo_is_mobile()) {
 		$filename = 'mobile.' . $filename;
+	}
+
+	if (wpo_webp_images_enabled() && !wpo_is_using_webp_images_redirection() && wpo_is_using_alter_html()) {
+		$filename = $filename . '.webp';
 	}
 
 	$cookies = wpo_cache_cookies();
@@ -269,6 +352,7 @@ function wpo_cache_filename($ext = '.html') {
 						$_cache_key = $cookie_key.'='.$_COOKIE[$key][$cookie_key];
 						$_cache_key = preg_replace('/[^a-z0-9_\-\=]/i', '-', $_cache_key);
 						$cache_key .= '-' . $_cache_key;
+						$wpo_cache_filename_debug[] = 'Cookie: name: ' . $key . '[' . $cookie_key . '], value: *** , cache_key:' . $_cache_key;
 					}
 				}
 				continue;
@@ -278,6 +362,7 @@ function wpo_cache_filename($ext = '.html') {
 				$_cache_key = $cookie_name.'='.$_COOKIE[$cookie_name];
 				$_cache_key = preg_replace('/[^a-z0-9_\-\=]/i', '-', $_cache_key);
 				$cache_key .= '-' . $_cache_key;
+				$wpo_cache_filename_debug[] = 'Cookie: name: ' . $cookie_name . ', value: *** , cache_key:' . $_cache_key;
 			}
 		}
 	}
@@ -293,14 +378,24 @@ function wpo_cache_filename($ext = '.html') {
 				$_cache_key = $variable.'='.$_GET[$variable];
 				$_cache_key = preg_replace('/[^a-z0-9_\-\=]/i', '-', $_cache_key);
 				$cache_key .= '-' . $_cache_key;
+				$wpo_cache_filename_debug[] = 'GET parameter: name: ' . $variable . ', value:' . htmlentities($_GET[$variable]) . ', cache_key:' . $_cache_key;
 			}
 		}
 	}
 
 	// add hash of queried cookies and variables to cache file name.
 	if ('' !== $cache_key) {
-		$filename .= '-' . md5($cache_key);
+		$hash = md5($cache_key);
+		$filename .= '-'.$hash;
+		$wpo_cache_filename_debug[] = 'Hash: ' . $hash;
 	}
+
+	$filename = apply_filters('wpo_cache_filename', $filename);
+
+	$wpo_cache_filename_debug[] = 'Extension: ' . $ext;
+	$wpo_cache_filename_debug[] = 'Filename: ' . $filename.$ext;
+
+	$GLOBALS['wpo_cache_filename_debug'] = $wpo_cache_filename_debug;
 
 	return $filename . $ext;
 }
@@ -460,13 +555,71 @@ function wpo_cache_mobile_caching_enabled() {
 endif;
 
 /**
+ * Check if webp images enabled
+ *
+ * @return bool
+ */
+if (!function_exists('wpo_webp_images_enabled')) :
+	function wpo_webp_images_enabled() {
+		if (!empty($GLOBALS['wpo_cache_config']['use_webp_images'])) return true;
+		return false;
+	}
+endif;
+
+/**
+ * Check whether webp images using alter html method or not
+ *
+ * @return bool
+ */
+if (!function_exists('wpo_is_using_alter_html')) :
+	function wpo_is_using_alter_html() {
+		return (isset($_SERVER['HTTP_ACCEPT']) && false !== strpos($_SERVER['HTTP_ACCEPT'], 'image/webp'));
+	}
+endif;
+
+/**
+ * Check whether webp images are served using redirect
+ *
+ * @return bool
+ */
+if (!function_exists('wpo_is_using_webp_images_redirection')) :
+	function wpo_is_using_webp_images_redirection() {
+		if (empty($GLOBALS['wpo_cache_config']['uploads'])) return false;
+
+		$uploads_dir =  $GLOBALS['wpo_cache_config']['uploads'];
+		$htaccess_file = $uploads_dir . '/.htaccess';
+		if (!file_exists($htaccess_file)) return false;
+		$htaccess_content = file_get_contents($htaccess_file);
+		$comment_sections = array('Register webp mime type', 'WP-Optimize WebP Rules');
+
+		if (function_exists('str_contains')) {
+			return str_contains($htaccess_content, $comment_sections[0]) && str_contains($htaccess_content, $comment_sections[1]);
+		} else {
+			return strpos($htaccess_content, $comment_sections[0]) && strpos($htaccess_content, $comment_sections[1]);
+		}
+	}
+endif;
+
+/**
  * Serves the cache and exits
  */
 if (!function_exists('wpo_serve_cache')) :
 function wpo_serve_cache() {
 	$file_name = wpo_cache_filename();
 
-	$path = WPO_CACHE_FILES_DIR . '/' . wpo_get_url_path() . '/' . $file_name;
+	$file_name_rss_xml = wpo_cache_filename('.rss-xml');
+	$send_as_feed = false;
+
+	$path_dir = WPO_CACHE_FILES_DIR . '/' . wpo_get_url_path() . '/';
+	$path = $path_dir . $file_name;
+
+	if (wpo_feeds_caching_enabled()) {
+		// check for .xml cache file if .html cache file doesn't exist
+		if (!file_exists($path_dir . $file_name) && file_exists($path_dir . $file_name_rss_xml)) {
+			$path = $path_dir . $file_name_rss_xml;
+			$send_as_feed = true;
+		}
+	}
 
 	$use_gzip = false;
 
@@ -501,6 +654,10 @@ function wpo_serve_cache() {
 			header('Content-Encoding: gzip');
 		}
 
+		if ($send_as_feed) {
+			header('Content-type: application/rss+xml');
+		}
+
 		header('WPO-Cache-Status: cached');
 		header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $modified_time) . ' GMT');
 		header($_SERVER['SERVER_PROTOCOL'] . ' 304 Not Modified', true, 304);
@@ -508,6 +665,9 @@ function wpo_serve_cache() {
 	}
 
 	if (file_exists($path) && is_readable($path)) {
+
+		if (wpo_is_canonical_redirection_needed()) return;
+
 		if ($use_gzip && !$gzip_header_already_sent) {
 			header('Content-Encoding: gzip');
 		}
@@ -523,6 +683,10 @@ function wpo_serve_cache() {
 			header('Content-type: text/plain');
 		}
 
+		if ($send_as_feed) {
+			header('Content-type: application/rss+xml');
+		}
+
 		header('WPO-Cache-Status: cached');
 		if (!empty($modified_time)) {
 			header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $modified_time) . ' GMT');
@@ -533,6 +697,35 @@ function wpo_serve_cache() {
 		exit;
 	}
 }
+endif;
+
+/**
+ * Checks and does redirection, if needed
+ *
+ * @return bool
+ */
+if (!function_exists('wpo_is_canonical_redirection_needed')) :
+	function wpo_is_canonical_redirection_needed() {
+		$permalink_structure = isset($GLOBALS['wpo_cache_config']['permalink_structure']) ? $GLOBALS['wpo_cache_config']['permalink_structure'] : '';
+		$site_url = $GLOBALS['wpo_cache_config']['site_url'];
+		
+		$schema = isset($_SERVER['HTTPS']) && 'on' === $_SERVER['HTTPS'] ? "https" : "http";
+		$url_part = "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+		$requested_url = $schema . $url_part;
+		$url_parts = parse_url($requested_url);
+		$extension = pathinfo($url_parts['path'], PATHINFO_EXTENSION);
+		
+		if (!empty($permalink_structure) && $requested_url != $site_url) {
+			if ('/' == substr($permalink_structure, -1) && empty($extension) && empty($url_parts['query']) && empty($url_parts['fragment'])) {
+				$url = preg_replace('/(.+?)([\/]*)(\[\?\#][^\/]+|$)/', '$1/$3', $_SERVER['REQUEST_URI']);
+				if (0 !== strcmp($_SERVER['REQUEST_URI'], $url)) return true;
+			} else {
+				$url = rtrim($_SERVER['REQUEST_URI'], '/');
+				if (0 !== strcmp($_SERVER['REQUEST_URI'], $url)) return true;
+			}
+		}
+		return false;
+	}
 endif;
 
 /**
@@ -562,8 +755,8 @@ function wpo_get_url_path($url = '') {
 	$url = '' == $url ? wpo_current_url() : $url;
 	$url_parts = parse_url($url);
 	
-	if (isset($url_parts['path']) && 0 === stripos($url_parts['path'], '/index.php')) {
-		$url_parts['path'] = str_replace('/index.php', '/index-php', $url_parts['path']);
+	if (isset($url_parts['path']) && false !== stripos($url_parts['path'], '/index.php')) {
+		$url_parts['path'] = preg_replace('/(.*?)index\.php(\/.+)/i', '$1index-php$2', $url_parts['path']);
 	}
 
 	if (!isset($url_parts['host'])) $url_parts['host'] = '';
@@ -593,6 +786,48 @@ function wpo_current_url() {
 endif;
 
 /**
+ * Return list of conditional tag exceptions.
+ *
+ * @return array
+ */
+if (!function_exists('wpo_get_conditional_tags_exceptions')) :
+function wpo_get_conditional_tags_exceptions() {
+	static $exceptions = null;
+
+	if (null !== $exceptions) return $exceptions;
+	
+	if (!empty($GLOBALS['wpo_cache_config'])) {
+		if (empty($GLOBALS['wpo_cache_config']['cache_exception_conditional_tags'])) {
+			$exceptions = array();
+
+		} else {
+			
+			$exceptions = $GLOBALS['wpo_cache_config']['cache_exception_conditional_tags'];
+
+		}
+		
+	} elseif (class_exists('WPO_Page_Cache')) {
+	
+		$config = WPO_Page_Cache::instance()->config->get();
+
+		if (is_array($config) && array_key_exists('cache_exception_conditional_tags', $config)) {
+			$exceptions = $config['cache_exception_conditional_tags'];
+		} else {
+			$exceptions = array();
+		}
+
+		$exceptions = is_array($exceptions) ? $exceptions : preg_split('#(\n|\r|\r\n)#', $exceptions);
+		$exceptions = array_filter($exceptions, 'trim');
+		
+	} else {
+		$exceptions = array();
+	}
+
+	return $exceptions;
+}
+endif;
+
+/**
  * Return list of url exceptions.
  *
  * @return array
@@ -605,13 +840,13 @@ function wpo_get_url_exceptions() {
 
 	// if called from file-based-page-cache.php when WP loading
 	// and cache settings exists then use it otherwise get settings from database.
-	if (isset($GLOBALS['wpo_cache_config']['cache_exception_urls'])) {
+	if (!empty($GLOBALS['wpo_cache_config'])) {
 		if (empty($GLOBALS['wpo_cache_config']['cache_exception_urls'])) {
 			$exceptions = array();
 		} else {
 			$exceptions = is_array($GLOBALS['wpo_cache_config']['cache_exception_urls']) ? $GLOBALS['wpo_cache_config']['cache_exception_urls'] : preg_split('#(\n|\r)#', $GLOBALS['wpo_cache_config']['cache_exception_urls']);
 		}
-	} else {
+	} elseif (class_exists('WPO_Page_Cache')) {
 		$config = WPO_Page_Cache::instance()->config->get();
 
 		if (is_array($config) && array_key_exists('cache_exception_urls', $config)) {
@@ -622,9 +857,11 @@ function wpo_get_url_exceptions() {
 
 		$exceptions = is_array($exceptions) ? $exceptions : preg_split('#(\n|\r)#', $exceptions);
 		$exceptions = array_filter($exceptions, 'trim');
+	} else {
+		$exceptions = array();
 	}
 
-	return $exceptions;
+	return apply_filters('wpo_get_url_exceptions', $exceptions);
 }
 endif;
 
@@ -641,6 +878,38 @@ function wpo_current_url_exception_match($exception) {
 	return wpo_url_exception_match(wpo_current_url(), $exception);
 }
 endif;
+
+/**
+ * Check if url in conditional tags exceptions list.
+ *
+ * @return string
+ */
+if (!function_exists('wpo_url_in_conditional_tags_exceptions')) :
+function wpo_url_in_conditional_tags_exceptions() {
+
+	$exceptions = wpo_get_conditional_tags_exceptions();
+	$restricted = '';
+	$allowed_functions = array('is_single', 'is_page', 'is_front_page', 'is_home', 'is_archive', 'is_tag', 'is_category', 'is_feed', 'is_search', 'is_author', 'is_woocommerce', 'is_shop', 'is_product', 'is_account_page', 'is_product_category', 'is_product_tag', 'is_wc_endpoint_url', 'is_bbpress', 'bbp_is_forum_archive', 'bbp_is_topic_archive', 'bbp_is_topic_tag', 'bbp_is_single_forum', 'bbp_is_single_topic', 'bbp_is_single_view', 'bbp_is_single_user', 'bbp_is_user_home', 'bbp_is_search');
+	//Filter for add more conditional tags to whitelist in the exceptions list.
+	$allowed_functions = apply_filters('wpo_allowed_conditional_tags_exceptions', $allowed_functions);
+	if (!empty($exceptions)) {
+		foreach ($exceptions as $exception) {
+			if (false !== strpos($exception, 'is_')) {
+				$exception_function = $exception;
+				if ('()' == substr($exception, -2)) {
+					$exception_function = substr($exception, 0, -2);
+				}
+
+				if (in_array($exception_function, $allowed_functions) && function_exists($exception_function) && call_user_func($exception_function)) {
+					$restricted = sprintf(__('In the settings, caching is disabled for %s', 'wp-optimize'), $exception_function);
+				}
+			}
+		}
+	}
+	return $restricted;
+}
+endif;
+
 
 /**
  * Check if url in exceptions list.
@@ -708,6 +977,9 @@ function wpo_url_exception_match($url, $exception) {
 	if (!preg_match('#\(\.\*\)$#', $exception)) $exception .= '/';
 
 	$exception = preg_quote($exception);
+
+	// fix - unescape possible escaped mask .*
+	$exception = str_replace('\\.\\*', '.*', $exception);
 
 	return preg_match('#^'.$exception.'$#i', $url) || preg_match('#^'.$sub_dir.$exception.'$#i', $url);
 }
@@ -792,13 +1064,18 @@ function wpo_delete_files($src, $recursive = true) {
 					$file = readdir($dir);
 					continue;
 				}
-				if (is_dir($src . '/' . $file)) {
-					if (!wpo_delete_files($src . '/' . $file)) {
+
+				$full_path = $src . '/' . $file;
+
+				if (is_dir($full_path)) {
+					if (!wpo_delete_files($full_path)) {
 						$success = false;
 					}
 				} else {
-					if (!unlink($src . '/' . $file)) {
-						$success = false;
+					if (!@unlink($full_path)) { // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- suppressed the first time in case it was already removed by a contemporary process (avoid unwanted logging for harmless races)
+						if (file_exists($full_path) && !unlink($full_path)) {
+							$success = false;
+						}
 					}
 				}
 
@@ -839,6 +1116,39 @@ function wpo_delete_files($src, $recursive = true) {
 	WP_Optimize()->get_page_cache()->delete_cache_size_information();
 
 	return $success;
+}
+endif;
+
+if (!function_exists('wpo_is_empty_dir')) :
+/**
+ * Check if selected directory is empty or has only index.php which we added for security reasons.
+ *
+ * @param string $dir
+ *
+ * @return bool
+ */
+function wpo_is_empty_dir($dir) {
+	if (!file_exists($dir) || !is_dir($dir)) return false;
+
+	$handle = opendir($dir);
+
+	if (false === $handle) return false;
+
+	$is_empty = true;
+	$file = readdir($handle);
+
+	while (false !== $file) {
+
+		if ('.' != $file && '..' != $file && 'index.php' != $file) {
+			$is_empty = false;
+			break;
+		}
+
+		$file = readdir($handle);
+	}
+
+	closedir($handle);
+	return $is_empty;
 }
 endif;
 
@@ -997,3 +1307,75 @@ if (!function_exists('wpo_cache_add_nocache_http_header')) :
 		}
 	}
 endif;
+
+/**
+ * Check if feeds caching enabled
+ *
+ * @return bool
+ */
+if (!function_exists('wpo_feeds_caching_enabled')) :
+	function wpo_feeds_caching_enabled() {
+		return apply_filters('wpo_feeds_caching_enabled', true);
+	}
+endif;
+
+if (!function_exists('wpo_debug_backtrace_summary')) {
+	function wpo_debug_backtrace_summary($ignore_class = null, $skip_frames = 0, $pretty = true) {
+		static $truncate_paths;
+	 
+		$trace       = debug_backtrace(false);
+		$caller      = array();
+		$check_class = !is_null($ignore_class);
+		$skip_frames++; // Skip this function.
+	 
+		if (!isset($truncate_paths)) {
+			$truncate_paths = array(
+				wpo_normalize_path(WP_CONTENT_DIR),
+				wpo_normalize_path(ABSPATH),
+			);
+		}
+	 
+		foreach ($trace as $call) {
+			if ($skip_frames > 0) {
+				$skip_frames--;
+			} elseif (isset($call['class'])) {
+				if ($check_class && $ignore_class == $call['class']) {
+					continue; // Filter out calls.
+				}
+	 
+				$caller[] = "{$call['class']}{$call['type']}{$call['function']}";
+			} else {
+				if (in_array($call['function'], array('do_action', 'apply_filters', 'do_action_ref_array', 'apply_filters_ref_array'), true)) {
+					$caller[] = "{$call['function']}('{$call['args'][0]}')";
+				} elseif (in_array($call['function'], array('include', 'include_once', 'require', 'require_once'), true)) {
+					$filename = isset($call['args'][0]) ? $call['args'][0] : '';
+					$caller[] = $call['function'] . "('" . str_replace($truncate_paths, '', wpo_normalize_path($filename)) . "')";
+				} else {
+					$caller[] = $call['function'];
+				}
+			}
+		}
+		if ($pretty) {
+			return implode(', ', array_reverse($caller));
+		} else {
+			return $caller;
+		}
+	}
+}
+
+if (!function_exists('wpo_normalize_path')) {
+	function wpo_normalize_path($path) {
+		// Standardise all paths to use '/'.
+		$path = str_replace('\\', '/', $path);
+	 
+		// Replace multiple slashes down to a singular, allowing for network shares having two slashes.
+		$path = preg_replace('|(?<=.)/+|', '/', $path);
+	 
+		// Windows paths should uppercase the drive letter.
+		if (':' === substr($path, 1, 1)) {
+			$path = ucfirst($path);
+		}
+
+		return $path;
+	}
+}

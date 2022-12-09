@@ -6,6 +6,9 @@
 	$retention_period = $options->get_option('retention-period', '2');
 	$admin_page_url = $options->admin_page_url();
 
+	$revisions_retention_enabled = $options->get_option('revisions-retention-enabled', 'false');
+	$revisions_retention_count = $options->get_option('revisions-retention-count', '2');
+
 ?>
 
 <h3 class="wpo-first-child"><?php _e('Status', 'wp-optimize'); ?></h3>
@@ -83,6 +86,16 @@
 		echo '</span></strong>';
 	} else {
 		echo '<strong>'.__('Not keeping recent data', 'wp-optimize').'</strong>';
+	}
+	
+	echo '<br>';
+
+	if ('true' == $revisions_retention_enabled) {
+		echo '<strong><span style="font-color: #0000FF;">';
+		printf(__('Keeping last %s revisions', 'wp-optimize'), $revisions_retention_count);
+		echo '</span></strong>';
+	} else {
+		echo '<strong>'.__('Not keeping any revisions', 'wp-optimize').'</strong>';
 	}
 	?>
 	</p>

@@ -12,20 +12,8 @@ class WP_Optimize_Minify {
 	 * @return void
 	 */
 	public function __construct() {
-		if (!class_exists('WP_Optimize_Minify_Incompatible_Plugins')) include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-incompatible-plugins.php';
-		$found_incompatible_plugins = WP_Optimize_Minify_Incompatible_Plugins::instance()->found_incompatible_plugins();
 
-		/**
-		 * Filters the list of plugins incompatible with minify which are currently active. Returning false will enable the feature anyways.
-		 *
-		 * @param array|boolean $found_incompatible_plugins - The active incompatible plugins
-		 * @return array|boolean
-		 */
-		if (apply_filters('wpo_minify_found_incompatible_plugins', $found_incompatible_plugins)) {
-			$this->incompatible_plugins = $found_incompatible_plugins;
-			add_action('wp_optimize_admin_page_wpo_minify_status', array($this, 'output_incompatible_status'), 20);
-			return;
-		}
+		$this->minify_commands = new WP_Optimize_Minify_Commands();
 
 		if (!class_exists('WP_Optimize_Minify_Config')) {
 			include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-config.php';
@@ -59,6 +47,23 @@ class WP_Optimize_Minify {
 		// cron job to delete old wpo_min cache
 		add_action('wpo_minify_purge_old_cache', array('WP_Optimize_Minify_Cache_Functions', 'purge_old'));
 		// front-end actions; skip on certain post_types or if there are specific keys on the url or if editor or admin
+
+		// Handle minify cache purging.
+		add_action('wp_loaded', array($this, 'handle_purge_minify_cache'));
+
+	}
+
+	/**
+	 * Returns singleton instance object
+	 *
+	 * @return WP_Optimize_Minify Returns `WP_Optimize_Minify` object
+	 */
+	public static function instance() {
+		static $_instance = null;
+		if (null === $_instance) {
+			$_instance = new self();
+		}
+		return $_instance;
 	}
 
 	/**
@@ -72,6 +77,7 @@ class WP_Optimize_Minify {
 
 		if (!$wpo_minify_options['enabled'] || !current_user_can('manage_options') || !($wpo_minify_options['enable_css'] || $wpo_minify_options['enable_js'])) return $menu_items;
 		
+		$act_url = remove_query_arg('wpo_minify_cache_purged');
 		$cache_path = WP_Optimize_Minify_Cache_Functions::cache_path();
 		$cache_size_info = '<h4>'.__('Minify cache', 'wp-optimize').'</h4><span><span class="label">'.__('Cache size:', 'wp-optimize').'</span> <span class="stats">'.esc_html(WP_Optimize_Minify_Cache_Functions::get_cachestats($cache_path['cachedir'])).'</span></span>';
 
@@ -88,9 +94,43 @@ class WP_Optimize_Minify {
 			'parent' => 'wpo_purge_cache',
 			'id' => 'purge_minify_cache',
 			'title' => __('Purge minify cache', 'wp-optimize'),
-			'href' => "#",
+			'href' => add_query_arg('_wpo_purge_minify_cache', wp_create_nonce('wpo_purge_minify_cache'), $act_url),
 		);
 		return $menu_items;
+	}
+
+	/**
+	 * Check if purge single page action sent and purge cache.
+	 */
+	public function handle_purge_minify_cache() {
+		$wpo_minify_options = wp_optimize_minify_config()->get();
+		if (!$wpo_minify_options['enabled'] || !current_user_can('manage_options')) return;
+
+		if (isset($_GET['wpo_minify_cache_purged'])) {
+			if (is_admin()) {
+				add_action('admin_notices', array($this, 'notice_purge_minify_cache_success'));
+				return;
+			} else {
+				$message = __('Minify cache purged', 'wp-optmize');
+				printf('<script>alert("%s");</script>', $message);
+				return;
+			}
+		}
+
+		if (!isset($_GET['_wpo_purge_minify_cache'])) return;
+		
+		if (wp_verify_nonce($_GET['_wpo_purge_minify_cache'], 'wpo_purge_minify_cache')) {
+			$success = false;
+
+			// Purge minify
+			$results = $this->minify_commands->purge_minify_cache();
+			if ("caches cleared" == $results['result']) $success = true;
+
+			// remove nonce from url and reload page.
+			wp_redirect(add_query_arg('wpo_minify_cache_purged', $success, remove_query_arg('_wpo_purge_minify_cache')));
+			exit;
+
+		}
 	}
 
 	/**
@@ -100,10 +140,6 @@ class WP_Optimize_Minify {
 	 */
 	private function load_admin() {
 		if (!is_admin()) return;
-
-		if (!class_exists('WP_Optimize_Minify_Admin')) {
-			include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-admin.php';
-		}
 		new WP_Optimize_Minify_Admin();
 	}
 
@@ -114,9 +150,6 @@ class WP_Optimize_Minify {
 	 */
 	private function load_frontend() {
 		if ($this->enabled) {
-			if (!class_exists('WP_Optimize_Minify_Front_End')) {
-				include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-front-end.php';
-			}
 			new WP_Optimize_Minify_Front_End();
 		}
 	}
@@ -127,9 +160,6 @@ class WP_Optimize_Minify {
 	 * @return void
 	 */
 	private function load_premium() {
-		if (!class_exists('WP_Optimize_Minify_Premium')) {
-			include WP_OPTIMIZE_MINIFY_DIR.'/class-wp-optimize-minify-premium.php';
-		}
 		$this->premium = new WP_Optimize_Minify_Premium();
 	}
 
@@ -189,17 +219,43 @@ class WP_Optimize_Minify {
 	}
 
 	/**
-	 * Outputs a message in the status tab, when the feature can't be loaded
-	 *
-	 * @return void
+	 * Shows success notice for purge minify cache
 	 */
-	public function output_incompatible_status() {
+	public function notice_purge_minify_cache_success() {
+		$this->show_notice(__('The minify cache was successfully purged.', 'wp-optimize'), 'success');
+	}
+
+	/**
+	 * Show notification in WordPress admin.
+	 *
+	 * @param string $message HTML (no further escaping is performed)
+	 * @param string $type    error, warning, success, or info
+	 */
+	public function show_notice($message, $type) {
+		global $current_screen;
+		
+		if ($current_screen && is_callable(array($current_screen, 'is_block_editor')) && $current_screen->is_block_editor()) :
 		?>
-		<div class="notice notice-error below-h2">
-			<p>
-				<?php printf(__('Minify cannot be loaded, because an incompatible plugin was found: %s', 'wp-optimize'), implode(', ', $this->incompatible_plugins)); ?>
-			</p>
-		</div>
+			<script>
+				window.addEventListener('load', function() {
+					(function(wp) {
+						if (window.wp && wp.hasOwnProperty('data') && 'function' == typeof wp.data.dispatch) {
+							wp.data.dispatch('core/notices').createNotice(
+								'<?php echo $type; ?>',
+								'<?php echo $message; ?>',
+								{
+									isDismissible: true,
+								}
+							);
+						}
+					})(window.wp);
+				});
+			</script>
+		<?php else : ?>
+			<div class="notice wpo-notice notice-<?php echo $type; ?> is-dismissible">
+				<p><?php echo $message; ?></p>
+			</div>
 		<?php
+		endif;
 	}
 }

@@ -62,6 +62,9 @@ class WP_Optimize_Minify_Cache_Functions {
 		// Create directories
 		$dirs = array($cache_dir, $tmp_dir, $header_dir);
 		foreach ($dirs as $target) {
+			$enabled = wp_optimize_minify_config()->get('enabled');
+			if (false === $enabled) break;
+
 			if (!is_dir($target) && !wp_mkdir_p($target)) {
 				error_log('WP_Optimize_Minify_Cache_Functions::cache_path(): The folder "'.$target.'" could not be created.');
 			}
@@ -178,7 +181,7 @@ class WP_Optimize_Minify_Cache_Functions {
 		// Purge Godaddy Managed WordPress Hosting (Varnish + APC)
 		if (class_exists('WPaaS\Plugin')) {
 			self::godaddy_request('BAN');
-			return sprintf(__('A cache purge request has been sent to %s. Please note that it may not work 100% of the time, due to cache rate limiting by your host!', 'wp-optimize'), '<strong>Go Daddy Varnish</strong>');
+			return sprintf(__('A cache purge request has been sent to %s. Please note that it may not work every time, due to cache rate limiting by your host.', 'wp-optimize'), '<strong>Go Daddy Varnish</strong>');
 		}
 
 		// purge cache enabler
@@ -200,7 +203,7 @@ class WP_Optimize_Minify_Cache_Functions {
 			}
 
 			if (method_exists('WpeCommon', 'purge_memcached') || method_exists('WpeCommon', 'clear_maxcdn_cache') || method_exists('WpeCommon', 'purge_varnish_cache')) {
-					return sprintf(__('A cache purge request has been sent to %s. Please note that it may not work 100% of the time, due to cache rate limiting by your host!', 'wp-optimize'), '<strong>WP Engine</strong>');
+					return sprintf(__('A cache purge request has been sent to %s. Please note that it may not work every time, due to cache rate limiting by your host.', 'wp-optimize'), '<strong>WP Engine</strong>');
 			}
 		}
 
@@ -254,8 +257,16 @@ class WP_Optimize_Minify_Cache_Functions {
 	 * @return Boolean
 	 */
 	public static function purge() {
+		$log = '';
 		if (is_dir(WPO_CACHE_MIN_FILES_DIR)) {
-			wpo_delete_files(WPO_CACHE_MIN_FILES_DIR, true);
+			if (wpo_delete_files(WPO_CACHE_MIN_FILES_DIR, true)) {
+				$log = "[Minify] files and folders are deleted recursively";
+			} else {
+				$log = "[Minify] recursive files and folders deletion unsuccessful";
+			}
+			if (wp_optimize_minify_config()->get('debug')) {
+				error_log($log);
+			}
 		}
 		return true;
 	}
@@ -270,13 +281,14 @@ class WP_Optimize_Minify_Cache_Functions {
 			include_once WPO_PLUGIN_MAIN_PATH . '/minify/class-wp-optimize-minify-config.php';
 		}
 		$cache_time = wp_optimize_minify_config()->get('last-cache-update');
+		$cache_lifespan = wp_optimize_minify_config()->get('cache_lifespan');
 
 		/**
 		 * Minify cache lifespan
 		 *
 		 * @param int The minify cache expiry timestamp
 		 */
-		$expires = apply_filters('wp_optimize_minify_cache_expiry_time', time() - 86400 * 30);
+		$expires = apply_filters('wp_optimize_minify_cache_expiry_time', time() - 86400 * $cache_lifespan);
 		$log = array();
 
 		// get all directories that are a direct child of current directory
@@ -286,19 +298,36 @@ class WP_Optimize_Minify_Cache_Functions {
 					if (strcmp($d, '.')==0 || strcmp($d, '..')==0) {
 						continue;
 					}
+					$log[] = "cache expiration time - $expires";
 					$log[] = "checking if cache has expired - $d";
 					if ($d != $cache_time && (is_numeric($d) && $d <= $expires)) {
 						$dir = WPO_CACHE_MIN_FILES_DIR.'/'.$d;
 						if (is_dir($dir)) {
 							$log[] = "deleting cache in $dir";
-							wpo_delete_files($dir, true);
-							if (file_exists($dir)) rmdir($dir);
+							if (wpo_delete_files($dir, true)) {
+								$log[] = "files and folders are deleted recursively - $dir";
+							} else {
+								$log[] = "recursive files and folders deletion unsuccessful - $dir";
+							}
+							if (file_exists($dir)) {
+								if (rmdir($dir)) {
+									$log[] = "folder deleted successfully - $dir";
+								} else {
+									$log[] = "folder deletion unsuccessful - $dir";
+								}
+							}
 						}
 					}
 				}
 				closedir($handle);
 			}
 		}
+		if (wp_optimize_minify_config()->get('debug')) {
+			foreach ($log as $message) {
+				error_log($message);
+			}
+		}
+
 		return $log;
 	}
 
@@ -407,7 +436,7 @@ class WP_Optimize_Minify_Cache_Functions {
 		
 		// Inspect directory with opendir, since glob might not be available in some systems
 		clearstatcache();
-		if ($handle = opendir($cache_dir.'/')) {
+		if (is_dir($cache_dir.'/') && $handle = opendir($cache_dir.'/')) {
 			while (false !== ($file = readdir($handle))) {
 				$file = $cache_dir.'/'.$file;
 				$ext = pathinfo($file, PATHINFO_EXTENSION);

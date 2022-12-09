@@ -5,12 +5,12 @@
 
 if (!defined('ABSPATH')) die('Access denied.');
 
-if (!class_exists('Updraft_Task_1_1')) :
+if (!class_exists('Updraft_Task_1_2')) :
 
 if (!class_exists('Updraft_Task_Options')) require_once('class-updraft-task-options.php');
 if (!class_exists('Updraft_Task_Meta')) require_once('class-updraft-task-meta.php');
 
-abstract class Updraft_Task_1_1 {
+abstract class Updraft_Task_1_2 {
 
 	/**
 	 * A unique ID for the specific task
@@ -585,7 +585,7 @@ abstract class Updraft_Task_1_1 {
 
 		if (isset($this->_loggers)) {
 			foreach ($this->_loggers as $logger) {
-				$logger->log($error_type, $message);
+				$logger->log($message, $error_type);
 			}
 		}
 	}
@@ -687,7 +687,8 @@ abstract class Updraft_Task_1_1 {
 	 */
 	private function get_task_from_db($task_id) {
 		global $wpdb;
-		return $wpdb->get_row("SELECT * FROM {$wpdb->base_prefix}tm_tasks WHERE id = {$task_id} LIMIT 1");		
+		$sql = $wpdb->prepare("SELECT * FROM {$wpdb->base_prefix}tm_tasks WHERE id = %d LIMIT 1", $task_id);
+		return $wpdb->get_row($sql);		
 	}
 }
 endif;

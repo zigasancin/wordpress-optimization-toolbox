@@ -6,7 +6,20 @@ if (!defined('WPO_VERSION')) die('No direct access allowed');
  * This class invokes optimiazations. The optimizations themselves live in the 'optimizations' sub-directory of the plugin.  The proper way to obtain access to the instance is via WP_Optimize()->get_optimizer()
  */
 class WP_Optimizer {
-	
+
+	/**
+	 * Returns singleton instance object
+	 *
+	 * @return WP_Optimizer Returns `WP_Optimizer` object
+	 */
+	public static function instance() {
+		static $_instance = null;
+		if (null === $_instance) {
+			$_instance = new self();
+		}
+		return $_instance;
+	}
+
 	public function get_retain_info() {
 	
 		$options = WP_Optimize()->get_options();
@@ -15,6 +28,20 @@ class WP_Optimizer {
 		$retain_period = (($retain_enabled) ? $options->get_option('retention-period', '2') : null);
 
 		return array($retain_enabled, $retain_period);
+	}
+
+	/**
+	 * Get data retention options
+	 *
+	 * @return array
+	 */
+	public function get_revisions_retain_info() {
+		$options = WP_Optimize()->get_options();
+
+		$revisions_retention_enabled = $options->get_option('revisions-retention-enabled', 'false');
+		$revisions_retention_count = $revisions_retention_enabled ? $options->get_option('revisions-retention-count', '2') : null;
+
+		return array($revisions_retention_enabled, $revisions_retention_count);
 	}
 	
 	public function get_optimizations_list() {
@@ -275,6 +302,8 @@ class WP_Optimizer {
 
 		if (false === $update && null !== $tables_info) return $tables_info;
 
+		$wpo_db_info = WP_Optimize()->get_db_info();
+
 		$table_status = WP_Optimize()->get_db_info()->get_show_table_status($update);
 
 		// Filter on the site's DB prefix (was not done in releases up to 1.9.1).
@@ -296,16 +325,18 @@ class WP_Optimizer {
 					continue;
 				}
 
-				$table_status[$index]->Engine = WP_Optimize()->get_db_info()->get_table_type($table_name);
+				$table_status[$index]->Engine = $wpo_db_info->get_table_type($table_name);
 
-				$table_status[$index]->is_optimizable = WP_Optimize()->get_db_info()->is_table_optimizable($table_name);
-				$table_status[$index]->is_type_supported = WP_Optimize()->get_db_info()->is_table_type_optimize_supported($table_name);
+				$table_status[$index]->is_optimizable = $wpo_db_info->is_table_optimizable($table_name);
+				$table_status[$index]->is_type_supported = $wpo_db_info->is_table_type_optimize_supported($table_name);
 				// add information about corrupted tables.
-				$is_needing_repair = WP_Optimize()->get_db_info()->is_table_needing_repair($table_name);
+				$is_needing_repair = $wpo_db_info->is_table_needing_repair($table_name);
 				$table_status[$index]->is_needing_repair = $is_needing_repair;
 				if ($is_needing_repair) $corrupted_tables_count++;
 
 				$table_status[$index] = $this->join_plugin_information($table_name, $table_status[$index]);
+
+				$table_status[$index]->blog_id = $wpo_db_info->get_table_blog_id($table_name);
 			}
 
 			WP_Optimize()->get_options()->update_option('corrupted-tables-count', $corrupted_tables_count);
@@ -394,9 +425,11 @@ class WP_Optimizer {
 	 * and information regarding each table and returns
 	 * the results to optimizations-table.php and optimizationstable.php
 	 *
+	 * @param int $blog_id filter tables by prefix
+	 *
 	 * @return Array - an array of data such as table list, innodb info and data free
 	 */
-	public function get_table_information() {
+	public function get_table_information($blog_id = 0) {
 		// Get table information.
 		$tablesstatus = $this->get_tables();
 
@@ -410,6 +443,9 @@ class WP_Optimizer {
 
 		// Make a list of tables to optimize.
 		foreach ($tablesstatus as $each_table) {
+			// if $blog_id is set then filter tables
+			if ($blog_id > 0 && $blog_id != $each_table->blog_id) continue;
+
 			$table_information['table_list'] .= $each_table->Name.'|';
 
 			// check if table type supported.
@@ -430,6 +466,7 @@ class WP_Optimizer {
 				$table_information['non_inno_db_tables']++;
 			}
 		}
+
 		return $table_information;
 	}
 	
@@ -480,20 +517,21 @@ class WP_Optimizer {
 
 		$total_gain = 0;
 		$total_size = 0;
-		$row_usage = 0;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Used in the foreach below
+		$row_usage = 0;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $row_usage Used in the foreach below
 		$data_usage = 0;
 		$index_usage = 0;
-		$overhead_usage = 0; // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Used in the foreach below
+		$overhead_usage = 0;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $overhead_usage Used in the foreach below
 		
 		$tablesstatus = $this->get_tables();
 
 		foreach ($tablesstatus as $tablestatus) {
-			$row_usage += $tablestatus->Rows;
+			$row_usage += $tablestatus->Rows;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $row_usage declared up above
+			$total_gain += $tablestatus->Data_free;
 			$data_usage += $tablestatus->Data_length;
 			$index_usage += $tablestatus->Index_length;
 
 			if ('InnoDB' != $tablestatus->Engine) {
-				$overhead_usage += $tablestatus->Data_free;
+				$overhead_usage += $tablestatus->Data_free;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $overhead_usage declared up above
 				$total_gain += $tablestatus->Data_free;
 			}
 		}

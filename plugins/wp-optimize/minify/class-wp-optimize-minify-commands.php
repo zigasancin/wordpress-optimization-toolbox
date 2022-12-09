@@ -2,6 +2,7 @@
 if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (!class_exists('WP_Optimize_Minify_Config')) require_once(dirname(__FILE__) . '/class-wp-optimize-minify-config.php');
+if (!class_exists('WP_Optimize_Minify_Preloader')) require_once(dirname(__FILE__) . '/class-wpo-minify-preloader.php');
 
 /**
  * All cache commands that are intended to be available for calling from any sort of control interface (e.g. wp-admin, UpdraftCentral) go in here. All public methods should either return the data to be returned, or a WP_Error with associated error code, message and error data.
@@ -73,8 +74,14 @@ class WP_Optimize_Minify_Commands {
 
 		// deletes temp files and old caches incase CRON isn't working
 		WP_Optimize_Minify_Cache_Functions::cache_increment();
-		$state = WP_Optimize_Minify_Cache_Functions::purge_temp_files();
-		$old = WP_Optimize_Minify_Cache_Functions::purge_old();
+		if (wp_optimize_minify_config()->always_purge_everything()) {
+			WP_Optimize_Minify_Cache_Functions::purge();
+			$state = array();
+			$old = array();
+		} else {
+			$state = WP_Optimize_Minify_Cache_Functions::purge_temp_files();
+			$old = WP_Optimize_Minify_Cache_Functions::purge_old();
+		}
 		$others = WP_Optimize_Minify_Cache_Functions::purge_others();
 		$files = $this->get_minify_cached_files();
 
@@ -102,7 +109,6 @@ class WP_Optimize_Minify_Commands {
 	 * @return array
 	 */
 	public function save_minify_settings($data) {
-
 		$new_data = array();
 		foreach ($data as $key => $value) {
 			if ('true' === $value) {
@@ -136,7 +142,7 @@ class WP_Optimize_Minify_Commands {
 		if (!$working) {
 			return array(
 				'success' => false,
-				'error' => 'failed to save'
+				'error' => 'failed to save minify settings'
 			);
 		}
 		$purged = $this->purge_minify_cache();
@@ -171,5 +177,33 @@ class WP_Optimize_Minify_Commands {
 			'html' => $config['html_minification'],
 			'stats' => $this->get_minify_cached_files()
 		);
+	}
+
+	/**
+	 * Run minify preload action.
+	 *
+	 * @return void|array - Doesn't return anything if run() is successfull (Run() prints a JSON object and closed browser connection) or an array if failed.
+	 */
+	public function run_minify_preload() {
+		return WP_Optimize_Minify_Preloader::instance()->run('manual');
+	}
+	
+	/**
+	 * Cancel minify preload action.
+	 *
+	 * @return array
+	 */
+	public function cancel_minify_preload() {
+		WP_Optimize_Minify_Preloader::instance()->cancel_preload();
+		return WP_Optimize_Minify_Preloader::instance()->get_status_info();
+	}
+
+	/**
+	 * Get status of minify preload.
+	 *
+	 * @return array
+	 */
+	public function get_minify_preload_status() {
+		return WP_Optimize_Minify_Preloader::instance()->get_status_info();
 	}
 }

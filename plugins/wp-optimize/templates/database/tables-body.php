@@ -7,6 +7,7 @@
 	// Check for windows servers.
 	$sqlversion = $wp_optimize->get_db_info()->get_version();
 	$tablesstatus = $wp_optimize->get_optimizer()->get_tables();
+	$is_multisite_mode = $wp_optimize->is_multisite_mode();
 	$total_gain = 0;
 	$no = 0;
 	$row_usage = 0;
@@ -15,6 +16,7 @@
 	$overhead_usage = 0;
 	$non_inno_db_tables = 0;
 	$inno_db_tables = 0;
+	$small_overhead_size = 1048576;
 	
 	foreach ($tablesstatus as $tablestatus) {
 		$no++;
@@ -22,6 +24,7 @@
 			data-tablename="'.esc_attr($tablestatus->Name).'"
 			data-type="'.esc_attr($tablestatus->Engine).'"
 			data-optimizable="'.($tablestatus->is_optimizable ? 1 : 0).'"
+			'.($is_multisite_mode ? 'data-blog_id="'.($tablestatus->blog_id).'"' : '').'
 		>'."\n";
 		echo '<td data-colname="'.__('No.', 'wp-optimize').'">'.number_format_i18n($no).'</td>'."\n";
 		echo '<td data-tablename="'.esc_attr($tablestatus->Name).'" data-colname="'.__('Table', 'wp-optimize').'">'.htmlspecialchars($tablestatus->Name);
@@ -30,6 +33,9 @@
 			if ($tablestatus->wp_core_table) {
 				echo "<br><span style='font-size: 11px;'>".__('Belongs to:', 'wp-optimize')."</span> ";
 				echo "<span style='font-size: 11px;'>".__('WordPress core', 'wp-optimize')."</span>";
+			} elseif (false !== stripos($tablestatus->Name, 'actionscheduler_')) {
+				echo "<br><span style='font-size: 11px;'>".__('This table is used by many plugins for batch processing. ', 'wp-optimize')."</span> ";
+				echo "<span style='font-size: 11px;'>".__('Thus, it cannot be deleted.', 'wp-optimize')."</span>";
 			} else {
 				echo '<div class="table-plugins">';
 				echo "<span style='font-size: 11px;'>".__('Known plugins that use this table name:', 'wp-optimize')."</span> ";
@@ -62,7 +68,7 @@
 			echo '<td data-colname="'.__('Type', 'wp-optimize').'" data-optimizable="1">'.htmlspecialchars($tablestatus->Engine).'</td>'."\n";
 
 			echo '<td data-colname="'.__('Overhead', 'wp-optimize').'" data-raw_value="'.esc_attr(intval($tablestatus->Data_free)).'">';
-			$font_colour = (($optimize_db) ? (($tablestatus->Data_free > 0) ? '#0000FF' : '#004600') : (($tablestatus->Data_free > 0) ? '#9B0000' : '#004600'));
+			$font_colour = ($optimize_db ? (($tablestatus->Data_free > $small_overhead_size) ? '#0000FF' : '#004600') : (($tablestatus->Data_free > $small_overhead_size) ? '#9B0000' : '#004600'));
 			echo '<span style="color:'.$font_colour.';">';
 			echo $wp_optimize->format_size($tablestatus->Data_free);
 			echo '</span>';
@@ -103,7 +109,7 @@
 	echo '<th>'.'-'.'</th>'."\n";
 	echo '<th>';
 
-	$font_colour = (($optimize_db) ? (($overhead_usage > 0) ? '#0000FF' : '#004600') : (($overhead_usage > 0) ? '#9B0000' : '#004600'));
+	$font_colour = (($optimize_db) ? (($overhead_usage > $small_overhead_size) ? '#0000FF' : '#004600') : (($overhead_usage > $small_overhead_size) ? '#9B0000' : '#004600'));
 	
 	echo '<span style="color:'.$font_colour.'">'.$wp_optimize->format_size($overhead_usage).'</span>';
 	

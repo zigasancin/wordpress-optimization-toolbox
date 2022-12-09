@@ -6,6 +6,17 @@
 		<h3><?php _e('Miscellaneous', 'wp-optimize'); ?></h3>
 		<div class="wpo-fieldgroup">
 			<fieldset>
+				<label for="merge_inline_extra_css_js">
+					<input
+						name="merge_inline_extra_css_js"
+						type="checkbox"
+						id="merge_inline_extra_css_js"
+						value="1"
+						<?php echo checked($wpo_minify_options['merge_inline_extra_css_js']);?>
+					>
+					<?php _e('Merge inline extra css and javascript', 'wp-optimize'); ?>
+					<span tabindex="0" data-tooltip="<?php esc_attr_e('Inline JavaScript and CSS that should come before or after other enqueued files will be merged.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span></span>
+				</label>
 				<label for="disable_when_logged_in">
 					<input
 						name="disable_when_logged_in"

@@ -163,13 +163,16 @@ var WP_Optimize_Cache = function () {
 
 		send_command('enable_browser_cache', {browser_cache_expire_days: browser_cache_expire_days, browser_cache_expire_hours: browser_cache_expire_hours}, function(response) {
 			var cache_status_message = $('#wpo_browser_cache_status');
+			var cache_status_field = $('#wpo_enable_browser_cache');
 			if (response) {
 				if (response.enabled) {
 					button.text(wpoptimize.update);
 					cache_status_message.removeClass('wpo-disabled').addClass('wpo-enabled');
+					cache_status_field.val('true');
 				} else {
 					button.text(wpoptimize.enable);
 					cache_status_message.addClass('wpo-disabled').removeClass('wpo-enabled');
+					cache_status_field.val('false');
 				}
 
 				if (response.message) {
@@ -219,6 +222,27 @@ var WP_Optimize_Cache = function () {
 				settings[name] = el.val().split("\n");
 			} else {
 				settings[name] = el.val();
+			}
+		});
+
+		$('.cache-settings-array').each(function() {
+			var el = $(this),
+				name = el.attr('name');
+
+			if (!settings.hasOwnProperty(name)) {
+				settings[name] = [];
+			}
+
+			if (el.is('input[type="checkbox"]')) {
+				if ('value' == el.data('saveas')) {
+					if (el.is(':checked')) settings[name].push(el.val());
+				} else {
+					settings[name].push(el.is(':checked') ? 1 : 0);
+				}
+			} else if (el.is('textarea')) {
+				settings[name].push(el.val().split("\n"));
+			} else {
+				settings[name].push(el.val());
 			}
 		});
 
@@ -278,12 +302,18 @@ var WP_Optimize_Cache = function () {
 				// show purge button
 				$('.purge-cache').show();
 				// enable preload button
-				$('#wp_optimize_run_cache_preload').removeProp('disabled');
+				$('#wp_optimize_run_cache_preload').prop('disabled', false);
+				// disable minify preload
+				$('#wp_optimize_run_minify_preload').prop('disabled', true);
+				$('#minify-preload').show();
 			} else {
 				// hide purge button
 				$('.purge-cache').hide();
 				// disable preload button
 				$('#wp_optimize_run_cache_preload').prop('disabled', true);
+				// enable minify preload
+				$('#wp_optimize_run_minify_preload').prop('disabled', false);
+				$('#minify-preload').hide();
 			}
 
 			if (response.result) {
@@ -465,4 +495,6 @@ var WP_Optimize_Cache = function () {
 		$('#wpo_current_cache_size_information').text(wpoptimize.current_cache_size + ' ' + response.size);
 		$('#wpo_current_cache_file_count').text(wpoptimize.number_of_files + ' ' + response.file_count);
 	}
+
+	wp_optimize.cache_settings = gather_cache_settings;
 };

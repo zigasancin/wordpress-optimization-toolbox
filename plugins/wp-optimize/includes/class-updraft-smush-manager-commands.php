@@ -41,6 +41,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 			'mark_as_compressed',
 			'mark_all_as_uncompressed',
 			'clean_all_backup_images',
+			'reset_webp_serving_method',
 		);
 
 		return array_merge($commands, $smush_commands);
@@ -63,7 +64,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 			return new WP_Error('compression_not_permitted', __('The blog ID provided does not match the current blog.', 'wp-optimize'));
 		}
 
-		$server = filter_var($options['compression_server'], FILTER_SANITIZE_STRING);
+		$server = sanitize_text_field($options['compression_server']);
 
 		$lossy = filter_var($options['lossy_compression'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$backup = filter_var($options['back_up_original'], FILTER_VALIDATE_BOOLEAN) ? true : false;
@@ -97,6 +98,11 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$response['success'] = $success;
 		$response['restore_possible'] = $backup;
 		$response['summary'] = get_post_meta($image, 'smush-info', true);
+
+		$smush_stats = get_post_meta($image, 'smush-stats', true);
+		if (isset($smush_stats['sizes-info'])) {
+			$response['sizes-info'] = WP_Optimize()->include_template('images/smush-details.php', true, array('sizes_info' => $smush_stats['sizes-info']));
+		}
 
 		return $response;
 	}
@@ -196,7 +202,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	 */
 	public function update_smush_options($data) {
 		$options = array();
-		$options['compression_server'] = filter_var($data['compression_server'], FILTER_SANITIZE_STRING);
+		$options['compression_server'] = sanitize_text_field($data['compression_server']);
 		$options['lossy_compression'] = filter_var($data['lossy_compression'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$options['back_up_original'] = filter_var($data['back_up_original'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$options['back_up_delete_after'] = filter_var($data['back_up_delete_after'], FILTER_VALIDATE_BOOLEAN) ? true : false;
@@ -205,12 +211,19 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$options['autosmush'] = filter_var($data['autosmush'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 		$options['image_quality'] = filter_var($data['image_quality'], FILTER_SANITIZE_NUMBER_INT);
 		$options['show_smush_metabox'] = filter_var($data['show_smush_metabox'], FILTER_VALIDATE_BOOLEAN) ? 'show' : 'hide';
+		$options['webp_conversion'] = filter_var($data['webp_conversion'], FILTER_VALIDATE_BOOLEAN) ? true : false;
 
 		$success = $this->task_manager->update_smush_options($options);
 
-		if (!$success) {
-			return new WP_Error('update_failed', __('Options could not be updated', 'wp-optimize'));
+		if (!$this->is_webp_enabled($options['webp_conversion'])) {
+			$this->remove_webp_redirect_rules();
 		}
+
+		if (!$success) {
+			return new WP_Error('update_failed', __('Smush options could not be updated', 'wp-optimize'));
+		}
+
+		do_action('wpo_save_images_settings');
 
 		$response = array();
 		$response['status'] = true;
@@ -246,7 +259,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	 * @param mixed $data - Sent in via AJAX
 	 */
 	public function check_server_status($data) {
-		$server = filter_var($data['server'], FILTER_SANITIZE_STRING);
+		$server = sanitize_text_field($data['server']);
 		$response = array();
 		$response['status'] = true;
 		$response['online'] = $this->task_manager->check_server_online($server);
@@ -467,6 +480,38 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		flush();
 		
 		if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+	}
+
+	/**
+	 * Resets webp serving method
+	 *
+	 * @return array
+	 */
+	public function reset_webp_serving_method() {
+		$success = WP_Optimize()->get_webp_instance()->reset_webp_serving_method();
+		return array(
+			'success' => $success,
+		);
+	}
+
+	/**
+	 * Decides whether to use webp images option is enabled or not
+	 *
+	 * @param bool $webp_option
+	 *
+	 * @return bool
+	 */
+	private function is_webp_enabled($webp_option) {
+		return true === $webp_option;
+	}
+
+	/**
+	 * Removes webp redirect rules in .htaccess file
+	 *
+	 * @return void
+	 */
+	private function remove_webp_redirect_rules() {
+		WP_Optimize()->get_webp_instance()->empty_htaccess_file();
 	}
 }
 

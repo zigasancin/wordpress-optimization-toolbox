@@ -119,7 +119,7 @@ class WP_Optimize_Minify_Config {
 			'merge_google_fonts' => true,
 			'enable_display_swap' => true,
 			'remove_googlefonts' => false,
-			'gfonts_method' => 'inline', // inline, async, exclude
+			'gfonts_method' => 'inherit', // inline, async, exclude
 			'fawesome_method' => 'inherit', // inline, async, exclude
 			'enable_css' => true,
 			'enable_css_minification' => true,
@@ -152,9 +152,25 @@ class WP_Optimize_Minify_Config {
 			// internal
 			'enabled' => false,
 			'last-cache-update' => 0,
-			'plugin_version' => '0.0.0'
+			'plugin_version' => '0.0.0',
+			'cache_lifespan' => 30,
+			'merge_inline_extra_css_js' => true,
 		);
 		return apply_filters('wpo_minify_defaults', $defaults);
+	}
+
+	/**
+	 * Check whether everything should be purged instead of just incremented
+	 *
+	 * @return boolean
+	 */
+	public function always_purge_everything() {
+		/**
+		 * Filters the result of always_purge_everything
+		 *
+		 * @return boolean
+		 */
+		return apply_filters('wpo_minify_always_purge_everything', 0 === intval($this->get('cache_lifespan')) || (defined('WPO_ADVANCED_CACHE') && defined('WP_CACHE') && WP_CACHE));
 	}
 
 	/**

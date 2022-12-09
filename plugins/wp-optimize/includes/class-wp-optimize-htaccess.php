@@ -215,7 +215,6 @@ class WP_Optimize_Htaccess {
 	 */
 	public function remove_commented_section($comment = 'WP-Optimize Browser Cache') {
 		$section_index = $this->search_commented_section($comment);
-
 		if (false === $section_index) return false;
 
 		$remove_length = (false === $section_index['end']) ? null : ($section_index['end'] - $section_index['begin'] + 1);
