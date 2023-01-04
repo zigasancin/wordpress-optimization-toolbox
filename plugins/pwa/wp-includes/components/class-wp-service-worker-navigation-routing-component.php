@@ -70,9 +70,9 @@ final class WP_Service_Worker_Navigation_Routing_Component implements WP_Service
 
 		$revision = PWA_VERSION;
 
-		$revision .= sprintf( ';%s=%s', $template, wp_get_theme( $template )->version );
+		$revision .= sprintf( ';%s=%s', $template, wp_get_theme( $template )->get( 'Version' ) );
 		if ( $template !== $stylesheet ) {
-			$revision .= sprintf( ';%s=%s', $stylesheet, wp_get_theme( $stylesheet )->version );
+			$revision .= sprintf( ';%s=%s', $stylesheet, wp_get_theme( $stylesheet )->get( 'Version' ) );
 		}
 
 		if ( ! is_admin() ) {
@@ -162,7 +162,7 @@ final class WP_Service_Worker_Navigation_Routing_Component implements WP_Service
 			 *
 			 * @since 0.6
 			 *
-			 * @param array {
+			 * @param array $config {
 			 *     Navigation caching configuration. If array filtered to be empty, then caching is disabled.
 			 *     Use snake_case convention instead of camelCase (where the latter will automatically convert to former).
 			 *
@@ -205,12 +205,12 @@ final class WP_Service_Worker_Navigation_Routing_Component implements WP_Service
 			$offline_error_template_file  = pwa_locate_template( array( 'offline.php', 'error.php' ) );
 			$offline_error_precache_entry = array(
 				'url'      => add_query_arg( 'wp_error_template', 'offline', home_url( '/' ) ),
-				'revision' => $revision . ';' . md5( $offline_error_template_file . file_get_contents( $offline_error_template_file ) ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				'revision' => $revision . ';' . md5( $offline_error_template_file . file_get_contents( $offline_error_template_file ) ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
 			);
 			$server_error_template_file   = pwa_locate_template( array( '500.php', 'error.php' ) );
 			$server_error_precache_entry  = array(
 				'url'      => add_query_arg( 'wp_error_template', '500', home_url( '/' ) ),
-				'revision' => $revision . ';' . md5( $server_error_template_file . file_get_contents( $server_error_template_file ) ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				'revision' => $revision . ';' . md5( $server_error_template_file . file_get_contents( $server_error_template_file ) ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
 			);
 
 			/**
@@ -297,9 +297,9 @@ final class WP_Service_Worker_Navigation_Routing_Component implements WP_Service
 		}
 
 		$scripts->register(
-			'wp-offline-commenting',
+			'wp-offline-post-request-handling',
 			array(
-				'src'  => array( $this, 'get_offline_commenting_script' ),
+				'src'  => array( $this, 'get_offline_post_request_script' ),
 				'deps' => array( 'wp-base-config' ),
 			)
 		);
@@ -308,7 +308,7 @@ final class WP_Service_Worker_Navigation_Routing_Component implements WP_Service
 			'wp-navigation-routing',
 			array(
 				'src'  => array( $this, 'get_script' ),
-				'deps' => array( 'wp-base-config', 'wp-offline-commenting' ),
+				'deps' => array( 'wp-base-config', 'wp-offline-post-request-handling' ),
 			)
 		);
 
@@ -408,32 +408,36 @@ final class WP_Service_Worker_Navigation_Routing_Component implements WP_Service
 			/**
 			 * Filter list of URL patterns to denylist from handling from the navigation router.
 			 *
+			 * Please note that the pattern is matched against the URL path concatenated with the query string.
+			 * The URL origin (scheme, host, port) are not considered for matching in navigation requests.
+			 *
 			 * @since 0.4
+			 * @link https://github.com/GoogleChrome/workbox/blob/5530e0b5d0b8d4da9f23747ecac665950a26bd51/packages/workbox-routing/src/NavigationRoute.ts#L103-L116
 			 *
 			 * @param array $denylist_patterns Denylist patterns.
 			 */
 			$denylist_patterns = apply_filters( 'wp_service_worker_navigation_route_denylist_patterns', $denylist_patterns );
 
 			// Exclude admin URLs, if not in the admin.
-			$denylist_patterns[] = '^' . preg_quote( untrailingslashit( wp_parse_url( admin_url(), PHP_URL_PATH ) ), '/' ) . '($|\?.*|/.*)';
+			$denylist_patterns[] = '^' . preg_quote( untrailingslashit( wp_parse_url( admin_url(), PHP_URL_PATH ) ), '/' ) . '($|\?|/)';
 
 			// Exclude PHP files (e.g. wp-login.php).
-			$denylist_patterns[] = '[^\?]*.\.php($|\?.*)';
+			$denylist_patterns[] = '^[^\?]*?\.php($|\?)';
 
 			// Exclude service worker requests (to ease debugging).
-			$denylist_patterns[] = '.*\?(.*&)?(' . join( '|', array( WP_Service_Workers::QUERY_VAR ) ) . ')=';
-			$denylist_patterns[] = '.*/wp\.serviceworker(\?.*)?$';
+			$denylist_patterns[] = '\?(.*?&)?' . WP_Service_Workers::QUERY_VAR . '=';
+			$denylist_patterns[] = '^[^\?]*?\/wp\.serviceworker(\?|$)';
 
 			// Exclude feed requests.
-			$denylist_patterns[] = '[^\?]*\/feed\/(\w+\/)?$';
+			$denylist_patterns[] = '^[^\?]*?\/feed\/(\w+\/)?$';
 
 			// Exclude Customizer preview.
-			$denylist_patterns[] = '\?(.+&)*wp_customize=';
-			$denylist_patterns[] = '\?(.+&)*customize_changeset_uuid=';
+			$denylist_patterns[] = '\?(.*?&)?wp_customize=';
+			$denylist_patterns[] = '\?(.*?&)?customize_changeset_uuid=';
 		}
 
 		// Exclude REST API (this only matters if you directly access the REST API in browser).
-		$denylist_patterns[] = '^' . preg_quote( wp_parse_url( get_rest_url(), PHP_URL_PATH ), '/' ) . '.*';
+		$denylist_patterns[] = '^' . preg_quote( wp_parse_url( get_rest_url(), PHP_URL_PATH ), '/' );
 
 		return $denylist_patterns;
 	}
@@ -466,12 +470,12 @@ final class WP_Service_Worker_Navigation_Routing_Component implements WP_Service
 	}
 
 	/**
-	 * Get script for offline commenting requests.
+	 * Get script for offline post requests.
 	 *
 	 * @return string Script.
 	 */
-	public function get_offline_commenting_script() {
-		$script = file_get_contents( PWA_PLUGIN_DIR . '/wp-includes/js/service-worker-offline-commenting.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	public function get_offline_post_request_script() {
+		$script = file_get_contents( PWA_PLUGIN_DIR . '/wp-includes/js/service-worker-offline-post-request-handling.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$script = preg_replace( '#/\*\s*global.+?\*/#', '', $script );
 
 		return str_replace(
