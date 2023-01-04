@@ -84,12 +84,6 @@ class NextGen extends Abstract_Integration {
 		add_action( 'admin_init', array( $this, 'init_modules' ) );
 
 		/**
-		 * FILTERS
-		 */
-		// Show submit button when Gutenberg is active.
-		add_filter( 'wp_smush_integration_show_submit', '__return_true' );
-
-		/**
 		 * ACTIONS
 		 */
 		// Auto Smush image, if enabled, runs after NextGen is finished uploading the image.
@@ -137,6 +131,15 @@ class NextGen extends Abstract_Integration {
 		return $settings;
 	}
 
+	/**
+	 * Disable module functionality if not PRO.
+	 *
+	 * @return bool
+	 */
+	public function setting_status() {
+		return ! WP_Smush::is_pro() ? true : ! $this->enabled;
+	}
+
 	/**************************************
 	 *
 	 * PUBLIC CLASSES
@@ -170,6 +173,13 @@ class NextGen extends Abstract_Integration {
 	 */
 	public function smush_bulk() {
 		$stats = array();
+
+		check_ajax_referer( 'wp-smush-ajax', '_nonce' );
+
+		// Check For permission.
+		if ( ! Helper::is_user_allowed( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Unauthorized', 'wp-smushit' ), 403 );
+		}
 
 		if ( empty( $_GET['attachment_id'] ) ) {
 			wp_send_json_error(
@@ -208,7 +218,7 @@ class NextGen extends Abstract_Integration {
 		}
 
 		// Check if a re-Smush request, update the re-Smush list.
-		if ( ! empty( $_REQUEST['is_bulk_resmush'] ) && $_REQUEST['is_bulk_resmush'] ) {
+		if ( ! empty( $_REQUEST['is_bulk_resmush'] ) ) {
 			WP_Smush::get_instance()->core()->mod->smush->update_resmush_list( $atchmnt_id, 'wp-smush-nextgen-resmush-list' );
 		}
 		$stats['is_lossy'] = ! empty( $smush['stats'] ) ? $smush['stats']['lossy'] : 0;
@@ -278,7 +288,7 @@ class NextGen extends Abstract_Integration {
 	 *
 	 * @param string $pid  NextGen Gallery Image ID.
 	 *
-	 * @return object
+	 * @return stdClass
 	 */
 	public function get_nextgen_image_from_id( $pid ) {
 		// Registry Object for NextGen Gallery.
@@ -287,9 +297,7 @@ class NextGen extends Abstract_Integration {
 		// Gallery Storage Object.
 		$storage = $registry->get_utility( 'I_Gallery_Storage' );
 
-		$image = $storage->object->_image_mapper->find( $pid );
-
-		return $image;
+		return $storage->object->_image_mapper->find( $pid );
 	}
 
 	/**
@@ -398,7 +406,7 @@ class NextGen extends Abstract_Integration {
 	 */
 	public function manual_nextgen() {
 		$pid   = ! empty( $_GET['attachment_id'] ) ? absint( (int) $_GET['attachment_id'] ) : '';
-		$nonce = ! empty( $_GET['_nonce'] ) ? $_GET['_nonce'] : '';
+		$nonce = ! empty( $_GET['_nonce'] ) ? wp_unslash( $_GET['_nonce'] ) : '';
 
 		// Verify Nonce.
 		if ( ! wp_verify_nonce( $nonce, 'wp_smush_nextgen' ) ) {
@@ -410,7 +418,7 @@ class NextGen extends Abstract_Integration {
 		}
 
 		// Check for media upload permission.
-		if ( ! current_user_can( 'upload_files' ) ) {
+		if ( ! Helper::is_user_allowed( 'upload_files' ) ) {
 			wp_send_json_error(
 				array(
 					'error_msg' => __( "You don't have permission to work with uploaded files.", 'wp-smushit' ),
@@ -525,18 +533,28 @@ class NextGen extends Abstract_Integration {
 		if ( empty( $_POST['attachment_id'] ) || empty( $_POST['_nonce'] ) ) {
 			wp_send_json_error(
 				array(
-					'error'   => 'empty_fields',
-					'message' => esc_html__( 'Error in processing restore action, Fields empty.', 'wp-smushit' ),
+					'error'     => 'empty_fields',
+					'error_msg' => '<div class="wp-smush-error">' . esc_html__( 'Error in processing restore action, Fields empty.', 'wp-smushit' ) . '</div>',
 				)
 			);
 		}
 
 		// Check Nonce.
-		if ( ! wp_verify_nonce( $_POST['_nonce'], 'wp-smush-restore-' . $_POST['attachment_id'] ) ) {
+		if ( ! wp_verify_nonce( wp_unslash( $_POST['_nonce'] ), 'wp-smush-restore-' . (int) $_POST['attachment_id'] ) ) {
 			wp_send_json_error(
 				array(
-					'error'   => 'empty_fields',
-					'message' => esc_html__( 'Image not restored, Nonce verification failed.', 'wp-smushit' ),
+					'error'     => 'empty_fields',
+					'error_msg' => '<div class="wp-smush-error">' . esc_html__( 'Image not restored, Nonce verification failed.', 'wp-smushit' ) . '</div>',
+				)
+			);
+		}
+
+		// Check permissions.
+		if ( ! Helper::is_user_allowed( 'NextGEN Manage gallery' ) ) {
+			wp_send_json_error(
+				array(
+					'error'     => 'unauthorized',
+					'error_msg' => '<div class="wp-smush-error">' . esc_html__( "You don't have permission to do this.", 'wp-smushit' ) . '</div>',
 				)
 			);
 		}
@@ -572,13 +590,13 @@ class NextGen extends Abstract_Integration {
 		// If file exists, corresponding to our backup path.
 		if ( file_exists( $backup_path ) ) {
 			// Restore.
-			$restored[] = @copy( $backup_path, $attachment_file_path );
+			$restored[] = copy( $backup_path, $attachment_file_path );
 
 			// Delete the backup.
-			@unlink( $backup_path );
+			unlink( $backup_path );
 		} elseif ( file_exists( $attachment_file_path . '_backup' ) ) {
 			// Restore from other backups.
-			$restored[] = @copy( $attachment_file_path . '_backup', $attachment_file_path );
+			$restored[] = copy( $attachment_file_path . '_backup', $attachment_file_path );
 		}
 		// Restoring the other sizes.
 		$attachment_data = ! empty( $image->meta_data['wp_smush'] ) ? $image->meta_data['wp_smush'] : array();
@@ -596,37 +614,27 @@ class NextGen extends Abstract_Integration {
 				// If file exists, corresponding to our backup path.
 				if ( file_exists( $backup_path ) ) {
 					// Restore.
-					$restored[] = @copy( $backup_path, $attachment_size_file_path );
+					$restored[] = copy( $backup_path, $attachment_size_file_path );
 
 					// Delete the backup.
-					@unlink( $backup_path );
+					unlink( $backup_path );
 				} elseif ( file_exists( $attachment_size_file_path . '_backup' ) ) {
 					// Restore from other backups.
-					$restored[] = @copy( $attachment_size_file_path . '_backup', $attachment_size_file_path );
+					$restored[] = copy( $attachment_size_file_path . '_backup', $attachment_size_file_path );
 				}
 			}
 		}
 
 		// If any of the image is restored, we count it as success.
-		if ( in_array( true, $restored ) ) {
+		if ( in_array( true, $restored, true ) ) {
 			// Update the global Stats.
 			$this->ng_admin->update_nextgen_stats( $image_id );
 
-			// Remove the Meta, And send json success.
-			$image->meta_data['wp_smush'] = '';
-			nggdb::update_image_meta( $image->pid, $image->meta_data );
+			// Remove the Meta.
+			$this->ng_admin->reset_smushdata( $image, $attachment_file_path );
 
 			// Get the Button html without wrapper.
 			$button_html = $this->ng_admin->wp_smush_column_options( '', $image_id );
-
-			/**
-			 * Called after the image has been successfully restored
-			 *
-			 * @since 3.7.0
-			 *
-			 * @param int $image_id ID of the restored image.
-			 */
-			do_action( 'wp_smush_image_nextgen_restored', $image_id );
 
 			wp_send_json_success(
 				array(
@@ -637,7 +645,7 @@ class NextGen extends Abstract_Integration {
 
 		wp_send_json_error(
 			array(
-				'message' => '<div class="wp-smush-error">' . __( 'Unable to restore image', 'wp-smushit' ) . '</div>',
+				'error_msg' => '<div class="wp-smush-error">' . __( 'Unable to restore image', 'wp-smushit' ) . '</div>',
 			)
 		);
 	}
@@ -656,10 +664,20 @@ class NextGen extends Abstract_Integration {
 		}
 
 		// Check Nonce.
-		if ( ! wp_verify_nonce( $_POST['_nonce'], 'wp-smush-resmush-' . $_POST['attachment_id'] ) ) {
+		if ( ! wp_verify_nonce( wp_unslash( $_POST['_nonce'] ), 'wp-smush-resmush-' . (int) $_POST['attachment_id'] ) ) {
 			wp_send_json_error(
 				array(
 					'error_msg' => '<div class="wp-smush-error">' . esc_html__( "Image couldn't be smushed as the nonce verification failed, try reloading the page.", 'wp-smushit' ) . '</div>',
+				)
+			);
+		}
+
+		// Check permissions.
+		if ( ! Helper::is_user_allowed( 'NextGEN Manage gallery' ) ) {
+			wp_send_json_error(
+				array(
+					'error'     => 'unauthorized',
+					'error_msg' => '<div class="wp-smush-error">' . esc_html__( "You don't have permission to do this.", 'wp-smushit' ) . '</div>',
 				)
 			);
 		}
@@ -732,7 +750,7 @@ class NextGen extends Abstract_Integration {
 	/**
 	 * Get the NextGen attachment id from image object
 	 *
-	 * @param $image
+	 * @param stdClass $image Image object.
 	 *
 	 * @return mixed
 	 */
@@ -756,7 +774,7 @@ class NextGen extends Abstract_Integration {
 	 * Read the image paths from an attachment's metadata and process each image
 	 * with wp_smushit().
 	 *
-	 * @param $image
+	 * @param stdClass $image Image object.
 	 *
 	 * @return mixed
 	 */
@@ -854,7 +872,7 @@ class NextGen extends Abstract_Integration {
 
 				$stats['sizes'][ $size ] = (object) $smush->array_fill_placeholders( $smush->get_size_signature(), (array) $response['data'] );
 
-				if ( empty( $stats['stats']['api_version'] ) || - 1 == $stats['stats']['api_version'] ) {
+				if ( empty( $stats['stats']['api_version'] ) || -1 === (int) $stats['stats']['api_version'] ) {
 					$stats['stats']['api_version'] = $response['data']->api_version;
 					$stats['stats']['lossy']       = $response['data']->lossy;
 					$stats['stats']['keep_exif']   = ! empty( $response['data']->keep_exif ) ? $response['data']->keep_exif : 0;
@@ -955,7 +973,7 @@ class NextGen extends Abstract_Integration {
 		$resize->initialize();
 
 		// If resizing not enabled, or if both max width and height is set to 0, return.
-		if ( ! $resize->resize_enabled || ( 0 == $resize->max_w && 0 == $resize->max_h ) ) {
+		if ( ! $resize->resize_enabled || ( 0 === $resize->max_w && 0 === $resize->max_h ) ) {
 			return $meta;
 		}
 
@@ -966,10 +984,8 @@ class NextGen extends Abstract_Integration {
 
 		$ext = $this->get_file_ext( $file_path );
 
-		$mime_supported = in_array( $ext, Core::$mime_types );
-
 		// If type of upload doesn't matches the criteria return.
-		$mime_supported = apply_filters( 'wp_smush_resmush_mime_supported', $mime_supported, $ext );
+		$mime_supported = apply_filters( 'wp_smush_resmush_mime_supported', in_array( $ext, Core::$mime_types, true ), $ext );
 		if ( ! empty( $mime ) && ! $mime_supported ) {
 			return $meta;
 		}
@@ -1006,13 +1022,13 @@ class NextGen extends Abstract_Integration {
 		$resized = $resize->perform_resize( $file_path, $original_file_size, $attachment_id, array(), false );
 
 		// If resize wasn't successful.
-		if ( ! $resized || $resized['filesize'] == $original_file_size ) {
+		if ( ! $resized || $resized['filesize'] === $original_file_size ) {
 			// Unlink Image, if other size path is not similar.
 			$this->maybe_unlink( $file_path, $sizes, $image, $storage );
 			return $meta;
 		} else {
 			// Else Replace the Original file with resized file.
-			$replaced = @copy( $resized['file_path'], $file_path );
+			$replaced = copy( $resized['file_path'], $file_path );
 			$this->maybe_unlink( $resized['file_path'], $sizes, $image, $storage );
 		}
 
@@ -1055,10 +1071,10 @@ class NextGen extends Abstract_Integration {
 	/**
 	 * Unlinks a file if none of the thumbnails have same file path
 	 *
-	 * @param string $path     Full path of the file to be unlinked
-	 * @param array  $sizes    All the available image sizes for the image
-	 * @param object $image    Image object to fetch the full path of all the sizes
-	 * @param object $storage  Gallery storage object
+	 * @param string $path     Full path of the file to be unlinked.
+	 * @param array  $sizes    All the available image sizes for the image.
+	 * @param object $image    Image object to fetch the full path of all the sizes.
+	 * @param object $storage  Gallery storage object.
 	 *
 	 * @return bool Whether the file was unlinked or not
 	 */
@@ -1069,7 +1085,7 @@ class NextGen extends Abstract_Integration {
 
 		// Unlink directly if meta value is not specified.
 		if ( empty( $sizes ) ) {
-			@unlink( $path );
+			unlink( $path );
 		}
 
 		$unlink = true;
@@ -1088,7 +1104,7 @@ class NextGen extends Abstract_Integration {
 
 		// Unlink the file.
 		if ( $unlink ) {
-			@unlink( $path );
+			unlink( $path );
 		}
 
 		return $unlink;

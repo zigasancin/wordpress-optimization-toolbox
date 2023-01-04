@@ -31,25 +31,21 @@ if ( ! defined( 'WPINC' ) ) {
 						alt="<?php esc_attr_e( 'Smush Updated Modal', 'wp-smushit' ); ?>" class="sui-image sui-image-center">
 				</figure>
 
-				<button class="sui-button-icon sui-button-float--right" data-modal-close="" onclick="WP_Smush.onboarding.hideUpgradeModal()">
+				<a href="<?php echo is_multisite() ? 'javascript:void(0);' : esc_url( $cta_url ); ?>" class="sui-button-icon sui-button-float--right" onclick="WP_Smush.onboarding.hideUpgradeModal()">
 					<i class="sui-icon-close sui-md" aria-hidden="true"></i>
-				</button>
+				</a>
 			</div>
 
 			<div class="sui-box-body sui-content-center sui-spacing-sides--30 sui-spacing-top--0 sui-spacing-bottom--50">
 				<h3 class="sui-box-title sui-lg" id="smush-title-updated-dialog" style="white-space: normal">
-					<?php esc_html_e( 'Update: Manage Your Uploaded Images!', 'wp-smushit' ); ?>
+					<?php esc_html_e( 'NEW: Bulk Smush images in the background!', 'wp-smushit' ); ?>
 				</h3>
 
 				<p class="sui-description">
-					<?php esc_html_e( 'You now have greater control over your images, with new settings to override WordPress Core functionality. Compress uploaded images, backup uploaded images, scale images to a desired threshold, disable scaling altogether, and more.', 'wp-smushit' ); ?>
+					<?php esc_html_e( 'Exciting news! You no longer need to keep the Bulk Smush tab open to complete optimizing your images, as Smush now works on processing the images in the background. Once your images are smushed, you will receive a notification email.', 'wp-smushit' ); ?>
 				</p>
 
-				<p class="sui-description">
-					<?php esc_html_e( 'Check out these new features in the Bulk Smush settings.', 'wp-smushit' ); ?>
-				</p>
-
-				<a href="<?php echo esc_url( $cta_url ); ?>" class="sui-button" onclick="WP_Smush.onboarding.hideUpgradeModal()">
+				<a href="<?php echo is_multisite() ? 'javascript:void(0);' : esc_url( $cta_url ); ?>" class="sui-button" onclick="WP_Smush.onboarding.hideUpgradeModal()">
 					<?php esc_html_e( 'Got it', 'wp-smushit' ); ?>
 				</a>
 			</div>

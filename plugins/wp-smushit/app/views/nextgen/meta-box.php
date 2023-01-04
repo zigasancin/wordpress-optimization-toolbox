@@ -11,8 +11,6 @@
  * @var string $url                   Media library URL.
  */
 
-use Smush\Core\Integrations\Nextgen\Admin;
-
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
@@ -49,7 +47,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 <?php $this->view( 'all-images-smushed-notice', array( 'all_done' => empty( $total_images_to_smush ) ), 'common' ); ?>
 
-<?php $this->view( 'progress-bar', array( 'count' => ( $ng->remaining_count + $resmush_count ) ), 'common' ); ?>
+<?php $this->view( 'progress-bar', array( 'count' => ( $ng->remaining_count + $resmush_count ) ), 'views/nextgen' ); ?>
 
 <div class="smush-final-log sui-hidden">
 	<div class="smush-bulk-errors"></div>
@@ -67,9 +65,7 @@ if ( ! defined( 'WPINC' ) ) {
 		<?php WP_Smush::get_instance()->admin()->print_pending_bulk_smush_content( $total_images_to_smush, $resmush_count, $ng->remaining_count ); ?>
 	</div>
 
-	<div id="wp-smush-all-button-container">
-		<button type="button" class="sui-button sui-button-blue wp-smush-nextgen-bulk">
-			<?php esc_html_e( 'BULK SMUSH', 'wp-smushit' ); ?>
-		</button>
-	</div>
+	<button type="button" class="sui-button sui-button-blue wp-smush-nextgen-bulk">
+		<?php esc_html_e( 'BULK SMUSH', 'wp-smushit' ); ?>
+	</button>
 </div>

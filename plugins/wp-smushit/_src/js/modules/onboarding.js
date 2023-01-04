@@ -4,7 +4,7 @@
 /**
  * Modals JavaScript code.
  */
-( function() {
+ ( function() {
 	'use strict';
 
 	/**
@@ -16,29 +16,29 @@
 		membership: 'free', // Assume free by default.
 		onboardingModal: document.getElementById( 'smush-onboarding-dialog' ),
 		scanFilesModal: document.getElementById( 'checking-files-dialog' ),
+		first_slide: 'usage',
 		settings: {
 			first: true,
 			last: false,
-			slide: 'start',
+			slide: 'usage',
 			value: false,
 		},
 		selection: {
+			usage: false,
 			auto: true,
 			lossy: true,
 			strip_exif: true,
 			original: false,
 			lazy_load: true,
-			usage: false,
 		},
 		contentContainer: document.getElementById( 'smush-onboarding-content' ),
 		onboardingSlides: [
-			'start',
+			'usage',
 			'auto',
 			'lossy',
 			'strip_exif',
 			'original',
 			'lazy_load',
-			'usage',
 		],
 		touchX: null,
 		touchY: null,
@@ -57,13 +57,12 @@
 
 			if ( 'pro' !== this.membership ) {
 				this.onboardingSlides = [
-					'start',
+					'usage',
 					'auto',
+					'lossy',
 					'strip_exif',
 					'lazy_load',
-					'usage',
 				];
-				this.selection.lossy = false;
 			}
 
 			if ( 'false' === dialog.dataset.tracking ) {
@@ -132,7 +131,7 @@
 		/**
 		 * Update the template, register new listeners.
 		 *
-		 * @param {string} directionClass  Accepts: fadeInRight, fadeInLeft, none.
+		 * @param {string} directionClass Accepts: fadeInRight, fadeInLeft, none.
 		 */
 		renderTemplate( directionClass = 'none' ) {
 			// Grab the selected value.
@@ -231,7 +230,7 @@
 		/**
 		 * Handle navigation.
 		 *
-		 * @param {Object} e
+		 * @param {Object}      e
 		 * @param {null|string} whereTo
 		 */
 		next( e, whereTo = null ) {
@@ -308,6 +307,10 @@
 		 */
 		showScanDialog() {
 			window.SUI.closeModal();
+			// Do not need to re-check images if we are in bulk smush page.
+			if ( window.location.search.indexOf('page=smush-bulk') > -1 ) {
+				return;
+			}
 			window.SUI.openModal(
 				'checking-files-dialog',
 				'wpbody-content',
@@ -354,7 +357,16 @@
 		 */
 		hideUpgradeModal: () => {
 			const xhr = new XMLHttpRequest();
-			xhr.open('POST', ajaxurl + '?action=hide_new_features');
+			xhr.open( 'POST', ajaxurl + '?action=hide_new_features&_ajax_nonce=' + window.wp_smush_msgs.nonce );
+			xhr.onload = () => {
+				if ( 200 === xhr.status ) {
+					window.SUI.closeModal( 'smush-updated-dialog' );
+				} else {
+					window.console.log(
+						'Request failed.  Returned status of ' + xhr.status
+					);
+				}
+			}
 			xhr.send();
 		},
 	};
@@ -378,9 +390,10 @@
 			compiled =
 				compiled ||
 				_.template( document.getElementById( id ).innerHTML );
+			data.first_slide = WP_Smush.onboarding.first_slide;
 			return compiled( data );
 		};
 	} );
 
 	window.addEventListener( 'load', () => WP_Smush.onboarding.init() );
-} )();
+}() );

@@ -71,9 +71,23 @@ class Modules {
 	public $lazy;
 
 	/**
+	 * Cache background optimization controller - Bulk_Smush_Controller
+	 *
+	 * @var Modules\Bulk\Background_Bulk_Smush
+	 */
+	public $bg_optimization;
+
+	/**
+	 * @var Modules\Product_Analytics
+	 */
+	public $product_analytics;
+
+	/**
 	 * Modules constructor.
 	 */
 	public function __construct() {
+		new Deprecated_Hooks();// Handle deprecated hooks.
+
 		new Api\Hub(); // Init hub endpoints.
 
 		new Modules\Resize_Detection();
@@ -94,6 +108,9 @@ class Modules {
 		$this->cdn  = new Modules\CDN( $page_parser );
 		$this->webp = new Modules\WebP();
 		$this->lazy = new Modules\Lazy( $page_parser );
+		$this->product_analytics = new Modules\Product_Analytics();
+
+		$this->bg_optimization = new Modules\Bulk\Background_Bulk_Smush();
 	}
 
 }

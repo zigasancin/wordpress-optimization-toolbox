@@ -23,6 +23,20 @@ if ( ! defined( 'WPINC' ) ) {
 class CDN extends Abstract_Module {
 
 	/**
+	 * Module slug.
+	 *
+	 * @var string
+	 */
+	protected $slug = 'cdn';
+
+	/**
+	 * Whether module is pro or not.
+	 *
+	 * @var string
+	 */
+	protected $is_pro = true;
+
+	/**
 	 * Smush CDN base url.
 	 *
 	 * @var null|string
@@ -113,7 +127,7 @@ class CDN extends Abstract_Module {
 		/**
 		 * Main functionality.
 		 */
-		if ( ! $this->settings->get( 'cdn' ) || ! $this->cdn_active ) {
+		if ( ! $this->get_status() ) {
 			return;
 		}
 
@@ -165,7 +179,7 @@ class CDN extends Abstract_Module {
 	 * @since 3.0
 	 */
 	public function get_status() {
-		return $this->cdn_active && $this->settings->get( 'cdn' );
+		return $this->cdn_active && $this->is_active();
 	}
 
 	/**
@@ -176,7 +190,7 @@ class CDN extends Abstract_Module {
 	 * @since 3.2.1
 	 */
 	public function status() {
-		if ( ! $this->cdn_active || ! $this->settings->get( 'cdn' ) ) {
+		if ( ! $this->settings->get( 'cdn' ) ) {
 			return 'disabled';
 		}
 
@@ -314,7 +328,7 @@ class CDN extends Abstract_Module {
 		}
 
 		// CDN will not work if there is no dashboard plugin installed.
-		if ( ! file_exists( WP_PLUGIN_DIR . '/wpmudev-updates/update-notifications.php' ) ) {
+		if ( ! file_exists( WP_PLUGIN_DIR . '/wpmudev-updates/update-notifications.php' ) && ! class_exists( 'WPMUDEV_Dashboard' ) ) {
 			return;
 		}
 
@@ -416,9 +430,7 @@ class CDN extends Abstract_Module {
 		$url = $this->cdn_base . ltrim( $url_parts['path'], '/' );
 
 		// Now we need to add our CDN parameters for resizing.
-		$url = add_query_arg( $args, $url );
-
-		return $url;
+		return add_query_arg( $args, $url );
 	}
 
 	/**
@@ -430,7 +442,7 @@ class CDN extends Abstract_Module {
 	 * @return true|WP_error
 	 */
 	public function toggle_cdn( $enable ) {
-		$this->settings->set( 'cdn', $enable );
+		$this->settings->set( $this->slug, $enable );
 
 		if ( $enable ) {
 			$status = $this->settings->get_setting( 'wp-smush-cdn_status' );
@@ -441,6 +453,14 @@ class CDN extends Abstract_Module {
 
 				if ( is_wp_error( $data ) ) {
 					return $data;
+				}
+
+				$this->settings->set_setting( 'wp-smush-cdn_status', $data );
+			} elseif ( empty( $status->endpoint_url ) ) {
+				$data = $this->process_cdn_status( WP_Smush::get_instance()->api()->enable( true ) );
+
+				if ( is_wp_error( $status ) ) {
+					return $status;
 				}
 
 				$this->settings->set_setting( 'wp-smush-cdn_status', $data );
@@ -558,9 +578,11 @@ class CDN extends Abstract_Module {
 			 * The preg_match is required to make sure that srcset is not already defined.
 			 * For the majority of images, srcset will be parsed as part of the wp_calculate_image_srcset filter.
 			 * But some images, for example, logos in Avada - will add their own srcset. For such images - generate our own.
+			 *
+			 * @since 3.9.10 Add 2 new parameters `$original_src, $image`  for filter `smush_skip_adding_srcset` to allow user disable auto-resize for specific image.
 			 */
 			if ( ! preg_match( '/srcset=["\'](.*?smushcdn\.com[^"\']+)["\']/i', $image ) ) {
-				if ( $this->settings->get( 'auto_resize' ) && ! apply_filters( 'smush_skip_adding_srcset', false ) ) {
+				if ( $this->settings->get( 'auto_resize' ) && ! apply_filters( 'smush_skip_adding_srcset', false, $original_src, $image ) ) {
 					list( $srcset, $sizes ) = $this->generate_srcset( $original_src );
 
 					if ( ! is_null( $srcset ) && false !== $srcset ) {
@@ -646,6 +668,14 @@ class CDN extends Abstract_Module {
 		// Store the original $src to be used later on.
 		$original_src = $src;
 
+		/**
+		 * Filter hook to alter background image src at the earliest.
+		 *
+		 * @param string $src    Image src.
+		 * @param string $image  Image tag.
+		 */
+		$src = apply_filters( 'smush_cdn_before_process_background_src', $src, $image );
+
 		// Make sure this image is inside a supported directory. Try to convert to valid path.
 		$src = $this->is_supported_path( $src );
 		if ( $src ) {
@@ -710,9 +740,7 @@ class CDN extends Abstract_Module {
 		 * @param string $src    Image src.
 		 * @param string $image  Image tag.
 		 */
-		$src = apply_filters( 'smush_image_src_after_cdn', $src, $image );
-
-		return $src;
+		return apply_filters( 'smush_image_src_after_cdn', $src, $image );
 	}
 
 	/**
@@ -890,12 +918,12 @@ class CDN extends Abstract_Module {
 
 		// Too many requests.
 		if ( is_null( $status ) ) {
-			return new \WP_Error( 'too_many_requests', __( 'Too many requests, please try again in a moment.', 'wp-smushit' ) );
+			return new WP_Error( 'too_many_requests', __( 'Too many requests, please try again in a moment.', 'wp-smushit' ) );
 		}
 
 		// Some other error from API.
 		if ( ! $status->success ) {
-			return new \WP_Error( $status->data->error_code, $status->data->message );
+			return new WP_Error( $status->data->error_code, $status->data->message );
 		}
 
 		return $status->data;
@@ -912,21 +940,32 @@ class CDN extends Abstract_Module {
 		$smush = WP_Smush::get_instance();
 
 		if ( isset( $status->cdn_enabling ) && $status->cdn_enabling ) {
-			$status = $this->process_cdn_status( $smush->api()->enable() );
-
-			if ( is_wp_error( $status ) ) {
-				$code = is_numeric( $status->get_error_code() ) ? $status->get_error_code() : null;
-				wp_send_json_error(
-					array(
-						'message' => $status->get_error_message(),
-					),
-					$code
-				);
-			}
-
-			$this->settings->set_setting( 'wp-smush-cdn_status', $status );
+			$new_status = $this->process_cdn_status( $smush->api()->enable() );
+		} elseif ( wp_doing_cron() ) {
+			// Verify CDN status via Cron.
+			$new_status = $this->process_cdn_status( WP_Smush::get_instance()->api()->check() );
 		}
 
+		// For ajax.
+		if ( ! isset( $new_status ) ) {
+			// At this point we already know that $status->data is valid.
+			return wp_send_json_success( $status );
+		}
+
+		// Return in case of error.
+		if ( is_wp_error( $new_status ) ) {
+			$code = is_numeric( $new_status->get_error_code() ) ? $new_status->get_error_code() : null;
+			wp_send_json_error(
+				array(
+					'message' => $new_status->get_error_message(),
+				),
+				$code
+			);
+		}
+
+		$this->settings->set_setting( 'wp-smush-cdn_status', $status );
+
+		// For ajax.
 		if ( ! wp_doing_cron() ) {
 			// At this point we already know that $status->data is valid.
 			wp_send_json_success( $status );
@@ -1058,7 +1097,7 @@ class CDN extends Abstract_Module {
 	private function get_size_from_file_name( $src ) {
 		$size = array();
 
-		if ( preg_match( '/(\d+)x(\d+)\.(?:' . implode( '|', $this->supported_extensions ) . ')$/i', $src, $size ) ) {
+		if ( preg_match( '/-(\d+)x(\d+)\.(?:' . implode( '|', $this->supported_extensions ) . ')$/i', $src, $size ) ) {
 			// Get size and width.
 			$width  = (int) $size[1];
 			$height = (int) $size[2];
@@ -1371,7 +1410,11 @@ class CDN extends Abstract_Module {
 
 		// Allow only these extensions in CDN.
 		$path = wp_parse_url( $src, PHP_URL_PATH );
-		$ext  = strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
+		// Make sure $path is not null, because passing null to parameter is deprecated in PHP 8.1.
+		if ( empty( $path ) ) {
+			return false;
+		}
+		$ext = strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
 		if ( ! in_array( $ext, $this->supported_extensions, true ) ) {
 			return false;
 		}
@@ -1426,7 +1469,7 @@ class CDN extends Abstract_Module {
 		 */
 		$uploads = apply_filters( 'smush_cdn_custom_uploads_dir', wp_get_upload_dir() );
 		// Check if the src is within custom uploads directory.
-		$uploads = isset( $uploads['baseurl'] ) ? false !== strpos( $src, $uploads['baseurl'] ) : true;
+		$uploads = ! isset( $uploads['baseurl'] ) || false !== strpos( $src, $uploads['baseurl'] );
 
 		if ( ( false === strpos( $src, content_url() ) && ! $uploads ) || ( is_multisite() && $mapped_domain && false === strpos( $src, $mapped_domain ) ) ) {
 			return false;
@@ -1479,7 +1522,7 @@ class CDN extends Abstract_Module {
 			$this->parser->enable( 'background_images' );
 		}
 
-		$this->parser->enable( 'cdn' );
+		$this->parser->enable( $this->slug );
 	}
 
 	/**

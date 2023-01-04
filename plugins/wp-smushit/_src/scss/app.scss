@@ -5,6 +5,7 @@
 @import "~@wpmudev/shared-ui/scss/functions";
 @import "~@wpmudev/shared-ui/scss/colors";
 @import "~@wpmudev/shared-ui/scss/variables";
+$google-fonts-url: 'https://fonts.bunny.net/css?family=Roboto:400,500,700';
 @import "~@wpmudev/shared-ui/scss/mixins";
 @import "~@wpmudev/shared-ui/scss/accessibility";
 @import "~@wpmudev/shared-ui/scss/animations";
@@ -24,7 +25,7 @@
 @import "~@wpmudev/shared-ui/scss/tags";
 @import "~@wpmudev/shared-ui/scss/forms";
 @import "~@wpmudev/shared-ui/scss/radio-checkbox";
-@import "~@wpmudev/shared-ui/scss/tabs";;
+@import "~@wpmudev/shared-ui/scss/tabs";
 @import "~@wpmudev/shared-ui/scss/sidenav";
 @import "~@wpmudev/shared-ui/scss/dropdowns";
 @import "~@wpmudev/shared-ui/scss/scores";
