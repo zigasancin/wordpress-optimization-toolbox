@@ -73,8 +73,9 @@ defined( '\\ABSPATH' ) || exit;
             <div class="section-pro">
 
                 <div class="card">
-                    <h2 class="title">
-                        Object Cache Pro
+                    <h2 class="title" style="line-height: 1.4">
+                        Need more performance and reliability?<br>
+                        Check out <span style="color: #dc2626;">Object Cache Pro</span>!
                     </h2>
                     <p>
                         <?php wp_kses_post( __( '<strong>A business class object cache backend.</strong> Truly reliable, highly-optimized and fully customizable, with a <u>dedicated engineer</u> when you most need it.', 'redis-cache' ) ); ?>
@@ -91,26 +92,26 @@ defined( '\\ABSPATH' ) || exit;
                         <li><?php esc_html_e( 'Optimized for WooCommerce, Jetpack & Yoast SEO', 'redis-cache' ); ?></li>
                     </ul>
                     <p>
-                        <a class="button button-primary" target="_blank" rel="noopener" href="https://objectcache.pro/?utm_source=wp-plugin&amp;utm_medium=settings">
+                        <a class="button button-primary" target="_blank" rel="noopener" href="https://objectcache.pro/?ref=oss&amp;utm_source=wp-plugin&amp;utm_medium=settings">
                             <?php esc_html_e( 'Learn more', 'redis-cache' ); ?>
                         </a>
                     </p>
                 </div>
 
-                <?php $is_php7 = version_compare( phpversion(), '7.0', '>=' ); ?>
+                <?php $is_php7 = version_compare( phpversion(), '7.2', '>=' ); ?>
                 <?php $is_phpredis311 = version_compare( phpversion( 'redis' ), '3.1.1', '>=' ); ?>
                 <?php $phpredis_installed = (bool) phpversion( 'redis' ); ?>
 
                 <?php if ( $is_php7 && $is_phpredis311 ) : ?>
 
-                    <p class="compatiblity">
+                    <p class="compatibility">
                         <span class="dashicons dashicons-yes"></span>
                         <span><?php esc_html_e( 'Your site meets the system requirements for the Pro version.', 'redis-cache' ); ?></span>
                     </p>
 
                 <?php else : ?>
 
-                    <p class="compatiblity">
+                    <p class="compatibility">
                         <span class="dashicons dashicons-no"></span>
                         <span><?php echo wp_kses_post( __( 'Your site <i>does not</i> meet the requirements for the Pro version:', 'redis-cache' ) ); ?></span>
                     </p>
@@ -121,7 +122,7 @@ defined( '\\ABSPATH' ) || exit;
                                 <?php
                                     printf(
                                         // translators: %s = PHP Version.
-                                        esc_html__( 'The current version of PHP (%s) is too old. PHP 7.0 or newer is required.', 'redis-cache' ),
+                                        esc_html__( 'The current version of PHP (%s) is too old. PHP 7.2 or newer is required.', 'redis-cache' ),
                                         esc_html( phpversion() )
                                     );
                                 ?>

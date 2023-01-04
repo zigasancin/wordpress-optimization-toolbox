@@ -42,7 +42,7 @@
             },
             chart: {
                 type: 'line',
-                height: '100%',
+                height: $( '#metrics-pane #widget-redis-stats' ).length ? '300px' : '100%',
                 toolbar: { show: false },
                 zoom: { enabled: false },
                 animations: { enabled: false },
@@ -148,12 +148,18 @@
                 yaxis: {
                     labels: {
                         formatter: function ( value ) {
-                            return Math.round( value / 1024 ) + ' KB';
+                            var i = value === 0 ? 0 : Math.floor( Math.log( value ) / Math.log( 1024 ) );
+
+                            return parseFloat( (value / Math.pow( 1024, i ) ).toFixed( i ? 2 : 0 ) ) + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
                         },
                     },
                 },
                 tooltip: {
                     custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+                        var value = series[0][ dataPointIndex ];
+                        var i = value === 0 ? 0 : Math.floor( Math.log( value ) / Math.log( 1024 ) );
+                        var bytes = parseFloat( (value / Math.pow( 1024, i ) ).toFixed( i ? 2 : 0 ) ) + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+
                         return [
                             rediscache.templates.tooltip_title({
                                 title: new Date( w.globals.seriesX[ seriesIndex ][ dataPointIndex ] ).toTimeString().slice( 0, 5 ),
@@ -161,7 +167,7 @@
                             rediscache.templates.series_group({
                                 color: rediscache.chart_defaults.colors[0],
                                 name: w.globals.seriesNames[0],
-                                value: Math.round( series[0][ dataPointIndex ] / 1024 ) + ' kb',
+                                value: bytes,
                             }),
                             rediscache.templates.series_pro({
                                 color: rediscache.chart_defaults.colors[1],
@@ -385,12 +391,19 @@
             }
         );
 
+        var firstRender = window.location.hash.indexOf('metrics') === -1;
+
         var show_tab = function ( name ) {
             $tabs.find( '.nav-tab-active' ).removeClass( 'nav-tab-active' );
             $panes.find( '.tab-pane.active' ).removeClass( 'active' );
 
             $( '#' + name + '-tab' ).addClass( 'nav-tab-active' );
             $( '#' + name + '-pane' ).addClass( 'active' );
+
+            if (name === 'metrics' && firstRender) {
+                firstRender = false;
+                render_chart( 'time' );
+            }
         };
 
         var show_current_tab = function () {
@@ -412,7 +425,7 @@
             render_chart( 'time' );
         }
 
-        $( '#widget-redis-stats ul a' ).on(
+        $( '#widget-redis-stats ul a[data-chart]' ).on(
             'click.redis-cache',
             function ( event ) {
                 event.preventDefault();
@@ -441,6 +454,35 @@
                 } );
             }
         );
+
+        if ( $( '#redis-cache-copy-button' ).length ) {
+            if ( typeof ClipboardJS === 'undefined' ) {
+                $( '#redis-cache-copy-button' ).remove();
+            } else {
+                var successTimeout;
+                var clipboard = new ClipboardJS( '#redis-cache-copy-button .copy-button' );
+
+                clipboard.on( 'success', function( e ) {
+                    var triggerElement = $( e.trigger ),
+                        successElement = $( '.success', triggerElement.closest( 'div' ) );
+
+                    e.clearSelection();
+                    triggerElement.trigger( 'focus' );
+
+                    clearTimeout( successTimeout );
+                    successElement.removeClass( 'hidden' );
+
+                    successTimeout = setTimeout( function() {
+                        successElement.addClass( 'hidden' );
+
+                        if ( clipboard.clipboardAction.fakeElem && clipboard.clipboardAction.removeFake ) {
+                            clipboard.clipboardAction.removeFake();
+                        }
+                    }, 3000 );
+
+                } );
+            }
+        }
     });
 
 } ( window[ rediscache.jQuery ], window ) );
