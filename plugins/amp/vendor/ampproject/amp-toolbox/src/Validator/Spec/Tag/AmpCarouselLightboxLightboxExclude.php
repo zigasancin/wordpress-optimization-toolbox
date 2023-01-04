@@ -7,8 +7,8 @@
 
 namespace AmpProject\Validator\Spec\Tag;
 
-use AmpProject\Attribute;
 use AmpProject\Format;
+use AmpProject\Html\Attribute;
 use AmpProject\Validator\Spec\Identifiable;
 use AmpProject\Validator\Spec\SpecRule;
 use AmpProject\Validator\Spec\Tag;
@@ -22,6 +22,7 @@ use AmpProject\Validator\Spec\Tag;
  * @property-read string $specName
  * @property-read array<array<bool>> $attrs
  * @property-read array<string> $htmlFormat
+ * @property-read string $descriptiveName
  */
 final class AmpCarouselLightboxLightboxExclude extends Tag implements Identifiable
 {
@@ -48,5 +49,6 @@ final class AmpCarouselLightboxLightboxExclude extends Tag implements Identifiab
         SpecRule::HTML_FORMAT => [
             Format::AMP,
         ],
+        SpecRule::DESCRIPTIVE_NAME => 'amp-carousel lightbox [lightbox-exclude] child',
     ];
 }

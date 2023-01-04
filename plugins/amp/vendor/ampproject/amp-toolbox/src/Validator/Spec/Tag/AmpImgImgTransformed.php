@@ -7,9 +7,9 @@
 
 namespace AmpProject\Validator\Spec\Tag;
 
-use AmpProject\Attribute;
 use AmpProject\Format;
-use AmpProject\Tag as Element;
+use AmpProject\Html\Attribute;
+use AmpProject\Html\Tag as Element;
 use AmpProject\Validator\Spec\AttributeList;
 use AmpProject\Validator\Spec\Identifiable;
 use AmpProject\Validator\Spec\SpecRule;
@@ -50,6 +50,13 @@ final class AmpImgImgTransformed extends Tag implements Identifiable
             Attribute::ALT => [],
             Attribute::ATTRIBUTION => [],
             Attribute::HEIGHT => [],
+            Attribute::IMPORTANCE => [
+                SpecRule::VALUE_CASEI => [
+                    'high',
+                    'low',
+                    'auto',
+                ],
+            ],
             Attribute::OBJECT_FIT => [],
             Attribute::OBJECT_POSITION => [],
             Attribute::REFERRERPOLICY => [],

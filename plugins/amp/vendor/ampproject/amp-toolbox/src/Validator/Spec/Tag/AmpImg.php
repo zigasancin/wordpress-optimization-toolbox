@@ -7,9 +7,9 @@
 
 namespace AmpProject\Validator\Spec\Tag;
 
-use AmpProject\Attribute;
 use AmpProject\Extension;
 use AmpProject\Format;
+use AmpProject\Html\Attribute;
 use AmpProject\Layout;
 use AmpProject\Validator\Spec\AttributeList;
 use AmpProject\Validator\Spec\Identifiable;
@@ -22,11 +22,12 @@ use AmpProject\Validator\Spec\Tag;
  * @package ampproject/amp-toolbox.
  *
  * @property-read string $tagName
- * @property-read array<array> $attrs
+ * @property-read array $attrs
  * @property-read array<string> $attrLists
  * @property-read string $specUrl
  * @property-read array<array<string>> $ampLayout
  * @property-read array<string> $htmlFormat
+ * @property-read array<string> $requires
  */
 final class AmpImg extends Tag implements Identifiable
 {
@@ -48,6 +49,13 @@ final class AmpImg extends Tag implements Identifiable
             Attribute::ALT => [],
             Attribute::ATTRIBUTION => [],
             Attribute::CROSSORIGIN => [],
+            Attribute::IMPORTANCE => [
+                SpecRule::VALUE_CASEI => [
+                    'high',
+                    'low',
+                    'auto',
+                ],
+            ],
             Attribute::OBJECT_FIT => [],
             Attribute::OBJECT_POSITION => [],
             Attribute::PLACEHOLDER => [],
@@ -77,6 +85,9 @@ final class AmpImg extends Tag implements Identifiable
         SpecRule::HTML_FORMAT => [
             Format::AMP,
             Format::AMP4ADS,
+        ],
+        SpecRule::REQUIRES => [
+            'amphtml javascript runtime (v0.js)',
         ],
     ];
 }

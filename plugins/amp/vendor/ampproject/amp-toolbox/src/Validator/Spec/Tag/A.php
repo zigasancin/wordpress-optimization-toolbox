@@ -7,10 +7,10 @@
 
 namespace AmpProject\Validator\Spec\Tag;
 
-use AmpProject\Attribute;
 use AmpProject\Format;
+use AmpProject\Html\Attribute;
+use AmpProject\Html\Tag as Element;
 use AmpProject\Protocol;
-use AmpProject\Tag as Element;
 use AmpProject\Validator\Spec\AttributeList;
 use AmpProject\Validator\Spec\Identifiable;
 use AmpProject\Validator\Spec\SpecRule;
@@ -66,6 +66,7 @@ final class A extends Tag implements Identifiable
                         Protocol::FEED,
                         Protocol::INTENT,
                         Protocol::LINE,
+                        Protocol::MICROSOFT_EDGE,
                         Protocol::SKYPE,
                         Protocol::SMS,
                         Protocol::SNAPCHAT,
@@ -91,6 +92,12 @@ final class A extends Tag implements Identifiable
             Attribute::ROLE => [
                 SpecRule::IMPLICIT => true,
             ],
+            Attribute::SHOW_TOOLTIP => [
+                SpecRule::VALUE => [
+                    'auto',
+                    'true',
+                ],
+            ],
             Attribute::TABINDEX => [
                 SpecRule::IMPLICIT => true,
             ],
@@ -107,16 +114,12 @@ final class A extends Tag implements Identifiable
                     'application/rss+xml',
                 ],
             ],
-            Attribute::SHOW_TOOLTIP => [
-                SpecRule::VALUE => [
-                    'auto',
-                    'true',
-                ],
-            ],
             '[href]' => [],
         ],
         SpecRule::ATTR_LISTS => [
+            AttributeList\ClickAttributions::ID,
             AttributeList\NameAttr::ID,
+            AttributeList\PrivateClickMeasurementAttributes::ID,
         ],
         SpecRule::SPEC_URL => 'https://amp.dev/documentation/guides-and-tutorials/learn/spec/amphtml/#links',
         SpecRule::HTML_FORMAT => [

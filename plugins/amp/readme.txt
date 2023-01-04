@@ -1,12 +1,12 @@
 === AMP ===
-Contributors: google, xwp, automattic, westonruter, albertomedina, schlessera, swissspidy, pierlo, delawski, johnwatkins0, joshuawold
+Contributors: google, xwp, rtcamp, automattic, westonruter, albertomedina, schlessera, delawski, swissspidy, pierlo, joshuawold
 Tags: page experience, performance, amp, mobile, optimization, accelerated mobile pages
 Requires at least: 4.9
-Tested up to: 5.8
-Stable tag: 2.1.4
+Tested up to: 6.0
+Stable tag: 2.3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Requires PHP: 5.6
+Requires PHP: 7.0
 
 An easier path to great Page Experience for everyone. Powered by AMP.
 

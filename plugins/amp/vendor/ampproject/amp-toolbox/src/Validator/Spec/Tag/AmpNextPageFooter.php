@@ -7,9 +7,9 @@
 
 namespace AmpProject\Validator\Spec\Tag;
 
-use AmpProject\Attribute;
 use AmpProject\Extension;
 use AmpProject\Format;
+use AmpProject\Html\Attribute;
 use AmpProject\Validator\Spec\Identifiable;
 use AmpProject\Validator\Spec\SpecRule;
 use AmpProject\Validator\Spec\Tag;
@@ -24,6 +24,7 @@ use AmpProject\Validator\Spec\Tag;
  * @property-read string $mandatoryParent
  * @property-read array<array<bool>> $attrs
  * @property-read array<string> $htmlFormat
+ * @property-read string $descriptiveName
  */
 final class AmpNextPageFooter extends Tag implements Identifiable
 {
@@ -51,5 +52,6 @@ final class AmpNextPageFooter extends Tag implements Identifiable
         SpecRule::HTML_FORMAT => [
             Format::AMP,
         ],
+        SpecRule::DESCRIPTIVE_NAME => 'amp-next-page [footer] child',
     ];
 }

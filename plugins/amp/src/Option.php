@@ -160,6 +160,20 @@ interface Option {
 	const PLUGIN_CONFIGURED = 'plugin_configured';
 
 	/**
+	 * The key of the option storing whether to delete AMP data upon uninstalling the plugin.
+	 *
+	 * @var string
+	 */
+	const DELETE_DATA_AT_UNINSTALL = 'delete_data_at_uninstall';
+
+	/**
+	 * The key of the option storing whether to use native img tag instead of amp-img tag.
+	 *
+	 * @var string
+	 */
+	const USE_NATIVE_IMG_TAG = 'use_native_img_tag';
+
+	/**
 	 * Cached slug when it is defined late.
 	 *
 	 * @var string
@@ -193,13 +207,6 @@ interface Option {
 	 * @var string
 	 */
 	const SUPPRESSED_PLUGINS_USERNAME = 'username';
-
-	/**
-	 * Suppressed plugins, erroring URLs.
-	 *
-	 * @var string
-	 */
-	const SUPPRESSED_PLUGINS_ERRORING_URLS = 'erroring_urls';
 
 	/**
 	 * Version of the AMP plugin for which the options were last saved.

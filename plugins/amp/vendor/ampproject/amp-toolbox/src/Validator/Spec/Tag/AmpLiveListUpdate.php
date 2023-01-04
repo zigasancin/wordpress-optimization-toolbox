@@ -7,8 +7,8 @@
 
 namespace AmpProject\Validator\Spec\Tag;
 
-use AmpProject\Attribute;
 use AmpProject\Format;
+use AmpProject\Html\Attribute;
 use AmpProject\Validator\Spec\Identifiable;
 use AmpProject\Validator\Spec\SpecRule;
 use AmpProject\Validator\Spec\Tag;
@@ -51,6 +51,6 @@ final class AmpLiveListUpdate extends Tag implements Identifiable
         SpecRule::HTML_FORMAT => [
             Format::AMP,
         ],
-        SpecRule::DESCRIPTIVE_NAME => 'amp-live-list [update]',
+        SpecRule::DESCRIPTIVE_NAME => 'amp-live-list [update] child',
     ];
 }

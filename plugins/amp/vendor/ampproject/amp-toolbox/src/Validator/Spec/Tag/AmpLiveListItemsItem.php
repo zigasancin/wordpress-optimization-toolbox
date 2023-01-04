@@ -7,8 +7,8 @@
 
 namespace AmpProject\Validator\Spec\Tag;
 
-use AmpProject\Attribute;
 use AmpProject\Format;
+use AmpProject\Html\Attribute;
 use AmpProject\Validator\Spec\AttributeList;
 use AmpProject\Validator\Spec\Identifiable;
 use AmpProject\Validator\Spec\SpecRule;
@@ -58,6 +58,6 @@ final class AmpLiveListItemsItem extends Tag implements Identifiable
         SpecRule::HTML_FORMAT => [
             Format::AMP,
         ],
-        SpecRule::DESCRIPTIVE_NAME => 'amp-live-list [items] item',
+        SpecRule::DESCRIPTIVE_NAME => 'amp-live-list [data-sort-time] child',
     ];
 }
