@@ -5,6 +5,7 @@
  * @package jetpack
  */
 
+use Automattic\Jetpack\Assets;
 use Automattic\Jetpack\Assets\Logo as Jetpack_Logo;
 use Automattic\Jetpack\Redirect;
 use Automattic\Jetpack\Status;
@@ -51,7 +52,15 @@ class Jetpack_Stats_Dashboard_Widget {
 				$widget_title,
 				array( __CLASS__, 'dashboard_widget' )
 			);
-			wp_enqueue_style( 'jetpack-dashboard-widget', plugins_url( 'css/dashboard-widget.css', JETPACK__PLUGIN_FILE ), array(), JETPACK__VERSION );
+			wp_enqueue_style(
+				'jetpack-dashboard-widget',
+				Assets::get_file_url_for_environment(
+					'css/dashboard-widget.min.css',
+					'css/dashboard-widget.css'
+				),
+				array(),
+				JETPACK__VERSION
+			);
 			wp_style_add_data( 'jetpack-dashboard-widget', 'rtl', 'replace' );
 		}
 	}
@@ -107,7 +116,7 @@ class Jetpack_Stats_Dashboard_Widget {
 			</div>
 
 			<div class="akismet">
-				<h3><?php esc_html_e( 'Anti-spam', 'jetpack' ); ?></h3>
+				<h3><?php esc_html_e( 'Akismet Anti-spam', 'jetpack' ); ?></h3>
 				<?php if ( is_plugin_active( 'akismet/akismet.php' ) ) : ?>
 					<p class="blocked-count">
 						<?php echo esc_html( number_format_i18n( get_option( 'akismet_spam_count', 0 ) ) ); ?>
