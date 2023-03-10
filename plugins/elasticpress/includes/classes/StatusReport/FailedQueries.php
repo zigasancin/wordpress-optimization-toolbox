@@ -58,6 +58,7 @@ class FailedQueries extends Report {
 		$labels = [
 			'wp_url'      => esc_html__( 'Page URL', 'elasticpress' ),
 			'es_req'      => esc_html__( 'Elasticsearch Request', 'elasticpress' ),
+			'request_id'  => esc_html__( 'Request ID', 'elasticpress' ),
 			'timestamp'   => esc_html__( 'Time', 'elasticpress' ),
 			'query_time'  => esc_html__( 'Time Spent (ms)', 'elasticpress' ),
 			'wp_args'     => esc_html__( 'WP Query Args', 'elasticpress' ),
@@ -144,7 +145,7 @@ class FailedQueries extends Report {
 	 * @param array $log The log
 	 * @return array The error in index 0, solution in index 1
 	 */
-	protected function analyze_log( $log ) {
+	public function analyze_log( $log ) {
 		$error = '';
 
 		if ( ! empty( $log['result']['error'] ) && ! empty( $log['result']['error']['root_cause'][0]['reason'] ) ) {
