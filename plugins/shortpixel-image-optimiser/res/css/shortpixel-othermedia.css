@@ -50,9 +50,12 @@
         cursor: pointer; }
     .shortpixel-other-media .list-overview .item:nth-child(odd) {
       background-color: #f9f9f9; }
+    .shortpixel-other-media .list-overview .item span:last-child {
+      min-width: 400px;
+      max-width: 400px; }
     .shortpixel-other-media .list-overview .item:hover .row-actions {
       left: 0;
-      color: #ddd; }
+      color: #bbb; }
       .shortpixel-other-media .list-overview .item:hover .row-actions a {
         text-decoration: none;
         padding-right: 4px;
@@ -60,7 +63,8 @@
         .shortpixel-other-media .list-overview .item:hover .row-actions a:first-child {
           padding-left: 0; }
     .shortpixel-other-media .list-overview .item .filename {
-      font-size: 14px; }
+      font-size: 14px;
+      min-width: 150px; }
     .shortpixel-other-media .list-overview .item .thumb {
       min-width: 60px;
       min-height: 60px;
@@ -92,12 +96,17 @@
         .shortpixel-other-media .list-overview .item .multi-action-wrapper .single-action a {
           display: block; }
     .shortpixel-other-media .list-overview .item .sp-column-info {
-      max-width: 400px;
+      width: 100%;
       min-width: 250px;
-      display: inline-block; }
+      display: inline-block;
+      position: relative; }
       @media (max-width: 1550px) {
         .shortpixel-other-media .list-overview .item .sp-column-info {
           width: auto; } }
+      .shortpixel-other-media .list-overview .item .sp-column-info .sp-column-actions {
+        position: absolute;
+        right: 15px;
+        top: 0; }
     @media (max-width: 1250px) {
       .shortpixel-other-media .list-overview .heading .type {
         display: none; }
@@ -116,3 +125,5 @@
       padding: 10px; }
       .shortpixel-other-media .list-overview .no-items p {
         font-size: 14px; }
+
+/*# sourceMappingURL=shortpixel-othermedia.css.map */

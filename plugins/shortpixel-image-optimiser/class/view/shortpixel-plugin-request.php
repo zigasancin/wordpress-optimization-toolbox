@@ -1,9 +1,12 @@
 <?php
+namespace ShortPixel;
+use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
 /**
  * User: simon
  * Date: 11.04.2018
  */
-
+// @todo This is used by feedback. Should be replaced a some point.
 class ShortPixelPluginRequest {
 
     /**
@@ -39,10 +42,11 @@ class ShortPixelPluginRequest {
 
         $this->url = $url;
         // Set variables
-        $this->allow_tracking = !$args['anonymous'];
+        $this->allow_tracking = ($args['anonymous'] === false)? true : false;
         $this->plugin_file = $_plugin_file;
         $this->data['unique'] = md5( home_url() . get_bloginfo( 'admin_email' ) );
-        $this->data['key'] = $args['key'];
+				if ($args['anonymous'] == false)
+        	$this->data['key'] = $args['key'];
         $this->data['wordpress']['deactivated_plugin']['uninstall_reason'] = $args['reason'];
         $this->data['wordpress']['deactivated_plugin']['uninstall_details'] = $args['details'];
 
@@ -91,9 +95,9 @@ class ShortPixelPluginRequest {
      *
      */
     private function _collect_server_data() {
-        $this->data['server']['server'] = isset( $_SERVER['SERVER_SOFTWARE'] ) ? $_SERVER['SERVER_SOFTWARE'] : '';
+        $this->data['server']['server'] = isset( $_SERVER['SERVER_SOFTWARE'] ) ? sanitize_text_field(wp_unslash($_SERVER['SERVER_SOFTWARE'])) : '';
         $this->data['server']['php_version'] = phpversion();
-        $this->data['server']['url'] = home_url();
+        $this->data['server']['url'] = esc_url(home_url());
     }
 
     /**
@@ -206,6 +210,7 @@ class ShortPixelPluginRequest {
             'body'        => $this->data,
             'user-agent'  => 'MT/EPSILON-CUSTOMER-TRACKING/' . esc_url( home_url() )
         ) );
+
 
         if ( is_wp_error( $request ) ) {
             return false;

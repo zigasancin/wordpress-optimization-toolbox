@@ -53,10 +53,23 @@
 
       }
 
-
       .refresh-folder { text-decoration: none; }
       .info-icon { cursor: pointer; }
   }
+
+	.deliverWebpTypes, .deliverWebpAlteringTypes {
+    margin: 16px 0 16px 16px;
+}
+
+.avifNoticeDisabled
+{
+	 padding: 12px 12px;
+	 line-height: 26px;
+	 > .spio-inline-help {
+		  display: inline;
+			float: none;
+	 }
+}
 
 
 
