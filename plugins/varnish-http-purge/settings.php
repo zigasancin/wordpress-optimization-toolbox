@@ -58,6 +58,11 @@ class VarnishStatus {
 		add_settings_section( 'vhp-settings-devmode-section', __( 'Development Mode Settings', 'varnish-http-purge' ), array( &$this, 'options_settings_devmode' ), 'varnish-devmode-settings' );
 		add_settings_field( 'varnish_devmode', __( 'Development Mode', 'varnish-http-purge' ), array( &$this, 'settings_devmode_callback' ), 'varnish-devmode-settings', 'vhp-settings-devmode-section' );
 
+		// Purge All settings
+		register_setting( 'vhp-settings-maxposts', 'vhp_varnish_max_posts_before_all', array( &$this, 'settings_maxposts_sanitize' ) );
+		add_settings_section( 'vhp-settings-maxposts-section', __( 'Maximum Individual URLs before Full Purge', 'varnish-http-purge' ), array( &$this, 'options_settings_maxposts' ), 'varnish-maxposts-settings' );
+		add_settings_field( 'varnish_maxposts', __( 'Set Max URLs', 'varnish-http-purge' ), array( &$this, 'settings_maxposts_callback' ), 'varnish-maxposts-settings', 'vhp-settings-maxposts-section' );
+
 		// IP Settings.
 		register_setting( 'vhp-settings-ip', 'vhp_varnish_ip', array( &$this, 'settings_ip_sanitize' ) );
 		add_settings_section( 'vhp-settings-ip-section', __( 'Configure Custom IP', 'varnish-http-purge' ), array( &$this, 'options_settings_ip' ), 'varnish-ip-settings' );
@@ -86,7 +91,7 @@ class VarnishStatus {
 		$devmode = get_site_option( 'vhp_varnish_devmode', VarnishPurger::$devmode );
 		$active  = ( isset( $devmode['active'] ) ) ? $devmode['active'] : false;
 		$active  = ( VHP_DEVMODE ) ? true : $active;
-		$expire  = current_time( 'timestamp' ) + DAY_IN_SECONDS;
+		$expire  = time() + DAY_IN_SECONDS;
 		?>
 		<input type="hidden" name="vhp_varnish_devmode[expire]" value="<?php $expire; ?>" />
 		<input type="checkbox" name="vhp_varnish_devmode[active]" value="true" <?php disabled( VHP_DEVMODE ); ?> <?php checked( $active, true ); ?> />
@@ -115,7 +120,7 @@ class VarnishStatus {
 	public function settings_devmode_sanitize( $input ) {
 
 		$output      = array();
-		$expire      = current_time( 'timestamp' ) + DAY_IN_SECONDS;
+		$expire      = time() + DAY_IN_SECONDS;
 		$set_message = __( 'Something has gone wrong!', 'varnish-http-purge' );
 		$set_type    = 'error';
 
@@ -134,6 +139,71 @@ class VarnishStatus {
 		}
 
 		add_settings_error( 'vhp_varnish_devmode', 'varnish-devmode', $set_message, $set_type );
+		return $output;
+	}
+
+	/**
+	 * Options Settings - Max Posts before Purge All
+	 *
+	 * @since 4.0
+	 */
+	public function options_settings_maxposts() {
+		?>
+		<p><a name="#configuremaxposts"></a><?php esc_html_e( 'Since it\'s possible to purge multiple URLs in sequence, there can be cases where too many URLs are queued at a time. In order to minimize disruption, the plugin has a limit of how many URLs can be queued before it runs a "purge all" instead. You can customize that value here.', 'varnish-http-purge' ); ?></strong></p>
+		<?php
+	}
+
+	/**
+	 * Settings - Max Posts before purge All
+	 *
+	 * @since 4.0
+	 */
+	public function settings_maxposts_callback() {
+
+		$disabled = false;
+		if ( defined( 'VHP_VARNISH_MAXPOSTS' ) && false !== VHP_VARNISH_MAXPOSTS ) {
+			$disabled  = true;
+			$max_posts = VHP_VARNISH_MAXPOSTS;
+		} else {
+			$max_posts = get_site_option( 'vhp_varnish_max_posts_before_all' );
+		}
+
+		?>
+		<input type="number" id="vhp_varnish_max_posts_before_all" name="vhp_varnish_max_posts_before_all" value="<?php echo esc_attr( $max_posts ); ?>" size="5" <?php disabled( $disabled, true ); ?> />
+		<label for="vhp_varnish_max_posts_before_all">&nbsp;
+		<?php
+		if ( $disabled ) {
+			esc_html_e( 'A maximum value has been defined in your wp-config file, so it is not editable in settings.', 'varnish-http-purge' );
+		} else {
+			esc_html_e( 'The default value is "50" URLs. It is not recommended to set this above 75.', 'varnish-http-purge' );
+		}
+		echo '</label>';
+	}
+
+	/**
+	 * Sanitization and validation for Max Posts before purge All
+	 *
+	 * @param mixed $input - the input to be sanitized.
+	 * @since 4.0
+	 */
+	public function settings_maxposts_sanitize( $input ) {
+
+		// default settings.
+		$output      = get_site_option( 'vhp_varnish_max_posts_before_all' );
+		$set_message = __( 'You have entered an invalid number.', 'varnish-http-purge' );
+		$set_type    = 'error';
+
+		if ( empty( $input ) ) {
+			// No input, do nothing.
+			return;
+		} elseif ( is_numeric( $input ) ) {
+			// If it's numeric, update.
+			$set_message = __( 'Number of Maximum URLs before a purge have been updated.', 'varnish-http-purge' );
+			$set_type    = 'updated';
+			$output      = (int) $input;
+		}
+
+		add_settings_error( 'vhp_varnish_max_posts_before_all', 'varnish-maxposts', $set_message, $set_type );
 		return $output;
 	}
 
@@ -160,7 +230,7 @@ class VarnishStatus {
 	public function settings_ip_callback() {
 
 		$disabled = false;
-		if ( false !== VHP_VARNISH_IP ) {
+		if ( defined( 'VHP_VARNISH_IP' ) && false !== VHP_VARNISH_IP ) {
 			$disabled  = true;
 			$varniship = VHP_VARNISH_IP;
 		} else {
@@ -281,7 +351,7 @@ class VarnishStatus {
 			$remote_ip = VarnishDebug::remote_ip( $headers );
 
 			// Get the IP.
-			if ( false !== VHP_VARNISH_IP ) {
+			if ( defined( 'VHP_VARNISH_IP' ) && false !== VHP_VARNISH_IP ) {
 				$varniship = VHP_VARNISH_IP;
 			} else {
 				$varniship = get_site_option( 'vhp_varnish_ip' );
@@ -425,7 +495,15 @@ class VarnishStatus {
 				<?php
 					settings_fields( 'vhp-settings-devmode' );
 					do_settings_sections( 'varnish-devmode-settings' );
-					submit_button( __( 'Save Settings', 'varnish-http-purge' ), 'primary' );
+					submit_button( __( 'Save Devmode Settings', 'varnish-http-purge' ), 'primary' );
+				?>
+				</form>
+
+				<form action="options.php" method="POST" >
+				<?php
+					settings_fields( 'vhp-settings-maxposts' );
+					do_settings_sections( 'varnish-maxposts-settings' );
+					submit_button( __( 'Save Maxposts Settings', 'varnish-http-purge' ), 'primary' );
 				?>
 				</form>
 
@@ -433,7 +511,7 @@ class VarnishStatus {
 				<?php
 					settings_fields( 'vhp-settings-ip' );
 					do_settings_sections( 'varnish-ip-settings' );
-					submit_button( __( 'Save IP', 'varnish-http-purge' ), 'secondary' );
+					submit_button( __( 'Save IP Settings', 'varnish-http-purge' ), 'secondary' );
 				?>
 				</form>
 				<?php

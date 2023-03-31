@@ -3,7 +3,7 @@
  * Plugin Name: Proxy Cache Purge
  * Plugin URI: https://github.com/ipstenu/varnish-http-purge/
  * Description: Automatically empty cached pages when content on your site is modified.
- * Version: 5.0.3
+ * Version: 5.1.3
  * Author: Mika Epstein
  * Author URI: https://halfelf.org/
  * License: http://www.apache.org/licenses/LICENSE-2.0
@@ -12,9 +12,10 @@
  *
  * @package varnish-http-purge
  *
- * Copyright 2016-2021 Mika Epstein (email: ipstenu@halfelf.org)
+ * Copyright 2016-2022 Mika Epstein (email: ipstenu@halfelf.org)
  *
- * This file is part of Proxy Cache Purge, a plugin for WordPress.
+ * This file is part of Proxy Cache Purge (formerly Varnish HTTP Purge), a 
+ * plugin for WordPress.
  *
  * Proxy Cache Purge is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License 2.0 license.
@@ -72,7 +73,7 @@ class VarnishPurger {
 		// Development mode defaults to off.
 		self::$devmode = array(
 			'active' => false,
-			'expire' => current_time( 'timestamp' ),
+			'expire' => time(),
 		);
 		if ( ! get_site_option( 'vhp_varnish_devmode' ) ) {
 			update_site_option( 'vhp_varnish_devmode', self::$devmode );
@@ -91,6 +92,11 @@ class VarnishPurger {
 		// Default Debug is the home.
 		if ( ! get_site_option( 'vhp_varnish_debug' ) ) {
 			update_site_option( 'vhp_varnish_debug', array( $this->the_home_url() => array() ) );
+		}
+
+		// Default Max posts to purge before purge all happens instead.
+		if ( ! get_site_option( 'vhp_varnish_max_posts_before_all' ) ) {
+			update_site_option( 'vhp_varnish_max_posts_before_all', 50 );
 		}
 
 		// Release the hounds!
@@ -297,7 +303,7 @@ class VarnishPurger {
 			$message = __( 'Proxy Cache Purge Development Mode has been activated via wp-config.', 'varnish-http-purge' );
 		} else {
 			$devmode = get_site_option( 'vhp_varnish_devmode', self::$devmode );
-			$time    = human_time_diff( current_time( 'timestamp' ), $devmode['expire'] );
+			$time    = human_time_diff( time(), $devmode['expire'] );
 
 			if ( ! $devmode['active'] ) {
 				if ( ! is_multisite() ) {
@@ -469,7 +475,7 @@ class VarnishPurger {
 
 		$fill = ( false !== $icon_color ) ? sanitize_hex_color( $icon_color ) : '#82878c';
 
-		if ( is_admin() && false === $icon_color ) {
+		if ( is_admin() && false === $icon_color && get_user_option( 'admin_color' ) ) {
 			$admin_colors  = json_decode( wp_json_encode( $_wp_admin_css_colors ), true );
 			$current_color = get_user_option( 'admin_color' );
 			$fill          = $admin_colors[ $current_color ]['icon_colors']['base'];
@@ -588,9 +594,29 @@ class VarnishPurger {
 		$purge_urls = array_unique( $this->purge_urls );
 
 		if ( ! empty( $purge_urls ) && is_array( $purge_urls ) ) {
-			// If there are URLs to purge and it's an array...
-			foreach ( $purge_urls as $url ) {
-				$this->purge_url( $url );
+
+			// If there are URLs to purge and it's an array, we'll likely purge.
+
+			// Number of URLs to purge.
+			$count = count( $purge_urls );
+
+			// Max posts
+			if ( defined( 'VHP_VARNISH_MAXPOSTS' ) && false !== VHP_VARNISH_MAXPOSTS ) {
+				$max_posts = VHP_VARNISH_MAXPOSTS;
+			} else {
+				$max_posts = get_option( 'vhp_varnish_max_posts_before_all' );
+			}
+
+			// If there are more than vhp_varnish_max_posts_before_all URLs to purge (default 50),
+			// do a purge ALL instead. Else, do the normal.
+			if ( $max_posts <= $count ) {
+				// Too many URLs, purge all instead.
+				$this->purge_url( $this->the_home_url() . '/?vhp-regex' );
+			} else {
+				// Purge each URL.
+				foreach ( $purge_urls as $url ) {
+					$this->purge_url( $url );
+				}
 			}
 		} elseif ( isset( $_GET ) ) {
 			// Otherwise, if we've passed a GET call...
@@ -738,11 +764,21 @@ class VarnishPurger {
 			}
 
 			/**
+			 * Filter the purge path
+			 *
+			 * Allows dynamically changing the purge cache for custom purge location
+			 * or systems not supporting .* regex purge for example
+			 *
+			 * @since 5.1
+			 */
+			$purgeme = apply_filters( 'vhp_purgeme_path', $purgeme, $schema, $one_host, $path, $pregex, $p );
+
+			/**
 			 * Filters the HTTP headers to send with a PURGE request.
 			 *
 			 * @since 4.1
 			 */
-			$headers  = apply_filters(
+			$headers = apply_filters(
 				'varnish_http_purge_headers',
 				array(
 					'host'           => $host_headers,
@@ -1080,16 +1116,19 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	include 'wp-cli.php';
 }
 
-/*
- * Settings Pages
- *
- * @since 4.0
- */
-// The settings PAGES aren't needed on the network admin page
-if ( ! is_network_admin() ) {
-	require_once 'settings.php';
-}
-require_once 'debug.php';
-require_once 'health-check.php';
+// Preventing people from forking this and hurting themselve by having two versions, though it may not work.
+if ( ! class_exists( 'VarnishStatus' ) ) {
+	/*
+	* Settings Pages
+	*
+	* @since 4.0
+	*/
+	// The settings PAGES aren't needed on the network admin page
+	if ( ! is_network_admin() ) {
+		require_once 'settings.php';
+	}
+	require_once 'debug.php';
+	require_once 'health-check.php';
 
-$purger = new VarnishPurger();
+	$purger = new VarnishPurger();
+}
