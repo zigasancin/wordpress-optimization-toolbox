@@ -696,7 +696,11 @@ class ObjectCache_WpObjectCache_Regular {
 		case 'redis':
 			$engineConfig = array(
 				'servers' => $this->_config->get_array( 'objectcache.redis.servers' ),
+				'verify_tls_certificates' => $this->_config->get_boolean( 'objectcache.redis.verify_tls_certificates' ),
 				'persistent' => $this->_config->get_boolean( 'objectcache.redis.persistent' ),
+				'timeout' => $this->_config->get_integer( 'objectcache.redis.timeout' ),
+				'retry_interval' => $this->_config->get_integer( 'objectcache.redis.retry_interval' ),
+				'read_timeout' => $this->_config->get_integer( 'objectcache.redis.read_timeout' ),
 				'dbid' => $this->_config->get_integer( 'objectcache.redis.dbid' ),
 				'password' => $this->_config->get_string( 'objectcache.redis.password' )
 			);
@@ -744,8 +748,11 @@ class ObjectCache_WpObjectCache_Regular {
 			case 'redis':
 				$engineConfig = array(
 					'servers' => $this->_config->get_array( 'objectcache.redis.servers' ),
-					'persistent' => $this->_config->get_boolean(
-						'objectcache.redis.persistent' ),
+					'verify_tls_certificates' => $this->_config->get_boolean( 'objectcache.redis.verify_tls_certificates' ),
+					'persistent' => $this->_config->get_boolean( 'objectcache.redis.persistent' ),
+					'timeout' => $this->_config->get_integer( 'objectcache.redis.timeout' ),
+					'retry_interval' => $this->_config->get_integer( 'objectcache.redis.retry_interval' ),
+					'read_timeout' => $this->_config->get_integer( 'objectcache.redis.read_timeout' ),
 					'dbid' => $this->_config->get_integer( 'objectcache.redis.dbid' ),
 					'password' => $this->_config->get_string( 'objectcache.redis.password' )
 				);
@@ -779,15 +786,6 @@ class ObjectCache_WpObjectCache_Regular {
 	 * @return boolean
 	 */
 	function _can_cache() {
-		/**
-		 * Don't cache in console mode
-		 */
-		if ( PHP_SAPI === 'cli' ) {
-			$this->cache_reject_reason = 'Console mode';
-
-			return false;
-		}
-
 		/**
 		 * Skip if disabled
 		 */

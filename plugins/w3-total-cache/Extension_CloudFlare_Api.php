@@ -32,33 +32,6 @@ class Extension_CloudFlare_Api {
 
 
 	/**
-	 * Makes ip_lkup API request
-	 *
-	 * @param string  $ip
-	 * @return object
-	 */
-	public function ip_lkup( $ip ) {
-		@set_time_limit( $this->_timelimit_api_request );
-
-		$response = Util_Http::request(
-			'https://www.cloudflare.com/api_json.html', array(
-				'method' => 'POST',
-				'body' => array(
-					'a' => 'ip_lkup',
-					'tkn' => $this->_key,
-					'email' => $this->_email,
-					'ip' => $ip
-				)
-			) );
-		if ( isset( $response['body'] ) )
-			return @json_decode( $response['body'] );
-
-		return null;
-	}
-
-
-
-	/**
 	 * Makes external event request
 	 *
 	 * @param string  $type
@@ -143,6 +116,12 @@ class Extension_CloudFlare_Api {
 			json_encode( array( 'value' => $value ) ) );
 	}
 
+	/**
+	 * Prepares the analytics dashboard widget query to be performed via the CF GraphQL API
+	 *
+	 * @throws Exception
+	 * @return array
+	 */
 	public function analytics_dashboard( $start, $end, $type = 'day' ) {
 		$dataset = 'httpRequests1dGroups';
 		$datetime_filter = 'date';
@@ -192,18 +171,22 @@ class Extension_CloudFlare_Api {
 			'{"purge_everything":true}' );
 	}
 
+	/**
+	 * Performs the CF API request
+	 *
+	 * @throws Exception
+	 * @return array
+	 */
 	private function _wp_remote_request( $method, $url, $body = array() ) {
 		if ( empty( $this->_email ) || empty( $this->_key ) ) {
 			throw new \Exception('Not authenticated');
 		}
 
+		$headers = $this->_generate_wp_remote_request_headers();
+
 		$result = wp_remote_request( $url, array(
 				'method' => $method,
-				'headers' => array(
-					'Content-Type' => 'application/json',
-					'X-Auth-Key' => $this->_key,
-					'X-Auth-Email' => $this->_email
-				),
+				'headers' => $headers,
 				'timeout' => $this->_timelimit_api_request,
 				'body' => $body
 			) );
@@ -219,7 +202,7 @@ class Extension_CloudFlare_Api {
 				str_replace( '<', '.', str_replace( '>', '.', $result['body'] ) ) );
 		}
 
-		if ( !isset( $response_json['success'] ) ) {
+		if ( !$response_json['success'] ) {
 			$errors = array();
 
 			if ( isset( $response_json['errors'] ) ) {
@@ -242,18 +225,22 @@ class Extension_CloudFlare_Api {
 		return array();
 	}
 
+	/**
+	 * Performs the CF API request with meta
+	 *
+	 * @throws Exception
+	 * @return array
+	 */
 	private function _wp_remote_request_with_meta( $method, $url, $body = array() ) {
 		if ( empty( $this->_email ) || empty( $this->_key ) ) {
 			throw new \Exception('Not authenticated');
 		}
 
+		$headers = $this->_generate_wp_remote_request_headers();
+
 		$result = wp_remote_request( $url, array(
 				'method' => $method,
-				'headers' => array(
-					'Content-Type' => 'application/json',
-					'X-Auth-Key' => $this->_key,
-					'X-Auth-Email' => $this->_email
-				),
+				'headers' => $headers,
 				'timeout' => $this->_timelimit_api_request,
 				'body' => $body
 			) );
@@ -290,20 +277,24 @@ class Extension_CloudFlare_Api {
 		return array();
 	}
 
+	/**
+	 * Performs the CF GraphQL API request
+	 *
+	 * @throws Exception
+	 * @return array
+	 */
 	private function _wp_remote_request_graphql( $method, $url, $body ) {
 		if ( empty( $this->_email ) || empty( $this->_key ) ) {
 			throw new \Exception('Not authenticated');
 		}
 
+		$headers = $this->_generate_wp_remote_request_headers();
+
 		$body = preg_replace( '/\s\s+/', ' ', $body );
 
 		$result = wp_remote_request( $url, array(
 				'method' => $method,
-				'headers' => array(
-					'Content-Type' => 'application/json',
-					'X-Auth-Key' => $this->_key,
-					'X-Auth-Email' => $this->_email
-				),
+				'headers' => $headers,
 				'timeout' => $this->_timelimit_api_request,
 				'body' => $body
 			) );
@@ -338,5 +329,42 @@ class Extension_CloudFlare_Api {
 		}
 
 		return array();
+	}
+
+	/**
+	 * Generates the appropriate request headers for CF API requests based on token or global key presence
+	 *
+	 * @since 2.2.1
+	 *
+	 * @throws Exception
+	 * @return array
+	 */
+	private function _generate_wp_remote_request_headers() {
+		if ( empty( $this->_email ) || empty( $this->_key ) ) {
+			throw new \Exception('Missing authentication email and/or API token / global key');
+		}
+
+		$headers = array();
+
+		// CF API Token
+		if( strlen( $this->_key ) == 40 ) {
+			$headers = array(
+				'Content-Type' => 'application/json',
+				'Authorization' => 'Bearer ' . $this->_key
+			);
+		}
+		// CF Legacy API Global Key
+		else if ( strlen( $this->_key ) == 37 ) {
+			$headers = array(
+				'Content-Type' => 'application/json',
+				'X-Auth-Key' => $this->_key,
+				'X-Auth-Email' => $this->_email
+			);
+		}
+		else {
+			throw new \Exception('Improper API token / global key length');
+		}
+
+		return $headers;
 	}
 }
