@@ -42,6 +42,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 			'mark_all_as_uncompressed',
 			'clean_all_backup_images',
 			'reset_webp_serving_method',
+			'convert_to_webp_format',
 		);
 
 		return array_merge($commands, $smush_commands);
@@ -491,6 +492,40 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$success = WP_Optimize()->get_webp_instance()->reset_webp_serving_method();
 		return array(
 			'success' => $success,
+		);
+	}
+
+	/**
+	 * Convert the image to webp format
+	 *
+	 * @param array $data
+	 * @return array
+	 */
+	public function convert_to_webp_format($data) {
+		$attachment_id = isset($data['attachment_id']) ? $data['attachment_id'] : 0;
+		if (0 === $attachment_id) return $this->image_not_found_response();
+
+		$images = WPO_Image_Utils::get_attachment_files($attachment_id);
+		if (empty($images)) return $this->image_not_found_response();
+
+		$images['original'] = get_attached_file($attachment_id);
+		foreach ($images as $image) {
+			WPO_Image_Utils::do_webp_conversion($image);
+		}
+
+		return array(
+			'success' => __('Image is converted to WebP format.', 'wp-optimize'),
+		);
+	}
+
+	/**
+	 * Returns image not found response
+	 *
+	 * @return array
+	 */
+	private function image_not_found_response() {
+		return array(
+			'error' => __('Image not found', 'wp-optimize'),
 		);
 	}
 

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776
+class ComposerStaticInite4f181c817bb7f56c650b242f9d1d695
 {
     public static $prefixLengthsPsr4 = array (
         't' => 
@@ -14,7 +14,6 @@ class ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776
         'W' => 
         array (
             'WebPConvert\\' => 12,
-            'WebPConvertCloudService\\' => 24,
         ),
         'P' => 
         array (
@@ -59,10 +58,6 @@ class ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776
         'WebPConvert\\' => 
         array (
             0 => __DIR__ . '/..' . '/rosell-dk/webp-convert/src',
-        ),
-        'WebPConvertCloudService\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/rosell-dk/webp-convert-cloud-service/src',
         ),
         'Psr\\Log\\' => 
         array (
@@ -195,6 +190,7 @@ class ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776
         'lessc_parser' => __DIR__ . '/..' . '/marcusschwarz/lesserphp/lessc.inc.php',
         'simplehtmldom\\Debug' => __DIR__ . '/..' . '/simplehtmldom/simplehtmldom/Debug.php',
         'simplehtmldom\\HtmlDocument' => __DIR__ . '/..' . '/simplehtmldom/simplehtmldom/HtmlDocument.php',
+        'simplehtmldom\\HtmlElement' => __DIR__ . '/..' . '/simplehtmldom/simplehtmldom/HtmlElement.php',
         'simplehtmldom\\HtmlNode' => __DIR__ . '/..' . '/simplehtmldom/simplehtmldom/HtmlNode.php',
         'simplehtmldom\\HtmlWeb' => __DIR__ . '/..' . '/simplehtmldom/simplehtmldom/HtmlWeb.php',
     );
@@ -202,10 +198,10 @@ class ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit74d6d284e18ca8c808ac9d334dc71776::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInite4f181c817bb7f56c650b242f9d1d695::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInite4f181c817bb7f56c650b242f9d1d695::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInite4f181c817bb7f56c650b242f9d1d695::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInite4f181c817bb7f56c650b242f9d1d695::$classMap;
 
         }, null, ClassLoader::class);
     }

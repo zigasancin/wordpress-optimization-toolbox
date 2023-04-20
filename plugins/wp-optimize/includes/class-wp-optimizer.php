@@ -304,7 +304,7 @@ class WP_Optimizer {
 
 		$wpo_db_info = WP_Optimize()->get_db_info();
 
-		$table_status = WP_Optimize()->get_db_info()->get_show_table_status($update);
+		$table_status = $wpo_db_info->get_show_table_status($update);
 
 		// Filter on the site's DB prefix (was not done in releases up to 1.9.1).
 		$table_prefix = $this->get_table_prefix();

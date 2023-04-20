@@ -269,7 +269,7 @@ var WP_Optimize_Cache = function () {
 			if (response.hasOwnProperty('error')) {
 				// show error
 				console.log(response.error);
-				$('.wpo-error__enabling-cache').removeClass('wpo_hidden').find('p').text(response.error.message);
+				wp_optimize.notices.show_notice(response.error.code, response.error.message);
 			} else {
 				$('.wpo-error__enabling-cache').addClass('wpo_hidden').find('p').text('');
 			}

@@ -136,7 +136,7 @@ class WP_Optimize_Database_Information {
 				$tables_info = $wpdb->get_results('SHOW TABLE STATUS');
 				$fetched_all_tables = true;
 				foreach ($tables_info as $i => $table) {
-					$rows_count = get_transient($table->Name . '_count');
+					$rows_count = get_transient('wpo_' . $table->Name . '_count');
 					if (false === $rows_count) break;
 					$tables_info[$i]->Rows = $rows_count;
 				}
@@ -654,7 +654,7 @@ class WP_Optimize_Database_Information {
 		$tables_info = $wpdb->get_results('SHOW TABLE STATUS');
 		foreach ($tables_info as $table) {
 			$rows_count = $wpdb->get_var("SELECT COUNT(*) FROM `$table->Name`");
-			set_transient($table->Name . '_count', $rows_count, 24*60*60);
+			set_transient('wpo_' . $table->Name . '_count', $rows_count, 24*60*60);
 		}
 	}
 }

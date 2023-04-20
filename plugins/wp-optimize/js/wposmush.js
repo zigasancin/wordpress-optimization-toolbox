@@ -23,6 +23,7 @@ var WP_Optimize_Smush = function() {
 		smush_mark_as_compressed_btn = $('#wpo_smush_mark_as_compressed'),
 		smush_single_image_btn = $('.wpo_smush_single_image .button'),
 		smush_single_restore_btn = $('.wpo_restore_single_image .button'),
+		convert_to_webp_btn = $('.wpo_smush.column-wpo_smush .convert-to-webp');
 		smush_mark_all_as_uncompressed_btn = $('#wpo_smush_mark_all_as_uncompressed_btn'),
 		restore_all_compressed_images_btn = $('#wpo_smush_restore_all_compressed_images_btn'),
 		smush_view_logs_btn = $('.wpo_smush_get_logs'),
@@ -38,7 +39,8 @@ var WP_Optimize_Smush = function() {
 		smush_completed = false,
 		smush_mark_all_as_uncompressed = false,
 		smush_affected_images = {},
-		pending_tasks_cancel_btn = $('#wpo_smush_images_pending_tasks_cancel_button');
+		pending_tasks_cancel_btn = $('#wpo_smush_images_pending_tasks_cancel_button'),
+		uncompressed_images_sites_select = $('#wpo_uncompressed_images_sites_select');
 
 	/**
 	 * Handle Image Selection
@@ -567,6 +569,30 @@ var WP_Optimize_Smush = function() {
 		update_view_available_options();
 	});
 
+	convert_to_webp_btn.on('click', function(e){
+		e.preventDefault();
+		var $link = $(this);
+		data = {
+			'attachment_id': $(this).data('attachment-id')
+		};
+		update_view_modal_message(wposmush.converting_to_webp);
+		smush_manager_send_command('convert_to_webp_format', data, function(response) {
+			if (response.error) {
+				update_view_modal_message(response.error, $.unblockUI);
+				setTimeout(function() {
+					$.unblockUI();
+				}, 2000);
+			} else {
+				update_view_modal_message(response.success, $.unblockUI);
+				setTimeout(function() {
+					$.unblockUI();
+				}, 2000);
+				$link.next().remove();
+				$link.remove();
+			}
+		});
+	});
+
 	/**
 	 * Load and show information about uncompressed images.
 	 *
@@ -717,32 +743,53 @@ var WP_Optimize_Smush = function() {
 
 		if (!data || !data.hasOwnProperty('unsmushed_images')) return;
 
-		var unsmushed_images = data.unsmushed_images;
-		var pending_tasks = data.pending_tasks;
+		var unsmushed_images = data.unsmushed_images,
+			pending_tasks = data.pending_tasks,
+			blog_id = 0;
 
-		if (0 == data.unsmushed_images.length && 0 == data.pending_tasks) {
+		if (0 == unsmushed_images.length && 0 == pending_tasks) {
 			smush_images_grid.text(wposmush.all_images_compressed).wrapInner("<div class='wpo-fieldgroup'> </div>");
 		}
 
-		if (0 != data.pending_tasks) {
+		if (0 != pending_tasks) {
 			smush_images_pending_tasks_container.show().find('.red').text(data.pending);
 		}
 
-		// Used to have upload.php?item= on multisite (using data.is_multisite), and no suffix
-		var admin_url_pre_id = 'post.php?post=';
-		var admin_url_post_id = '&action=edit';
-		
-		for (blog_id in data.unsmushed_images) {
-			data.unsmushed_images[blog_id].sort(function(a, b) {
-				return a.id - b.id;
-			});
-			for (i in data.unsmushed_images[blog_id]) {
-				if (!data.unsmushed_images[blog_id].hasOwnProperty(i)) continue;
-				image = data.unsmushed_images[blog_id][i];
-				add_image_to_grid(image, blog_id, data.admin_urls[blog_id] + admin_url_pre_id + image.id + admin_url_post_id);
+		if (1 === data.is_multisite) {
+			blog_id = uncompressed_images_sites_select.find(":selected").val();
+			add_unsmushed_images_to_grid(blog_id, data);
+		} else {
+			for (blog_id in data.unsmushed_images) {
+				add_unsmushed_images_to_grid(blog_id, data);
 			}
 		}
 	}
+
+	function sort_unsmushed_images(a, b) {
+		return a.id - b.id;
+	}
+
+	function add_unsmushed_images_to_grid(blog_id, data) {
+		// Used to have upload.php?item= on multisite (using data.is_multisite), and no suffix
+		var admin_url_pre_id = 'post.php?post=',
+			admin_url_post_id = '&action=edit',
+			admin_url = data.admin_urls[blog_id],
+			unsmushed_images = data.unsmushed_images[blog_id];
+
+		if ('undefined' !== typeof unsmushed_images) {
+			unsmushed_images.sort(sort_unsmushed_images);
+		}
+
+		for (i in unsmushed_images) {
+			if (!unsmushed_images.hasOwnProperty(i)) continue;
+			var image = unsmushed_images[i];
+			add_image_to_grid(image, blog_id, admin_url + admin_url_pre_id + image.id + admin_url_post_id);
+		}
+	}
+
+	uncompressed_images_sites_select.on('change', function() {
+		get_info_from_smush_manager();
+	});
 
 	/**
 	 * Updates the view when bulk smush starts

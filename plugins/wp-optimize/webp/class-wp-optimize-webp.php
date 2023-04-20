@@ -206,9 +206,14 @@ class WP_Optimize_WebP {
 	 */
 	public function empty_htaccess_file() {
 		$this->setup_htaccess_file();
-		$htaccess_comment_section = 'WP-Optimize WebP Rules';
-		$this->_htaccess->remove_commented_section($htaccess_comment_section);
-		$this->_htaccess->write_file();
+		$htaccess_comment_sections = array(
+			'WP-Optimize WebP Rules',
+			'Register webp mime type',
+		);
+		foreach ($htaccess_comment_sections as $htaccess_comment_section) {
+			$this->_htaccess->remove_commented_section($htaccess_comment_section);
+			$this->_htaccess->write_file();
+		}
 	}
 
 	/**
@@ -355,6 +360,40 @@ class WP_Optimize_WebP {
 	 */
 	private function init_webp_cron_scheduler() {
 		WPO_WebP_Cron_Scheduler::get_instance();
+	}
+
+	/**
+	 * Determines whether the php shell functions are available or not
+	 *
+	 * @return bool
+	 */
+	public static function is_shell_functions_available() {
+		$shell_functions = self::get_shell_functions();
+		foreach ($shell_functions as $shell_function) {
+			if (!function_exists($shell_function)) return false;
+		}
+		return true;
+	}
+
+	/**
+	 * List of php shell function names
+	 *
+	 * @return string[]
+	 */
+	public static function get_shell_functions() {
+		return array(
+			'escapeshellarg',
+			'escapeshellcmd',
+			'exec',
+			'passthru',
+			'proc_close',
+			'proc_get_status',
+			'proc_nice',
+			'proc_open',
+			'proc_terminate',
+			'shell_exec',
+			'system',
+		);
 	}
 }
 
