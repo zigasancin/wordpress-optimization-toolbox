@@ -1747,7 +1747,7 @@ function ewww_image_optimizer_bulk_counter_measures( $image ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	if ( ! empty( $_REQUEST['ewww_error_counter'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 		$error_counter = (int) $_REQUEST['ewww_error_counter']; // phpcs:ignore WordPress.Security.NonceVerification
-		if ( 30 !== $error_counter ) {
+		if ( 30 >= $error_counter ) {
 			$failed_file              = get_transient( 'ewww_image_optimizer_failed_file' );
 			$previous_incomplete_file = get_transient( 'ewww_image_optimizer_bulk_current_image' );
 			if ( is_array( get_transient( 'ewww_image_optimizer_bulk_counter_measures' ) ) ) {
@@ -1765,7 +1765,7 @@ function ewww_image_optimizer_bulk_counter_measures( $image ) {
 					'pdf20'           => false,
 				);
 			}
-			if ( $failed_file === $image->file || $previous_incomplete_file === $image->file ) {
+			if ( $failed_file && $failed_file === $image->file || $previous_incomplete_file === $image->file ) {
 				ewwwio_debug_message( "failed file detected, taking evasive action: $failed_file" );
 				// Use the constants for temporary overrides, while keeping track of which ones we've used.
 				if ( 'image/png' === ewww_image_optimizer_quick_mimetype( $image->file ) ) {
@@ -1854,7 +1854,7 @@ function ewww_image_optimizer_bulk_counter_measures( $image ) {
 					}
 				}
 				if ( 'image/gif' === ewww_image_optimizer_quick_mimetype( $image->file ) ) {
-					if ( empty( $previous_countermeasures['gif2png'] ) && ! defined( 'EWWW_IMAGE_OPTIMIZER_GIF_TO_PNG' ) && ewww_image_optimzer_get_option( 'ewww_image_optimizer_gif_to_png' ) ) {
+					if ( empty( $previous_countermeasures['gif2png'] ) && ! defined( 'EWWW_IMAGE_OPTIMIZER_GIF_TO_PNG' ) && ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_to_png' ) ) {
 						ewwwio_debug_message( 'gif2png' );
 						// If the file is a GIF and GIF2PNG is enabled.
 						define( 'EWWW_IMAGE_OPTIMIZER_GIF_TO_PNG', false );
@@ -1865,7 +1865,7 @@ function ewww_image_optimizer_bulk_counter_measures( $image ) {
 					}
 				}
 				if ( 'application/pdf' === ewww_image_optimizer_quick_mimetype( $image->file ) ) {
-					if ( empty( $previous_countermeasures['pdf20'] ) && ! defined( 'EWWW_IMAGE_OPTIMIZER_PDF_LEVEL' ) && 20 === (int) ewww_image_optimzer_get_option( 'ewww_image_optimizer_pdf_level' ) ) {
+					if ( empty( $previous_countermeasures['pdf20'] ) && ! defined( 'EWWW_IMAGE_OPTIMIZER_PDF_LEVEL' ) && 20 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_pdf_level' ) ) {
 						ewwwio_debug_message( 'pdf20' );
 						// If lossy PDF is enabled, drop it down a notch.
 						define( 'EWWW_IMAGE_OPTIMIZER_PDF_LEVEL', 10 );
@@ -1983,6 +1983,7 @@ function ewww_image_optimizer_bulk_loop( $hook = '', $delay = 0 ) {
 	while ( $output['completed'] < $batch_image_limit && $image->file && microtime( true ) - $started + $time_adjustment < apply_filters( 'ewww_image_optimizer_timeout', 15 ) ) {
 		$output['completed']++;
 		$meta = false;
+		ewwwio_debug_message( "processing {$image->id}: {$image->file}" );
 		// See if the image needs fetching from a CDN.
 		if ( ! ewwwio_is_file( $image->file ) ) {
 			$meta      = wp_get_attachment_metadata( $image->attachment_id );
@@ -2005,7 +2006,7 @@ function ewww_image_optimizer_bulk_loop( $hook = '', $delay = 0 ) {
 		global $ewww_image;
 		$ewww_image = $image;
 		if ( 'full' === $image->resize && ewww_image_optimizer_get_option( 'ewww_image_optimizer_resize_existing' ) && ! function_exists( 'imsanity_get_max_width_height' ) ) {
-			if ( ! $meta || ! is_array( $meta ) ) {
+			if ( empty( $meta ) || ! is_array( $meta ) ) {
 				$meta = wp_get_attachment_metadata( $image->attachment_id );
 			}
 			$new_dimensions = ewww_image_optimizer_resize_upload( $image->file );
@@ -2059,12 +2060,9 @@ function ewww_image_optimizer_bulk_loop( $hook = '', $delay = 0 ) {
 			);
 		}
 		// If this is a full size image and it was converted.
-		if ( 'full' === $image->resize && ( false !== $image->increment || false !== $converted ) ) {
-			if ( ! $meta || ! is_array( $meta ) ) {
+		if ( 'full' === $image->resize && false !== $converted ) {
+			if ( empty( $meta ) || ! is_array( $meta ) ) {
 				$meta = wp_get_attachment_metadata( $image->attachment_id );
-			}
-			if ( $converted ) {
-				$image->increment = $converted;
 			}
 			$image->file      = $file;
 			$image->converted = $original;
@@ -2088,7 +2086,7 @@ function ewww_image_optimizer_bulk_loop( $hook = '', $delay = 0 ) {
 
 		// Do metadata update after full-size is processed, usually because of conversion or resizing.
 		if ( 'full' === $image->resize && $image->attachment_id ) {
-			if ( $meta && is_array( $meta ) ) {
+			if ( ! empty( $meta ) && is_array( $meta ) ) {
 				clearstatcache();
 				if ( ! empty( $image->file ) && is_file( $image->file ) ) {
 					$meta['filesize'] = filesize( $image->file );
@@ -2267,4 +2265,3 @@ add_action( 'wp_ajax_ewww_bulk_update_meta', 'ewww_image_optimizer_bulk_update_m
 add_action( 'wp_ajax_bulk_cleanup', 'ewww_image_optimizer_bulk_cleanup' );
 add_action( 'wp_ajax_bulk_quota_update', 'ewww_image_optimizer_bulk_quota_update' );
 add_filter( 'ewww_image_optimizer_count_optimized_queries', 'ewww_image_optimizer_reduce_query_count' );
-?>
