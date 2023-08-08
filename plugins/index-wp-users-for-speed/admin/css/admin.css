@@ -1,0 +1,22 @@
+@media (min-width: 783px) {
+    div.wrap.index-users > form > table.form-table > tbody > tr > th {
+        text-align: right;
+        font-weight: 400;
+    }
+}
+
+div.wrap.index-users > form > table.form-table > tbody > tr > td > div > span.radioitem {
+    margin-right: 0.5em;
+}
+
+div.wrap.index-users > form > table.form-table > tbody > tr > td > p {
+    word-break: break-word;
+}
+
+div.wrap.index-users > form > table.form-table > tbody > tr > td > p.menu-note {
+    margin-bottom: 1em;
+}
+
+input#quickedit_threshold_limit {
+    width: 5em;
+}
