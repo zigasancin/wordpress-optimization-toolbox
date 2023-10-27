@@ -129,7 +129,7 @@ class PageSpeed_Widget {
 								'Before you can get started using the Google PageSpeed tool, you’ll first need to authorize access. Please click %1$s.',
 								'w3-total-cache'
 							),
-							'<a href="' . esc_url( Util_Ui::admin_url( 'admin.php?page=w3tc_general#google_page_speed' ) ) . '" target="_blank">' . esc_html__( 'here', 'w3-total-cache' ) . '</a>'
+							'<a href="' . esc_url( Util_Ui::admin_url( 'admin.php?page=w3tc_general#google_pagespeed' ) ) . '" target="_blank">' . esc_html__( 'here', 'w3-total-cache' ) . '</a>'
 						),
 					)
 				);
@@ -174,7 +174,7 @@ class PageSpeed_Widget {
 			} else {
 				$api_response['time']         = time();
 				$api_response['display_time'] = \current_time( 'M jS, Y g:ia', false );
-				update_option( 'w3tc_pagespeed_data_' . $home_url, wp_json_encode( $api_response ), Util_PageSpeed::get_cache_life() );
+				update_option( 'w3tc_pagespeed_data_' . $home_url, wp_json_encode( $api_response ), 'yes' );
 			}
 		}
 
