@@ -7,8 +7,8 @@ if ( ! function_exists( 'wp_cache_phase2' ) ) {
 // error_reporting(E_ERROR | E_PARSE); // uncomment to debug this file!
 // directory where the configuration file lives.
 if ( !defined( 'WPCACHECONFIGPATH' ) ) {
-  define( 'WPCACHECONFIGPATH', WP_CONTENT_DIR );
-} 
+	define( 'WPCACHECONFIGPATH', WP_CONTENT_DIR );
+}
 
 if ( ! @include WPCACHECONFIGPATH . '/wp-cache-config.php' ) {
 	return false;
@@ -145,6 +145,11 @@ if ( function_exists( 'add_filter' ) ) { // loaded since WordPress 4.6
 }
 
 $wp_cache_request_uri = wpsc_remove_tracking_params_from_uri( $_SERVER['REQUEST_URI'] ); // Cache this in case any plugin modifies it and filter out tracking parameters.
+
+// $wp_cache_request_uri is expected to be a string. If running from wp-cli it will be null.
+if ( $wp_cache_request_uri === null ) {
+	$wp_cache_request_uri = '';
+}
 
 if ( defined( 'DOING_CRON' ) ) {
 	// this is required for scheduled CRON jobs.

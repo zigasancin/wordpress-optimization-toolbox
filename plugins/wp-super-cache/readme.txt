@@ -1,10 +1,10 @@
 === WP Super Cache ===
-Contributors: donncha, automattic
+Contributors: donncha, automattic, adnan007, mikemayhem3030, ppetrov2c, pyronaur, thingalon
 Tags: performance, caching, wp-cache, wp-super-cache, cache
-Requires at least: 5.9
+Requires at least: 6.1
 Requires PHP: 5.6
-Tested up to: 6.1
-Stable tag: 1.9.2
+Tested up to: 6.3
+Stable tag: 1.10.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,7 +49,7 @@ Even with preload mode enabled cached files will still be deleted when posts are
 * Translation of the plugin into different languages is on the [translation page](https://translate.wordpress.org/projects/wp-plugins/wp-super-cache).
 
 ### Documentation ###
-If you need more information than the following, you can have a look at the [Developer documentation](https://odd.blog/wp-super-cache-developers/).
+If you need more information than the following, you can have a look at [the wiki](https://github.com/Automattic/wp-super-cache/wiki) or the [Developer documentation](https://odd.blog/wp-super-cache-developers/).
 
 #### Preloading ####
 You can generate cached files for the posts, categories and tags of your site by preloading. Preloading will visit each page of your site generating a cached page as it goes along, just like any other visitor to the site. Due to the sequential nature of this function, it can take some time to preload a complete site if there are many posts.
@@ -268,18 +268,34 @@ Your theme is probably responsive which means it resizes the page to suit whatev
 
 
 == Changelog ==
-### 1.9.1-beta - 2022-12-09
+### 1.10.0 - 2023-08-16
 #### Added
-- Added a dismissable option to install Jetpack Boost.
-- Improved stability with the start of an end-to-end test suite.
-- Tested with v6.1 of WordPress.
+- Caching: Added support for the 'Accept' HTTP Header. Prevent caching JSON content.
+- Preload: Improved preload notification panel shows the last 5 preloaded URLs.
 
 #### Changed
-- Updated package dependencies.
+- General: Indicate full compatibility with the latest version of WordPress, 6.3.
+- General: Update Boost install / activate card styles.
+- General: Update documentation links to point to Jetpack.com docs.
+- General: Update the contributors list.
+- Preload: Faster and more robust preloading slower hosts.
+
+#### Removed
+- Cleanup: Removes unwanted development environment files from production version of the plugin.
+- Cleanup: Remove unused "object cache" code.
 
 #### Fixed
-- Compatibility: Avoid use of QUERY_STRING value, which is not available in all environments.
-- Updated links to related plugins to remove click-tracking redirects.
+- Cache Compression: Fix PHP warning appearing in gzip output stream.
+- Caching: Reject unknown or malformed URIs to prevent PHP warnings.
+- Dynamic Caching: Fixed incorrect encoding headers when using dynamic caching with compression.
+- Setting page: Fixed boost banner getting oversized when zoomed out
+- General: Fix incorrect Debug Log URL for nested WordPress installations.
+- General: Fix links to cache directory on sites that are in a sub directory.
+- General: Updated Nginx documentation hyperlink.
+- Preload: No longer deletes child taxonomies during preload.
+- Preload: Use a constant instead of hard-coded email numbers in preload dropdown.
+- Caching: Prevent Super Cache from attempting to gunzip content which is not zipped
+- General: Fix null/false warning in PHP8.1
 
 --------
 
