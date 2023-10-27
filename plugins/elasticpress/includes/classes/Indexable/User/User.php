@@ -8,10 +8,10 @@
 
 namespace ElasticPress\Indexable\User;
 
-use ElasticPress\Indexable as Indexable;
-use ElasticPress\Elasticsearch as Elasticsearch;
-use \WP_User_Query as WP_User_Query;
-use ElasticPress\Utils as Utils;
+use \WP_User_Query;
+use ElasticPress\Elasticsearch;
+use ElasticPress\Indexable;
+use ElasticPress\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -664,13 +664,20 @@ class User extends Indexable {
 		 * WP_User_Query doesn't let us get users across all blogs easily. This is the best
 		 * way to do that.
 		 */
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$objects = $wpdb->get_results( $wpdb->prepare( "SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$orderby} LIMIT %d, %d", (int) $args['offset'], (int) $args['number'] ) );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$objects = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT SQL_CALC_FOUND_ROWS ID FROM {$wpdb->users} {$orderby} LIMIT %d, %d",
+				(int) $args['offset'],
+				(int) $args['number']
+			)
+		);
 
 		return [
 			'objects'       => $objects,
 			'total_objects' => ( 0 === count( $objects ) ) ? 0 : (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' ),
 		];
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -691,6 +698,7 @@ class User extends Indexable {
 			 */
 			$es_version = apply_filters( 'ep_fallback_elasticsearch_version', '2.0' );
 		}
+		$es_version = (string) $es_version;
 
 		$mapping_file = 'initial.php';
 

@@ -11,6 +11,7 @@ import {
 	useRef,
 	WPElement,
 } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
 
 /**
  * Internal dependencies.
@@ -105,8 +106,10 @@ export const ApiSearchProvider = ({
 		isOn: defaultIsOn,
 		isPoppingState: false,
 		searchResults: [],
-		searchedTerm: '',
 		totalResults: 0,
+		suggestedTerms: [],
+		isFirstSearch: true,
+		searchTerm: '',
 	});
 
 	/**
@@ -119,7 +122,7 @@ export const ApiSearchProvider = ({
 	stateRef.current = state;
 
 	/**
-	 * Clear facet contraints.
+	 * Clear facet constraints.
 	 *
 	 * @returns {void}
 	 */
@@ -128,7 +131,7 @@ export const ApiSearchProvider = ({
 	}, []);
 
 	/**
-	 * Clear search resu;ts.
+	 * Clear search results.
 	 *
 	 * @returns {void}
 	 */
@@ -280,29 +283,44 @@ export const ApiSearchProvider = ({
 	 *
 	 * @returns {void}
 	 */
-	const handleSearch = useCallback(async () => {
-		const { args, isOn, isPoppingState } = stateRef.current;
+	const handleSearch = useCallback(() => {
+		const handle = async () => {
+			const { args, isOn, isPoppingState } = stateRef.current;
 
-		if (!isPoppingState) {
-			pushState();
-		}
+			if (!isPoppingState) {
+				pushState();
+			}
 
-		if (!isOn) {
-			return;
-		}
+			if (!isOn) {
+				return;
+			}
 
-		const urlParams = getUrlParamsFromArgs(args, argsSchema);
+			const urlParams = getUrlParamsFromArgs(args, argsSchema);
 
-		setIsLoading(true);
+			setIsLoading(true);
 
-		const response = await fetchResults(urlParams);
+			try {
+				const response = await fetchResults(urlParams);
 
-		if (!response) {
-			return;
-		}
+				if (!response) {
+					return;
+				}
 
-		setResults(response);
-		setIsLoading(false);
+				setResults(response);
+			} catch (e) {
+				const errorMessage = sprintf(
+					/* translators: Error message */
+					__('ElasticPress: Unable to fetch results. %s', 'elasticpress'),
+					e.message,
+				);
+
+				console.error(errorMessage); // eslint-disable-line no-console
+			}
+
+			setIsLoading(false);
+		};
+
+		handle();
 	}, [argsSchema, fetchResults, pushState]);
 
 	/**
@@ -321,8 +339,17 @@ export const ApiSearchProvider = ({
 	/**
 	 * Provide state to context.
 	 */
-	const { aggregations, args, isLoading, isOn, searchResults, searchTerm, totalResults } =
-		stateRef.current;
+	const {
+		aggregations,
+		args,
+		isLoading,
+		isOn,
+		searchResults,
+		searchTerm,
+		totalResults,
+		suggestedTerms,
+		isFirstSearch,
+	} = stateRef.current;
 
 	// eslint-disable-next-line react/jsx-no-constructed-context-values
 	const contextValue = {
@@ -343,6 +370,8 @@ export const ApiSearchProvider = ({
 		previousPage,
 		totalResults,
 		turnOff,
+		suggestedTerms,
+		isFirstSearch,
 	};
 
 	return <Context.Provider value={contextValue}>{children}</Context.Provider>;

@@ -8,9 +8,8 @@
 
 namespace ElasticPress\Indexable\User;
 
-use ElasticPress\Indexables as Indexables;
-use \WP_User_Query as WP_User_Query;
-use ElasticPress\Utils as Utils;
+use \WP_User_Query;
+use ElasticPress\Indexables;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -30,9 +29,21 @@ class QueryIntegration {
 	 * @since 3.6.0 Added $indexable_slug
 	 */
 	public function __construct( $indexable_slug = 'user' ) {
+		/**
+		 * Filter whether to enable query integration during indexing
+		 *
+		 * @since 4.5.2
+		 * @hook ep_enable_query_integration_during_indexing
+		 *
+		 * @param {bool} $enable To allow query integration during indexing
+		 * @param {string} $indexable_slug Indexable slug
+		 * @return {bool} New value
+		 */
+		$allow_query_integration_during_indexing = apply_filters( 'ep_enable_query_integration_during_indexing', false, $indexable_slug );
+
 		// Ensure that we are currently allowing ElasticPress to override the normal WP_Query
 		// Indexable->is_full_reindexing() is not available at this point yet, so using the IndexHelper version of it.
-		if ( \ElasticPress\IndexHelper::factory()->is_full_reindexing( $indexable_slug ) ) {
+		if ( \ElasticPress\IndexHelper::factory()->is_full_reindexing( $indexable_slug ) && ! $allow_query_integration_during_indexing ) {
 			return;
 		}
 
