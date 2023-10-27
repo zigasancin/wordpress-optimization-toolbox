@@ -2,10 +2,10 @@
 Contributors: nosilver4u
 Donate link: https://ewww.io/donate/
 Tags: optimize, image, convert, webp, resize, compress, lazy load, optimization, lossless, lossy, seo, scale
-Requires at least: 5.8
-Tested up to: 6.2
-Requires PHP: 7.2
-Stable tag: 7.0.0
+Requires at least: 6.0
+Tested up to: 6.3
+Requires PHP: 7.3
+Stable tag: 7.2.1
 License: GPLv3
 
 Smaller Images, Faster Sites, Happier Visitors. Comprehensive image optimization that doesn't require a degree in rocket science.
@@ -38,7 +38,10 @@ With Easy IO, images are automatically compressed, scaled to fit the page and de
 
 Stuck? Feeling like maybe you DO need that rocket science degree? [We provide free one-on-one email support to everyone](https://ewww.io/contact-us/).
 Do you have an idea to make EWWW IO even better? [Share it and vote on future features](https://feedback.ewww.io/b/features)!
+
 Found a bug? Report the issue on [GitHub](https://github.com/nosilver4u/ewww-image-optimizer), and we'll get it fixed!
+
+You may report security issues through our Patchstack Vulnerability Disclosure Program. The Patchstack team helps validate, triage and handle any security vulnerabilities. [Report a security vulnerability.](https://patchstack.com/database/vdp/ewww-image-optimizer)
 
 = Bulk Optimize =
 
@@ -136,6 +139,37 @@ That's not a question, but since I made it up, I'll answer it. See this resource
 
 * Feature requests can be viewed and submitted on our [feedback portal](https://feedback.ewww.io/b/features)
 * If you would like to help translate this plugin in your language, [join the team](https://translate.wordpress.org/projects/wp-plugins/ewww-image-optimizer/)
+
+= 7.2.1 =
+* changed: Scheduled Optimizer skips image errors faster
+* changed: use updated coding standards, and restructure code for async/background functions
+* removed: legacy image editor extensions for unmaintained plugins
+* security: randomize filename of debug log
+
+= 7.2.0 =
+* added: Easy IO rewrites poster/thumbnail image URLs for video elements
+* changed: Easy IO + Auto Scale checks images on load and resize events to reduce browser upscaling
+* changed: prevent Easy IO font substitution when OMGF is active
+* fixed: Auto Scale downscales too much for landscape images displayed in portrait containers
+* fixed: Easy IO compatibility with Brizy thumbnail generation endpoint
+
+= 7.1.0 =
+* added: deliver Google Fonts via Easy IO or Bunny Fonts for improved user privacy
+* fixed: PHP error trying to save EXIF data to JPG after resizing
+* fixed: could not disable auto-scaling
+* fixed: prevent errors when using legacy Animated GIF Resizing plugin
+* fixed: prevent WP Offload Media from prematurely re-offloading when using bulk optimizer
+
+= 7.0.2 =
+* fixed: background optimization incorrectly displays as disabled on fresh installs with object caching
+* fixed: Easy IO registration state not detected on multi-site
+* fixed: duplicate queries in wp-admin when used with WP Offload Media
+* fixed: deprecation notices when validating quality settings
+* fixed: error when checking a corrupted PNG for transparency
+
+= 7.0.1 =
+* fixed: Easy IO instructions display incorrect URL when images are on cloud storage (S3, GCS, etc.)
+* fixed: fatal error calling undefined method supports_webp
 
 = 7.0.0 =
 * breaking: namespaced and reorganized several classes, third party integrations should check for compatibility

@@ -64,7 +64,7 @@ class Backup extends Base {
 	/**
 	 * Register (once) actions and filters for Backup and Restore.
 	 */
-	function __construct() {
+	public function __construct() {
 		global $eio_backup;
 		if ( \is_object( $eio_backup ) ) {
 			return $eio_backup;
@@ -136,12 +136,12 @@ class Backup extends Base {
 			$this->debug_message( 'using ' . $this->backup_uploads_dir );
 			return \str_replace( $upload_dir, $this->backup_uploads_dir, $file );
 		}
-		$content_dir = \trailingslashit( \realpath( \WP_CONTENT_DIR ) );
+		$content_dir = \trailingslashit( \realpath( WP_CONTENT_DIR ) );
 		if ( $content_dir && \strpos( $file, $content_dir ) === 0 ) {
 			$this->debug_message( 'using ' . $this->backup_dir );
 			return \str_replace( $content_dir, $this->backup_dir, $file );
 		}
-		$wp_dir = \trailingslashit( \realpath( \ABSPATH ) );
+		$wp_dir = \trailingslashit( \realpath( ABSPATH ) );
 		if ( $wp_dir && \strpos( $file, $wp_dir ) === 0 ) {
 			$this->debug_message( 'using ' . $this->backup_root_dir );
 			return \str_replace( $wp_dir, $this->backup_root_dir, $file );
@@ -169,7 +169,7 @@ class Backup extends Base {
 			}
 			if ( $record && $this->is_iterable( $record ) && ! empty( $record['backup'] ) && ! empty( $record['updated'] ) ) {
 				$updated_time = \strtotime( $record['updated'] );
-				if ( \DAY_IN_SECONDS * 30 + $updated_time > \time() ) {
+				if ( DAY_IN_SECONDS * 30 + $updated_time > \time() ) {
 					return true;
 				}
 			}
@@ -208,6 +208,9 @@ class Backup extends Base {
 			return;
 		}
 		if ( ! $this->is_file( $file ) || ! $this->is_readable( $file ) ) {
+			return;
+		}
+		if ( apply_filters( 'ewww_image_optimizer_skip_local_backup', false, $file ) ) {
 			return;
 		}
 		$backup_file = $this->get_backup_location( $file );
@@ -261,7 +264,7 @@ class Backup extends Base {
 		}
 		$this->error_message = '';
 		if ( ! \is_array( $image ) && ! empty( $image ) && \is_numeric( $image ) ) {
-			$image = $ewwwdb->get_row( "SELECT id,path,backup FROM $ewwwdb->ewwwio_images WHERE id = $image", \ARRAY_A );
+			$image = $ewwwdb->get_row( "SELECT id,path,backup FROM $ewwwdb->ewwwio_images WHERE id = $image", ARRAY_A );
 		}
 		if ( ! empty( $image['path'] ) ) {
 			$image['path'] = \ewww_image_optimizer_absolutize_path( $image['path'] );
@@ -392,7 +395,7 @@ class Backup extends Base {
 		} else {
 			$ewwwdb = $wpdb;
 		}
-		$images = $ewwwdb->get_results( "SELECT id,path,resize,backup FROM $ewwwdb->ewwwio_images WHERE attachment_id = $id AND gallery = '$gallery'", \ARRAY_A );
+		$images = $ewwwdb->get_results( "SELECT id,path,resize,backup FROM $ewwwdb->ewwwio_images WHERE attachment_id = $id AND gallery = '$gallery'", ARRAY_A );
 		foreach ( $images as $image ) {
 			if ( ! empty( $image['path'] ) ) {
 				$image['path'] = \ewww_image_optimizer_absolutize_path( $image['path'] );

@@ -1,3 +1,34 @@
+= 7.2.1 =
+* changed: Scheduled Optimizer skips image errors faster
+* changed: use updated coding standards, and restructure code for async/background functions
+* removed: legacy image editor extensions for unmaintained plugins
+* security: randomize filename of debug log
+
+= 7.2.0 =
+* added: Easy IO rewrites poster/thumbnail image URLs for video elements
+* changed: Easy IO + Auto Scale checks images on load and resize events to reduce browser upscaling
+* changed: prevent Easy IO font substitution when OMGF is active
+* fixed: Auto Scale downscales too much for landscape images displayed in portrait containers
+* fixed: Easy IO compatibility with Brizy thumbnail generation endpoint
+
+= 7.1.0 =
+* added: deliver Google Fonts via Easy IO or Bunny Fonts for improved user privacy
+* fixed: PHP error trying to save EXIF data to JPG after resizing
+* fixed: could not disable auto-scaling
+* fixed: prevent errors when using legacy Animated GIF Resizing plugin
+* fixed: prevent WP Offload Media from prematurely re-offloading when using bulk optimizer
+
+= 7.0.2 =
+* fixed: background optimization incorrectly displays as disabled on fresh installs with object caching
+* fixed: Easy IO registration state not detected on multi-site
+* fixed: duplicate queries in wp-admin when used with WP Offload Media
+* fixed: deprecation notices when validating quality settings
+* fixed: error when checking a corrupted PNG for transparency
+
+= 7.0.1 =
+* fixed: Easy IO instructions display incorrect URL when images are on cloud storage (S3, GCS, etc.)
+* fixed: fatal error calling undefined method supports_webp
+
 = 7.0.0 =
 * breaking: namespaced and reorganized several classes, third party integrations should check for compatibility
 * added: allow video files to go through Easy IO CDN (pass through)

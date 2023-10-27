@@ -181,7 +181,7 @@ function ewww_image_optimizer_jpegtran_autorotate( $file, $type, $orientation ) 
  *                             6=imagestore.
  * @param bool   $converted True if this is a resize and the full image was converted to a
  *                          new format. Deprecated, always false now.
- * @param bool   $new True if this is a new image, so it should attempt conversion regardless of
+ * @param bool   $new_image True if this is a new image, so it should attempt conversion regardless of
  *                    previous results.
  * @param bool   $fullsize True if this is a full size (original) image.
  * @return array {
@@ -193,7 +193,7 @@ function ewww_image_optimizer_jpegtran_autorotate( $file, $type, $orientation ) 
  *     @type string The original filename if converted.
  * }
  */
-function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $new = false, $fullsize = false ) {
+function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $new_image = false, $fullsize = false ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 	session_write_close();
 	if ( function_exists( 'wp_raise_memory_limit' ) ) {
@@ -334,7 +334,7 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 			}
 			$compression_level = (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' );
 			// Check for previous optimization, so long as the force flag is not on and this isn't a new image that needs converting.
-			if ( empty( $ewww_force ) && ! ( $new && $convert ) ) {
+			if ( empty( $ewww_force ) && ! ( $new_image && $convert ) ) {
 				$results_msg = ewww_image_optimizer_check_table( $file, $orig_size );
 				$smart_reopt = ! empty( $ewww_force_smart ) && ewww_image_optimizer_level_mismatch( $ewww_image->level, $compression_level ) ? true : false;
 				if ( $smart_reopt ) {
@@ -615,7 +615,7 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 			} // End if().
 			$compression_level = (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' );
 			// Check for previous optimization, so long as the force flag is not on and this isn't a new image that needs converting.
-			if ( empty( $ewww_force ) && ! ( $new && $convert ) ) {
+			if ( empty( $ewww_force ) && ! ( $new_image && $convert ) ) {
 				$results_msg = ewww_image_optimizer_check_table( $file, $orig_size );
 				$smart_reopt = ! empty( $ewww_force_smart ) && ewww_image_optimizer_level_mismatch( $ewww_image->level, $compression_level ) ? true : false;
 				if ( $smart_reopt ) {
@@ -926,7 +926,7 @@ function ewww_image_optimizer( $file, $gallery_type = 4, $converted = false, $ne
 			}
 			$compression_level = (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_level' );
 			// Check for previous optimization, so long as the force flag is on and this isn't a new image that needs converting.
-			if ( empty( $ewww_force ) && ! ( $new && $convert ) ) {
+			if ( empty( $ewww_force ) && ! ( $new_image && $convert ) ) {
 				$results_msg = ewww_image_optimizer_check_table( $file, $orig_size );
 				$smart_reopt = ! empty( $ewww_force_smart ) && ewww_image_optimizer_level_mismatch( $ewww_image->level, $compression_level ) ? true : false;
 				if ( $smart_reopt ) {
@@ -1285,7 +1285,7 @@ function ewww_image_optimizer_webp_create( $file, $orig_size, $type, $tool, $rec
 			case 'image/jpeg':
 				ewwwio_debug_message( "$nice " . $tool . " -q $quality $sharp_yuv -metadata $copy_opt -quiet " . ewww_image_optimizer_escapeshellarg( $file ) . ' -o ' . ewww_image_optimizer_escapeshellarg( $webpfile ) . ' 2>&1' );
 				exec( "$nice " . $tool . " -q $quality $sharp_yuv -metadata $copy_opt -quiet " . ewww_image_optimizer_escapeshellarg( $file ) . ' -o ' . ewww_image_optimizer_escapeshellarg( $webpfile ) . ' 2>&1', $cli_output );
-				if ( ! ewwwio_is_file( $webpfile ) && ewwwio()->supports_webp() && ewww_image_optimizer_is_cmyk( $file ) ) {
+				if ( ! ewwwio_is_file( $webpfile ) && ewwwio()->imagick_supports_webp() && ewww_image_optimizer_is_cmyk( $file ) ) {
 					ewwwio_debug_message( 'cmyk image skipped, trying imagick' );
 					ewww_image_optimizer_imagick_create_webp( $file, $type, $webpfile );
 				} elseif ( ewwwio_is_file( $webpfile ) && 'image/webp' !== ewww_image_optimizer_mimetype( $webpfile, 'i' ) ) {

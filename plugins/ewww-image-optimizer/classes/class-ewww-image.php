@@ -129,7 +129,7 @@ class EWWW_Image {
 	 * @param string $gallery Optional. The type of image to work with. Accepts 'media', 'nextgen', 'flag', or 'nextcellent'.
 	 * @param string $path Optional. The absolute path to an image.
 	 */
-	function __construct( $id = 0, $gallery = '', $path = '' ) {
+	public function __construct( $id = 0, $gallery = '', $path = '' ) {
 		if ( ! is_numeric( $id ) ) {
 			$id = 0;
 		}
@@ -900,7 +900,7 @@ class EWWW_Image {
 		while ( \ewwwio_is_file( $filename . $suffix . $dimensions . $hidpi_suffix . $fileext ) ) {
 			ewwwio_debug_message( "$filenum is not good enough, bumping" );
 			// Bump the numerical appendage.
-			$filenum++;
+			++$filenum;
 			$suffix = '-' . $filenum;
 		}
 		// All done, let's reconstruct the filename.
@@ -941,11 +941,11 @@ class EWWW_Image {
 		$this->update_db_urls( $new_url, $old_url );
 
 		if ( 2 === (int) \apply_filters( 'wpml_setting', false, 'language_negotiation_type' ) ) {
-			$default_domain = wp_parse_url( get_site_url(), \PHP_URL_HOST );
+			$default_domain = wp_parse_url( get_site_url(), PHP_URL_HOST );
 			$wpml_domains   = \apply_filters( 'wpml_setting', array(), 'language_domains' );
 			if ( ewww_image_optimizer_iterable( $wpml_domains ) ) {
 				foreach ( $wpml_domains as $wpml_domain ) {
-					$image_domain = wp_parse_url( $old_url, \PHP_URL_HOST );
+					$image_domain = wp_parse_url( $old_url, PHP_URL_HOST );
 					if ( empty( $wpml_domain ) || empty( $image_domain ) ) {
 						continue;
 					}
@@ -963,9 +963,7 @@ class EWWW_Image {
 					}
 				}
 			}
-		} elseif ( 1 === (int) \apply_filters( 'wpml_setting', false, 'language_negotiation_type' ) ) {
 		}
-		// TODO: Also (maybe) need to check sub-folder style, and maybe make that extensible? Plus be sure to check the default folder if the primary attachment is in a non-default language, just like we did for domains.
 		do_action( 'ewwwio_conversion_replace_url_post', $new_url, $old_url );
 	}
 
@@ -1154,7 +1152,7 @@ class EWWW_Image {
 						$time += 2;
 					}
 				} else {
-					$time++;
+					++$time;
 					if ( 40 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' ) ) {
 						if ( $image_size > 200000 ) { // greater than 200k.
 							$time += 11;
@@ -1170,7 +1168,7 @@ class EWWW_Image {
 				break;
 			case 'image/png':
 				if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) > 10 && ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
-					$time++;
+					++$time;
 				}
 				if ( $image_size > 2500000 ) { // greater than 2.5MB.
 					$time += 35;
@@ -1183,7 +1181,7 @@ class EWWW_Image {
 					} elseif ( 30 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
 						$time += 10;
 					} elseif ( 20 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
-						$time++;
+						++$time;
 					}
 				} elseif ( $image_size > 500000 ) { // greater than 500kb.
 					$time += 7;
@@ -1194,7 +1192,7 @@ class EWWW_Image {
 					} elseif ( 30 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
 						$time += 8;
 					} elseif ( 20 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
-						$time++;
+						++$time;
 					}
 				} elseif ( $image_size > 100000 ) { // greater than 100kb.
 					$time += 4;
@@ -1205,25 +1203,25 @@ class EWWW_Image {
 					} elseif ( 30 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
 						$time += 9;
 					} elseif ( 20 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
-						$time++;
+						++$time;
 					}
 				} else {
-					$time++;
+					++$time;
 					if ( 50 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
 						$time += 2;
 					} elseif ( 40 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
-						$time ++;
+						++$time;
 					} elseif ( 30 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
 						$time += 3;
 					} elseif ( 20 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' ) ) {
-						$time++;
+						++$time;
 					}
 				} // End if().
 				break;
 			case 'image/gif':
-				$time++;
+				++$time;
 				if ( 10 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_level' ) && ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
-					$time++;
+					++$time;
 				}
 				if ( $image_size > 1000000 ) { // greater than 1MB.
 					$time += 5;
@@ -1249,7 +1247,7 @@ class EWWW_Image {
 						$time += 12;
 					}
 				} elseif ( $image_size > 1000000 ) { // greater than 1MB.
-					$time++;
+					++$time;
 					if ( 20 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_pdf_level' ) ) {
 						$time += 10;
 					}
