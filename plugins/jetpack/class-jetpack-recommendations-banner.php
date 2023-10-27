@@ -47,7 +47,7 @@ class Jetpack_Recommendations_Banner {
 	 * @param \WP_Screen $current_screen Current WordPress screen.
 	 */
 	public function maybe_initialize_hooks( $current_screen ) {
-		if ( ! $this->can_be_displayed() ) {
+		if ( ! static::can_be_displayed() ) {
 			return;
 		}
 
@@ -208,7 +208,7 @@ class Jetpack_Recommendations_Banner {
 				<h1 class="jp-recommendations-banner__question">
 					<?php
 					/* translators: placeholder is the name of the website */
-					echo sprintf( esc_html__( 'Tell us more about %s?', 'jetpack' ), esc_html( $site_name ) );
+					printf( esc_html__( 'Tell us more about %s?', 'jetpack' ), esc_html( $site_name ) );
 					?>
 				</h1>
 				<p class="jp-recommendations-banner__description">

@@ -75,8 +75,9 @@ class Assets {
 	 *
 	 * @param string $script_handle Script handle.
 	 */
-	public function add_async_script( $script_handle ) {
-		$this->defer_script_handles[] = $script_handle;
+	public static function add_async_script( $script_handle ) {
+		$assets_instance                         = self::instance();
+		$assets_instance->defer_script_handles[] = $script_handle;
 	}
 
 	/**
@@ -281,7 +282,7 @@ class Assets {
 				++$i;
 			}
 		}
-		$ret .= join( '/', $pp );
+		$ret .= implode( '/', $pp );
 
 		$ret .= isset( $parts['query'] ) ? '?' . $parts['query'] : '';
 		$ret .= isset( $parts['fragment'] ) ? '#' . $parts['fragment'] : '';
@@ -508,7 +509,7 @@ class Assets {
 		}
 
 		// Deprecated state module: Depend on wp-i18n to ensure global `wp` exists and because anything needing this will need that too.
-		$wp_scripts->add( 'wp-jp-i18n-state', null, array( 'wp-deprecated', 'wp-jp-i18n-loader' ) );
+		$wp_scripts->add( 'wp-jp-i18n-state', false, array( 'wp-deprecated', 'wp-jp-i18n-loader' ) );
 		$wp_scripts->add_inline_script( 'wp-jp-i18n-state', 'wp.deprecated( "wp-jp-i18n-state", { alternative: "wp-jp-i18n-loader" } );' );
 		$wp_scripts->add_inline_script( 'wp-jp-i18n-state', 'wp.jpI18nState = wp.jpI18nLoader.state;' );
 	}
@@ -730,7 +731,6 @@ class Assets {
 	}
 
 	// endregion .
-
 }
 
 // Enable section folding in vim:

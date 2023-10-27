@@ -411,6 +411,7 @@ abstract class WPCOM_JSON_API_Endpoint {
 	 * @return mixed
 	 */
 	public function input( $return_default_values = true, $cast_and_filter = true ) {
+		$return       = null;
 		$input        = trim( (string) $this->api->post_body );
 		$content_type = (string) $this->api->content_type;
 		if ( $content_type ) {
@@ -426,11 +427,7 @@ abstract class WPCOM_JSON_API_Endpoint {
 			case 'text/json':
 				$return = json_decode( $input, true );
 
-				if ( function_exists( 'json_last_error' ) ) {
-					if ( JSON_ERROR_NONE !== json_last_error() ) { // phpcs:ignore PHPCompatibility
-						return null;
-					}
-				} elseif ( $return === null && wp_json_encode( null ) !== $input ) {
+				if ( JSON_ERROR_NONE !== json_last_error() ) {
 					return null;
 				}
 
@@ -634,11 +631,19 @@ abstract class WPCOM_JSON_API_Endpoint {
 							}
 						}
 
-						$return[ $key ] = $files;
-						break;
+						foreach ( $files as $k => $file ) {
+							if ( ! isset( $file['tmp_name'] ) || ! is_string( $file['tmp_name'] ) || ! is_uploaded_file( $file['tmp_name'] ) ) {
+								unset( $files[ $k ] );
+							}
+						}
+						if ( $files ) {
+							$return[ $key ] = $files;
+						}
+					} elseif ( isset( $value['tmp_name'] ) && is_string( $value['tmp_name'] ) && is_uploaded_file( $value['tmp_name'] ) ) {
+						$return[ $key ] = $value;
 					}
 				}
-				// no break - treat as 'array'.
+				break;
 			case 'array':
 				// Fallback array -> string.
 				if ( is_string( $value ) ) {
@@ -1127,7 +1132,7 @@ abstract class WPCOM_JSON_API_Endpoint {
 		</td>
 	</tr>
 
-			<?php endforeach; ?>
+<?php endforeach; ?>
 </tbody>
 </table>
 </section>
@@ -1250,7 +1255,7 @@ abstract class WPCOM_JSON_API_Endpoint {
 							}
 						}
 					}
-					$type                  = '(' . join( '|', $type ) . ')';
+					$type                  = '(' . implode( '|', $type ) . ')';
 					list( , $description ) = explode( ')', $description, 2 );
 					$description           = trim( $description );
 					if ( $default ) {
@@ -1365,6 +1370,14 @@ abstract class WPCOM_JSON_API_Endpoint {
 	 * @return object
 	 */
 	public function get_author( $author, $show_email_and_ip = false ) {
+		$is_jetpack = null;
+		$login      = null;
+		$email      = null;
+		$name       = null;
+		$first_name = null;
+		$last_name  = null;
+		$nice       = null;
+		$url        = null;
 		$ip_address = isset( $author->comment_author_IP ) ? $author->comment_author_IP : '';
 
 		if ( isset( $author->comment_author_email ) ) {
@@ -1376,7 +1389,7 @@ abstract class WPCOM_JSON_API_Endpoint {
 			$last_name   = '';
 			$url         = $author->comment_author_url;
 			$avatar_url  = $this->api->get_avatar_url( $author );
-			$profile_url = 'https://en.gravatar.com/' . md5( strtolower( trim( $email ) ) );
+			$profile_url = 'https://gravatar.com/' . md5( strtolower( trim( $email ) ) );
 			$nice        = '';
 			$site_id     = -1;
 
@@ -1386,10 +1399,10 @@ abstract class WPCOM_JSON_API_Endpoint {
 				$$field = str_replace( '&amp;', '&', $$field );
 			}
 		} else {
-			if ( isset( $author->user_id ) && $author->user_id ) {
-				$author = $author->user_id;
-			} elseif ( isset( $author->user_email ) ) {
+			if ( $author instanceof WP_User || isset( $author->user_email ) ) {
 				$author = $author->ID;
+			} elseif ( isset( $author->user_id ) && $author->user_id ) {
+				$author = $author->user_id;
 			} elseif ( isset( $author->post_author ) ) {
 				// then $author is a Post Object.
 				if ( ! $author->post_author ) {
@@ -1446,9 +1459,9 @@ abstract class WPCOM_JSON_API_Endpoint {
 						is_private_blog_user( $site_id, get_current_user_id() )
 					);
 				}
-				$profile_url = "https://en.gravatar.com/{$login}";
+				$profile_url = "https://gravatar.com/{$login}";
 			} else {
-				$profile_url = 'https://en.gravatar.com/' . md5( strtolower( trim( $email ) ) );
+				$profile_url = 'https://gravatar.com/' . md5( strtolower( trim( $email ) ) );
 				$site_id     = -1;
 			}
 
@@ -2147,6 +2160,11 @@ abstract class WPCOM_JSON_API_Endpoint {
 			return false;
 		}
 
+		// We don't know if this is an upload or a sideload, but in either case the tmp_name should be a path, not a URL.
+		if ( wp_parse_url( $media_item['tmp_name'], PHP_URL_SCHEME ) !== null ) {
+			return false;
+		}
+
 		// Check if video is longer than 5 minutes.
 		$video_meta = wp_read_video_metadata( $media_item['tmp_name'] );
 		if (
@@ -2574,7 +2592,6 @@ abstract class WPCOM_JSON_API_Endpoint {
 	 *  $data: HTTP 200, json_encode( $data ) response body
 	 */
 	abstract public function callback( $path = '' );
-
 }
 
 require_once __DIR__ . '/json-endpoints.php';

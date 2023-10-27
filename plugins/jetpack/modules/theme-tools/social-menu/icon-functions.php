@@ -165,6 +165,7 @@ if ( ! function_exists( 'jetpack_social_menu_social_links_icons' ) ) :
 			'mailto:'           => 'mail',
 			'meetup.com'        => 'meetup',
 			'medium.com'        => 'medium',
+			'nextdoor.com'      => 'nextdoor',
 			'patreon.com'       => 'patreon',
 			'pinterest.'        => 'pinterest',
 			'getpocket.com'     => 'pocket',
@@ -180,6 +181,7 @@ if ( ! function_exists( 'jetpack_social_menu_social_links_icons' ) ) :
 			'strava.com'        => 'strava',
 			'stumbleupon.com'   => 'stumbleupon',
 			'telegram.me'       => 'telegram',
+			'threads.net'       => 'threads',
 			'tiktok.com'        => 'tiktok',
 			'tumblr.com'        => 'tumblr',
 			'twitch.tv'         => 'twitch',
@@ -191,6 +193,7 @@ if ( ! function_exists( 'jetpack_social_menu_social_links_icons' ) ) :
 			'wordpress.org'     => 'wordpress',
 			'wordpress.com'     => 'wordpress',
 			'yelp.com'          => 'yelp',
+			'x.com'             => 'x',
 			'xanga.com'         => 'xanga',
 			'youtube.com'       => 'youtube',
 		);

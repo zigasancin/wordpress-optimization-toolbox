@@ -8,6 +8,12 @@
 namespace Automattic\Jetpack\Forms\Dashboard;
 
 use Automattic\Jetpack\Assets;
+use Automattic\Jetpack\Connection\Manager as Connection_Manager;
+use Automattic\Jetpack\Forms\Jetpack_Forms;
+use Automattic\Jetpack\Forms\Service\Google_Drive;
+use Automattic\Jetpack\Redirect;
+use Automattic\Jetpack\Status;
+use Automattic\Jetpack\Status\Host;
 
 /**
  * Handles the Jetpack Forms dashboard.
@@ -79,6 +85,20 @@ class Dashboard {
 			'window.jetpackFormsData = ' . wp_json_encode( array( 'apiRoot' => $api_root ) ) . ';',
 			'before'
 		);
+
+		if ( ( new Host() )->is_wpcom_platform() ) {
+			Assets::register_script(
+				'jp-forms-dashboard-wpcom',
+				'../../dist/dashboard/jetpack-forms-dashboard.wpcom.js',
+				__FILE__,
+				array(
+					'in_footer'    => true,
+					'textdomain'   => 'jetpack-forms',
+					'enqueue'      => true,
+					'dependencies' => array( 'jp-forms-dashboard' ),
+				)
+			);
+		}
 	}
 
 	/**
@@ -116,8 +136,47 @@ class Dashboard {
 	 * Render the dashboard.
 	 */
 	public function render_dashboard() {
+		if ( ! class_exists( 'Jetpack_AI_Helper' ) ) {
+			require_once JETPACK__PLUGIN_DIR . '_inc/lib/class-jetpack-ai-helper.php';
+		}
+
+		$ai_feature = \Jetpack_AI_Helper::get_ai_assistance_feature();
+		$has_ai     = ! is_wp_error( $ai_feature ) ? $ai_feature['has-feature'] : false;
+
+		$jetpack_connected = ( defined( 'IS_WPCOM' ) && IS_WPCOM ) || ( new Connection_Manager( 'jetpack-forms' ) )->is_user_connected( get_current_user_id() );
+		$user_id           = (int) get_current_user_id();
+
+		$config = array(
+			'blogId'                  => get_current_blog_id(),
+			'exportNonce'             => wp_create_nonce( 'feedback_export' ),
+			'newFormNonce'            => wp_create_nonce( 'create_new_form' ),
+			'gdriveConnection'        => $jetpack_connected && Google_Drive::has_valid_connection( $user_id ),
+			'gdriveConnectURL'        => esc_url( Redirect::get_url( 'jetpack-forms-responses-connect' ) ),
+			'gdriveConnectSupportURL' => esc_url( Redirect::get_url( 'jetpack-support-contact-form-export' ) ),
+			'checkForSpamNonce'       => wp_create_nonce( 'grunion_recheck_queue' ),
+			'pluginAssetsURL'         => Jetpack_Forms::assets_url(),
+			'siteURL'                 => ( new Status() )->get_site_suffix(),
+			'hasFeedback'             => $this->has_feedback(),
+			'hasAI'                   => $has_ai,
+		);
 		?>
-		<div id="jp-forms-dashboard" style="min-height: calc(100vh - 100px);"></div>
+		<div id="jp-forms-dashboard" style="min-height: calc(100vh - 100px);" data-config="<?php echo esc_attr( wp_json_encode( $config, JSON_FORCE_OBJECT ) ); ?>"></div>
 		<?php
+	}
+
+	/**
+	 * Returns true if there are any feedback posts on the site.
+	 *
+	 * @return boolean
+	 */
+	private function has_feedback() {
+		$posts = new \WP_Query(
+			array(
+				'post_type'   => 'feedback',
+				'post_status' => array( 'publish', 'draft', 'spam', 'trash' ),
+			)
+		);
+
+		return $posts->found_posts > 0;
 	}
 }

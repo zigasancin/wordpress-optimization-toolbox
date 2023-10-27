@@ -58,6 +58,29 @@ class Jetpack_SSO {
 		add_action( 'login_form_jetpack-sso', '__return_true' );
 
 		add_filter( 'wp_login_errors', array( $this, 'sso_reminder_logout_wpcom' ) );
+
+		/**
+		 * Filter to include Force 2FA feature.
+		 *
+		 * By default, `manage_options` users are forced when enable. The capability can be modified
+		 * with the `jetpack_force_2fa_cap` filter.
+		 *
+		 * To enable the feature, add the following code:
+		 * add_filter( 'jetpack_force_2fa', '__return_true' );
+		 *
+		 * @param bool $force_2fa Whether to force 2FA or not.
+		 *
+		 * @todo Provide a UI to enable/disable the feature.
+		 *
+		 * @since 12.7
+		 * @module SSO
+		 * @return bool
+		 */
+		if ( ! class_exists( 'Jetpack_Force_2FA' ) && apply_filters( 'jetpack_force_2fa', false ) ) {
+			// Checking for the class to avoid collisions with existing standalone Jetpack Force 2FA plugin and break out if so.
+			require_once JETPACK__PLUGIN_DIR . 'modules/sso/class-jetpack-force-2fa.php';
+			new Jetpack_Force_2FA();
+		}
 	}
 
 	/**
@@ -408,7 +431,7 @@ class Jetpack_SSO {
 		}
 
 		if ( 'jetpack-sso' === $action ) {
-			if ( isset( $_GET['result'], $_GET['user_id'], $_GET['sso_nonce'] ) && 'success' === $_GET['result'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_GET['result'] ) && isset( $_GET['user_id'] ) && isset( $_GET['sso_nonce'] ) && 'success' === $_GET['result'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$this->handle_login();
 				$this->display_sso_login_form();
 			} elseif ( ( new Status() )->is_staging_site() ) {
@@ -426,7 +449,7 @@ class Jetpack_SSO {
 		} elseif ( Jetpack_SSO_Helpers::display_sso_form_for_action( $action ) ) {
 
 			// Save cookies so we can handle redirects after SSO.
-			$this->save_cookies();
+			static::save_cookies();
 
 			/**
 			 * Check to see if the site admin wants to automagically forward the user
@@ -950,7 +973,7 @@ class Jetpack_SSO {
 						array(
 							'redirect_to'               => $redirect_to,
 							'request_redirect_to'       => $_request_redirect_to,
-							'calypso_env'               => Jetpack::get_calypso_env(),
+							'calypso_env'               => ( new Host() )->get_calypso_env(),
 							'jetpack-sso-auth-redirect' => '1',
 						),
 						admin_url()

@@ -406,6 +406,14 @@ class Jetpack_Likes {
 			return $content;
 		}
 
+		// Do not output Likes on requests for ActivityPub requests.
+		if (
+			function_exists( '\Activitypub\is_activitypub_request' )
+			&& \Activitypub\is_activitypub_request()
+		) {
+			return $content;
+		}
+
 		// Ensure we don't display like button on post excerpts that are hooked inside the post content
 		if ( in_array( 'the_excerpt', (array) $wp_current_filter, true ) &&
 			in_array( 'the_content', (array) $wp_current_filter, true ) ) {
@@ -609,14 +617,5 @@ add_action( 'rest_api_init', 'jetpack_post_likes_register_rest_field' );
 // Some CPTs (e.g. Jetpack portfolios and testimonials) get registered with
 // restapi_theme_init because they depend on theme support, so let's also hook to that.
 add_action( 'restapi_theme_init', 'jetpack_post_likes_register_rest_field', 20 );
-
-/**
- * Set the Likes and Sharing Gutenberg extension availability.
- */
-function jetpack_post_likes_set_extension_availability() {
-	Jetpack_Gutenberg::set_extension_available( 'likes' );
-}
-
-add_action( 'jetpack_register_gutenberg_extensions', 'jetpack_post_likes_set_extension_availability' );
 
 Jetpack_Likes::init();

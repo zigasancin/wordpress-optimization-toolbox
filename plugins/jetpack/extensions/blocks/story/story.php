@@ -297,12 +297,12 @@ function render_video( $media ) {
 			title="%1$s"
 			type="%2$s"
 			class="wp-story-video intrinsic-ignore wp-video-%3$s"
-			data-id="%3$s"
+			data-id="%3$d"
 			src="%4$s">
 		</video>',
 		esc_attr( get_the_title( $media['id'] ) ),
 		esc_attr( $media['mime'] ),
-		$media['id'],
+		absint( $media['id'] ),
 		esc_attr( $media['url'] )
 	);
 }
@@ -425,7 +425,7 @@ function render_pagination( $settings ) {
 		'<div class="wp-story-pagination wp-story-pagination-bullets">
 			%s
 		</div>',
-		join( "\n", array_map( __NAMESPACE__ . '\render_pagination_bullet', range( 1, $bullet_count ) ) ) . $bullet_ellipsis
+		implode( "\n", array_map( __NAMESPACE__ . '\render_pagination_bullet', range( 1, $bullet_count ) ) ) . $bullet_ellipsis
 	);
 }
 

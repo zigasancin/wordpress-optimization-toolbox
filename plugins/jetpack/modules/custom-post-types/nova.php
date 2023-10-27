@@ -1384,14 +1384,15 @@ class Nova_Restaurant {
 	 * @return array
 	 */
 	public function get_menus( $args = array() ) {
-		$args = wp_parse_args(
+		$args             = wp_parse_args(
 			$args,
 			array(
 				'hide_empty' => false,
 			)
 		);
+		$args['taxonomy'] = self::MENU_TAX;
 
-		$terms = get_terms( self::MENU_TAX, $args );
+		$terms = get_terms( $args );
 		if ( ! $terms || is_wp_error( $terms ) ) {
 			return array();
 		}
@@ -1486,7 +1487,7 @@ class Nova_Restaurant {
 				);
 			}
 
-			echo join( _x( ', ', 'Nova label separator', 'jetpack' ), $out ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- we build $out ourselves and escape things there.
+			echo implode( _x( ', ', 'Nova label separator', 'jetpack' ), $out ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- we build $out ourselves and escape things there.
 		} else {
 			esc_html_e( 'No Labels', 'jetpack' );
 		}

@@ -5,33 +5,41 @@ import {
 	Container,
 	Col,
 	getRedirectUrl,
+	LoadingPlaceholder,
 } from '@automattic/jetpack-components';
 import { useConnectionErrorNotice, ConnectionError } from '@automattic/jetpack-connection';
 import apiFetch from '@wordpress/api-fetch';
 import { ExternalLink } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, useState, useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import useAnalytics from '../../hooks/useAnalytics';
 import useCapabilities from '../../hooks/useCapabilities';
 import useConnection from '../../hooks/useConnection';
-import { STORE_ID } from '../../store';
-import Backups from '../Backups';
+import { Backups, Loading as BackupsLoadingPlaceholder } from '../Backups';
 import BackupStorageSpace from '../backup-storage-space';
 import ReviewRequest from '../review-request';
 import Header from './header';
-import { useIsFullyConnected } from './hooks';
+import {
+	useIsFullyConnected,
+	useIsSecondaryAdminNotConnected,
+	useSiteHasBackupProduct,
+} from './hooks';
 import NoBackupCapabilities from './no-backup-capabilities';
 import './style.scss';
 import '../masthead/masthead-style.scss';
 
 /* eslint react/react-in-jsx-scope: 0 */
 const Admin = () => {
-	const [ connectionStatus ] = useConnection();
+	const [ connectionStatus, , BackupSecondaryAdminConnectionScreen ] = useConnection();
 	const { tracks } = useAnalytics();
 	const { hasConnectionError } = useConnectionErrorNotice();
 	const connectionLoaded = 0 < Object.keys( connectionStatus ).length;
 	const isFullyConnected = useIsFullyConnected();
+
+	// If the site is fully connected and the current user is not connected it means the user
+	// is a secondary admin. We should ask them to log in to Jetpack.
+	const secondaryAdminNotConnected = useIsSecondaryAdminNotConnected();
+	const { siteHasBackupProduct, isLoadingBackupProduct } = useSiteHasBackupProduct();
 
 	useEffect( () => {
 		tracks.recordEvent( 'jetpack_backup_admin_page_view' );
@@ -39,6 +47,29 @@ const Admin = () => {
 	}, [] );
 
 	const { capabilities, capabilitiesError, capabilitiesLoaded, hasBackupPlan } = useCapabilities();
+
+	// If the user is a secondary admin not connected and the site has a backup product,
+	// let's show the login screen.
+	// @TODO: Review the use case where the site is fully connected but the backup product expires and
+	// a secondary admin is not connected. Currently it will display the default `Site backups are
+	// managed by the owner of this site's Jetpack connection.` message.
+	if ( secondaryAdminNotConnected ) {
+		if ( isLoadingBackupProduct ) {
+			return (
+				<SecondaryAdminConnectionLayout>
+					<LoadingPlaceholder width="100%" height={ 500 } />
+				</SecondaryAdminConnectionLayout>
+			);
+		}
+
+		if ( ! isLoadingBackupProduct && siteHasBackupProduct ) {
+			return (
+				<SecondaryAdminConnectionLayout>
+					<BackupSecondaryAdminConnectionScreen />
+				</SecondaryAdminConnectionLayout>
+			);
+		}
+	}
 
 	return (
 		<AdminPage
@@ -84,49 +115,22 @@ const Admin = () => {
 	);
 };
 
-// Renders additional segments under the jp-hero area condition on having a backup plan
-const BackupSegments = ( hasBackupPlan, connectionLoaded ) => {
+// Render additional segments for the backup admin page under the jp-hero section.
+// If the user has a backup plan and is connected, we render the storage space segment.
+const BackupSegments = ( { hasBackupPlan, connectionLoaded } ) => {
 	const [ connectionStatus ] = useConnection();
 	const { tracks } = useAnalytics();
-	const domain = useSelect( select => select( STORE_ID ).getCalypsoSlug(), [] );
 
 	const trackLearnMoreClick = useCallback( () => {
 		tracks.recordEvent( 'jetpack_backup_learn_more_click' );
 	}, [ tracks ] );
 
-	const trackSeeSiteActivityClick = useCallback( () => {
-		tracks.recordEvent( 'jetpack_backup_see_site_activity_click', { site: domain } );
-	}, [ tracks, domain ] );
+	const trackLearnBackupBrowserClick = useCallback( () => {
+		tracks.recordEvent( 'jetpack_backup_learn_file_browser_click' );
+	}, [ tracks ] );
 
 	return (
 		<Container horizontalSpacing={ 3 } horizontalGap={ 3 } className="backup-segments">
-			<Col lg={ 6 } md={ 6 }>
-				<h2>{ __( "Your site's heartbeat", 'jetpack-backup-pkg' ) }</h2>
-				<p>
-					{ __(
-						'The activity log lets you see everything that’s going on with your site outlined in an organized, readable way.',
-						'jetpack-backup-pkg'
-					) }
-				</p>
-				{ hasBackupPlan && connectionStatus.isUserConnected && (
-					<p>
-						<ExternalLink
-							href={ getRedirectUrl( 'backup-plugin-activity-log', { site: domain } ) }
-							onClick={ trackSeeSiteActivityClick }
-						>
-							{ __( "See your site's activity", 'jetpack-backup-pkg' ) }
-						</ExternalLink>
-					</p>
-				) }
-			</Col>
-			{ hasBackupPlan && connectionStatus.isUserConnected && (
-				<>
-					<Col lg={ 1 } md={ 1 } />
-					<Col lg={ 5 } md={ 5 } className="backup-segments__storage-section">
-						{ <BackupStorageSpace /> }
-					</Col>
-				</>
-			) }
 			<Col lg={ 6 } md={ 6 }>
 				<h2>{ __( 'Restore points created with every edit', 'jetpack-backup-pkg' ) }</h2>
 				<p>
@@ -140,7 +144,32 @@ const BackupSegments = ( hasBackupPlan, connectionLoaded ) => {
 						href={ getRedirectUrl( 'jetpack-blog-realtime-mechanics' ) }
 						onClick={ trackLearnMoreClick }
 					>
-						{ __( 'Learn more', 'jetpack-backup-pkg' ) }
+						{ __( 'Learn about real-time backups', 'jetpack-backup-pkg' ) }
+					</ExternalLink>
+				</p>
+			</Col>
+			{ hasBackupPlan && connectionStatus.isUserConnected && (
+				<>
+					<Col lg={ 1 } md={ 1 } />
+					<Col lg={ 5 } md={ 5 } className="backup-segments__storage-section">
+						{ <BackupStorageSpace /> }
+					</Col>
+				</>
+			) }
+			<Col lg={ 6 } md={ 6 }>
+				<h2>{ __( 'Manage your backup files', 'jetpack-backup-pkg' ) }</h2>
+				<p>
+					{ __(
+						'The backup file browser allows you to access, preview and download all your backup files.',
+						'jetpack-backup-pkg'
+					) }
+				</p>
+				<p>
+					<ExternalLink
+						href={ getRedirectUrl( 'jetpack-blog-backup-file-browser' ) }
+						onClick={ trackLearnBackupBrowserClick }
+					>
+						{ __( 'Learn about the file browser', 'jetpack-backup-pkg' ) }
 					</ExternalLink>
 				</p>
 			</Col>
@@ -341,7 +370,15 @@ const LoadedState = ( {
 	}
 
 	if ( ! capabilitiesLoaded ) {
-		return null;
+		return (
+			<Container horizontalSpacing={ 5 } fluid>
+				<Col>
+					<div className="jp-wrap jp-content backup-panel">
+						<BackupsLoadingPlaceholder />
+					</div>
+				</Col>
+			</Container>
+		);
 	}
 
 	if ( hasBackupPlan ) {
@@ -385,5 +422,13 @@ const LoadedState = ( {
 
 	return null;
 };
+
+const SecondaryAdminConnectionLayout = ( { children } ) => (
+	<AdminPage showHeader={ false } moduleName={ __( 'VaultPress Backup', 'jetpack-backup-pkg' ) }>
+		<Container horizontalSpacing={ 8 } horizontalGap={ 0 }>
+			<Col>{ children }</Col>
+		</Container>
+	</AdminPage>
+);
 
 export default Admin;

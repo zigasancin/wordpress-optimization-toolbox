@@ -478,18 +478,6 @@ abstract class SAL_Site {
 	}
 
 	/**
-	 * Detect whether a site is WordPress.com Staging Site.
-	 *
-	 * @return bool
-	 */
-	public function is_wpcom_staging_site() {
-		if ( function_exists( 'has_blog_sticker' ) ) {
-			return has_blog_sticker( 'staging_site' );
-		}
-		return false;
-	}
-
-	/**
 	 * Detect whether a site is an automated transfer site and WooCommerce is active.
 	 *
 	 * @see /wpcom/public.api/rest/sal/class.json-api-site-jetpack-shadow.php.
@@ -501,13 +489,15 @@ abstract class SAL_Site {
 	}
 
 	/**
-	 * Indicate whether this site was ever an eCommerce trial.
+	 * Indicate whether this site was ever a specific trial.
+	 *
+	 * @param string $trial The trial type to check for.
 	 *
 	 * @return bool
 	 */
-	public function was_ecommerce_trial() {
+	public function was_trial( $trial ) {
 		if ( function_exists( 'has_blog_sticker' ) ) {
-			return has_blog_sticker( 'had-ecommerce-trial' );
+			return has_blog_sticker( "had-{$trial}-trial" );
 		}
 		return false;
 	}
@@ -1485,22 +1475,25 @@ abstract class SAL_Site {
 	}
 
 	/**
+	 * Detect whether a site is WordPress.com Staging Site.
+	 *
+	 * @see class.json-api-site-jetpack.php for implementation.
+	 */
+	abstract public function is_wpcom_staging_site();
+
+	/**
 	 * Get site option for the production blog id (if is a WP.com Staging Site).
 	 *
-	 * @return string
+	 * @see class.json-api-site-jetpack.php for implementation.
 	 */
-	public function get_wpcom_production_blog_id() {
-		return get_option( 'wpcom_production_blog_id', '' );
-	}
+	abstract public function get_wpcom_production_blog_id();
 
 	/**
 	 * Get site option for the staging blog ids (if it has them)
 	 *
-	 * @return string
+	 * @see class.json-api-site-jetpack.php for implementation.
 	 */
-	public function get_wpcom_staging_blog_ids() {
-		return get_option( 'wpcom_staging_blog_ids', array() );
-	}
+	abstract public function get_wpcom_staging_blog_ids();
 
 	/**
 	 * Get the site's Blaze eligibility status.
@@ -1509,5 +1502,40 @@ abstract class SAL_Site {
 	 */
 	public function can_blaze() {
 		return (bool) Blaze::site_supports_blaze( $this->blog_id );
+	}
+
+	/**
+	 * Return site's setup identifier.
+	 *
+	 * @return string
+	 */
+	public function get_wpcom_site_setup() {
+		return get_option( 'wpcom_site_setup' );
+	}
+
+	/**
+	 * Returns whether the site is commercial.
+	 *
+	 * @return mixed
+	 *
+	 * - `true`: the site is commercial
+	 * - `false`: the site is not commercial
+	 * - `null`: the commercial status is not yet determined
+	 */
+	public function is_commercial() {
+		// Override if blog has the commercial stickers.
+		if ( function_exists( 'has_blog_sticker' ) ) {
+			$has_not_commercial_sticker = has_blog_sticker( 'jetpack-site-is-not-commercial-override', $this->blog_id );
+			if ( $has_not_commercial_sticker ) {
+				return false;
+			}
+			$has_commercial_sticker = has_blog_sticker( 'jetpack-site-is-commercial-override', $this->blog_id );
+			if ( $has_commercial_sticker ) {
+				return true;
+			}
+		}
+
+		$is_commercial = get_option( '_jetpack_site_is_commercial', null );
+		return $is_commercial === null ? null : (bool) $is_commercial;
 	}
 }

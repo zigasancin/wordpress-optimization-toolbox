@@ -21,6 +21,11 @@ function jetpack_get_module_i18n( $key ) {
 				'description' => _x( 'An easy to use way for visitors to follow, like, and comment on your site.', 'Module Description', 'jetpack' ),
 			),
 
+			'blaze' => array(
+				'name' => _x( 'Blaze', 'Module Name', 'jetpack' ),
+				'description' => _x( 'Grow your audience by promoting your content across Tumblr and WordPress.com.', 'Module Description', 'jetpack' ),
+			),
+
 			'carousel' => array(
 				'name' => _x( 'Carousel', 'Module Name', 'jetpack' ),
 				'description' => _x( 'Display images and galleries in a gorgeous, full-screen browsing experience', 'Module Description', 'jetpack' ),
@@ -33,7 +38,7 @@ function jetpack_get_module_i18n( $key ) {
 
 			'comments' => array(
 				'name' => _x( 'Comments', 'Module Name', 'jetpack' ),
-				'description' => _x( 'Let visitors use a WordPress.com, Twitter, or Facebook account to comment', 'Module Description', 'jetpack' ),
+				'description' => _x( 'Let visitors use a WordPress.com or Facebook account to comment', 'Module Description', 'jetpack' ),
 			),
 
 			'contact-form' => array(
@@ -93,7 +98,7 @@ function jetpack_get_module_i18n( $key ) {
 
 			'lazy-images' => array(
 				'name' => _x( 'Lazy Images', 'Module Name', 'jetpack' ),
-				'description' => _x( 'Speed up your site and create a smoother viewing experience by loading images as visitors scroll down the screen, instead of all at once.', 'Module Description', 'jetpack' ),
+				'description' => _x( 'Improve your site\'s speed by only loading images visible on the screen. Modern browsers now support lazy loading, and WordPress itself bundles lazy loading features for images and videos. This feature will consequently be removed from Jetpack in November 2023.', 'Module Description', 'jetpack' ),
 			),
 
 			'likes' => array(
@@ -168,7 +173,7 @@ function jetpack_get_module_i18n( $key ) {
 
 			'sharedaddy' => array(
 				'name' => _x( 'Sharing', 'Module Name', 'jetpack' ),
-				'description' => _x( 'Add Twitter and Facebook buttons at the bottom of each post, making it easy for visitors to share your content.', 'Module Description', 'jetpack' ),
+				'description' => _x( 'Add sharing buttons at the bottom of each post, making it easy for visitors to share your content.', 'Module Description', 'jetpack' ),
 			),
 
 			'shortcodes' => array(
@@ -197,7 +202,7 @@ function jetpack_get_module_i18n( $key ) {
 			),
 
 			'subscriptions' => array(
-				'name' => _x( 'Subscriptions', 'Module Name', 'jetpack' ),
+				'name' => _x( 'Newsletter', 'Module Name', 'jetpack' ),
 				'description' => _x( 'Let visitors subscribe to new posts and comments via email', 'Module Description', 'jetpack' ),
 			),
 
@@ -269,6 +274,7 @@ function jetpack_get_module_i18n_tag( $key ) {
 
 			// Modules with `Social` tag:
 			// - modules/action-bar.php
+			// - modules/blaze.php
 			// - modules/comment-likes.php
 			// - modules/comments.php
 			// - modules/gravatar-hovercards.php
@@ -281,6 +287,12 @@ function jetpack_get_module_i18n_tag( $key ) {
 			// - modules/subscriptions.php
 			// - modules/widgets.php
 			'Social' => _x( 'Social', 'Module Tag', 'jetpack' ),
+
+			// Modules with `Traffic` tag:
+			// - modules/blaze.php
+			// - modules/sitemaps.php
+			// - modules/wordads.php
+			'Traffic' => _x( 'Traffic', 'Module Tag', 'jetpack' ),
 
 			// Modules with `Photos and Videos` tag:
 			// - modules/carousel.php
@@ -348,11 +360,6 @@ function jetpack_get_module_i18n_tag( $key ) {
 			// - modules/post-list.php
 			'Admin' => _x( 'Admin', 'Module Tag', 'jetpack' ),
 
-			// Modules with `Traffic` tag:
-			// - modules/sitemaps.php
-			// - modules/wordads.php
-			'Traffic' => _x( 'Traffic', 'Module Tag', 'jetpack' ),
-
 			// Modules with `Jetpack Stats` tag:
 			// - modules/stats.php
 			'Jetpack Stats' => _x( 'Jetpack Stats', 'Module Tag', 'jetpack' ),
@@ -400,6 +407,24 @@ function jetpack_get_module_info( $key ) {
 	    'additional_search_queries' => 'adminbar, actionbar, comments, likes, follow, sharing',
 	    'plan_classes' => '',
 	  ),
+	  'blaze' => 
+	  array (
+	    'name' => 'Blaze',
+	    'description' => 'Grow your audience by promoting your content across Tumblr and WordPress.com.',
+	    'sort' => '22',
+	    'recommendation_order' => '12',
+	    'introduced' => '12.3',
+	    'changed' => '',
+	    'deactivate' => '',
+	    'free' => '',
+	    'requires_connection' => 'Yes',
+	    'requires_user_connection' => '',
+	    'auto_activate' => 'Yes',
+	    'module_tags' => 'Traffic, Social',
+	    'feature' => '',
+	    'additional_search_queries' => 'advertising, ads',
+	    'plan_classes' => '',
+	  ),
 	  'carousel' => 
 	  array (
 	    'name' => 'Carousel',
@@ -439,7 +464,7 @@ function jetpack_get_module_info( $key ) {
 	  'comments' => 
 	  array (
 	    'name' => 'Comments',
-	    'description' => 'Let visitors use a WordPress.com, Twitter, or Facebook account to comment',
+	    'description' => 'Let visitors use a WordPress.com or Facebook account to comment',
 	    'sort' => '20',
 	    'recommendation_order' => '',
 	    'introduced' => '1.4',
@@ -451,7 +476,7 @@ function jetpack_get_module_info( $key ) {
 	    'auto_activate' => 'No',
 	    'module_tags' => 'Social',
 	    'feature' => 'Engagement',
-	    'additional_search_queries' => 'comments, comment, facebook, twitter, social',
+	    'additional_search_queries' => 'comments, comment, facebook, social',
 	    'plan_classes' => '',
 	  ),
 	  'contact-form' => 
@@ -655,7 +680,7 @@ function jetpack_get_module_info( $key ) {
 	  'lazy-images' => 
 	  array (
 	    'name' => 'Lazy Images',
-	    'description' => 'Speed up your site and create a smoother viewing experience by loading images as visitors scroll down the screen, instead of all at once.',
+	    'description' => 'Improve your site\'s speed by only loading images visible on the screen. Modern browsers now support lazy loading, and WordPress itself bundles lazy loading features for images and videos. This feature will consequently be removed from Jetpack in November 2023.',
 	    'sort' => '24',
 	    'recommendation_order' => '14',
 	    'introduced' => '5.6.0',
@@ -865,7 +890,7 @@ function jetpack_get_module_info( $key ) {
 	    'auto_activate' => 'No',
 	    'module_tags' => 'Social, Recommended',
 	    'feature' => 'Engagement',
-	    'additional_search_queries' => 'facebook, jetpack publicize, twitter, tumblr, linkedin, social, tweet, connections, sharing, social media, automated, automated sharing, auto publish, auto tweet and like, auto tweet, facebook auto post, facebook posting',
+	    'additional_search_queries' => 'facebook, jetpack publicize, tumblr, linkedin, social, tweet, connections, sharing, social media, automated, automated sharing, auto publish, auto tweet and like, auto tweet, facebook auto post, facebook posting',
 	    'plan_classes' => '',
 	  ),
 	  'related-posts' => 
@@ -925,7 +950,7 @@ function jetpack_get_module_info( $key ) {
 	  'sharedaddy' => 
 	  array (
 	    'name' => 'Sharing',
-	    'description' => 'Add Twitter and Facebook buttons at the bottom of each post, making it easy for visitors to share your content.',
+	    'description' => 'Add sharing buttons at the bottom of each post, making it easy for visitors to share your content.',
 	    'sort' => '7',
 	    'recommendation_order' => '6',
 	    'introduced' => '1.1',
@@ -1032,7 +1057,7 @@ function jetpack_get_module_info( $key ) {
 	  ),
 	  'subscriptions' => 
 	  array (
-	    'name' => 'Subscriptions',
+	    'name' => 'Newsletter',
 	    'description' => 'Let visitors subscribe to new posts and comments via email',
 	    'sort' => '9',
 	    'recommendation_order' => '8',
@@ -1045,7 +1070,7 @@ function jetpack_get_module_info( $key ) {
 	    'auto_activate' => 'No',
 	    'module_tags' => 'Social',
 	    'feature' => 'Engagement',
-	    'additional_search_queries' => 'subscriptions, subscription, email, follow, followers, subscribers, signup',
+	    'additional_search_queries' => 'subscriptions, subscription, email, follow, followers, subscribers, signup, newsletter',
 	    'plan_classes' => '',
 	  ),
 	  'tiled-gallery' => 

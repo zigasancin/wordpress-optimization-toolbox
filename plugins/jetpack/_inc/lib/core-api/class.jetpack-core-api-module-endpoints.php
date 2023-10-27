@@ -6,6 +6,7 @@
  */
 
 use Automattic\Jetpack\Connection\REST_Connector;
+use Automattic\Jetpack\Current_Plan as Jetpack_Plan;
 use Automattic\Jetpack\Plugins_Installer;
 use Automattic\Jetpack\Stats\WPCOM_Stats;
 use Automattic\Jetpack\Stats_Admin\Main as Stats_Admin_Main;
@@ -16,8 +17,7 @@ use Automattic\Jetpack\Waf\Brute_Force_Protection\Brute_Force_Protection_Shared_
 /**
  * This is the base class for every Core API endpoint Jetpack uses.
  */
-class Jetpack_Core_API_Module_Toggle_Endpoint
-	extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
+class Jetpack_Core_API_Module_Toggle_Endpoint extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 
 	/**
 	 * Check if the module requires the site to be publicly accessible from WPCOM.
@@ -196,9 +196,9 @@ class Jetpack_Core_API_Module_List_Endpoint {
 	 */
 	public function process( $request ) {
 		if ( 'GET' === $request->get_method() ) {
-			return $this->get_modules( $request );
+			return $this->get_modules();
 		} else {
-			return $this->activate_modules( $request );
+			return static::activate_modules( $request );
 		}
 	}
 
@@ -284,7 +284,7 @@ class Jetpack_Core_API_Module_List_Endpoint {
 			$activated_text = $activated_count > 1 ? sprintf(
 				/* Translators: first variable is a list followed by the last item, which is the second variable. Example: dog, cat and bird. */
 				__( '%1$s and %2$s', 'jetpack' ),
-				join( ', ', $activated ),
+				implode( ', ', $activated ),
 				$activated_last
 			) : $activated_last;
 
@@ -301,7 +301,7 @@ class Jetpack_Core_API_Module_List_Endpoint {
 			$failed_text = $failed_count > 1 ? sprintf(
 				/* Translators: first variable is a list followed by the last item, which is the second variable. Example: dog, cat and bird. */
 				__( '%1$s and %2$s', 'jetpack' ),
-				join( ', ', $failed ),
+				implode( ', ', $failed ),
 				$failed_last
 			) : $failed_last;
 
@@ -410,6 +410,9 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 				$module['description']       = $i18n['description'];
 				$module['short_description'] = $i18n['description'];
 			}
+			if ( isset( $module['module_tags'] ) ) {
+				$module['module_tags'] = array_map( 'jetpack_get_module_i18n_tag', $module['module_tags'] );
+			}
 
 			return Jetpack_Core_Json_Api_Endpoints::prepare_modules_for_response( $module );
 		}
@@ -503,7 +506,8 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 					break;
 
 				default:
-					$response[ $setting ] = Jetpack_Core_Json_Api_Endpoints::cast_value( get_option( $setting ), $settings[ $setting ] );
+					$default              = isset( $settings[ $setting ]['default'] ) ? $settings[ $setting ]['default'] : false;
+					$response[ $setting ] = Jetpack_Core_Json_Api_Endpoints::cast_value( get_option( $setting, $default ), $settings[ $setting ] );
 					break;
 			}
 		}
@@ -976,6 +980,7 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 
 				case 'stb_enabled':
 				case 'stc_enabled':
+				case 'sm_enabled':
 					// Convert the false value to 0. This allows the option to be updated if it doesn't exist yet.
 					$sub_value = $value ? $value : 0;
 					$updated   = (string) get_option( $option ) !== (string) $sub_value ? update_option( $option, $sub_value ) : true;
@@ -986,8 +991,14 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 					break;
 
 				default:
-					// If option value was the same, consider it done.
-					$updated = get_option( $option ) != $value // phpcs:ignore Universal.Operators.StrictComparisons.LooseNotEqual -- ensure we support scalars or strings saved by update_option.
+					// Boolean values are stored as 1 or 0.
+					if ( isset( $options[ $option ]['type'] ) && 'boolean' === $options[ $option ]['type'] ) {
+						$value = (int) $value;
+					}
+
+					// If option value was the same as it's current value, or it's default, consider it done.
+					$default = isset( $options[ $option ]['default'] ) ? $options[ $option ]['default'] : false;
+					$updated = get_option( $option, $default ) != $value // phpcs:ignore Universal.Operators.StrictComparisons.LooseNotEqual -- ensure we support scalars or strings saved by update_option.
 						? update_option( $option, $value )
 						: true;
 					break;
@@ -1010,7 +1021,7 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 				$error = sprintf(
 				/* Translators: the plural variable is a comma-separated list. Example: dog, cat, bird. */
 					_n( 'Invalid option: %s.', 'Invalid options: %s.', $invalid_count, 'jetpack' ),
-					join( ', ', $invalid )
+					implode( ', ', $invalid )
 				);
 			}
 			if ( $not_updated_count > 0 ) {
@@ -1029,7 +1040,7 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 					$error .= ' ';
 				}
 				if ( ! empty( $not_updated_messages ) ) {
-					$error .= ' ' . join( '. ', $not_updated_messages );
+					$error .= ' ' . implode( '. ', $not_updated_messages );
 				}
 			}
 			// There was an error because some options were updated but others were invalid or failed to update.
@@ -1186,7 +1197,7 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 		}
 
 		if ( isset( $data['businessPersonal'] ) && 'business' === $data['businessPersonal'] ) {
-			$contact_page .= "\n" . join( "\n", $data['businessInfo'] );
+			$contact_page .= "\n" . implode( "\n", $data['businessInfo'] );
 		}
 
 		if ( ! empty( $contact_page ) ) {
@@ -1241,7 +1252,7 @@ class Jetpack_Core_API_Data extends Jetpack_Core_API_XMLRPC_Consumer_Endpoint {
 
 		return empty( $error )
 			? ''
-			: join( ', ', $error );
+			: implode( ', ', $error );
 	}
 
 	/**
@@ -1430,7 +1441,7 @@ class Jetpack_Core_API_Module_Data_Endpoint {
 	 */
 	public function get_protect_data() {
 		if ( Jetpack::is_module_active( 'protect' ) ) {
-			return get_site_option( 'jetpack_protect_blocked_attempts' );
+			return (int) get_site_option( 'jetpack_protect_blocked_attempts', 0 );
 		}
 
 		return new WP_Error(
@@ -1727,7 +1738,7 @@ class Jetpack_Core_API_Module_Data_Endpoint {
 				sprintf(
 					/* translators: %1$s is a comma separated list of services, and %2$s is a single service name like Google, Bing, Pinterest, etc. */
 					__( 'Your site is verified with %1$s and %2$s.', 'jetpack' ),
-					join( ', ', $copy_services ),
+					implode( ', ', $copy_services ),
 					$last_service
 				)
 			);

@@ -14,6 +14,7 @@
  * @package automattic/jetpack
  */
 
+use Automattic\Jetpack\Admin_UI\Admin_Menu;
 use Automattic\Jetpack\Connection\Client;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Connection\XMLRPC_Async_Call;
@@ -143,42 +144,6 @@ function stats_build_view_data() {
 }
 
 /**
- * Stats Footer.
- *
- * @deprecated 11.5
- * @access public
- * @return void
- */
-function stats_footer() {
-	_deprecated_function( __METHOD__, 'jetpack-11.5', 'Automattic\Jetpack\Stats\Tracking_Pixel::add_to_footer' );
-	Stats_Tracking_Pixel::add_to_footer();
-}
-
-/**
- * Render the stats footer
- *
- * @deprecated 11.5
- *
- * @param array $data Array of data for the JS stats tracker.
- */
-function stats_render_footer( $data ) {
-	_deprecated_function( __METHOD__, 'jetpack-11.5', 'Automattic\Jetpack\Stats\Tracking_Pixel::render_footer' );
-	Stats_Tracking_Pixel::render_footer( $data );
-}
-
-/**
- * Render the stats footer for AMP output.
- *
- * @deprecated 11.5
- *
- * @param array $data Array of data for the AMP pixel tracker.
- */
-function stats_render_amp_footer( $data ) {
-	_deprecated_function( __METHOD__, 'jetpack-11.5', 'Automattic\Jetpack\Stats\Tracking_Pixel::render_amp_footer' );
-	Stats_Tracking_Pixel::render_amp_footer( $data );
-}
-
-/**
  * Stats Get Options.
  *
  * @deprecated 11.5
@@ -281,12 +246,12 @@ function stats_admin_menu() {
 		// - Atomic sites.
 		// - When the "enable_odyssey_stats" option is disabled.
 		// - When being shown in the adminbar outside of wp-admin.
-		$hook = add_submenu_page( 'jetpack', __( 'Stats', 'jetpack' ), __( 'Stats', 'jetpack' ), 'view_stats', 'stats', 'jetpack_admin_ui_stats_report_page_wrapper' );
+		$hook = Admin_Menu::add_menu( __( 'Stats', 'jetpack' ), __( 'Stats', 'jetpack' ), 'view_stats', 'stats', 'jetpack_admin_ui_stats_report_page_wrapper' );
 		add_action( "load-$hook", 'stats_reports_load' );
 	} else {
 		// Enable the new Odyssey Stats experience.
 		$stats_dashboard = new Stats_Dashboard();
-		$hook            = add_submenu_page( 'jetpack', __( 'Stats', 'jetpack' ), __( 'Stats', 'jetpack' ), 'view_stats', 'stats', array( $stats_dashboard, 'render' ) );
+		$hook            = Admin_Menu::add_menu( __( 'Stats', 'jetpack' ), __( 'Stats', 'jetpack' ), 'view_stats', 'stats', array( $stats_dashboard, 'render' ) );
 		add_action( "load-$hook", array( $stats_dashboard, 'admin_init' ) );
 	}
 }
@@ -1319,7 +1284,7 @@ function stats_dashboard_widget_content() {
 	}
 
 	// Cache.
-	get_posts( array( 'include' => join( ',', array_unique( $post_ids ) ) ) );
+	get_posts( array( 'include' => implode( ',', array_unique( $post_ids ) ) ) );
 
 	$searches     = array();
 	$search_terms = stats_get_csv( 'searchterms', "days=$options[search]$csv_args[search]" );
@@ -1341,55 +1306,57 @@ function stats_dashboard_widget_content() {
 				</a>
 			</div>
 		</div>
-		<div id="top-posts" class="stats-section">
-			<div class="stats-section-inner">
-			<h3 class="heading"><?php esc_html_e( 'Top Posts', 'jetpack' ); ?></h3>
-			<?php
-			if ( empty( $top_posts ) ) {
-				?>
-				<p class="nothing"><?php esc_html_e( 'Sorry, nothing to report.', 'jetpack' ); ?></p>
+		<div class="stats-info-content">
+			<div id="top-posts" class="stats-section">
+				<div class="stats-section-inner">
+				<h3 class="heading"><?php esc_html_e( 'Top Posts', 'jetpack' ); ?></h3>
 				<?php
-			} else {
-				foreach ( $top_posts as $post ) {
-					if ( ! get_post( $post['post_id'] ) ) {
-						continue;
+				if ( empty( $top_posts ) ) {
+					?>
+					<p class="nothing"><?php esc_html_e( 'Sorry, nothing to report.', 'jetpack' ); ?></p>
+					<?php
+				} else {
+					foreach ( $top_posts as $post ) {
+						if ( ! get_post( $post['post_id'] ) ) {
+							continue;
+						}
+						?>
+						<p>
+						<?php
+						printf(
+							esc_html(
+								/* Translators: Stats dashboard widget Post list with view count: "Post Title 1 View (or Views if plural)". */
+								_n( '%1$s %2$s View', '%1$s %2$s Views', $post['views'], 'jetpack' )
+							),
+							'<a href="' . esc_url( get_permalink( $post['post_id'] ) ) . '">' . esc_html( get_the_title( $post['post_id'] ) ) . '</a>',
+							esc_html( number_format_i18n( $post['views'] ) )
+						);
+						?>
+					</p>
+						<?php
 					}
-					?>
-					<p>
-					<?php
-					printf(
-						esc_html(
-							/* Translators: Stats dashboard widget Post list with view count: "Post Title 1 View (or Views if plural)". */
-							_n( '%1$s %2$s View', '%1$s %2$s Views', $post['views'], 'jetpack' )
-						),
-						'<a href="' . esc_url( get_permalink( $post['post_id'] ) ) . '">' . esc_html( get_the_title( $post['post_id'] ) ) . '</a>',
-						esc_html( number_format_i18n( $post['views'] ) )
-					);
-					?>
-				</p>
-					<?php
 				}
-			}
-			?>
-			</div>
-		</div>
-		<div id="top-search" class="stats-section">
-			<div class="stats-section-inner">
-			<h3 class="heading"><?php esc_html_e( 'Top Searches', 'jetpack' ); ?></h3>
-			<?php
-			if ( empty( $searches ) ) {
 				?>
-				<p class="nothing"><?php esc_html_e( 'Sorry, nothing to report.', 'jetpack' ); ?></p>
+				</div>
+			</div>
+			<div id="top-search" class="stats-section">
+				<div class="stats-section-inner">
+				<h3 class="heading"><?php esc_html_e( 'Top Searches', 'jetpack' ); ?></h3>
 				<?php
-			} else {
-				foreach ( $searches as $search_term_item ) {
-					printf(
-						'<p>%s</p>',
-						esc_html( $search_term_item )
-					);
+				if ( empty( $searches ) ) {
+					?>
+					<p class="nothing"><?php esc_html_e( 'Sorry, nothing to report.', 'jetpack' ); ?></p>
+					<?php
+				} else {
+					foreach ( $searches as $search_term_item ) {
+						printf(
+							'<p>%s</p>',
+							esc_html( $search_term_item )
+						);
+					}
 				}
-			}
-			?>
+				?>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -1670,7 +1637,7 @@ function jetpack_stats_load_admin_css() {
 }
 
 /**
- * Set header for column that allows to go to WordPress.com to see an entry's stats.
+ * Set header for column that allows to view an entry's stats.
  *
  * @param array $columns An array of column names.
  *
@@ -1679,8 +1646,22 @@ function jetpack_stats_load_admin_css() {
  * @return mixed
  */
 function jetpack_stats_post_table( $columns ) {
-	// Adds a stats link on the edit posts page.
-	if ( ! current_user_can( 'view_stats' ) || ! ( new Connection_Manager( 'jetpack' ) )->is_user_connected() ) {
+	/*
+	 * Stats can be accessed in wp-admin or in Calypso,
+	 * depending on what version of the stats screen is enabled on your site.
+	 *
+	 * In both cases, the user must be allowed to access stats.
+	 *
+	 * If the Odyssey Stats experience isn't enabled, the user will need to go to Calypso,
+	 * so they need to be connected to WordPress.com to be able to access that page.
+	 */
+	if (
+		! current_user_can( 'view_stats' )
+		|| (
+			! Stats_Options::get_option( 'enable_odyssey_stats' )
+			&& ! ( new Connection_Manager( 'jetpack' ) )->is_user_connected()
+		)
+	) {
 		return $columns;
 	}
 

@@ -353,7 +353,7 @@ class REST_Endpoints {
 				$modules['users'] = 'initial';
 			} elseif ( is_array( $request->get_param( $module_name ) ) ) {
 				$ids = $request->get_param( $module_name );
-				if ( count( $ids ) > 0 ) {
+				if ( array() !== $ids ) {
 					$modules[ $module_name ] = $ids;
 				}
 			}
@@ -868,5 +868,4 @@ class REST_Endpoints {
 		// Limit to A-Z,a-z,0-9,_,-,. .
 		return preg_replace( '/[^A-Za-z0-9-_.]/', '', $item );
 	}
-
 }

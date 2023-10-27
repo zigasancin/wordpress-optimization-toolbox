@@ -12,7 +12,6 @@ use Automattic\Jetpack\Connection\Tokens;
  * Main Comments class
  *
  * @package automattic/jetpack
- * @version 1.4
  * @since   1.4
  */
 class Jetpack_Comments extends Highlander_Comments_Base {
@@ -59,7 +58,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	/**
 	 * Main constructor for Comments
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 */
 	public function __construct() {
 		parent::__construct();
@@ -106,7 +105,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	 *
 	 * This is primarily defining the comment form sources.
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 */
 	protected function setup_globals() {
 		parent::setup_globals();
@@ -116,7 +115,6 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 			'guest',
 			'jetpack',
 			'wordpress',
-			'twitter',
 			'facebook',
 		);
 	}
@@ -124,7 +122,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	/**
 	 * Setup actions for methods in this class
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 */
 	protected function setup_actions() {
 		parent::setup_actions();
@@ -156,9 +154,11 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	}
 
 	/**
-	 * Get the comment avatar from Gravatar, Twitter, or Facebook
+	 * Get the comment avatar from Gravatar or Twitter/Facebook.
 	 *
-	 * @since JetpackComments (1.4)
+	 * Leaving the Twitter reference for legacy comments even though support is no longer offered.
+	 *
+	 * @since 1.4
 	 *
 	 * @param string $avatar  Current avatar URL.
 	 * @param string $comment Comment for the avatar.
@@ -172,7 +172,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 			return $avatar;
 		}
 
-		// Detect whether it's a Facebook or Twitter avatar.
+		// Detect whether it's a Facebook avatar.
 		$foreign_avatar          = get_comment_meta( $comment->comment_ID, 'hc_avatar', true );
 		$foreign_avatar_hostname = wp_parse_url( $foreign_avatar, PHP_URL_HOST );
 		if ( ! $foreign_avatar_hostname ||
@@ -209,7 +209,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	 *
 	 * Comment form output will only be captured if comments are enabled - we return otherwise.
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 */
 	public function comment_form_before() {
 		/**
@@ -241,7 +241,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	 * Noop the default comment form output, get some options, and output our
 	 * tricked out totally radical comment form.
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 */
 	public function comment_form_after() {
 		/** This filter is documented in modules/comments/comments.php */
@@ -387,17 +387,43 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 		 */
 		$show_greeting = apply_filters( 'jetpack_comment_form_display_greeting', true );
 
+		/**
+		 * Filter the comment title tag.
+		 *
+		 * @module comments
+		 * @since 12.4
+		 *
+		 * @param string $comment_reply_title_tag The comment title tag. Default to h3.
+		 */
+		$comment_reply_title_tag = apply_filters( 'jetpack_comment_reply_title_tag', 'h3' );
+
 		// The actual iframe (loads comment form from Jetpack server).
 
-		$is_amp = Jetpack_AMP_Support::is_amp_request();
+		$is_amp = class_exists( Jetpack_AMP_Support::class ) && Jetpack_AMP_Support::is_amp_request();
 		?>
 
 		<div id="respond" class="comment-respond">
-			<?php if ( true === $show_greeting ) : ?>
-				<h3 id="reply-title" class="comment-reply-title"><?php comment_form_title( esc_html( $params['greeting'] ), esc_html( $params['greeting_reply'] ) ); ?>
-					<small><?php cancel_comment_reply_link( esc_html__( 'Cancel reply', 'jetpack' ) ); ?></small>
-				</h3>
-			<?php endif; ?>
+			<?php
+			if ( true === $show_greeting ) :
+				printf(
+					'<%1$s id="reply-title" class="comment-reply-title">',
+					esc_html( $comment_reply_title_tag )
+				);
+
+				comment_form_title(
+					esc_html( $params['greeting'] ),
+					esc_html( $params['greeting_reply'] )
+				);
+				echo '<small>';
+				cancel_comment_reply_link( esc_html__( 'Cancel reply', 'jetpack' ) );
+				echo '</small>';
+
+				printf(
+					'</%1$s>',
+					esc_html( $comment_reply_title_tag )
+				);
+			endif;
+			?>
 			<form id="commentform" class="comment-form">
 				<iframe
 					title="<?php esc_attr_e( 'Comment Form', 'jetpack' ); ?>"
@@ -446,10 +472,10 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	 *
 	 * If AMP is enabled, we don't make any changes.
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 */
 	public function watch_comment_parent() {
-		if ( Jetpack_AMP_Support::is_amp_request() ) {
+		if ( class_exists( Jetpack_AMP_Support::class ) && Jetpack_AMP_Support::is_amp_request() ) {
 			// @todo Implement AMP support.
 			return;
 		}
@@ -560,7 +586,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	 * If the Jetpack token is missing we return nothing,
 	 * and if the token is unknown or invalid, or comments not allowed, an error is returned.
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 */
 	public function pre_comment_on_post() {
 		$post_array = stripslashes_deep( $_POST );
@@ -609,7 +635,7 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 	 * Add some additional comment meta after comment is saved about what
 	 * service the comment is from, the avatar, user_id, etc...
 	 *
-	 * @since JetpackComments (1.4)
+	 * @since 1.4
 	 *
 	 * @param int $comment_id The comment ID.
 	 */
@@ -620,12 +646,6 @@ class Jetpack_Comments extends Highlander_Comments_Base {
 		switch ( $this->is_highlander_comment_post() ) {
 			case 'facebook':
 				$comment_meta['hc_post_as']         = 'facebook';
-				$comment_meta['hc_avatar']          = isset( $_POST['hc_avatar'] ) ? filter_var( wp_unslash( $_POST['hc_avatar'] ) ) : null;
-				$comment_meta['hc_foreign_user_id'] = isset( $_POST['hc_userid'] ) ? filter_var( wp_unslash( $_POST['hc_userid'] ) ) : null;
-				break;
-
-			case 'twitter':
-				$comment_meta['hc_post_as']         = 'twitter';
 				$comment_meta['hc_avatar']          = isset( $_POST['hc_avatar'] ) ? filter_var( wp_unslash( $_POST['hc_avatar'] ) ) : null;
 				$comment_meta['hc_foreign_user_id'] = isset( $_POST['hc_userid'] ) ? filter_var( wp_unslash( $_POST['hc_userid'] ) ) : null;
 				break;

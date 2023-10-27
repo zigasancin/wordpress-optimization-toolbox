@@ -1,4 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
+
+use Automattic\Jetpack\Assets\Logo;
 use Automattic\Jetpack\Connection\Initial_State as Connection_Initial_State;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Status;
@@ -30,7 +32,8 @@ class Jetpack_React_Page extends Jetpack_Admin_Page {
 	 * @return string|false Return value from WordPress's `add_menu_page()`.
 	 */
 	public function get_page_hook() {
-		return add_menu_page( 'Jetpack', 'Jetpack', 'jetpack_admin_page', 'jetpack', array( $this, 'render' ), 'div', 3 );
+		$icon = ( new Logo() )->get_base64_logo();
+		return add_menu_page( 'Jetpack', 'Jetpack', 'jetpack_admin_page', 'jetpack', array( $this, 'render' ), $icon, 3 );
 	}
 
 	/**
@@ -74,7 +77,7 @@ class Jetpack_React_Page extends Jetpack_Admin_Page {
 	 */
 	public function jetpack_add_dashboard_sub_nav_item() {
 		if ( ( new Status() )->is_offline_mode() || Jetpack::is_connection_ready() ) {
-			add_submenu_page( 'jetpack', __( 'Dashboard', 'jetpack' ), __( 'Dashboard', 'jetpack' ), 'jetpack_admin_page', 'jetpack#/dashboard', '__return_null' );
+			add_submenu_page( 'jetpack', __( 'Dashboard', 'jetpack' ), __( 'Dashboard', 'jetpack' ), 'jetpack_admin_page', 'jetpack#/dashboard', '__return_null', 1 );
 			remove_submenu_page( 'jetpack', 'jetpack' );
 		}
 	}
@@ -293,6 +296,6 @@ class Jetpack_React_Page extends Jetpack_Admin_Page {
 		wp_add_inline_script( 'react-plugin', 'var jetpack_redirects = { currentSiteRawUrl: "' . $site_suffix . '" };', 'before' );
 
 		// Adds Connection package initial state.
-		wp_add_inline_script( 'react-plugin', Connection_Initial_State::render(), 'before' );
+		Connection_Initial_State::render_script( 'react-plugin' );
 	}
 }

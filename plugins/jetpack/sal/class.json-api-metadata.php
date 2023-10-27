@@ -4,6 +4,7 @@
  *
  * @package automattic/jetpack
  */
+
 /**
  * Base class for WPCOM_JSON_API_Metadata
  */
@@ -50,6 +51,17 @@ class WPCOM_JSON_API_Metadata {
 	public static function is_internal_only( $key ) {
 		// We want to always return the `_jetpack_blogging_prompt_key` key in post responses if it is available.
 		if ( $key === '_jetpack_blogging_prompt_key' ) {
+			return false;
+		}
+
+		// We want to always return the `_jetpack_newsletter_access` key to
+		// display the correct newsletter access in Calypso.
+		$whitelist = array(
+			'_jetpack_newsletter_access',
+			'_jetpack_newsletter_tier_id',
+		);
+
+		if ( in_array( $key, $whitelist, true ) ) {
 			return false;
 		}
 

@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.13] - 2023-10-10
+### Fixed
+- Escape email address when output in HTML. [#33536]
+
+## [0.11.12] - 2023-09-28
+### Changed
+- Minor internal updates.
+
+## [0.11.11] - 2023-09-19
+
+- Minor internal updates.
+
+## [0.11.10] - 2023-09-11
+### Changed
+- General: remove backwards-compatible functions now that package relies on WordPress 6.2. [#32772]
+
+## [0.11.9] - 2023-08-28
+### Changed
+- Updated package dependencies. [#32605]
+
+## [0.11.8] - 2023-07-18
+### Changed
+- Add support for running brute force protection in environments that otherwise do not support the WAF. [#31761]
+- Minor performance improvements. [#31684]
+
+## [0.11.7] - 2023-07-17
+### Changed
+- Add support for non-empty server https values. [#31688]
+
+## [0.11.6] - 2023-05-22
+### Added
+- Add integration tests for unsupported environments [#30544]
+
+### Fixed
+- Fix Brute force protection activation when WAF unset [#30544]
+- Fix unavailable endpoint when WAF module is disabled [#30487]
+- Multisite: avoid errors when the package is used in the Protect plugin instead of the Jetpack plugin. [#30767]
+
+## [0.11.5] - 2023-05-15
+### Changed
+- Internal updates.
+
+## [0.11.4] - 2023-04-27
+### Added
+- Fix hardblock issue if user only has Protect installed [#30278]
+
+## [0.11.3] - 2023-04-17
+### Fixed
+- Fix brute force protection not initializing on atomic. [#30113]
+
+## [0.11.2] - 2023-04-10
+### Added
+- Add Jetpack Autoloader package suggestion. [#29988]
+
 ## [0.11.1] - 2023-04-03
 ### Fixed
 - Return early if we detect the older BFP implementation from the main plugin [#29794]
@@ -181,6 +235,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Core: do not ship .phpcs.dir.xml in production builds.
 
+[0.11.13]: https://github.com/Automattic/jetpack-waf/compare/v0.11.12...v0.11.13
+[0.11.12]: https://github.com/Automattic/jetpack-waf/compare/v0.11.11...v0.11.12
+[0.11.11]: https://github.com/Automattic/jetpack-waf/compare/v0.11.10...v0.11.11
+[0.11.10]: https://github.com/Automattic/jetpack-waf/compare/v0.11.9...v0.11.10
+[0.11.9]: https://github.com/Automattic/jetpack-waf/compare/v0.11.8...v0.11.9
+[0.11.8]: https://github.com/Automattic/jetpack-waf/compare/v0.11.7...v0.11.8
+[0.11.7]: https://github.com/Automattic/jetpack-waf/compare/v0.11.6...v0.11.7
+[0.11.6]: https://github.com/Automattic/jetpack-waf/compare/v0.11.5...v0.11.6
+[0.11.5]: https://github.com/Automattic/jetpack-waf/compare/v0.11.4...v0.11.5
+[0.11.4]: https://github.com/Automattic/jetpack-waf/compare/v0.11.3...v0.11.4
+[0.11.3]: https://github.com/Automattic/jetpack-waf/compare/v0.11.2...v0.11.3
+[0.11.2]: https://github.com/Automattic/jetpack-waf/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/Automattic/jetpack-waf/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/Automattic/jetpack-waf/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/Automattic/jetpack-waf/compare/v0.10.1...v0.10.2

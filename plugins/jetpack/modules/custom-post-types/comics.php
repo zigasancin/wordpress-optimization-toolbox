@@ -580,7 +580,7 @@ class Jetpack_Comic {
 			++$i;
 		}
 
-		if ( count( $image_id_arr ) === 0 ) {
+		if ( $image_id_arr === array() ) {
 			// All image uploads failed.
 			$rv = array( 'error' => '' );
 
@@ -697,7 +697,6 @@ class Jetpack_Comic {
 		$post_types[] = self::POST_TYPE;
 		return $post_types;
 	}
-
 }
 
 add_action( 'init', array( 'Jetpack_Comic', 'init' ) );

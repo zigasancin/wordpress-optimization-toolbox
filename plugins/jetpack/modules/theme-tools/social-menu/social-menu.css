@@ -115,6 +115,11 @@ Genericons
 	content: "\f208";
 }
 
+/* Nextdoor */
+.jetpack-social-navigation-genericons a[href*="nextdoor.com"]:before {
+	content: "\f10c";
+}
+
 /* Path */
 .jetpack-social-navigation-genericons a[href*="path.com"]:before {
 	content: "\f219";
@@ -160,6 +165,11 @@ Genericons
 	content: "\f223";
 }
 
+/* Threads */
+.jetpack-social-navigation-genericons a[href*="threads.net"]:before {
+	content: "\f10d";
+}
+
 /* Tumblr */
 .jetpack-social-navigation-genericons a[href*="tumblr.com"]:before {
 	content: "\f214";
@@ -189,6 +199,11 @@ Genericons
 .jetpack-social-navigation-genericons a[href*="wordpress.com"]:before,
 .jetpack-social-navigation-genericons a[href*="wordpress.org"]:before {
 	content: "\f205";
+}
+
+/* X */
+.jetpack-social-navigation-genericons a[href*="x.com"]:before {
+	content: "\f10e";
 }
 
 /* YouTube */

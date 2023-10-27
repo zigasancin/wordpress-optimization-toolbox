@@ -9,6 +9,7 @@ namespace Automattic\Jetpack\Dashboard_Customizations;
 
 use Automattic\Jetpack\Assets;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
+use Automattic\Jetpack\Current_Plan as Jetpack_Plan;
 use Automattic\Jetpack\Device_Detection\User_Agent_Info;
 use Automattic\Jetpack\Redirect;
 use Automattic\Jetpack\Scan\Admin_Bar_Notice;
@@ -18,7 +19,6 @@ use GP_Locale;
 use GP_Locales;
 use Jetpack;
 use Jetpack_AMP_Support;
-use Jetpack_Plan;
 use WP_Admin_Bar;
 
 /**
@@ -83,6 +83,12 @@ class Masterbar {
 	 * @var string
 	 */
 	private $primary_site_slug;
+	/**
+	 * Site URL displayed in the UI.
+	 *
+	 * @var string
+	 */
+	private $primary_site_url;
 	/**
 	 * Whether the text direction is RTL (based on connected WordPress.com user's interface settings).
 	 *
@@ -379,7 +385,7 @@ class Masterbar {
 		$this->add_reader_submenu( $wp_admin_bar );
 
 		// Right part.
-		if ( Jetpack::is_module_active( 'notes' ) ) {
+		if ( Jetpack::is_module_active( 'notes' ) && ! \Jetpack_Notifications::is_block_editor() ) {
 			$this->add_notifications( $wp_admin_bar );
 		}
 
@@ -387,9 +393,7 @@ class Masterbar {
 		$this->add_write_button( $wp_admin_bar );
 
 		// Recovery mode exit.
-		if ( function_exists( 'wp_admin_bar_recovery_mode_menu' ) ) {
-			wp_admin_bar_recovery_mode_menu( $wp_admin_bar );
-		}
+		wp_admin_bar_recovery_mode_menu( $wp_admin_bar );
 
 		if ( class_exists( 'Automattic\Jetpack\Scan\Admin_Bar_Notice' ) ) {
 			$scan_admin_bar_notice = Admin_Bar_Notice::instance();
@@ -539,84 +543,6 @@ class Masterbar {
 				'href'   => 'https://wordpress.com/read',
 				'meta'   => array(
 					'class' => 'mb-trackable',
-				),
-			)
-		);
-
-		/** This filter is documented in modules/masterbar.php */
-		if ( apply_filters( 'jetpack_load_admin_menu_class', false ) ) {
-			return;
-		}
-
-		$wp_admin_bar->add_menu(
-			array(
-				'parent' => 'newdash',
-				'id'     => 'streams-header',
-				'title'  => esc_html_x(
-					'Streams',
-					'Title for Reader sub-menu that contains followed sites, likes, and search',
-					'jetpack'
-				),
-				'meta'   => array(
-					'class' => 'ab-submenu-header',
-				),
-			)
-		);
-
-		$following_title = $this->create_menu_item_pair(
-			array(
-				'url'   => Redirect::get_url( 'calypso-read' ),
-				'id'    => 'wp-admin-bar-followed-sites',
-				'label' => esc_html__( 'Followed Sites', 'jetpack' ),
-			),
-			array(
-				'url'   => Redirect::get_url( 'calypso-following-edit' ),
-				'id'    => 'wp-admin-bar-reader-followed-sites-manage',
-				'label' => esc_html__( 'Manage', 'jetpack' ),
-			)
-		);
-
-		$wp_admin_bar->add_menu(
-			array(
-				'parent' => 'newdash',
-				'id'     => 'following',
-				'title'  => $following_title,
-				'meta'   => array( 'class' => 'inline-action' ),
-			)
-		);
-
-		$wp_admin_bar->add_menu(
-			array(
-				'parent' => 'newdash',
-				'id'     => 'discover-discover',
-				'title'  => esc_html__( 'Discover', 'jetpack' ),
-				'href'   => Redirect::get_url( 'calypso-discover' ),
-				'meta'   => array(
-					'class' => 'mb-icon-spacer',
-				),
-			)
-		);
-
-		$wp_admin_bar->add_menu(
-			array(
-				'parent' => 'newdash',
-				'id'     => 'discover-search',
-				'title'  => esc_html__( 'Search', 'jetpack' ),
-				'href'   => Redirect::get_url( 'calypso-read-search' ),
-				'meta'   => array(
-					'class' => 'mb-icon-spacer',
-				),
-			)
-		);
-
-		$wp_admin_bar->add_menu(
-			array(
-				'parent' => 'newdash',
-				'id'     => 'my-activity-my-likes',
-				'title'  => esc_html__( 'My Likes', 'jetpack' ),
-				'href'   => Redirect::get_url( 'calypso-activities-likes' ),
-				'meta'   => array(
-					'class' => 'mb-icon-spacer',
 				),
 			)
 		);

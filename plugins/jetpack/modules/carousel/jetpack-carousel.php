@@ -724,7 +724,7 @@ class Jetpack_Carousel {
 								<div class="jp-carousel-photo-description"></div>
 							</div>
 							<ul class="jp-carousel-image-exif" style="display: none;"></ul>
-							<a class="jp-carousel-image-download" target="_blank" style="display: none;">
+							<a class="jp-carousel-image-download" href="#" target="_blank" style="display: none;">
 								<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 									<mask id="mask0" mask-type="alpha" maskUnits="userSpaceOnUse" x="3" y="3" width="19" height="18">
 										<path fill-rule="evenodd" clip-rule="evenodd" d="M5.84615 5V19H19.7775V12H21.7677V19C21.7677 20.1 20.8721 21 19.7775 21H5.84615C4.74159 21 3.85596 20.1 3.85596 19V5C3.85596 3.9 4.74159 3 5.84615 3H12.8118V5H5.84615ZM14.802 5V3H21.7677V10H19.7775V6.41L9.99569 16.24L8.59261 14.83L18.3744 5H14.802Z" fill="white"/>
@@ -789,9 +789,28 @@ class Jetpack_Carousel {
 		}
 		$selected_images = array();
 		foreach ( $matches[0] as $image_html ) {
-			if ( preg_match( '/(wp-image-|data-id=)\"?([0-9]+)\"?/i', $image_html, $class_id ) &&
-				! preg_match( '/wp-block-jetpack-slideshow_image/', $image_html ) ) {
-				$attachment_id = absint( $class_id[2] );
+			if (
+				preg_match( '/(wp-image-|data-id=)\"?([0-9]+)\"?/i', $image_html, $class_id )
+				&& ! preg_match( '/wp-block-jetpack-slideshow_image/', $image_html )
+			) {
+				/**
+				 * Allow filtering the attachment ID used to fetch and populate metadata about an image in a gallery.
+				 *
+				 * @module carousel
+				 *
+				 * @since 12.6
+				 *
+				 * @param int    $attachment_id Attachment ID pulled from image HTML.
+				 * @param string $image_html    Full HTML image tag.
+				 */
+				$attachment_id = absint(
+					apply_filters(
+						'jetpack_carousel_image_attachment_id',
+						$class_id[2],
+						$image_html
+					)
+				);
+
 				/**
 				 * The same image tag may be used more than once but with different attribs,
 				 * so save each of them against the attachment id.

@@ -164,7 +164,7 @@ new WPCOM_JSON_API_Update_Post_v1_2_Endpoint(
 	)
 );
 
-use function \Automattic\Jetpack\Extensions\Map\map_block_from_geo_points;
+use function Automattic\Jetpack\Extensions\Map\map_block_from_geo_points;
 
 // phpcs:disable PEAR.NamingConventions.ValidClassName.Invalid
 /**
@@ -182,6 +182,8 @@ class WPCOM_JSON_API_Update_Post_v1_2_Endpoint extends WPCOM_JSON_API_Update_Pos
 	 * @param int    $post_id Post ID.
 	 */
 	public function write_post( $path, $blog_id, $post_id ) {
+		$delete_featured_image = null;
+		$media_results         = array();
 		global $wpdb;
 
 		$new  = $this->api->ends_with( $path, '/new' );
@@ -194,7 +196,6 @@ class WPCOM_JSON_API_Update_Post_v1_2_Endpoint extends WPCOM_JSON_API_Update_Pos
 		// unhook publicize, it's hooked again later -- without this, skipping services is impossible.
 		if ( defined( 'IS_WPCOM' ) && IS_WPCOM ) {
 			remove_action( 'save_post', array( $GLOBALS['publicize_ui']->publicize, 'async_publicize_post' ), 100, 2 );
-			add_action( 'rest_api_inserted_post', array( $GLOBALS['publicize_ui']->publicize, 'async_publicize_post' ) );
 
 			if ( $this->should_load_theme_functions( $post_id ) ) {
 				$this->load_theme_functions();
@@ -534,7 +535,7 @@ class WPCOM_JSON_API_Update_Post_v1_2_Endpoint extends WPCOM_JSON_API_Update_Pos
 			$media_urls      = ! empty( $input['media_urls'] ) ? $input['media_urls'] : array();
 			$media_attrs     = ! empty( $input['media_attrs'] ) ? $input['media_attrs'] : array();
 			$media_results   = $this->handle_media_creation_v1_1( $media_files, $media_urls, $media_attrs );
-			$media_id_string = join( ',', array_filter( array_map( 'absint', $media_results['media_ids'] ) ) );
+			$media_id_string = implode( ',', array_filter( array_map( 'absint', $media_results['media_ids'] ) ) );
 		}
 
 		$is_dtp_fb_post = false;
@@ -726,12 +727,12 @@ class WPCOM_JSON_API_Update_Post_v1_2_Endpoint extends WPCOM_JSON_API_Update_Pos
 				 *
 				 * We do support mixed arrays: mixed integer and string keys (see 3rd example below).
 				 *
-				 * EG: array( 'twitter', 'facebook') will only publicize to those, ignoring the other available services
-				 *      Form data: publicize[]=twitter&publicize[]=facebook
-				 * EG: array( 'twitter' => '(int) $pub_conn_id_0, (int) $pub_conn_id_3', 'facebook' => (int) $pub_conn_id_7 ) will publicize to two Twitter accounts, and one Facebook connection, of potentially many.
-				 *      Form data: publicize[twitter]=$pub_conn_id_0,$pub_conn_id_3&publicize[facebook]=$pub_conn_id_7
-				 * EG: array( 'twitter', 'facebook' => '(int) $pub_conn_id_0, (int) $pub_conn_id_3' ) will publicize to all available Twitter accounts, but only 2 of potentially many Facebook connections
-				 *      Form data: publicize[]=twitter&publicize[facebook]=$pub_conn_id_0,$pub_conn_id_3
+				 * EG: array( 'linkedin', 'facebook') will only publicize to those, ignoring the other available services
+				 *      Form data: publicize[]=linkedin&publicize[]=facebook
+				 * EG: array( 'linkedin' => '(int) $pub_conn_id_0, (int) $pub_conn_id_3', 'facebook' => (int) $pub_conn_id_7 ) will publicize to two LinkedIn accounts, and one Facebook connection, of potentially many.
+				 *      Form data: publicize[linkedin]=$pub_conn_id_0,$pub_conn_id_3&publicize[facebook]=$pub_conn_id_7
+				 * EG: array( 'linkedin', 'facebook' => '(int) $pub_conn_id_0, (int) $pub_conn_id_3' ) will publicize to all available LinkedIn accounts, but only 2 of potentially many Facebook connections
+				 *      Form data: publicize[]=linkedin&publicize[facebook]=$pub_conn_id_0,$pub_conn_id_3
 				 */
 
 				// Delete any stale SKIP value for the service by name. We'll add it back by ID.

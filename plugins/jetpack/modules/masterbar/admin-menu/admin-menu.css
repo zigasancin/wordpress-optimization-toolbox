@@ -39,6 +39,7 @@
 @media (min-width: 961px) {
 	body:not(.folded).auto-fold .interface-interface-skeleton,
 	.auto-fold .edit-post-layout .components-editor-notices__snackbar,
+	.components-snackbar-list.edit-widgets-notices__snackbar,
 	.jp-dialogue-modern-full__container {
 		left: 272px;
 	}
@@ -265,6 +266,11 @@
 	margin-top: 6px;
 	margin-right: 3px;
 	padding: 1px 10px;
+}
+
+.site__info > .site__badge.site__badge-staging {
+	background-color: #f0c930;
+	color: #4f3500;
 }
 
 /**

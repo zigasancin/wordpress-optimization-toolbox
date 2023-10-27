@@ -9,14 +9,16 @@ namespace Automattic\Jetpack\My_Jetpack;
 
 use Automattic\Jetpack\Admin_UI\Admin_Menu;
 use Automattic\Jetpack\Assets;
-use Automattic\Jetpack\Connection\Client as Client;
+use Automattic\Jetpack\Connection\Client;
 use Automattic\Jetpack\Connection\Initial_State as Connection_Initial_State;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Connection\Rest_Authentication as Connection_Rest_Authentication;
-use Automattic\Jetpack\JITMS\JITM as JITM;
+use Automattic\Jetpack\Constants as Jetpack_Constants;
+use Automattic\Jetpack\JITMS\JITM;
 use Automattic\Jetpack\Licensing;
+use Automattic\Jetpack\Modules;
 use Automattic\Jetpack\Plugins_Installer;
-use Automattic\Jetpack\Status as Status;
+use Automattic\Jetpack\Status;
 use Automattic\Jetpack\Terms_Of_Service;
 use Automattic\Jetpack\Tracking;
 
@@ -30,7 +32,12 @@ class Initializer {
 	 *
 	 * @var string
 	 */
-	const PACKAGE_VERSION = '2.9.2';
+	const PACKAGE_VERSION = '3.8.1';
+
+	/**
+	 * HTML container ID for the IDC screen on My Jetpack page.
+	 */
+	const IDC_CONTAINER_ID = 'my-jetpack-identity-crisis-container';
 
 	/**
 	 * Initialize My Jetpack
@@ -58,10 +65,10 @@ class Initializer {
 		$page_suffix = Admin_Menu::add_menu(
 			__( 'My Jetpack', 'jetpack-my-jetpack' ),
 			__( 'My Jetpack', 'jetpack-my-jetpack' ),
-			'manage_options',
+			'edit_posts',
 			'my-jetpack',
 			array( __CLASS__, 'admin_page' ),
-			999
+			-1
 		);
 
 		add_action( 'load-' . $page_suffix, array( __CLASS__, 'admin_init' ) );
@@ -116,6 +123,7 @@ class Initializer {
 	 * @return void
 	 */
 	public static function admin_init() {
+		add_filter( 'identity_crisis_container_id', array( static::class, 'get_idc_container_id' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		// Product statuses are constantly changing, so we never want to cache the page.
 		header( 'Cache-Control: no-cache, no-store, must-revalidate' );
@@ -150,6 +158,7 @@ class Initializer {
 				'textdomain' => 'jetpack-my-jetpack',
 			)
 		);
+		$modules = new Modules();
 		wp_localize_script(
 			'my_jetpack_main_app',
 			'myJetpackInitialState',
@@ -165,9 +174,13 @@ class Initializer {
 				'topJetpackMenuItemUrl' => Admin_Menu::get_top_level_menu_item_url(),
 				'siteSuffix'            => ( new Status() )->get_site_suffix(),
 				'myJetpackVersion'      => self::PACKAGE_VERSION,
+				'myJetpackFlags'        => self::get_my_jetpack_flags(),
 				'fileSystemWriteAccess' => self::has_file_system_write_access(),
 				'loadAddLicenseScreen'  => self::is_licensing_ui_enabled(),
 				'adminUrl'              => esc_url( admin_url() ),
+				'IDCContainerID'        => static::get_idc_container_id(),
+				'userIsAdmin'           => current_user_can( 'manage_options' ),
+				'isStatsModuleActive'   => $modules->is_active( 'stats' ),
 			)
 		);
 
@@ -181,12 +194,26 @@ class Initializer {
 		);
 
 		// Connection Initial State.
-		wp_add_inline_script( 'my_jetpack_main_app', Connection_Initial_State::render(), 'before' );
+		Connection_Initial_State::render_script( 'my_jetpack_main_app' );
 
 		// Required for Analytics.
 		if ( self::can_use_analytics() ) {
 			Tracking::register_tracks_functions_scripts( true );
 		}
+	}
+
+	/**
+	 *  Build flags for My Jetpack UI
+	 *
+	 *  @return array
+	 */
+	public static function get_my_jetpack_flags() {
+		$flags = array(
+			'videoPressStats'      => Jetpack_Constants::is_true( 'JETPACK_MY_JETPACK_VIDEOPRESS_STATS_ENABLED' ),
+			'showJetpackStatsCard' => class_exists( 'Jetpack' ),
+		);
+
+		return $flags;
 	}
 
 	/**
@@ -206,6 +233,9 @@ class Initializer {
 	public static function register_rest_endpoints() {
 		new REST_Products();
 		new REST_Purchases();
+		new REST_Zendesk_Chat();
+		new REST_Product_Data();
+		new REST_AI();
 
 		register_rest_route(
 			'my-jetpack/v1',
@@ -311,4 +341,12 @@ class Initializer {
 		return $write_access;
 	}
 
+	/**
+	 * Get container IDC for the IDC screen.
+	 *
+	 * @return string
+	 */
+	public static function get_idc_container_id() {
+		return static::IDC_CONTAINER_ID;
+	}
 }
