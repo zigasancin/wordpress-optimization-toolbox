@@ -1,26 +1,26 @@
 === Redis Object Cache ===
-Contributors: tillkruess
+Contributors: tillkruess, a5hleyrich
 Donate link: https://github.com/sponsors/tillkruss
 Tags: redis, object cache, cache, object caching, caching performance, relay, predis, phpredis
 Requires at least: 3.3
-Tested up to: 6.2
+Tested up to: 6.3
 Requires PHP: 7.2
-Stable tag: 2.3.0
+Stable tag: 2.4.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
+A persistent object cache backend powered by Redis®¹. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
 
 
 == Description ==
 
-A persistent object cache backend powered by Redis. Supports [Predis](https://github.com/predis/predis/), [PhpRedis (PECL)](https://github.com/phpredis/phpredis), [Relay](https://relaycache.com), replication, sentinels, clustering and [WP-CLI](https://wp-cli.org/).
+A persistent object cache backend powered by Redis®¹. Supports [Predis](https://github.com/predis/predis/), [PhpRedis (PECL)](https://github.com/phpredis/phpredis), [Relay](https://relaycache.com), replication, sentinels, clustering and [WP-CLI](https://wp-cli.org/).
 
 To adjust the connection parameters, prefix cache keys or configure replication/clustering, see the [configuration options](https://github.com/rhubarbgroup/redis-cache/#configuration).
 
 = Object Cache Pro =
 
-A **business class** Redis object cache backend. Truly reliable, highly optimized, fully customizable and with a dedicated engineer when you most need it.
+A **business class** Redis®¹ object cache backend. Truly reliable, highly optimized, fully customizable and with a dedicated engineer when you most need it.
 
 * Rewritten for raw performance
 * 100% WordPress API compliant
@@ -34,6 +34,7 @@ A **business class** Redis object cache backend. Truly reliable, highly optimize
 
 Learn more about [Object Cache Pro](https://objectcache.pro/?ref=oss&amp;utm_source=wp-plugin&amp;utm_medium=readme).
 
+¹ Redis is a registered trademark of Redis Ltd. Any rights therein are reserved to Redis Ltd. Any use by Redis Object Cache is for referential purposes only and does not indicate any sponsorship, endorsement or affiliation between Redis and Redis Object Cache.
 
 == Installation ==
 
@@ -60,6 +61,40 @@ Redis Object Cache has various WP CLI commands, for more information run `wp hel
 
 
 == Changelog ==
+
+= 2.4.4 =
+
+- Improved handling of unexpected transaction results
+
+= 2.4.3 =
+
+- Fixed PHP `<=7.2` syntax error
+- Fixed loading error-page translations
+
+= 2.4.2 =
+
+- Made admin-bar script more robust
+- Improved recovery instructions on `redis-error.php`
+- Improved CloudLinux detection
+- Localization improvements
+- Prevent W3 Total Cache and LiteSpeed Cache from overwriting drop-in
+- Fixed ACL username support when using Predis and array syntax
+
+= 2.4.1 =
+
+- Fix PHP `<=7.2` syntax error
+
+= 2.4.0 =
+
+- Flush cache when toggling the object cache
+- Show a custom error message when Redis is unreachable
+- Don't allow object cache to be enabled when Redis is unreachable
+- Deprecated risky `WP_REDIS_SERIALIZER` configuration constant, use `WP_REDIS_IGBINARY` instead
+- Support `WP_REDIS_USERNAME` when using Predis
+- Show cache hit ratio decimal points in Admin Bar node
+- Obscure secrets when displaying `WP_REDIS_SERVERS`
+- Improved CloudLinux's Accelerate WP compatibility
+- Admin bar cache flush now uses AJAX
 
 = 2.3.0 =
 
@@ -626,6 +661,6 @@ Since Predis isn't maintained any longer, it's highly recommended to switch over
 
 == Upgrade Notice ==
 
-= 2.3.0 =
+= 2.4.0 =
 
- Software version 2.3.0 includes general performance and stability improvements.
+Version 2.4.0 includes several stability and QoL improvements.

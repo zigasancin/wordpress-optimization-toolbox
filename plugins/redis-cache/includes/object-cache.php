@@ -3,7 +3,7 @@
  * Plugin Name: Redis Object Cache Drop-In
  * Plugin URI: https://wordpress.org/plugins/redis-cache/
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 2.3.0
+ * Version: 2.4.4
  * Author: Till Krüss
  * Author URI: https://objectcache.pro
  * License: GPLv3
@@ -522,8 +522,10 @@ class WP_Object_Cache {
 
         $this->cache_group_types();
 
-        if ( defined( 'WP_REDIS_TRACE' ) && WP_REDIS_TRACE && function_exists( '_doing_it_wrong' ) ) {
-            _doing_it_wrong( __FUNCTION__ , 'Tracing feature was removed.' , '2.1.2' );
+        if ( function_exists( '_doing_it_wrong' ) ) {
+            if ( defined( 'WP_REDIS_TRACE' ) && WP_REDIS_TRACE ) {
+                _doing_it_wrong( __FUNCTION__ , 'Tracing feature was removed.' , '2.1.2' );
+            }
         }
 
         $client = $this->determine_client();
@@ -747,6 +749,10 @@ class WP_Object_Cache {
 
         if ( defined( 'WP_REDIS_SERIALIZER' ) && ! empty( WP_REDIS_SERIALIZER ) ) {
             $this->redis->setOption( Redis::OPT_SERIALIZER, WP_REDIS_SERIALIZER );
+
+            if ( function_exists( '_doing_it_wrong' ) ) {
+                _doing_it_wrong( __FUNCTION__ , 'The `WP_REDIS_SERIALIZER` configuration constant has been deprecated, use `WP_REDIS_IGBINARY` instead.', '2.3.1' );
+            }
         }
     }
 
@@ -819,6 +825,10 @@ class WP_Object_Cache {
 
         if ( defined( 'WP_REDIS_SERIALIZER' ) && ! empty( WP_REDIS_SERIALIZER ) ) {
             $this->redis->setOption( Relay\Relay::OPT_SERIALIZER, WP_REDIS_SERIALIZER );
+
+            if ( function_exists( '_doing_it_wrong' ) ) {
+                _doing_it_wrong( __FUNCTION__ , 'The `WP_REDIS_SERIALIZER` configuration constant has been deprecated, use `WP_REDIS_IGBINARY` instead.', '2.3.1' );
+            }
         }
     }
 
@@ -896,6 +906,17 @@ class WP_Object_Cache {
                         $options['parameters']['password'] = WP_REDIS_PASSWORD;
                     }
                 }
+            }
+        }
+
+        if ( isset( $parameters['password'] ) ) {
+            if ( is_array( $parameters['password'] ) ) {
+                $parameters['username'] = array_shift( $parameters['password'] );
+                $parameters['password'] = implode( '', $parameters['password'] );
+            }
+
+            if ( defined( 'WP_REDIS_USERNAME' ) ) {
+                $parameters['username'] = WP_REDIS_USERNAME;
             }
         }
 
@@ -1278,7 +1299,9 @@ class WP_Object_Cache {
             }, $tx->{$method}() ?: [] );
 
             if ( count( $results ) !== count( $keys ) ) {
-                throw new Exception( 'Redis pipeline returned unexpected result' );
+                $tx->discard();
+
+                return array_fill_keys( $keys, false );
             }
 
             $results = array_combine( $keys, $results );
@@ -1527,7 +1550,9 @@ class WP_Object_Cache {
             }, $tx->{$method}() ?: [] );
 
             if ( count( $results ) !== count( $keys ) ) {
-                throw new Exception( 'Redis pipeline returned unexpected result' );
+                $tx->discard();
+
+                return array_fill_keys( $keys, false );
             }
 
             $execute_time = microtime( true ) - $start_time;
@@ -2249,7 +2274,9 @@ LUA;
             }, $tx->{$method}() ?: [] );
 
             if ( count( $results ) !== count( $keys ) ) {
-                throw new Exception( 'Redis pipeline returned unexpected result' );
+                $tx->discard();
+
+                return array_fill_keys( $keys, false );
             }
 
             $results = array_combine( $keys, $results );
@@ -2424,7 +2451,7 @@ LUA;
         <?php echo (int) $this->cache_misses; ?>
         <br />
         <strong>Cache Size:</strong>
-        <?php echo number_format( strlen( serialize( $this->cache ) ) / 1024, 2 ); ?> KB
+        <?php echo number_format_i18n( strlen( serialize( $this->cache ) ) / 1024, 2 ); ?> KB
     </p>
         <?php
     }
@@ -2846,13 +2873,13 @@ LUA;
         // When Redis is unavailable, fall back to the internal cache by forcing all groups to be "no redis" groups.
         $this->ignored_groups = array_unique( array_merge( $this->ignored_groups, $this->global_groups ) );
 
+        error_log( $exception ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+
         if ( ! $this->fail_gracefully ) {
-            throw $exception;
+            $this->show_error_and_die( $exception );
         }
 
         $this->errors[] = $exception->getMessage();
-
-        error_log( $exception ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 
         if ( function_exists( 'do_action' ) ) {
             /**
@@ -2863,6 +2890,61 @@ LUA;
              */
             do_action( 'redis_object_cache_error', $exception );
         }
+    }
+
+    /**
+     * Show Redis connection error screen, or load custom `/redis-error.php`.
+     *
+     * @return void
+     */
+    protected function show_error_and_die( Exception $exception ) {
+        wp_load_translations_early();
+
+        add_filter( 'pre_determine_locale', function () {
+            return defined( 'WPLANG' ) ? WPLANG : 'en_US';
+        } );
+
+        // Load custom DB error template, if present.
+        if ( file_exists( WP_CONTENT_DIR . '/redis-error.php' ) ) {
+            require_once WP_CONTENT_DIR . '/redis-error.php';
+            die();
+        }
+
+        $verbose = wp_installing()
+            || defined( 'WP_ADMIN' )
+            || ( defined( 'WP_DEBUG' ) && WP_DEBUG );
+
+        $message = '<h1>' . __( 'Error establishing a Redis connection', 'redis-cache' ) . "</h1>\n";
+
+        if ( $verbose ) {
+            $message .= "<p><code>" . $exception->getMessage() . "</code></p>\n";
+
+            $message .= '<p>' . sprintf(
+                // translators: %s = Formatted wp-config.php file name.
+                __( 'WordPress is unable to establish a connection to Redis. This means that the connection information in your %s file are incorrect, or that the Redis server is not reachable.', 'redis-cache' ),
+                '<code>wp-config.php</code>'
+            ) . "</p>\n";
+
+            $message .= "<ul>\n";
+            $message .= '<li>' . __( 'Is the correct Redis host and port set?', 'redis-cache' ) . "</li>\n";
+            $message .= '<li>' . __( 'Is the Redis server running?', 'redis-cache' ) . "</li>\n";
+            $message .= "</ul>\n";
+
+            $message .= '<p>' . sprintf(
+                // translators: %s = Link to installation instructions.
+                __( 'If you need help, please read the <a href="%s">installation instructions</a>.', 'redis-cache' ),
+                'https://github.com/rhubarbgroup/redis-cache/blob/develop/INSTALL.md'
+            ) . "</p>\n";
+        }
+
+        $message .= '<p>' . sprintf(
+            // translators: %1$s = Formatted object-cache.php file name, %2$s = Formatted wp-content directory name.
+            __( 'To disable Redis, delete the %1$s file in the %2$s directory.', 'redis-cache' ),
+            '<code>object-cache.php</code>',
+            '<code>/wp-content/</code>'
+        ) . "</p>\n";
+
+        wp_die( $message );
     }
 
     /**
