@@ -272,8 +272,7 @@ class CDN extends Abstract_Module {
 			switch ( $setting_key ) {
 				case 'webp':
 					esc_html_e(
-						'Note: We’ll detect and serve WebP images to browsers that will accept them by checking
-						Accept Headers, and gracefully fall back to normal PNGs or JPEGs for non-compatible browsers.',
+						'Note: We’ll detect and serve WebP images to browsers that will accept them by checking Accept Headers, and gracefully fall back to normal PNGs or JPEGs for non-compatible browsers.',
 						'wp-smushit'
 					);
 					break;
@@ -289,14 +288,14 @@ class CDN extends Abstract_Module {
 					break;
 				case 'background_images':
 					printf(
-						/* translators: %1$s - link, %2$s - closing link tag */
+						/* translators: %1$s - Open the link <a>, %2$s - Closing link tag */
 						esc_html__( 'Note: For this feature to work your theme’s background images must be declared correctly using the default %1$swp_attachment%2$s functions.', 'wp-smushit' ),
 						'<a href="https://developer.wordpress.org/reference/functions/wp_get_attachment_image/" target="_blank">',
 						'</a>'
 					);
 					echo '<br>';
 					printf(
-						/* translators: %1$s - link, %2$s - closing link tag */
+						/* translators: %1$s - Open the link <a>, %2$s - closing link tag */
 						esc_html__( 'For any non-media library uploads, you can still use the %1$sDirectory Smush%2$s feature to compress them, they just won’t be served from the CDN.', 'wp-smushit' ),
 						'<a href="' . esc_url( network_admin_url( 'admin.php?page=smush-directory' ) ) . '">',
 						'</a>'
@@ -304,7 +303,7 @@ class CDN extends Abstract_Module {
 					break;
 				case 'rest_api_support':
 					printf(
-						/* translators: %1$s - link, %2$s - closing link tag */
+						/* translators: %1$s - Open a link <a>, %2$s - closing link tag */
 						esc_html__( 'Note: Smush will use the %1$srest_pre_echo_response%2$s hook to filter images in REST API responses.', 'wp-smushit' ),
 						'<a href="https://developer.wordpress.org/reference/hooks/rest_pre_echo_response/" target="_blank">',
 						'</a>'
@@ -359,7 +358,7 @@ class CDN extends Abstract_Module {
 		$site_id = absint( $this->status->site_id );
 
 		$this->cdn_base = trailingslashit( "https://{$this->status->endpoint_url}/{$site_id}" );
-	}
+	}	
 
 	/**
 	 * Add CDN url to header for better speed.
@@ -417,20 +416,24 @@ class CDN extends Abstract_Module {
 			return $src;
 		}
 
-		// Arguments for CDN.
-		$pro_args = array(
-			'lossy' => $this->settings->get( 'lossy' ) ? 1 : 0,
-			'strip' => $this->settings->get( 'strip_exif' ) ? 1 : 0,
-			'webp'  => $this->settings->get( 'webp' ) ? 1 : 0,
-		);
-
-		$args = wp_parse_args( $pro_args, $args );
+		$args = wp_parse_args( $this->get_cdn_parameters(), $args );
 
 		// Replace base url with cdn base.
 		$url = $this->cdn_base . ltrim( $url_parts['path'], '/' );
 
 		// Now we need to add our CDN parameters for resizing.
 		return add_query_arg( $args, $url );
+	}
+
+	private function get_cdn_parameters() {
+		$webp_cdn            = $this->settings->get( 'webp' );
+		$lossy_level_setting = $this->settings->get_lossy_level_setting();
+		$strip_exif          = $this->settings->get( 'strip_exif' );
+		return array(
+			'lossy' => $lossy_level_setting,
+			'strip' => (int) $strip_exif,
+			'webp'  => (int) $webp_cdn,
+		);
 	}
 
 	/**
@@ -963,12 +966,12 @@ class CDN extends Abstract_Module {
 			);
 		}
 
-		$this->settings->set_setting( 'wp-smush-cdn_status', $status );
+		$this->settings->set_setting( 'wp-smush-cdn_status', $new_status );
 
 		// For ajax.
 		if ( ! wp_doing_cron() ) {
 			// At this point we already know that $status->data is valid.
-			wp_send_json_success( $status );
+			wp_send_json_success( $new_status );
 		}
 	}
 
@@ -1305,27 +1308,32 @@ class CDN extends Abstract_Module {
 		 * @see https://core.trac.wordpress.org/ticket/41281
 		 */
 		$attachment_id = attachment_url_to_postid( $src );
+		$image_meta    = array();
+		$width         = 0;
+		$height        = 0;
 
 		// Try to get width and height from image.
 		if ( $attachment_id ) {
 			list( $src, $width, $height ) = wp_get_attachment_image_src( $attachment_id, 'full' );
+			$image_meta                   = wp_get_attachment_metadata( $attachment_id );
+		}
 
-			// Revolution slider fix: images will always return 0 height and 0 width.
-			if ( 0 === $width && 0 === $height ) {
-				// Try to get the dimensions directly from the file.
-				list( $width, $height ) = $this->get_image_size( $src );
-			}
-
-			$image_meta = wp_get_attachment_metadata( $attachment_id );
-		} else {
+		// Revolution slider fix: images will always return 0 height and 0 width.
+		if ( $src && ( empty( $width ) || empty( $height ) ) ) {
 			// Try to get the dimensions directly from the file.
 			list( $width, $height ) = $this->get_image_size( $src );
+		}
 
-			// This is an image placeholder - do not generate srcset.
-			if ( $width === $height && 1 === $width ) {
-				return false;
-			}
+		if ( empty( $width ) || empty( $height ) ) {
+			return false;
+		}
 
+		// This is an image placeholder - do not generate srcset.
+		if ( $width === $height && 1 === $width ) {
+			return false;
+		}
+
+		if ( empty( $image_meta ) ) {
 			$image_meta = array(
 				'width'  => $width,
 				'height' => $height,
@@ -1545,7 +1553,7 @@ class CDN extends Abstract_Module {
 			return false;
 		}
 
-		return getimagesize( $path );
+		return wp_getimagesize( $path );
 	}
 
 }

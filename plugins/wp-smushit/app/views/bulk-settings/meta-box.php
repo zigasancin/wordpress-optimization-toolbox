@@ -8,7 +8,7 @@
  * @var bool  $cdn_enabled       CDN status.
  * @var array $grouped_settings  Grouped settings that can be skipped.
  * @var array $settings          Settings values.
- * @var int   $backups_count     Number of attachments with backups.
+ * @var bool  $backup_exists     Number of attachments with backups.
  */
 
 use Smush\Core\Settings;
@@ -37,15 +37,19 @@ foreach ( $grouped_settings as $name ) {
 		continue;
 	}
 
-	// Skip premium features if not a member.
-	if ( ! in_array( $name, $basic_features, true ) && ! WP_Smush::is_pro() ) {
+	$can_access_pro        = $this->settings->can_access_pro_field( $name );
+	$is_pro_field          = $this->settings->is_pro_field( $name );
+	$is_upsell_field       = $this->settings->is_upsell_field( $name );
+	$is_disabled_field     = ( $is_upsell_field || $is_pro_field ) && ! $can_access_pro;
+	$is_pro_but_not_upsell = $is_pro_field && ! $is_upsell_field;
+	// Only show pro upsell field on Bulk Smush page to avoid upselly UI.
+	if ( $is_pro_but_not_upsell && ! $can_access_pro ) {
 		continue;
 	}
-
-	$value = empty( $settings[ $name ] ) ? false : $settings[ $name ];
+	$value = $is_disabled_field || empty( $settings[ $name ] ) ? false : $settings[ $name ];
 
 	// Show settings option.
-	do_action( 'wp_smush_render_setting_row', $name, $value );
+	do_action( 'wp_smush_render_setting_row', $name, $value, $is_disabled_field, $is_upsell_field );
 }
 
 // Hook after general settings.
@@ -65,7 +69,7 @@ do_action( 'wp_smush_after_basic_settings' );
 	</div>
 
 	<div class="sui-box-settings-col-2">
-		<button type="button" class="sui-button sui-button-ghost wp-smush-restore" onclick="WP_Smush.restore.init()" <?php disabled( ! $backups_count ); ?>>
+		<button type="button" class="sui-button sui-button-ghost wp-smush-restore" onclick="WP_Smush.restore.init()" <?php disabled( ! $backup_exists ); ?>>
 			<i class="sui-icon-undo" aria-hidden="true"></i>
 			<?php esc_html_e( 'Restore Thumbnails', 'wp-smushit' ); ?>
 		</button>

@@ -62,6 +62,7 @@ class Installer {
 		}
 
 		$version = get_site_option( 'wp-smush-version' );
+		self::maybe_mark_as_pre_3_12_6_site( $version );
 
 		if ( ! class_exists( '\\Smush\\Core\\Settings' ) ) {
 			require_once __DIR__ . '/class-settings.php';
@@ -108,6 +109,8 @@ class Installer {
 
 		if ( false === $version ) {
 			self::smush_activated();
+		} else {
+			self::maybe_mark_as_pre_3_12_6_site( $version );
 		}
 
 		if ( false !== $version && WP_SMUSH_VERSION !== $version ) {
@@ -129,20 +132,11 @@ class Installer {
 				delete_option( 'wp-smush-transparent_png' );
 			}
 
-			if ( version_compare( $version, '3.8.6', '<' ) ) {
-				add_site_option( 'wp-smush-show_upgrade_modal', true );
-			}
-
 			if ( version_compare( $version, '3.9.0', '<' ) ) {
 				// Hide the Local WebP wizard if Local WebP is enabled.
 				if ( Settings::get_instance()->get( 'webp_mod' ) ) {
 					add_site_option( 'wp-smush-webp_hide_wizard', true );
 				}
-			}
-
-			if ( version_compare( $version, '3.9.1', '<' ) ) {
-				// Add the flag to display the release highlights modal.
-				add_site_option( 'wp-smush-show_upgrade_modal', true );
 			}
 
 			if ( version_compare( $version, '3.9.5', '<' ) ) {
@@ -161,8 +155,12 @@ class Installer {
 				self::upgrade_3_10_3();
 			}
 
+			if ( version_compare( $version, '3.14.0', '<' ) ) {
+				self::upgrade_3_14_0();
+			}
+
 			$hide_new_feature_highlight_modal = apply_filters( 'wpmudev_branding_hide_doc_link', false );
-			if ( ! $hide_new_feature_highlight_modal && version_compare( $version, '3.12.0', '<' ) ) {
+			if ( ! $hide_new_feature_highlight_modal && version_compare( $version, '3.14.0', '<' ) ) {
 				// Add the flag to display the new feature background process modal.
 				add_site_option( 'wp-smush-show_upgrade_modal', true );
 			}
@@ -311,5 +309,34 @@ class Installer {
 		if ( wp_next_scheduled( 'wdev_logger_clear_logs' ) ) {
 			wp_clear_scheduled_hook( 'wdev_logger_clear_logs' );
 		}
+	}
+
+	private static function maybe_mark_as_pre_3_12_6_site( $version ) {
+		if ( ! $version || version_compare( $version, '3.12.0', '<' ) || false !== get_site_option( 'wp_smush_pre_3_12_6_site') ) {
+			return;
+		}
+		if ( version_compare( $version, '3.12.5', '>' ) ) {
+			$version = 0;
+		}
+		update_site_option( 'wp_smush_pre_3_12_6_site', $version );
+	}
+
+
+	private static function upgrade_3_14_0() {
+		// Update Smush mode for display on Configs page.
+		$stored_configs = get_site_option( 'wp-smush-preset_configs', array() );
+		if ( empty( $stored_configs ) || ! is_array( $stored_configs ) ) {
+			return;
+		}
+
+		$configs_handler = new Configs();
+		foreach ( $stored_configs as $key => $preset_config ) {
+			if ( empty( $preset_config['config']['configs']['settings'] ) ) {
+				continue;
+			}
+			$preset_config['config'] = $configs_handler->sanitize_and_format_configs( $preset_config['config']['configs'] );
+			$stored_configs[ $key ]  = $preset_config;
+		}
+		update_site_option( 'wp-smush-preset_configs', $stored_configs );
 	}
 }
