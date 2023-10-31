@@ -101,7 +101,7 @@ final class AfterActivationSiteScan implements Conditional, Delayed, HasRequirem
 			&&
 			! is_network_admin()
 			&&
-			( $react instanceof _WP_Dependency && version_compare( $react->ver, '18', '<' ) )
+			( $react instanceof _WP_Dependency && version_compare( $react->ver, '18', '>=' ) )
 			&&
 			AMP_Validation_Manager::has_cap()
 			&&

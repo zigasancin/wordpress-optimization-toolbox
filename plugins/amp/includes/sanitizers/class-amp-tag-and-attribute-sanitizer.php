@@ -93,6 +93,13 @@ class AMP_Tag_And_Attribute_Sanitizer extends AMP_Base_Sanitizer {
 	const WRONG_PARENT_TAG                     = 'WRONG_PARENT_TAG';
 
 	/**
+	 * Key for localhost.
+	 *
+	 * @var string
+	 */
+	const LOCALHOST = 'localhost';
+
+	/**
 	 * Allowed tags.
 	 *
 	 * @since 0.5
@@ -184,6 +191,7 @@ class AMP_Tag_And_Attribute_Sanitizer extends AMP_Base_Sanitizer {
 			'amp_globally_allowed_attributes' => AMP_Allowed_Tags_Generated::get_allowed_attributes(),
 			'amp_layout_allowed_attributes'   => AMP_Allowed_Tags_Generated::get_layout_attributes(),
 			'prefer_bento'                    => false,
+			'allow_localhost_http_protocol'   => false,
 		];
 
 		parent::__construct( $dom, $args );
@@ -595,7 +603,7 @@ class AMP_Tag_And_Attribute_Sanitizer extends AMP_Base_Sanitizer {
 		);
 
 		// Remove element if it has illegal CDATA.
-		if ( ! empty( $cdata ) && $node instanceof DOMElement ) {
+		if ( ! empty( $cdata ) ) {
 			$validity = $this->validate_cdata_for_node( $node, $cdata );
 			if ( true !== $validity ) {
 				$sanitized = $this->remove_invalid_child(
@@ -828,7 +836,7 @@ class AMP_Tag_And_Attribute_Sanitizer extends AMP_Base_Sanitizer {
 		}
 
 		// Check if element needs amp-bind component.
-		if ( $node instanceof DOMElement && ! in_array( 'amp-bind', $this->script_components, true ) ) {
+		if ( ! in_array( 'amp-bind', $this->script_components, true ) ) {
 			foreach ( $node->attributes as $name => $value ) {
 				if ( Amp::BIND_DATA_ATTR_PREFIX === substr( $name, 0, 14 ) ) {
 					$script_components[] = 'amp-bind';
@@ -1939,7 +1947,9 @@ class AMP_Tag_And_Attribute_Sanitizer extends AMP_Base_Sanitizer {
 			if ( $node->hasAttribute( $attr_name ) ) {
 				foreach ( $this->extract_attribute_urls( $node->getAttributeNode( $attr_name ) ) as $url ) {
 					$url_scheme = $this->parse_protocol( $this->normalize_url_from_attribute_value( $url ) );
-					if ( isset( $url_scheme ) && ! in_array( strtolower( $url_scheme ), $attr_spec_rule[ AMP_Rule_Spec::VALUE_URL ][ AMP_Rule_Spec::ALLOWED_PROTOCOL ], true ) ) {
+					if ( $this->args['allow_localhost_http_protocol'] && self::LOCALHOST === wp_parse_url( $url, PHP_URL_HOST ) ) {
+						return AMP_Rule_Spec::PASS;
+					} elseif ( isset( $url_scheme ) && ! in_array( strtolower( $url_scheme ), $attr_spec_rule[ AMP_Rule_Spec::VALUE_URL ][ AMP_Rule_Spec::ALLOWED_PROTOCOL ], true ) ) {
 						return AMP_Rule_Spec::FAIL;
 					}
 				}
@@ -1951,7 +1961,9 @@ class AMP_Tag_And_Attribute_Sanitizer extends AMP_Base_Sanitizer {
 					if ( $node->hasAttribute( $alternative_name ) ) {
 						foreach ( $this->extract_attribute_urls( $node->getAttributeNode( $alternative_name ), $attr_name ) as $url ) {
 							$url_scheme = $this->parse_protocol( $this->normalize_url_from_attribute_value( $url ) );
-							if ( isset( $url_scheme ) && ! in_array( strtolower( $url_scheme ), $attr_spec_rule[ AMP_Rule_Spec::VALUE_URL ][ AMP_Rule_Spec::ALLOWED_PROTOCOL ], true ) ) {
+							if ( $this->args['allow_localhost_http_protocol'] && self::LOCALHOST === wp_parse_url( $url, PHP_URL_HOST ) ) {
+								return AMP_Rule_Spec::PASS;
+							} elseif ( isset( $url_scheme ) && ! in_array( strtolower( $url_scheme ), $attr_spec_rule[ AMP_Rule_Spec::VALUE_URL ][ AMP_Rule_Spec::ALLOWED_PROTOCOL ], true ) ) {
 								return AMP_Rule_Spec::FAIL;
 							}
 						}
@@ -2334,7 +2346,7 @@ class AMP_Tag_And_Attribute_Sanitizer extends AMP_Base_Sanitizer {
 
 		// Ensure attributes match; if not move up to the next node.
 		foreach ( $parsed_spec_name['attributes'] as $attr_name => $attr_value ) {
-			if ( $node instanceof DOMElement && strtolower( $node->getAttribute( $attr_name ) ) !== $attr_value ) {
+			if ( strtolower( $node->getAttribute( $attr_name ) ) !== $attr_value ) {
 				return false;
 			}
 		}
