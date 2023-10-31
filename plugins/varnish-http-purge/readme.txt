@@ -2,13 +2,17 @@
 Contributors: Ipstenu, mikeschroder, techpriester, danielbachhuber
 Tags: proxy, purge, cache, varnish, nginx
 Requires at least: 5.0
-Tested up to: 6.0
-Stable tag: 5.1.3
+Tested up to: 6.3
+Stable tag: 5.2.0
 Requires PHP: 5.6
 
 Automatically empty proxy cached content when your site is modified.
 
 == Description ==
+
+<strong><em>19 OCTOBER 2023 -- WARNING: THIS PLUGIN IS NOT BEING ACTIVELY MAINTAINED.</em></strong>
+
+If you're interested in adopting this plugin, please read [Requests to Take Over Development](https://github.com/Ipstenu/varnish-http-purge/wiki/Requests-to-Take-Over-Development).
 
 <strong>This plugin <em>does not</em> install nor configure a cache proxy. It acts as an interface with such services.</strong>
 
@@ -100,6 +104,14 @@ When using Nginx based proxies, your IP will likely be `localhost`.
 **Please report all issues in the [support forums](https://wordpress.org/support/plugin/varnish-http-purge)**
 
 If you have code patches, [pull requests are welcome](https://github.com/Ipstenu/varnish-http-purge).
+
+= Don't you work at DreamHost? Is this Official or DreamHost only? =
+
+This plugin was originally adopted and updated for DreamHost's DreamPress server, however it is not (and never has been) for DreamHost _only_.
+
+I worked at DreamHost from 2012 to 2022, and have maintained the plugin since around 2014 or so.
+
+As of October 2023, this plugin is _NO LONGER_ installed by default on DreamPress.
 
 = Is this plugin caching my data? =
 
@@ -238,35 +250,15 @@ This is a question beyond the support of plugin. I do not have the resources ava
 
 Yes _IF_ the service has an interface. Sadly Nginx does not. [Detailed directions can be found on the debugging section on GitHub](https://github.com/Ipstenu/varnish-http-purge/wiki). Bear in mind, these interfaces tend to be command-line only.
 
-= Don't you work at DreamHost? Is this Official or DreamHost only? =
+= Caching is detected but cannot be confirmed. What does that mean? =
 
-* Yes, I do work for DreamHost
-* No, this plugin is not DreamHost Only
-
-This plugin is installed by default for _all_ DreamPress installs on DreamHost, and I maintain it for DreamHost, but it was not originally an official DreamHost plugin which means I will continue to support all users to the best of my ability.
+It means that somewhere your server's headers aren't returning the data the plugin needs to see, in order to determine if the cache is working. The most common cause is that your server isn't returning the `X-Varnish` header or the `Age` header.
 
 == Changelog ==
 
-= 5.1.3 =
-* June 2022
-* Check if a required option exists before trying to use it
-
-= 5.1.2 = 
-* April 2022
-* Fix typo in readme
-
-= 5.1.1 =
-* April 2022
-* Prevent two versions of the plugin from running at once.
-* Correct JSON
-
-= 5.1 =
-* February 2022
-* WP 5.9 Compat
-* Rate limiting to prevent abuse - if you try to purge more than the max number of posts in a go (default 50), a purge ALL is triggered
-* Allows customizing the purge URL to support: (credit mickaelperrin)
-- Nginx cache purge mechanism that doesn't support regex directives
-- Custom purge location
+= 5.2.0 =
+* July 2023
+* Fix debug for if Via headers are an array (props @iverok)
 
 == Screenshots ==
 
