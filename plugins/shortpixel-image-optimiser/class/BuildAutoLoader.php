@@ -32,7 +32,6 @@ class BuildAutoLoader
       // 'class/wp-short-pixel.php',
        'class/wp-shortpixel-settings.php',
       // 'class/view/shortpixel_view.php',
-       'class/shortpixel-png2jpg.php',
        'class/front/img-to-picture-webp.php',
     );
 
@@ -41,24 +40,24 @@ class BuildAutoLoader
 
     $externals = array(
       'class/external/cloudflare.php',
-      'class/external/flywheel.php',
       //'class/external/gravityforms.php',
-      //'class/external/helpscout.php',
       'class/external/nextgen/nextGenController.php',
       'class/external/nextgen/nextGenViewController.php',
-      //'class/external/securi.php',
-      //'class/external/shortpixel_queue_db.php',
       'class/external/visualcomposer.php',
-      'class/external/wp-offload-media.php',
-      //'class/external/wpengine.php',
+			'class/external/offload/Offloader.php',
+      'class/external/offload/wp-offload-media.php',
+			'class/external/offload/virtual-filesystem.php',
       'class/external/wp-cli/wp-cli-base.php',
 			'class/external/wp-cli/wp-cli-single.php',
 			'class/external/wp-cli/wp-cli-bulk.php',
-      'class/external/custom-suffixes.php',
+      'class/external/image-galleries.php',
       'class/external/pantheon.php',
 			'class/external/spai.php',
 			'class/external/cache.php',
 			'class/external/uncode.php',
+			'class/external/query-monitor.php',
+			'class/external/Woocommerce.php',
+      'class/external/themes/total-theme.php',
     );
 
     echo "Build Plugin.JSON ";

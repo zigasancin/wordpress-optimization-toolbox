@@ -1,11 +1,16 @@
 <?php
 namespace ShortPixel;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 ?>
 <section class="panel process" data-panel="process" >
   <div class="panel-container">
 
     <h3 class="heading"><span><img src="<?php echo esc_url(\wpSPIO()->plugin_url('res/img/robo-slider.png')); ?>"></span>
       <?php esc_html_e('ShortPixel Bulk Process is in progress','shortpixel-image-optimiser'); ?>
+
       <div class='average-optimization'>
           <p><?php esc_html_e('Average this run','shortpixel-image-optimiser'); ?></p>
           <svg class="opt-circle-average" viewBox="-10 0 150 140">

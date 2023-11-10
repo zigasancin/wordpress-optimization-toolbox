@@ -1,8 +1,12 @@
 <?php
 namespace ShortPixel\Controller;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\Notices\NoticeController as Notices;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 use ShortPixel\ViewController as ViewController;
 
@@ -33,6 +37,7 @@ class AdminNoticesController extends \ShortPixel\Controller
         'LegacyNotice',
         'ListviewNotice',
 				'HeicFeatureNotice',
+        'NewExclusionFormat',
     );
     protected $adminNotices; // Models
 
@@ -127,11 +132,13 @@ class AdminNoticesController extends \ShortPixel\Controller
 
         if ($noticeControl->countNotices() > 0)
         {
-            $notices = $noticeControl->getNoticesForDisplay();
 
+            $notices = $noticeControl->getNoticesForDisplay();
             if (count($notices) > 0)
             {
                 \wpSPIO()->load_style('shortpixel-notices');
+								\wpSPIO()->load_style('notices-module');
+
 
                 foreach($notices as $notice)
                 {
@@ -188,6 +195,7 @@ class AdminNoticesController extends \ShortPixel\Controller
 			 foreach($this->adminNotices as $key => $class)
 			 {
 				  $class->load();
+					$this->doRemoteNotices();
 			 }
 		}
 

@@ -1,10 +1,11 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
-
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 ?>
-
 <div id='sp-msg-<?php echo( esc_attr($view->id) );?>' class='column-wp-shortPixel view-edit-media'>
 <?php // Debug Data
 if (! is_null($view->debugInfo) && is_array($view->debugInfo) && count($view->debugInfo) > 0 ):  ?>
@@ -42,15 +43,7 @@ if (! is_null($view->debugInfo) && is_array($view->debugInfo) && count($view->de
     <?php
     // single actions
     if (isset($this->view->actions)):
-      foreach($this->view->actions as $actionName => $action):
-        $classes = ($action['display'] == 'button') ? " button-smaller button-primary $actionName " : "$actionName";
-        $link = ($action['type'] == 'js') ? 'javascript:' . $action['function'] : $action['function'];
-
-        ?>
-        <a href="<?php echo $link ?>" class="<?php echo esc_attr($classes) ?>"><?php echo esc_html($action['text']) ?></a>
-
-        <?php
-      endforeach;
+       $this->loadView('snippets/part-single-actions', false);
 
     endif;
 

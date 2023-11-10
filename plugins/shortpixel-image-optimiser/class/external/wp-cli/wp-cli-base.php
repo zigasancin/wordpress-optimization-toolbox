@@ -1,6 +1,11 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\OptimizeController as OptimizeController;
 use ShortPixel\Controller\BulkController as BulkController;
 
@@ -17,8 +22,6 @@ class WpCliController
 
     protected static $ticks = 0;
     protected static $emptyq = 0;
-
-		protected $last_combinedStatus;
 
     public function __construct()
     {
@@ -46,7 +49,7 @@ class WpCliController
 				\WP_CLI::add_command('spio bulk', '\ShortPixel\SpioBulk');
     }
 
-}
+} // class WpCliController
 
 /**
 * ShortPixel Image Optimizer
@@ -57,6 +60,8 @@ class SpioCommandBase
 {
 
      protected static $runs = 0;
+		 protected $last_combinedStatus;
+
       /**
      * Adds a single item to the queue(s), then processes the queue(s).
      *
@@ -122,7 +127,7 @@ class SpioCommandBase
 							$this->run($args, $assoc);
 					}
 					else {
-						\WP_CLI::Line (__('You can optimize images via the run command', 'shortpixel-image-optimiser'));						
+						\WP_CLI::Line (__('You can optimize images via the run command', 'shortpixel-image-optimiser'));
 					}
 				}
         elseif ($result->status == 0)
@@ -183,6 +188,15 @@ class SpioCommandBase
         else
           $wait = 3;
 
+				// Prepare limit
+				if (isset($assoc['limit']))
+				{
+					$limit = intval($assoc['limit']);
+				}
+				else {
+					 $limit = false;
+				}
+
 				$complete = false;
         if (! isset($assoc['ticks']))
         {
@@ -197,8 +211,24 @@ class SpioCommandBase
            $bool = $this->runClick($queue);
            if ($bool === false)
            {
+						 $this->status($args, $assoc);
              break;
            }
+
+					 if (false !== $limit)
+					 {
+						  $status = $this->getStatus();
+							$total = $this->unFormatNumber($status->total->stats->total);
+							$is_preparing = $status->total->stats->is_preparing;
+							if ($total >= $limit && $is_preparing)
+							{
+								\WP_CLI::log(sprintf('Bulk Preparing is done. Limit reached of %s items (%s items). Use start command to signal ready. Use run to process after starting.', $limit, $status->total->stats->total));
+								$this->status($args, $assoc);
+
+								 $bool = false;
+								 break;
+							}
+					 }
 
            $ticks--;
 
@@ -257,13 +287,13 @@ class SpioCommandBase
 		           foreach($qresult->results as $item)
 		           {
 								   // Non-result results can happen ( ie. with PNG conversion ). Probably just ignore.
-								 	 if (! is_object($item->result))
+								 	 if (false === property_exists($item, 'result') || ! is_object($item->result))
 									 {
 										  continue;
 									 }
 
-		               $result = $item->result;
-									 $counts = $item->counts;
+		               $result = (true === property_exists($item, 'result')) ? $item->result : null;
+									 $counts = (true === property_exists($item, 'counts')) ? $item->counts : null;
 
 									 $apiStatus = property_exists($result, 'apiStatus') ? $result->apiStatus : null;
 
@@ -302,9 +332,6 @@ class SpioCommandBase
 	        else
 	          $combinedStatus = $customStatus;
 
-	      //if ($combinedStatus == 100)
-	      //  return false; // no status in this request.
-
       	if ($combinedStatus == Queue::RESULT_QUEUE_EMPTY)
         {
            \WP_CLI::log('All Queues report processing has finished');
@@ -313,13 +340,12 @@ class SpioCommandBase
         }
         elseif($combinedStatus == Queue::RESULT_PREPARING_DONE)
         {
-           \WP_CLI::log(sprintf('Bulk Preparing is done. %d items. Use start command to signal ready. Use run to process after starting.', $results->total->stats->total));
+           \WP_CLI::log(sprintf('Bulk Preparing is done. %s items. Use start command to signal ready. Use run to process after starting.', $results->total->stats->total));
 					 return false;
         }
 
 				$this->last_combinedStatus = $combinedStatus;
 
-      //  if ($mediaResult->status !==)
       return true;
     }
 
@@ -329,7 +355,7 @@ class SpioCommandBase
 				$apiStatus = property_exists($result, 'apiStatus') ? $result->apiStatus : null;
 
 
-					if ($apiStatus == ApiController::STATUS_SUCCESS)
+					if ($apiStatus === ApiController::STATUS_SUCCESS)
 					{
 							\WP_CLI::line(' ');
 							\WP_CLI::line('---------------------------------------');
@@ -378,6 +404,13 @@ class SpioCommandBase
 							 }
 
 				 } // success
+         elseif ($apiStatus === ApiController::STATUS_NOT_API)
+         {
+             $message = property_exists($result, 'message') ? $result->message : '';
+
+             \WP_CLI::line($message);
+
+         }
 				 else
 				 {
 					  if ($result->is_error)
@@ -416,7 +449,6 @@ class SpioCommandBase
 
 				$queue = $this->getQueueArgument($assoc);
 				$startupData = $this->getStatus();
-
 
 				$items = array();
 				$fields = array('queue name', 'in queue', 'in process', 'fatal errors', 'done', 'total', 'preparing', 'running', 'finished');
@@ -507,7 +539,6 @@ class SpioCommandBase
 				}
 
 				\WP_CLI::Success(__('Queue(s) cleared', 'shortpixel-image-optimiser'));
-
 		}
 
     //  Colored is buggy, so off for now -> https://github.com/wp-cli/php-cli-tools/issues/134
@@ -591,4 +622,12 @@ class SpioCommandBase
 						return $optimizeController;
 		}
 
-} // Class
+		private function unFormatNumber($string)
+		{
+			 $string = str_replace(',', '', $string);
+			 $string = str_replace('.', '', $string);
+
+			 return $string;
+		}
+
+} // Class SpioCommandBase

@@ -1,6 +1,11 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\OptimizeController as OptimizeController;
 use ShortPixel\Controller\BulkController as BulkController;
 

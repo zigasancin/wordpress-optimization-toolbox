@@ -1,34 +1,31 @@
 'use strict';
 
 // MainScreen as an option for delegate functions
-var ShortPixelScreen = function (MainScreen, processor)
+class ShortPixelScreen extends ShortPixelScreenBase
 {
-    this.isCustom = true;
-    this.isMedia = true;
-    this.processor = processor;
 
-    this.Init = function()
-    {
+  Init()
+  {
+    super.Init();
+    this.ListenPLUpload();
+  }
 
-    },
-    this.HandleImage = function(result, type)
+
+  // Only listening on the nolist ( and more specific -> media addnew) , since the post editor classic/ gutenberg and others have this interface otherwise hidden.
+  ListenPLUpload() {
+
+    // Most screen will not have uploader defined or ready.
+    if (typeof uploader === 'undefined' || uploader === null)
     {
-				return true;
+       return;
     }
 
-    this.UpdateStats = function()
+    var self = this;
+    uploader.bind('UploadComplete', function (up, file, response)
     {
-
-    }
-    this.HandleError = function()
-    {
-
-    }
-
-    this.RenderItemView = function(e)
-    {
-
-    }
-
+        // Give processor a swoop when uploading is done, while respecting set boundaries.
+        self.processor.RunProcess();
+    });
+  }
 
 } // class

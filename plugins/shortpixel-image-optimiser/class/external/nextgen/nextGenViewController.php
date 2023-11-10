@@ -1,7 +1,12 @@
 <?php
 namespace ShortPixel;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\Notices\NoticeController as Notice;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 use ShortPixel\Helper\UiHelper as UiHelper;
 use ShortPixel\Controller\OtherMediaController as OtherMediaController;
@@ -12,7 +17,6 @@ class NextGenViewController extends \ShortPixel\ViewController
   protected static $nggColumnIndex = 0;
 
   protected $template = 'view-list-media';
-
 
    protected function hooks()
    {
@@ -46,7 +50,9 @@ class NextGenViewController extends \ShortPixel\ViewController
 
        $otherMediaController = OtherMediaController::getInstance();
        $mediaItem = $otherMediaController->getCustomImageByPath($nextGenObj->imagePath);
+
        $this->view->mediaItem = $mediaItem;
+       $this->view->id = $mediaItem->get('id');
        $this->view->text = UiHelper::getStatusText($mediaItem);
 
        $this->view->list_actions = UiHelper::getListActions($mediaItem);

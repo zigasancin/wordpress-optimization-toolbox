@@ -1,225 +1,19 @@
 'use strict';
 
 // MainScreen as an option for delegate functions
-var ShortPixelScreen = function (MainScreen, processor)
+class ShortPixelScreen extends ShortPixelScreenItemBase //= function (MainScreen, processor)
 {
-    this.isCustom = true;
-    this.isMedia = true;
-    this.processor = processor;
+    isCustom = true;
+    isMedia = true;
+		type = 'media';
 
-    this.currentMessage = '';
-		this.strings = '';
-
-
-    this.Init = function()
-    {
-          window.addEventListener('shortpixel.media.resumeprocessing', this.processor.ResumeProcess.bind(this.processor));
-					window.addEventListener('shortpixel.RenderItemView', this.RenderItemView.bind(this) );
-
-					this.strings = spio_screenStrings;
-    }
-
-    this.HandleImage = function(resultItem, type)
-    {
-        if (type == 'custom')  // We don't eat that here.
-          return false;
-
-        if (typeof resultItem.result !== 'undefined')
-        {
-            // This is final, not more messing with this. In results (multiple) defined one level higher than result object, if single, it's in result.
-            var item_id = typeof resultItem.item_id !== 'undefined' ? resultItem.item_id : resultItem.result.item_id;
-            var message = resultItem.result.message;
-
-            var element = document.getElementById('sp-msg-' + item_id); // empty result box while getting
-            if (typeof message !== 'undefined')
-            {
-								 var isError = false;
-							 if (resultItem.result.is_error == true)
-							    isError = true;
-               this.UpdateMessage(item_id, message, isError);
-            }
-            if (element !== null)
-            {
-              element.innerHTML = '';
-            //  var event = new CustomEvent('shortpixel.loadItemView', {detail: {'type' : type, 'id': result.id }}); // send for new item view.
-            var fileStatus = processor.fStatus[resultItem.result.status];
-
-              if (fileStatus == 'FILE_SUCCESS' || fileStatus == 'FILE_RESTORED' || resultItem.result.is_done == true)
-              {
-                this.processor.LoadItemView({id: item_id, type: type});
-              }
-              else if (fileStatus == 'FILE_PENDING')
-              {
-                 element.style.display = 'none';
-              }
-              //window.dispatchEvent(event);
-            }
-        }
-        else
-        {
-          console.error('handleImage without Result');
-          console.log(resultItem);
-        }
-        /*if (result.message)
-        {
-           var element = document.getElementById('sp-message-' + result.item_id); // empty result box while getting
-           if (element !== null)
-           {
-               element.innerHTML = result.message;
-           }
-        } */
-				return false;
-    }
-
-    this.UpdateMessage = function(id, message, isError)
-    {
-
-       var element = document.getElementById('sp-message-' + id);
-			 if (typeof isError === 'undefined')
-			 	 isError = false;
-
-       this.currentMessage = message;
-
-       if (element == null)
-       {
-           var parent = document.getElementById('sp-msg-' + id);
-           if (parent !== null)
-           {
-             var element = document.createElement('div');
-             element.classList.add('message');
-             element.setAttribute('id', 'sp-message-' + id);
-             parent.parentNode.insertBefore(element, parent.nextSibling);
-           }
-       }
-
-       if (element !== null)
-       {
-				  if (element.classList.contains('error'))
-						 element.classList.remove('error');
-
-					console.log('update message '  + message)
-          element.innerHTML = message;
-
-					if (isError)
-						 element.classList.add('error');
-       }
-       else
-       {
-        //console.error('Update Message column not found ' + id);
-        this.processor.Debug('Update Message Column not found - ' + id);
-       }
-    }
-		// Show a message that an action has started.
-		this.SetMessageProcessing = function(id)
+		Init()
 		{
-				var message = this.strings.startAction;
-
-				var loading = document.createElement('img');
-				loading.width = 20;
-				loading.height = 20;
-				loading.src = this.processor.GetPluginUrl() + '/res/img/bulk/loading-hourglass.svg';
-
-
-				message += loading.outerHTML;
-				this.UpdateMessage(id, message);
+			super.Init();
+      this.ListenGallery();
 		}
 
-    this.QueueStatus = function(qStatus)
-    {
-/*        if (qStatus == 'QUEUE_EMPTY')
-        {
-          var data = {
-              type: 'media',
-              screen_action: 'finishQueue'
-           };
-
-          this.processor.AjaxRequest(data);
-        } */
-    }
-
-    this.UpdateStats = function(stats, type)
-    {
-			// for now, since we process both, only update the totals in tooltip.
-			if ( type !== 'total')
-				return;
-
-			console.log('UpdateStats', stats, type);
-      var waiting = stats.in_queue + stats.in_process;
-      this.processor.tooltip.RefreshStats(waiting);
-    }
-
-    this.GeneralResponses = function(responses)
-    {
-
-       var self = this;
-
-       if (responses.length == 0)  // no responses.
-         return;
-
-			 var shownId = []; // prevent the same ID from creating multiple tooltips. There will be punishment for this.
-
-       responses.forEach(function (element, index)
-       {
-
-				  	if (element.id)
-						{
-								if (shownId.indexOf(element.id) > -1)
-								{
-									return; // skip
-								}
-								else
-								{
-									shownId.push(element.id);
-								}
-						}
-
-						var message = element.message;
-						if (element.filename)
-							message += ' - ' + element.filename;
-
-            self.processor.tooltip.AddNotice(message);
-            if (self.processor.rStatus[element.code] == 'RESPONSE_ERROR')
-            {
-
-             if (element.id)
-             {
-               var message = self.currentMessage;
-               self.UpdateMessage(element.id, message + '<br>' + element.message);
-               self.currentMessage = message; // don't overwrite with this, to prevent echo.
-             }
-             else
-             {
-                 var errorBox = document.getElementById('shortpixel-errorbox');
-                 if (errorBox)
-                 {
-                   var error = document.createElement('div');
-                   error.classList.add('error');
-                   error.innerHTML = element.message;
-                   errorBox.append(error);
-                 }
-             }
-            }
-       });
-
-    }
-
-		// For some reason all these functions are repeated up there ^^
-		// HandleError is handling from results / result, not ResponseController. Check if it has negative effects it's kinda off now.
-    this.HandleError = function(result)
-    {
-          if (result.message && result.item_id)
-          {
-            this.UpdateMessage(result.item_id, result.message, true);
-          }
-
-					if (typeof result.item_id !== 'undefined')
-					{
-          	this.processor.LoadItemView({id: result.item_id, type: 'media'});
-					}
-
-    }
-
-    this.RenderItemView = function(e)
+    RenderItemView(e)
     {
 				e.preventDefault();
         var data = e.detail;
@@ -230,39 +24,33 @@ var ShortPixelScreen = function (MainScreen, processor)
             var element = document.getElementById('sp-msg-' + id);
 						if (element !== null) // Could be other page / not visible / whatever.
             	element.outerHTML = data.media.itemView;
+            else {
+              console.error('Render element not found');
+            }
         }
+				else {
+					console.error('Data not found - RenderItemview on media screen');
+				}
         return false; // callback shouldn't do more, see processor.
     }
 
-    this.RestoreItem = function(id)
-    {
-        var data = {};
-        //e.detail;
-        data.id = id;
-        data.type = 'media';
-        data.screen_action = 'restoreItem';
-        // AjaxRequest should return result, which will go through Handleresponse, then LoadiTemView.
-				this.SetMessageProcessing(id);
-				this.processor.AjaxRequest(data);
+		HandleImage(resultItem, type)
+		{
+				var res = super.HandleImage(resultItem, type);
+				var fileStatus = this.processor.fStatus[resultItem.fileStatus];
 
-        //var id = data.id;
-    }
-    this.ReOptimize = function(id, compression)
-    {
-        var data = {
-           id : id ,
-           compressionType: compression,
-           type: 'media',
-           screen_action: 'reOptimizeItem'
-        };
+				// If image editor is active and file is being restored because of this reason ( or otherwise ), remove the warning if this one exists.
+				if (fileStatus == 'FILE_RESTORED')
+				{
+					 var warning = document.getElementById('shortpixel-edit-image-warning');
+					 if (warning !== null)
+					 {
+						  warning.remove();
+					 }
+				}
+		}
 
-			 if (! this.processor.CheckActive())
-			     data.callback = 'shortpixel.custom.resumeprocessing';
-
-				this.SetMessageProcessing(id);
-        this.processor.AjaxRequest(data);
-    }
-		this.RedoLegacy = function(id)
+		RedoLegacy(id)
 		{
 			var data = {
 				 id: id,
@@ -282,22 +70,187 @@ var ShortPixelScreen = function (MainScreen, processor)
 			this.SetMessageProcessing(id);
 			this.processor.AjaxRequest(data);
 		}
-    this.Optimize = function (id)
-    {
 
-       var data = {
-          id: id,
-          type: 'media',
-          screen_action: 'optimizeItem'
-       }
+    ListenGallery()
+  	{
+  	   	var self = this;
+  			if (typeof (wp.media) === 'undefined')
+  			{
+  				 this.ListenEditAttachment(); // Edit Media edit attachment screen
+  				 return;
+  			}
 
-       if (! this.processor.CheckActive())
-         data.callback = 'shortpixel.media.resumeprocessing';
+  			// This taken from S3-offload / media.js /  Grid media gallery
+  		  if (typeof wp.media.view.Attachment.Details.TwoColumn !== 'undefined')
+        {
+  			     var detailsColumn = wp.media.view.Attachment.Details.TwoColumn;
+             var twoCol = true;
+        }
+        else {
+            var detailsColumn = wp.media.view.Attachment.Details;
+            var twoCol = false;
+        }
 
-			 this.SetMessageProcessing(id);
-       this.processor.AjaxRequest(data);
-    }
+  			 var extended = detailsColumn.extend ({
+            render: function()
+            {
+               detailsColumn.prototype.render.apply( this );
+               this.fetchSPIOData(this.model.get( 'id' ));
 
-    this.Init();
+               return this;
+            },
+            fetchSPIOData : function (id)
+            {
+              var data = {};
+              data.id =  id;
+              data.type = self.type;
+              data.action = 'getItemView';
+              data.callback = 'shortpixel.MediaRenderView';
+
+              window.addEventListener('shortpixel.MediaRenderView', this.renderSPIOView.bind(this), {'once':true});
+              self.processor.LoadItemView(data);
+            },
+
+            renderSPIOView: function(e, timed)
+            {
+              if (! e.detail || ! e.detail.media || ! e.detail.media.itemView)
+              {
+                return;
+              }
+
+              var $spSpace = this.$el.find('.attachment-info .details');
+              if ($spSpace.length === 0 && (typeof timed === 'undefined' || timed < 5))
+              {
+                // It's possible the render is slow or blocked by other plugins. Added a delay and retry bit later to draw.
+                if (typeof timed === 'undefined')
+                {
+                   var timed = 0;
+                }
+                else {
+                   timed++;
+                }
+                setTimeout(function () { this.renderSPIOView(e, true) }.bind(this), 1000);
+              }
+
+              var html = this.doSPIORow(e.detail.media.itemView);
+
+              $spSpace.after(html);
+            },
+            doSPIORow : function(dataHtml)
+            {
+               var html = '';
+               html += '<div class="shortpixel-popup-info">';
+               html += '<label class="name">ShortPixel</label>';
+               html += dataHtml;
+               html += '</div>';
+               return html;
+            },
+            editAttachment: function(event)
+            {
+               event.preventDefault();
+               self.AjaxOptimizeWarningFromUnderscore(this.model.get( 'id' ));
+               detailsColumn.prototype.editAttachment.apply( this, [event]);
+            }
+        });
+
+        if (true === twoCol)
+        {
+          wp.media.view.Attachment.Details.TwoColumn =  extended; //wpAttachmentDetailsTwoColumn;
+        }
+        else {
+          wp.media.view.Attachment.Details = extended;
+        }
+  	}
+
+  	AjaxOptimizeWarningFromUnderscore(id)
+  	{
+  		var data = {
+  			id: id,
+  			type: 'media',
+  			screen_action: 'getItemEditWarning',
+  			callback: 'ShortPixelMedia.getItemEditWarning'
+  		};
+
+  		window.addEventListener('ShortPixelMedia.getItemEditWarning', this.CheckOptimizeWarning.bind(this), {'once': true} );
+  		this.processor.AjaxRequest(data);
+  	}
+
+  	CheckOptimizeWarning(event)
+  	{
+  		var data = event.detail;
+
+  		var image_post_id = data.id;
+  		var is_restorable = data.is_restorable;
+  		var is_optimized = data.is_optimized;
+
+  		if ('true' === is_restorable || 'true' === is_optimized)
+  		{
+  			 this.ShowOptimizeWarning(image_post_id, is_restorable, is_optimized);
+  		}
+  	}
+
+  	ShowOptimizeWarning(image_post_id, is_restorable, is_optimized)
+  	{
+  			var div = document.createElement('div');
+  			div.id = 'shortpixel-edit-image-warning';
+  			div.classList.add('shortpixel', 'shortpixel-notice', 'notice-warning');
+
+
+  			if ('true' == is_restorable)
+  			{
+  				var restore_link = spio_media.restore_link.replace('#post_id#', image_post_id);
+  				div.innerHTML = '<p>' + spio_media.optimized_text + ' <a href="'  + restore_link + '">' + spio_media.restore_link_text + '</a></p>' ;
+  			}
+  			else {
+  				div.innerHTML = '<p>' + spio_media.optimized_text  + ' ' + spio_media.restore_link_text_unrestorable + '</p>' ;
+
+  			}
+  			// only if not existing.
+  			if (document.getElementById('shortpixel-edit-image-warning') == null)
+        {
+          var $menu = jQuery('.imgedit-menu');
+          if ($menu.length > 0)
+          {
+  				      $menu.append(div);
+          }
+          else {
+            jQuery(document).one('image-editor-ui-ready', function() // one!
+            {
+                jQuery('.imgedit-menu').append(div);
+            });
+
+          }
+
+        }
+  	}
+
+  	// This should be the edit-attachment screen
+   ListenEditAttachment()
+   {
+  	 var self = this;
+  	 var imageEdit = window.imageEdit;
+
+  	 jQuery(document).on('image-editor-ui-ready', function()
+  	 {
+  		 var element = document.querySelector('input[name="post_ID"]');
+  		 if (null === element)
+  		 {
+  				console.error('Could not fetch post id on this screen');
+  				return;
+  		 }
+
+  		 var post_id = element.value;
+
+  		 var data = {
+  			 id: post_id,
+  			 type: 'media',
+  			 screen_action: 'getItemEditWarning',
+  			 callback: 'ShortPixelMedia.getItemEditWarning'
+  		 };
+
+  		 window.addEventListener('ShortPixelMedia.getItemEditWarning', self.CheckOptimizeWarning.bind(self), {'once': true} );
+  		 window.ShortPixelProcessor.AjaxRequest(data);
+  	 });
+   }
 
 } // class

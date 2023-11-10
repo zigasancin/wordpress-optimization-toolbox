@@ -1,6 +1,11 @@
 <?php
 namespace ShortPixel\Model;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 /** Loads a few environment variables handy to have nearby
 *
@@ -36,6 +41,7 @@ class EnvironmentModel extends \ShortPixel\Model
 
     // Debug flag
     public $is_debug = false;
+		// Is the plugin configured to automatically optimize on upload hook?
     public $is_autoprocess = false;
 
     protected static $instance;
@@ -107,6 +113,9 @@ class EnvironmentModel extends \ShortPixel\Model
 				case 's3-offload':
 				  $plugin = 'amazon-s3-and-cloudfront/wordpress-s3.php';
 				break;
+				case 'woocommerce':
+					 $plugin = 'woocommerce/woocommerce.php';
+				break;
 				default:
 				 	$plugin = 'none';
 				break;
@@ -138,6 +147,29 @@ class EnvironmentModel extends \ShortPixel\Model
       return false;
   }
 
+	public function hasOffload()
+	{
+			$off = \ShortPixel\External\Offload\Offloader::getInstance();
+			$name = $off->getOffloadName();
+			if (is_null($name))
+				return false;
+			else
+				return true;
+	}
+
+  public function getOffloadName()
+  {
+    $off = \ShortPixel\External\Offload\Offloader::getInstance();
+    $name = $off->getOffloadName();
+    return $name;
+  }
+
+  public function useVirtualHeavyFunctions()
+  {
+      $bool = apply_filters('shortpixel/file/virtual/heavy_features', true);
+      return $bool;
+  }
+
   private function setServer()
   {
     $this->is_nginx = ! empty($_SERVER["SERVER_SOFTWARE"]) && strpos(strtolower(wp_unslash($_SERVER["SERVER_SOFTWARE"])), 'nginx') !== false ? true : false;
@@ -150,10 +182,9 @@ class EnvironmentModel extends \ShortPixel\Model
   private function setWordPress()
   {
     $this->is_multisite = (function_exists("is_multisite") && is_multisite()) ? true : false;
-    $this->is_mainsite = is_main_site();
+    $this->is_mainsite = (function_exists('is_main_site') && true === is_main_site()) ? true : false; 
 
     $this->determineFrontBack();
-
 
     if (wp_doing_ajax())
     {
@@ -190,6 +221,7 @@ class EnvironmentModel extends \ShortPixel\Model
         'edit-post', // edit post
         'new-post',  // new post
         'edit-page', // all pages
+        'media', // add new item screen
     );
     $use_screens = apply_filters('shortpixel/init/optimize_on_screens', $use_screens);
 
@@ -217,7 +249,8 @@ class EnvironmentModel extends \ShortPixel\Model
        $this->is_screen_to_use = true;
        $this->is_our_screen = true;
 
-       if ($screen->id == 'media_page_wp-short-pixel-bulk')
+			 // Strpos instead of full screen id, because the first page (media_page) is not reliable and can change.
+       if ( strpos($screen->id, 'wp-short-pixel-bulk') !== false)
         $this->is_bulk_page = true;
     }
 		elseif (is_object($screen) && method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() ) {
@@ -280,6 +313,15 @@ class EnvironmentModel extends \ShortPixel\Model
 
       return false;
   }
+
+	public function useTrustedMode()
+	{
+		 if (defined('SHORTPIXEL_TRUSTED_MODE') && true === SHORTPIXEL_TRUSTED_MODE)
+		 {
+			 	return true;
+		 }
+		 return false;
+	}
 
 
 

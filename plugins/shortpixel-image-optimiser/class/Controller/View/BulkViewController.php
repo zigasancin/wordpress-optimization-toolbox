@@ -1,12 +1,17 @@
 <?php
 namespace ShortPixel\Controller\View;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Notices\NoticeController as Notices;
 
 use ShortPixel\Controller\AdminNoticesController as AdminNoticesController;
 use ShortPixel\Controller\ApiKeyController as ApiKeyController;
 use ShortPixel\Controller\QuotaController as QuotaController;
-use Shortpixel\Controller\OptimizeController as OptimizeController;
+use ShortPixel\Controller\OptimizeController as OptimizeController;
 use ShortPixel\Controller\BulkController as BulkController;
 use ShortPixel\Controller\StatsController as StatsController;
 use ShortPixel\Controller\OtherMediaController as OtherMediaController;
@@ -24,6 +29,8 @@ class BulkViewController extends \ShortPixel\ViewController
   protected $quotaData;
   protected $pendingMeta;
   protected $selected_folders = array();
+
+	protected static $instance;
 
 
   public function load()

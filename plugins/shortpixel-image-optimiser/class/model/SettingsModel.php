@@ -1,6 +1,11 @@
 <?php
 namespace ShortPixel\Model;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 class SettingsModel
 {
@@ -50,12 +55,12 @@ class SettingsModel
 		);
 
 		protected $settings;
-		protected $states; 
+		protected $states;
 
 		public function __construct()
 		{
 			 $this->checkLegacy();
-			 $this->loadSettings();
+			 $this->load();
 
 		}
 
@@ -89,7 +94,7 @@ class SettingsModel
 		protected function checkLegacy()
 		{
 				$this->deleteLegacy(); // very legacy, unused
-				$this->convertLegacy(); // legacy, move to new format.
+			//	$this->convertLegacy(); // legacy, move to new format.
 		}
 
 		public function convertLegacy()

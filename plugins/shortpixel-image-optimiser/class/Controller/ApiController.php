@@ -1,8 +1,11 @@
 <?php
-
 namespace ShortPixel\Controller;
 
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 class ApiController
 {
@@ -22,7 +25,6 @@ class ApiController
 	 const STATUS_OPTIMIZED_BIGGER = -9;
 	 const STATUS_CONVERTED = -10;
 
-
     const STATUS_QUEUE_FULL = -404;
     const STATUS_MAINTENANCE = -500;
 		const STATUS_CONNECTION_ERROR = -503; // Not official, error connection in WP.
@@ -38,6 +40,7 @@ class ApiController
     const ERR_PNG2JPG_MEMORY = -908;
     const ERR_POSTMETA_CORRUPT = -909;
     const ERR_UNKNOWN = -999;
+
 
     const DOWNLOAD_ARCHIVE = 7;
 
@@ -56,7 +59,6 @@ class ApiController
       $this->apiDumpEndPoint = $settings->httpProto . '://' . SHORTPIXEL_API . '/v2/cleanup.php';
     }
 
-
   public static function getInstance()
   {
      if (is_null(self::$instance))
@@ -64,7 +66,6 @@ class ApiController
 
       return self::$instance;
   }
-
 
   /*
   * @param Object $item Item of stdClass
@@ -77,9 +78,9 @@ class ApiController
 				$item->result = $this->returnFailure(self::STATUS_FAIL, __('Item seems invalid, removed or corrupted.', 'shortpixel-image-optimiser'));
 				return $item;
 			}
-		 	elseif (! $imageObj->isProcessable() || $imageObj->isOptimizePrevented() == true)
+		 	elseif (false === $imageObj->isProcessable() || $imageObj->isOptimizePrevented() == true)
 			{
-					if ($imageObj->isOptimized())
+					if ($imageObj->isOptimized()) // This only looks at main item
 					{
 						 $item->result = $this->returnFailure(self::STATUS_FAIL, __('Item is already optimized', 'shortpixel-image-optimiser'));
 						 return $item;
@@ -95,6 +96,19 @@ class ApiController
           $item->result = $this->returnFailure(self::STATUS_FAIL, __('No Urls given for this Item', 'shortpixel-image-optimiser'));
           return $item;
       }
+			else { // if ok, urlencode them.
+					$list = array();
+				  foreach($item->urls as $url)
+					{
+							$parsed_url = parse_url($url);
+							if (false !== $parsed_url)
+							{
+									//$url = $this->encodeURL($parsed_url, $url);
+							}
+							$list[] = $url;
+					}
+					$item->urls = $list;
+			}
 
       $requestArgs = array('urls' => $item->urls); // obligatory
       if (property_exists($item, 'compressionType'))
@@ -141,8 +155,7 @@ class ApiController
 			 			array(
                 'plugin_version' => SHORTPIXEL_IMAGE_OPTIMISER_VERSION,
                 'key' => $keyControl->forceGetApiKey(),
-                'urllist' => $item->urls	)
-					);
+                'urllist' => $item->urls	)	, JSON_UNESCAPED_UNICODE);
 
 		 Log::addDebug('Dumping Media Item ', $item->urls);
 
@@ -195,16 +208,11 @@ class ApiController
 			 $requestParameters['returndatalist'] = $args['returndatalist'];
 		}
 
-
-    if(/*false &&*/ $settings->downloadArchive == self::DOWNLOAD_ARCHIVE && class_exists('PharData')) {
-        $requestParameters['group'] = $args['item_id'];
-    }
     if($args['refresh']) { // @todo if previous status was ShortPixelAPI::ERR_INCORRECT_FILE_SIZE; then refresh.
         $requestParameters['refresh'] = 1;
     }
 
 		$requestParameters = apply_filters('shortpixel/api/request', $requestParameters, $args['item_id']);
-
 
     $arguments = array(
         'method' => 'POST',
@@ -214,7 +222,7 @@ class ApiController
         'httpversion' => '1.0',
         'blocking' => $args['blocking'],
         'headers' => array(),
-        'body' => json_encode($requestParameters),
+        'body' => json_encode($requestParameters, JSON_UNESCAPED_UNICODE),
         'cookies' => array()
     );
     //add this explicitely only for https, otherwise (for http) it slows down the request
@@ -274,6 +282,22 @@ class ApiController
 
     return $item;
   }
+
+	/**
+	* @param $parsed_url Array  Result of parse_url
+	*/
+	private function encodeURL($parsed_url, $url)
+	{
+		//str_replace($parsed_url['path'], urlencode($parsed_url['path']), $url);
+		$path = $parsed_url['path'];
+		//echo strrpos($parsed_url, ',');
+		$filename = substr($path, strrpos($path, '/') + 1); //strrpos($path, '/');
+
+		$path = str_replace($filename, urlencode($filename), $url);
+
+		return $path;
+
+	}
 
   private function parseResponse($response)
   {
@@ -384,6 +408,13 @@ class ApiController
 
     if ( is_array($APIresponse) && isset($APIresponse[0]) ) //API returned image details
     {
+
+				if (! isset($returnDataList['sizes']))
+				{
+					   return $this->returnFailure(self::STATUS_FAIL,  __('Item did not return image size information. This might be a failed queue item. Reset the queue if this persists or contact support','shortpixel-image-optimiser'));
+				}
+			//        return $this->returnFailure(self::STATUS_FAIL,  __('Unrecognized API response. Please contact support.','shortpixel-image-optimiser'));
+
 				$analyze = array('total' => count($item->urls), 'ready' => 0, 'waiting' => 0);
 				$waitingDebug = array();
 
@@ -414,14 +445,15 @@ class ApiController
 								 'imageName' => $imageName,
 							 );
 
-							 if (isset($returnDataList['fileSizes']))
+               // Filesize might not be present, but also imageName ( only if smartcrop is done, might differ per image)
+							 if (isset($returnDataList['fileSizes']) && isset($returnDataList['fileSizes'][$imageName]))
 							 {
-								 $data['fileSize'] = $returnDataList['fileSizes'][$imageName];
+								  $data['fileSize'] = $returnDataList['fileSizes'][$imageName];
 							 }
 
 							 if (! isset($item->files[$imageName]))
 							 {
-							 	$imageList[$imageName] = $this->handleNewSuccess($item, $imageObject, $data);
+							 	  $imageList[$imageName] = $this->handleNewSuccess($item, $imageObject, $data);
 							 }
 							 else {
 							 }
@@ -541,8 +573,16 @@ class ApiController
 			$fileType = ($compressionType > 0) ? 'LossyURL' : 'LosslessURL';
 			$fileSize = ($compressionType > 0) ? 'LossySize' : 'LosslessSize';
 
-			$image['image']['url'] = $fileData->$fileType;
-			$image['image']['optimizedSize']  = intval($fileData->$fileSize);
+      // if originalURL and OptimizedURL is the same, API is returning it as the same item, aka not optimized.
+      if ($fileData->$fileType === $fileData->OriginalURL)
+      {
+        $image['image']['status'] = self::STATUS_UNCHANGED;
+      }
+      else
+      {
+        $image['image']['url'] = $fileData->$fileType;
+  			$image['image']['optimizedSize']  = intval($fileData->$fileSize);
+      }
 
 			// Don't download if the originalSize / OptimizedSize is the same ( same image ) . This can be non-opt result or it was not asked to be optimized( webp/avif only job i.e. )
 			if ($image['image']['originalSize'] == $image['image']['optimizedSize'])
@@ -670,6 +710,10 @@ class ApiController
 	{
 			// This is ok.
 			if ($fileSize >= $resultSize)
+				return true;
+
+			// Fine suppose, but crashes the increase
+			if ($fileSize == 0)
 				return true;
 
 		  $percentage = apply_filters('shortpixel/api/filesizeMargin', 5);

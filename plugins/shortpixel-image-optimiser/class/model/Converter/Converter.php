@@ -1,12 +1,17 @@
 <?php
 namespace ShortPixel\Model\Converter;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\Replacer\Replacer as Replacer;
 use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Model\File\DirectoryModel as DirectoryModel;
 use ShortPixel\Model\File\FileModel as FileModel;
 use ShortPixel\Controller\ResponseController as ResponseController;
 
-
+/* ShortPixel Image Optimiser Converters. Unified interface for handling conversion between file types */
 abstract class Converter
 {
 	  const CONVERTABLE_EXTENSIONS = array('png', 'heic');
@@ -95,6 +100,11 @@ abstract class Converter
       if (! $file->exists())
         return $file;
 
+			if ($file->is_virtual())
+			{
+				 return $file;
+			}
+
       $number = 0;
       $fs = \wpSPIO()->filesystem();
 
@@ -117,7 +127,7 @@ abstract class Converter
 			$fs = \wpSPIO()->filesystem();
 
 			$filename = $this->imageModel->getFileName();
-			$newFileName = $this->imageModel->getFileBase() . '.jpg'; // convert extension to .png
+			$newFileName = $this->imageModel->getFileBase() . '.jpg'; // convert extension to .jpg
 
 			$fsNewFile = $fs->getFile($this->imageModel->getFileDir() . $newFileName);
 

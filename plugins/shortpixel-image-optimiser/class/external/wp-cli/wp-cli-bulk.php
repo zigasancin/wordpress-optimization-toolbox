@@ -1,6 +1,11 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\OptimizeController as OptimizeController;
 use ShortPixel\Controller\BulkController as BulkController;
 
@@ -59,12 +64,19 @@ class SpioBulk extends SpioCommandBase
 	   *
 	   * [--queue=<name>]
 	   * : Either 'media' or 'custom'. Omit the parameter to process both queues.
-	   * ---
+     * ---
 	   * default: media,custom
 	   * options:
 	   *   - media
 	   *   - custom
 	   * ---
+		 *
+		 * [--limit=<num>]
+		 * : Limit the amount of items being prepared.
+		 *
+		 * [--special=<migrate>]
+		 * : Run the migration
+
 	   *
 	   * ## EXAMPLES
 	   *
@@ -131,10 +143,8 @@ class SpioBulk extends SpioCommandBase
 							}
 
 				}
-
-
+        
 				\WP_CLI::log('Automatic Bulk ended');
-				$this->status($args, $assoc);
 		}
 
 	 /**
@@ -149,6 +159,8 @@ class SpioBulk extends SpioCommandBase
 	 * options:
 	 *   - media
 	 *   - custom
+   * [--special=<migrate>]
+   * : Run the migration
 	 * ---
 	 *
 	 * ## EXAMPLES
@@ -167,9 +179,21 @@ class SpioBulk extends SpioCommandBase
 
 			$queues = $this->getQueueArgument($assoc);
 
+      $operation = null;
+      if (isset($assoc['special']))
+      {
+         switch ($assoc['special'])
+         {
+            case 'migrate':
+              $operation = 'migrate';
+              $queues = array('media'); // can only have one bulk, this.
+            break;
+         }
+      }
+
 			foreach($queues as $qname)
 			{
-	    	$stats = $bulkControl->createNewBulk($qname);
+	    	$stats = $bulkControl->createNewBulk($qname, $operation);
 	    	$json->$qname->stats = $stats;
 
 				\WP_CLI::Line("Bulk $qname created. Ready to prepare");
@@ -244,6 +268,9 @@ class SpioBulk extends SpioCommandBase
 		*   - custom
 		* ---
 		*
+		* [--limit=<num>]
+		* : Limit the amount of items being prepared.
+		*
 		* ## EXAMPLES
 		*
 		*   wp spio bulk prepare
@@ -259,20 +286,11 @@ class SpioBulk extends SpioCommandBase
 						if (! $data->total->stats->is_preparing)
 						{
 							 \WP_CLI::Error("No queues have status preparing, aborting");
-					//		 break;
 						}
 						else
 						{
-							 $assoc['complete']  = true;
-							 //$assoc['queue'] = $qname;
 							 $assoc['wait'] = 0.5;
 							 $bool = $this->run($args, $assoc);
 						}
-
-						//$this->showResponses();
 			}
-
-
-
-
 } // CLASS

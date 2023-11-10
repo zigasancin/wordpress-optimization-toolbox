@@ -1,6 +1,10 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 
 abstract class Model
 {
@@ -11,7 +15,7 @@ abstract class Model
     $data = array();
     foreach($this->model as $item => $options)
     {
-			
+
       $data[$item] = $this->{$item};
 
     }

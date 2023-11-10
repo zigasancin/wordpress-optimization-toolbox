@@ -1,17 +1,24 @@
 <?php
 namespace ShortPixel\Model;
 
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\QuotaController as QuotaController;
 
 // Central place for user / access checking, roles etc.
 class AccessModel
 {
 
+  // Instance of class
 	private static $instance;
 
+  // Array of known SPIO Capabilities mapped to WordPress variants
 	private $caps;
 
+  // int  . The current user id
 	private $current_user_id;
 
 
@@ -29,6 +36,7 @@ class AccessModel
 					'image_all' =>  'edit_others_posts',
 					'image_user' => 'edit_post',
 					'custom_all' => 'edit_others_posts',
+					'is_admin_user' => 'manage_options',
 					'actions' => array(),
 			);
 
@@ -41,9 +49,11 @@ class AccessModel
 	public static function getInstance()
 	{
 			 if (is_null(self::$instance))
+       {
 			 	 self::$instance = new AccessModel();
+       }
 
-				return self::$instance;
+			return self::$instance;
 	}
 
 	/** Check for allowing a notice

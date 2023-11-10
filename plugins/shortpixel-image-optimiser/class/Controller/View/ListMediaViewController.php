@@ -1,7 +1,11 @@
 <?php
-
 namespace ShortPixel\Controller\View;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 use ShortPixel\Helper\UiHelper as UiHelper;
 use ShortPixel\Helper\UtilHelper as UtilHelper;
@@ -19,6 +23,8 @@ use ShortPixel\Model\Image\MediaLibraryModel as MediaLibraryModel;
 class ListMediaViewController extends \ShortPixel\ViewController
 {
 
+	protected static $instance;
+
   protected $template = 'view-list-media';
 //  protected $model = 'image';
 
@@ -29,6 +35,9 @@ class ListMediaViewController extends \ShortPixel\ViewController
 
   public function load()
   {
+			$fs = \wpSPIO()->filesystem();
+			$fs->startTrustedMode();
+
 			$this->checkAction(); // bulk action checkboxes, y'all
       $this->loadHooks();
   }
@@ -40,18 +49,16 @@ class ListMediaViewController extends \ShortPixel\ViewController
 	   $wp_list_table = _get_list_table('WP_Media_List_Table');
      $action = $wp_list_table->current_action();
 
-
 		 if (! $action)
 		 		return;
 
 		if(strpos($action, 'shortpixel') === 0 ) {
 		 		check_admin_referer('bulk-media');
-
-				// Nothing selected, nothing doin'
-				if (! isset($_GET['media']) || ! is_array($_GET['media']))
-					return;
-
 		}
+
+    // Nothing selected, nothing doin'
+    if (! isset($_GET['media']) || ! is_array($_GET['media']))
+      return;
 
 		 $fs = \wpSPIO()->filesystem();
 		 $optimizeController = new OptimizeController();
@@ -60,7 +67,7 @@ class ListMediaViewController extends \ShortPixel\ViewController
 		 $numItems = count($items);
 	   $plugin_action = str_replace('shortpixel-', '', $action);
 
-		 $targetCompressionType = null;
+		 $targetCompressionType = $targetCrop = null;
 
 		 switch ($plugin_action)
 		 {
@@ -72,6 +79,12 @@ class ListMediaViewController extends \ShortPixel\ViewController
 				break;
 				case "lossless":
 					  $targetCompressionType = ImageModel::COMPRESSION_LOSSLESS;
+				break;
+				case 'smartcrop':
+						$targetCrop = ImageModel::ACTION_SMARTCROP;
+				break;
+				case 'smartcropless':
+						$targetCrop = ImageModel::ACTION_SMARTCROPLESS;
 				break;
 		 }
 
@@ -85,24 +98,53 @@ class ListMediaViewController extends \ShortPixel\ViewController
 							 if ($mediaItem->isProcessable())
 							 	$res = $optimizeController->addItemToQueue($mediaItem);
 						break;
+						case 'smartcrop':
+						case 'smartcropless':
+								if ($mediaItem->isOptimized())
+								{
+										$targetCompressionType = $mediaItem->getMeta('compressionType');
+								}
+								else {
+									$targetCompressionType = \wpSPIO()->settings()->compressionType;
+								}
 						case 'glossy':
 						case 'lossy':
 						case 'lossless':
-								if ($mediaItem->isOptimized() && $mediaItem->getMeta('compressionType') == $targetCompressionType  )
+
+								if ($mediaItem->isOptimized() && $mediaItem->getMeta('compressionType') == $targetCompressionType && is_null($targetCrop)  )
 								{
 									// do nothing if already done w/ this compression.
 								}
 								elseif(! $mediaItem->isOptimized())
 								{
+									$mediaItem->setMeta('compressionType', $targetCompressionType);
+									if (! is_null($targetCrop))
+									{
+										 $mediaItem->doSetting('smartcrop', $targetCrop);
+									}
 									$res = $optimizeController->addItemToQueue($mediaItem);
 								}
 								else
-							 		$res = $optimizeController->reOptimizeItem($mediaItem, $targetCompressionType);
+								{
+									$args = array();
+									if (! is_null($targetCrop))
+									{
+										 $args = array('smartcrop' => $targetCrop);
+									}
+
+							 		$res = $optimizeController->reOptimizeItem($mediaItem, $targetCompressionType, $args);
+								}
 						break;
 						case 'restore';
 								if ($mediaItem->isOptimized())
 									$res = $optimizeController->restoreItem($mediaItem);
 						break;
+            case 'mark-completed':
+                 if ($mediaItem->isProcessable())
+                 {
+                   $mediaItem->markCompleted(__('This item has been manually marked as completed', 'shortpixel-image-optimiser'), ImageModel::FILE_STATUS_MARKED_DONE);
+                 }
+            break;
 				 }
 
 		 }
@@ -113,18 +155,11 @@ class ListMediaViewController extends \ShortPixel\ViewController
   /** Hooks for the MediaLibrary View */
   protected function loadHooks()
   {
-
     add_filter( 'manage_media_columns', array( $this, 'headerColumns' ) );//add media library column header
     add_action( 'manage_media_custom_column', array( $this, 'doColumn' ), 10, 2 );//generate the media library column
     //Sort and filter on ShortPixel Compression column
     //add_filter( 'manage_upload_sortable_columns', array( $this, 'registerSortable') );
 
-		// Keep noses out of the rest.
-		if (\wpSPIO()->env()->is_screen_to_use)
-		{
-			add_filter( 'request', array( $this, 'filterBy') );
-			add_action('posts_request', array($this, 'parseQuery'), 10, 2);
-		}
     add_action('restrict_manage_posts', array( $this, 'mediaAddFilterDropdown'));
 
     add_action('loop_end', array($this, 'loadComparer'));
@@ -133,14 +168,8 @@ class ListMediaViewController extends \ShortPixel\ViewController
 
   public function headerColumns($defaults)
   {
-
     $defaults['wp-shortPixel'] = __('ShortPixel Compression', 'shortpixel-image-optimiser');
-   /* if(current_user_can( 'manage_options' )) {
-        $defaults['wp-shortPixel'] .=
-                  '&nbsp;<a href="options-general.php?page=wp-shortpixel-settings&part=stats" title="'
-                . __('ShortPixel Statistics','shortpixel-image-optimiser')
-                . '"><span class="dashicons dashicons-dashboard"></span></a>';
-    } */
+
     return $defaults;
   }
 
@@ -149,11 +178,10 @@ class ListMediaViewController extends \ShortPixel\ViewController
      if($column_name == 'wp-shortPixel')
      {
        $this->view = new \stdClass; // reset every row
+       $this->view->id = $id;
        $this->loadItem($id);
-			 if (property_exists($this->view, 'mediaItem') && is_object($this->view->mediaItem)) // can not be if not exists
-			 {
-       		$this->loadView(null, false);
-			 }
+
+	     $this->loadView(null, false);
      }
   }
 
@@ -166,8 +194,10 @@ class ListMediaViewController extends \ShortPixel\ViewController
 
 		 // Asking for something non-existing.
 		 if ($mediaItem === false)
+     {
+       $this->view->text = __('File Error. This could be not an image or the file is missing', 'shortpixel-image-optimiser');
 		 	 return;
-
+     }
      $this->view->mediaItem = $mediaItem;
 
      $actions = array();
@@ -200,95 +230,6 @@ class ListMediaViewController extends \ShortPixel\ViewController
     $this->loadView('snippets/part-comparer');
   }
 
-  /*public function registerSortable($columns)
-  {
-      $columns['wp-shortPixel'] = 'ShortPixel Compression';
-      return $columns;
-  } */
-
-  public function filterBy($vars)
-  {
-		// Must return postID's  as ID
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended  -- This is not a form
-    if ( 'upload.php' == $GLOBALS['pagenow'] && isset( $_GET['shortpixel_status'] ) ) {
-
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended  -- This is not a form
-      $status = sanitize_text_field(wp_unslash($_GET['shortpixel_status']));
-
-			if ($status == 'all')
-			{
-				 return $vars; // nono
-			}
-			switch ($status)
-			{
-				 case 'opt':
-				 	$filter = 'optimized';
-				 break;
-				 case 'unopt':
-				 default:
-				 	$filter = 'unoptimized';
-				 break;
-			}
-
-			$vars['shortpixel-filter']  = $filter;
-
-    }
-
-    return $vars;
-  }
-
-	public function parseQuery($request, $wpquery)
-	{
-		global $wpdb;
-
-		 if (isset($wpquery->query_vars['shortpixel-filter']) || isset($wpquery->query_vars['shortpixel-order']) )
-		 {
-			  $filter = isset($wpquery->query_vars['shortpixel-filter']) ? $wpquery->query_vars['shortpixel-filter'] : false ;
-				//$order =  isset($wpquery->query_vars['shortpixel-order']) ? $wpquery->query_vars['shortpixel-order'] : false;
-
-				if ($filter == 'optimized')
-				{
-					 $fileStatus = ImageModel::FILE_STATUS_SUCCESS;
-				}
-				elseif ($filter == 'unoptimized') {
-						//fileStatus = ImageModel::FILE_STATUS_UNPROCESSED;
-				}
-
-			  $tableName = UtilHelper::getPostMetaTable();
-				$post_pos = strpos($request, '1=1');
-			  $post_where = substr($request, $post_pos);
-
-
-				if ($filter && $filter == 'optimized')
-				{
-					$where = " AND " . $wpdb->posts . '.ID in ( SELECT attach_id FROM ' . $tableName . " WHERE parent = %d and status = %d) ";
-					$where = $wpdb->prepare($where, MediaLibraryModel::IMAGE_TYPE_MAIN, ImageModel::FILE_STATUS_SUCCESS);
-
-					$sql = substr_replace($request, $where, ($post_pos + strlen($post_pos)) ,0);
-
-					/*$sql = ' SELECT SQL_CALC_FOUND_ROWS * FROM ' . $tableName;
-					$sql .= ' INNER JOIN ' . $wpdb->posts . ' ON ' . $wpdb->posts . '.ID = ' . $tableName . '.attach_id ';
-
-					$sql .= 'WHERE image_type = %d AND status =  %d';
-					$sql = $wpdb->prepare($sql, MediaLibraryModel::IMAGE_TYPE_MAIN,  $fileStatus);
-					$sql .= ' AND ' . $post_where; // glue back the orders, and the all. */
-				}
-				if ($filter && $filter == 'unoptimized')
-				{
-					 $where = " AND " . $wpdb->posts . '.ID not in ( SELECT attach_id FROM ' . $tableName . " WHERE parent = %d and status = %d) ";
-					 $where = $wpdb->prepare($where, MediaLibraryModel::IMAGE_TYPE_MAIN, ImageModel::FILE_STATUS_SUCCESS);
-
-					  $sql = substr_replace($request, $where, ($post_pos + strlen($post_pos)) ,0);
-				}
-
-				return $sql;
-		 }
-
-		 return $request;
-	}
-
-
-
   /*
   * @hook restrict_manage_posts
   */
@@ -297,19 +238,12 @@ class ListMediaViewController extends \ShortPixel\ViewController
       if ( $scr->base !== 'upload' ) return;
 
       $status   = filter_input(INPUT_GET, 'shortpixel_status', FILTER_UNSAFE_RAW );
-  //    $selected = (int)$status > 0 ? $status : 0;
-    /*  $args = array(
-          'show_option_none'   => 'ShortPixel',
-          'name'               => 'shortpixel_status',
-          'selected'           => $selected
-      ); */
-//        wp_dropdown_users( $args );
+
       $options = array(
-          'all' => __('All Images', 'shortpixel-image-optimiser'),
-          'opt' => __('Optimized', 'shortpixel-image-optimiser'),
-          'unopt' => __('Unoptimized', 'shortpixel-image-optimiser'),
-        //  'pending' => __('Pending', 'shortpixel-image-optimiser'),
-        //  'error' => __('Errors', 'shortpixel-image-optimiser'),
+          'all' => __('Any ShortPixel State', 'shortpixel-image-optimiser'),
+          'optimized' => __('Optimized', 'shortpixel-image-optimiser'),
+          'unoptimized' => __('Unoptimized', 'shortpixel-image-optimiser'),
+					'prevented' => __('Optimization Error', 'shortpixer-image-optimiser'),
       );
 
       echo  "<select name='shortpixel_status' id='shortpixel_status'>\n";

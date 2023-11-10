@@ -1,10 +1,14 @@
 <?php
 namespace ShortPixel\Controller;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\Controller\Queue\MediaLibraryQueue as MediaLibraryQueue;
 use ShortPixel\Controller\Queue\CustomQueue as CustomQueue;
 use ShortPixel\Controller\Queue\Queue as Queue;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 // Class for controlling bulk and reporting.
 class BulkController
@@ -32,7 +36,6 @@ class BulkController
    */
    public function createNewBulk($type = 'media', $customOp = null)
    {
-   //  $this->q->createNewBulk();
       $optimizeController = new OptimizeController();
       $optimizeController->setBulk(true);
 
@@ -66,6 +69,7 @@ class BulkController
            $options['numitems'] = 200;
 
         }
+				$options = apply_filters('shortpixel/bulk/custom_options', $options, $customOp);
         $Q->setCustomBulk($customOp, $options);
       }
 

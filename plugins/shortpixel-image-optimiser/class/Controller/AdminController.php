@@ -1,14 +1,22 @@
 <?php
 namespace ShortPixel\Controller;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Notices\NoticeController as Notices;
 use ShortPixel\Controller\Queue\Queue as Queue;
 
-use \ShortPixel\ShortPixelPng2Jpg as ShortPixelPng2Jpg;
 use ShortPixel\Model\Converter\Converter as Converter;
 use ShortPixel\Model\Converter\ApiConverter as ApiConverter;
 
+use ShortPixel\Model\Image\MediaLibraryModel as MediaLibraryModel;
+use ShortPixel\Model\Image\ImageModel as ImageModel;
+
 use ShortPixel\Model\AccessModel as AccessModel;
+use ShortPixel\Helper\UtilHelper as UtilHelper;
 
 
 /* AdminController is meant for handling events, hooks, filters in WordPress where there is *NO* specific or more precise  ShortPixel Page active.
@@ -20,11 +28,6 @@ class AdminController extends \ShortPixel\Controller
     protected static $instance;
 
 		private static $preventUploadHook = array();
-
-    public function __construct()
-    {
-
-    }
 
     public static function getInstance()
     {
@@ -39,14 +42,13 @@ class AdminController extends \ShortPixel\Controller
     */
     public function handleImageUploadHook($meta, $id)
     {
-
         // Media only hook
 				if ( in_array($id, self::$preventUploadHook))
 				{
 					 return $meta;
 				}
 
-// todo add check here for mediaitem
+        // todo add check here for mediaitem
 			  $fs = \wpSPIO()->filesystem();
 				$fs->flushImageCache(); // it's possible file just changed by external plugin.
         $mediaItem = $fs->getImage($id, 'media');
@@ -87,6 +89,7 @@ class AdminController extends \ShortPixel\Controller
 				}
         return $meta; // It's a filter, otherwise no thumbs
     }
+
 
 		public function preventImageHook($id)
 		{
@@ -174,9 +177,33 @@ class AdminController extends \ShortPixel\Controller
 
 							sleep($args['wait']);
 				}
-
-
 		}
+
+    public function scanCustomFoldersHook($args = array() )
+    {
+      $defaults = array(
+        'force' => false,
+        'wait' => 3,
+      );
+
+      $args = wp_parse_args($args, $defaults);
+
+      $otherMediaController = OtherMediaController::getInstance();
+
+      $running = true;
+
+      while (true === $running)
+      {
+        $result = $otherMediaController->doNextRefreshableFolder($args);
+        if (false === $result) // stop on false return.
+        {
+           $running = false;
+        }
+        sleep($args['wait']);
+
+      }
+
+    }
 
 		// WP functions that are not loaded during Cron Time.
 		protected function loadCronCompat()
@@ -187,6 +214,101 @@ class AdminController extends \ShortPixel\Controller
 				}
 		}
 
+    /** Filter for Medialibrary items in list and grid view. Because grid uses ajax needs to be caught more general.
+    * @handles pre_get_posts
+    * @param WP_Query $query
+    *
+    * @return WP_Query
+    */
+    public function filter_listener($query)
+    {
+      global $pagenow;
+
+      if ( empty( $query->query_vars["post_type"] ) || 'attachment' !== $query->query_vars["post_type"] ) {
+        return $query;
+      }
+
+      if ( ! in_array( $pagenow, array( 'upload.php', 'admin-ajax.php' ) ) ) {
+        return $query;
+      }
+
+      $filter = $this->selected_filter_value( 'shortpixel_status', 'all' );
+
+      // No filter
+      if ($filter == 'all')
+      {
+         return $query;
+      }
+
+//      add_filter( 'posts_join', array( $this, 'filter_join' ), 10, 2 );
+  		add_filter( 'posts_where', array( $this, 'filter_add_where' ), 10, 2 );
+//  		add_filter( 'posts_orderby', array( $this, 'query_add_orderby' ), 10, 2 );
+
+      return $query;
+    }
+
+    public function filter_add_where ($where, $query)
+    {
+        global $wpdb;
+        $filter = $this->selected_filter_value( 'shortpixel_status', 'all' );
+        $tableName = UtilHelper::getPostMetaTable();
+
+        switch($filter)
+        {
+             case 'all':
+
+             break;
+             case 'unoptimized':
+              // The parent <> %d exclusion is meant to also deselect duplicate items ( translations ) since they don't have a status, but shouldn't be in a list like this.
+                $sql = " AND " . $wpdb->posts . '.ID not in ( SELECT attach_id FROM ' . $tableName . " WHERE (parent = %d and status = %d) OR parent <> %d ) ";
+  					    $where .= $wpdb->prepare($sql, MediaLibraryModel::IMAGE_TYPE_MAIN, ImageModel::FILE_STATUS_SUCCESS, MediaLibraryModel::IMAGE_TYPE_MAIN);
+             break;
+             case 'optimized':
+                $sql = ' AND ' . $wpdb->posts . '.ID in ( SELECT attach_id FROM ' . $tableName . ' WHERE parent = %d and status = %d) ';
+   					    $where .= $wpdb->prepare($sql, MediaLibraryModel::IMAGE_TYPE_MAIN, ImageModel::FILE_STATUS_SUCCESS);
+             break;
+             case 'prevented':
+
+                $sql = sprintf('AND %s.ID in (SELECT post_id FROM %s WHERE meta_key = %%s)', $wpdb->posts, $wpdb->postmeta);
+
+                $sql .= sprintf(' AND %s.ID not in ( SELECT attach_id FROM %s WHERE parent = 0 and status = %s)', $wpdb->posts, $tableName, ImageModel::FILE_STATUS_MARKED_DONE);
+
+                $where = $wpdb->prepare($sql, '_shortpixel_prevent_optimize');
+            break;
+        }
+
+
+        return $where;
+    }
+
+
+    /**
+  	 * Safely retrieve the selected filter value from a dropdown.
+  	 *
+  	 * @param string $key
+  	 * @param string $default
+  	 *
+  	 * @return string
+  	 */
+  	private function selected_filter_value( $key, $default ) {
+  		if ( wp_doing_ajax() ) {
+  			if ( isset( $_REQUEST['query'][ $key ] ) ) {
+  				$value = sanitize_text_field( $_REQUEST['query'][ $key ] );
+  			}
+  		} else {
+  			if ( ! isset( $_REQUEST['filter_action'] )  ) {
+  				return $default;
+  			}
+
+  			if ( ! isset( $_REQUEST[ $key ] ) ) {
+  				return $default;
+  			}
+
+  			$value = sanitize_text_field( $_REQUEST[ $key ] );
+  		}
+
+  		return ! empty( $value ) ? $value : $default;
+  	}
 
     /**
 		* When replacing happens.
@@ -201,7 +323,11 @@ class AdminController extends \ShortPixel\Controller
           $fs = \wpSPIO()->filesystem();
 
           $imageObj = $fs->getImage($post_id, 'media');
-          $imageObj->onDelete();
+          // In case entry is corrupted data, this might fail.
+          if (is_object($imageObj))
+          {
+            $imageObj->onDelete();
+          }
       }
 
     }
@@ -212,11 +338,6 @@ class AdminController extends \ShortPixel\Controller
 		*/
 		public function handleReplaceEnqueue($target, $source, $post_id)
 		{
-		/*		$fs = \wpSPIO()->filesystem();
-        $imageObj = $fs->getImage($post_id, 'media');
-				$optimizeController = new OptimizeController();
-				$optimizeController->addItemToQueue($imageObj); */
-
 				// Delegate this to the hook, so all checks are done there.
 				$this->handleImageUploadHook(array(), $post_id);
 
@@ -257,6 +378,39 @@ class AdminController extends \ShortPixel\Controller
 
         return $mimes;
     }
+
+		/** Media library gallery view, attempt to add fields that looks like the SPIO status */
+		public function editAttachmentScreen($fields, $post)
+		{
+      return;
+				// Prevent this thing running on edit media screen. The media library grid is before the screen is set, so just check if we are not on the attachment window.
+				$screen_id = \wpSPIO()->env()->screen_id;
+				if ($screen_id == 'attachment')
+				{
+					return $fields;
+				}
+
+				$fields["shortpixel-image-optimiser"] = array(
+							"label" => esc_html__("ShortPixel", "shortpixel-image-optimiser"),
+							"input" => "html",
+							"html" => '<div id="sp-msg-' . $post->ID . '">--</div>',
+						);
+
+				return $fields;
+		}
+
+		public function printComparer()
+		{
+
+				$screen_id = \wpSPIO()->env()->screen_id;
+				if ($screen_id !== 'upload')
+				{
+					return false;
+				}
+
+				$view = \ShortPixel\Controller\View\ListMediaViewController::getInstance();
+				$view->loadComparer();
+		}
 
     /** When an image is deleted
     * @hook delete_attachment

@@ -1,8 +1,11 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\ApiKeyController as ApiKeyController;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 /**
  * User: simon
  * Date: 11.04.2018
@@ -23,6 +26,11 @@ class ShortPixelFeedback {
 				$apiControl = ApiKeyController::getInstance();
 				$this->key = $apiControl->forceGetApiKey();
 
+        // Skip the feedback when constant.
+        if (defined('SHORTPIXEL_SKIP_FEEDBACK') && true == SHORTPIXEL_SKIP_FEEDBACK)
+        {
+           return false;
+        }
         // Deactivation
         add_filter( 'plugin_action_links_' . plugin_basename( $this->plugin_file ), array( $this, 'filterActionLinks') );
 				add_filter('network_admin_plugin_action_links_' . plugin_basename( $this->plugin_file ), array( $this, 'filterActionLinks'));

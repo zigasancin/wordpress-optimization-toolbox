@@ -1,6 +1,10 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 
 // #Todo Move this to some env or more appropiate place.
 $is_unlimited= (!is_null($this->quotaData) && $this->quotaData->unlimited) ? true : false;
@@ -42,7 +46,7 @@ $is_unlimited= (!is_null($this->quotaData) && $this->quotaData->unlimited) ? tru
                     ?>" target="_blank">
 												 <?php if ($is_unlimited)
 												 {
-													 printf(esc_html__('Shortpixel Unlimited', 'shortpixel-image-optimiser'));
+													 printf(esc_html__('ShortPixel Unlimited', 'shortpixel-image-optimiser'));
 												 }
 												 else
                          {

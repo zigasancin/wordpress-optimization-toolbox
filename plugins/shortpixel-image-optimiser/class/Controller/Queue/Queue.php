@@ -1,8 +1,12 @@
 <?php
 namespace ShortPixel\Controller\Queue;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\Model\Image\ImageModel as ImageModel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\CacheController as CacheController;
 use ShortPixel\Controller\ResponseController as ResponseController;
 use ShortPixel\Model\Converter\Converter as Converter;
@@ -72,8 +76,14 @@ abstract class Queue
     * @param ImageModel $mediaItem An ImageModel (CustomImageModel or MediaLibraryModel) object
     * @return mixed
     */
-    public function addSingleItem(ImageModel $imageModel)
+    public function addSingleItem(ImageModel $imageModel, $args = array())
     {
+
+       $defaults = array(
+          'forceExclusion' => false,
+       );
+       $args = wp_parse_args($args, $defaults);
+
        $qItem = $this->imageModelToQueue($imageModel);
        $counts = $qItem->counts;
 
@@ -84,9 +94,16 @@ abstract class Queue
 				  $media_id = $imageModel->getParent();
 			 }
 
+       if (count($args) > 0)
+       {
+          $qItem->options = $args;
+       }
+
 			 $result = new \stdClass;
 
        $item = array('id' => $media_id, 'value' => $qItem, 'item_count' => $counts->creditCount);
+
+
        $this->q->addItems(array($item), false);
        $numitems = $this->q->withRemoveDuplicates()->enqueue(); // enqueue returns numitems
 
@@ -349,7 +366,11 @@ abstract class Queue
 
 			$customData = $this->getStatus('custom_data');
 
-
+			if ($this->isCustomOperation())
+			{
+					  $stats->customOperation = $this->getCustomDataItem('customOperation');
+            $stats->isCustomOperation = '10'; // numeric value for the bulk JS
+			}
 
       $stats->total = $stats->in_queue + $stats->fatal_errors + $stats->errors + $stats->done + $stats->in_process;
       if ($stats->total > 0)
@@ -489,17 +510,12 @@ abstract class Queue
     // The 'avif / webp left imp. is commented out since both API / and OptimizeController don't play well with this.
     protected function imageModelToQueue(ImageModel $imageModel)
     {
-      //  $settings = \wpSPIO()->settings();
         $item = new \stdClass;
         $item->compressionType = \wpSPIO()->settings()->compressionType;
 
-//        $urls = $imageModel->getOptimizeUrls();
 				$data = $imageModel->getOptimizeData();
 				$urls = $data['urls'];
 				$params = $data['params'];
-
-		//		$imagePreview = UIHelper::findBestPreview($imageModel, 800, true);
-		//		$imagePreviewURL = (is_object($imagePreview)) ? $imagePreview->getURL() : false;
 
 				list($u, $baseCount) = $imageModel->getCountOptimizeData('thumbnails');
 				list($u, $webpCount) = $imageModel->getCountOptimizeData('webp');
@@ -551,8 +567,6 @@ abstract class Queue
 						}
 				}
 
-				//$converter =
-				// @todo Adapt this.
 				$converter = Converter::getConverter($imageModel, true);
 
 				if ($baseCount > 0 && is_object($converter) && $converter->isConvertable())
@@ -591,7 +605,7 @@ abstract class Queue
 						}
 				}
 				// CompressionType can be integer, but not empty string. In cases empty string might happen, causing lossless optimization, which is not correct.
-        if (! is_null($imageModel->getMeta('compressionType')) && is_int($imageModel->getMeta('compressionType')))
+        if (! is_null($imageModel->getMeta('compressionType')) && is_numeric($imageModel->getMeta('compressionType')))
 				{
           $item->compressionType = $imageModel->getMeta('compressionType');
 				}

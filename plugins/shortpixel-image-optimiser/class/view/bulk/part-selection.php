@@ -1,6 +1,10 @@
 <?php
 namespace ShortPixel;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 $approx = $this->view->approx;
 ?>
 <section class='panel selection' data-panel="selection" data-status="loaded" >
@@ -24,8 +28,15 @@ $approx = $this->view->approx;
              <p><?php esc_html_e('Please wait, ShortPixel is checking the images to be processed...','shortpixel-image-optimiser'); ?><br>
                <span class="number" data-stats-total="total">x</span> <?php esc_html_e('items found', 'shortpixel-image-optimiser'); ?></p>
            </span>
-
          </div>
+				 <div class='loading skip'>
+					 <span><p><button class='button' data-action="SkipPreparing"><?php _e('Start now', 'shortpixel-image-optimiser'); ?></button></p>
+
+					 </span>
+					 <span>
+	 						 <p><?php _e("Clicking this button will start optimization of the items added to the queue. The remaining items can be processed in a new bulk. After completion, you can start bulk and the system will continue with the unprocessed images.",'shortpixel-image-optimiser'); ?></p>
+						</span>
+				</div>
        </div>
 
        <div class="interface wrapper">
@@ -36,7 +47,7 @@ $approx = $this->view->approx;
 					 <p><?php printf(esc_html__('ShortPixel has %sestimated%s the number of images that can still be optimized. %sAfter you select the options, the plugin will calculate exactly how many images to optimize.','shortpixel-image-optimiser'), '<b>','</b>', '<br />'); ?></p>
 
 					 <?php if ($approx->media->isLimited): ?>
-						 <h4 class='count_limited'><?php esc_html_e('Shortpixel has detected a high number of images. This estimates are limited for performance reasons. On the next step an accurate count will be produced', 'shortpixel-image-optimiser'); ?></h4>
+						 <h4 class='count_limited'><?php esc_html_e('ShortPixel has detected a high number of images. This estimates are limited for performance reasons. On the next step an accurate count will be produced', 'shortpixel-image-optimiser'); ?></h4>
 					 <?php endif; ?>
 
 

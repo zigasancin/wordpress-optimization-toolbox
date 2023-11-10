@@ -1,6 +1,9 @@
 <?php
 use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 
 /** Settings Model **/
 class WPShortPixelSettings extends \ShortPixel\Model {
@@ -47,6 +50,7 @@ class WPShortPixelSettings extends \ShortPixel\Model {
         'png2jpg' => array('key' => 'wp-short-pixel-png2jpg', 'default' => 0, 'group' => 'options'),
         'excludeSizes' => array('key' => 'wp-short-pixel-excludeSizes', 'default' => array(), 'group' => 'options'),
 				'currentVersion' => array('key' => 'wp-short-pixel-currentVersion', 'default' => null, 'group' => 'options'),
+				'hideCustomMedia' => array('key' => 'wp-short-pixel-hide-custom-media', 'default' => 0, 'group' => 'options'),
 
         //CloudFlare
         'cloudflareEmail'   => array( 'key' => 'wp-short-pixel-cloudflareAPIEmail', 'default' => '', 'group' => 'options'),
@@ -120,7 +124,7 @@ class WPShortPixelSettings extends \ShortPixel\Model {
         'savedSpace' => array('s' => 'skip'),
         'fileCount' => array('s' => 'skip'), // int
         'under5Percent' => array('s' => 'skip'), // int
-      //  'helpscoutOptin' => array('s' => 'boolean'), // checkbox
+				'hideCustomMedia' => array('s' => 'boolean'),
     );
 
       public static function resetOptions() {
@@ -144,7 +148,8 @@ class WPShortPixelSettings extends \ShortPixel\Model {
 				{
         	delete_option(self::$_optionsMap['removeSettingsOnDeletePlugin']['key']);
 				}
-        // Dismissed now via Notices Controller.
+
+        
 
     }
 
@@ -248,13 +253,6 @@ class WPShortPixelSettings extends \ShortPixel\Model {
 
     public function setOpt($key, $val) {
         $autoload = true;
-        /*if (isset(self::$_optionsMap[$key]))
-        {
-            if (self::$_optionsMap[$key]['group'] == 'options')
-               $autoload = true;  // add most used to autoload, because performance.
-
-        } */
-
         $ret = update_option($key, $val, $autoload);
 
         //hack for the situation when the option would just not update....

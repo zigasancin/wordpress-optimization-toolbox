@@ -1,12 +1,21 @@
 <?php
 namespace ShortPixel\Controller\View;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 use ShortPixel\Helper\UiHelper as UiHelper;
+use ShortPixel\Helper\UtilHelper as UtilHelper;
 use ShortPixel\Controller\OptimizeController as OptimizeController;
+use ShortPixel\Controller\ErrorController as ErrorController;
 
+use ShortPixel\Model\File\FileModel as FileModel;
 
-//use ShortPixel\Model\ImageModel as ImageModel;
+use ShortPixel\Helper\DownloadHelper as DownloadHelper;
+
 
 // Future contoller for the edit media metabox view.
 class EditMediaViewController extends \ShortPixel\ViewController
@@ -19,6 +28,9 @@ class EditMediaViewController extends \ShortPixel\ViewController
 
       protected $imageModel;
       protected $hooked;
+
+			protected static $instance;
+
 
       public function __construct()
       {
@@ -35,6 +47,9 @@ class EditMediaViewController extends \ShortPixel\ViewController
       {
         if (! $this->hooked)
           $this->loadHooks();
+
+					$fs = \wpSPIO()->filesystem();
+					$fs->startTrustedMode();
       }
 
       public function addMetaBox()
@@ -48,7 +63,6 @@ class EditMediaViewController extends \ShortPixel\ViewController
               //'default'      // priority of the box
           );
       }
-
 
       public function dometaBox($post)
       {
@@ -69,19 +83,19 @@ class EditMediaViewController extends \ShortPixel\ViewController
 						return false;
 					}
 
-
-
           $this->view->status_message = null;
 
-          $this->view->text = UiHelper::getStatusText($this->imageModel);
+         	$this->view->text = UiHelper::getStatusText($this->imageModel);
           $this->view->list_actions = UiHelper::getListActions($this->imageModel);
+
           if ( count($this->view->list_actions) > 0)
             $this->view->list_actions = UiHelper::renderBurgerList($this->view->list_actions, $this->imageModel);
           else
             $this->view->list_actions = '';
 
-          $this->view->actions = UiHelper::getActions($this->imageModel);
+          //$this->imageModel->cancelUserExclusions();
 
+          $this->view->actions = UiHelper::getActions($this->imageModel);
           $this->view->stats = $this->getStatistics();
 
           if (! $this->userIsAllowed)
@@ -90,8 +104,10 @@ class EditMediaViewController extends \ShortPixel\ViewController
             $this->view->list_actions = '';
           }
 
-					// @todo remove this if not DEVMODE
-          $this->view->debugInfo = $this->getDebugInfo();
+          if(true === \wpSPIO()->env()->is_debug )
+          {
+            $this->view->debugInfo = $this->getDebugInfo();
+          }
 
           $this->loadView();
       }
@@ -130,8 +146,6 @@ class EditMediaViewController extends \ShortPixel\ViewController
 					$ext = $imageObj->getMeta()->convertMeta()->getFileFormat();
 					$error = $imageObj->getMeta()->convertMeta()->getError(); // error code.
 					$stats[] = array(UiHelper::getConvertErrorReason($error, $ext), '');
-
-
 				}
 
         if ($resize == true)
@@ -170,7 +184,6 @@ class EditMediaViewController extends \ShortPixel\ViewController
 
 					if ($imageObj->isProcessable())
 					{
-						 //$urls = $imageObj->getOptimizeUrls();
 						 $optimizeData = $imageObj->getOptimizeData();
 						 $urls = $optimizeData['urls'];
 
@@ -189,7 +202,15 @@ class EditMediaViewController extends \ShortPixel\ViewController
 
 					if ($imageObj->is_virtual())
 					{
-						$debugInfo[] = array(__('Is Virtual true: '), $imageObj->getFullPath() );
+            $virtual = $imageObj->get('virtual_status');
+            if($virtual == FileModel::$VIRTUAL_REMOTE)
+              $vtext = 'Remote';
+            elseif($virtual == FileModel::$VIRTUAL_STATELESS)
+              $vtext = 'Stateless';
+            else
+              $vtext = 'Not set';
+
+						$debugInfo[] = array(__('Is Virtual: ') . $vtext, $imageObj->getFullPath() );
 					}
 
           $debugInfo[] = array(__('Size and Mime (ImageObj)'), $imageObj->get('width') . 'x' . $imageObj->get('height'). ' (' . $imageObj->get('mime') . ')');

@@ -1,6 +1,11 @@
 <?php
 namespace ShortPixel;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 class cacheRemover
 {
@@ -16,6 +21,7 @@ class cacheRemover
     public function __construct()
     {
 			 $this->addHooks();
+			 $this->checkCaches();
     }
 
 		public static function getInstance()
@@ -78,6 +84,12 @@ class cacheRemover
         // important - first check the available cache plugins
         $this->checkCaches();
 
+        $bool = apply_filters('shortpixel/external/flush_cache', true, $post_id, $imageItem);
+        if (false === $bool)
+        {
+           return false;
+        }
+
         // general WP
         if ($post_id > 0)
           clean_post_cache($post_id);
@@ -101,7 +113,7 @@ class cacheRemover
             $this->removeFastestCache();
 
         if ($this->has_litespeed)
-            $this->litespeedReset($post_id);
+            $this->litespeedReset($imageItem);
 
     }
 
@@ -143,9 +155,20 @@ class cacheRemover
     		sg_cachepress_purge_cache();
     }
 
-    protected function litespeedReset($post_id)
+    protected function litespeedReset($imageItem)
     {
-      do_action('litespeed_media_reset', $post_id);
+      // Suppress the notices on purge.
+      if (! defined( 'LITESPEED_PURGE_SILENT' ))
+      {
+         define('LITESPEED_PURGE_SILENT', true);
+      }
+
+			$urls = $imageItem->getAllUrls();
+			foreach($urls as $url)
+			{
+				 do_action('litespeed_purge_url', $url, false, true);
+			}
+  //    do_action('litespeed_media_reset', $post_id);
     }
 
 }

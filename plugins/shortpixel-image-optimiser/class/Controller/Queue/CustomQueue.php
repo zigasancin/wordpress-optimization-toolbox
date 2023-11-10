@@ -1,8 +1,12 @@
 <?php
 namespace ShortPixel\Controller\Queue;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\ShortQ\ShortQ as ShortQ;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 class CustomQueue extends Queue
 {
@@ -11,19 +15,6 @@ class CustomQueue extends Queue
    protected $cacheName = 'CustomCache'; // When preparing, write needed data to cache.
 
    protected static $instance;
-
-
-   /*public static function getInstance()
-   {
-      if (is_null(self::$instance))
-      {
-         $class = get_called_class();
-         static::$instance = new $class();
-      }
-
-      return static::$instance;
-   } */
-
 
    public function __construct($queueName = 'Custom')
    {

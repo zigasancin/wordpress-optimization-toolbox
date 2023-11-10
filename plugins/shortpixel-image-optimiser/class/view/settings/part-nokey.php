@@ -1,7 +1,11 @@
 <?php
 namespace ShortPixel;
 use ShortPixel\Notices\NoticeController as Notice;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 
 $canValidate = false;
 // Several conditions for showing API key.

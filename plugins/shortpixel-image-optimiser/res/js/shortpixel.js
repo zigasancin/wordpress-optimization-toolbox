@@ -32,16 +32,14 @@ var ShortPixel = function() {
                 + '</option><option value="shortpixel-glossy"> → ' + _spTr.redoGlossy
                 + '</option><option value="shortpixel-lossless"> → ' + _spTr.redoLossless
                 + '</option><option value="shortpixel-restore"> → ' + _spTr.restoreOriginal
+								+ '</option><option value="shortpixel-smartcrop"> → ' + _spTr.redoSmartcrop
+								+ '</option><option value="shortpixel-smartcropless"> → ' + _spTr.redoSmartcropless
+                + '</option><option value="shortpixel-mark-completed"> → ' + _spTr.markCompleted
                 + '</option>');
         }
 
         // Extracting the protected Array from within the 0 element of the parent array
         ShortPixel.setOptions(ShortPixelConstants[0]);
-
-       /* if(jQuery('#backup-folder-size').length) {
-            jQuery('#backup-folder-size').html(ShortPixel.getBackupSize());
-        } */
-
 
 				if (jQuery('#shortpixel-form-request-key').length > 0)
 				{
@@ -161,6 +159,28 @@ var ShortPixel = function() {
       }
     }
 
+    function checkHeavyFeatureWarning(name)
+    {
+       var inputName = (name == 'retina') ? 'optimizeRetina' : 'optimizeUnlisted';
+       var input = jQuery('input[name="' + inputName + '"]');
+
+       if (! input)
+         return;
+
+       var warningEl = jQuery('.heavy-feature-virtual.' + name );
+
+
+       if (input.is(':checked'))
+       {
+          //input.attr('disabled', true);
+          warningEl.fadeIn();
+       }
+       else {
+         //input.attr('disabled', false);
+         warningEl.fadeOut();
+       }
+    }
+
     function setupGeneralTab() {
 				// @todo Make something workable out of this
         var rad = 0;
@@ -179,10 +199,7 @@ var ShortPixel = function() {
                 if(this !== prev) {
                     prev = this;
                 }
-                // Warns once that changing compressType is only for new images.
-            //    if(typeof ShortPixel.setupGeneralTabAlert !== 'undefined') return;
-              //  alert(_spTr.alertOnlyAppliesToNewImages);
-              //  ShortPixel.setupGeneralTabAlert = 1;
+
 							 if (this.value == savedCompression)
   					 		jQuery('.compression-notice-row').addClass('shortpixel-hide');
 							else
@@ -216,14 +233,7 @@ var ShortPixel = function() {
                 this.defaultValue = elm.val();
             }
         });
-        /*
-        jQuery("#width").blur(function(e){
-            jQuery(this).val(Math.max(minWidth, parseInt(jQuery(this).val())));
-        });
-        jQuery("#height").blur(function(e){
-            jQuery(this).val(Math.max(minHeight, parseInt(jQuery(this).val())));
-        });
-        */
+
         jQuery('.shortpixel-confirm').on('click', function(event){
             var choice = confirm(event.target.getAttribute('data-confirm'));
             if (!choice) {
@@ -251,8 +261,6 @@ var ShortPixel = function() {
         });
         ShortPixel.checkSmartCropWarning();
 
-
-
     }
 
     function apiKeyChanged() {
@@ -261,6 +269,8 @@ var ShortPixel = function() {
     }
 
     function setupAdvancedTab() {
+
+      /* @TODO - Removed in favor of AjaxController method . Remove in next version
         jQuery("input.remove-folder-button").on('click', function(){
             var id = jQuery(this).data("value");
             var path = jQuery(this).data('name');
@@ -270,6 +280,7 @@ var ShortPixel = function() {
                 jQuery('#wp_shortpixel_options').submit();
             }
         });
+
         jQuery("input.recheck-folder-button").on('click', function(){
             var path = jQuery(this).data("value");
             var r = confirm( SPstringFormat(_spTr.areYouSureStopOptimizing, path));
@@ -278,6 +289,25 @@ var ShortPixel = function() {
                 jQuery('#wp_shortpixel_options').submit();
             }
         });
+        */
+
+        if (document.querySelector('.heavy-feature-virtual.retina') !== null)
+        {
+          jQuery('input[name="optimizeRetina"]').on('change', function()
+          {
+             ShortPixel.checkHeavyFeatureWarning('retina');
+          });
+          ShortPixel.checkHeavyFeatureWarning('retina');
+        }
+
+        if (document.querySelector('.heavy-feature-virtual.unlisted') !== null)
+        {
+          jQuery('input[name="optimizeUnlisted"]').on('change', function()
+          {
+             ShortPixel.checkHeavyFeatureWarning('unlisted');
+          });
+          ShortPixel.checkHeavyFeatureWarning('unlisted');
+        }
     }
 
     function checkThumbsUpdTotal(el) {
@@ -408,12 +438,6 @@ var ShortPixel = function() {
         });
     }
 
-
-
-
-
-
-
     function browseContent(browseData) {
         browseData.action = 'shortpixel_browse_content';
 
@@ -430,23 +454,6 @@ var ShortPixel = function() {
         return browseResponse;
     }
 
-    function getBackupSize(element) {
-       /* Off until we found something better.
-			 var browseData = { 'action': 'shortpixel_get_backup_size', nonce: ShortPixelConstants[0].nonce_ajaxrequest };
-        var browseResponse = "";
-        jQuery.ajax({
-            type: "POST",
-            url: ShortPixel.AJAX_URL,
-            data: browseData,
-            success: function(response) {
-                 browseResponse = response;
-								 element.dataset.value = browseResponse;
-								 element.textContent = browseResponse;
-            },
-            //async: false
-        });
-        return browseResponse; */
-     }
 
     function newApiKey(event) {
 				event.preventDefault();
@@ -505,62 +512,6 @@ var ShortPixel = function() {
         }
     }
 
-    function initFolderSelector() {
-        jQuery(".select-folder-button").on('click', function(){
-            jQuery(".sp-folder-picker-shade").fadeIn(100); //.css("display", "block");
-						jQuery(".shortpixel-modal.modal-folder-picker").removeClass('shortpixel-hide');
-						jQuery(".shortpixel-modal.modal-folder-picker").show();
-
-
-            var picker = jQuery(".sp-folder-picker");
-            picker.parent().css('margin-left', -picker.width() / 2);
-            picker.fileTree({
-                script: ShortPixel.browseContent,
-                multiFolder: false,
-            });
-        });
-        jQuery(".shortpixel-modal input.select-folder-cancel, .sp-folder-picker-shade").on('click', function(){
-            jQuery(".sp-folder-picker-shade").fadeOut(100); //.css("display", "none");
-						jQuery(".shortpixel-modal.modal-folder-picker").addClass('shortpixel-hide');
-            jQuery(".shortpixel-modal.modal-folder-picker").hide();
-        });
-        jQuery(".shortpixel-modal input.select-folder").on('click', function(e){
-            //var subPath = jQuery("UL.jqueryFileTree LI.directory.selected A").attr("rel").trim();
-
-            // @todo This whole thing might go, since we don't display files anymore in folderTree.
-
-            // check if selected item is a directory. If so, we are good.
-            var selected = jQuery('UL.jqueryFileTree LI.directory.selected');
-
-            // if not a file might be selected, check the nearest directory.
-            if (jQuery(selected).length == 0 )
-              var selected = jQuery('UL.jqueryFileTree LI.selected').parents('.directory');
-
-            // fail-saif check if there is really a rel.
-            var subPath = jQuery(selected).children('a').attr('rel');
-
-            if (typeof subPath === 'undefined') // nothing is selected
-              return;
-
-            subPath = subPath.trim();
-
-            if(subPath) {
-                var fullPath = jQuery("#customFolderBase").val() + subPath;
-                fullPath = fullPath.replace(/\/\//,'/');
-              //  console.debug('FullPath' + fullPath);
-                jQuery("#addCustomFolder").val(fullPath);
-                jQuery("#addCustomFolderView").val(fullPath);
-                jQuery(".sp-folder-picker-shade").fadeOut(100);
-                jQuery(".shortpixel-modal.modal-folder-picker").css("display", "none");
-                jQuery('#saveAdvAddFolder').removeClass('hidden');
-            } else {
-                alert("Please select a folder from the list.");
-            }
-        });
-    }
-
-
-
     // used in bulk restore all interface
     function checkRandomAnswer(e)
     {
@@ -580,7 +531,6 @@ var ShortPixel = function() {
         }
 
     }
-
 
     function openImageMenu(e) {
             e.preventDefault();
@@ -731,9 +681,8 @@ var ShortPixel = function() {
         closeHelpPane       : closeHelpPane,
         checkQuota          : checkQuota,
         percentDial         : percentDial,
-        initFolderSelector  : initFolderSelector,
+      //  initFolderSelector  : initFolderSelector,
         browseContent       : browseContent,
-        getBackupSize       : getBackupSize,
         newApiKey           : newApiKey,
         proposeUpgrade      : proposeUpgrade,
         closeProposeUpgrade : closeProposeUpgrade,
@@ -749,6 +698,7 @@ var ShortPixel = function() {
         checkExifWarning    : checkExifWarning,
         checkBackUpWarning  : checkBackUpWarning,
 				checkSmartCropWarning: checkSmartCropWarning,
+        checkHeavyFeatureWarning : checkHeavyFeatureWarning,
         comparerData        : {
             cssLoaded   : false,
             jsLoaded    : false,

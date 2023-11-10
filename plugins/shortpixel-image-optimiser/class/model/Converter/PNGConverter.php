@@ -1,6 +1,10 @@
 <?php
  namespace ShortPixel\Model\Converter;
 
+ if ( ! defined( 'ABSPATH' ) ) {
+ 	exit; // Exit if accessed directly.
+ }
+
  use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
  use ShortPixel\Model\Image\ImageModel as ImageModel;
  use ShortPixel\Model\File\DirectoryModel as DirectoryModel;
@@ -17,7 +21,7 @@ class PNGConverter extends MediaLibraryConverter
 		protected $instance;
 
     protected $current_image; // The current PHP image resource in memory
-		protected $newFile; // The newFile Object.
+		protected $virtual_filesize;
 		protected $replacer; // Replacer class Object.
 
 		protected $converterActive = false;
@@ -101,7 +105,6 @@ class PNGConverter extends MediaLibraryConverter
 
 			 $fs = \wpSPIO()->filesystem();
 
-
 			 $defaults = array(
 				 	'runReplacer' => true, // The replacer doesn't need running when the file is just uploaded and doing in handle upload hook.
 			 );
@@ -131,7 +134,6 @@ class PNGConverter extends MediaLibraryConverter
 			 }
 
 			 $args = wp_parse_args($args, $defaults);
-
 
 			 if ($this->forceConvertTransparent === false && $this->isTransparent())
 			 {
@@ -200,7 +202,7 @@ class PNGConverter extends MediaLibraryConverter
 			}
 			if (! is_int($height) && ! $height > 0)
 			{
-				 $height = imagesx($img);
+				 $height = imagesy($img);
 			}
 
 			Log::addDebug("PNG2JPG doConvert width $width height $height", memory_get_usage());
@@ -239,13 +241,19 @@ class PNGConverter extends MediaLibraryConverter
 			}
 
 			// check old filename, replace with uniqued filename.
-			// @todo Probably not needed anymore
-		//	$newUrl = str_replace($filename, $uniqueFile->getFileName(), $url);
 
+      /** Quality is set to 90 and not using WP defaults (or filter) for good reason. Lower settings very quickly degrade the libraries output quality.  Better to leave this hardcoded at 90 and let the ShortPixel API handle the optimization **/
 			if ($bool = imagejpeg($bg, $replacementPath, 90)) {
 					Log::addDebug("PNG2JPG doConvert created JPEG at $replacementPath");
-					$newSize = filesize($replacementPath); // $uniqueFile->getFileSize();
-					$origSize = $this->imageModel->getFileSize();
+					$newSize = filesize($replacementPath); // This might invoke wrapper but ok
+
+					if (! is_null($this->virtual_filesize))
+					{
+						 $origSize = $this->virtual_filesize;
+					}
+					else {
+						$origSize = $this->imageModel->getFileSize();
+					}
 
 					// Reload the file we just wrote.
 					$newFile = $fs->getFile($replacementPath);
@@ -387,6 +395,7 @@ class PNGConverter extends MediaLibraryConverter
 				if (is_object($tempFile))
 				{
 					 $imagePath = $tempFile->getFullPath();
+					 $this->virtual_filesize = $tempFile->getFileSize();
 				}
 			}
 

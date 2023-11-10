@@ -1,5 +1,10 @@
 <?php
 namespace ShortPixel\Model\Image;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 class ImageConvertMeta
@@ -52,7 +57,7 @@ class ImageConvertMeta
 
 	 public function setFileFormat($ext)
 	 {
-		  if (is_null($this->fileFormat) && false === $this->isConverted())
+		  if (is_null($this->fileFormat))
 		  	$this->fileFormat = $ext;
 	 }
 

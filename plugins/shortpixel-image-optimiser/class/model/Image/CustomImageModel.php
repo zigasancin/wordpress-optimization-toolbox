@@ -1,6 +1,11 @@
 <?php
 namespace ShortPixel\Model\Image;
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\OptimizeController as OptimizeController;
 use ShortPixel\Helper\UtilHelper as UtilHelper;
 
@@ -24,7 +29,9 @@ class CustomImageModel extends \ShortPixel\Model\Image\ImageModel
 
     protected $is_main_file = true;
 
-    const FILE_STATUS_PREVENT = -10;
+		/** @var array */
+		protected $forceSettings = array();  // option derives from setting or otherwise, request to be forced upon via UI to use specific value.
+
 
 		// @param int $id
     public function __construct($id)
@@ -34,11 +41,11 @@ class CustomImageModel extends \ShortPixel\Model\Image\ImageModel
         if ($id > 0)
 				{
           $bool = $this->loadMeta();
-					if ($bool)
+					/*if ($bool)
 					{
 				  	$this->setWebp();
 				  	$this->setAvif();
-					}
+					} */
 				}
         else
         {
@@ -66,6 +73,17 @@ class CustomImageModel extends \ShortPixel\Model\Image\ImageModel
 
     }
 
+    protected function getExcludePatterns()
+    {
+        $args = array(
+          'filter' => true,
+          'is_custom' => true,
+        );
+
+        $patterns = UtilHelper::getExclusions($args);
+        return $patterns;
+    }
+
 		public function getOptimizeData()
 		{
 				$parameters = array(
@@ -80,18 +98,38 @@ class CustomImageModel extends \ShortPixel\Model\Image\ImageModel
         else
           $url = $this->getURL();
 
+				 $settings = \wpSPIO()->settings();
+				 $isSmartCrop = ($settings->useSmartcrop == true && $this->getExtension() !== 'pdf') ? true : false;
+		 		 $paramListArgs = array(); // args for the params, yes.
+
+		 		 if (isset($this->forceSettings['smartcrop']) && $this->getExtension() !== 'pdf')
+		 		 {
+		 			  $isSmartCrop = ($this->forceSettings['smartcrop'] == ImageModel::ACTION_SMARTCROP) ? true : false;
+		 		 }
+				 $paramListArgs['smartcrop'] = $isSmartCrop;
+         $paramListArgs['main_url'] = $url;
+         $paramListArgs['url'] = $url;
+
         if ($this->isProcessable(true) || $this->isProcessableAnyFileType())
 				{
           $parameters['urls'][0] =  $url;
 					$parameters['paths'][0] = $this->getFullPath();
-					$parameters['params'][0] = $this->createParamList();
+					$parameters['params'][0] = $this->createParamList($paramListArgs);
 					$parameters['returnParams']['sizes'][0] =  $this->getFileName();
-  			}
 
+					if ($isSmartCrop )
+					{
+						 $parameters['returnParams']['fileSizes'][0] = $this->getFileSize();
+					}
+  			}
 
 				return $parameters;
 		}
 
+		public function doSetting($setting, $value)
+		{
+			  $this->forceSettings[$setting] = $value;
+		}
 
 		public function getURL()
 		{
@@ -427,24 +465,38 @@ class CustomImageModel extends \ShortPixel\Model\Image\ImageModel
 
     }
 
-    protected function preventNextTry($reason = '')
+    protected function preventNextTry($reason = '', $status = self::FILE_STATUS_PREVENT)
     {
         $this->setMeta('errorMessage', $reason);
-        $this->setMeta('status', SELF::FILE_STATUS_PREVENT);
+        $this->setMeta('status', $status);
         $this->saveMeta();
+    }
+
+    public function markCompleted($reason, $status)
+    {
+       return $this->preventNextTry($reason, $status);
     }
 
     public function isOptimizePrevented()
     {
          $status = $this->getMeta('status');
 
-         if ($status == self::FILE_STATUS_PREVENT )
+         if ($status == self::FILE_STATUS_PREVENT || $status == self::FILE_STATUS_MARKED_DONE )
          {
 					  $this->processable_status = self::P_OPTIMIZE_PREVENTED;
+            $this->optimizePreventedReason  = $this->getMeta('errorMessage');
+
             return $this->getMeta('errorMessage');
          }
 
+
          return false;
+    }
+
+    // Only one item for now, so it's equal
+    public function isSomethingOptimized()
+    {
+       return $this->isOptimized();
     }
 
     public function resetPrevent()

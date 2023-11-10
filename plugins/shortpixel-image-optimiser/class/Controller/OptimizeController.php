@@ -1,6 +1,10 @@
 <?php
 namespace ShortPixel\Controller;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
+
 use ShortPixel\Controller\ApiKeyController as ApiKeyController;
 use ShortPixel\Controller\Queue\MediaLibraryQueue as MediaLibraryQueue;
 use ShortPixel\Controller\Queue\CustomQueue as CustomQueue;
@@ -10,7 +14,7 @@ use ShortPixel\Controller\AjaxController as AjaxController;
 use ShortPixel\Controller\QuotaController as QuotaController;
 use ShortPixel\Controller\StatsController as StatsController;
 
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 use ShortPixel\Controller\ResponseController as ResponseController;
 
 use ShortPixel\Model\Image\ImageModel as ImageModel;
@@ -26,6 +30,8 @@ class OptimizeController
     protected static $results;
 
     protected $isBulk = false; // if queueSystem should run on BulkQueues;
+
+		protected static $lastId; // Last item_id received / send. For catching errors.
 
     public function __construct()
     {
@@ -75,8 +81,13 @@ class OptimizeController
 		* @param Object $mediaItem
     @return int Number of Items added
     */
-    public function addItemToQueue($mediaItem)
+    public function addItemToQueue($mediaItem, $args = array())
     {
+        $defaults = array(
+            'forceExclusion' => false,
+        );
+        $args = wp_parse_args($args, $defaults);
+
         $fs = \wpSPIO()->filesystem();
 
 				$json = $this->getJsonResponse();
@@ -96,7 +107,6 @@ class OptimizeController
 					ResponseController::addData($item->item_id, 'message', $item->result->message);
 
 					Log::addWarn('Item with id ' . $json->result->item_id . ' is not restorable,');
-
 					 return $json;
 				}
 
@@ -107,7 +117,9 @@ class OptimizeController
 
         // Manual Optimization order should always go trough
         if ($mediaItem->isOptimizePrevented() !== false)
+        {
             $mediaItem->resetPrevent();
+        }
 
         $queue = $this->getQueue($mediaItem->get('type'));
 
@@ -120,10 +132,19 @@ class OptimizeController
           $json->result->fileStatus = ImageModel::FILE_STATUS_ERROR;
         }
 
-        if (! $mediaItem->isProcessable())
+        $is_processable = $mediaItem->isProcessable();
+        // Allow processable to be overridden when using the manual optimize button
+        if (false === $is_processable && true === $mediaItem->isUserExcluded() && true === $args['forceExclusion'] )
+        {
+          $mediaItem->cancelUserExclusions();
+          $is_processable = true;
+        }
+
+        // If is not processable and not user excluded (user via this way can force an optimize if needed) then don't do it!
+        if (false === $is_processable)
         {
           $json->result->message = $mediaItem->getProcessableReason();
-          $json->result->is_error = true;
+          $json->result->is_error = false;
           $json->result->is_done = true;
           $json->result->fileStatus = ImageModel::FILE_STATUS_ERROR;
         }
@@ -136,12 +157,11 @@ class OptimizeController
 				}
         else
         {
-          $result = $queue->addSingleItem($mediaItem); // 1 if ok, 0 if not found, false is not processable
+          $result = $queue->addSingleItem($mediaItem, $args); // 1 if ok, 0 if not found, false is not processable
           if ($result->numitems > 0)
           {
             $json->result->message = sprintf(__('Item %s added to Queue. %d items in Queue', 'shortpixel-image-optimiser'), $mediaItem->getFileName(), $result->numitems);
             $json->status = 1;
-
           }
           else
           {
@@ -236,7 +256,7 @@ class OptimizeController
 				$now = function_exists('wp_date') ? wp_date( 'U', time() ) : time();
 
 				// Reset the whole thing after that.
-				$mediaItem = $fs->getImage($item_id, $mediaItem->get('type'));
+				$mediaItem = $fs->getImage($item_id, $mediaItem->get('type'), false);
 
 				// Dump this item from server if optimized in the last hour, since it can still be server-side cached.
 				if ( ( $now   - $optimized) < HOUR_IN_SECONDS )
@@ -266,7 +286,6 @@ class OptimizeController
 
         }
 
-
         return $json;
     }
 
@@ -274,7 +293,7 @@ class OptimizeController
 		*
 		* @param Object $mediaItem
 		*/
-		public function reOptimizeItem($mediaItem, $compressionType)
+		public function reOptimizeItem($mediaItem, $compressionType, $args = array())
     {
       $json = $this->restoreItem($mediaItem);
 
@@ -284,10 +303,23 @@ class OptimizeController
 					$fs->flushImageCache();
 
           // Hard reload since metadata probably removed / changed but still loaded, which might enqueue wrong files.
-            $mediaItem = $fs->getImage($mediaItem->get('id'), $mediaItem->get('type'));
-
+            $mediaItem = $fs->getImage($mediaItem->get('id'), $mediaItem->get('type'), false);
             $mediaItem->setMeta('compressionType', $compressionType);
-            $json = $this->addItemToQueue($mediaItem);
+
+						if (isset($args['smartcrop']))
+						{
+							 $mediaItem->doSetting('smartcrop', $args['smartcrop']);
+						}
+
+            // This is a user triggered thing. If the whole thing is user excluxed, but one ones this, then ok.
+            $args = array();
+            if (false === $mediaItem->isProcessable() && true === $mediaItem->isUserExcluded())
+            {
+               $args['forceExclusion'] = true;
+            }
+
+
+            $json = $this->addItemToQueue($mediaItem, $args);
             return $json;
       }
 
@@ -303,8 +335,8 @@ class OptimizeController
         $customQ = $this->getQueue('custom');
 
 				// Clean queue upon starting a load.
-				$mediaQ->cleanQueue();
-				$customQ->cleanQueue();
+				//$mediaQ->cleanQueue();
+			  //$customQ->cleanQueue();
 
         $data = new \stdClass;
         $data->media = new \stdClass;
@@ -332,6 +364,7 @@ class OptimizeController
     */
     public function processQueue($queueTypes = array())
     {
+
         $keyControl = ApiKeyController::getInstance();
 
         if ($keyControl->keyIsVerified() === false)
@@ -388,8 +421,6 @@ class OptimizeController
         $results->total = $this->calculateStatsTotals($results);
 				$results = $this->numberFormatStats($results);
 
-    //    $this->checkCleanQueue($results);
-
         return $results;
     }
 
@@ -431,16 +462,19 @@ class OptimizeController
     public function sendToProcessing($item, $q)
     {
       $api = $this->getAPI();
+			$this->setLastID($item->item_id);
 
 			$fs = \wpSPIO()->filesystem();
 			$qtype = $q->getType();
 			$qtype = strtolower($qtype);
 
+      // Options contained in the queue item for extra uh options
+      $options = (property_exists($item, 'options')) ? $item->options : array();
+
 			$imageObj = $fs->getImage($item->item_id, $qtype);
 			if (is_object($imageObj))
 			{
 				ResponseController::addData($item->item_id, 'fileName', $imageObj->getFileName());
-
 			}
 
 			// If item is blocked (handling success), skip over. This can happen if internet is slow or process too fast.
@@ -448,12 +482,13 @@ class OptimizeController
 			{
 					$item = $this->handleAPIResult($item, $q);
 			}
-      elseif (property_exists($item, 'action'))
+      elseif (property_exists($item, 'action')) // ResultMessages in ResponseController
       {
             $item->result = new \stdClass;
             $item->result->is_done = true; // always done
             $item->result->is_error = false; // for now
             $item->result->apiStatus = ApiController::STATUS_NOT_API;
+            ResponseController::addData($item->item_id, 'action', $item->action);
 
 					 if ($imageObj === false) // not exist error.
 					 {
@@ -479,6 +514,18 @@ class OptimizeController
       }
       else // as normal
       {
+        $is_processable = $imageObj->isProcessable();
+        // Allow processable to be overridden when using the manual optimize button - ignore when this happens already to be in queue.
+
+        if (false === $is_processable )
+        {
+          if (is_object($options) && property_exists($options,'forceExclusion') && true == $options->forceExclusion)
+          {
+            $imageObj->cancelUserExclusions();
+          }
+
+        }
+
 				$item = $api->processMediaItem($item, $imageObj);
 
       }
@@ -740,6 +787,7 @@ class OptimizeController
            if ($imageItem->isProcessable() && $result->apiStatus !== ApiController::STATUS_NOT_API)
            {
               Log::addDebug('Item with ID' . $imageItem->item_id . ' still has processables (with dump)', $imageItem->getOptimizeUrls());
+
  						  $api = $this->getAPI();
 							$newItem = new \stdClass;
 							$newItem->urls = $imageItem->getOptimizeUrls();
@@ -782,10 +830,6 @@ class OptimizeController
 									$result->apiStatus = ApiController::STATUS_UNCHANGED;
 
 							}
-							// Try to replace the item ID with the filename.
-						//	$item->result->message = substr_replace( $item->result->message,  $imageItem->getFileName() . ' ', strpos($item->result->message, '#' . $item->item_id), 0);
-             // $item->result->message .= sprintf(__('(cycle %d)', 'shortpixel-image-optimiser'), intval($item->tries) );
-
 
 							if ($retry_limit == $item->tries || $retry_limit == ($item->tries -1))
 							{
@@ -847,7 +891,7 @@ class OptimizeController
 			$item->result->message = ResponseController::formatItem($item->item_id);
 
 			if ($item->result->is_error)
-				$item->result->kblink = UIHelper::getKBSearchLink($item->result->message);
+				$item->result->kblink = UiHelper::getKBSearchLink($item->result->message);
 
       return $item;
 
@@ -857,7 +901,7 @@ class OptimizeController
 		protected function handleOptimizedItem($q, $item, $mediaObj, $successData)
 		{
 				$imageArray = $successData['files'];
-				
+
 				$downloadHelper = DownloadHelper::getInstance();
 				$converter = Converter::getConverter($mediaObj, true);
 
@@ -938,6 +982,7 @@ class OptimizeController
 					else {
 						ResponseController::addData($item->item_id, 'message', __('File conversion failed.', 'shortpixel-image-optimiser'));
 						$q->itemFailed($item, true);
+            Log::addError('File conversion failed with data ', $successData);
 						$status = ApiController::STATUS_FAIL;
 					}
 
@@ -1092,6 +1137,7 @@ class OptimizeController
     // Communication Part
     protected function getJsonResponse()
     {
+
       $json = new \stdClass;
       $json->status = null;
       $json->result = null;
@@ -1195,8 +1241,7 @@ class OptimizeController
 
 		private function numberFormatStats($results) // run the whole stats thing through the numberFormat.
 		{
-//			 $run = array('media', 'custom', 'total')
-
+			//qn: array('media', 'custom', 'total')
 			 foreach($results as $qn => $item)
 			 {
 				  if (is_object($item) && property_exists($item, 'stats'))
@@ -1208,16 +1253,16 @@ class OptimizeController
 								 {
 									  foreach($value as $key2 => $val2) // embedded 'images' can happen here.
 										{
-										 $value->$key2 = UIHelper::formatNumber($val2, 0);
+										 $value->$key2 = UiHelper::formatNumber($val2, 0);
 										}
 								 }
 								 elseif (strpos($key, 'percentage') !== false)
 								 {
-								 	  $value = UIHelper::formatNumber($value, 2);
+								 	  $value = UiHelper::formatNumber($value, 2);
 								 }
-								 else
+								 elseif (is_numeric($value))
 								 {
-								 		$value = UIHelper::formatNumber($value, 0);
+								 		$value = UiHelper::formatNumber($value, 0);
 								 }
 
 								$results->$qn->stats->$key = $value;
@@ -1254,6 +1299,16 @@ class OptimizeController
 						}
 				}
 
+		}
+
+		protected function setLastID($item_id)
+		{
+			 self::$lastId = $item_id;
+		}
+
+		public static function getLastId()
+		{
+			 return self::$lastId;
 		}
 
     public static function resetQueues()

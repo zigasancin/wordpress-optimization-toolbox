@@ -1,205 +1,26 @@
 'use strict';
 // MainScreen as an option for delegate functions
-var ShortPixelScreen = function (MainScreen, processor)
+class ShortPixelScreen extends ShortPixelScreenItemBase
 {
-    this.isCustom = true;
-    this.isMedia = true;
-    this.processor = processor;
+    isCustom = true;
+    isMedia = true;
+		type = 'custom';
+    folderTree = null;
+    currentSelectedPath = null;
+		stopSignal = false;
 
-		this.strings = '';
+    Init()
+  	{
+  		super.Init();
 
-    this.Init = function()
-    {
-					window.addEventListener('shortpixel.custom.resumeprocessing', this.processor.ResumeProcess.bind(this.processor));
-					window.addEventListener('shortpixel.RenderItemView', this.RenderItemView.bind(this) );
+      this.InitFolderSelector();
+			this.InitScanButtons();
+      this.InitFileScreenAction();
+  	}
 
-					this.strings = spio_screenStrings;
-    },
-    this.HandleImage = function(resultItem, type)
-    {
-        if (type == 'media')  // We don't eat that here.
-          return false;
-
-        if (typeof resultItem.result !== 'undefined')
-        {
-            // This is final, not more messing with this. In results (multiple) defined one level higher than result object, if single, it's in result.
-            var item_id = typeof resultItem.item_id !== 'undefined' ? resultItem.item_id : resultItem.result.item_id;
-            var message = resultItem.result.message;
-
-            var element = document.getElementById('sp-msg-' + item_id); // empty result box while getting
-            if (typeof message !== 'undefined')
-            {
-               this.UpdateMessage(item_id, message);
-            }
-            if (element !== null)
-            {
-              element.innerHTML = '';
-
-            var fileStatus = processor.fStatus[resultItem.fileStatus];
-
-              if (fileStatus == 'FILE_SUCCESS' || fileStatus == 'FILE_RESTORED' || resultItem.result.is_done == true)
-              {
-                this.processor.LoadItemView({id: item_id, type: type});
-              }
-              else if (fileStatus == 'FILE_PENDING')
-              {
-                 element.style.display = 'none';
-                //this.UpdateMessage(item_id, )
-              }
-
-            }
-        }
-        else
-        {
-          console.error('handleImage without Result');
-          console.log(resultItem);
-        }
-
-				return false;
-    }
-
-    this.UpdateMessage = function(id, message, isError)
-    {
-
-       var element = document.getElementById('sp-message-' + id);
-			 if (typeof isError === 'undefined')
-			 	 isError = false;
-
-       this.currentMessage = message;
-
-       if (element == null)
-       {
-           var parent = document.getElementById('sp-msg-' + id);
-           if (parent !== null)
-           {
-             var element = document.createElement('div');
-             element.classList.add('message');
-             element.setAttribute('id', 'sp-message-' + id);
-             parent.parentNode.insertBefore(element, parent.nextSibling);
-           }
-       }
-
-       if (element !== null)
-       {
-				  if (element.classList.contains('error'))
-						 element.classList.remove('error');
-
-					console.log('update message '  + message)
-          element.innerHTML = message;
-
-					if (isError)
-						 element.classList.add('error');
-       }
-       else
-       {
-        //console.error('Update Message column not found ' + id);
-        this.processor.Debug('Update Message Column not found' + id);
-       }
-    }
-		this.SetMessageProcessing = function(id)
-		{
-				var message = this.strings.startAction;
-
-				var loading = document.createElement('img');
-				loading.width = 20;
-				loading.height = 20;
-				loading.src = this.processor.GetPluginUrl() + '/res/img/bulk/loading-hourglass.svg';
-
-
-				message += loading.outerHTML;
-				this.UpdateMessage(id, message);
-		}
-
-    this.UpdateStats = function(stats, type)
-    {
-				if ( type !== 'total')
-					return;
-
-        var waiting = stats.in_queue + stats.in_process;
-        this.processor.tooltip.RefreshStats(waiting);
-    }
-		this.GeneralResponses = function(responses)
-	    {
-	       console.log(responses);
-	       var self = this;
-
-	       if (responses.length == 0)  // no responses.
-	         return;
-
-				 var shownId = []; // prevent the same ID from creating multiple tooltips. There will be punishment for this.
-
-	       responses.forEach(function (element, index)
-	       {
-
-					  	if (element.id)
-							{
-									if (shownId.indexOf(element.id) > -1)
-									{
-										return; // skip
-									}
-									else
-									{
-										shownId.push(element.id);
-									}
-							}
-
-							var message = element.message;
-							if (element.filename)
-								message += ' - ' + element.filename;
-
-	            self.processor.tooltip.AddNotice(message);
-	            if (self.processor.rStatus[element.code] == 'RESPONSE_ERROR')
-	            {
-
-	             if (element.id)
-	             {
-	               var message = self.currentMessage;
-	               self.UpdateMessage(element.id, message + '<br>' + element.message);
-	               self.currentMessage = message; // don't overwrite with this, to prevent echo.
-	             }
-	             else
-	             {
-	                 var errorBox = document.getElementById('shortpixel-errorbox');
-	                 if (errorBox)
-	                 {
-	                   var error = document.createElement('div');
-	                   error.classList.add('error');
-	                   error.innerHTML = element.message;
-	                   errorBox.append(error);
-	                 }
-	             }
-	            }
-	       });
-
-	    }
-
-    // For some reason all these functions are repeated up there ^^
-		// HandleError is handling from results / result, not ResponseController. Check if it has negative effects it's kinda off now.
-    this.HandleError = function(result)
-    {
-				// console.log('HANDLE ERROR', result);
-
-          if (result.message && result.item_id)
-          {
-            this.UpdateMessage(result.item_id, result.message, true);
-          }
-
-          this.processor.LoadItemView({id: result.item_id, type: 'media'});
-          /*if (result.is_done)
-          {
-            e = {};
-            e.detail = {};
-            e.detail.media = {};
-            e.detail.media.id = result.item_id;
-            e.detail.media.result = result.message;
-            this.RenderItemView(e); // remove actions.
-         } */
-    }
-
-    this.RenderItemView = function(e)
+    RenderItemView(e)
     {
         var data = e.detail;
-				console.log('RenderItemView', data);
 
         if (data.custom)
         {
@@ -207,53 +28,490 @@ var ShortPixelScreen = function (MainScreen, processor)
             var element = document.getElementById('sp-msg-' + id);
             element.outerHTML = data.custom.itemView;
 
+            var isOptimizable = data.custom.is_optimizable;
+            var isRestorable = data.custom.is_restorable;
+
+            var inputSelect = document.querySelector('.item-' + id + ' input[name="select[]"]');
+
+            if (null === inputSelect)
+            {
+               console.warn('Checkbox not found ' + id);
+            }
+
+            inputSelect.classList.remove('is-optimizable', 'is-restorable');
+            if (true === isOptimizable)
+              inputSelect.classList.add('is-optimizable');
+
+            if (true === isRestorable)
+              inputSelect.classList.add('is-restorable');
+
+
         }
+
         return false;
     }
 
-    this.RestoreItem = function(id)
+		// Check if the processor needs to start when items are being added / folders refreshed
+		CheckProcessorStart()
+		{
+			// If automedia is active, see if something is to process.
+			if (this.processor.IsAutoMediaActive())
+			{
+				 this.processor.SetInterval(-1);
+				 this.processor.RunProcess();
+			}
+		}
+
+    RefreshFolder(id)
     {
         var data = {};
-        //e.detail;
         data.id = id;
-        data.type = 'custom';
-        data.screen_action = 'restoreItem';
-        //data.callback = 'this.loadItemView';
-        // AjaxRequest should return result, which will go through Handleresponse, then LoadiTemView.
-				this.SetMessageProcessing(id);
-        this.processor.AjaxRequest(data);
-        //var id = data.id;
-    }
-    this.ReOptimize = function(id, compression)
-    {
-        var data = {
-           id : id ,
-           compressionType: compression,
-           type: 'custom',
-           screen_action: 'reOptimizeItem'
-        };
+        data.type = 'folder';
+        data.screen_action = 'refreshFolder';
+        data.callback = 'shortpixel.folder.HandleFolderResult';
 
-			 if (! this.processor.CheckActive())
-			     data.callback = 'shortpixel.custom.resumeprocessing';
+        window.addEventListener('shortpixel.folder.HandleFolderResult', this.HandleFolderResult.bind(this), {'once':true});
 
- 			 	this.SetMessageProcessing(id);
+        // AjaxRequest should return result, which will go through Handleresponse, then LoaditemView.
         this.processor.AjaxRequest(data);
     }
-    this.Optimize = function (id)
+
+    StopMonitoringFolder(id)
     {
 
-       var data = {
-          id: id,
-          type: 'custom',
-          screen_action: 'optimizeItem'
+       if (confirm('Are you sure you want to stop optimizing this folder? '))
+       {
+         var data = {};
+         data.id = id;
+         data.type = 'folder';
+         data.screen_action = 'removeCustomFolder';
+         data.callback = 'shortpixel.folder.HandleFolderResult';
+
+         window.addEventListener('shortpixel.folder.HandleFolderResult', this.HandleFolderResult.bind(this), {'once':true});
+         this.processor.AjaxRequest(data);
+       }
+    }
+
+    HandleFolderResult(e)
+    {
+       var data = e.detail;
+
+       if (data.folder)
+       {
+          var folder_id = data.folder.id;
+          if (data.folder.message)
+          {
+             var el = document.querySelector('.shortpixel-other-media .item.item-' + folder_id + ' .status');
+             if (null !== el)
+             {
+                el.innerHTML = data.folder.message;
+             }
+             else {
+               console.error('Status Element not found for '  + folder_id);
+             }
+          }
+
+          if (data.folder.fileCount)
+          {
+             var el = document.querySelector('.shortpixel-other-media .item.item-' + folder_id + ' .files-number');
+             if (null !== el)
+             {
+                el.innerText = data.folder.fileCount;
+             }
+             else {
+               console.error('FileCount Element not found for '  + folder_id);
+             }
+          }
+
+          if (data.folder.action == 'remove')
+          {
+             if (true == data.folder.is_done)
+             {
+                 var el = document.querySelector('.shortpixel-other-media .item.item-' + folder_id);
+                 if ( null !== el)
+                 {
+                   el.remove();
+                 }
+                 else {
+                   console.error('Row Element not found for '  + folder_id);
+                 }
+
+             }
+          }
+
        }
 
-			 if (! this.processor.CheckActive())
-			     data.callback = 'shortpixel.custom.resumeprocessing';
-
-			 this.SetMessageProcessing(id);
-       this.processor.AjaxRequest(data);
+			 this.CheckProcessorStart();
     }
 
-		this.Init();
+		InitScanButtons()
+		{
+			 var scanButtons = document.querySelectorAll('.scan-button');
+			 var self = this;
+
+			 if (null !== scanButtons)
+			 {
+				 	scanButtons.forEach(function (scanButton) {
+						scanButton.addEventListener('click', self.StartFolderScanEvent.bind(self));
+					});
+			 }
+
+			 var stopButton = document.querySelector('.scan-actions .stop-button');
+			 if (null !== stopButton)
+			 {
+				  stopButton.addEventListener('click', this.StopScanEvent.bind(this));
+			 }
+
+		}
+
+    InitFolderSelector()
+    {
+      var openModalButton = document.querySelector('.open-selectfolder-modal');
+      if (null !== openModalButton)
+        openModalButton.addEventListener('click', this.OpenFolderModal.bind(this));
+
+      var closeModalButtons = document.querySelectorAll('.shortpixel-modal input.select-folder-cancel, .sp-folder-picker-shade');
+
+      var self = this;
+      closeModalButtons.forEach(function (button, index)
+      {
+          button.addEventListener('click', self.CloseFolderModal.bind(self));
+      });
+
+      var addFolderButton = document.querySelector('.modal-folder-picker .select-folder')
+      if (null !== addFolderButton)
+      {
+        addFolderButton.addEventListener('click', this.AddNewFolderEvent.bind(this));
+      }
+    }
+
+    InitFileScreenAction()
+    {
+       var selectAll = document.querySelector('input[name="select-all"]');
+       if (null !== selectAll)
+        selectAll.addEventListener('change', this.SelectAllItemsEvent.bind(this));
+
+
+       var bulkAction = document.querySelector('button[name="doBulkAction"]');
+       if (null !== bulkAction)
+        bulkAction.addEventListener('click', this.BulkActionEvent.bind(this));
+
+    }
+
+    SelectAllItemsEvent(event)
+    {
+       var parent = event.target;
+       var inputs = document.querySelectorAll('input[name="select[]"]');
+
+       var toggle = (true === parent.checked) ? true : false;
+
+       for(var i = 0; i < inputs.length; i++)
+       {
+         inputs[i].checked = toggle;
+
+       }
+
+    }
+
+    BulkActionEvent(event)
+    {
+       event.preventDefault();
+       var target = event.target;
+
+       var items = document.querySelectorAll('input[name="select[]"]:checked');
+       var selectBox = document.querySelector('select[name="bulk-actions"]');
+       var selectedAction = selectBox.options[selectBox.selectedIndex];
+       selectBox.selectedIndex = 0; // Return to default
+
+       var action = selectedAction.value;
+
+
+       for (var i = 0; i < items.length; i++)
+       {
+           var item = items[i];
+           if (false == item.checked) // failsafe
+           {
+              continue;
+           }
+           var item_id = item.value;
+
+           if ('optimize' === action)
+           {
+              if (item.classList.contains('is-optimizable'))
+              {
+               this.Optimize(item_id);
+              }
+           }
+           else if ('restore' === action)
+           {
+              if (item.classList.contains('is-restorable'))
+              {
+                this.RestoreItem(item_id);
+              }
+           }
+           else if ('mark-completed' === action)
+           {
+             if (item.classList.contains('is-optimizable'))
+             {
+               this.MarkCompleted(item_id);
+             }
+
+           }
+           else {
+           }
+
+           item.checked = false;
+       }
+
+       var selectAll = document.querySelector('input[name="select-all"]');
+       selectAll.checked = false;
+    }
+
+    OpenFolderModal()
+    {
+      var shade  = document.querySelector(".sp-folder-picker-shade");
+    //  this.FadeIn(shade, 500);
+      this.Show(shade);
+
+      var picker = document.querySelector(".shortpixel-modal.modal-folder-picker");
+      picker.classList.remove('shortpixel-hide');
+      picker.style.display = 'block';
+
+      var picker = document.querySelector(".sp-folder-picker");
+
+      if (null === this.folderTree)
+      {
+        this.folderTree = new ShortPixelFolderTree(picker, this.processor);
+        picker.addEventListener('shortpixel-folder.selected', this.HandleFolderSelectedEvent.bind(this));
+      }
+
+      this.Show(picker);
+    }
+
+    HandleFolderSelectedEvent(event)
+    {
+        var data = event.detail;
+        var relpath = data.relpath;
+
+        var selectedField = document.querySelector('.sp-folder-picker-selected');
+        selectedField.textContent = relpath;
+
+        this.currentSelectedPath = relpath;
+
+        if (null !== this.currentSelectedPath)
+        {
+          var addFolderButton = document.querySelector('.modal-folder-picker .select-folder');
+          if (null !== addFolderButton)
+          {
+            addFolderButton.disabled = false;
+          }
+        }
+    }
+
+    CloseFolderModal()
+    {
+      var shade  = document.querySelector(".sp-folder-picker-shade");
+      this.Hide(shade);
+
+      // @todo FadeOut function here
+      var picker = document.querySelector('.shortpixel-modal.modal-folder-picker');
+      this.Hide(picker);
+    }
+
+    AddNewFolderEvent(event)
+    {
+      var data = {};
+      data.relpath = this.currentSelectedPath;
+      data.type = 'folder';
+      data.screen_action = 'addCustomFolder';
+      data.callback = 'shortpixel.folder.AddNewDirectory';
+
+      window.addEventListener('shortpixel.folder.AddNewDirectory', this.UpdateFolderViewEvent.bind(this), {'once':true});
+
+      this.processor.AjaxRequest(data);
+    }
+
+    UpdateFolderViewEvent(event)
+    {
+        var data = event.detail;
+
+        if (data.folder.result.itemView)
+        {
+           var element = document.querySelector('.list-overview .item');
+					 var elementHeading = document.querySelector('.list-overview .heading');
+
+           if (null !== element)
+           {
+                element.insertAdjacentHTML('beforebegin', data.folder.result.itemView);
+           }
+					 else if (null !== elementHeading) // In case list is empty.
+					 {
+						 		elementHeading.insertAdjacentHTML('afterend',  data.folder.result.itemView);
+								var noitems = document.querySelector('.list-overview .no-items');
+								if (null !== noitems)
+									noitems.remove();
+					 }
+
+        }
+        this.CloseFolderModal();
+
+				this.CheckProcessorStart();
+
+    }
+
+    StartFolderScanEvent(event)
+    {
+			 var element = event.target;
+			 this.stopSignal = false;
+			 this.ToggleScanInterface(true);
+
+			 var force = false;
+			 if ('mode' in element.dataset)
+			 {
+				  var force = true;
+			 }
+
+		  var reportElement = document.querySelector('.scan-area .result-table');
+			while(reportElement.firstChild)
+			{
+				 reportElement.firstChild.remove();
+			}
+
+			var args = [];
+			args.force = force;
+
+			if (true === force)
+			{
+				var data = {};
+				data.type = 'folder';
+				data.screen_action = 'resetScanFolderChecked';
+				data.callback = 'shortpixel.folder.ScanFolder';
+
+				window.addEventListener('shortpixel.folder.ScanFolder', this.ScanFolder.bind(this, args), {'once':true});
+				this.processor.AjaxRequest(data);
+
+			}
+			else {
+				this.ScanFolder(args);
+			}
+
+    }
+
+		ScanFolder(args)
+		{
+			if (true === this.stopSignal)
+			{
+				 return false;
+			}
+			var data = {};
+			data.type = 'folder';
+			data.screen_action = 'scanNextFolder';
+			data.callback = 'shortpixel.folder.ScannedDirectoryEvent';
+
+			if (true === args.force)
+			{
+				 data.force = args.force;
+			}
+
+			window.addEventListener('shortpixel.folder.ScannedDirectoryEvent', this.ScannedDirectoryEvent.bind(this, args), {'once':true});
+			this.processor.AjaxRequest(data);
+		}
+
+		ScannedDirectoryEvent(args, event)
+		{
+			var data = event.detail;
+			data = data.folder;
+
+			var reportElement = document.querySelector('.scan-area .result-table');
+			if ( null === reportElement)
+			{
+				 console.error('Something wrong with reporting element');
+				 return false;
+			}
+
+			if (data.is_done === true)
+			{
+				// @todo Probably emit some done status here
+				var div = document.createElement('div');
+				div.classList.add('message');
+				div.textContent = data.result.message;
+				this.ToggleScanInterface(false);
+
+				reportElement.appendChild(div);
+			}
+			else if (data.result)
+			{
+					var div = document.createElement('div');
+					var span_path = document.createElement('span');
+					var span_filecount = document.createElement('span');
+					var span_message = document.createElement('span');
+
+					span_path.textContent = data.result.path;
+					span_filecount.textContent = data.result.new_count;
+					span_message.textContent = data.result.message;
+
+					div.appendChild(span_path);
+					div.appendChild(span_filecount);
+					div.appendChild(span_message);
+					reportElement.appendChild(div);
+
+					var self = this;
+					setTimeout( function () { self.ScanFolder(args) }, 200);
+			}
+		}
+
+		StopScanEvent(event)
+		{
+			 this.stopSignal = true;
+
+			var reportElement = document.querySelector('.scan-area .result-table');
+ 			if ( null === reportElement)
+ 			{
+ 				 console.error('Something wrong with reporting element');
+ 				 return false;
+ 			}
+
+			var div = document.createElement('div');
+			div.classList.add('message');
+			div.textContent = this.strings.stopActionMessage;
+
+			reportElement.appendChild(div);
+
+			this.ToggleScanInterface(false);
+
+		}
+
+		ToggleScanInterface(show)
+		{
+				if (typeof show === 'undefined')
+				{
+					 var show = true;
+				}
+
+				var divs = document.querySelectorAll('.scan-actions > div');
+
+				divs.forEach(function(div){
+						if (div.classList.contains('action-scan') && true === show)
+						{
+								div.classList.add('not-visible');
+						}
+						else if (div.classList.contains('action-scan') && false === show) {
+								div.classList.remove('not-visible');
+						}
+						else if ( div.classList.contains('action-stop') && true === show)
+						{
+							div.classList.remove('not-visible');
+						}
+						else {
+							div.classList.add('not-visible');
+						}
+				});
+
+				var output = document.querySelector('.scan-area .output');
+				if (null !== output && true === show)
+				{
+					 output.classList.remove('not-visible');
+				}
+		}
+
 } // class

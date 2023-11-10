@@ -1,23 +1,22 @@
 <?php
 namespace ShortPixel\Controller;
 
+if ( ! defined( 'ABSPATH' ) ) {
+ exit; // Exit if accessed directly.
+}
 
-use ShortPixel\ShortpixelLogger\ShortPixelLogger as Log;
+use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
 
 class QuotaController
 {
     protected static $instance;
     const CACHE_NAME = 'quotaData';
 
-
     protected $quotaData;
 
-
-    public function __construct()
-    {
-
-    }
-
+    /** Singleton instance
+    * @return Object QuotaController object
+    */
     public static function getInstance()
     {
       if (is_null(self::$instance))
@@ -26,6 +25,11 @@ class QuotaController
       return self::$instance;
     }
 
+
+    /**
+     * Return if account has any quota left
+     * @return boolean Has quota left
+     */
     public function hasQuota()
     {
       $settings = \wpSPIO()->settings();
@@ -38,6 +42,10 @@ class QuotaController
 
     }
 
+    /**
+     * Retrieves QuotaData object from cache or from remote source
+     * @return array The quotadata array (remote format)
+     */
     protected function getQuotaData()
     {
         if (! is_null($this->quotaData))
@@ -65,6 +73,10 @@ class QuotaController
         return $quotaData;
     }
 
+    /**
+     * Retrieve quota information for this account
+     * @return object quotadata SPIO format
+     */
     public function getQuota()
     {
 
@@ -101,26 +113,34 @@ class QuotaController
           return $quota;
     }
 
+    /**
+     * Get available remaining - total - credits
+     * @return int Total remaining credits
+     */
     public function getAvailableQuota()
     {
         $quota = $this->getQuota();
-
-        /*max(0, $quotaData['APICallsQuotaNumeric'] + $quotaData['APICallsQuotaOneTimeNumeric'] - $quotaData['APICallsMadeNumeric'] - $quotaData['APICallsMadeOneTimeNumeric']))); */
-
         return $quota->total->remaining;
     }
 
+    /**
+     * Force to get quotadata from API, even if cache is still active ( use very sparingly )
+     * Does not actively fetches it, but invalidates cache, so next call will trigger a remote call
+     * @return void
+     */
     public function forceCheckRemoteQuota()
     {
         $cache = new CacheController();
         $cacheData = $cache->getItem(self::CACHE_NAME);
         $cacheData->delete();
         $this->quotaData = null;
-
-       //$this->getRemoteQuota();
     }
 
-
+    /**
+     * Validate account key in the API via quota check
+     * @param  string $key               User account key
+     * @return array      Quotadata array (remote format) with validated key
+     */
     public function remoteValidateKey($key)
     {
 			  // Remove the cache before checking.
@@ -129,8 +149,9 @@ class QuotaController
     }
 
 		/**
-		* Function should be called when plugin detects the remote quota has been exceeded
-		*/
+     * Called when plugin detects the remote quota has been exceeded.
+     * Triggers various call to actions to customer
+     */
 		public function setQuotaExceeded()
 		{
 			  $settings = \wpSPIO()->settings();
@@ -138,7 +159,9 @@ class QuotaController
 				$this->forceCheckRemoteQuota(); // remove the previous cache.
 		}
 
-
+    /**
+     * When quota is detected again via remote check, reset all call to actions
+     */
     private function resetQuotaExceeded()
     {
         $settings = \wpSPIO()->settings();
@@ -150,12 +173,17 @@ class QuotaController
 				{
 						AdminNoticesController::resetQuotaNotices();
 				}
-				Log::addDebug('Reset Quota Exceeded and reset Notices');
+		//		Log::addDebug('Reset Quota Exceeded and reset Notices');
        	$settings->quotaExceeded = 0;
     }
 
 
-
+    /**
+     * [getRemoteQuota description]
+     * @param  string $apiKey                 User account key
+     * @param  boolean $validate               Api should also validate key or not
+     * @return array            Quotadata array (remote format) [with validated key]
+     */
     private function getRemoteQuota($apiKey = false, $validate = false)
     {
         if (! $apiKey && ! $validate) // validation is done by apikeymodel, might result in a loop.
@@ -308,7 +336,7 @@ class QuotaController
               "APICallsMadeOneTimeNumeric" =>  (int) max($data->APICallsMadeOneTime, 0),
               "APICallsQuotaOneTimeNumeric" => (int) max($data->APICallsQuotaOneTime, 0),
 
-              "Unlimited" => ($data->Unlimited == 'true') ? true : false,
+              "Unlimited" => (property_exists($data, 'Unlimited') && $data->Unlimited == 'true') ? true : false,
 
               "APILastRenewalDate" => $data->DateSubscription,
               "DomainCheck" => (isset($data->DomainCheck) ? $data->DomainCheck : null)
@@ -328,7 +356,7 @@ class QuotaController
               $this->setQuotaExceeded();
 					}
 
-          Log::addDebug('GetQuotaInformation Result ', $dataArray);
+      //    Log::addDebug('GetQuotaInformation Result ', $dataArray);
           return $dataArray;
     }
 
