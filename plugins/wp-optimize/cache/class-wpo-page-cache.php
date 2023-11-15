@@ -23,7 +23,7 @@ if (!defined('WPO_CACHE_EXT_DIR')) define('WPO_CACHE_EXT_DIR', dirname(__FILE__)
 if (!defined('WPO_CACHE_CONFIG_DIR')) define('WPO_CACHE_CONFIG_DIR', WPO_CACHE_DIR.'/config');
 
 /**
- * Directory that stores the cache, including gzipped files and mobile specifc cache
+ * Directory that stores the cache, including gzipped files and mobile specific cache
  */
 if (!defined('WPO_CACHE_FILES_DIR')) define('WPO_CACHE_FILES_DIR', untrailingslashit(WP_CONTENT_DIR).'/cache/wpo-cache');
 
@@ -120,6 +120,8 @@ class WPO_Page_Cache {
 
 		add_action('update_option_gmt_offset', array($this, 'update_gmt_offset_timezone_string_config'), 10, 3);
 		add_action('update_option_timezone_string', array($this, 'update_gmt_offset_timezone_string_config'), 10, 3);
+		add_action('update_option_date_format', array($this, 'update_option_date_format'), 10, 2);
+		add_action('update_option_time_format', array($this, 'update_option_time_format'), 10, 2);
 
 		$this->check_compatibility_issues();
 
@@ -358,9 +360,9 @@ class WPO_Page_Cache {
 			$message .= ' '.__('Please check file and directory permissions on the file paths up to this point, and your PHP error log.', 'wp-optimize');
 
 			if (!defined('WP_CLI') || !WP_CLI) {
-				$message .= "\n\n".sprintf(__('1. Please navigate, via FTP, to the folder - %s', 'wp-optimize'), htmlspecialchars(dirname($this->get_advanced_cache_filename())));
-				$message .= "\n".__('2. Edit or create a file with the name advanced-cache.php', 'wp-optimize');
-				$message .= "\n".__('3. Copy and paste the following lines into the file:', 'wp-optimize');
+				$message .= "\n\n1. ".sprintf(__('Please navigate, via FTP, to the folder - %s', 'wp-optimize'), htmlspecialchars(dirname($this->get_advanced_cache_filename())));
+				$message .= "\n2. ".__('Edit or create a file with the name advanced-cache.php', 'wp-optimize');
+				$message .= "\n3. ".__('Copy and paste the following lines into the file:', 'wp-optimize');
 			}
 
 			$already_ran_enable = new WP_Error("write_advanced_cache", $message);
@@ -441,7 +443,7 @@ class WPO_Page_Cache {
 		 */
 		$this->should_purge = apply_filters('wpo_purge_page_cache_on_activate_deactivate_plugin', true);
 		$purge_actions = array(
-			'deactivate_' . plugin_basename(WPO_PLUGIN_MAIN_PATH . '/wp-optimize.php'),
+			'deactivate_' . plugin_basename(WPO_PLUGIN_MAIN_PATH . 'wp-optimize.php'),
 			'deactivate_plugin',
 			'activated_plugin',
 		);
@@ -572,18 +574,19 @@ class WPO_Page_Cache {
 	 * @return bool - true on success, false otherwise
 	 */
 	public function create_folders() {
+		$permissions_str = __('Please check your file permissions.', 'wp-optimize');
 
 		if (!is_dir(WPO_CACHE_DIR) && !wp_mkdir_p(WPO_CACHE_DIR)) {
-			return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s. Please check your file permissions.'), str_ireplace(ABSPATH, '', WPO_CACHE_DIR)));
+			return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s.', 'wp-optimize'), str_ireplace(ABSPATH, '', WPO_CACHE_DIR)) .' '. $permissions_str);
 		}
 
 		if (!is_dir(WPO_CACHE_CONFIG_DIR) && !wp_mkdir_p(WPO_CACHE_CONFIG_DIR)) {
-			return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s. Please check your file permissions.'), str_ireplace(ABSPATH, '', WPO_CACHE_CONFIG_DIR)));
+			return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s.', 'wp-optimize'), str_ireplace(ABSPATH, '', WPO_CACHE_CONFIG_DIR)) .' '. $permissions_str);
 		}
 		
 		if (!is_dir(WPO_CACHE_FILES_DIR)) {
 			if (!wp_mkdir_p(WPO_CACHE_FILES_DIR)) {
-				return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s. Please check your file permissions.'), str_ireplace(ABSPATH, '', WPO_CACHE_FILES_DIR)));
+				return new WP_Error('create_folders', sprintf(__('The request to the filesystem failed: unable to create directory %s.', 'wp-optimize'), str_ireplace(ABSPATH, '', WPO_CACHE_FILES_DIR)) .' '. $permissions_str);
 			} else {
 				wpo_disable_cache_directories_viewing();
 			}
@@ -885,7 +888,7 @@ EOF;
 	}
 
 	/**
-	 * Update permalink strucutre in cache config
+	 * Update permalink structure in cache config
 	 *
 	 * @param string $old_value Old value of permalink_structure option
 	 * @param string $value 	New value of permalink_structure option
@@ -938,7 +941,7 @@ EOF;
 	}
 
 	/**
-	 * Fetch directory informations.
+	 * Fetch directory information.
 	 *
 	 * @param string $dir
 	 * @return array
@@ -1087,7 +1090,7 @@ EOF;
 	}
 
 	/**
-	 * Delete sitemap cahche.
+	 * Delete sitemap cache.
 	 */
 	public static function delete_sitemap_cache() {
 		if (!defined('WPO_CACHE_FILES_DIR')) return;
@@ -1237,8 +1240,6 @@ EOF;
 	 * @return null
 	 */
 	public function update_gmt_offset_timezone_string_config($old_value, $new_value, $option) {
-		$option;
-		
 		if ('' == $new_value) return;
 
 		$current_config = $this->config->get();
@@ -1247,12 +1248,42 @@ EOF;
 			$dateTime = new DateTime("now");
 			$gmt_offset = $timeZone->getOffset($dateTime);
 			$current_config['gmt_offset'] = round($gmt_offset/3600, 1);
+			$current_config['timezone_string'] = $new_value;
 		} elseif ('' !== $new_value) {
 			$current_config['gmt_offset'] = $new_value;
+			$current_config['timezone_string'] = '';
 		}
 		$this->config->update($current_config, true);
 	}
-
+	
+	/**
+	 * Update `date_format` cache config value, used with hook `update_option_date_format`.
+	 *
+	 * @param string $old_value Old date format
+	 * @param string $new_value New date format
+	 *
+	 * @return void
+	 */
+	public function update_option_date_format($old_value, $new_value) {
+		$current_config = $this->config->get();
+		$current_config['date_format'] = $new_value;
+		$this->config->update($current_config, true);
+	}
+	
+	/**
+	 * Update `time_format` cache config value, used with hook `update_option_time_format`.
+	 *
+	 * @param string $old_value Old time format
+	 * @param string $new_value New time format
+	 *
+	 * @return void
+	 */
+	public function update_option_time_format($old_value, $new_value) {
+		$current_config = $this->config->get();
+		$current_config['time_format'] = $new_value;
+		$this->config->update($current_config, true);
+	}
+ 
 	/**
 	 * Adds an error to the error store
 	 *

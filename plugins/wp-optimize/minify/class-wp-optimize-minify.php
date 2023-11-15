@@ -46,7 +46,7 @@ class WP_Optimize_Minify {
 		}
 
 		/**
-		 * Directory that stores the cache, including gzipped files and mobile specifc cache
+		 * Directory that stores the cache, including gzipped files and mobile specific cache
 		 */
 		if (!defined('WPO_CACHE_MIN_FILES_DIR')) define('WPO_CACHE_MIN_FILES_DIR', untrailingslashit(WP_CONTENT_DIR).'/cache/wpo-minify');
 		if (!defined('WPO_CACHE_MIN_FILES_URL')) define('WPO_CACHE_MIN_FILES_URL', untrailingslashit(WP_CONTENT_URL).'/cache/wpo-minify');
@@ -59,7 +59,10 @@ class WP_Optimize_Minify {
 
 		// cron job to delete old wpo_min cache
 		add_action('wpo_minify_purge_old_cache', array('WP_Optimize_Minify_Cache_Functions', 'purge_old'));
-		// front-end actions; skip on certain post_types or if there are specific keys on the url or if editor or admin
+		
+		if ($this->enabled) {
+			$this->schedule_purge_old_cache_event();
+		}
 
 		// Handle minify cache purging.
 		add_action('wp_loaded', array($this, 'handle_purge_minify_cache'));
@@ -124,7 +127,7 @@ class WP_Optimize_Minify {
 				add_action('admin_notices', array($this, 'notice_purge_minify_cache_success'));
 				return;
 			} else {
-				$message = __('Minify cache purged', 'wp-optmize');
+				$message = __('Minify cache purged', 'wp-optimize');
 				printf('<script>alert("%s");</script>', $message);
 				return;
 			}
@@ -190,11 +193,18 @@ class WP_Optimize_Minify {
 		
 		// old cache purge event cron
 		wp_clear_scheduled_hook('wpo_minify_purge_old_cache');
-		if (!wp_next_scheduled('wpo_minify_purge_old_cache')) {
-			wp_schedule_event(time() + 86400, 'daily', 'wpo_minify_purge_old_cache');
-		}
+		$this->schedule_purge_old_cache_event();
 	}
 
+	/**
+	 * If the WP cron event for scheduling purging of the minify cache does not exist, then create it
+	 */
+	private function schedule_purge_old_cache_event() {
+		if (!wp_next_scheduled('wpo_minify_purge_old_cache')) {
+			wp_schedule_event(time() + 43200, 'daily', 'wpo_minify_purge_old_cache');
+		}
+	}
+	
 	/**
 	 * Run during plugin deactivation
 	 *

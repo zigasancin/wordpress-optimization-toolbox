@@ -126,8 +126,12 @@ class WP_Optimize_Database_Information {
 		static $tables_info = array();
 		static $fetched_all_tables = false;
 
+		if ($fetched_all_tables && !$update) {
+			return $tables_info;
+		}
+
 		// If a table name is provided, and the whole record hasn't been fetched yet, only fetch the information for the current table.
-		// This allows for a big preformance gain when using WP-CLI or doing single optimizations.
+		// This allows for a big performance gain when using WP-CLI or doing single optimizations.
 		if ($table_name && !$fetched_all_tables) {
 			$sql = $wpdb->prepare("SHOW TABLE STATUS LIKE '%s'", $table_name);
 			$tables_info = $wpdb->get_results($sql);

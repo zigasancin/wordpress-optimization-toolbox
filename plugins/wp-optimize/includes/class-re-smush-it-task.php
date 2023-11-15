@@ -82,19 +82,18 @@ class Re_Smush_It_Task extends Updraft_Smush_Task {
 		if ($lossy) {
 			$quality = $this->get_option('image_quality');
 		} else {
-			$quality = 100;
+			$quality = 92;
 		}
 
 		if (isset($options['quality']) && is_int($options['quality']) && 0 < $options['quality']) $quality = $options['quality'];
 
-		$this->log($quality);
 		$post_fields = array(
 			'qlty' => $quality,
 			'exif' => $this->get_option('preserve_exif', false)
 		);
 		$payload = '';
 		$file_name = basename($local_file);
-		
+
 		foreach ($post_fields as $name => $value) {
 			$payload .= "--$boundary";
 			$payload .= "\r\n";
@@ -119,7 +118,7 @@ class Re_Smush_It_Task extends Updraft_Smush_Task {
 	}
 
 	/**
-	 * Processes the response recieved from the remote server
+	 * Processes the response received from the remote server
 	 *
 	 * @param String $response - The response object
 	 */
@@ -189,7 +188,7 @@ class Re_Smush_It_Task extends Updraft_Smush_Task {
 			'request_timeout' => 30,
 			'keep_original' => true,
 			'preserve_exif' => false,
-			'image_quality' => 98,
+			'image_quality' => 92,
 			'api_endpoint' => self::API_URL,
 			'max_filesize' => self::MAX_FILESIZE,
 			'version' => '0.1.13',

@@ -140,7 +140,7 @@ abstract class WP_Optimization {
 	 * Convert all applicable characters to HTML entities in array. Used to prepare data for output in browser for preview.
 	 *
 	 * @param  array $array        source array
-	 * @param  array $exclude_keys what items shoudn't be encoded.
+	 * @param  array $exclude_keys what items shouldn't be encoded.
 	 *
 	 * @return array
 	 */
@@ -228,7 +228,7 @@ abstract class WP_Optimization {
 	 * This gathers the optimization information to be displayed
 	 * before triggering any optimizations
 	 *
-	 * @return array Returns an array of optimization information
+	 * @return object Returns an object of optimization information
 	 */
 	public function get_optimization_info() {
 		return $this->optimizer->get_optimization_info($this);
@@ -403,7 +403,7 @@ abstract class WP_Optimization {
 	/**
 	 * What is returned must be at least convertible to an array
 	 *
-	 * @return array Array of results.
+	 * @return object Results object.
 	 */
 	public function get_results() {
 	

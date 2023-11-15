@@ -78,7 +78,7 @@ var WP_Optimize = function () {
 
 	// table sorter library.
 	// This calls the tablesorter library in order to sort the table information correctly.
-	// There is a fix below on line 172 to apply applyWidgets on load to avoid diplay hidden for tabs.
+	// There is a fix below on line 172 to apply applyWidgets on load to avoid display hidden for tabs.
 	// add parser through the tablesorter addParser method
 	$.tablesorter.addParser({
 		// set a unique id
@@ -114,7 +114,7 @@ var WP_Optimize = function () {
 			theme: 'default',
 			widgets: ['zebra', 'rows', 'filter'],
 			cssInfoBlock: "tablesorter-no-sort",
-			// This option is to specify with colums will be disabled for sorting
+			// This option is to specify with columns will be disabled for sorting
 			headers: {
 				2: {sorter: 'digit'},
 				3: {sorter: 'sizes'},
@@ -272,10 +272,6 @@ var WP_Optimize = function () {
 	});
 
 	$('#wp-optimize-wrap').on('page-change', function(e, params) {
-		// When changing the page, trigger a click, in case the page was loaded somewhere else.
-		if ('WP-Optimize' == params.page && $('#wp-optimize-nav-tab-WP-Optimize-optimize').is('.nav-tab-active')) {
-			$('#wp-optimize-nav-tab-WP-Optimize-optimize').trigger('click');
-		}
 		// Trigger the global tab change events when changing page
 		var active_tab = $('.wpo-page[data-whichpage='+params.page+']').find('.nav-tab-wrapper .nav-tab-active');
 		$('#wp-optimize-wrap').trigger('tab-change', { page: params.page, tab: active_tab.data('tab') });
@@ -357,13 +353,14 @@ var WP_Optimize = function () {
 		}
 	}
 
+	var database_tabs_loading = false;
 	var database_tabs_loaded = false;
 	// When showing the tables tab
 	$('#wp-optimize-wrap').on('tab-change/WP-Optimize/tables', function(e) {
 		get_database_tabs();
 	});
 
-	// When showing the tables tab
+	// When showing the optimizations tab
 	$('#wp-optimize-wrap').on('tab-change/WP-Optimize/optimize', function(event, data) {
 		get_database_tabs();
 	});
@@ -379,12 +376,13 @@ var WP_Optimize = function () {
 	 * Get the data for the database tabs. We get them at the same time, as they both need the same time consuming requests.
 	 */
 	function get_database_tabs() {
-		if (database_tabs_loaded) return;
+		if (database_tabs_loading || database_tabs_loaded) return;
 		var container = $('.wpo-page[data-whichpage=WP-Optimize]');
 		var shade = container.find('.wpo_shade');
 		shade.removeClass('hidden');
+		database_tabs_loading = true;
 		send_command('get_database_tabs', {}, function(response) {
-			// Set the satus to true, to prevent loading again.
+			// Set the status to true, to prevent loading again.
 			database_tabs_loaded = true;
 
 			// Updtate the optimizations tab
@@ -398,6 +396,7 @@ var WP_Optimize = function () {
 			$(document).trigger('wpo_database_tabs_loaded');
 
 		}).always(function() {
+			database_tabs_loading = false;
 			shade.addClass('hidden');
 		});
 	}
@@ -448,7 +447,7 @@ var WP_Optimize = function () {
 	}
 	
 	/**
-	 * Proceses the queue
+	 * Processes the queue
 	 *
 	 * @return void
 	 */
@@ -2189,7 +2188,7 @@ jQuery(function ($) {
 	function get_add_logging_form_html() {
 		var i,
 			select_options = [
-				'<option value="">Select destination</option>'
+				'<option value="">' + wpoptimize.select_destination + '</option>'
 			];
 
 		for (i in wpoptimize.loggers_classes_info) {
@@ -2205,8 +2204,8 @@ jQuery(function ($) {
 				'<select class="wpo_logger_type" name="wpo-logger-type[]">',
 					select_options.join(''),
 				'</select>',
-				'<div class="wpo_logging_edit_row" style="display:block;"><span class="wpo_delete_logger button button-secondary" title="'+wpoptimize.delete_logger+'">'+wpoptimize.delete_logger+'</span>',
-				'<span class="wpo_save_logging button button-primary" title="'+wpoptimize.add_logger+'">'+wpoptimize.add_logger+'</span></div>',
+				'<div class="wpo_logging_edit_row" style="display:block;"><span class="wpo_delete_logger button button-secondary" title="'+wpoptimize.cancel+'">'+wpoptimize.cancel+'</span>',
+				'<span class="wpo_save_logging button button-primary" title="'+wpoptimize.add+'">'+wpoptimize.add+'</span></div>',
 				'<div class="wpo_additional_logger_options"></div>',
 			'</div>'
 		].join('');

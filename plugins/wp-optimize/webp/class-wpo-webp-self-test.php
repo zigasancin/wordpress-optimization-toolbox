@@ -7,34 +7,25 @@ if (!class_exists('WPO_WebP_Self_Test')) :
 class WPO_WebP_Self_Test {
 
 	/**
-	 * Decided whether we can get a webp image or not
+	 * Determines whether content type header has webp mime or not
+	 *
+	 * @param array $headers An array of headers
 	 *
 	 * @return bool
 	 */
-	public function get_webp_image() {
-		$args = array(
-			'headers' => array(
-				'accept' => 'image/webp'
-			)
-		);
+	private function has_webp_mime($headers) {
+		return isset($headers['content-type']) && 0 === strcasecmp('image/webp', $headers['content-type']);
+	}
 
-		$upload_dir = wp_upload_dir();
-		$url =  $upload_dir['baseurl']. '/wpo/images/wpo_logo_small.png.webp';
-
-		$response = wp_remote_get($url, $args);
-
-		if (is_wp_error($response)) return false;
-		if (200 != $response['response']['code']) return false;
-
-		$headers = wp_remote_retrieve_headers($response);
-		if (method_exists($headers, 'getAll')) {
-			$headers = $headers->getAll();
-			if (isset($headers['content-type']) && 'image/webp' == $headers['content-type']) {
-				return true;
-			}
-		}
-		
-		return false;
+	/**
+	 * Determines whether headers has `vary` header or not
+	 *
+	 * @param array $headers An array of headers
+	 *
+	 * @return bool
+	 */
+	private function has_vary($headers) {
+		return isset($headers['vary']) && preg_match('/accept/i', $headers['vary']);
 	}
 
 	/**
@@ -52,7 +43,7 @@ class WPO_WebP_Self_Test {
 		$upload_dir = wp_upload_dir();
 		$url =  $upload_dir['baseurl']. '/wpo/images/wpo_logo_small.png';
 
-		$response = wp_remote_get($url, $args);
+		$response = wp_remote_head($url, $args);
 
 		if (is_wp_error($response)) return false;
 		if (200 != $response['response']['code']) return false;
@@ -60,11 +51,10 @@ class WPO_WebP_Self_Test {
 		$headers = wp_remote_retrieve_headers($response);
 		if (method_exists($headers, 'getAll')) {
 			$headers = $headers->getAll();
-			if (isset($headers['content-type']) && 'image/webp' == $headers['content-type']) {
+			if ($this->has_webp_mime($headers) && $this->has_vary($headers)) {
 				return true;
 			}
 		}
-		
 		return false;
 	}
 

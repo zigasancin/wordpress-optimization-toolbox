@@ -13,29 +13,43 @@ ini_set('pcre.recursion_limit', 5000000);
 
 // Include PHP Minify [1.3.60] - https://github.com/matthiasmullie/minify
 if (!class_exists('\MatthiasMullie\Minify\Minify')) {
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Minify.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/CSS.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/JS.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Exception.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Exceptions/BasicException.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src//Exceptions/FileImportException.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/minify/src/Exceptions/IOException.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/path-converter/src/ConverterInterface.php';
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/matthiasmullie/path-converter/src/Converter.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/minify/src/Minify.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/minify/src/CSS.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/minify/src/JS.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/minify/src/Exception.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/minify/src/Exceptions/BasicException.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/minify/src//Exceptions/FileImportException.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/minify/src/Exceptions/IOException.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/path-converter/src/ConverterInterface.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/matthiasmullie/path-converter/src/Converter.php';
 }
 	
 use MatthiasMullie\Minify; // phpcs:ignore PHPCompatibility.Keywords.NewKeywords.t_useFound, PHPCompatibility.LanguageConstructs.NewLanguageConstructs.t_ns_separatorFound
 
 // Use HTML minification
 if (!class_exists('Minify_HTML')) {
-	require_once WPO_PLUGIN_MAIN_PATH.'/vendor/mrclay/minify/lib/Minify/HTML.php';
+	require_once WPO_PLUGIN_MAIN_PATH.'vendor/mrclay/minify/lib/Minify/HTML.php';
 }
 
 if (!class_exists('WP_Optimize_Options')) {
-	include_once WPO_PLUGIN_MAIN_PATH.'/includes/class-wp-optimize-options.php';
+	include_once WPO_PLUGIN_MAIN_PATH.'includes/class-wp-optimize-options.php';
 }
 
 class WP_Optimize_Minify_Functions {
+
+	/**
+	 * Applies `strip_tags` function for given array of messages
+	 *
+	 * @param array  $messages     Array of messages
+	 * @param string $allowed_tags Tags to retain in message (optional)
+	 *
+	 * @return array
+	 */
+	public static function apply_strip_tags_for_messages_array($messages, $allowed_tags = '<strong>') {
+		return array_map(function($message) use ($allowed_tags) {
+			return strip_tags($message, $allowed_tags);
+		}, $messages);
+	}
 
 	/**
 	 * Detect external or internal scripts
@@ -141,10 +155,10 @@ class WP_Optimize_Minify_Functions {
 
 		// no query strings
 		if (stripos($hurl, '.js?v') !== false) {
-			$hurl = stristr($hurl, '.js?v', true).'.js'; // phpcs:ignore PHPCompatibility.FunctionUse.NewFunctionParameters.stristr_before_needleFound
+			$hurl = stristr($hurl, '.js?v', true).'.js';
 		}//end if
 		if (stripos($hurl, '.css?v') !== false) {
-			$hurl = stristr($hurl, '.css?v', true).'.css'; // phpcs:ignore PHPCompatibility.FunctionUse.NewFunctionParameters.stristr_before_needleFound
+			$hurl = stristr($hurl, '.css?v', true).'.css';
 		}//end if
 
 		return $hurl;
@@ -249,7 +263,7 @@ class WP_Optimize_Minify_Functions {
 	 */
 	public static function minify_css_string($css) {
 		$css = apply_filters('wpo_minify_css_string', $css);
-		$minifier = new Minify\CSS($css); // phpcs:ignore PHPCompatibility.LanguageConstructs.NewLanguageConstructs.t_ns_separatorFound
+		$minifier = new Minify\CSS($css);
 		$minifier->setMaxImportSize(15); // [css only] embed assets up to 15 Kb (default 5Kb) - processes gif, png, jpg, jpeg, svg & woff
 		$min = $minifier->minify();
 		if (false !== $min) {
@@ -323,7 +337,7 @@ class WP_Optimize_Minify_Functions {
 	public static function minify_js_string($js) {
 		$js = apply_filters('wpo_minify_js_string', $js);
 		// PHP Minify from https://github.com/matthiasmullie/minify
-		$minifier = new Minify\JS($js); // phpcs:ignore PHPCompatibility.LanguageConstructs.NewLanguageConstructs.t_ns_separatorFound
+		$minifier = new Minify\JS($js);
 		$min = $minifier->minify();
 		if (false !== $min && (strlen(trim($js)) == strlen(trim($min)) || strlen(trim($min)) > 0)) {
 			return self::compat_urls($min);
@@ -493,7 +507,7 @@ class WP_Optimize_Minify_Functions {
 	public static function replace_css_import($css, $file_url) {
 		$remove_print_mediatypes = wp_optimize_minify_config()->get('remove_print_mediatypes');
 		$debug = wp_optimize_minify_config()->get('debug');
-		return preg_replace_callback('/(?:@import)\s(?:url\()?\s?["\'](.*?)["\']\s?\)?(?:[^;]*);?/im', function($matches) use ($file_url, $remove_print_mediatypes, $debug) { // phpcs:ignore PHPCompatibility.FunctionDeclarations.NewClosure.Found
+		return preg_replace_callback('/(?:@import)\s(?:url\()?\s?["\'](.*?)["\']\s?\)?(?:[^;]*);?/im', function($matches) use ($file_url, $remove_print_mediatypes, $debug) {
 			// @import contains url()
 			if (preg_match('/url\s*\((.[^\)]*)[\)*?](.*);/', $matches[0], $url_matches)) {
 				$url = trim(str_replace(array('"', "'"), '', $url_matches[1]));

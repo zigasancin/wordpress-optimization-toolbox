@@ -90,6 +90,8 @@ class WP_Optimize_Cache_Commands {
 			$enabled = $previous_settings['enable_page_caching'];
 		}
 
+		$data['cache-settings']['use_webp_images'] = (bool) WP_Optimize()->get_options()->get_option('webp_conversion');
+
 		$skip_if_no_file_yet = !$enabled || is_wp_error($enabled);
 		$save_settings_result = WPO_Cache_Config::instance()->update($data['cache-settings'], $skip_if_no_file_yet);
 
@@ -161,8 +163,15 @@ class WP_Optimize_Cache_Commands {
 	 * @return array
 	 */
 	public function purge_page_cache() {
-
-		if (!WP_Optimize()->get_page_cache()->can_purge_cache()) {
+		
+		if (!WP_Optimize()->get_page_cache()->is_enabled()) {
+			return array(
+				'success' => false,
+				'error' => __('Cache is not enabled.', 'wp-optimize'),
+			);
+		}
+		
+		if (!WP_Optimize()->get_page_cache()->can_purge_cache() && !(defined('WP_CLI') && WP_CLI)) {
 			return array(
 				'success' => false,
 				'message' => __('You do not have permission to purge the cache', 'wp-optimize'),
@@ -232,7 +241,7 @@ class WP_Optimize_Cache_Commands {
 	/**
 	 * Run cache preload action.
 	 *
-	 * @return void|array - Doesn't return anything if run() is successfull (Run() prints a JSON object and closed browser connection) or an array if failed.
+	 * @return void|array - Doesn't return anything if run() is successful (Run() prints a JSON object and closed browser connection) or an array if failed.
 	 */
 	public function run_cache_preload() {
 		return WP_Optimize_Page_Cache_Preloader::instance()->run('manual');
