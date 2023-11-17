@@ -335,7 +335,7 @@ echo sprintf( __( 'You can manually create rules for different types of pages or
 </tr>
 <tr valign="top" class="css_sub" id="autoptimize_css_defer_inline">
 <th scope="row"></th>
-<td><label><textarea rows="10" cols="10" style="width:100%;" placeholder="<?php _e( 'Paste the above the fold CSS here. You can leave this empty when using the automated Critical CSS integration.', 'autoptimize' ); ?>" name="autoptimize_css_defer_inline"><?php echo autoptimizeStyles::sanitize_css( autoptimizeOptionWrapper::get_option( 'autoptimize_css_defer_inline' ) ); ?></textarea></label></td>
+<td><label><textarea rows="10" cols="10" style="width:100%;" spellcheck="false" placeholder="<?php _e( 'Paste the above the fold CSS here. You can leave this empty when using the automated Critical CSS integration.', 'autoptimize' ); ?>" name="autoptimize_css_defer_inline"><?php echo autoptimizeStyles::sanitize_css( autoptimizeOptionWrapper::get_option( 'autoptimize_css_defer_inline' ) ); ?></textarea></label></td>
 </tr>
 <tr valign="top" class="css_sub css_aggregate">
 <th scope="row"><?php _e( 'Inline all CSS?', 'autoptimize' ); ?></th>
@@ -429,7 +429,7 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
             $details = ', ~' . $ao_cache_size . ' total';
         }
         // translators: Kilobytes + timestamp shown.
-        printf( __( '%1$s files, totalling %2$s (calculated at %3$s)', 'autoptimize' ), $ao_stat_arr[0], $ao_cache_size, date( 'H:i e', $ao_stat_arr[2] ) ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
+        printf( __( '%1$s files, totalling %2$s (calculated at %3$s)', 'autoptimize' ), $ao_stat_arr[0], $ao_cache_size, wp_date( 'H:i', $ao_stat_arr[2] ) ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
     }
     ?>
 </td>
@@ -485,13 +485,11 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
     <?php _e( 'Add a "metabox" to the post/ page edit screen allowing different optimizations to be turned off on a per post/ page level?', 'autoptimize' ); ?></label></td>
     </tr>
     <?php } ?>
-    <?php if ( false !== (bool) autoptimizeOptionWrapper::get_option( 'autoptimize_installed_before_compatibility', false ) ) { ?>
     <tr valign="top">
     <th scope="row"><?php _e( 'Disable extra compatibilty logic?', 'autoptimize' ); ?></th>
-    <td><label class="cb_label"><input type="checkbox" name="autoptimize_installed_before_compatibility" checked="checked" />
-    <?php _e( 'In Autoptimize 3.0 extra compatibiity logic was added (e.g. for Gutenberg blocks, Revolution Slider, jQuery-heavy plugins, ...), but if you had Autoptimize installed already before the update to 3.0, this compatibility code was disabled. <strong>Untick this option to permanently enable the compatibility logic</strong>.', 'autoptimize' ); ?></label></td>
+    <td><label class="cb_label"><input type="checkbox" name="autoptimize_installed_before_compatibility" <?php echo $conf->get( 'autoptimize_installed_before_compatibility' ) ? 'checked="checked" ' : ''; ?>/>
+    <?php _e( 'Autoptimize applies extra "compatibiity logic" to prevent issues with JS optimization (for e.g. Gutenberg blocks, Revolution Slider, jQuery-heavy plugins, ...) but may sometimes be a bit too careful. If you have render-blocking JS issues, you can try disabling this logic here. Make sure to test your site thoroughly though!', 'autoptimize' ); ?></label></td>
     </tr>
-    <?php } ?>
 </table>
 </li>
 
@@ -732,7 +730,7 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
 
     public function autoptimize_admin_scripts()
     {
-        wp_enqueue_script( 'unslider', plugins_url( '/external/js/unslider-min.js', __FILE__ ), array( 'jquery' ), null, true );
+        wp_enqueue_script( 'unslider', plugins_url( '/external/js/unslider.min.js', __FILE__ ), array( 'jquery' ), null, true );
     }
 
     public function autoptimize_admin_styles()
@@ -808,11 +806,11 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
     public static function get_defaults()
     {
         static $config = array(
-            'autoptimize_html'                           => 0,
+            'autoptimize_html'                           => 1,
             'autoptimize_html_keepcomments'              => 0,
             'autoptimize_html_minify_inline'             => 0,
             'autoptimize_enable_site_config'             => 1,
-            'autoptimize_js'                             => 0,
+            'autoptimize_js'                             => 1,
             'autoptimize_js_aggregate'                   => 0,
             'autoptimize_js_defer_not_aggregate'         => 1,
             'autoptimize_js_defer_inline'                => 1,
@@ -821,7 +819,7 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
             'autoptimize_js_justhead'                    => 0,
             'autoptimize_js_include_inline'              => 0,
             'autoptimize_js_forcehead'                   => 0,
-            'autoptimize_css'                            => 0,
+            'autoptimize_css'                            => 1,
             'autoptimize_css_aggregate'                  => 0,
             'autoptimize_css_exclude'                    => '',
             'autoptimize_css_justhead'                   => 0,
@@ -1025,7 +1023,7 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
     public static function get_post_meta_ao_settings( $optim ) {
         if ( ! autoptimizeConfig::is_ao_meta_settings_active() ) {
             // Per page/post settings not active, so always return true (as in; can be optimized).
-            if ( in_array( $optim, array( 'ao_post_preload' ) ) ) {
+            if ( in_array( $optim, apply_filters( 'autoptimize_filter_meta_inactive_return_false_for', array( 'ao_post_preload' ) ) ) ) {
                 // but make sure to return false for text input.
                 return false;
             }
@@ -1035,9 +1033,9 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
         static $_meta_value = null;
         if ( null === $_meta_value ) {
             global $wp_query;
-            if ( isset( $wp_query ) && ( is_page() || is_single() ) ) {
+            if ( isset( $wp_query ) ) {
                 $_meta_value = get_post_meta( get_the_ID(), 'ao_post_optimize', true );
-            } else if ( isset( $wp_query ) ) {
+            } else {
                 $_meta_value = false;
             }
         }
@@ -1046,7 +1044,7 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
         // fixme: need unit tests to ensure below logic is sane!
         if ( empty( $_meta_value ) || ! is_array( $_meta_value ) ) {
             // no metabox values so all optimizations are a go.
-            if ( in_array( $optim, array( 'ao_post_preload' ) ) ) {
+            if ( in_array( $optim, apply_filters( 'autoptimize_filter_meta_optim_nonbool', array( 'ao_post_preload' ) ) ) ) {
                 // but make sure to return false for text input.
                 return false;
             }
@@ -1054,6 +1052,9 @@ if ( true === autoptimizeImages::imgopt_active() && true === apply_filters( 'aut
         } else if ( array_key_exists( 'ao_post_optimize', $_meta_value ) && 'on' !== $_meta_value['ao_post_optimize'] ) {
             // ao entirely off for this page.
             return false;
+        } else if ( in_array( $optim, apply_filters( 'autoptimize_filter_meta_optim_with_filters', array() ) ) ) {
+            // if an $optim is registered as having a filter, apply filter and return that (default false).
+            return apply_filters( 'autoptimize_filter_meta_filtered_optim', false, $optim, $_meta_value );
         } else if ( array_key_exists( $optim, $_meta_value ) && empty( $_meta_value[ $optim ] ) ) {
             // sub-optimization off for this page.
             return false;

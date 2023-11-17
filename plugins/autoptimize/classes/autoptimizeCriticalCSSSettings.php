@@ -15,6 +15,13 @@ class autoptimizeCriticalCSSSettings {
      */
     private $settings_screen_do_remote_http = true;
 
+    /**
+     * Critical CSS object.
+     *
+     * @var object
+     */
+    protected $criticalcss;
+
     public function __construct() {
         $this->criticalcss = autoptimize()->criticalcss();
         $this->settings_screen_do_remote_http = apply_filters( 'autoptimize_settingsscreen_remotehttp', $this->settings_screen_do_remote_http );
@@ -182,7 +189,7 @@ class autoptimizeCriticalCSSSettings {
                     ?>
                     <div data-dismissible="i-know-about-disable-cron-forever" class="notice-warning notice is-dismissible"><p>
                     <?php
-                    _e( 'WordPress cron (for task scheduling) seems to be disabled. Have a look at <a href="https://wordpress.org/plugins/autoptimize-criticalcss/faq/" target="_blank">the FAQ</a> or the info in the Job Queue instructions if all jobs remain in "N" status and no rules are created.', 'autoptimize' );
+                    _e( 'WordPress cron (for task scheduling) seems to be disabled. Have a look at <a href="https://blog.futtta.be/2023/03/17/how-to-fix-autoptimize-critical-css-cron-issue/" target="_blank">the FAQ</a> or the info in the Job Queue instructions if all jobs remain in "N" status and no rules are created.', 'autoptimize' );
                     ?>
                     </p></div>
                     <?php
@@ -246,7 +253,7 @@ class autoptimizeCriticalCSSSettings {
                     ?>
                     <div data-dismissible="i-know-about-cron-1" class="notice-warning notice is-dismissible"><p>
                     <?php
-                    _e( 'It looks like there might be a problem with WordPress cron (task scheduling). Have a look at <a href="https://wordpress.org/plugins/autoptimize-criticalcss/faq/" target="_blank">the FAQ</a> or the info in the Job Queue instructions if all jobs remain in "N" status and no rules are created.', 'autoptimize' );
+                    _e( 'It looks like there might be a problem with WordPress cron (task scheduling). Have a look at <a href="https://blog.futtta.be/2023/03/17/how-to-fix-autoptimize-critical-css-cron-issue/" target="_blank">the FAQ</a> or the info in the Job Queue instructions if all jobs remain in "N" status and no rules are created.', 'autoptimize' );
                     ?>
                     </p></div>
                     <?php

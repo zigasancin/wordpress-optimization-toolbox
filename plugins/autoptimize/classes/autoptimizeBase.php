@@ -319,7 +319,7 @@ abstract class autoptimizeBase
 
         // Allows API/filter to further tweak the cdn url...
         $cdn_url = apply_filters( 'autoptimize_filter_base_cdnurl', $cdn_url );
-        if ( ! empty( $cdn_url ) && false === strpos( $url, $cdn_url ) ) {
+        if ( ! empty( $cdn_url ) && false === strpos( $url, $cdn_url ) && false !== apply_filters( 'autoptimize_filter_base_apply_cdn', true, $url ) ) {
 
             // Simple str_replace-based approach fails when $url is protocol-or-host-relative.
             $is_protocol_relative = autoptimizeUtils::is_protocol_relative( $url );
@@ -665,12 +665,10 @@ abstract class autoptimizeBase
             return false;
         }
 
-        // Bail if it looks like its already minifed (by having -min or .min
-        // in filename) or if it looks like WP jquery.js (which is minified).
+        // Bail if it looks like its already minifed (by having -min or .min in filename).
         $minified_variants = array(
             '-min.' . $type,
             '.min.' . $type,
-            'js/jquery/jquery.js',
         );
         foreach ( $minified_variants as $ending ) {
             if ( autoptimizeUtils::str_ends_in( $filepath, $ending ) && true === apply_filters( 'autoptimize_filter_base_prepare_exclude_minified', true ) ) {

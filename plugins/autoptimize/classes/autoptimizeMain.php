@@ -191,8 +191,12 @@ class autoptimizeMain
                 }
 
                 // And disable Jetpack's site accelerator if JS or CSS opt. are active.
-                if ( class_exists( 'Jetpack' ) && apply_filters( 'autoptimize_filter_main_disable_jetpack_cdn', true ) && ( $conf->get( 'autoptimize_js' ) || $conf->get( 'autoptimize_css' ) ) ) {
-                    add_filter( 'jetpack_force_disable_site_accelerator', '__return_true' );
+                if ( class_exists( 'Jetpack' ) && apply_filters( 'autoptimize_filter_main_disable_jetpack_cdn', true ) && ( $conf->get( 'autoptimize_js' ) || $conf->get( 'autoptimize_css' ) || autoptimizeImages::imgopt_active() ) ) {
+                    add_filter( 'jetpack_force_disable_site_accelerator', '__return_true' ); // this does not seemt to work any more?
+                    if ( true === autoptimizeImages::imgopt_active() ) {
+                        // only disable photon if AO is optimizing images.
+                        add_filter( 'jetpack_photon_skip_for_url', '__return_true' );
+                    }
                 }
 
                 // Add "no cache found" notice.
@@ -214,6 +218,7 @@ class autoptimizeMain
 
             // And show the imgopt notice.
             add_action( 'admin_notices', 'autoptimizeMain::notice_plug_imgopt' );
+            add_action( 'admin_notices', 'autoptimizeMain::notice_imgopt_issue' );
         }
     }
 
@@ -223,6 +228,7 @@ class autoptimizeMain
         if ( autoptimizeConfig::is_admin_and_not_ajax() ) {
             new autoptimizePartners();
             new autoptimizeExitSurvey();
+            new autoptimizeProTab();
         }
     }
 
@@ -254,10 +260,12 @@ class autoptimizeMain
 
     public function maybe_run_ao_compat()
     {
+        $conf = autoptimizeConfig::instance();
+
         // Condtionally loads the compatibility-class to ensure more out-of-the-box compatibility with big players.
         $_run_compat = true;
 
-        if ( autoptimizeOptionWrapper::get_option( 'autoptimize_installed_before_compatibility', false ) ) {
+        if ( 'on' === $conf->get( 'autoptimize_installed_before_compatibility' ) ) {
             // If AO was already running before Compatibility logic was added, don't run compat by default
             // because it can be assumed everything works and we want to avoid (perf) regressions that
             // could occur due to compatibility code.
@@ -427,6 +435,12 @@ class autoptimizeMain
             if ( function_exists( 'is_customize_preview' ) && is_customize_preview() ) {
                 $is_customize_preview = is_customize_preview();
             }
+            
+            // explicitly disable when is_login exists and is true but don't use it direclty because older versions of WordPress don't have that yet.
+            $is_login = false;
+            if ( function_exists( 'is_login' ) && true === is_login() ) {
+                $is_login = true;
+            }
 
             /**
              * We only buffer the frontend requests (and then only if not a feed
@@ -435,7 +449,7 @@ class autoptimizeMain
              * while the main query hasn't been ran yet. Thats why we use
              * AUTOPTIMIZE_INIT_EARLIER in tests.
              */
-            $do_buffering = ( ! is_admin() && ! is_feed() && ! is_embed() && ! $ao_noptimize && ! $is_customize_preview );
+            $do_buffering = ( ! is_admin() && ! is_feed() && ! is_embed() && ! $is_login && ! $is_customize_preview && ! $ao_noptimize );
         }
 
         return $do_buffering;
@@ -742,7 +756,7 @@ class autoptimizeMain
     public static function notice_installed()
     {
         echo '<div class="updated"><p>';
-        printf( __( 'Thank you for installing and activating Autoptimize. Please configure it under %1$sSettings -> Autoptimize%2$s to start improving your site\'s performance.', 'autoptimize' ), '<a href="options-general.php?page=autoptimize">', '</a>' );
+        printf( __( 'Thank you for installing and activating Autoptimize. Your site is being optimized immediately, please test the frontend to ensure everything still works as expected. If needed you can change JavaScript or CSS optimization settings under %1$sSettings -> Autoptimize%2$s .', 'autoptimize' ), '<a href="options-general.php?page=autoptimize">', '</a>' );
         echo '</p></div>';
     }
 
@@ -756,7 +770,7 @@ class autoptimizeMain
     public static function notice_plug_imgopt()
     {
         // Translators: the URL added points to the Autopmize Extra settings.
-        $_ao_imgopt_plug_notice      = sprintf( __( 'Did you know Autoptimize that Autoptimize offers on-the-fly image optimization (with support for WebP and AVIF) and CDN via ShortPixel? Check out the %1$sAutoptimize Image settings%2$s to enable this option.', 'autoptimize' ), '<a href="options-general.php?page=autoptimize_imgopt">', '</a>' );
+        $_ao_imgopt_plug_notice      = sprintf( __( 'Did you know that Autoptimize offers on-the-fly image optimization (with support for WebP and AVIF) and CDN via ShortPixel? Check out the %1$sAutoptimize Image settings%2$s to enable this option.', 'autoptimize' ), '<a href="options-general.php?page=autoptimize_imgopt">', '</a>' );
         $_ao_imgopt_plug_notice      = apply_filters( 'autoptimize_filter_main_imgopt_plug_notice', $_ao_imgopt_plug_notice );
         $_ao_imgopt_launch_ok        = autoptimizeImages::launch_ok_wrapper();
         $_ao_imgopt_plug_dismissible = 'ao-img-opt-plug-123';
@@ -769,6 +783,29 @@ class autoptimizeMain
             echo '</p></div>';
         }
     }
+
+    public static function notice_imgopt_issue()
+    {
+        // Translators: the URL added points to the Autopmize Extra settings.
+        $_ao_imgopt_issue_notice      = sprintf( __( 'Shortpixel reports it cannot always reach your site, which might mean some images are not optimized. You can %1$sread more about why this happens and how you can fix that problem here%2$s.', 'autoptimize' ), '<a href="https://shortpixel.com/knowledge-base/article/469-i-received-an-e-mail-that-says-some-of-my-images-are-not-accessible-what-should-i-do#fullarticle" target="_blank">', '</a>' );
+        $_ao_imgopt_issue_notice      = apply_filters( 'autoptimize_filter_main_imgopt_issue_notice', $_ao_imgopt_issue_notice );
+        $_ao_imgopt_issue_dismissible = 'ao-img-opt-issue-14';
+        $_ao_imgopt_active            = autoptimizeImages::imgopt_active();
+        $_ao_imgopt_status            = autoptimizeOptionWrapper::get_option( 'autoptimize_imgopt_provider_stat', '' );
+
+        if ( is_array( $_ao_imgopt_status ) && array_key_exists( 'TemporaryRedirectOrigin', $_ao_imgopt_status ) && ( $_ao_imgopt_status['TemporaryRedirectOrigin'] === "true" || $_ao_imgopt_status['TemporaryRedirectOrigin'] === true ) ) {
+            $_ao_imgopt_status_redirect_warning = true;            
+        } else {
+            $_ao_imgopt_status_redirect_warning = false;
+        }
+
+        if ( current_user_can( 'manage_options' ) && $_ao_imgopt_active && $_ao_imgopt_status_redirect_warning && '' !== $_ao_imgopt_issue_notice && PAnD::is_admin_notice_active( $_ao_imgopt_issue_dismissible ) ) {
+            echo '<div class="notice notice-info is-dismissible" data-dismissible="' . $_ao_imgopt_issue_dismissible . '"><p>';
+            echo $_ao_imgopt_issue_notice;
+            echo '</p></div>';
+        }
+    }
+
 
     public static function notice_nopagecache()
     {

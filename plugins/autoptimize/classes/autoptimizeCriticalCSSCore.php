@@ -15,6 +15,13 @@ class autoptimizeCriticalCSSCore {
      * @var array
      */
     protected $_types = null;
+    
+    /**
+     * Critical CSS object.
+     *
+     * @var object
+     */
+    protected $criticalcss;
 
     public function __construct() {
         $this->criticalcss = autoptimize()->criticalcss();
@@ -100,6 +107,9 @@ class autoptimizeCriticalCSSCore {
                                 }
                                 return apply_filters( 'autoptimize_filter_ccss_core_ccss', $_ccss_contents . $additional );
                             } else {
+                                if ( $debug ) {
+                                    $this->criticalcss->log( 'Path based rule with value "none" found.', 3 );
+                                }
                                 $no_ccss = 'none';
                             }
                         }
@@ -123,6 +133,9 @@ class autoptimizeCriticalCSSCore {
                                 }
                                 return apply_filters( 'autoptimize_filter_ccss_core_ccss', $_ccss_contents . $additional );
                             } else {
+                                if ( $debug ) {
+                                    $this->criticalcss->log( 'Conditional rule for is_front_page with value "none" found.', 3 );
+                                }
                                 $no_ccss = 'none';
                             }
                         } elseif ( ( $this->criticalcss->is_api_active() || $this->criticalcss->is_rule_manual( $rule ) ) && strpos( $type, 'custom_post_' ) === 0 && ! $is_front_page ) {
@@ -133,6 +146,9 @@ class autoptimizeCriticalCSSCore {
                                     }
                                     return apply_filters( 'autoptimize_filter_ccss_core_ccss', $_ccss_contents . $additional );
                                 } else {
+                                    if ( $debug ) {
+                                        $this->criticalcss->log( 'Conditional rule custom_post with value "none" found.', 3 );
+                                    }
                                     $no_ccss = 'none';
                                 }
                             }
@@ -144,6 +160,9 @@ class autoptimizeCriticalCSSCore {
                                     }
                                     return apply_filters( 'autoptimize_filter_ccss_core_ccss', $_ccss_contents . $additional );
                                 } else {
+                                    if ( $debug ) {
+                                        $this->criticalcss->log( 'Conditional rule for template with value "none" found.', 3 );
+                                    }
                                     $no_ccss = 'none';
                                 }
                             }
@@ -158,6 +177,9 @@ class autoptimizeCriticalCSSCore {
                                     }
                                     return apply_filters( 'autoptimize_filter_ccss_core_ccss', $_ccss_contents . $additional );
                                 } else {
+                                    if ( $debug ) {
+                                        $this->criticalcss->log( 'Conditional rule for ' . $type . ' with value "none" found.', 3 );
+                                    }
                                     $no_ccss = 'none';
                                 }
                             }
@@ -170,8 +192,14 @@ class autoptimizeCriticalCSSCore {
         // Finally, inline the default CriticalCSS if any or else the entire CSS for the page
         // This also applies to logged in users if the option to add CCSS for logged in users has been disabled.
         if ( ! empty( $inlined ) && 'none' !== $no_ccss ) {
+            if ( $debug ) {
+                $this->criticalcss->log( 'Using default "above the fold" CSS.', 3 );
+            }
             return apply_filters( 'autoptimize_filter_ccss_core_ccss', $inlined . $additional );
         } else {
+            if ( $debug ) {
+                $this->criticalcss->log( 'No matching CCSS found, switching to inlining full CSS.', 3 );
+            }
             add_filter( 'autoptimize_filter_css_inline', '__return_true' );
             return;
         }

@@ -101,7 +101,7 @@ class autoptimizeExtra
         add_filter( 'tiny_mce_plugins', array( $this, 'filter_disable_emojis_tinymce' ) );
 
         // Removes emoji dns-preftech.
-        add_filter( 'wp_resource_hints', array( $this, 'filter_remove_emoji_dns_prefetch' ), 10, 2 );
+        add_filter( 'emoji_svg_url', '__return_false' );
     }
 
     public function filter_disable_emojis_tinymce( $plugins )
@@ -205,13 +205,6 @@ class autoptimizeExtra
         }
     }
 
-    public function filter_remove_emoji_dns_prefetch( $urls, $relation_type )
-    {
-        $emoji_svg_url = apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/' );
-
-        return $this->filter_remove_dns_prefetch( $urls, $relation_type, $emoji_svg_url );
-    }
-
     public function filter_remove_gfonts_dnsprefetch( $urls, $relation_type )
     {
         return $this->filter_remove_dns_prefetch( $urls, $relation_type, 'fonts.googleapis.com' );
@@ -311,7 +304,7 @@ class autoptimizeExtra
                 } else {
                     $rel_string = 'rel="stylesheet"';
                 }
-                $fonts_markup = '<link ' . $rel_string . ' id="ao_optimized_gfonts" href="https://fonts.googleapis.com/css?family=' . $fonts_string . '" />';
+                $fonts_markup = '<link ' . $rel_string . ' id="ao_optimized_gfonts" href="https://fonts.googleapis.com/css?family=' . $fonts_string . '">';
             }
         } elseif ( '4' === $options['autoptimize_extra_radio_field_4'] ) {
             // Aggregate & load async (webfont.js impl.)!
@@ -490,6 +483,15 @@ class autoptimizeExtra
                 function() {
                     wp_dequeue_style( 'wp-block-library' );
                     wp_dequeue_style( 'wp-block-library-theme' );
+                }
+            );
+        }
+
+        if ( true === apply_filters( 'autoptimize_filter_extra_remove_woocommerce_block_css', true ) ) {
+            add_action(
+                'wp_enqueue_scripts',
+                function() {
+                    wp_dequeue_style( 'wc-blocks-style' );
                 }
             );
         }
