@@ -1,14 +1,14 @@
 === Smush - Optimize, Compress and Lazy Load Images ===
 Plugin Name: Smush - Lazy Load Images, Optimize & Compress Images
-Version: 3.14.2
+Version: 3.15.1
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV, alexdunae
-Tags: image optimization, optimize images, compress images, lazy load, resize images, convert webp, optimize, images, convert, webp, compress, optimization, lossless
+Tags: optimize images, convert webp, webp, image optimization, compress images, lazy load, resize images, image optimizer, image compressor, performance, reduce image size
 Requires at least: 5.3
-Tested up to: 6.3
-Stable tag: 3.14.2
-Requires PHP: 5.6
+Tested up to: 6.4
+Stable tag: 3.15.1
+Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
 Compress images & optimize images with built-in lossless compression, lazy load, WebP conversion, and resize detection to make your site load amazingly fast.
@@ -17,50 +17,50 @@ Compress images & optimize images with built-in lossless compression, lazy load,
 
 ### The #1 Image Optimization Plugin for WordPress ###
 
-[Smush](https://wpmudev.com/project/wp-smush-pro/) is the leading image optimization plugin - optimize, resize, and compress images, as well as converting images to WebP format for faster loading web pages.
+[Smush](https://wpmudev.com/project/wp-smush-pro/) is the leading image optimization plugin - optimize, resize, and compress images, as well as converting images to WebP format for faster loading web pages. 
 
-Brought to you by the WPMU DEV team - founded in 2007 and trusted by web professionals from freelancer to agency worldwide ever since.
+Brought to you by the WPMU DEV team - founded in 2007 and trusted by web professionals from freelancer to agency worldwide ever since. 
 
-Whether you spell it 'optimise' or 'optimize' - with Smush’s image optimizer you can compress images and serve images in next-gen formats (convert to WebP), all without introducing a visible drop in quality.
+Whether you spell it 'optimise' or 'optimize' - with Smush’s image optimizer you can compress images and serve images in next-gen formats (convert to WebP), all without introducing a visible drop in quality. 
 
 [youtube https://www.youtube.com/watch?v=Z1kTcyLFE2g&feature=youtu.be]
 
 ### Award-Winning Image Optimizer ###
 
-Smush has been benchmarked and tested number one for speed and quality. Beyond that, it's also the [award-winning](https://wpmudev.com/blog/smush-wins-plugin-madness-champion-back-to-back/), back-to-back proven crowd-favorite WordPress image optimizer trusted by over 1M+ worldwide to:
+Smush has been benchmarked and tested number one for speed and quality. Beyond that, it's also the [award-winning](https://wpmudev.com/blog/smush-wins-plugin-madness-champion-back-to-back/), back-to-back proven crowd-favorite WordPress image optimizer trusted by over 1M+ worldwide to: 
 
 - Optimize images
 - Compress images
 - Lazy load images
 - Resize images
-- Convert to WebP
+- Convert to WebP 
 - And more...
 
 ### Why Use Smush To Optimize Images (The Smush Difference) ###
 
 Smush was built from the ground up to make it easy for WordPress users to optimize images, activate lazy loading, compress media files, and more - whether they’re just getting started, or a seasoned pro who's developed thousands of websites.
 
-Improve website performance (along with Google PageSpeed Insights scores) with compressed and optimized images and lazy loading - all while actually delivering a better user experience because the rollout of Core Web Vitals has proven one thing: performance is about far more than *just* scoring well on performance testing tools. Visitor experience matters.
+Improve website performance (along with Google PageSpeed Insights scores) with compressed and optimized images and lazy loading - all while actually delivering a better user experience because the rollout of Core Web Vitals has proven one thing: performance is about far more than *just* scoring well on performance testing tools. Visitor experience matters. 
 
-Discover the features that set Smush apart from other image optimization plugins:
+Discover the features that set Smush apart from other image optimization plugins:  
 
 - **Lossless compression (Basic Smush)** - Strip unused data and compress images without affecting image quality.
-- **Lossy compression (Super Smush)** - Optimize images up to 2x more than lossless compression with our cutting-edge, multi-pass lossy image compression.
-- **Ultra Smush (Pro Only)** - Take performance to the next level with 5x image compressing power! Your images are as light, fast, and high quality as possible.
+- **Lossy compression (Super Smush)** - Optimize images up to 2x more than lossless compression with our cutting-edge, multi-pass lossy image compression. 
+- **Ultra Smush (Pro Only)** - Take performance to the next level with 5x image compressing power! Your images are as light, fast, and high quality as possible. 
 - **Built-In Lazy Loading** - Lazy load images to defer loading of offscreen images with the flip of a switch.
-- **Convert to WebP (Pro Only)** - Convert and automatically serve images in the next-gen WebP format.
-- **Bulk Smush** - Bulk optimize and compress images with one click.
-- **Background Optimization (Pro Only)** - Smush's powerful image optimization features will continue to run in the background even when the plugin is closed.
-- **Resize Images** - Set a max width and height, and large images will scale down as they are being optimized.
-- **Incorrect Image Size Detection** - Quickly locate images that are slowing down your site.
-- **Directory Smush** - Optimize images even if they aren't in the default WordPress media library.
-- **Automated Optimization** - Asynchronously auto-smush your attachments for super fast compression on upload.
+- **Convert to WebP (Pro Only)** - Convert and automatically serve images in the next-gen WebP format. 
+- **Bulk Smush** - Bulk optimize and compress images with one click. 
+- **Background Optimization (Pro Only)** - Smush's powerful image optimization features will continue to run in the background even when the plugin is closed. 
+- **Resize Images** - Set a max width and height, and large images will scale down as they are being optimized. 
+- **Incorrect Image Size Detection** - Quickly locate images that are slowing down your site. 
+- **Directory Smush** - Optimize images even if they aren't in the default WordPress media library. 
+- **Automated Optimization** - Asynchronously auto-smush your attachments for super fast compression on upload. 
 - **No Monthly Limits** - Optimize all of your images (up to 5 MB in size) free forever (no daily, monthly, or annual limits).
-- **Gutenberg Block Integration** - View image compression information directly in image blocks.
-- **Multisite Compatible** - Flexible global and subsite settings for multisite installations.
-- **Optimize All Media Files, Not Just Images** - Smush supports optimization for PNG, JPEG, and GIF files.
-- **No Performance Impact On Your Server** - Image optimization is not run on your website's server to prevent wasting server resources (that you pay for) and is instead run using the fast, reliable WPMU DEV Smush API.
-- **Configs** - Set your preferred Smush settings, save them as a config, and instantly upload to any other site.
+- **Gutenberg Block Integration** - View image compression information directly in image blocks. 
+- **Multisite Compatible** - Flexible global and subsite settings for multisite installations. 
+- **Optimize All Media Files, Not Just Images** - Smush supports optimization for PNG, JPEG, and GIF files. 
+- **No Performance Impact On Your Server** - Image optimization is not run on your website's server to prevent wasting server resources (that you pay for) and is instead run using the fast, reliable WPMU DEV Smush API. 
+- **Configs** - Set your preferred Smush settings, save them as a config, and instantly upload to any other site. 
 - And many, many, more!
 
 
@@ -78,17 +78,17 @@ With Smush, you can take advantage of next-gen image formats by converting all o
 
 **WebP lossless images are 26% smaller in size compared to PNGs. WebP lossy images are 25-34% smaller than comparable JPG images**. More information can be found in [this Google developers article](https://developers.google.com/speed/webp).
 
-**The best part:** Smush's Convert WebP feature makes this incredibly easy to set up with the ability to host all images locally (not requiring the use of a CDN). Our Convert WebP feature includes automatically replacing PNG, JPEG, and GIF images on your website's frontend to serve WebP images - with the necessary fallbacks for browsers that don't support WebP yet.
+**The best part:** Smush's Convert WebP feature makes this incredibly easy to set up with the ability to host all images locally (not requiring the use of a CDN). Our Convert WebP feature includes automatically replacing PNG, JPEG, and GIF images on your website's frontend to serve WebP images - with the necessary fallbacks for browsers that don't support WebP yet. 
 
 Learn more: [How To Convert Images to WebP In WordPress](https://wpmudev.com/blog/serve-images-next-gen-formats-webp)
 
-Note: Yes, Smush supports WebP conversion for all image formats - GIF to WebP, JPEG to WebP, and - of course - PNG to WebP.
+Note: Yes, Smush supports WebP conversion for all image formats - GIF to WebP, JPEG to WebP, and - of course - PNG to WebP. 
 
-With the best image optimization plugin for WordPress - you can finally stop worrying about the performance impact of using the images you want on your website.
+With the best image optimization plugin for WordPress - you can finally stop worrying about the performance impact of using the images you want on your website. 
 
 ### Compress Images While Preserving Image Quality
 
-Image compression plugins don't have to destroy images with a visible, 30% loss in quality. Smush strips hidden information from your images (that can often be bulky), and reduces image file sizes without introducing a visible impact on appearance.
+Image compression plugins don't have to destroy images with a visible, 30% loss in quality. Smush strips hidden information from your images (that can often be bulky), and reduces image file sizes without introducing a visible impact on appearance. 
 
 [youtube https://www.youtube.com/watch?v=RZJGq4zwf1A]
 
@@ -125,7 +125,7 @@ Smush includes built-in lazy loading. If your page has a bunch of images below t
 ### Save time with Smush Configs ###
 Configs allow you to save your preferred Smush configuration settings and apply them to your other sites in a few clicks. You can create unlimited configs.
 
-= Here's What Our Users Are Saying =
+= Here's What Our Users Are Saying = 
 
 ★★★★★
 > “I had no idea that my page load time was being dragged down by the images. The plugin nearly halved the time it took.” - [karlcw](http://profiles.wordpress.org/karlcw)
@@ -158,7 +158,7 @@ The faster your site loads, the more Google, Bing, Yahoo, and other search engin
 
 Smush can take care of all your image compression needs... all for free!
 
-However, if you’d like fast CDN image delivery, WebP conversion, automatic image resizing, the ability to optimize (or optimise) images up to 32MB, bulk smush optimization for all your images in just one-click, auto-convert PNG to JPEG, the ability to make a copy of your full-sized images (to restore them at any point), you can always take the next step with [WP Smush Pro](https://wpmudev.com/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wp_smush_pro#trial). And get even more with her whole team of WordPress optimization hero friends (security, SEO, performance, support, and maintenance automation) - trusted by thousands of agencies and freelancers offering site maintenance services.
+However, if you’d like fast CDN image delivery, WebP conversion, automatic image resizing, the ability to optimize (or optimise) images up to 256MB, bulk smush optimization for all your images in just one-click, auto-convert PNG to JPEG, the ability to make a copy of your full-sized images (to restore them at any point), you can always take the next step with [WP Smush Pro](https://wpmudev.com/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wp_smush_pro#trial). And get even more with her whole team of WordPress optimization hero friends (security, SEO, performance, support, and maintenance automation) - trusted by thousands of agencies and freelancers offering site maintenance services.
 
 ### Privacy
 
@@ -202,7 +202,7 @@ Yes! EXIF data stores camera settings, focal length, date, time, and location in
 
 = I just ran Bulk Smush and some of my images didn't get compressed. Why would this happen? =
 
-First, check to see if you're receiving any server errors. If your images seem to be processing correctly, check the file size of the images being skipped. Images over 5mb will not be processed by the free version of Smush. To compress images up to 32mb, get [Smush Pro](https://wpmudev.com/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wp_smush_pro#trial).
+First, check to see if you're receiving any server errors. If your images seem to be processing correctly, check the file size of the images being skipped. Images over 5mb will not be processed by the free version of Smush. To compress images up to 256mb, get [Smush Pro](https://wpmudev.com/project/wp-smush-pro/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=smush-readme&utm_content=wp_smush_pro#trial).
 
 = I activated Smush, but I don’t see any difference in image quality. How am I supposed to know if Smush is working? =
 
@@ -227,10 +227,17 @@ It depends what side of the pond you live on... but whether you say optimize, op
 
 1. Getting started couldn't be easier with the Smush setup wizard.
 2. Automatically detect and bulk optimize images.
-3. Watch as Smush optimizes your media library to reduce page load and save you storage space.
+3. Watch as Smush optimizes your media library to reduce page load and save you storage space. 
 4. Automatically resize images on upload.
 
 == Changelog ==
+
+= 3.15.1 ( 2023-11-15 ) =
+- Improvement: Code stability improvements
+
+= 3.15.0 ( 2023-10-11 ) =
+- Improvement: Image size limit increased for pro version
+- Fix: Query running frequently and causing performance issues on some sites
 
 = 3.14.2 ( 2023-08-23 ) =
 - Fix: Media library scanner not identifying some MariaDB versions correctly
