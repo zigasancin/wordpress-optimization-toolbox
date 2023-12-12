@@ -138,7 +138,7 @@ class SyncManager extends \ElasticPress\SyncManager {
 	 * Filter to allow cron and WP CLI processes to index/delete documents
 	 *
 	 * @param  boolean $bypass The current filtered value
-	 * @return boolean Boolean indicating if permission checking should be bypased or not
+	 * @return boolean Boolean indicating if permission checking should be bypassed or not
 	 * @since  3.6.0
 	 */
 	public function filter_bypass_permission_checks_for_machines( $bypass ) {
@@ -303,9 +303,7 @@ class SyncManager extends \ElasticPress\SyncManager {
 		 * Make sure to remove this post from the sync queue in case an shutdown happens
 		 * before a redirect when a redirect has already been triggered.
 		 */
-		if ( isset( $this->sync_queue[ $post_id ] ) ) {
-			unset( $this->sync_queue[ $post_id ] );
-		}
+		$this->remove_from_queue( $post_id );
 	}
 
 	/**
@@ -838,7 +836,7 @@ class SyncManager extends \ElasticPress\SyncManager {
 		}
 
 		// If we have more items to update than the number set as Content Items per Index Cycle, skip it to avoid a timeout.
-		$single_ids_queued   = array_unique( array_keys( $this->sync_queue ) );
+		$single_ids_queued   = array_unique( array_keys( $this->get_sync_queue() ) );
 		$has_too_many_queued = count( $single_ids_queued ) > IndexHelper::factory()->get_index_default_per_page();
 
 		return ! $has_too_many_queued;
