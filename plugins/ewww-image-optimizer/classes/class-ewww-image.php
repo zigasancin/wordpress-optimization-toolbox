@@ -78,6 +78,13 @@ class EWWW_Image {
 	public $level = 0;
 
 	/**
+	 * Whether an image is connected to a new image upload or not.
+	 *
+	 * @var bool $new
+	 */
+	public $new = false;
+
+	/**
 	 * The optimized size of the image.
 	 *
 	 * @var int $opt_size
@@ -106,6 +113,43 @@ class EWWW_Image {
 	public $resize = null;
 
 	/**
+	 * An error code from when this image was last attempted to be resized.
+	 *
+	 * 0 = No error, 1 = WP_Image_Editor error, 2 = scaled version was too large,
+	 * 3 = some other error, like an unwritable or missing image.
+	 *
+	 * @var int $resize_error
+	 */
+	public $resize_error = 0;
+
+	/**
+	 * The height setting (in pixels) when this image was last attempted to be resized.
+	 *
+	 * This is not the actual height of the image, but used to check if the settings
+	 * have changed since the last attempt.
+	 *
+	 * @var int $resized_height
+	 */
+	public $resized_height = 0;
+
+	/**
+	 * The width setting (in pixels) when this image was last attempted to be resized.
+	 *
+	 * This is not the actual width of the image, but used to check if the settings
+	 * have changed since the last attempt.
+	 *
+	 * @var int $resized_width
+	 */
+	public $resized_width = 0;
+
+	/**
+	 * A retrieval ID for an API-optimized image that hasn't yet completed.
+	 *
+	 * @var string $retrieve
+	 */
+	public $retrieve = '';
+
+	/**
 	 * The suffix added to the converted file, to be applied also to thumbs.
 	 *
 	 * @var string $suffix
@@ -127,6 +171,7 @@ class EWWW_Image {
 	 *
 	 * @param int    $id Optional. The attachment ID to search for.
 	 * @param string $gallery Optional. The type of image to work with. Accepts 'media', 'nextgen', 'flag', or 'nextcellent'.
+	 *                        Otherwise, $id is the direct record id in ewwwio_images.
 	 * @param string $path Optional. The absolute path to an image.
 	 */
 	public function __construct( $id = 0, $gallery = '', $path = '' ) {
@@ -186,6 +231,8 @@ class EWWW_Image {
 				// Pull a random image.
 				$new_image = $ewwwdb->get_row( "SELECT * FROM $ewwwdb->ewwwio_images WHERE pending = 1 LIMIT 1", ARRAY_A );
 			}
+		} elseif ( $id ) {
+			$new_image = $ewwwdb->get_row( $ewwwdb->prepare( "SELECT * FROM $ewwwdb->ewwwio_images WHERE id = %d LIMIT 1", $id ), ARRAY_A );
 		} else {
 			ewwwio_debug_message( 'no id or path, just pulling next image' );
 			$new_image = $ewwwdb->get_row( "SELECT * FROM $ewwwdb->ewwwio_images WHERE pending = 1 LIMIT 1", ARRAY_A );
@@ -207,6 +254,7 @@ class EWWW_Image {
 		$this->converted     = ewww_image_optimizer_absolutize_path( $new_image['converted'] );
 		$this->gallery       = ( empty( $gallery ) || empty( $new_image['attachment_id'] ) ? $new_image['gallery'] : $gallery );
 		$this->backup        = $new_image['backup'];
+		$this->retrieve      = $new_image['retrieve'];
 		$this->level         = (int) $new_image['level'];
 		$this->record        = $new_image;
 	}
@@ -284,12 +332,8 @@ class EWWW_Image {
 		}
 		$sizes_queried = $ewwwdb->get_results( "SELECT * FROM $ewwwdb->ewwwio_images WHERE attachment_id = $this->attachment_id AND resize <> 'full' AND resize <> ''", ARRAY_A );
 		/* ewwwio_debug_message( 'found some images in the db: ' . count( $sizes_queried ) ); */
-		$sizes = array();
-		if ( 'ims_image' === get_post_type( $this->attachment_id ) ) {
-			$base_dir = trailingslashit( dirname( $this->file ) ) . '_resized/';
-		} else {
-			$base_dir = trailingslashit( dirname( $this->file ) );
-		}
+		$sizes    = array();
+		$base_dir = trailingslashit( dirname( $this->file ) );
 		ewwwio_debug_message( 'about to process db results' );
 		foreach ( $sizes_queried as $size_queried ) {
 			$size_queried['path'] = ewww_image_optimizer_absolutize_path( $size_queried['path'] );
@@ -722,7 +766,7 @@ class EWWW_Image {
 							$imagick->setImageAlphaChannel( 11 );
 						}
 						$imagick->setImageFormat( 'JPG' );
-						$imagick->setCompressionQuality( $quality );
+						$imagick->setImageCompressionQuality( $quality );
 						$imagick->writeImage( $newfile );
 					} catch ( Exception $imagick_error ) {
 						ewwwio_debug_message( $imagick_error->getMessage() );
@@ -1037,7 +1081,6 @@ class EWWW_Image {
 						'converted'     => ewww_image_optimizer_relativize_path( $path ),
 						'orig_size'     => ewww_image_optimizer_filesize( $new_path ),
 						'attachment_id' => $this->attachment_id,
-						'results'       => __( 'No savings', 'ewww-image-optimizer' ),
 						'updated'       => gmdate( 'Y-m-d H:i:s' ),
 						'updates'       => 0,
 					)
@@ -1050,7 +1093,6 @@ class EWWW_Image {
 			array(
 				'path'      => ewww_image_optimizer_relativize_path( $new_path ),
 				'converted' => ewww_image_optimizer_relativize_path( $path ),
-				'results'   => ewww_image_optimizer_image_results( $record['orig_size'], ewww_image_optimizer_filesize( $new_path ) ),
 				'updates'   => 0,
 				'trace'     => '',
 			),
@@ -1095,7 +1137,6 @@ class EWWW_Image {
 				'path'       => ewww_image_optimizer_relativize_path( $new_path ),
 				'converted'  => '',
 				'image_size' => 0,
-				'results'    => __( 'Original Restored', 'ewww-image-optimizer' ),
 				'updates'    => 0,
 				'trace'      => '',
 				'level'      => null,

@@ -369,11 +369,27 @@ function ewww_image_optimizer_aux_images_clear_all() {
  */
 function ewww_image_optimizer_reset_webp_clean() {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+	check_admin_referer( 'ewww-image-optimizer-tools' );
 	$permissions = apply_filters( 'ewww_image_optimizer_admin_permissions', '' );
 	if ( ! current_user_can( $permissions ) ) {
 		wp_die( esc_html__( 'Access denied.', 'ewww-image-optimizer' ) );
 	}
 	delete_option( 'ewww_image_optimizer_webp_clean_position' );
+	wp_safe_redirect( wp_get_referer() );
+	exit;
+}
+
+/**
+ * Reset the progress/position of the bulk restore routine.
+ */
+function ewww_image_optimizer_reset_bulk_restore() {
+	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
+	check_admin_referer( 'ewww-image-optimizer-tools' );
+	$permissions = apply_filters( 'ewww_image_optimizer_admin_permissions', '' );
+	if ( ! current_user_can( $permissions ) ) {
+		wp_die( esc_html__( 'Access denied.', 'ewww-image-optimizer' ) );
+	}
+	delete_option( 'ewww_image_optimizer_bulk_restore_position' );
 	wp_safe_redirect( wp_get_referer() );
 	exit;
 }
@@ -657,7 +673,7 @@ function ewww_image_optimizer_delete_webp_handler() {
 
 	$id = (int) $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT ID FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID LIMIT 1",
+			"SELECT ID FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID LIMIT 1",
 			(int) $position,
 			'%image%',
 			'%pdf%'
@@ -934,7 +950,7 @@ function ewww_image_optimizer_aux_meta_clean() {
 
 	$attachments = $wpdb->get_col(
 		$wpdb->prepare(
-			"SELECT ID FROM $wpdb->posts WHERE (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID ASC LIMIT %d,%d",
+			"SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID ASC LIMIT %d,%d",
 			'%image%',
 			'%pdf%',
 			$offset,
@@ -1053,6 +1069,42 @@ function ewww_image_optimizer_delete_pending() {
 }
 
 /**
+ * Remove an un-optimized image from the ewwwio_images table.
+ *
+ * If the image was previously optimized, then simply toggle the pending column.
+ *
+ * @param int $id The ID of the pending image in the db.
+ * @global object $wpdb
+ */
+function ewww_image_optimizer_delete_pending_image( $id ) {
+	global $wpdb;
+	$deleted = $wpdb->query( $wpdb->prepare( "DELETE from $wpdb->ewwwio_images WHERE id=%d AND pending=1 AND (image_size IS NULL OR image_size = 0)", $id ) );
+	if ( ! $deleted ) {
+		ewww_image_optimizer_toggle_pending_image( $id );
+	}
+}
+
+/**
+ * Toggle the pending flag for an image in the ewwwio_images table.
+ *
+ * @param int $id The ID of the pending image in the db.
+ * @global object $wpdb
+ */
+function ewww_image_optimizer_toggle_pending_image( $id ) {
+	global $wpdb;
+	$wpdb->update(
+		$wpdb->ewwwio_images,
+		array(
+			'pending'  => 0,
+			'retrieve' => '',
+		),
+		array(
+			'id' => $id,
+		)
+	);
+}
+
+/**
  * Retrieve the number images from the ewwwio_queue table.
  *
  * @since 4.6.0
@@ -1105,6 +1157,20 @@ function ewww_image_optimizer_get_unscanned_attachments( $gallery, $limit = 1000
 }
 
 /**
+ * Check to see if an attachment has any more sizes that are pending.
+ *
+ * @param int    $id The ID of the attachment/image.
+ * @param string $gallery The type of image to look for. Optional, default is 'media'.
+ * @return int The number of pending sizes in the database.
+ * @global object $wpdb
+ */
+function ewww_image_optimizer_attachment_has_pending_sizes( $id, $gallery = 'media' ) {
+	global $wpdb;
+	$id = (int) $id;
+	return $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM $wpdb->ewwwio_images WHERE attachment_id = %d AND gallery = %s AND pending = 1", $id, $gallery ) );
+}
+
+/**
  * Check to see if an image is in the queue.
  *
  * @param int    $id The ID of the attachment/image.
@@ -1134,7 +1200,7 @@ function ewww_image_optimizer_get_all_attachments() {
 	global $wpdb;
 	$attachments = $wpdb->get_col(
 		$wpdb->prepare(
-			"SELECT ID FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID DESC",
+			"SELECT ID FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID DESC",
 			(int) $start_id,
 			'%image%',
 			'%pdf%'
@@ -1166,7 +1232,7 @@ function ewww_image_optimizer_webp_attachment_count() {
 	global $wpdb;
 	$total_attachments = (int) $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT count(ID) FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE %s OR post_mime_type LIKE %s)",
+			"SELECT count(ID) FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND (post_mime_type LIKE %s OR post_mime_type LIKE %s)",
 			(int) $start_id,
 			'%image%',
 			'%pdf%'
@@ -1332,8 +1398,6 @@ function ewww_image_optimizer_image_scan( $dir, $started = 0 ) {
 	global $wpdb;
 	global $optimized_list;
 	global $ewww_scan;
-	global $ewww_force;
-	global $ewww_force_smart;
 	$images       = array();
 	$reset_images = array();
 	ewwwio_debug_message( "scanning folder for images: $dir" );
@@ -1481,13 +1545,13 @@ function ewww_image_optimizer_image_scan( $dir, $started = 0 ) {
 					continue;
 				}
 				$compression_level = ewww_image_optimizer_get_level( $mime );
-				if ( ! empty( $ewww_force_smart ) && ewww_image_optimizer_level_mismatch( $already_optimized['level'], $compression_level ) ) {
+				if ( ! empty( ewwwio()->force_smart ) && ewww_image_optimizer_level_mismatch( $already_optimized['level'], $compression_level ) ) {
 					$reset_images[] = (int) $already_optimized['id'];
 					ewwwio_debug_message( "smart re-opt found level mismatch for $path, db says " . $already_optimized['level'] . " vs. current $compression_level" );
 				} elseif ( $should_resize ) {
 					$reset_images[] = (int) $already_optimized['id'];
 					ewwwio_debug_message( "resize other existing found candidate for scaling: $path" );
-				} elseif ( (int) $already_optimized['image_size'] === $image_size && empty( $ewww_force ) ) {
+				} elseif ( (int) $already_optimized['image_size'] === $image_size && empty( ewwwio()->force ) ) {
 					ewwwio_debug_message( "match found for $path" );
 					continue;
 				} else {
