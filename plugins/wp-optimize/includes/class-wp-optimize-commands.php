@@ -492,6 +492,7 @@ class WP_Optimize_Commands {
 		$cache_result = WP_Optimize()->get_page_cache()->config->update($cache_settings);
 		$minify_result = WP_Optimize()->get_minify()->minify_commands->save_minify_settings($minify_settings);
 		$smush_result = WP_Optimize()->get_task_manager()->commands->update_smush_options($smush_settings);
+		$webp_result = WP_Optimize()->get_task_manager()->commands->update_webp_options($smush_settings);
 		$this->save_settings($database_settings);
 
 		if (is_wp_error($cache_result)) {
@@ -505,6 +506,10 @@ class WP_Optimize_Commands {
 
 		if (is_wp_error($smush_result)) {
 			$message .= $smush_result->get_error_message() . PHP_EOL;
+		}
+
+		if (is_wp_error($webp_result)) {
+			$message .= $webp_result->get_error_message() . PHP_EOL;
 		}
 
 		return array(

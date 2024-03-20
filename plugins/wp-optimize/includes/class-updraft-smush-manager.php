@@ -101,6 +101,12 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 				wp_unschedule_event($scheduled, 'wpo_smush_clear_backup_images');
 			}
 		}
+
+		// Schedule CRON job for deleting failed smush tasks
+		add_action('wpo_smush_clear_failed_tasks', array($this, 'clear_failed_tasks'));
+		if (!wp_next_scheduled('wpo_smush_clear_failed_tasks')) {
+			wp_schedule_event(time(), 'wpo_monthly', 'wpo_smush_clear_failed_tasks');
+		}
 	}
 
 	/**
@@ -735,6 +741,8 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 			'mark_all_images_uncompressed'	=> __('Do you really want to mark all the images as uncompressed?', 'wp-optimize') . ' ' . __('This action is irreversible.', 'wp-optimize'),
 			'restore_images_from_backup'	=> __('Do you want to restore the original images from the backup (where they exist?)', 'wp-optimize'),
 			'restore_all_compressed_images'	=> __('Do you really want to restore all the compressed images?', 'wp-optimize'),
+			'webp_conversion_tool_error' => __('No WebP conversion tools are available on your web-server.', 'wp-optimize'),
+			'webp_conversion_tool_how_to' => __('How to get the WebP conversion tools to work?', 'wp-optimize'),
 			'more' => __('More', 'wp-optimize'),
 			'less' => __('Less', 'wp-optimize'),
 			'converting_to_webp' => __('Converting image to WebP format, please wait', 'wp-optimize'),
@@ -1207,9 +1215,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 	 * @return string - file path
 	 */
 	public function get_logfile_path() {
-		$upload_dir = wp_upload_dir();
-		$upload_base = $upload_dir['basedir'];
-		return $upload_base . '/smush-' . substr(md5(wp_salt()), 0, 20) . '.log';
+		return WP_Optimize_Utils::get_log_file_path('smush');
 	}
 
 	/**
@@ -1604,6 +1610,19 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 		$the_original_file = trailingslashit($uploads_dir['basedir'])  . $the_original_file;
 		if ('' != $the_original_file && file_exists($the_original_file)) {
 			@unlink($the_original_file);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- suppress warning because of file permission issues
+		}
+	}
+
+	/**
+	 * Remove failed smush tasks from the wp_tm_tasks table
+	 */
+	public function clear_failed_tasks() {
+		$failed_tasks = $this->get_tasks('failed', 'smush');
+		if (empty($failed_tasks)) return;
+
+		foreach ($failed_tasks as $task) {
+			$task->delete_meta();
+			$task->delete();
 		}
 	}
 

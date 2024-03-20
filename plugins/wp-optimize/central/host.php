@@ -181,8 +181,10 @@ abstract class UpdraftCentral_Host {
 	 * @return array
 	 */
 	public function get_udrpc($indicator_name = 'migrator.updraftplus.com') {
-		if (!class_exists('UpdraftPlus_Remote_Communications')) include_once($this->get_host_dir().'/vendor/team-updraft/common-libs/src/updraft-rpc/class-udrpc.php');
-		$ud_rpc = new UpdraftPlus_Remote_Communications($indicator_name);
+		global $updraftplus;
+		$updraftplus->ensure_phpseclib();
+		if (!class_exists('UpdraftPlus_Remote_Communications_V2')) include_once($this->get_host_dir().'/vendor/team-updraft/common-libs/src/updraft-rpc/class-udrpc2.php');
+		$ud_rpc = new UpdraftPlus_Remote_Communications_V2($indicator_name);
 		$ud_rpc->set_can_generate(true);
 		return $ud_rpc;
 	}

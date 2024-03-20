@@ -217,9 +217,13 @@ class UpdraftCentral_Listener {
 			//
 			// This will give UpdraftCentral a proper way of disabling the backup feature
 			// for this site if the UpdraftPlus plugin is currently not installed or activated.
+			//
+			// In addition, we need to attached the host plugin who is handling the UpdraftCentral requests
+			global $updraftcentral_host_plugin;
 			$extra = apply_filters('updraftcentral_get_updraftplus_status', array(
 				'is_updraftplus_installed' => false,
-				'is_updraftplus_active' => false
+				'is_updraftplus_active' => false,
+				'host_plugin' => $updraftcentral_host_plugin->plugin_name,
 			));
 
 			$command_info = apply_filters('updraftcentral_get_command_info', false, $command);
