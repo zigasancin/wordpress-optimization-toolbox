@@ -5,7 +5,7 @@ Donate link: http://blog.futtta.be/2013/10/21/do-not-donate-to-me/
 Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 5.6
-Stable tag: 3.1.10
+Stable tag: 3.1.11
 
 Autoptimize speeds up your website by optimizing JS, CSS, images (incl. lazy-load), HTML and Google Fonts, asyncing JS, removing emoji cruft and more.
 
@@ -18,7 +18,7 @@ If you think performance indeed is important, you should at least consider one o
 > [Autoptimize Pro is a premium Power-Up](https://misc.optimizingmatters.com/partners/?from=partnertab&partner=aopro), adding image optimization, CDN, page caching, automatic critical CSS rules and extra “booster” options, all in one handy subscription to [make your site even faster!](https://misc.optimizingmatters.com/partners/?from=partnertab&partner=aopro)!
 
 > <strong>Premium Support</strong><br>
-> We provide great [Premium Support and Web Performance Optimization services](https://misc.optimizingmatters.com/partners/?from=partnertab&partner=autoptimizepro), check out our offering on [https://accelera.site/](https://misc.optimizingmatters.com/partners/?from=partnertab&partner=autoptimizepro)!
+> We provide great [Premium Support and Web Performance Optimization services](https://misc.optimizingmatters.com/partners/?from=partnertab&partner=autoptimizepro) with Accelera, check out our offering on [https://accelerawp.com/](https://misc.optimizingmatters.com/partners/?from=partnertab&partner=autoptimizepro)!
 
 (Speed-surfing image under creative commons [by LL Twistiti](https://www.flickr.com/photos/twistiti/818552808/))
 
@@ -318,6 +318,10 @@ You can get help on the [wordpress.org support forum](http://wordpress.org/suppo
 Just [fork Autoptimize on Github](https://github.com/futtta/autoptimize) and code away!
 
 == Changelog ==
+
+= 3.1.11 =
+* code quality improvements see the [GitHub commit log](https://github.com/futtta/autoptimize/commits/beta).
+* some other minor changes/ improvements/ filters, see the [GitHub commit log](https://github.com/futtta/autoptimize/commits/beta).
 
 = 3.1.10 =
 * improvement: with "don't aggregate but defer" and "also defer inline JS" on, also defer JS that had the async flag to avoid the (previously) asynced JS from executing before the inline JS has ran.

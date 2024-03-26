@@ -21,9 +21,9 @@ class autoptimizeProTab
     {
         // alternate between tab title every 5 minutes.
         if ( floor( date( "i", time() ) / 5 ) %2 === 0 ) {
-            $this->rnd_title = __( 'Page Cache', 'autoptimize' );
+            $this->rnd_title = esc_html__( 'Page Cache', 'autoptimize' );
         } else {
-            $this->rnd_title = __( 'Pro Boosters', 'autoptimize' );
+            $this->rnd_title = esc_html__( 'Pro Boosters', 'autoptimize' );
         }
 
         $this->run();
@@ -87,7 +87,7 @@ class autoptimizeProTab
     </style>
     <script>document.title = "Autoptimize: <?php echo $this->rnd_title ?> " + document.title;</script>
     <div class="wrap">
-        <h1><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? _e( 'Autoptimize Pro Settings', 'autoptimize' ) : _e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
+        <h1><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? esc_html_e( 'Autoptimize Pro Settings', 'autoptimize' ) : esc_html_e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
         <?php
             echo autoptimizeConfig::ao_admin_tabs();
             $aopro_explanation = '';
@@ -111,7 +111,8 @@ class autoptimizeProTab
 
             // placeholder text in case HTML is empty.
             if ( empty( $aopro_explanation ) ) {
-                $aopro_explanation = __( '<h2>Add more power to Autoptimize with Pro!</h2><p>As a user of Autoptimize you understand <strong>the importance of having a fast site</strong>. Autoptimize Pro is a premium Power-Up extending AO by adding <strong>image optimization, CDN, automatic critical CSS rules generation and page caching but also providing extra “booster” options</strong>, all in one handy subscription to make your site even faster!</p><p>Have a look at <a href="https://autoptimize.com/pro/" target="_blank">https://autoptimize.com/pro/</a> for more info or <a href="https://checkout.freemius.com/mode/dialog/plugin/10906/plan/18508/?currency=auto" target="_blank">click here to buy now</a>!</p>', 'autoptimize' );
+                // translators: h2, strong but also 2 links.
+                $aopro_explanation = sprintf( esc_html__( '%1$sAdd more power to Autoptimize with Pro!%2$s%3$sAs a user of Autoptimize you understand %5$sthe importance of having a fast site%6$s. Autoptimize Pro is a premium Power-Up extending AO by adding %5$simage optimization, CDN, automatic critical CSS rules generation and page caching but also providing extra “booster” options%6$s, all in one handy subscription to make your site even faster!%4$s%3$sHave a look at %7$shttps://autoptimize.com/pro/%8$s for more info or %9$sclick here to buy now%10$s!%4$s', 'autoptimize' ), '<h2>', '</h2>', '<p>', '</p>', '<strong>', '</strong>', '<a href="https://autoptimize.com/pro/" target="_blank">', '</a>', '<a href="https://checkout.freemius.com/mode/dialog/plugin/10906/plan/18508/?currency=auto" target="_blank">', '</a>' );
             } else {
                 // we were able to fetch the explenation, so add the JS to show correct language.
                 $aopro_explanation .= "<script>jQuery('.ao_i18n').hide();d=document;lang=d.getElementsByTagName('html')[0].getAttribute('lang').substring(0,2);if(d.getElementById(lang)!= null){jQuery('#'+lang).show();}else{jQuery('#default').show();}</script>";
