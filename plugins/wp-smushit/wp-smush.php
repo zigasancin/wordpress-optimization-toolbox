@@ -13,7 +13,8 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://wpmudev.com/">WPMU DEV</a> WordPress Smush API.
- * Version:           3.15.1
+ * Version:           3.15.5
+ * Requires PHP:      7.4
  * Author:            WPMU DEV
  * Author URI:        https://profiles.wordpress.org/wpmudev/
  * License:           GPLv2
@@ -48,11 +49,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '3.15.1' );
+	define( 'WP_SMUSH_VERSION', '3.15.5' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
-	define( 'WP_SHARED_UI_VERSION', 'sui-2-12-10' );
+	define( 'WP_SHARED_UI_VERSION', 'sui-2-12-23' );
 }
 if ( ! defined( 'WP_SMUSH_BASENAME' ) ) {
 	define( 'WP_SMUSH_BASENAME', plugin_basename( __FILE__ ) );
@@ -91,6 +92,49 @@ if ( ! defined( 'WP_SMUSH_BACKGROUND' ) ) {
 	define( 'WP_SMUSH_BACKGROUND', true );
 }
 
+if ( ! defined( 'WP_SMUSH_MIN_PHP_VERSION' ) ) {
+	define( 'WP_SMUSH_MIN_PHP_VERSION', '7.4' );
+}
+
+if ( version_compare( PHP_VERSION, WP_SMUSH_MIN_PHP_VERSION, '<' ) ) {
+	if ( ! function_exists( 'wp_smush_php_deprecated_notice' ) ) {
+		function  wp_smush_php_deprecated_notice() {
+			// Only show the deprecated notice for admin and only network side for MU site.
+			if ( ! current_user_can( 'manage_options' ) || ( is_multisite() && ! is_network_admin() ) ) {
+				return;
+			}
+			?>
+			<div class="notice notice-error is-dismissible">
+				<p>
+					<?php
+						printf(
+							wp_kses( /* translators: %1$s - Requires PHP version - %2$s URL to an article about our hosting benefits. */
+								__( 'Your site is running an outdated version of PHP that is no longer supported or receiving security updates. Please update PHP to at least version %1$s at your hosting provider in order to activate Smush, or consider switching to <a href="%2$s" target="_blank" rel="noopener noreferrer">WPMU DEV Hosting</a>.', 'wp-smushit' ),
+								array(
+									'a'      => array(
+										'href'   => array(),
+										'target' => array(),
+										'rel'    => array(),
+									),
+									'strong' => array(),
+								)
+							),
+							esc_html( WP_SMUSH_MIN_PHP_VERSION ),
+							'https://wpmudev.com/hosting/'
+						);
+					?>
+				</p>
+			</div>
+			<?php
+
+			// Deactivate plugin.
+			deactivate_plugins( WP_SMUSH_BASENAME, false, is_network_admin() );
+		}
+	}
+	add_action( 'admin_notices', 'wp_smush_php_deprecated_notice' );
+	add_action( 'network_admin_notices', 'wp_smush_php_deprecated_notice' );
+	return;
+}
 /**
  * To support Smushing on staging sites like SiteGround staging where staging site urls are different
  * but redirects to main site url. Remove the protocols and www, and get the domain name.*

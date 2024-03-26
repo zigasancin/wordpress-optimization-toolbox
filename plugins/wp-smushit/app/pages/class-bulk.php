@@ -37,7 +37,6 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 			Core::check_bulk_limit( true );
 			add_action( 'smush_setting_column_tag', array( $this, 'add_pro_tag' ) );
 		}
-		add_action( 'smush_setting_column_tag', array( $this, 'add_lossy_new_tag' ) );
 
 		add_action( 'smush_setting_column_right_inside', array( $this, 'settings_desc' ), 10, 2 );
 		add_action( 'smush_setting_column_right_inside', array( $this, 'auto_smush' ), 15, 2 );
@@ -532,13 +531,12 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 				'utm_campaign' => 'smush_bulk_smush_progress_BO',
 			)
 		);
-
-		$upsell_cdn_url 		=  $this->get_utm_link(
+		$upsell_cdn_url 		= $this->get_utm_link(
 			array(
 				'utm_campaign' => 'smush_bulksmush_cdn',
 			)
 		);
-		
+
 		$bg_optimization               = WP_Smush::get_instance()->core()->mod->bg_optimization;
 		$background_processing_enabled = $bg_optimization->should_use_background();
 		$background_in_processing      = $background_processing_enabled && $bg_optimization->is_in_processing();
@@ -549,7 +547,14 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 			$upsell_text = sprintf(
 				/* translators: %s: Upsell Link */
 				__( 'Want to exit the page? Background Optimization is available with Smush Pro, allowing you to leave while Smush continues to work its magic. %s', 'wp-smushit' ),
-				'<a class="smush-upsell-link" target="_blank" href="' . esc_url( $in_progress_upsell_url ) . '"><strong>' . esc_html__( 'Upgrade to Pro and get 60% off', 'wp-smushit' ) . '</strong></a>'
+				'<a class="smush-upsell-link" target="_blank" href="' . esc_url( $in_progress_upsell_url ) . '">
+					<strong>' .
+					sprintf(
+						/* translators: %s: Discount */
+						esc_html__( 'Upgrade to Pro and get %s off', 'wp-smushit' ),
+						WP_Smush::get_instance()->admin()->get_plugin_discount()
+					) . '</strong>
+				</a>'
 			);
 		}
 		$in_processing_notice = sprintf(
@@ -569,11 +574,11 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 				'remaining_count'                 => (int) $array_utils->get_array_value( $global_stats, 'remaining_count' ),
 				'total_count'                     => (int) $array_utils->get_array_value( $global_stats, 'count_total' ),
 				'bulk_upgrade_url'                => $bulk_upgrade_url,
-				'upsell_cdn_url'				  => $upsell_cdn_url,
+				'upsell_cdn_url'                  => $upsell_cdn_url,
 				'background_processing_enabled'   => $background_processing_enabled,
 				'background_in_processing'        => $background_in_processing,
 				'background_in_processing_notice' => $bg_optimization->get_in_process_notice(),
-				'in_processing_notice' 			  => $in_processing_notice,
+				'in_processing_notice'            => $in_processing_notice,
 			)
 		);
 	}
@@ -612,25 +617,6 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 				'backup_exists'    => $backup_exists,
 			)
 		);
-	}
-
-	/**
-	 * Show a "new" tag near the super-smush option for free users.
-	 *
-	 * @since 3.10.0
-	 * @since 3.14.0 Showing the new tag for all users after adding Ultra level.
-	 *
-	 * @param string $name Option name.
-	 *
-	 * @return void
-	 */
-	public function add_lossy_new_tag( $name ) {
-		if ( 'lossy' !== $name ) {
-			return;
-		}
-		?>
-		<span class="sui-tag smush-sui-tag-new"><?php esc_html_e( 'New', 'wp-smushit' ); ?></span>
-		<?php
 	}
 
 	public function add_pro_tag( $name ) {
