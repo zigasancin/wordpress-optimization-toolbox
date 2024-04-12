@@ -597,7 +597,7 @@
             align-items: center;
             width: 90%;
             margin: auto;
-						> span > {
+						> span  {
 							height: 65px;
 							p { margin: 0;}
 						}
@@ -613,6 +613,13 @@
 					 	margin: 30px auto;
 						padding-left: 90px;
 
+				 }
+				 .loading.overlimit // overlimit warning
+				 {
+					  display: none;
+						padding: 6px 8px;
+						border: 1px solid #dba617;
+						color: #646970;
 				 }
       }
 

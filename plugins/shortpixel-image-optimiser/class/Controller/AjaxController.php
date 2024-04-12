@@ -133,8 +133,8 @@ class AjaxController
           $json = new \stdClass;
           $json->$type = new \stdClass;
           $json->$type->itemView = $result;
-					$json->$type->is_optimizable = $item->isProcessable();
-					$json->$type->is_restorable = $item->isRestorable();
+					$json->$type->is_optimizable = (false !== $item) ? $item->isProcessable() : false;
+					$json->$type->is_restorable = (false !== $item)  ? $item->isRestorable() : false;
           $json->$type->id = $id;
           $json->$type->results = null;
           $json->$type->is_error = false;
@@ -147,6 +147,7 @@ class AjaxController
     {
         $this->checkNonce('processing');
         $this->checkProcessorKey();
+
 
 				ErrorController::start(); // Capture fatal errors for us.
 
@@ -459,7 +460,8 @@ class AjaxController
 			 $actionType = isset($_POST['actionType']) ? intval($_POST['actionType']) : null;
 
        $mediaItem = $this->getMediaItem($id, $type);
-
+			 $args = array();
+			 
 				if ($actionType == ImageModel::ACTION_SMARTCROP || $actionType == ImageModel::ACTION_SMARTCROPLESS)
 				{
 						$args = array('smartcrop' => $actionType);
@@ -1000,6 +1002,7 @@ class AjaxController
           $json->processorKey = $pKey;
 
         wp_send_json($json);
+
         exit();
     }
 

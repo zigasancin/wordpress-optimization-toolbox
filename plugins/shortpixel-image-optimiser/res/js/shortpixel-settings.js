@@ -31,7 +31,8 @@ var ShortPixelSettings = function()
 			});
 
 			// Events for the New Exclusion dialog
-			var newExclusionInputs = document.querySelectorAll('.new-exclusion select, .new-exclusion input, .new-exclusion button', 'input[name="removeExclusion"]', 'button[name="cancelEditExclusion"]');
+			var newExclusionInputs = document.querySelectorAll('.new-exclusion select, .new-exclusion input, .new-exclusion button, input[name="removeExclusion"], button[name="cancelEditExclusion"]');
+
 			newExclusionInputs.forEach(function (input)
 			{
 					switch (input.name)
@@ -51,7 +52,7 @@ var ShortPixelSettings = function()
 			});
 
 			 var exclusionItems = document.querySelectorAll('.exclude-list li');
-			exclusionItems.forEach(function (input) {
+			 exclusionItems.forEach(function (input) {
 				  if (false == input.classList.contains('no-exclusion-item'))
 					{
 						input.addEventListener('click', self.NewExclusionShowInterfaceEvent.bind(self));
@@ -60,7 +61,13 @@ var ShortPixelSettings = function()
 
 
 			var addNewExclusionButton = document.querySelector('.new-exclusion-button');
-			addNewExclusionButton.addEventListener('click', this.NewExclusionShowInterfaceEvent.bind(this));
+			if (addNewExclusionButton !== null)
+			{
+				addNewExclusionButton.addEventListener('click', this.NewExclusionShowInterfaceEvent.bind(this));
+			}
+
+			var size_select = new ShiftSelect('input[name^="excludeSizes[]"]');
+
 	}
 
 	this.DoToggleAction = function(event)
@@ -257,7 +264,7 @@ this.NewExclusionShowInterfaceEvent = function (event)
 	 var updateButton = document.querySelector('.new-exclusion .button-actions button[name="updateExclusion"]');
 
 
-	 if (event.target.name == 'addExclusion')
+	 if (event.target.name == 'addNewExclusion')
 	 {
 		  var mode = 'new';
 			var id = 'new';

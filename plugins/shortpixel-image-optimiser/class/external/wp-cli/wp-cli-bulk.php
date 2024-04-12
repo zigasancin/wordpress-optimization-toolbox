@@ -46,12 +46,13 @@ class SpioBulk extends SpioCommandBase
 
 			 $queue = $this->getQueueArgument($assoc);
 
+       \WP_CLI::Line('Start signal for Bulk Processing given.');
+
 			 foreach($queue as $qname)
 			 {
 			 	$result = $bulkControl->startBulk($qname);
 			 }
 
-			 \WP_CLI::Line('Start signal for Bulk Processing given.');
 
 			// $this->run($args, $assoc);
 	     //$controller = new OptimizeController();
@@ -143,7 +144,7 @@ class SpioBulk extends SpioCommandBase
 							}
 
 				}
-        
+
 				\WP_CLI::log('Automatic Bulk ended');
 		}
 
@@ -242,7 +243,9 @@ class SpioBulk extends SpioCommandBase
 
 				foreach($queues as $queue_name)
 				{
+           Log::addTemp('FinishBulk - ' . $queue_name);
 					 $bulkControl->finishBulk($queue_name);
+
 				}
 
 		}

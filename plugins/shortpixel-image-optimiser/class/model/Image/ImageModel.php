@@ -38,6 +38,7 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
 
     const FILE_STATUS_PREVENT = -10;
     const FILE_STATUS_MARKED_DONE = -11;
+    const FILE_STATUS_BAD_METADATA = -12;
 
     // Compression Option Consts
     const COMPRESSION_LOSSLESS = 0;
@@ -808,7 +809,7 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
           }
           return true;
 
-        Log::addWarn('Could not find images of this item in tempfile -' . $this->id . '(' . $this->getFullPath() . ')', array_keys($downloadResults) );
+        Log::addWarn('Could not find images of this item in tempfile -' . $this->id . '(' . $this->getFullPath() . ')', array_keys($results) );
 
 				$response = array(
 					 'is_error' => true,
@@ -832,7 +833,15 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
 
              $webpResult = $this->handleWebp($tmpFile);
               if ($webpResult === false)
-                Log::addWarn('Webps available, but copy failed ' . $downloadResults['webp']['file']->getFullPath());
+              {
+                if (is_object($tmpFile))
+                {
+                  Log::addWarn('Webps available, but copy failed ' . $tmpFile->getFullPath());
+                }
+                else {
+                  Log::addWarn('Webps available, but tmpFile not object / failed ', $downloadResult['webp']);
+                }
+              }
               else
                 $this->setMeta('webp', $webpResult->getFileName());
           }
@@ -1020,6 +1029,7 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
     {
         if ($this->hasBackup())
         {
+
            $file = $this->getBackupFile();
            $file->delete();
         }
@@ -1027,12 +1037,15 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
         $webp = $this->getWebp();
         $avif = $this->getAvif();
 
-        if ($webp !== false && $webp->exists())
+        if ($webp !== false && $webp->exists() && $this->getExtension() !== 'webp')
+        {
           $webp->delete();
+        }
 
-        if ($avif !== false && $avif->exists())
+        if ($avif !== false && $avif->exists() && $this->getExtension() !== 'avif')
+        {
            $avif->delete();
-
+        }
     }
 
 
@@ -1058,7 +1071,7 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
 
             $result = false;
 
-            if (! $target->exists()) // don't copy if exists.
+            if (false === $target->exists()) // don't copy if exists.
             {
 							$result = $tempFile->copy($target);
 						}
@@ -1073,7 +1086,6 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
 							return false;
 						}
             return $target;
-      //   }
 
          return false;
     }
@@ -1476,6 +1488,8 @@ abstract class ImageModel extends \ShortPixel\Model\File\FileModel
 		 $result['image'] = $this->isProcessable(true);
 		 $result['webp']  = ($imageOk && $this->isProcessableFileType('webp')) ? true : false;
 		 $result['avif']  = ($imageOk && $this->isProcessableFileType('avif')) ? true : false;
+
+     $result = apply_filters('shortpixel/image/imageparamlist', $result, $this->id, $this);
 		 return $result;
 
 		}

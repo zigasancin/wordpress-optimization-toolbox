@@ -267,7 +267,6 @@ class OptimizeController
 					 $api->dumpMediaItem($item);
 				}
 
-
         if ($result)
         {
            $json->status = 1;
@@ -277,13 +276,10 @@ class OptimizeController
         }
         else
         {
-
 					 $json->result->message = ResponseController::formatItem($mediaItem->get('id'));
-
            $json->result->is_done = true;
            $json->fileStatus = ImageModel::FILE_STATUS_ERROR;
            $json->result->is_error = true;
-
         }
 
         return $json;
@@ -330,13 +326,8 @@ class OptimizeController
     /** Returns the state of the queue so the startup JS can decide if something is going on and what.  **/
     public function getStartupData()
     {
-
         $mediaQ = $this->getQueue('media');
         $customQ = $this->getQueue('custom');
-
-				// Clean queue upon starting a load.
-				//$mediaQ->cleanQueue();
-			  //$customQ->cleanQueue();
 
         $data = new \stdClass;
         $data->media = new \stdClass;
@@ -364,7 +355,6 @@ class OptimizeController
     */
     public function processQueue($queueTypes = array())
     {
-
         $keyControl = ApiKeyController::getInstance();
 
         if ($keyControl->keyIsVerified() === false)
@@ -406,13 +396,17 @@ class OptimizeController
 
         // @todo Here prevent bulk from running when running flag is off
         // @todo Here prevent a runTick is the queue is empty and done already ( reliably )
+        // @todo If once queue exited because of mediaItem, don't run the other one but abort
         $results = new \stdClass;
         if ( in_array('media', $queueTypes))
         {
           $mediaQ = $this->getQueue('media');
           $results->media = $this->runTick($mediaQ); // run once on mediaQ
+
+          $overlimit = (Queue::RESULT_PREPARING_OVERLIMIT === $results->media->qstatus) ? true : false;
+
         }
-        if ( in_array('custom', $queueTypes))
+        if (false === $overlimit && in_array('custom', $queueTypes))
         {
           $customQ = $this->getQueue('custom');
           $results->custom = $this->runTick($customQ);
@@ -440,7 +434,7 @@ class OptimizeController
 			*/
       foreach($items as $mainIndex => $item)
       {
-               //continue; // conversion done one way or another, item will be need requeuing, because new urls / flag.
+             //continue; // conversion done one way or another, item will be need requeuing, because new urls / flag.
 						$item = $this->sendToProcessing($item, $Q);
 
             $item = $this->handleAPIResult($item, $Q);
@@ -472,10 +466,15 @@ class OptimizeController
       $options = (property_exists($item, 'options')) ? $item->options : array();
 
 			$imageObj = $fs->getImage($item->item_id, $qtype);
+
 			if (is_object($imageObj))
 			{
 				ResponseController::addData($item->item_id, 'fileName', $imageObj->getFileName());
 			}
+      else {
+         // If image doesn't produce object, bail out.
+         return $this->handleAPIResult($item, $q);
+      }
 
 			// If item is blocked (handling success), skip over. This can happen if internet is slow or process too fast.
 			if (property_exists($item, 'blocked') && true === $item->blocked )
@@ -1008,19 +1007,30 @@ class OptimizeController
 		* @integration Regenerate Thumbnails Advanced
 		* Called via Hook when plugins like RegenerateThumbnailsAdvanced Update an thumbnail
 		*/
-    public function thumbnailsChangedHook($postId, $originalMeta, $regeneratedSizes = array(), $bulk = false)
+    public function thumbnailsChangedHookLegacy($postId, $originalMeta, $regeneratedSizes = array(), $bulk = false)
+    {
+        $this->thumbnailsChangedHook($postId, $regeneratedSizes);
+    }
+
+    public function thumbnailsChangedHook($post_id, $sizes)
     {
        $fs = \wpSPIO()->filesystem();
        $settings = \wpSPIO()->settings();
-       $imageObj = $fs->getMediaImage($postId);
+       $imageObj = $fs->getMediaImage($post_id);
 
-			 Log::addDebug('Regenerated Thumbnails reported', $regeneratedSizes);
+       if (! is_object($imageObj))
+       {
+          Log::addWarn('Thumbnails changed on something thats not object', $imageObj);
+          return false;
+       }
 
-       if (count($regeneratedSizes) == 0)
+			 Log::addDebug('Regenerated Thumbnails reported', $sizes);
+
+       if (count($sizes) == 0)
         return;
 
         $metaUpdated = false;
-        foreach($regeneratedSizes as $sizeName => $size) {
+        foreach($sizes as $sizeName => $size) {
             if(isset($size['file']))
             {
 
@@ -1028,10 +1038,14 @@ class OptimizeController
                 $thumb = $imageObj->getThumbnail($sizeName);
                 if ($thumb !== false)
                 {
+
                   $thumb->setMeta('status', ImageModel::FILE_STATUS_UNPROCESSED);
-									$thumb->onDelete();
+									$thumb->onDelete(true);
 
                   $metaUpdated = true;
+                }
+                else {
+                  Log::addDebug('Could not find thumbnail to update: ', $thumb);
                 }
             }
         }
@@ -1098,6 +1112,9 @@ class OptimizeController
         {
           case Queue::RESULT_PREPARING:
             $json->message = sprintf(__('Prepared %s items', 'shortpixel-image-optimiser'), $result->items );
+          break;
+          case Queue::RESULT_PREPARING_OVERLIMIT:
+            $json->message = sprintf(__('Prepared %s items - but went over limit! ', 'shortpixel-image-optimiser'), $result->items );
           break;
           case Queue::RESULT_PREPARING_DONE:
             $json->message = sprintf(__('Preparing is done, queue has %s items ', 'shortpixel-image-optimiser'), $result->stats->total );
