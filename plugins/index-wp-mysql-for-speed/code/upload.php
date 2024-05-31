@@ -17,10 +17,16 @@ function imfsGetAllStats( $db ) {
   }
   $wordpress = ImfsQueries::getWpDescription( $db );
   $dbms      = imfs_get_dbms_stats( $globalStatus, $variables );
+  $sizes     = $db->getSizes();
+  foreach ( $sizes as $k => $v ) {
+    $dbms[ $k ] = (int) $v;
+  }
+
 
   /** @noinspection PhpUnnecessaryLocalVariableInspection */
-  $stats = [
+  $stats = array(
     'id'           => '', /* id should be first */
+    'version'      => index_wp_mysql_for_speed_VERSION_NUM,
     'wordpress'    => $wordpress,
     'dbms'         => $dbms,
     'mysqlVer'     => $db->semver,
@@ -29,7 +35,9 @@ function imfsGetAllStats( $db ) {
     //'timings'      => $db->timings,
     'globalStatus' => $globalStatus,
     'variables'    => $variables,
-  ];
+    'version'      => index_wp_mysql_for_speed_VERSION_NUM,
+    't'            => (int) time(),
+  );
 
   return $stats;
 }
@@ -53,6 +61,7 @@ function imfs_get_dbms_stats( $globalStatus, $variables ) {
   }
 
   $dbms['msNullQueryTime'] = imfsGetNullQueryTime();
+
   return $dbms;
 }
 
@@ -62,20 +71,25 @@ function imfsGetNullQueryTime() {
   global $wpdb;
   $startTime = imfsGetTime();
   $wpdb->get_var( ImfsQueries::tagQuery( 'SELECT 1' ) );
+
   return floatval( round( 1000 * ( imfsGetTime() - $startTime ), 3 ) );
 }
 
+/**
+ * Get the time in seconds for a minimum (SELECT 1) query
+ * @return float Time in seconds.
+ */
 function imfsGetTime() {
   try {
     $hasHrTime = function_exists( 'hrtime' );
-  } catch ( Exception $ex ) {
+  } catch( Exception $ex ) {
     $hasHrTime = false;
   }
 
   try {
     /** @noinspection PhpElementIsNotAvailableInCurrentPhpVersionInspection */
     return $hasHrTime ? hrtime( true ) * 0.000000001 : time();
-  } catch ( Exception $ex ) {
+  } catch( Exception $ex ) {
     return time();
   }
 }
@@ -96,10 +110,11 @@ function imfs_upload_monitor( $db, $idString, $name, $monitor ) {
   try {
     $monitor['id']        = $idString;
     $monitor['wordpress'] = $wordpress;
+    $monitor['mysqlVer']  = $db->semver;
     $monitor['dbms']      = $dbms;
     $monitor['alltables'] = $db->getTableStats();
     imfs_upload_post( (object) $monitor );
-  } catch ( Exception $e ) {
+  } catch( Exception $e ) {
     /* empty, intentionally. don't croak on uploading */
   }
 
@@ -112,7 +127,7 @@ function imfs_upload_stats( $db, $idString, $target = index_wp_mysql_for_speed_s
     $stats       = imfsGetAllStats( $db );
     $stats['id'] = $idString;
     imfs_upload_post( (object) $stats, $target );
-  } catch ( Exception $e ) {
+  } catch( Exception $e ) {
     /* empty, intentionally. don't croak on uploading */
   }
 

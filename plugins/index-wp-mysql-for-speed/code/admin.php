@@ -124,7 +124,8 @@ class ImfsPage extends Imfs_AdminPageFramework {
    */
   private function insertHelpTab( $monitor, $sHTML ) {
     $tabSlug = $monitor ? 'monitor' : $this->oProp->getCurrentTabSlug();
-    $helpUrl = index_wp_mysql_for_speed_help_site . $tabSlug;
+    $tabSlug = ctype_alnum ( $tabSlug ) ? $tabSlug : 'about';
+    $helpUrl = index_wp_mysql_for_speed_help_site .  $tabSlug;
     $help    = __( 'Help', 'index-wp-mysql-for-speed' );
     /** @noinspection HtmlUnknownTarget */
     $helpTag = '<a class="helpbutton nav-tab" target="_blank" href="%s/">%s</a>';
@@ -674,6 +675,26 @@ class ImfsPage extends Imfs_AdminPageFramework {
   }
 
   /**
+   * Database health information report.
+   */
+  private function showHealthInfo( $healthReport ) {
+    global $wp_version;
+    global $wp_db_version;
+    $this->addSettingFields(
+      [
+        'field_id' => 'health',
+        'title'    => __( 'Database Health', 'index-wp-mysql-for-speed' ),
+        'default'  => $healthReport,
+        'save'     => false,
+        'class'    => [
+          'fieldrow' => 'info',
+        ],
+      ]
+    );
+  }
+
+
+  /**
    * text field showing versions
    */
   private
@@ -911,6 +932,7 @@ class ImfsPage extends Imfs_AdminPageFramework {
     }
 
     $this->showIndexStatus( $this->db->getRekeying() );
+    $this->showHealthInfo( $this->db->getHealthReport() );
     $this->uploadMetadata();
     $this->showVersionInfo();
   }
