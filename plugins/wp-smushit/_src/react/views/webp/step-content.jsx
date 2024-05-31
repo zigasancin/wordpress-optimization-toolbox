@@ -71,6 +71,19 @@ export default ({
 		}
 
 		if (2 === currentStep) {
+			const switchDirectConversionMethod = ( e ) => {
+				e.preventDefault();
+				WP_Smush.WebP.switchMethod( 'direct_conversion' );
+			};
+
+			const suggestionMessage = sprintf(
+				/* translators: 1: Opening <button> tag, 2: Closing button, 3: Opening support link, 4: Closing the link */
+				__( 'Please try the %1$sDirect Conversion%2$s method if you don’t have server access, or %3$scontact support%4$s for further assistance.', 'wp-smushit' ),
+				'<button type="submit" style="text-decoration: none; color: #17A8E3; font-weight: 500; outline-color: transparent; outline-style: none; box-shadow: none;padding:0;margin:0;background:transparent;border:none;cursor:pointer;">',
+				'</button>',
+				'<a href="https://wpmudev.com/hub2/support/#get-support" target="_blank">',
+				'</a>'
+			);
 			return (
 				<div
 					role="alert"
@@ -90,6 +103,7 @@ export default ({
 										__html: rulesError,
 									}}
 								/>
+								<form onSubmit={ switchDirectConversionMethod }><p dangerouslySetInnerHTML={{ __html: suggestionMessage  }} /></form>
 							</div>
 						</div>
 					)}

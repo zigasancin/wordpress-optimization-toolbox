@@ -35,6 +35,15 @@
 	} );
 
 	/**
+	 * Local WebP page.
+	 */
+	$( 'form#smush-webp-form' ).on( 'submit', function( e ) {
+		e.preventDefault();
+		$( '#save-settings-button' ).addClass( 'sui-button-onload-text' );
+		saveSettings( $( this ).serialize(), 'webp' );
+	} );
+
+	/**
 	 * Integrations page.
 	 */
 	$( 'form#smush-integrations-form' ).on( 'submit', function( e ) {

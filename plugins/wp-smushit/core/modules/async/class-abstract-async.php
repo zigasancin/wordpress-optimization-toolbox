@@ -117,9 +117,13 @@ abstract class Abstract_Async {
 	 * @return mixed|void
 	 */
 	public function launch() {
-		$data = func_get_args();
+		$data   = func_get_args();
+		$result = isset( $data[0] ) ? $data[0] : null;
 		try {
 			$data = $this->prepare_data( $data );
+			if ( ! $this->should_run( $data ) ) {
+				return $result;
+			}
 		} catch ( Exception $e ) {
 			Helper::logger()->error( sprintf( 'Async Smush: Error in prepare_data: %s', $e->getMessage() ) );
 			return;
@@ -148,9 +152,11 @@ abstract class Abstract_Async {
 		}
 
 		// If we have image metadata return it.
-		if ( ! empty( $data['metadata'] ) ) {
-			return $data['metadata'];
-		}
+		return $result;
+	}
+
+	protected function should_run( $data ) {
+		return true;
 	}
 
 	/**

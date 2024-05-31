@@ -160,7 +160,7 @@ class Smush_Optimization extends Media_Item_Optimization {
 		$file_paths        = array_map( function ( $size ) {
 			return $size->get_file_path();
 		}, $this->get_sizes_to_smush() );
-		$responses         = $this->smusher->smush( $file_paths );
+		$responses         = $this->smusher->smush( $file_paths, ! $media_item->is_large() );
 		$success_responses = array_filter( $responses );
 		if ( count( $success_responses ) !== count( $responses ) ) {
 			return false;

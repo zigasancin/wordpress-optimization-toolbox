@@ -36,11 +36,12 @@ import { GlobalStats } from '../common/globalStats';
 
 		startScanThenBulkSmushOnComplete() {
 			this.runBulkSmushOnComplete = true;
-			return this.startScan( true );
+			this.startScan( true );
 		}
 
 		onStart() {
 			this.hideRecheckNotice();
+			this.hideFailedBulkSmushNotice();
 			this.disableRelatedButtons();
 			this.setRecheckImagesButtonOnLoad();
 			this.toggleBulkSmushBoxContent();
@@ -157,6 +158,8 @@ import { GlobalStats } from '../common/globalStats';
 			if ( ! recheckNotice ) {
 				return;
 			}
+
+			this.hideFailedBulkSmushNotice();
 			this.showAnElement( recheckNotice );
 			this.hideAnElement( recheckNotice.querySelector( '.wp-smush-recheck-images-notice-warning' ) );
 			this.showAnElement( recheckNotice.querySelector( '.wp-smush-recheck-images-notice-success' ) );
@@ -167,6 +170,8 @@ import { GlobalStats } from '../common/globalStats';
 			if ( ! recheckNotice ) {
 				return;
 			}
+
+			this.hideFailedBulkSmushNotice();
 			this.showAnElement( recheckNotice );
 			this.hideAnElement( recheckNotice.querySelector( '.wp-smush-recheck-images-notice-success' ) );
 			this.showAnElement( recheckNotice.querySelector( '.wp-smush-recheck-images-notice-warning' ) );
@@ -176,6 +181,10 @@ import { GlobalStats } from '../common/globalStats';
 			this.hideAnElement( $( '.wp-smush-recheck-images-notice-box' ) );
 		}
 
+		hideFailedBulkSmushNotice() {
+			this.hideAnElement( $( '#smush-box-inline-retry-bulk-smush-notice' ) );
+		}
+
 		showProgressErrorNoticeOnRecheckNotice() {
 			const recheckWarningElement = $( '.wp-smush-recheck-images-notice-box .wp-smush-recheck-images-notice-warning' );
 			if ( ! recheckWarningElement ) {
@@ -183,7 +192,6 @@ import { GlobalStats } from '../common/globalStats';
 			}
 			recheckWarningElement.classList.add( 'sui-notice-error' );
 			recheckWarningElement.classList.remove( 'sui-notice-warning' );
-			this.setInnerText( recheckWarningElement.querySelector( 'span' ), this.getErrorProgressMessage() );
 			this.showRecheckNoticeWarning();
 		}
 
@@ -296,24 +304,26 @@ import { GlobalStats } from '../common/globalStats';
 		//Check scan is running.
 		if ( window.wp_smushit_data.media_library_scan?.in_processing ) {
 			mediaLibScanner.onStart().showProgressBar().autoSyncStatus();
+		}
+	};
+
+	const maybeAutoStartMediaLibraryScanOnRedirect = () => {
+		if ( ! recheckImagesBtn || ! window.location.search.includes( 'smush-action=start-scan-media' ) ) {
 			return;
 		}
 
-		if ( window.location.search.includes( 'smush-action=start-scan-media' ) ) {
-			recheckImagesBtn.click();
-			const removeScanActionFromURLAddress = () => {
-				const cleanedURL = window.location.href.replace( '&smush-action=start-scan-media', '' );
-				window.history.pushState( null, null, cleanedURL );
-			};
-			removeScanActionFromURLAddress();
-		}
+		recheckImagesBtn.click();
+		const removeScanActionFromURLAddress = () => {
+			const cleanedURL = window.location.href.replace( '&smush-action=start-scan-media', '' );
+			window.history.pushState( null, null, cleanedURL );
+		};
+		removeScanActionFromURLAddress();
 	};
-	registerScanMediaLibraryEvent();
 
 	/**
 	 * Recheck Images Notice events.
 	 */
-	const registerEventsRelatedRecheckImagesNotice = () => {
+	const registerEventsRelatedInlineNoticeOnBulkSmushPage = () => {
 		const recheckImagesNotice = $( '.wp-smush-recheck-images-notice-box' );
 		if ( ! recheckImagesNotice || ! recheckImagesBtn ) {
 			return;
@@ -325,10 +335,12 @@ import { GlobalStats } from '../common/globalStats';
 				recheckImagesBtn.click();
 			};
 
-			if ( window.wp_smushit_data.media_library_scan?.is_dead ) {
-				mediaLibScanner.showProgressErrorNoticeOnRecheckNotice();
-			} else if( window.wp_smushit_data.is_outdated ) {
-				mediaLibScanner.showRecheckNoticeWarning();
+			if ( ! window.location.search.includes( 'smush-action=start-scan-media' ) ) {
+				if ( window.wp_smushit_data.media_library_scan?.is_dead ) {
+					mediaLibScanner.showProgressErrorNoticeOnRecheckNotice();
+				} else if( window.wp_smushit_data.is_outdated && ! window.wp_smushit_data?.bo_stats?.is_dead ) {
+					mediaLibScanner.showRecheckNoticeWarning();
+				}
 			}
 		}
 		const triggerBulkSmush = recheckImagesNotice.querySelector( '.wp-smush-trigger-bulk-smush' );
@@ -355,13 +367,17 @@ import { GlobalStats } from '../common/globalStats';
 
 			mediaLibScanner.setRequiredScanForBulkSmushButton();
 
+			const bulkSmushFailedNotice = document.querySelector( '#smush-box-inline-retry-bulk-smush-notice' );
+			const isShowingBulkSmushFailedNotice = bulkSmushFailedNotice && ! bulkSmushFailedNotice.classList.contains( 'sui-hidden' );
+			if ( isShowingBulkSmushFailedNotice ) {
+				return;
+			}
+
 			recheckImagesNotice.classList.remove( 'sui-hidden' );
 			recheckImagesNotice.querySelector( '.wp-smush-recheck-images-notice-success' ).classList.add( 'sui-hidden' );
 			recheckImagesNotice.querySelector( '.wp-smush-recheck-images-notice-warning' ).classList.remove( 'sui-hidden' );
 		} );
 	};
-
-	registerEventsRelatedRecheckImagesNotice();
 
 	// Scan and Bulk Smush.
 	const registerScanAndBulkSmushEvent = () => {
@@ -381,5 +397,44 @@ import { GlobalStats } from '../common/globalStats';
 
 		bulkSmushButton.addEventListener( 'click', handleScanAndBulkSmush );
 	};
+
+	const autoStartBulkSmushOnRedirect = () => {
+		if ( ! bulkSmushButton || ! window.location.search.includes( 'smush-action=start-bulk-' ) ) {
+			return;
+		}
+
+		bulkSmushButton.click();
+
+		const removeSmushActionFromURLAddress = () => {
+			const cleanedURL = window.location.href.replace( /&smush-action=start-bulk-(smush|webp-conversion)/i, '' );
+			window.history.pushState( null, null, cleanedURL );
+		};
+		removeSmushActionFromURLAddress();
+	};
+
+	const registerRetryProcessFromLoopbackErrorModal = () => {
+		const loopbackErrorModal = document.getElementById( 'smush-loopback-error-dialog' );
+		if ( ! loopbackErrorModal ) {
+			return;
+		}
+
+		const retryButton = loopbackErrorModal.querySelector( '.smush-retry-process-button' );
+		if ( retryButton ) {
+			retryButton.addEventListener( 'click', () => {
+				const processType = loopbackErrorModal.dataset?.processType || 'scan';
+				if ( 'scan' === processType ) {
+					recheckImagesBtn.click();
+				} else {
+					bulkSmushButton.click();
+				}
+			} );
+		}
+	};
+
+	registerScanMediaLibraryEvent();
 	registerScanAndBulkSmushEvent();
+	registerEventsRelatedInlineNoticeOnBulkSmushPage();
+	maybeAutoStartMediaLibraryScanOnRedirect();
+	autoStartBulkSmushOnRedirect();
+	registerRetryProcessFromLoopbackErrorModal();
 }() );

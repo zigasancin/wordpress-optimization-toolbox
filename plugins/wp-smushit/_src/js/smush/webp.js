@@ -6,6 +6,7 @@
  *
  * @since 3.8.0
  */
+import Fetcher from '../utils/fetcher';
 
 (function () {
 	'use strict';
@@ -16,6 +17,7 @@
 		recheckStatusButton: document.getElementById('smush-webp-recheck'),
 		recheckStatusLink: document.getElementById('smush-webp-recheck-link'),
 		showWizardButton: document.getElementById('smush-webp-toggle-wizard'),
+		switchWebpMethod: document.getElementById('smush-switch-webp-method' ),
 
 		init() {
 			this.maybeShowDeleteAllSuccessNotice();
@@ -64,6 +66,27 @@
 					this.toggleWizard
 				);
 			}
+
+			if ( this.switchWebpMethod ) {
+				this.switchWebpMethod.addEventListener(
+					'click',
+					( e ) => {
+						e.preventDefault();
+						e.target.classList.add('wp-smush-link-in-progress');
+						this.switchMethod( this.switchWebpMethod.dataset.method );
+					}
+				);
+			}
+		},
+
+		switchMethod( newMethod ) {
+			Fetcher.webp.switchMethod( newMethod ).then( ( res ) => {
+				if ( ! res?.success ) {
+					WP_Smush.helpers.showNotice( res );
+					return;
+				}
+				window.location.reload();
+			} );
 		},
 
 		/**
@@ -221,7 +244,7 @@
 					window.wp_smush_msgs.webp_nonce,
 				true
 			);
-			xhr.onload = () => location.reload();
+			xhr.onload = () => location.href = window.wp_smush_msgs.localWebpURL;
 			xhr.send();
 		},
 

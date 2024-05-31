@@ -1,5 +1,6 @@
 /* global WP_Smush */
 /* global ajaxurl */
+import tracker from "../utils/tracker";
 
 /**
  * Modals JavaScript code.
@@ -336,6 +337,12 @@
 			xhr.onload = () => {
 				window.SUI.closeModal();
 				button.classList.remove( 'wp-smush-link-in-progress' );
+
+				const actionName = redirectUrl ? 'cta_clicked' : 'closed';
+				tracker.track( 'update_modal_displayed', {
+					Action: actionName,
+				} );
+
 				if ( 200 === xhr.status ) {
 					if ( redirectUrl ) {
 						window.location.href = redirectUrl;

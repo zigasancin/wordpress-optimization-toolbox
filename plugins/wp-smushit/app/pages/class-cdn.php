@@ -9,6 +9,7 @@ namespace Smush\App\Pages;
 
 use Smush\App\Abstract_Summary_Page;
 use Smush\App\Interface_Page;
+use Smush\Core\CDN\CDN_Helper;
 use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -78,7 +79,7 @@ class CDN extends Abstract_Summary_Page implements Interface_Page {
 	 * @since 3.0
 	 */
 	public function cdn_meta_box() {
-		$status = WP_Smush::get_instance()->core()->mod->cdn->status();
+		$status = CDN_Helper::get_instance()->get_cdn_status_string();
 
 		// Available values: warning (inactive), success (active) or error (expired).
 		$status_msg = array(

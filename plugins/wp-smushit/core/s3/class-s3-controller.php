@@ -114,13 +114,13 @@ class S3_Controller extends Controller {
 	}
 
 	public function disable_s3_update_attachment( $data ) {
-		add_action( 'as3cf_pre_update_attachment_metadata', array( $this, 'return_true' ) );
+		add_filter( 'as3cf_pre_update_attachment_metadata', array( $this, 'return_true' ) );
 
 		return $data;
 	}
 
 	public function enable_back_s3_update_attachment() {
-		remove_action( 'as3cf_pre_update_attachment_metadata', array( $this, 'return_true' ) );
+		remove_filter( 'as3cf_pre_update_attachment_metadata', array( $this, 'return_true' ) );
 	}
 
 	public function return_true() {
@@ -222,32 +222,6 @@ class S3_Controller extends Controller {
 		wp_update_attachment_metadata( $attachment_id, $media_item->get_wp_metadata() );
 	}
 
-	public function delete_files_from_remote( $attachment_id ) {
-		if ( ! $this->local_files_available( $attachment_id ) ) {
-			$this->log_error( "Did not find expected local files for attachment $attachment_id, so files from remote are not being deleted." );
-			return;
-		}
-
-		$s3_media_item  = $this->get_s3_media_item( $attachment_id );
-		$remove_handler = $this->wp_offload_media->get_item_handler( 'remove-provider' );
-		if ( $s3_media_item && $remove_handler && method_exists( $remove_handler, 'handle' ) ) {
-			$remove_handler->handle( $s3_media_item, array( 'verify_exists_on_local' => false ) );
-		}
-	}
-
-	private function local_files_available( $attachment_id ) {
-		$local_media_item = $this->media_item_cache->get( $attachment_id );
-		foreach ( $local_media_item->get_sizes() as $size ) {
-			if ( is_a( $size, '\Smush\Core\S3\S3_Media_Item_Size' ) ) {
-				if ( ! $this->fs->file_exists( $size->get_local_path() ) ) {
-					return false;
-				}
-			}
-		}
-
-		return true;
-	}
-
 	/**
 	 * @param $size
 	 * @param $key
@@ -296,7 +270,7 @@ class S3_Controller extends Controller {
 		 */
 		// When all optimizations are completed, the new files will be uploaded.
 		// Note that this is especially important for Png2Jpg optimization for getting rid of the old files from the servers. The new files are nothing like the old ones.
-		$this->after_smush( array( $this, 'delete_files_from_remote' ), 10 );
+		add_action( 'wp_smush_png_jpg_converted', array( $this, 'delete_old_png_files_after_convert' ), 10, 4 );
 
 		/**
 		 * Trigger offloading after smush is done
@@ -318,18 +292,9 @@ class S3_Controller extends Controller {
 			// New media upload triggers wp_update_attachment_metadata which triggers offloading. Make sure offloading is postponed until smush is done.
 			add_filter( 'add_attachment', array( $this, 'disable_s3_update_attachment' ) );
 
-			$this->before_smush_attempt(
-				function ( $attachment_id ) {
-					$media_item = $this->media_item_cache->get( $attachment_id );
-					if ( ! $media_item->is_valid() || $media_item->has_errors() || $media_item->is_skipped() ) {
-						// If there is an error we want the image to be offloaded explicitly
-						$this->enable_back_s3_update_attachment();
-						$this->trigger_update_attachment_metadata( $attachment_id );
-					}
-					// We have already added hooks for enabling back and triggering offloading after successful smush.
-				},
-				100 // This has to be higher than other methods attached to this hook because $media_item->is_skipped() depends on those other methods
-			);
+			$priority = 100; // This has to be higher than other methods attached to this hook because $media_item->is_skipped() depends on those other methods
+			$this->after_attachment_upload( array( $this, 'offload_if_media_item_not_optimizable' ), $priority );
+			$this->before_smush_attempt( array( $this, 'offload_if_media_item_not_optimizable' ), $priority );
 		}
 	}
 
@@ -355,11 +320,7 @@ class S3_Controller extends Controller {
 		 * Delete remote version before uploading restored
 		 */
 		// When the restoration is completed, the new files will be uploaded. Again, this is especially important for Png2Jpg
-		$this->after_restore( function ( $restored, $backup_file_path, $attachment_id ) {
-			if ( $restored ) {
-				$this->delete_files_from_remote( $attachment_id );
-			}
-		}, 10 );
+		add_action( 'wp_smush_after_restore_png_jpg', array( $this, 'delete_old_jpg_files_after_restore' ), 10, 2 );
 
 		/**
 		 * Trigger offloading after restore is done
@@ -370,6 +331,7 @@ class S3_Controller extends Controller {
 
 		$this->after_restore( function ( $restored, $backup_file_path, $attachment_id ) {
 			if ( $restored ) {
+				$this->wp_offload_media->delete_remote_files( $backup_file_path, $attachment_id );
 				$this->trigger_update_attachment_metadata( $attachment_id );
 			}
 		}, 40 );
@@ -377,5 +339,55 @@ class S3_Controller extends Controller {
 
 	private function log_error( $error ) {
 		$this->logger->error( "Smush S3 Integration: $error" );
+	}
+
+	private function is_media_item_optimizable( Media_Item $media_item ) {
+		return ! $this->is_media_item_not_optimizable( $media_item );
+	}
+
+	/**
+	 * @param Media_Item $media_item
+	 *
+	 * @return bool
+	 */
+	private function is_media_item_not_optimizable( Media_Item $media_item ) {
+		return ! $media_item->is_valid() || $media_item->has_errors() || $media_item->is_skipped();
+	}
+
+	public function offload_if_media_item_not_optimizable( $attachment_id ) {
+		$media_item = $this->media_item_cache->get( $attachment_id );
+		if ( $this->is_media_item_not_optimizable( $media_item ) ) {
+			// If there is an error we want the image to be offloaded explicitly
+			$this->enable_back_s3_update_attachment();
+			$this->trigger_update_attachment_metadata( $attachment_id );
+		}
+		// We have already added hooks for enabling back and triggering offloading after successful smush.
+	}
+
+	private function after_attachment_upload( $callback, $priority ) {
+		add_action( 'wp_smush_after_attachment_upload', $callback, $priority );
+	}
+
+	public function delete_old_png_files_after_convert( $attachment_id, $image_metadata, $media_item_stats, $png_file_paths ) {
+		if ( empty( $png_file_paths ) ) {
+			return;
+		}
+
+		$this->after_smush( function () use ( $png_file_paths, $attachment_id ) {
+			$this->wp_offload_media->delete_remote_files( $png_file_paths, $attachment_id );
+		}, 50 );
+	}
+
+	public function delete_old_jpg_files_after_restore( $media_item, $jpg_file_paths ) {
+		if ( empty( $jpg_file_paths ) ) {
+			return;
+		}
+
+		$attachment_id = $media_item->get_id();
+		$this->after_restore( function ( $restored ) use ( $jpg_file_paths, $attachment_id ) {
+			if ( $restored ) {
+				$this->wp_offload_media->delete_remote_files( $jpg_file_paths, $attachment_id );
+			}
+		}, 50 );
 	}
 }

@@ -160,6 +160,14 @@ export const Configs = ({ isWidget }) => {
 			sourceLang={lang}
 			sourceUrls={window.smushReact.links}
 			requestsData={window.smushReact.requestsData}
+			proItems={ window.smushReact.isPro ? [] : [
+				'PNG to JPEG Conversion',
+				'Email Notification',
+				'CDN',
+				'Local WebP',
+				'Amazon S3',
+				'NextGen Gallery',
+			] }
 		/>
 	);
 };

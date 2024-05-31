@@ -7,6 +7,7 @@
 import Fetcher from '../utils/fetcher';
 import { scanProgressBar } from './progressbar';
 import { GlobalStats } from './globalStats';
+import loopbackTester from '../loopback-tester';
 const { __ } = wp.i18n;
 export default class MediaLibraryScanner {
 	constructor() {
@@ -17,12 +18,26 @@ export default class MediaLibraryScanner {
 
 	startScan( optimizeOnScanCompleted = false ) {
 		this.onStart();
-		return Fetcher.scanMediaLibrary.start( optimizeOnScanCompleted ).then( ( response ) => {
-			if ( ! response?.success ) {
-				this.onStartFailure( response );
-				return;
+		const processType = optimizeOnScanCompleted ? 'smush' : 'scan';
+		loopbackTester.performTest().then( ( res ) => {
+			const isLoopbackHealthy = res?.loopback;
+			if ( isLoopbackHealthy ) {
+				Fetcher.scanMediaLibrary.start( optimizeOnScanCompleted ).then( ( response ) => {
+					if ( ! response?.success ) {
+						this.showFailureNotice( response );
+						this.onStartFailure( response );
+						return;
+					}
+					this.showProgressBar().autoSyncStatus();
+				} );
+			} else {
+				this.showLoopbackErrorModal( processType );
+				this.onStartFailure( res );
 			}
-			this.showProgressBar().autoSyncStatus();
+		} ).catch( ( error ) => {
+			console.error( 'Error:', error );
+			this.showLoopbackErrorModal( processType );
+			this.onStartFailure( error );
 		} );
 	}
 
@@ -31,10 +46,26 @@ export default class MediaLibraryScanner {
 	}
 
 	onStartFailure( response ) {
+		// Do nothing at the moment.
+	}
+
+	showFailureNotice( response ) {
 		WP_Smush.helpers.showNotice( response, {
 			showdismiss: true,
 			autoclose: false,
 		} );
+	}
+
+	showLoopbackErrorModal( processType ) {
+		const loopbackErrorModal = document.getElementById( 'smush-loopback-error-dialog' );
+		if ( ! loopbackErrorModal || ! window.SUI ) {
+			return;
+		}
+
+		// Cache current process type.
+		loopbackErrorModal.dataset.processType = processType || 'scan';
+
+		WP_Smush.helpers.showModal( loopbackErrorModal.id );
 	}
 
 	showProgressBar() {
@@ -72,7 +103,7 @@ export default class MediaLibraryScanner {
 			return;
 		}
 
-		stopScanButton.addEventListener( 'click', this.cancelProgress.bind( this ) );
+		stopScanButton.addEventListener( 'click', this.cancelProgress.bind( this ), { once: true } );
 	}
 
 	closeStopScanningModal() {
@@ -130,10 +161,6 @@ export default class MediaLibraryScanner {
 		this.scanProgress.resetCancelButtonOnFailure();
 	}
 
-	getErrorProgressMessage() {
-		return __( 'Unfortunately the scan hit an error due to limited resources on your site, we have adjusted the scan to use fewer resources the next time.', 'wp-smushit' );
-	}
-
 	onDead( stats ) {
 		this.clearProgressTimeout();
 		this.closeProgressBar();
@@ -147,7 +174,7 @@ export default class MediaLibraryScanner {
 			return;
 		}
 
-		retryScanModalElement.querySelector('.smush-retry-scan-notice-button').onclick = (e) => {
+		retryScanModalElement.querySelector( '.smush-retry-scan-notice-button' ).addEventListener( 'click', ( e ) => {
 			window.SUI.closeModal( 'smush-retry-scan-notice' );
 			const recheckImagesBtn = document.querySelector( '.wp-smush-scan' );
 			if ( ! recheckImagesBtn ) {
@@ -156,7 +183,7 @@ export default class MediaLibraryScanner {
 
 			e.preventDefault();
 			recheckImagesBtn.click();
-		}
+		}, { once: true } );
 
 		window.SUI.openModal(
 			'smush-retry-scan-notice',

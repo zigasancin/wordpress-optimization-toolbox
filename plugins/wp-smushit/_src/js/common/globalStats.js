@@ -70,7 +70,7 @@ export const GlobalStats = ( () => {
 
 	return {
 		isChangedStats( newBoStats ) {
-			const primaryKeys = [ 'total_items', 'processed_items', 'failed_items', 'is_cancelled', 'is_completed' ];
+			const primaryKeys = [ 'total_items', 'processed_items', 'failed_items', 'is_cancelled', 'is_completed', 'is_dead' ];
 			return primaryKeys.some( ( key ) => {
 				return newBoStats[ key ] !== boStats[ key ];
 			} );

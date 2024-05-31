@@ -25,13 +25,13 @@ class Media_Library_Watcher extends Controller {
 	}
 
 	public function wait_for_generate_metadata() {
-		add_action( 'wp_generate_attachment_metadata', array( $this, 'trigger_custom_add_attachment' ), 10, 2 );
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'trigger_custom_add_attachment' ), 10, 2 );
 	}
 
 	public function trigger_custom_add_attachment( $metadata, $attachment_id ) {
 		do_action( 'wp_smush_after_attachment_upload', $attachment_id );
 
-		remove_action( 'wp_generate_attachment_metadata', array( $this, 'trigger_custom_add_attachment' ) );
+		remove_filter( 'wp_generate_attachment_metadata', array( $this, 'trigger_custom_add_attachment' ) );
 
 		return $metadata;
 	}

@@ -8,6 +8,8 @@
 
 namespace Smush\Core\Modules\Helpers;
 
+use Smush\Core\Request_Utils;
+use Smush\Core\Settings;
 use WP_Smush;
 
 /**
@@ -47,12 +49,19 @@ class Parser {
 			return;
 		}
 
-		if ( $this->is_page_builder() ) {
-			return;
+		$settings          = Settings::get_instance();
+		$background_images = $settings->get( 'background_images' );
+		if ( $background_images ) {
+			$this->enable( 'background_images' );
+		}
+		if ( $settings->is_cdn_active() ) {
+			$this->enable( 'cdn' );
 		}
 
-		if ( $this->is_smartcrawl_analysis() ) {
-			return;
+		$lazy_load_options = $settings->get_setting( 'wp-smush-lazy_load' );
+		$this->enable( 'lazy_load' );
+		if ( isset( $lazy_load_options['format']['iframe'] ) && $lazy_load_options['format']['iframe'] ) {
+			$this->enable( 'iframes' );
 		}
 
 		// Start an output buffer before any output starts.
@@ -153,21 +162,6 @@ class Parser {
 				$new_image = WP_Smush::get_instance()->core()->mod->cdn->parse_image( $img_src, $new_image, $images['srcset'][ $key ], $images['type'][ $key ] );
 			}
 
-			/**
-			 * Internal filter to disable page parsing.
-			 *
-			 * Because the page parser module is universal, we need to make sure that all modules have the ability to skip
-			 * parsing of certain pages. For example, lazy loading should skip if_preview() pages. In order to achieve this
-			 * functionality, I've introduced this filter. Filter priority can be used to overwrite the $skip param.
-			 *
-			 * @since 3.2.2
-			 *
-			 * @param bool $skip  Skip status.
-			 */
-			if ( $this->lazy_load && ! apply_filters( 'wp_smush_should_skip_parse', false ) ) {
-				$new_image = WP_Smush::get_instance()->core()->mod->lazy->parse_image( $img_src, $new_image, $images['type'][ $key ] );
-			}
-
 			$content = str_replace( $image, $new_image, $content );
 		}
 
@@ -192,6 +186,7 @@ class Parser {
 
 		// Try to sort out the duplicate entries.
 		$elements = array_unique( $images[0] );
+		// TODO: check what this is and whether or not we are doing the same thing in the new framework
 		$urls     = array_unique( $images['img_url'] );
 		if ( count( $elements ) === count( $urls ) ) {
 			$images[0]         = $elements;
@@ -217,25 +212,6 @@ class Parser {
 		}
 
 		return $content;
-	}
-
-	/**
-	 * Compatibility with SmartCrawl readability analysis.
-	 * Do not process page on analysis.
-	 *
-	 * @since 3.3.0
-	 */
-	private function is_smartcrawl_analysis() {
-		$wds_analysis = filter_input( INPUT_POST, 'action', FILTER_SANITIZE_SPECIAL_CHARS );
-		if ( ! is_null( $wds_analysis ) && 'wds-analysis-recheck' === $wds_analysis ) {
-			return true;
-		}
-
-		if ( null !== filter_input( INPUT_GET, 'wds-frontend-check', FILTER_SANITIZE_SPECIAL_CHARS ) ) {
-			return true;
-		}
-
-		return false;
 	}
 
 	/**
@@ -266,6 +242,7 @@ class Parser {
 		}
 
 		$pattern = '/<(?P<type>img|source|iframe)\b(?>\s+(?:src=[\'"](?P<src>[^\'"]*)[\'"]|srcset=[\'"](?P<srcset>[^\'"]*)[\'"])|[^\s>]+|\s+)*>/is';
+		// TODO: Deprecate in favor of wp_smush_images_from_content_regex
 		$pattern = apply_filters( 'smush_images_from_content_regex', $pattern );
 
 		if ( preg_match_all( $pattern, $content, $images ) ) {
@@ -297,6 +274,7 @@ class Parser {
 		$images = array();
 
 		$pattern = '/(?:background-image:\s*?url\(\s*[\'"]?(?P<img_url>.*?[^)\'"]+)[\'"]?\s*\))/i';
+		// TODO: deprecate the following in favor of wp_smush_background_images_regex
 		$pattern = apply_filters( 'smush_background_images_regex', $pattern );
 
 		if ( preg_match_all( $pattern, $content, $images ) ) {
@@ -336,49 +314,6 @@ class Parser {
 		);
 
 		return $images;
-	}
-
-	/**
-	 * Check if this is one of the known page builders.
-	 *
-	 * @since 3.5.1
-	 *
-	 * @return bool
-	 */
-	private function is_page_builder() {
-		// Oxygen builder.
-		if ( defined( 'SHOW_CT_BUILDER' ) && SHOW_CT_BUILDER ) {
-			return true;
-		}
-
-		// Oxygen builder as well.
-		if ( null !== filter_input( INPUT_GET, 'ct_builder' ) ) {
-			return true;
-		}
-
-		// Beaver builder.
-		if ( null !== filter_input( INPUT_GET, 'fl_builder' ) ) {
-			return true;
-		}
-
-		// Thrive Architect Builder.
-		if ( null !== filter_input( INPUT_GET, 'tve' ) && null !== filter_input( INPUT_GET, 'tcbf' ) ) {
-			return true;
-		}
-
-		// Tatsu page builder.
-		if ( null !== filter_input( INPUT_GET, 'tatsu' ) ) {
-			return true;
-		}
-
-		// BuddyBoss' AJAX requests. They do something strange and end up defining
-		// DOING_AJAX on template_redirect after self::parse_page() runs. That makes
-		// our lazy load page parsing break some of their AJAX requests.
-		if ( function_exists( 'bbp_is_ajax' ) && bbp_is_ajax() ) {
-			return true;
-		}
-
-		return false;
 	}
 
 	/**

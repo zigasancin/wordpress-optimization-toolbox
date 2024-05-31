@@ -4,12 +4,8 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit44da5ef6ec192b1d3ca0859c44513364
+class ComposerStaticInit475f25d3f603bebbfc37b2a880ed1995
 {
-    public static $files = array (
-        '1f155afceeab454b94183cdd8d5248a6' => __DIR__ . '/..' . '/mixpanel/mixpanel-php/lib/Mixpanel.php',
-    );
-
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {

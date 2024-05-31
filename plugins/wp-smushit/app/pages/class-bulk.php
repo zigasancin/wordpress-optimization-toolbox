@@ -14,6 +14,7 @@ use Smush\Core\Array_Utils;
 use Smush\Core\Core;
 use Smush\Core\Settings;
 use Smush\Core\Stats\Global_Stats;
+use Smush\Core\Media_Library\Background_Media_Library_Scanner;
 use WP_Smush;
 use Smush\Core\Backups\Backups;
 
@@ -84,6 +85,27 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 					'box_content_class' => false,
 				)
 			);
+
+			$bg_optimization               = WP_Smush::get_instance()->core()->mod->bg_optimization;
+			$scan_background_process       = Background_Media_Library_Scanner::get_instance()->get_background_process();
+			$is_scan_process_dead          = $scan_background_process->get_status()->is_dead();
+			$show_bulk_smush_inline_notice = $bg_optimization->is_background_enabled() && $bg_optimization->is_dead();
+			// Do not show failed bulk smush inline notice when required re-check images.
+			$show_bulk_smush_inline_notice = $show_bulk_smush_inline_notice && ! $is_scan_process_dead;
+			if ( $show_bulk_smush_inline_notice ) {
+				$this->add_meta_box(
+					'inline-retry-bulk-smush-notice',
+					null,
+					array( $this, 'inline_retry_bulk_smush_notice_box' ),
+					null,
+					null,
+					'main',
+					array(
+						'box_class'         => 'sui-box wp-smush-inline-retry-bulk-smush-notice-box',
+						'box_content_class' => false,
+					)
+				);
+			}
 		}
 		parent::register_meta_boxes();
 
@@ -269,7 +291,7 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 					}
 					break;
 				case 'original':
-					esc_html_e( 'By default, WordPress will only compress the generated attachments when you upload images, not the original ones. Enable this feature to compress the original images.', 'wp-smushit' );
+					esc_html_e( 'By default, WordPress will only optimize the generated attachments when you upload images, not the original ones. Enable this feature to optimize the original images.', 'wp-smushit' );
 					break;
 				case 'strip_exif':
 					esc_html_e(
@@ -440,7 +462,7 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 							<p>
 								<?php
 								printf( /* translators: %1$s - <strong>, %2$s - </strong> */
-									esc_html__( '%1$sCompress original images%2$s is disabled, which means that enabling %1$sBackup original images%2$s won’t yield additional benefits and will use more storage space. We recommend enabling %1$sBackup original images%2$s only if %1$sCompress original images%2$s is also enabled.', 'wp-smushit' ),
+									esc_html__( '%1$sOptimize original images%2$s is disabled, which means that enabling %1$sBackup original images%2$s won’t yield additional benefits and will use more storage space. We recommend enabling %1$sBackup original images%2$s only if %1$sOptimize original images%2$s is also enabled.', 'wp-smushit' ),
 									'<strong>',
 									'</strong>'
 								);
@@ -654,5 +676,10 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 			array(),
 			'common'
 		);
+	}
+
+
+	public function inline_retry_bulk_smush_notice_box() {
+		$this->view( 'bulk/inline-retry-bulk-smush-notice' );
 	}
 }

@@ -11,8 +11,8 @@
  */
 
 namespace Smush\Core\Modules\Async;
-
 use Exception;
+use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -94,4 +94,14 @@ class Async extends Abstract_Async {
 		}
 	}
 
+	protected function should_run( $data ) {
+		if ( empty( $data['metadata'] ) && empty( $data['id'] ) ) {
+			return false;
+		}
+
+		$attachment_id = $data['id'];
+		$smush         = WP_Smush::get_instance()->core()->mod->smush;
+
+		return $smush->should_auto_smush( $attachment_id );
+	}
 }

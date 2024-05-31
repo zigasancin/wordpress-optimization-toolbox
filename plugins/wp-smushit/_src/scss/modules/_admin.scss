@@ -1233,13 +1233,6 @@
 		}
 	}
 
-	.sui-modal #smush-stop-scanning-dialog {
-		max-width:460px;
-		.sui-box-footer {
-			padding-top: 20px;
-		}
-	}
-
 	.smush-settings-wrapper {
 		.smush-png2jpg-setting-note {
 			p span {
@@ -1254,28 +1247,6 @@
 			animation: fadeIn 3s;
 			&.sui-hidden {
 				animation: none;
-			}
-		}
-	}
-
-	.smush-retry-scan-notice {
-		.sui-box-body {
-			padding-top:15px!important;
-			padding-bottom:20px!important;
-			.smush-retry-scan-notice-content {
-				.sui-notice {
-					margin-bottom: 15px;
-				}
-				> p {
-					padding: 0 25px;
-					font-size: 13px;
-					margin:0;
-					line-height: 22px;
-				}
-			}
-
-			.sui-notice-message {
-				text-align: left;
 			}
 		}
 	}
@@ -1332,15 +1303,29 @@
 		}
 	}
 
-	/**
-	 * Temporary hide pro tags for all features on Configs page.
-	 *
-	 * @todo Remove when there's a fix for this in SUI.
-	 * @since 3.14.0
-	 */
-	#smush-widget-configs,#smush-box-configs {
-		.sui-accordion-item .sui-accordion-item-body .sui-tag-pro {
-			display:none;
+	.sui-modal .smush-retry-modal .sui-box {
+		.sui-notice-icon {
+			&:before {
+				color:$red;
+			}
+			&.sui-warning-icon:before {
+				color:$yellow;
+			}
+		}
+		.sui-box-title {
+			margin-top: 7px;
+			margin-bottom: 5px;
+		}
+		.sui-description a {
+			text-decoration: underline;
+		}
+		.sui-box-footer {
+			.sui-button {
+				min-width: 0;
+				+ .sui-button-ghost {
+					margin-left: 17px;
+				}
+			}
 		}
 	}
 

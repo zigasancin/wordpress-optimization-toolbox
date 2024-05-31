@@ -4,7 +4,7 @@
  * External dependencies
  */
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 /**
  * WordPress dependencies
@@ -81,7 +81,7 @@ export const WebpPage = ({ smushData }) => {
 		<React.Fragment>
 			<div className="sui-box-body sui-no-padding">
 				<div className="sui-row-with-sidenav">
-					<StepsBar smushData={smushData} currentStep={currentStep} />
+					{ smushData.isPro && <StepsBar smushData={smushData} currentStep={currentStep} /> }
 					{stepContent}
 				</div>
 			</div>
@@ -102,9 +102,7 @@ export const WebpPage = ({ smushData }) => {
 domReady(function () {
 	const webpPageBox = document.getElementById('smush-box-webp-wizard');
 	if (webpPageBox) {
-		ReactDOM.render(
-			<WebpPage smushData={window.smushReact} />,
-			webpPageBox
-		);
+		const root = createRoot(webpPageBox);
+		root.render( <WebpPage smushData={window.smushReact} /> );
 	}
 });

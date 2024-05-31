@@ -15,6 +15,12 @@ use Smush\Core\Smush\Smush_Optimization;
 use WP_Smush;
 
 class Bulk_Smush_Background_Process extends Background_Process {
+	/**
+	 * Retrival limit per 1000.
+	 *
+	 * @var int
+	 */
+	const REVIVAL_LIMIT_UNIT = 5;
 	public function __construct( $identifier ) {
 		parent::__construct( $identifier );
 
@@ -101,5 +107,39 @@ class Bulk_Smush_Background_Process extends Background_Process {
 		}
 
 		do_action( 'wp_smush_bulk_smush_completed' );
+	}
+
+	protected function get_revival_limit() {
+		$constant_value = $this->get_revival_limit_constant();
+		if ( $constant_value ) {
+			return $constant_value;
+		}
+
+		$revival_limit = $this->calculate_default_revival_limit();
+
+		return apply_filters( $this->identifier . '_revival_limit', $revival_limit );
+	}
+
+	private function get_revival_limit_constant() {
+		if ( ! defined( 'WP_SMUSH_BULK_REVIVAL_LIMIT' ) ) {
+			return 0;
+		}
+
+		$constant_value = (int) WP_SMUSH_BULK_REVIVAL_LIMIT;
+
+		return max( $constant_value, 0 );
+	}
+
+	private function calculate_default_revival_limit() {
+		$total_items           = $this->get_status()->get_total_items();
+		$default_revival_limit = (int) ceil( $total_items / 1000 ) * self::REVIVAL_LIMIT_UNIT;
+
+		return max( $default_revival_limit, 5 );
+	}
+
+	protected function mark_as_dead() {
+		do_action( 'wp_smush_bulk_smush_dead', $this );
+
+		return parent::mark_as_dead();
 	}
 }

@@ -935,18 +935,27 @@ jQuery(function ($) {
 	}
 
 	// Display dialogs that show up with no user action.
-	if ($('#smush-updated-dialog').length) {
+	if ( $( '#smush-updated-dialog' ).length ) {
 		// Displays the modal with the release's higlights if it exists.
+		const modalId = 'smush-updated-dialog',
+			focusAfterClosed = 'wpbody-content',
+			focusWhenOpen = undefined,
+			hasOverlayMask = false,
+			isCloseOnEsc = false,
+			isAnimated = true;
+
 		window.SUI.openModal(
-			'smush-updated-dialog',
-			'wpbody-content',
-			undefined,
-			false
+			modalId,
+			focusAfterClosed,
+			focusWhenOpen,
+			hasOverlayMask,
+			isCloseOnEsc,
+			isAnimated
 		);
 	}
 
 	/**
-	 * Toggle backup notice based on "Compress original images" setting.
+	 * Toggle backup notice based on "Optimize original images" setting.
 	 * @since 3.9.1
 	 */
 	$( 'input#original' ).on( 'change', function() {

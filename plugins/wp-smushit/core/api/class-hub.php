@@ -80,7 +80,7 @@ class Hub {
 		$core     = WP_Smush::get_instance()->core();
 		$settings = Settings::get_instance();
 
-		$status['cdn']   = $core->mod->cdn->is_active();
+		$status['cdn']   = $settings->is_cdn_active();
 		$status['lossy'] = $settings->get_lossy_level_setting();
 
 		$lazy = $settings->get_setting( 'wp-smush-lazy_load' );

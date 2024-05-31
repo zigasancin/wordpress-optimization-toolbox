@@ -31,7 +31,7 @@ class Plugin_Settings_Watcher extends Controller {
 	}
 
 	private function hook_settings_update_interceptor( $callback, $option_id = 'wp-smush-settings' ) {
-		if ( $this->settings->is_network_enabled() ) {
+		if ( $this->settings->is_network_setting( $option_id ) ) {
 			$this->register_action(
 				"update_site_option_$option_id",
 				function ( $option, $settings, $old_settings ) use ( $callback ) {

@@ -9,6 +9,7 @@ namespace Smush\App\Pages;
 
 use Smush\App\Abstract_Summary_Page;
 use Smush\App\Interface_Page;
+use Smush\Core\Webp\Webp_Configuration;
 use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -47,8 +48,6 @@ class WebP extends Abstract_Summary_Page implements Interface_Page {
 			'before'
 		);
 
-		$webp = WP_Smush::get_instance()->core()->mod->webp;
-
 		// Defining this here to esc_html before using dangerouslySetInnerHTML on frontend.
 		$third_step_message = ! is_multisite()
 			? sprintf(
@@ -70,16 +69,18 @@ class WebP extends Abstract_Summary_Page implements Interface_Page {
 				'</b>'
 			);
 
+		$server_configuration = Webp_Configuration::get_instance()->server_configuration();
+
 		wp_localize_script(
 			'smush-react-webp',
 			'smushReact',
 			array(
 				'nonce'          => wp_create_nonce( 'wp-smush-webp-nonce' ),
 				'isPro'          => WP_Smush::is_pro(),
-				'detectedServer' => $webp->get_server_type(),
-				'apacheRules'    => $webp->get_apache_code_to_print(),
-				'nginxRules'     => $webp->get_nginx_code(),
-				'startStep'      => true !== $webp->is_configured() || ! WP_Smush::is_pro() ? 1 : 3,
+				'detectedServer' => $server_configuration->get_server_type(),
+				'apacheRules'    => $server_configuration->get_apache_code(),
+				'nginxRules'     => $server_configuration->get_nginx_code(),
+				'startStep'      => ! $server_configuration->is_configured() || ! WP_Smush::is_pro() ? 1 : 3,
 				'isMultisite'    => is_multisite(),
 				'isWpmudevHost'  => isset( $_SERVER['WPMUDEV_HOSTED'] ),
 				'isWhitelabel'   => apply_filters( 'wpmudev_branding_hide_doc_link', false ),
@@ -90,7 +91,6 @@ class WebP extends Abstract_Summary_Page implements Interface_Page {
 					'support'   => 'https://wpmudev.com/hub2/support/#get-support',
 					'freeImg'   => esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-webp-free-tier.png' ),
 					'freeImg2x' => esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-webp-free-tier@2x.png' ),
-					'webpDoc'   => $this->get_utm_link( array( 'utm_campaign' => 'smush_webp_learnmore' ), 'https://wpmudev.com/blog/local-webp-support-smush/' ),
 					'upsell'    => add_query_arg(
 						array(
 							'utm_source'   => 'smush',
@@ -114,7 +114,7 @@ class WebP extends Abstract_Summary_Page implements Interface_Page {
 			return;
 		}
 
-		if ( ! $this->settings->get( 'webp_mod' ) ) {
+		if ( $this->should_disable_local_webp() ) {
 			$this->add_meta_box(
 				'webp/disabled',
 				__( 'Local WebP', 'wp-smushit' ),
@@ -125,14 +125,23 @@ class WebP extends Abstract_Summary_Page implements Interface_Page {
 			return;
 		}
 
+		$direct_conversion_enabled = Webp_Configuration::get_instance()->direct_conversion_enabled();
+
 		$this->add_meta_box(
 			'webp/webp',
 			__( 'Local WebP', 'wp-smushit' ),
 			null,
-			array( $this, 'webp_meta_box_header' )
+			array( $this, 'webp_meta_box_header' ),
+			$direct_conversion_enabled ? array( $this, 'common_meta_box_footer' ) : null
 		);
 
 		$this->modals['webp-delete-all'] = array();
+	}
+
+	private function should_disable_local_webp() {
+		$is_cdn_active  = $this->settings->is_cdn_active() && $this->settings->has_cdn_page(); // CDN takes precedence because it handles webp anyway
+		$is_webp_active = $this->settings->is_webp_module_active();
+		return $is_cdn_active || ! $is_webp_active;
 	}
 
 	/**
@@ -144,10 +153,17 @@ class WebP extends Abstract_Summary_Page implements Interface_Page {
 		$this->view(
 			'webp/meta-box-header',
 			array(
-				'is_disabled'   => ! $this->settings->get( 'webp_mod' ),
-				'is_configured' => true === WP_Smush::get_instance()->core()->mod->webp->is_configured(),
+				'is_disabled'   => $this->should_disable_local_webp(),
+				'is_configured' => Webp_Configuration::get_instance()->is_configured(),
 			)
 		);
+	}
+
+	/**
+	 * Common footer meta box.
+	 */
+	public function common_meta_box_footer() {
+		$this->view( 'meta-box-footer', array(), 'common' );
 	}
 
 	/**
@@ -158,6 +174,7 @@ class WebP extends Abstract_Summary_Page implements Interface_Page {
 	 * @return bool
 	 */
 	protected function is_wizard() {
-		return ( ! WP_Smush::is_pro() || ( $this->settings->get( 'webp_mod' ) && ! get_site_option( 'wp-smush-webp_hide_wizard' ) ) );
+		$is_free = ! WP_Smush::is_pro();
+		return $is_free || Webp_Configuration::get_instance()->should_show_wizard();
 	}
 }

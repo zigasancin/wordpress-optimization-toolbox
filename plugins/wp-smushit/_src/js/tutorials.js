@@ -16,7 +16,7 @@ import domReady from '@wordpress/dom-ready';
  */
 import { TutorialsList, TutorialsSlider } from '@wpmudev/shared-tutorials';
 
-import MixPanel from "./mixpanel"
+import tracker from './utils/tracker';
 
 function hideTutorials() {
 	const xhr = new XMLHttpRequest();
@@ -88,7 +88,7 @@ jQuery(function ($) {
 		};
 		const title = decodeHtml($tutorial.attr('title'));
 
-		MixPanel.getInstance().track('Tutorial Opened', {
+		tracker.track('Tutorial Opened', {
 			'Tutorial Name': title,
 			'Triggered From': isDashPage ? 'Dashboard' : 'Tutorials Tab'
 		});

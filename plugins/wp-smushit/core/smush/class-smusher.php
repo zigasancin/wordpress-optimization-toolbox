@@ -6,6 +6,7 @@ use Smush\Core\Api\Backoff;
 use Smush\Core\Api\Request_Multiple;
 use Smush\Core\File_System;
 use Smush\Core\Helper;
+use Smush\Core\Server_Utils;
 use Smush\Core\Settings;
 use Smush\Core\Upload_Dir;
 use WP_Error;
@@ -68,6 +69,10 @@ class Smusher {
 	 * @var Upload_Dir
 	 */
 	private $upload_dir;
+	/**
+	 * @var Server_Utils
+	 */
+	private $server_utils;
 
 	public function __construct() {
 		$this->retry_attempts  = WP_SMUSH_RETRY_ATTEMPTS;
@@ -84,6 +89,7 @@ class Smusher {
 		$this->errors           = new WP_Error();
 		$this->fs               = new File_System();
 		$this->upload_dir       = new Upload_Dir();
+		$this->server_utils     = new Server_Utils();
 	}
 
 	/**
@@ -91,14 +97,27 @@ class Smusher {
 	 *
 	 * @return boolean[]|object[]
 	 */
-	public function smush( $file_paths ) {
+	public function smush( $file_paths, $try_parallel = true ) {
 		$this->set_errors( new WP_Error() );
 
-		if ( $this->parallel_available() ) {
+		if (
+			$try_parallel
+			&& $this->smush_parallel
+			&& $this->parallel_available_on_server()
+			&& $this->memory_available_for_parallel()
+		) {
 			return $this->smush_parallel( $file_paths );
 		} else {
 			return $this->smush_sequential( $file_paths );
 		}
+	}
+
+	private function memory_available_for_parallel() {
+		$memory_limit   = $this->server_utils->get_memory_limit() * 0.75; // 75% of max memory
+		$memory_limit   = apply_filters( 'wp_smush_parallel_memory_cutoff', $memory_limit );
+		$current_memory = $this->server_utils->get_memory_usage();
+
+		return $current_memory < $memory_limit;
 	}
 
 	/**
@@ -482,11 +501,7 @@ class Smusher {
 	/**
 	 * @return bool
 	 */
-	public function parallel_available() {
-		if ( ! $this->smush_parallel ) {
-			return false;
-		}
-
+	public function parallel_available_on_server() {
 		return $this->curl_multi_exec_available();
 	}
 

@@ -77,10 +77,10 @@ class Mail extends Helpers\Mail {
 		$site_url = get_site_url();
 		$site_url = preg_replace( '#http(s)?://(www.)?#', '', $site_url );
 		if ( $this->whitelabel->enabled() ) {
-			/* translators: %s - Site Url */
+			/* translators: %s: Site URL */
 			return sprintf( __( 'Bulk compression completed for %s', 'wp-smushit' ), esc_html( $site_url ) );
 		}
-		/* translators: %s - Site Url */
+		/* translators: %s: Site URL */
 		return sprintf( __( 'Bulk Smush completed for %s', 'wp-smushit' ), esc_html( $site_url ) );
 	}
 	/**
@@ -152,7 +152,7 @@ class Mail extends Helpers\Mail {
 		}
 		if ( $this->whitelabel->enabled() ) {
 			return array(
-				/* Translators: %s: Site URL */
+				/* translators: %s: Site URL */
 				'mail_title'    => __( 'Bulk compression completed for %s', 'wp-smushit' ),
 				'mail_desc'     => __( 'The bulk compress you actioned has successfully completed. Here’s a quick summary of the results:', 'wp-smushit' ),
 				'total_title'   => __( 'Total image attachments', 'wp-smushit' ),
@@ -165,7 +165,7 @@ class Mail extends Helpers\Mail {
 		}
 
 		return array(
-			/* Translators: %s: Site URL */
+			/* translators: %s: Site URL */
 			'mail_title'    => __( 'Bulk Smush completed for %s', 'wp-smushit' ),
 			'mail_desc'     => __( 'The bulk smush you actioned has successfully completed. Here’s a quick summary of the results:', 'wp-smushit' ),
 			'total_title'   => __( 'Total image attachments', 'wp-smushit' ),

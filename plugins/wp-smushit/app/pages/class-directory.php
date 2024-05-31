@@ -124,7 +124,7 @@ class Directory extends Abstract_Summary_Page implements Interface_Page {
 			$notice_message .= sprintf(
 			/* translators: %1$d - number of skipped images, %2$d - total number of images */
 				_n(
-					'%d image was skipped because it was already optimized',
+					'%1$d/%2$d image was skipped because it was already optimized',
 					'%1$d/%2$d images were skipped because they were already optimized',
 					$skipped_items,
 					'wp-smushit'
@@ -137,7 +137,7 @@ class Directory extends Abstract_Summary_Page implements Interface_Page {
 			$notice_message .= sprintf(
 			/* translators: %1$d - number of failed images, %2$d - total number of images */
 				_n(
-					'%d resulted in an error',
+					'%1$d/%2$d image resulted in an error',
 					'%1$d/%2$d images resulted in an error, check the logs for more information',
 					$failed_items,
 					'wp-smushit'

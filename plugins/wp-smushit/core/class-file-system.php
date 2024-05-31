@@ -58,4 +58,17 @@ class File_System {
 	private function is_valid_path( $path ) {
 		return false === stripos( $path, 'phar://' );
 	}
+
+	public function get_wp_filesystem() {
+		global $wp_filesystem;
+		if ( is_null( $wp_filesystem ) ) {
+			// These aren't included when applying a config from the Hub.
+			if ( ! function_exists( 'WP_Filesystem' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+			}
+			WP_Filesystem();
+		}
+
+		return $wp_filesystem;
+	}
 }

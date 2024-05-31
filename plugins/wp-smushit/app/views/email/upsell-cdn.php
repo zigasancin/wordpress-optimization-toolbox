@@ -72,7 +72,7 @@ $discount = WP_Smush::get_instance()->admin()->get_plugin_discount();
 					</p>
 					<p style="margin:0;padding:20px 0 35px;">
 						<a class="button"
-						style="display:inline-block;background:#286EFA;border-radius:6px;font-family:Roboto,Arial,sans-serif;font-size:13px;width:176px;height:40px;padding:0!important;font-weight:500;line-height:40px;text-align:center;margin:0;display:inline-block!important;color:#fff!important;text-decoration:none!important;"
+						style="display:inline-block;background:#0059FF;border-radius:6px;font-family:Roboto,Arial,sans-serif;font-size:13px;width:176px;height:40px;padding:0!important;font-weight:500;line-height:40px;text-align:center;margin:0;display:inline-block!important;color:#fff!important;text-decoration:none!important;"
 						href="<?php echo esc_url( $upsell_url ); ?>"><?php esc_html_e( 'Learn more about Pro', 'wp-smushit' ); ?></a>
 					</p>
 				</td>

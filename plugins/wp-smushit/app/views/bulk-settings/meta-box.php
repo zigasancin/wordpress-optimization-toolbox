@@ -76,7 +76,7 @@ do_action( 'wp_smush_after_basic_settings' );
 		<span class="sui-description">
 			<?php
 			printf( /* translators: %1$s - strong tag, %2$s - closing strong tag */
-				wp_kses( 'This feature regenerates thumbnails using your original uploaded images. If %1$sCompress original images%2$s is enabled, your thumbnails can still be regenerated, but the quality will be impacted by the compression of your uploaded images.', 'wp-smushit' ),
+				wp_kses( 'This feature regenerates thumbnails using your original uploaded images. If %1$sOptimize original images%2$s is enabled, your thumbnails can still be regenerated, but the quality will be impacted by the compression of your uploaded images.', 'wp-smushit' ),
 				'<strong>',
 				'</strong>'
 			);

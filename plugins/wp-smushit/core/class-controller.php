@@ -7,7 +7,15 @@ abstract class Controller {
 
 	private $filters = array();
 
+	public function should_run() {
+		return true;
+	}
+
 	public function init() {
+		if ( ! $this->should_run() ) {
+			return;
+		}
+
 		foreach ( $this->actions as $action_hook => $actions ) {
 			foreach ( $actions as $action_args ) {
 				add_action( $action_hook, $action_args['callback'], $action_args['priority'], $action_args['accepted_args'] );

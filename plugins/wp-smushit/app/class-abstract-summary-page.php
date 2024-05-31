@@ -9,6 +9,7 @@
 namespace Smush\App;
 
 use Smush\Core\Array_Utils;
+use Smush\Core\CDN\CDN_Helper;
 use Smush\Core\Resize\Resize_Optimization;
 use Smush\Core\Settings;
 use Smush\Core\Stats\Global_Stats;
@@ -142,8 +143,7 @@ abstract class Abstract_Summary_Page extends Abstract_Page {
 	 * @since 2.8.6
 	 */
 	public function cdn_stats_ui() {
-		$status = WP_Smush::get_instance()->core()->mod->cdn->status();
-
+		$status = CDN_Helper::get_instance()->get_cdn_status_string();
 		if ( 'disabled' === $status ) {
 			return;
 		}

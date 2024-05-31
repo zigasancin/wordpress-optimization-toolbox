@@ -6,6 +6,7 @@ use Smush\Core\Controller;
 use Smush\Core\Helper;
 use Smush\Core\Media\Media_Item_Query;
 use Smush\Core\Stats\Global_Stats;
+use Smush\Core\Modules\Background\Loopback_Request_Tester;
 use WP_Smush;
 
 class Background_Media_Library_Scanner extends Controller {
@@ -75,32 +76,6 @@ class Background_Media_Library_Scanner extends Controller {
 			wp_send_json_error( array( 'message' => __( 'Background scan is already in processing.', 'wp-smushit' ) ) );
 		}
 
-		if ( ! Helper::loopback_supported() ) {
-			$this->logger->error( 'Loopback check failed. Not starting a new background process.' );
-			$doc_link = 'https://wpmudev.com/docs/wpmu-dev-plugins/smush/#background-processing';
-			if ( ! WP_Smush::is_pro() ) {
-				$doc_link = add_query_arg(
-					array(
-						'utm_source' => 'smush',
-						'utm_medium' => 'plugin',
-						'utm_campaign' => 'smush_bulksmush_loopback_notice',
-					),
-					$doc_link
-				);
-			}
-			wp_send_json_error(
-				array(
-					'message' => sprintf(
-						/* translators: %s Doc link */
-						esc_html__( 'Your site seems to have an issue with loopback requests. Please try again and if the problem persists find out more %s.', 'wp-smushit' ),
-						sprintf( '<a target="_blank" href="%1$s">%2$s</a>', $doc_link, esc_html__( 'here', 'wp-smushit' ) )
-					),
-				)
-			);
-		} else {
-			$this->logger->notice( 'Loopback check successful.' );
-		}
-
 		$this->set_optimize_on_scan_completed( ! empty( $_REQUEST['optimize_on_scan_completed'] ) );
 
 		if ( $this->background_process->get_status()->is_dead() ) {
@@ -125,7 +100,10 @@ class Background_Media_Library_Scanner extends Controller {
 			wp_send_json_error();
 		}
 
-		$this->background_process->cancel();
+		if ( ! $this->background_process->get_status()->is_cancelled() ) {
+			$this->background_process->cancel();
+		}
+
 		$this->set_optimize_on_scan_completed( false );
 
 		wp_send_json_success( $this->get_scan_status() );

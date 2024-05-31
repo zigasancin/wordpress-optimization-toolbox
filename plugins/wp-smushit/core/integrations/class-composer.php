@@ -12,6 +12,7 @@
 
 namespace Smush\Core\Integrations;
 
+use Smush\Core\CDN\CDN_Helper;
 use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -184,14 +185,13 @@ class Composer extends Abstract_Integration {
 			return $image;
 		}
 
-		$cdn = WP_Smush::get_instance()->core()->mod->cdn;
-
-		if ( ! $cdn->get_status() ) {
+		$cdn_helper = CDN_Helper::get_instance();
+		if ( ! $cdn_helper->is_cdn_active() ) {
 			return $image;
 		}
 
 		if ( is_array( $image ) && ! empty( $image[0] ) ) {
-			$image[0] = $cdn->generate_cdn_url( $image[0] );
+			$image[0] = $cdn_helper->generate_cdn_url( $image[0] );
 		}
 
 		return $image;

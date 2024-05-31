@@ -10,14 +10,11 @@
 
 namespace Smush\App;
 
+use Smush\Core\Configs;
 use Smush\Core\Core;
 use Smush\Core\Error_Handler;
 use Smush\Core\Helper;
-use Smush\Core\Configs;
 use Smush\Core\Media\Media_Item_Cache;
-use Smush\Core\Media\Media_Item_Optimizer;
-use Smush\Core\Modules\CDN;
-use Smush\Core\Modules\Helpers\Parser;
 use Smush\Core\Modules\Smush;
 use Smush\Core\Settings;
 use WP_Smush;
@@ -99,28 +96,6 @@ class Ajax {
 		 */
 		// Handle Ajax request for directory smush stats (stats meta box).
 		add_action( 'wp_ajax_get_dir_smush_stats', array( $this, 'get_dir_smush_stats' ) );
-
-		/**
-		 * CDN
-		 */
-		// Toggle CDN.
-		add_action( 'wp_ajax_smush_toggle_cdn', array( $this, 'toggle_cdn' ) );
-		// Update stats box and CDN status.
-		add_action( 'wp_ajax_get_cdn_stats', array( new CDN( new Parser() ), 'update_stats' ) );
-
-		/**
-		 * WebP
-		 */
-		// Toggle WebP.
-		add_action( 'wp_ajax_smush_webp_toggle', array( $this, 'webp_toggle' ) );
-		// Check server configuration status for WebP.
-		add_action( 'wp_ajax_smush_webp_get_status', array( $this, 'webp_get_status' ) );
-		// Apply apache rules for WebP support into .htaccess file.
-		add_action( 'wp_ajax_smush_webp_apply_htaccess_rules', array( $this, 'webp_apply_htaccess_rules' ) );
-		// Delete all webp images for all attachments.
-		add_action( 'wp_ajax_smush_webp_delete_all', array( $this, 'webp_delete_all' ) );
-		// Hide the webp wizard.
-		add_action( 'wp_ajax_smush_toggle_webp_wizard', array( $this, 'webp_toggle_wizard' ) );
 
 		/**
 		 * LAZY LOADING
@@ -649,156 +624,6 @@ class Ajax {
 	 *
 	 * @since 3.0
 	 */
-
-	/**
-	 * Toggle CDN.
-	 *
-	 * Handles "Get Started" button press on the disabled CDN meta box.
-	 * Handles "Deactivate" button press on the CDN meta box.
-	 * Refreshes page on success.
-	 *
-	 * @since 3.0
-	 */
-	public function toggle_cdn() {
-		check_ajax_referer( 'save_wp_smush_options' );
-
-		if ( ! Helper::is_user_allowed( 'manage_options' ) ) {
-			wp_send_json_error(
-				array(
-					'message' => __( 'User can not modify options', 'wp-smushit' ),
-				),
-				403
-			);
-		}
-
-		$enable   = filter_input( INPUT_POST, 'param', FILTER_VALIDATE_BOOLEAN );
-		$response = WP_Smush::get_instance()->core()->mod->cdn->toggle_cdn( $enable );
-
-		if ( is_wp_error( $response ) ) {
-			wp_send_json_error(
-				array( 'message' => $response->get_error_message() )
-			);
-		}
-
-		wp_send_json_success();
-	}
-
-	/***************************************
-	 *
-	 * WebP
-	 *
-	 * @since 3.8.0
-	 */
-
-	/**
-	 * Toggle WebP.
-	 *
-	 * Handles "Activate" button press on the disabled WebP meta box.
-	 * Handles "Deactivate" button press on the WebP meta box.
-	 * Refreshes page on success.
-	 *
-	 * @since 3.8.0
-	 */
-	public function webp_toggle() {
-		check_ajax_referer( 'save_wp_smush_options' );
-
-		$capability = is_multisite() ? 'manage_network' : 'manage_options';
-		if ( ! Helper::is_user_allowed( $capability ) ) {
-			wp_send_json_error(
-				array(
-					'message' => __( "You don't have permission to do this.", 'wp-smushit' ),
-				),
-				403
-			);
-		}
-
-		$param       = isset( $_POST['param'] ) ? sanitize_text_field( wp_unslash( $_POST['param'] ) ) : '';
-		$enable_webp = 'true' === $param;
-
-		WP_Smush::get_instance()->core()->mod->webp->toggle_webp( $enable_webp );
-
-		wp_send_json_success();
-	}
-
-	/**
-	 * Check server configuration status and other info for WebP.
-	 *
-	 * Handles "Re-Check Status" button press on the WebP meta box.
-	 *
-	 * @since 3.8.0
-	 */
-	public function webp_get_status() {
-		if ( ! check_ajax_referer( 'wp-smush-webp-nonce', false, false ) || ! Helper::is_user_allowed( 'manage_options' ) ) {
-			wp_send_json_error( esc_html__( "Either the nonce expired or you can't modify options. Please reload the page and try again.", 'wp-smushit' ) );
-		}
-
-		$is_configured = WP_Smush::get_instance()->core()->mod->webp->get_is_configured_with_error_message( true );
-
-		if ( true === $is_configured ) {
-			wp_send_json_success();
-		}
-
-		// The messages are set in React with dangerouslySetInnerHTML so they must be html-escaped.
-		wp_send_json_error( esc_html( $is_configured ) );
-	}
-
-	/**
-	 * Write apache rules for WebP support from .htaccess file.
-	 * Handles the "Apply Rules" button press on the WebP meta box.
-	 *
-	 * @since 3.8.0
-	 */
-	public function webp_apply_htaccess_rules() {
-		if ( ! check_ajax_referer( 'wp-smush-webp-nonce', false, false ) || ! Helper::is_user_allowed( 'manage_options' ) ) {
-			wp_send_json_error( "Either the nonce expired or you can't modify options. Please reload the page and try again." );
-		}
-
-		$was_written = WP_Smush::get_instance()->core()->mod->webp->save_htaccess();
-
-		if ( true === $was_written ) {
-			wp_send_json_success();
-		}
-
-		wp_send_json_error( wp_kses_post( $was_written ) );
-	}
-
-	/**
-	 * Delete all webp images.
-	 * Triggered by the "Delete WebP images" button in the webp tab.
-	 *
-	 * @since 3.8.0
-	 */
-	public function webp_delete_all() {
-		check_ajax_referer( 'save_wp_smush_options' );
-
-		$capability = is_multisite() ? 'manage_network' : 'manage_options';
-
-		if ( ! Helper::is_user_allowed( $capability ) ) {
-			wp_send_json_error(
-				array(
-					'message' => __( 'This user can not delete all WebP images.', 'wp-smushit' ),
-				),
-				403
-			);
-		}
-
-		WP_Smush::get_instance()->core()->mod->webp->delete_all();
-
-		wp_send_json_success();
-	}
-
-	/**
-	 * Toggles the webp wizard.
-	 *
-	 * @since 3.8.8
-	 */
-	public function webp_toggle_wizard() {
-		if ( check_ajax_referer( 'wp-smush-webp-nonce', false, false ) && Helper::is_user_allowed( 'manage_options' ) ) {
-			$is_hidden = get_site_option( 'wp-smush-webp_hide_wizard' );
-			update_site_option( 'wp-smush-webp_hide_wizard', ! $is_hidden );
-			wp_send_json_success();
-		}
-	}
 
 	/***************************************
 	 *

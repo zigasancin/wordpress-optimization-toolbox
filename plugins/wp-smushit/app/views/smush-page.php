@@ -7,14 +7,19 @@
  * @var Abstract_Page $this
  */
 
-use Smush\App\Abstract_Page;
+use Smush\Core\Webp\Webp_Configuration;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
 // Some pages don't need to have wrapped in a form.
-$page_has_form = ! in_array( $this->get_slug(), array( 'smush-tutorials', 'smush-webp' ), true );
+$direct_conversion_enabled = Webp_Configuration::get_instance()->direct_conversion_enabled();
+$page_without_forms        = array( 'smush-tutorials' );
+if ( ! $direct_conversion_enabled ) {
+	$page_without_forms[] = 'smush-webp';
+}
+$page_has_form = ! in_array( $this->get_slug(), $page_without_forms, true );
 
 $this->do_meta_boxes( 'summary' );
 

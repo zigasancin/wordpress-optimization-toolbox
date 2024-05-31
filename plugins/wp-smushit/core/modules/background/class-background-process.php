@@ -403,7 +403,7 @@ abstract class Background_Process extends Async_Request {
 		$this->spawn();
 	}
 
-	private function mark_as_dead() {
+	protected function mark_as_dead() {
 		$this->do_action( 'dead' );
 		$this->status->mark_as_dead();
 		$this->cleanup();

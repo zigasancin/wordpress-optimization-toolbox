@@ -82,7 +82,7 @@ abstract class Abstract_Page {
 	 * @param bool   $parent   Does a page have a parent (will be added as a sub menu).
 	 * @param bool   $nextgen  Is that a NextGen subpage.
 	 */
-	public function __construct( $slug, $title, $parent = false, $nextgen = false ) {
+	public function __construct( $slug, $title, $parent = false, $nextgen = false, $is_upsell_link = false ) {
 		$this->slug     = $slug;
 		$this->settings = Settings::get_instance();
 
@@ -101,8 +101,13 @@ abstract class Abstract_Page {
 				$title,
 				$title,
 				$nextgen ? 'NextGEN Manage gallery' : 'manage_options',
-				$this->slug,
-				array( $this, 'render' )
+				$is_upsell_link ?
+					$this->get_utm_link(
+						array(
+							'utm_campaign' => $slug,
+						)
+					) : $this->slug,
+				$is_upsell_link ? null : array( $this, 'render' )
 			);
 		}
 
@@ -442,7 +447,7 @@ abstract class Abstract_Page {
 			$this->has_onload_modal()
 			|| $hide_upgrade_modal
 			|| $whitelabel_hide_doc_link
-			|| ( $is_on_subsite_screen && ! $this->settings->has_bulk_smush_page() )
+			|| ( $is_on_subsite_screen && ! $this->settings->has_webp_page() )
 		) {
 			$should_ignore_upgrade_modal = $whitelabel_hide_doc_link || $this->has_onload_modal( 'onboarding' );
 			if ( $should_ignore_upgrade_modal ) {
@@ -451,7 +456,7 @@ abstract class Abstract_Page {
 			return;
 		}
 
-		$cta_url                 = $this->settings->has_bulk_smush_page() ? Helper::get_page_url( 'smush-bulk' ) : '';
+		$cta_url                 = Helper::get_page_url( 'smush-webp' );
 		$this->modals['updated'] = array(
 			'cta_url' => $cta_url,
 		);
@@ -599,10 +604,10 @@ abstract class Abstract_Page {
 	 * @return string
 	 */
 	public function get_doc_url() {
-		$doc = 'https://wpmudev.com/docs/wpmu-dev-plugins/smush/';
-		if ( ! WP_Smush::is_pro() ) {
-			$doc = 'https://wpmudev.com/docs/wpmu-dev-plugins/smush/?utm_source=smush&utm_medium=plugin&utm_campaign=smush_pluginlist_docs';
-		}
+		$doc = $this->get_utm_link(
+			array( 'utm_campaign' => 'smush_pluginlist_docs' ),
+			'https://wpmudev.com/docs/wpmu-dev-plugins/smush/'
+		);
 
 		switch ( $this->get_slug() ) {
 			case 'smush-bulk':
@@ -1016,17 +1021,7 @@ abstract class Abstract_Page {
 			$url = $this->upgrade_url;
 		}
 
-		if ( WP_Smush::is_pro() ) {
-			return $url;
-		}
-
-		$default = array(
-			'utm_source' => 'smush',
-			'utm_medium' => 'plugin',
-		);
-		$args    = wp_parse_args( $args, $default );
-
-		return add_query_arg( $args, $url );
+		return Helper::get_utm_link( $args, $url );
 	}
 
 	public function get_connect_site_link() {

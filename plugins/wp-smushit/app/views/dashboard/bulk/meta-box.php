@@ -9,6 +9,8 @@
  * @var string $upsell_url                    Upsell URL.
  * @var bool   $background_processing_enabled Whether background processing is enabled or not.
  * @var bool   $background_in_processing      Whether BO is in processing or not.
+ * @var bool   $bulk_background_process_dead  Whether Bulk Smush background process is dead or not.
+ * @var bool   $scan_background_process_dead  Whether Scan background process is dead or not.
  * @var int    $total_count                   Total count.
  */
 
@@ -26,6 +28,10 @@ if ( $background_processing_enabled ) {
 <?php
 if ( $background_in_processing ) {
 	$this->view( 'background-in-processing', array(), 'views/dashboard/bulk' );
+} elseif ( $scan_background_process_dead ) {
+	$this->view( 'scan-background-process-dead', array(), 'views/dashboard/bulk' );
+} elseif ( $bulk_background_process_dead ) {
+	$this->view( 'bulk-background-process-dead', array(), 'views/dashboard/bulk' );
 } elseif ( 0 === $total_count ) {
 	$this->view( 'media-lib-empty', array(), 'views/dashboard/bulk' );
 } elseif ( 0 === $uncompressed ) {

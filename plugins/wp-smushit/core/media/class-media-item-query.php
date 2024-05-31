@@ -2,10 +2,26 @@
 
 namespace Smush\Core\Media;
 
+use Smush\Core\Array_Utils;
 use Smush\Core\Smush\Smush_Optimization;
 use Smush\Core\Smush_File;
+use Smush\Core\Url_Utils;
 
 class Media_Item_Query {
+	/**
+	 * @var Url_Utils
+	 */
+	private $url_utils;
+	/**
+	 * @var Array_Utils
+	 */
+	private $array_utils;
+
+	public function __construct() {
+		$this->url_utils   = new Url_Utils();
+		$this->array_utils = new Array_Utils();
+	}
+
 	public function fetch( $offset = 0, $limit = - 1 ) {
 		global $wpdb;
 		$query = $this->make_query( 'ID', $offset, $limit );
@@ -130,5 +146,166 @@ class Media_Item_Query {
 		$slice_size = (int) $slice_size;
 
 		return ( $slice - 1 ) * $slice_size;
+	}
+
+	/**
+	 * @see attachment_url_to_postid()
+	 */
+	public function attachment_urls_to_ids( $urls ) {
+		if ( empty( $urls ) ) {
+			return array();
+		}
+
+		$relative_urls = array_map( array( $this, 'convert_attachment_url_to_relative' ), $urls );
+		$escaped_urls  = array_map( function ( $url ) {
+			return "'" . esc_sql( $url ) . "'";
+		}, $relative_urls );
+		$in            = join( ',', $escaped_urls );
+
+		global $wpdb;
+		$sql = "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})";
+
+		$results = $wpdb->get_results( $sql, ARRAY_A );
+		if ( empty( $results ) ) {
+			return array();
+		}
+
+		$ids = array();
+		foreach ( $results as $result ) {
+			$meta_value   = $result['meta_value'];
+			$index        = array_search( $meta_value, $relative_urls, true );
+			$original_url = $urls[ $index ];
+
+			$ids[ $original_url ] = $result['post_id'];
+		}
+		return $ids;
+	}
+
+	public function urls_to_size_data( $urls ) {
+		if ( empty( $urls ) || ! is_array( $urls ) ) {
+			return array();
+		}
+
+		global $wpdb;
+
+		$wild             = '%';
+		$meta_value_likes = [];
+		foreach ( $urls as $url ) {
+			$meta_value_likes[] = $wpdb->prepare( "meta_value LIKE %s", $wild . $wpdb->esc_like( basename( $url ) ) . $wild );
+		}
+		$where      = join( ' OR ', $meta_value_likes );
+		$sql        = "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attachment_metadata' AND ({$where})";
+		$db_results = $wpdb->get_results( $sql, ARRAY_A );
+		if ( empty( $db_results ) ) {
+			return array();
+		}
+
+		return $this->prepare_urls_to_size_data_result( $urls, $db_results );
+	}
+
+	private function get_main_file_data_from_wp_attachment_metadata( $attachment_id, $meta_value, $absolute_url ) {
+		if ( empty( $meta_value ) ) {
+			return array();
+		}
+
+		$file = $this->array_utils->get_array_value( $meta_value, 'file' );
+		if ( $this->convert_attachment_url_to_relative( $absolute_url ) === $file ) {
+			$width  = $this->array_utils->get_array_value( $meta_value, 'width' );
+			$height = $this->array_utils->get_array_value( $meta_value, 'height' );
+			if ( $width && $height ) {
+				return array(
+					'id'     => (int) $attachment_id,
+					'width'  => (int) $width,
+					'height' => (int) $height,
+				);
+			}
+		}
+
+		return array();
+	}
+
+	private function get_size_data_from_wp_attachment_metadata( $attachment_id, $meta_value, $absolute_url ) {
+		if ( empty( $meta_value ) ) {
+			return array();
+		}
+
+		$sizes = $this->array_utils->get_array_value( $meta_value, 'sizes' );
+		$sizes = $this->array_utils->ensure_array( $sizes );
+		if ( empty( $sizes ) ) {
+			return array();
+		}
+
+		foreach ( $sizes as $size ) {
+			$file = $this->array_utils->get_array_value( $size, 'file' );
+			if ( basename( $absolute_url ) === $file ) {
+				$width  = $this->array_utils->get_array_value( $size, 'width' );
+				$height = $this->array_utils->get_array_value( $size, 'height' );
+
+				if ( $file && $width && $height ) {
+					return array(
+						'id'     => (int) $attachment_id,
+						'width'  => (int) $width,
+						'height' => (int) $height,
+					);
+				}
+			}
+		}
+		return array();
+	}
+
+	private function convert_attachment_url_to_relative( $url ) {
+		return $this->url_utils->make_media_url_relative( $url );
+	}
+
+	/**
+	 * @param $urls
+	 * @param array $db_results
+	 *
+	 * @return array
+	 */
+	private function prepare_urls_to_size_data_result( $urls, $db_results ) {
+		$return = array();
+		foreach ( $urls as $url ) {
+			if ( $this->is_non_media_library_url( $url ) ) {
+				continue;
+			}
+
+			foreach ( $db_results as $result ) {
+				$attachment_id = $this->array_utils->get_array_value( $result, 'post_id' );
+				$meta_value    = $this->array_utils->get_array_value( $result, 'meta_value' );
+				if ( empty( $attachment_id ) || empty( $meta_value ) ) {
+					continue;
+				}
+
+				$file_name = basename( $url );
+				if ( strpos( $meta_value, $file_name ) === false ) {
+					continue;
+				}
+
+				$meta_value     = maybe_unserialize( $meta_value );
+				$main_file_data = $this->get_main_file_data_from_wp_attachment_metadata( $attachment_id, $meta_value, $url );
+				if ( ! empty( $main_file_data ) ) {
+					$return[ $url ] = $main_file_data;
+					break;
+				} else {
+					// Look for a size
+					$size_data = $this->get_size_data_from_wp_attachment_metadata( $attachment_id, $meta_value, $url );
+					if ( ! empty( $size_data ) ) {
+						$return[ $url ] = $size_data;
+						break;
+					}
+				}
+			}
+		}
+		return $return;
+	}
+
+	/**
+	 * @param $url
+	 *
+	 * @return bool
+	 */
+	private function is_non_media_library_url( $url ): bool {
+		return $this->convert_attachment_url_to_relative( $url ) === $url;
 	}
 }

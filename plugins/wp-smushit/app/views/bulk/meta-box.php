@@ -25,8 +25,12 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+$start_bulk_webp_conversion = ! empty( $_GET['smush-action'] ) && 'start-bulk-webp-conversion' === wp_unslash( $_GET['smush-action'] );
+
 if ( 0 !== absint( $total_count ) ) :
-	if ( $background_processing_enabled ) {
+	if ( $start_bulk_webp_conversion && $this->settings->is_webp_module_active() ) {
+		$msg = __( 'When Local WebP is enabled, Bulk Smush will convert your images to .webp format in addition to its regular smushing for optimal performance.', 'wp-smushit' );
+	} elseif ( $background_processing_enabled ) {
 		$msg = __( 'Bulk smush detects images that can be optimized and allows you to compress them in bulk in the background without any quality loss.', 'wp-smushit' );
 	} else {
 		$msg = __( 'Bulk smush detects images that can be optimized and allows you to compress them in bulk.', 'wp-smushit' );
@@ -36,6 +40,12 @@ if ( 0 !== absint( $total_count ) ) :
 <?php endif; ?>
 
 <?php
+$this->view(
+	'loopback-error-dialog',
+	array(),
+	'modals'
+);
+
 // If there are no images in media library.
 if ( 0 === absint( $total_count ) ) {
 	$this->view( 'media-lib-empty', array(), 'views/bulk' );
@@ -104,13 +114,21 @@ if ( ! $can_use_background ) {
 		),
 		'views/bulk'
 	);
-} elseif ( ! WP_Smush::is_pro() ) {
+} else {
 	$this->view(
-		'cdn-upsell',
-		array(
-			'background_in_processing' => $background_in_processing,
-			'bulk_upgrade_url'         => $upsell_cdn_url,
-		),
-		'views/bulk'
+		'retry-bulk-smush-notice',
+		array(),
+		'modals'
 	);
+
+	if ( ! WP_Smush::is_pro() ) {
+		$this->view(
+			'cdn-upsell',
+			array(
+				'background_in_processing' => $background_in_processing,
+				'bulk_upgrade_url'         => $upsell_cdn_url,
+			),
+			'views/bulk'
+		);
+	}
 }

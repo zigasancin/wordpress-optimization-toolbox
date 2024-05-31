@@ -7,112 +7,36 @@
  *
  * @var Smush\App\Abstract_Page $this  Page.
  */
+use Smush\Core\Webp\Webp_Configuration;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-$is_configured = WP_Smush::get_instance()->core()->mod->webp->get_is_configured_with_error_message();
+$webp_configuration        = Webp_Configuration::get_instance();
+$is_configured             = $webp_configuration->is_configured();
+$direct_conversion_enabled = $webp_configuration->direct_conversion_enabled();
+$header_desc               = $direct_conversion_enabled ?
+					__( 'Serve WebP images directly from your server to supported browsers, with one click. All without relying on a CDN or any server configuration.', 'wp-smushit' ) :
+					__( 'Serve WebP images directly from your server to supported browsers, while seamlessly switching to original images for those without WebP support. All without relying on a CDN. Uses a server-side setup.', 'wp-smushit' );
 ?>
 
 <p>
-	<?php esc_html_e( "Locally serve WebP versions of your images to supported browsers, and gracefully fall back on JPEGs and PNGs for browsers that don't support WebP.", 'wp-smushit' ); ?>
+	<?php echo esc_html( $header_desc ); ?>
 </p>
 
-<span class="sui-settings-label" style="font-size:13px;color:#333333;font-weight: bold;">
-	<?php esc_html_e( 'Status', 'wp-smushit' ); ?>
-</span>
-
-<?php if ( true === $is_configured ) : ?>
-	<div class="sui-notice sui-notice-success">
-		<div class="sui-notice-content">
-			<div class="sui-notice-message">
-				<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
-				<p>
-					<?php
-					esc_html_e( 'WebP conversion is active and working well.', 'wp-smushit' );
-
-					if ( isset( $_SERVER['WPMUDEV_HOSTED'] ) ) :
-						if ( ! apply_filters( 'wpmudev_branding_hide_doc_link', false ) ) :
-							esc_html_e( " Since your site is hosted with WPMU DEV, we've automatically preconfigured the conversion for you.", 'wp-smushit' );
-						else :
-							esc_html_e( ' Your hosting provider has preconfigured the conversion for you.', 'wp-smushit' );
-						endif;
-					endif;
-					?>
-				</p>
-				<p>
-					<?php
-					printf(
-						/* translators: 1. opening 'b' tag, 2. closing 'b' tag, 3. opening 'a' tag, 4. closing 'a' tag */
-						esc_html__( '%1$sNote:%2$s You need to use the %3$sBulk Smush%4$s tool to convert all your images as WebP format. ', 'wp-smushit' ),
-						'<b>',
-						'</b>',
-						! is_multisite() ? '<a href="' . esc_url( $this->get_url( 'smush-bulk' ) ) . '">' : '',
-						( ! is_multisite() ? '</a>' : '' )
-					);
-
-					if ( ! is_multisite() ) :
-						if ( ! $this->settings->get( 'auto' ) ) {
-							printf(
-								/* translators: %1$s - opening link tag, %2$s - </a> */
-								esc_html__( 'You can also enable %3$sAutomatic Compression%2$s to convert newly uploaded image files automatically going forward.', 'wp-smushit' ),
-								'<a href="' . esc_url( network_admin_url( 'admin.php?page=smush' ) ) . '">',
-								'</a>',
-								'<a href="' . esc_url( $this->get_url( 'smush-bulk' ) ) . '#column-auto">'
-							);
-						} else {
-							esc_html_e( 'Newly uploaded images will be automatically converted to WebP format.', 'wp-smushit' );
-						}
-					endif;
-					?>
-				</p>
-				<?php if ( $this->settings->get( 's3' ) && ! WP_Smush::get_instance()->core()->s3->setting_status() ) : ?>
-					<p>
-						<?php
-						printf(
-							/* translators: 1. opening 'b' tag, 2. closing 'b' tag */
-							esc_html__( '%1$sNote:%2$s We noticed the Amazon S3 Integration is enabled. Offloaded images will not be served in WebP format, but Smush will still create local WebP copies of all images. If this is undesirable, please deactivate the WebP module below.', 'wp-smushit' ),
-							'<b>',
-							'</b>'
-						);
-						?>
-					</p>
-				<?php endif; ?>
-			</div>
-		</div>
-	</div>
-<?php else : ?>
-	<div class="sui-notice sui-notice-warning">
-		<div class="sui-notice-content">
-			<div class="sui-notice-message">
-				<i class="sui-notice-icon sui-icon-warning-alert sui-md" aria-hidden="true"></i>
-				<p><?php echo esc_html( $is_configured ); ?></p>
-
-				<?php if ( $this->settings->get( 's3' ) && ! WP_Smush::get_instance()->core()->s3->setting_status() ) : ?>
-					<p>
-						<?php
-						printf(
-							/* translators: 1. opening 'b' tag, 2. closing 'b' tag */
-							esc_html__( '%1$sNote:%2$s We noticed the Amazon S3 Integration is enabled. Offloaded images will not be served in WebP format, but Smush will still create local WebP copies of all images. If this is undesirable, please deactivate the WebP module below.', 'wp-smushit' ),
-							'<b>',
-							'</b>'
-						);
-						?>
-					</p>
-				<?php endif; ?>
-
-				<button id="smush-webp-toggle-wizard" type="button" class="sui-button" style="padding-left: 14px; margin-left: 26px;">
-					<span class="sui-loading-text">
-						<?php esc_html_e( 'Configure', 'wp-smushit' ); ?>
-					</span>
-
-					<span class="sui-icon-loader sui-loading" aria-hidden="true"></span>
-				</button>
-			</div>
-		</div>
-	</div>
-<?php endif; ?>
+<?php
+if ( $is_configured ) {
+	$this->view( 'webp/configured-meta-box' );
+} else {
+	$this->view(
+		'webp/required-configuration-meta-box',
+		array(
+			'error_message' => $webp_configuration->server_configuration()->get_configuration_message(),
+		)
+	);
+}
+?>
 
 <div class="sui-box-settings-row">
 	<div class="sui-box-settings-col-1">
@@ -142,6 +66,50 @@ $is_configured = WP_Smush::get_instance()->core()->mod->webp->get_is_configured_
 		</span>
 	</div>
 </div>
+
+<?php
+if ( $direct_conversion_enabled ) :
+	$webp_fallback_activated = $this->settings->is_webp_fallback_active();
+	?>
+<div class="sui-box-settings-row">
+	<div class="sui-box-settings-col-1">
+		<span class="sui-settings-label">
+			<?php esc_html_e( 'Legacy Browser Support', 'wp-smushit' ); ?>
+		</span>
+		<span class="sui-description">
+			<?php esc_html_e( 'Use JavaScript to serve original image files to unsupported browsers.', 'wp-smushit' ); ?>
+		</span>
+	</div>
+	<div class="sui-box-settings-col-2">
+		<div class="sui-form-field">
+			<label for="webp-fallback" class="sui-toggle">
+				<input
+					type="checkbox"
+					id="webp-fallback"
+					name="webp-fallback"
+					aria-labelledby="webp-fallback-label"
+					aria-describedby="webp-fallback-description"
+					<?php checked( $webp_fallback_activated ); ?>
+				/>
+				<span class="sui-toggle-slider" aria-hidden="true"></span>
+				<span id="webp-fallback-label" class="sui-toggle-label">
+					<?php esc_html_e( 'Enable JavaScript Fallback', 'wp-smushit' ); ?>
+				</span>
+				<span class="sui-description">
+					<?php
+					printf(
+						/* translators: 1: Opening a link, 2: Closing a link */
+						esc_html__( 'Enable this option to serve original files to unsupported browsers. %1$sCheck Browser Compatibility%2$s.', 'wp-smushit' ),
+						'<a target="_blank" href="https://caniuse.com/webp">',
+						'</a>'
+					);
+					?>
+				</span>
+			</label>
+		</div>
+	</div>
+</div>
+<?php endif; ?>
 
 <div class="sui-box-settings-row">
 	<div class="sui-box-settings-col-1">

@@ -538,10 +538,24 @@ div.wp-smush-info.notice {
 #smush-box-cdn-upsell,
 #smush-box-webp-wizard {
 	.sui-upsell-list {
-		max-width: 525px;
+		max-width: 490px;
 		text-align: left;
 		margin: 0 auto;
+		li {
+			font-size:12px;
+			border-bottom:1px solid #f2f2f2;
+			padding-bottom: 10px;
+			margin-bottom: 15px;
+			letter-spacing: -0.23px;
+			&:last-child {
+				border-bottom: none;
+			}
+		}
 	}
+}
+
+#smush-box-cdn-upsell .sui-upsell-list {
+	max-width:350px;
 }
 
 @media only all and (max-width: 1000px) {

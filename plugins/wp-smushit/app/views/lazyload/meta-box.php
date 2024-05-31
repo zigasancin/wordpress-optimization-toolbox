@@ -537,9 +537,9 @@ wp_enqueue_style( 'wp-color-picker' );
 		</div>
 
 		<div class="sui-form-field">
-			<strong><?php esc_html_e( 'Classes & IDs', 'wp-smushit' ); ?></strong>
+			<strong><?php esc_html_e( 'Keywords', 'wp-smushit' ); ?></strong>
 			<div class="sui-description">
-				<?php esc_html_e( 'Additionally, you can specify classes or IDs to avoid lazy loading. This gives you absolute control over each image on a page, not just the page itself.', 'wp-smushit' ); ?>
+				<?php esc_html_e( 'Specify keywords from the image or iframe code - classes, IDs, filenames, source URLs or any string of characters - to exclude from lazy loading (case-sensitive).', 'wp-smushit' ); ?>
 			</div>
 			<?php
 			$strings = '';
@@ -547,12 +547,12 @@ wp_enqueue_style( 'wp-color-picker' );
 				$strings = join( PHP_EOL, $settings['exclude-classes'] );
 			}
 			?>
-			<textarea class="sui-form-control" name="exclude-classes" placeholder="<?php esc_attr_e( 'Add classes or IDs, one per line', 'wp-smushit' ); ?>"><?php echo esc_attr( $strings ); ?></textarea>
+			<textarea class="sui-form-control" name="exclude-classes" placeholder="<?php esc_attr_e( 'Add keywords, one per line', 'wp-smushit' ); ?>"><?php echo esc_attr( $strings ); ?></textarea>
 			<div class="sui-description">
 				<?php
 				printf(
 					/* translators: %1$s - opening strong tag, %2$s - closing strong tag */
-					esc_html__( 'Add one class or ID per line, including the prefix. E.g %1$s#image-id%2$s or %1$s.image-class%2$s.', 'wp-smushit' ),
+					esc_html__( 'Add one keyword per line. E.g. %1$s#image-id%2$s or %1$s.image-class%2$s or %1$slogo_image%2$s or %1$sgo_imag%2$s or %1$sx.com/%2$s', 'wp-smushit' ),
 					'<strong>',
 					'</strong>'
 				);

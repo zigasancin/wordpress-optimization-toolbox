@@ -97,7 +97,12 @@
     a {
       text-decoration: none !important;
       font-weight: 700 !important;
-      color: #286EF1 !important;
+      color: #0059FF !important;
+      transition: color 0.5s;
+    }
+
+    a:hover {
+      color: #0C33A9 !important;
     }
 
     .hidden-img img {
@@ -111,7 +116,7 @@
       font-size: 13px !important;
       line-height: 20px;
       font-weight: bold;
-      background: #286EF1;
+      background: #0059FF;
       text-decoration: none !important;
       padding: 10px 15px;
       color: #ffffff !important;
@@ -120,6 +125,7 @@
       margin: 20px auto;
       text-transform: unset !important;
       min-width: unset !important;
+      transition: background 0.5s;
     }
 
     small {
@@ -129,6 +135,15 @@
 
     .main-content img {
       max-width: 100% !important;
+    }
+
+    .main-content .button {
+      background: #0059FF !important;
+      color:#fff !important;
+      transition: background 0.5s;
+    }
+    .main-content .button:hover {
+      background: #0C33A9 !important;
     }
 
     @media (min-width: 600px) {
@@ -228,14 +243,20 @@
         color:#F8F8F8;
       }
       .main-content .button {
-        background: #286efa !important;
+        background: #0059FF !important;
         color:#fff !important;
+      }
+      .main-content .button:hover {
+        background: #0C33A9 !important;
       }
       h2 {
         color: #f2f2f2 !important;
       }
       h2 a{
-        color: #286EFA !important;
+        color: #0059FF !important;
+      }
+      h2 a:hover{
+        color: #0C33A9 !important;
       }
       .main-content p, .summary-compression p,.summary-compression td, .summary-compression strong, .summary-compression span{
         color: #F8F8F8 !important;
@@ -304,14 +325,23 @@
       color:#F8F8F8;
     }
     [data-ogsc] .main-content .button {
-      background: #286efa !important;
+      background: #0059FF !important;
       color:#fff !important;
+    }
+    [data-ogsc] .main-content .button:hover {
+      background: #0C33A9 !important;
+    }
+    [data-ogsc] .main-content .button:hover{
+      background: #0C33A9 !important;
     }
     [data-ogsc] h2 {
       color: #f2f2f2 !important;
     }
     [data-ogsc] h2 a{
-      color: #286EFA !important;
+      color: #0059FF !important;
+    }
+    [data-ogsc] h2 a:hover{
+      color: #0C33A9 !important;
     }
      [data-ogsc] .main-content p,  [data-ogsc] .summary-compression p, [data-ogsc] .summary-compression td,  [data-ogsc] .summary-compression strong,  [data-ogsc] .summary-compression span{
       color: #F8F8F8 !important;

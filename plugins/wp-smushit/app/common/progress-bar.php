@@ -73,3 +73,9 @@ if ( ! defined( 'WPINC' ) ) {
 		</a>
 	</div>
 </div>
+<?php
+$this->view(
+	'stop-bulk-smush',
+	array(),
+	'modals'
+);

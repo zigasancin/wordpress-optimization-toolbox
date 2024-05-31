@@ -9,9 +9,11 @@
 namespace Smush\Core;
 
 use Exception;
+use Smush\Core\CDN\CDN_Controller;
 use WP_Error;
 use WP_REST_Request;
 use WP_Smush;
+use Smush\Core\Webp\Webp_Configuration;
 
 /**
  * Class Configs
@@ -110,6 +112,7 @@ class Configs {
 						'original'          => true,
 						'backup'            => true,
 						'png_to_jpg'        => true,
+						'background_email'  => false,
 						'nextgen'           => false,
 						's3'                => false,
 						'gutenberg'         => false,
@@ -319,18 +322,19 @@ class Configs {
 					}
 				}
 
-				// Update the flag file when local webp changes.
-				if ( isset( $new_settings['webp_mod'] ) && $new_settings['webp_mod'] !== $stored_settings['webp_mod'] ) {
-					WP_Smush::get_instance()->core()->mod->webp->toggle_webp( $new_settings['webp_mod'] );
-					// Hide the wizard form if Local Webp is configured.
-					if ( WP_Smush::get_instance()->core()->mod->webp->is_configured() ) {
-						update_site_option( 'wp-smush-webp_hide_wizard', 1 );
-					}
+				// Update Local WebP status.
+				if ( isset( $new_settings['webp_mod'] ) ) {
+					$webp_configuration        = Webp_Configuration::get_instance();
+					$enable_webp               = ! empty( $new_settings['webp_mod'] );
+					$direct_conversion_enabled = ! empty( $new_settings['webp_direct_conversion'] );
+
+					$settings_handler->set( 'webp_direct_conversion', $direct_conversion_enabled );
+					$webp_configuration->toggle_module( $enable_webp );
 				}
 
 				// Update the CDN status for CDN changes.
 				if ( isset( $new_settings['cdn'] ) && $new_settings['cdn'] !== $stored_settings['cdn'] ) {
-					WP_Smush::get_instance()->core()->mod->cdn->toggle_cdn( $new_settings['cdn'] );
+					CDN_Controller::get_instance()->toggle_cdn( $new_settings['cdn'] );
 				}
 
 				// Keep the stored settings that aren't present in the incoming one.
@@ -537,7 +541,7 @@ class Configs {
 			'bulk_smush'   => Settings::get_instance()->get_bulk_fields(),
 			'lazy_load'    => Settings::get_instance()->get_lazy_load_fields(),
 			'cdn'          => Settings::get_instance()->get_cdn_fields(),
-			'webp_mod'     => array(),
+			'webp_mod'     => Settings::get_instance()->get_webp_fields(),
 			'integrations' => Settings::get_instance()->get_integrations_fields(),
 			'settings'     => Settings::get_instance()->get_settings_fields(),
 		);
@@ -546,11 +550,14 @@ class Configs {
 
 		if ( ! empty( $config['settings'] ) ) {
 			foreach ( $settings_data as $name => $fields ) {
+				if ( 'webp_mod' === $name ) {
+					$display_array[ $name ] = $this->get_webp_settings_display_value( $config, $fields );
+					continue;
+				}
 
 				// Display the setting inactive when the module is off.
 				if (
-					'webp_mod' === $name ||
-					( in_array( $name, array( 'cdn', 'lazy_load' ), true ) && empty( $config['settings'][ $name ] ) )
+					in_array( $name, array( 'cdn', 'lazy_load' ), true ) && empty( $config['settings'][ $name ] )
 				) {
 					$display_array[ $name ] = $this->format_boolean_setting_value( $name, $config['settings'][ $name ] );
 					continue;
@@ -592,6 +599,41 @@ class Configs {
 		);
 
 		return $display_array;
+	}
+
+	private function get_webp_settings_display_value( $config, $fields ) {
+		$webp_module_activated = WP_Smush::is_pro() && ! empty( $config['settings']['webp_mod'] );
+		if ( ! $webp_module_activated ) {
+			return $this->format_boolean_setting_value( 'webp_mod', $webp_module_activated );
+		}
+
+		$direct_conversion_enabled = ! empty( $config['settings']['webp_direct_conversion'] );
+		$webp_mode                 = $direct_conversion_enabled ? __( 'Direct Conversion', 'wp-smushit' ) : __( 'Server Configuration', 'wp-smushit' );
+
+		$formatted_rows = array(
+			$this->format_config_description(
+				__( 'Local WebP', 'wp-smushit' ),
+				$this->format_boolean_setting_value( 'webp_mod', $webp_module_activated )
+			),
+			$this->format_config_description(
+				__( 'WebP Mode', 'wp-smushit' ),
+				$webp_mode
+			),
+		);
+
+		if ( $direct_conversion_enabled ) {
+			$legacy_browser_support = ! empty( $config['settings']['webp_fallback'] );
+			$formatted_rows[]       = $this->format_config_description(
+				__( 'Legacy Browser Support', 'wp-smushit' ),
+				$this->format_boolean_setting_value( 'webp_fallback', $legacy_browser_support )
+			);
+		}
+
+		return $formatted_rows;
+	}
+
+	private function format_config_description( $field_name, $field_description ) {
+		return "{$field_name} - {$field_description}";
 	}
 
 	/**

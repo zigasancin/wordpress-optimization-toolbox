@@ -12,6 +12,7 @@ use WDEV_Logger;
  * @method string|bool copy_provider_file_to_server( Media_Library_Item $media_library_item, string $file_path )
  * @method get_setting( string $string )
  * @method Item_Handler get_item_handler( string $string )
+ * @method string get_stream_wrapper_file( $url, $file, $attachment_id, Media_Library_Item $as3cf_item )
  */
 class WP_Offload_Media_Api {
 	private $return_value = null;
@@ -76,5 +77,45 @@ class WP_Offload_Media_Api {
 	 */
 	private function get_alt_method_name( $method_name ) {
 		return str_replace( '_provider_', '_s3_', $method_name );
+	}
+
+	public function delete_remote_files( $local_file_paths, $attachment_id ) {
+		if ( empty( $local_file_paths ) ) {
+			return;
+		}
+
+		$attached_file = $this->get_remote_file_path( $attachment_id );
+		if ( ! $attached_file ) {
+			return;
+		}
+
+		$attached_file_name = wp_basename( $attached_file );
+
+		if ( is_string( $local_file_paths ) ) {
+			$local_file_paths = array( $local_file_paths );
+		}
+
+		foreach ( $local_file_paths as $local_file_path ) {
+			$size_file_name   = basename( $local_file_path );
+			$remote_file_path = str_replace( $attached_file_name, $size_file_name, $attached_file );
+			if ( $remote_file_path ) {
+				wp_delete_file( $remote_file_path );
+			}
+		}
+	}
+
+	private function get_remote_file_path( $attachment_id ) {
+		if ( ! method_exists( '\\DeliciousBrains\WP_Offload_Media\Items\Media_Library_Item', 'get_by_source_id' ) ) {
+			return false;
+		}
+
+		$as3cf_item = Media_Library_Item::get_by_source_id( $attachment_id );
+		if ( empty( $as3cf_item ) || is_wp_error( $as3cf_item ) ) {
+			return false;
+		}
+
+		$attached_file = get_attached_file( $attachment_id );
+
+		return $this->get_stream_wrapper_file( $attached_file, null, $attachment_id, $as3cf_item );
 	}
 }

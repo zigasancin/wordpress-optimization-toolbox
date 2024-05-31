@@ -8,6 +8,8 @@
  * @var \Smush\App\Abstract_Page $this
  */
 
+use Smush\Core\CDN\CDN_Helper;
+
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
@@ -23,7 +25,7 @@ $button_text = __( 'Save changes', 'wp-smushit' );
  */
 $enabled = 'smush-integrations' === $current_tab ? apply_filters( 'wp_smush_integration_show_submit', false ) : true;
 
-if ( 'smush-cdn' === $current_tab && ! WP_Smush::get_instance()->core()->mod->cdn->get_status() ) {
+if ( 'smush-cdn' === $current_tab && ! CDN_Helper::get_instance()->is_cdn_active() ) {
 	$button_text = __( 'Save & Activate', 'wp-smushit' );
 	$button_msg  = __( 'Activating CDN...', 'wp-smushit' );
 }

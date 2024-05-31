@@ -11,10 +11,18 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+$start_bulk_webp_conversion = ! empty( $_GET['smush-action'] ) && 'start-bulk-webp-conversion' === wp_unslash( $_GET['smush-action'] );
+
 ?>
 
 <h3 class="sui-box-title">
 	<?php echo esc_html( $title ); ?>
+	<?php
+	if ( $start_bulk_webp_conversion && $this->settings->is_webp_module_active() ) {
+		echo ' - ';
+		esc_html_e( 'WebP Conversion', 'wp-smushit' );
+	}
+	?>
 </h3>
 
 <div class="sui-actions-right">

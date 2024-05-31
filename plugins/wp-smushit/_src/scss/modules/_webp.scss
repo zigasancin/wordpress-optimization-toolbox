@@ -7,7 +7,12 @@
 @include body-class(true) {
 
 	#smush-box-webp-webp {
-
+		.sui-box-header {
+			.smush-sui-tag-new {
+				font-size: 10px;
+				line-height: 12px;
+			}
+		}
 		.smush-webp-supported-browser {
 			height: 30px;
 			width: 30px;

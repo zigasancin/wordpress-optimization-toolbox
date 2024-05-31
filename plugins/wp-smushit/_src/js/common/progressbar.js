@@ -174,6 +174,7 @@ const SmushProgressBar = () => {
 	const bulkSmushDescription = document.querySelector( '.wp-smush-bulk-wrapper' );
 	const bulkRunningNotice = progressBar.querySelector( '#wp-smush-running-notice' );
 	const bulkSmushAllDone = document.querySelector( '.wp-smush-all-done' );
+	const stopBulkSmushModal = document.getElementById( 'smush-stop-bulk-smush-modal' );
 	let isStateHidden = false;
 	let onCancelCallback = () => {};
 
@@ -206,15 +207,51 @@ const SmushProgressBar = () => {
 				.setOnCancelCallback( () => {} )
 				.update( 0, 0 );
 			this.resetOriginalNotice();
+			this.closeStopBulkSmushModal();
 			return this;
 		},
 		show() {
 			// Show progress bar.
-			cancelBtn.onclick = onCancelCallback;
 			progressBar.classList.remove( 'sui-hidden' );
+			cancelBtn.onclick = this.showStopBulkSmushModal.bind( this );
 			this.hideBulkSmushDescription();
 			this.hideBulkSmushAllDone();
 			this.hideRecheckImagesNotice();
+		},
+		showStopBulkSmushModal() {
+			if ( ! stopBulkSmushModal ) {
+				return;
+			}
+
+			const stopBulkSmushButton = stopBulkSmushModal.querySelector( '.smush-stop-bulk-smush-button' );
+			stopBulkSmushButton.addEventListener( 'click', onCancelCallback, { once: true } );
+
+			// Displays the modal with the release's higlights if it exists.
+			const modalId = stopBulkSmushModal.id,
+			focusAfterClosed = 'wpbody-content',
+			focusWhenOpen = undefined,
+			hasOverlayMask = false,
+			isCloseOnEsc = false,
+			isAnimated = true;
+
+			window.SUI.openModal(
+				modalId,
+				focusAfterClosed,
+				focusWhenOpen,
+				hasOverlayMask,
+				isCloseOnEsc,
+				isAnimated
+			);
+		},
+		closeStopBulkSmushModal() {
+			if ( ! window.SUI ) {
+				return;
+			}
+			const isModalClosed = ( ! stopBulkSmushModal ) || ! stopBulkSmushModal.classList.contains( 'sui-content-fade-in' );
+			if ( isModalClosed ) {
+				return;
+			}
+			window.SUI.closeModal( stopBulkSmushModal.id );
 		},
 		setCancelButtonLabel( textContent ) {
 			cancelBtn.textContent = textContent;

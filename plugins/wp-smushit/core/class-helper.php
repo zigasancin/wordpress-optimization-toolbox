@@ -96,6 +96,7 @@ class Helper {
 						'backup'       => array(),
 						'api'          => array(),
 						'integrations' => array(),
+						'track'        => array(),
 					),
 				)
 			);
@@ -525,16 +526,30 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_url( $utm_campaign = '' ) {
-		$upgrade_url = 'https://wpmudev.com/project/wp-smush-pro/';
+		return self::get_utm_link( array( 'utm_campaign' => $utm_campaign ) );
+	}
 
-		return add_query_arg(
+	public static function get_utm_link( $args, $url = '' ) {
+		if ( empty( $url ) ) {
+			$url = 'https://wpmudev.com/project/wp-smush-pro/';
+		}
+
+		$hash = '';
+		if ( strpos( $url, '#' ) ) {
+			list( $url, $hash ) = explode( '#', $url );
+			$hash               = '#' . $hash;
+		}
+
+		$utm_source = WP_Smush::is_pro() ? 'smush_pro' : 'smush';
+		$args       = wp_parse_args(
+			$args,
 			array(
-				'utm_source'   => 'smush',
-				'utm_medium'   => 'plugin',
-				'utm_campaign' => $utm_campaign,
-			),
-			$upgrade_url
+				'utm_source' => $utm_source,
+				'utm_medium' => 'plugin',
+			)
 		);
+
+		return add_query_arg( $args, $url ) . $hash;
 	}
 
 	/**

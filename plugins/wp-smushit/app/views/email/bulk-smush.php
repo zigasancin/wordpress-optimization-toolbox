@@ -101,8 +101,8 @@
     </table>
     <p style="margin:27px 0 11px;padding: 0;text-align: center">
         <a class="button"
-        style="background:#286EFA;border-radius: 6px;font-family: Roboto, Arial, sans-serif;font-size: 13px;width: 141px;height:40px;padding: 0!important;font-weight: 500;line-height: 40px;text-align: center;margin-bottom: 0;display:inline-block!important;color:#fff!important;text-decoration:none!important;"
-        href="<?php echo esc_url( $redirect_url ); ?>"><?php esc_html_e( 'View full details', 'wp-smushit' ); ?></a>
+        style="background:#0059FF;border-radius: 6px;font-family: Roboto, Arial, sans-serif;font-size: 13px;width: 141px;height:40px;padding: 0!important;font-weight: 500;line-height: 40px;text-align: center;margin-bottom: 0;display:inline-block!important;color:#fff!important;text-decoration:none!important;"
+        href="<?php echo esc_url( $redirect_url ); ?>"><?php esc_html_e( 'View Full Report', 'wp-smushit' ); ?></a>
     </p>
 </div>
 <?php //phpcs:enable ?>
