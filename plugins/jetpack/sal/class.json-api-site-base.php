@@ -457,7 +457,7 @@ abstract class SAL_Site {
 	 *
 	 * @see class.json-api-site-jetpack.php for implementation.
 	 */
-	abstract protected function is_wpforteams_site();
+	abstract public function is_wpforteams_site();
 
 	/**
 	 * Get hub blog id for P2 sites.
@@ -953,6 +953,8 @@ abstract class SAL_Site {
 			'view_stats'          => stats_is_blog_user( $this->blog_id ),
 			'activate_plugins'    => $this->current_user_can( 'activate_plugins' ),
 			'update_plugins'      => $this->current_user_can( 'update_plugins' ),
+			'export'              => $this->current_user_can( 'export' ),
+			'import'              => $this->current_user_can( 'import' ),
 		);
 	}
 
@@ -1348,15 +1350,19 @@ abstract class SAL_Site {
 	}
 
 	/**
-	 * Returns the 'siteGoals' option if set (eg. share, promote, educate, sell, showcase), null otherwise.
+	 * Returns the 'site_goals' option if set (eg. share, promote, educate, sell, showcase).
 	 *
-	 * @return string|null
+	 * @return array
 	 **/
 	public function get_site_goals() {
-		$options = get_option( 'options' );
-		return empty( $options['siteGoals'] ) ? null : $options['siteGoals'];
-	}
+		$site_goals_option = get_option( 'site_goals' );
 
+		if ( is_array( $site_goals_option ) ) {
+			return $site_goals_option;
+		}
+
+		return array();
+	}
 	/**
 	 * Return site's launch status. Expanded in class.json-api-site-jetpack.php.
 	 *
@@ -1482,6 +1488,15 @@ abstract class SAL_Site {
 	}
 
 	/**
+	 * Get the option onboarding_segment coming from the Guided Flow
+	 *
+	 * @return string
+	 */
+	public function get_onboarding_segment() {
+		return get_option( 'onboarding_segment', '' );
+	}
+
+	/**
 	 * Get site option for completed launchpad checklist tasks
 	 *
 	 * @return string
@@ -1596,4 +1611,18 @@ abstract class SAL_Site {
 	public function get_wpcom_classic_early_release() {
 		return ! empty( get_option( 'wpcom_classic_early_release' ) );
 	}
+
+	/**
+	 * Get Zendesk site meta.
+	 *
+	 * @return array|null
+	 */
+	abstract public function get_zendesk_site_meta();
+
+	/**
+	 * Detect whether there's a pending plan for this site.
+	 *
+	 * @return bool
+	 */
+	abstract public function is_pending_plan();
 }

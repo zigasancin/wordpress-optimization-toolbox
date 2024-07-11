@@ -9,6 +9,7 @@ use Automattic\Jetpack\Connection\Client;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Connection\Rest_Authentication;
 use Automattic\Jetpack\Connection\REST_Connector;
+use Automattic\Jetpack\Connection\SSO;
 use Automattic\Jetpack\Current_Plan as Jetpack_Plan;
 use Automattic\Jetpack\Jetpack_CRM_Data;
 use Automattic\Jetpack\Plugins_Installer;
@@ -2590,7 +2591,7 @@ class Jetpack_Core_Json_Api_Endpoints {
 			'jetpack_sso_require_two_step'          => array(
 				'description'       => esc_html__( 'Require Two-Step Authentication', 'jetpack' ),
 				'type'              => 'boolean',
-				'default'           => 0,
+				'default'           => SSO\Helpers::is_require_two_step_checkbox_disabled(),
 				'validate_callback' => __CLASS__ . '::validate_boolean',
 				'jp_group'          => 'sso',
 			),
@@ -2638,6 +2639,27 @@ class Jetpack_Core_Json_Api_Endpoints {
 				'validate_callback' => __CLASS__ . '::validate_boolean',
 				'jp_group'          => 'subscriptions',
 			),
+			'jetpack_gravatar_in_email'             => array(
+				'description'       => esc_html__( 'Whether to show author avatar in the email byline', 'jetpack' ),
+				'type'              => 'boolean',
+				'default'           => 1,
+				'validate_callback' => __CLASS__ . '::validate_boolean',
+				'jp_group'          => 'subscriptions',
+			),
+			'jetpack_author_in_email'               => array(
+				'description'       => esc_html__( 'Whether to show author display name in the email byline', 'jetpack' ),
+				'type'              => 'boolean',
+				'default'           => 1,
+				'validate_callback' => __CLASS__ . '::validate_boolean',
+				'jp_group'          => 'subscriptions',
+			),
+			'jetpack_post_date_in_email'            => array(
+				'description'       => esc_html__( 'Whether to show date in the email byline', 'jetpack' ),
+				'type'              => 'boolean',
+				'default'           => 1,
+				'validate_callback' => __CLASS__ . '::validate_boolean',
+				'jp_group'          => 'subscriptions',
+			),
 			'wpcom_subscription_emails_use_excerpt' => array(
 				'description'       => esc_html__( 'Whether to use the excerpt in the email or not', 'jetpack' ),
 				'type'              => 'boolean',
@@ -2652,8 +2674,22 @@ class Jetpack_Core_Json_Api_Endpoints {
 				'validate_callback' => __CLASS__ . '::validate_subscriptions_reply_to',
 				'jp_group'          => 'subscriptions',
 			),
+			'jetpack_subscriptions_from_name'       => array(
+				'description'       => esc_html__( 'From name for newsletters emails', 'jetpack' ),
+				'type'              => 'string',
+				'default'           => '',
+				'validate_callback' => __CLASS__ . '::validate_subscriptions_reply_to_name',
+				'jp_group'          => 'subscriptions',
+			),
 			'sm_enabled'                            => array(
 				'description'       => esc_html__( 'Show popup Subscribe modal to readers.', 'jetpack' ),
+				'type'              => 'boolean',
+				'default'           => 0,
+				'validate_callback' => __CLASS__ . '::validate_boolean',
+				'jp_group'          => 'subscriptions',
+			),
+			'jetpack_subscribe_overlay_enabled'     => array(
+				'description'       => esc_html__( 'Show subscribe overlay on homepage.', 'jetpack' ),
 				'type'              => 'boolean',
 				'default'           => 0,
 				'validate_callback' => __CLASS__ . '::validate_boolean',
@@ -2668,6 +2704,13 @@ class Jetpack_Core_Json_Api_Endpoints {
 			),
 			'jetpack_subscriptions_login_navigation_enabled' => array(
 				'description'       => esc_html__( 'Add Subscriber Login block to the navigation.', 'jetpack' ),
+				'type'              => 'boolean',
+				'default'           => 0,
+				'validate_callback' => __CLASS__ . '::validate_boolean',
+				'jp_group'          => 'subscriptions',
+			),
+			'jetpack_subscriptions_subscribe_navigation_enabled' => array(
+				'description'       => esc_html__( 'Add Subscribe block to the navigation.', 'jetpack' ),
 				'type'              => 'boolean',
 				'default'           => 0,
 				'validate_callback' => __CLASS__ . '::validate_boolean',
@@ -2787,6 +2830,13 @@ class Jetpack_Core_Json_Api_Endpoints {
 			),
 			'wordads_second_belowpost'              => array(
 				'description'       => esc_html__( 'Display second ad below post?', 'jetpack' ),
+				'type'              => 'boolean',
+				'default'           => 1,
+				'validate_callback' => __CLASS__ . '::validate_boolean',
+				'jp_group'          => 'wordads',
+			),
+			'wordads_inline_enabled'                => array(
+				'description'       => esc_html__( 'Display inline ad within post content?', 'jetpack' ),
 				'type'              => 'boolean',
 				'default'           => 1,
 				'validate_callback' => __CLASS__ . '::validate_boolean',
@@ -3402,8 +3452,33 @@ class Jetpack_Core_Json_Api_Endpoints {
 	 * @return bool|WP_Error
 	 */
 	public static function validate_subscriptions_reply_to( $value, $request, $param ) {
-		$valid_values = array( 'author', 'no-reply' );
-		if ( ! empty( $value ) && ! in_array( $value, $valid_values, true ) ) {
+		require_once JETPACK__PLUGIN_DIR . 'modules/subscriptions/class-settings.php';
+		if ( ! empty( $value ) && ! Automattic\Jetpack\Modules\Subscriptions\Settings::is_valid_reply_to( $value ) ) {
+			return new WP_Error(
+				'invalid_param',
+				sprintf(
+					/* Translators: Placeholder is a parameter name. */
+					esc_html__( '%s must be a valid type.', 'jetpack' ),
+					$param
+				)
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * Validates that the parameter is among the valid reply-to types for subscriptions.
+	 *
+	 * @since 4.3.0
+	 *
+	 * @param string|bool     $value Value to check.
+	 * @param WP_REST_Request $request The request sent to the WP REST API.
+	 * @param string          $param Name of the parameter passed to endpoint holding $value.
+	 *
+	 * @return bool|WP_Error
+	 */
+	public static function validate_subscriptions_reply_to_name( $value, $request, $param ) {
+		if ( ! empty( $value ) && ! is_string( $value ) ) {
 			return new WP_Error(
 				'invalid_param',
 				sprintf(
