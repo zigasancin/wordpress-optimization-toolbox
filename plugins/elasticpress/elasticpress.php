@@ -3,7 +3,7 @@
  * Plugin Name:       ElasticPress
  * Plugin URI:        https://github.com/10up/ElasticPress
  * Description:       A fast and flexible search and query engine for WordPress.
- * Version:           5.0.2
+ * Version:           5.1.3
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            10up
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'EP_URL', plugin_dir_url( __FILE__ ) );
 define( 'EP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'EP_FILE', plugin_basename( __FILE__ ) );
-define( 'EP_VERSION', '5.0.2' );
+define( 'EP_VERSION', '5.1.3' );
 
 define( 'EP_PHP_VERSION_MIN', '7.4' );
 
@@ -105,7 +105,7 @@ spl_autoload_register(
  *
  * @since  2.2
  */
-define( 'EP_ES_VERSION_MAX', '7.10' );
+define( 'EP_ES_VERSION_MAX', '8.99' );
 define( 'EP_ES_VERSION_MIN', '5.2' );
 
 require_once __DIR__ . '/includes/compat.php';

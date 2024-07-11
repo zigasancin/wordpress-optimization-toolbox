@@ -56,7 +56,7 @@ class SearchOrdering extends Feature {
 
 		$this->summary = '<p>' . __( 'Selected posts will be inserted into search results in the specified position.', 'elasticpress' ) . '</p>';
 
-		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#custom-search-results', 'elasticpress' );
+		$this->docs_url = __( 'https://www.elasticpress.io/documentation/article/configuring-elasticpress-via-the-plugin-dashboard/#custom-search-results', 'elasticpress' );
 
 		$this->requires_install_reindex = false;
 
@@ -215,7 +215,7 @@ class SearchOrdering extends Feature {
 			'elasticpress',
 			esc_html__( 'Custom Results', 'elasticpress' ),
 			esc_html__( 'Custom Results', 'elasticpress' ),
-			Utils\get_capability(),
+			Utils\get_capability( 'search-ordering' ),
 			'edit.php?post_type=' . self::POST_TYPE_NAME
 		);
 	}
@@ -294,7 +294,7 @@ class SearchOrdering extends Feature {
 			'show_in_menu'         => false,
 			'query_var'            => true,
 			'rewrite'              => array( 'slug' => 'ep-pointer' ),
-			'capabilities'         => Utils\get_post_map_capabilities(),
+			'capabilities'         => Utils\get_post_map_capabilities( 'search-ordering' ),
 			'has_archive'          => false,
 			'hierarchical'         => false,
 			'menu_position'        => 100,

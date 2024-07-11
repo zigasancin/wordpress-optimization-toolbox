@@ -65,7 +65,7 @@ export const useIndex = (apiUrl, nonce) => {
 					 */
 					throw new Error(
 						__(
-							'Something went wrong. Find troubleshooting steps at https://elasticpress.zendesk.com/hc/en-us/articles/20857557098125/.',
+							'Something went wrong. Find troubleshooting steps at https://www.elasticpress.io/documentation/article/troubleshooting-guide-elasticpress-something-went-wrong-error/.',
 							'elasticpress',
 						),
 					);
@@ -91,7 +91,7 @@ export const useIndex = (apiUrl, nonce) => {
 				 */
 				throw new Error(
 					__(
-						'Unable to parse response. Find troubleshooting steps at https://elasticpress.zendesk.com/hc/en-us/articles/20857557098125/.',
+						'Unable to parse response. Find troubleshooting steps at https://www.elasticpress.io/documentation/article/troubleshooting-guide-elasticpress-something-went-wrong-error/.',
 						'elasticpress',
 					),
 				);

@@ -2,7 +2,7 @@
  * WordPress dependencies.
  */
 import { Panel, PanelBody } from '@wordpress/components';
-import { useEffect, WPElement } from '@wordpress/element';
+import { useEffect, useState, WPElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 /**
@@ -27,16 +27,47 @@ import { useSyncSettings } from '../provider';
  */
 export default () => {
 	const { createNotice } = useSettingsScreen();
-	const { isComplete, isEpio, isSyncing, logMessage, startSync, syncHistory, syncTrigger } =
-		useSync();
+	const {
+		errorCounts,
+		isComplete,
+		isEpio,
+		isSyncing,
+		logMessage,
+		startSync,
+		syncHistory,
+		syncTrigger,
+	} = useSync();
 	const { args, autoIndex } = useSyncSettings();
+
+	/**
+	 * State.
+	 */
+	const [isLogOpen, setIsLogOpen] = useState(false);
+	const [errorCount, setErrorCount] = useState(0);
+
+	/**
+	 * Handle toggling the log panel.
+	 *
+	 * @param {boolean} opened Whether the panel will be open.
+	 */
+	const onToggleLog = (opened) => {
+		setIsLogOpen(opened);
+	};
 
 	/**
 	 * Handle a completed sync.
 	 */
 	const onComplete = () => {
 		if (isComplete) {
+			const newErrorCount = errorCounts.reduce((c, e) => c + e.count, 0);
+
 			createNotice('success', __('Sync completed.', 'elasticpress'));
+
+			if (newErrorCount > errorCount) {
+				setIsLogOpen(true);
+			}
+
+			setErrorCount(newErrorCount);
 		}
 	};
 
@@ -70,7 +101,7 @@ export default () => {
 		logMessage(__('Starting sync…', 'elasticpress'), 'info');
 	};
 
-	useEffect(onComplete, [createNotice, isComplete]);
+	useEffect(onComplete, [createNotice, errorCount, errorCounts, isComplete]);
 	useEffect(onInit, [autoIndex, logMessage, startSync, syncTrigger]);
 
 	return (
@@ -98,7 +129,7 @@ export default () => {
 					<Controls />
 					{syncHistory.length ? <PutMapping /> : null}
 				</PanelBody>
-				<PanelBody initialOpen={false} title="Log">
+				<PanelBody onToggle={onToggleLog} opened={isLogOpen} title="Log">
 					<Log />
 				</PanelBody>
 				{syncHistory.length ? (

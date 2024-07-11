@@ -187,7 +187,7 @@ function maybe_skip_install() {
 		return;
 	}
 
-	if ( empty( $_GET['ep-skip-install'] ) || empty( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_GET['nonce'] ), 'ep-skip-install' ) || ! in_array( Screen::factory()->get_current_screen(), [ 'install' ], true ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+	if ( empty( $_GET['ep-skip-install'] ) || empty( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_GET['nonce'] ), 'ep-skip-install' ) || ! in_array( Screen::factory()->get_current_screen(), [ 'install' ], true ) ) {
 		return;
 	}
 
@@ -221,7 +221,11 @@ function maybe_clear_es_info_cache() {
 		return;
 	}
 
-	if ( empty( $_GET['ep-retry'] ) && ! in_array( Screen::factory()->get_current_screen(), [ 'dashboard', 'settings', 'install' ], true ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+	$isset_retry = ! empty( $_GET['ep-retry'] ) &&
+		! empty( $_GET['ep_retry_nonce'] ) &&
+		wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['ep_retry_nonce'] ) ), 'ep_retry_nonce' );
+
+	if ( ! $isset_retry && ! in_array( Screen::factory()->get_current_screen(), [ 'dashboard', 'settings', 'install' ], true ) ) {
 		return;
 	}
 
@@ -231,8 +235,8 @@ function maybe_clear_es_info_cache() {
 		delete_transient( 'ep_es_info' );
 	}
 
-	if ( ! empty( $_GET['ep-retry'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-		wp_safe_redirect( remove_query_arg( 'ep-retry' ) );
+	if ( $isset_retry ) {
+		wp_safe_redirect( remove_query_arg( [ 'ep-retry', 'ep_retry_nonce' ] ) );
 		exit();
 	}
 }
@@ -493,15 +497,28 @@ function action_admin_enqueue_dashboard_scripts() {
 		$weightable_fields       = $weighting->get_weightable_fields();
 		$weighting_configuration = $weighting->get_weighting_configuration_with_defaults();
 
-		wp_localize_script(
-			'ep_weighting_script',
-			'epWeighting',
-			array(
+		/**
+		 * Filter weighting dashboard options.
+		 *
+		 * @hook ep_weighting_options
+		 * @param  {array} $data Weighting dashboard options
+		 * @return  {array} New options array
+		 * @since 5.1.0
+		 */
+		$data = apply_filters(
+			'ep_weighting_options',
+			[
 				'apiUrl'                 => $api_url,
 				'metaMode'               => $meta_mode,
 				'weightableFields'       => $weightable_fields,
 				'weightingConfiguration' => $weighting_configuration,
-			)
+			]
+		);
+
+		wp_localize_script(
+			'ep_weighting_script',
+			'epWeighting',
+			$data
 		);
 
 		wp_set_script_translations( 'ep_weighting_script', 'elasticpress' );
@@ -518,9 +535,7 @@ function action_admin_enqueue_dashboard_scripts() {
 
 		wp_set_script_translations( 'ep_dashboard_scripts', 'elasticpress' );
 
-		$sync_url = ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) ?
-				network_admin_url( 'admin.php?page=elasticpress-sync&do_sync' ) :
-				admin_url( 'admin.php?page=elasticpress-sync&do_sync' );
+		$sync_url = Utils\get_sync_url( true );
 
 		$skip_url = ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) ?
 				network_admin_url( 'admin.php?page=elasticpress' ) :

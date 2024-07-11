@@ -260,7 +260,7 @@ abstract class Indexable {
 	 * @param  int     $object_id Object to index.
 	 * @param  boolean $blocking Blocking HTTP request or not.
 	 * @since  3.0
-	 * @return boolean
+	 * @return object|boolean
 	 */
 	public function index( $object_id, $blocking = false ) {
 		$document = $this->prepare_document( $object_id );
@@ -299,7 +299,7 @@ abstract class Indexable {
 		 *
 		 * @hook ep_after_index_{indexable_slug}
 		 * @param  {array} $document Document to index
-		 * @param  {array|boolean} $return ES response on success, false on failure
+		 * @param  {object|boolean} $return ES response on success, false on failure
 		 * @since  3.0
 		 */
 		do_action( 'ep_after_index_' . $this->slug, $document, $return );

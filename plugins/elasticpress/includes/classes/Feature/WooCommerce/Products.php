@@ -466,7 +466,7 @@ class Products {
 		// WooCommerce unsets the search term right after using it to fetch product IDs. Here we add it back.
 		$search_term = ! empty( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! empty( $search_term ) ) {
-			$query->set( 's', sanitize_text_field( $search_term ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$query->set( 's', sanitize_text_field( $search_term ) );
 
 			/**
 			 * Filter the fields used in WooCommerce Admin Product Search.
@@ -973,7 +973,7 @@ class Products {
 		 */
 		if ( ! empty( $_GET['orderby'] ) && $query->is_main_query() ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$orderby = sanitize_text_field( wp_unslash( $_GET['orderby'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
-			switch ( $orderby ) { // phpcs:ignore WordPress.Security.NonceVerification
+			switch ( $orderby ) {
 				case 'popularity':
 					$query->set( 'orderby', $this->get_orderby_meta_mapping( 'total_sales' ) );
 					$query->set( 'order', 'DESC' );

@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by Taylor Lovett on 16-January-2024 using Strauss.
+ * Modified by Taylor Lovett on 11-June-2024 using Strauss.
  * @see https://github.com/BrianHenryIE/strauss
  */
 

@@ -9,7 +9,7 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies.
  */
 import { useSettingsScreen } from '../../settings-screen';
-import { syncUrl } from '../config';
+import { syncUrl, syncNonce } from '../config';
 import { useFeatureSettings } from '../provider';
 import Feature from '../components/feature';
 import Tab from '../components/tab';
@@ -44,6 +44,7 @@ export default () => {
 		const url = new URL(syncUrl);
 
 		url.searchParams.append('do_sync', 'features');
+		url.searchParams.append('ep_sync_nonce', syncNonce);
 
 		return url.toString();
 	}, []);

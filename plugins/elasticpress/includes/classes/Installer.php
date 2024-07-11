@@ -76,7 +76,7 @@ class Installer {
 
 		$host = Utils\get_host();
 
-		if ( empty( $host ) && empty( $_POST['ep_host'] ) ) { // phpcs:ignore
+		if ( empty( $host ) && empty( $_POST['ep_host'] ) ) {
 			$this->install_status = 2;
 
 			return;

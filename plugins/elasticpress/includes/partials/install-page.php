@@ -12,13 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) {
 	$setup_url     = admin_url( 'network/admin.php?page=elasticpress-settings' );
-	$sync_url      = admin_url( 'network/admin.php?page=elasticpress-sync&do_sync=install' );
 	$dashboard_url = admin_url( 'network/admin.php?page=elasticpress' );
 } else {
 	$setup_url     = admin_url( 'admin.php?page=elasticpress-settings' );
-	$sync_url      = admin_url( 'admin.php?page=elasticpress-sync&do_sync=install' );
 	$dashboard_url = admin_url( 'admin.php?page=elasticpress' );
 }
+
+$sync_url = \ElasticPress\Utils\get_sync_url( 'install' );
 
 $skip_install_url = add_query_arg(
 	[

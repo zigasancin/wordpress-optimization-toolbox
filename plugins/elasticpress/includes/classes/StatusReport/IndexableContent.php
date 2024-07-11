@@ -93,6 +93,7 @@ class IndexableContent extends Report {
 		$post_types     = $post_indexable->get_indexable_post_types();
 
 		$post_stati = $post_indexable->get_indexable_post_status();
+		$fields     = [];
 
 		foreach ( $post_types as $post_type ) {
 			$post_type_obj   = get_post_type_object( $post_type );
@@ -134,6 +135,7 @@ class IndexableContent extends Report {
 		$fields           = [];
 		$all_keys         = [];
 		$post_count_limit = 88000;
+		$limited          = false;
 
 		foreach ( $post_types as $post_type ) {
 			$post_type_obj = get_post_type_object( $post_type );

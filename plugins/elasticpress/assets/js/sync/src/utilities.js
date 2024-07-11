@@ -6,6 +6,7 @@
 export const clearSyncParam = () => {
 	const url = new URL(document.location.href);
 	url.searchParams.delete('do_sync');
+	url.searchParams.delete('ep_sync_nonce');
 	window.history.replaceState({}, document.title, url);
 };
 

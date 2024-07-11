@@ -57,7 +57,7 @@ class Search extends Feature {
 		$this->summary = '<p>' . __( 'Instantly find the content you’re looking for. The first time.', 'elasticpress' ) . '</p>' .
 			'<p>' . __( 'Overcome higher-end performance and functional limits posed by the traditional WordPress structured (SQL) database to deliver superior keyword search, instantly. ElasticPress indexes custom fields, tags, and other metadata to improve search results. Fuzzy matching accounts for misspellings and verb tenses.', 'elasticpress' ) . '</p>';
 
-		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#post-search', 'elasticpress' );
+		$this->docs_url = __( 'https://www.elasticpress.io/documentation/article/configuring-elasticpress-via-the-plugin-dashboard/#post-search', 'elasticpress' );
 
 		$this->requires_install_reindex = false;
 
@@ -285,14 +285,18 @@ class Search extends Feature {
 	 * @return string $text the new excerpt
 	 */
 	public function ep_highlight_excerpt( $text, $post ) {
-
 		$settings = $this->get_settings();
 
 		// reproduces wp_trim_excerpt filter, preserving the excerpt_more and excerpt_length filters
 		if ( '' === $text ) {
 			$text = get_the_content( '', false, $post );
+
+			$text = strip_shortcodes( $text );
+			$text = excerpt_remove_blocks( $text );
+
 			$text = apply_filters( 'the_content', $text );
 			$text = str_replace( '\]\]\>', ']]&gt;', $text );
+
 			$text = strip_tags( $text, '<' . esc_html( $settings['highlight_tag'] ) . '>' );
 
 			// use the defined length, if already applied...
@@ -300,9 +304,12 @@ class Search extends Feature {
 
 			// use defined excerpt_more filter if it is used
 			$excerpt_more = apply_filters( 'excerpt_more', $text );
-
 			$excerpt_more = $excerpt_more !== $text ? $excerpt_more : '[&hellip;]';
 
+			/**
+			 * WordPress would handle this using `wp_trim_words` but that removes all tags,
+			 * including the one used to highlight the search term.
+			 */
 			$words = explode( ' ', $text, $excerpt_length + 1 );
 			if ( count( $words ) > $excerpt_length ) {
 				array_pop( $words );

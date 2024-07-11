@@ -28,9 +28,9 @@ class RelatedPosts extends Feature {
 
 		$this->title = esc_html__( 'Related Posts', 'elasticpress' );
 
-		$this->summary = '<p>' . __( 'Instantly deliver engaging and precise related content with no impact on site performance. Output related content using our block or directly in your theme using our <a href="https://elasticpress.zendesk.com/hc/en-us/articles/16671825423501-Features#related-posts">API functions</a>.', 'elasticpress' ) . '</p>';
+		$this->summary = '<p>' . __( 'Instantly deliver engaging and precise related content with no impact on site performance. Output related content using our block or directly in your theme using our <a href="https://www.elasticpress.io/documentation/article/related-posts-api/">API functions</a>.', 'elasticpress' ) . '</p>';
 
-		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#related-posts', 'elasticpress' );
+		$this->docs_url = __( 'https://www.elasticpress.io/documentation/article/configuring-elasticpress-via-the-plugin-dashboard/#related-posts', 'elasticpress' );
 
 		$this->requires_install_reindex = false;
 
@@ -283,7 +283,7 @@ class RelatedPosts extends Feature {
 	 */
 	public function output_feature_box_long() {
 		?>
-		<p><?php echo wp_kses_post( __( 'Output related content using our Widget or directly in your theme using our <a href="https://elasticpress.zendesk.com/hc/en-us/articles/16671825423501-Features#related-posts">API functions.</a>', 'elasticpress' ) ); ?></p>
+		<p><?php echo wp_kses_post( __( 'Output related content using our Widget or directly in your theme using our <a href="https://www.elasticpress.io/documentation/article/related-posts-api/">API functions.</a>', 'elasticpress' ) ); ?></p>
 		<?php
 	}
 }

@@ -77,7 +77,7 @@ export default () => {
 				</Button>
 			)}
 			<Button
-				href="https://elasticpress.zendesk.com/hc/en-us/articles/5205632443533"
+				href="https://www.elasticpress.io/documentation/article/what-is-the-elasticpress-sync/"
 				target="_blank"
 				variant="link"
 			>

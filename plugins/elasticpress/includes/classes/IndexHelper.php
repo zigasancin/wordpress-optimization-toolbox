@@ -7,7 +7,7 @@
  * while syncing via dashboard, relying on the index_meta to pick it up where it stopped.
  *
  * @since 4.0.0
- * @see https://elasticpress.zendesk.com/hc/en-us/articles/16672117103501-Sync-Process
+ * @see https://www.elasticpress.io/documentation/article/sync-process/
  * @package elasticpress
  */
 
@@ -1412,8 +1412,10 @@ class IndexHelper {
 					esc_html__( 'Mapping failed: %s', 'elasticpress' ),
 					Utils\get_elasticsearch_error_reason( $error['message'] )
 				);
-				$message .= "\n";
-				$message .= esc_html__( 'Mapping has failed, which will cause ElasticPress search results to be incorrect. Please click `Delete all Data and Start a Fresh Sync` to retry mapping.', 'elasticpress' );
+				if ( $this->should_suggest_retry( $message ) ) {
+					$message .= "\n";
+					$message .= esc_html__( 'Mapping has failed, which will cause ElasticPress search results to be incorrect. Please click `Delete all Data and Start a Fresh Sync` to retry mapping.', 'elasticpress' );
+				}
 				break;
 			default:
 				/* translators: Error message */
@@ -1521,6 +1523,16 @@ class IndexHelper {
 		}
 
 		Features::factory()->apply_draft_feature_settings();
+	}
+
+	/**
+	 * Whether to suggest retrying the sync or not.
+	 *
+	 * @param string $message The message returned by the hosting server
+	 * @return boolean
+	 */
+	protected function should_suggest_retry( $message ) {
+		return ! preg_match( '/you have reached the limit of indices your plan supports/', $message );
 	}
 
 	/**

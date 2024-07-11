@@ -37,7 +37,7 @@ class Terms extends Feature {
 
 		$this->summary = '<p>' . __( 'This feature will empower your website to overcome traditional WordPress term search and query limitations that can present themselves at scale. This feature is only needed if you are using <code>WP_Term_Query</code> directly.', 'elasticpress' ) . '</p>';
 
-		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#terms', 'elasticpress' );
+		$this->docs_url = __( 'https://www.elasticpress.io/documentation/article/configuring-elasticpress-via-the-plugin-dashboard/#terms', 'elasticpress' );
 
 		$this->requires_install_reindex = true;
 

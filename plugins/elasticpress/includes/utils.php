@@ -54,47 +54,66 @@ function get_epio_credentials() {
 /**
  * Get WP capability needed for a user to interact with ElasticPress in the admin
  *
- * @since 4.5.0
+ * @since 4.5.0, 5.1.0 added $context
+ * @param string $context Context for the capability. Defaults to empty string.
  * @return string
  */
-function get_capability() : string {
+function get_capability( string $context = '' ) : string {
 	/**
 	 * Filter the WP capability needed to interact with ElasticPress in the admin
 	 *
-	 * @since 4.5.0
+	 * Example:
+	 * ```
+	 * add_filter(
+	 *     'ep_capability',
+	 *     function ( $cacapability, $context ) {
+	 *         return ( 'synonyms' === $context ) ?
+	 *            'manage_elasticpress_synonyms' :
+	 *            $cacapability;
+	 *     },
+	 *     10,
+	 *     2
+	 * );
+	 * ```
+	 *
+	 * @since 4.5.0, 5.1.0 added $context
 	 * @hook ep_capability
 	 * @param  {string} $capability Capability name. Defaults to `'manage_elasticpress'`
+	 * @param  {string} $context    Additional context
 	 * @return {string} New capability value
 	 */
-	return apply_filters( 'ep_capability', 'manage_elasticpress' );
+	return apply_filters( 'ep_capability', 'manage_elasticpress', $context );
 }
 
 /**
  * Get WP capability needed for a user to interact with ElasticPress in the network admin
  *
- * @since 4.5.0
+ * @since 4.5.0, 5.1.0 added $context
+ * @param string $context Context for the capability. Defaults to empty string.
  * @return string
  */
-function get_network_capability() : string {
+function get_network_capability( string $context = '' ) : string {
 	/**
 	 * Filter the WP capability needed to interact with ElasticPress in the network admin
 	 *
-	 * @since 4.5.0
+	 * @since 4.5.0, 5.1.0 added $context
 	 * @hook ep_network_capability
 	 * @param  {string} $capability Capability name. Defaults to `'manage_network_elasticpress'`
+	 * @param  {string} $context    Additional context
 	 * @return {string} New capability value
 	 */
-	return apply_filters( 'ep_network_capability', 'manage_network_elasticpress' );
+	return apply_filters( 'ep_network_capability', 'manage_network_elasticpress', $context );
 }
 
 /**
  * Get mapped capabilities for post types
  *
- * @since 4.5.0
+ * @since 4.5.0, 5.1.0 added $context
+ * @param string $context Context for the capability. Defaults to empty string.
  * @return array
  */
-function get_post_map_capabilities() : array {
-	$capability = get_capability();
+function get_post_map_capabilities( string $context = '' ) : array {
+	$capability = get_capability( $context );
 
 	return [
 		'edit_post'          => $capability,
@@ -656,7 +675,7 @@ function is_integrated_request( $context, $types = [] ) {
 	}
 
 	$is_admin_request             = is_admin();
-	$is_ajax_request              = defined( 'DOING_AJAX' ) && DOING_AJAX;
+	$is_ajax_request              = wp_doing_ajax();
 	$is_rest_request              = defined( 'REST_REQUEST' ) && REST_REQUEST;
 	$is_integrated_admin_request  = false;
 	$is_integrated_ajax_request   = false;
@@ -748,17 +767,31 @@ function get_asset_info( $slug, $attribute = null ) {
  * Return the Sync Page URL.
  *
  * @since 4.4.0
- * @param boolean $do_sync Whether the link should or should not start a resync.
+ * @param boolean|string $do_sync Whether the link should or should not start a resync. Pass a string to store the reason of the resync.
  * @return string
  */
-function get_sync_url( bool $do_sync = false ) : string {
+function get_sync_url( $do_sync = false ) : string {
 	$page = 'admin.php?page=elasticpress-sync';
 	if ( $do_sync ) {
 		$page .= '&do_sync';
+		if ( is_string( $do_sync ) ) {
+			$page .= '=' . rawurlencode( $do_sync );
+		}
+		$page .= '&ep_sync_nonce=' . wp_create_nonce( 'ep_sync_nonce' );
 	}
 	return ( defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ) ?
 		network_admin_url( $page ) :
 		admin_url( $page );
+}
+
+/**
+ * Check if the `do_sync` parameter is set and the nonce is valid.
+ *
+ * @since 5.1.2
+ * @return boolean
+ */
+function isset_do_sync_parameter() : bool {
+	return isset( $_GET['do_sync'] ) && ! empty( $_GET['ep_sync_nonce'] ) && wp_verify_nonce( sanitize_key( $_GET['ep_sync_nonce'] ), 'ep_sync_nonce' );
 }
 
 /**

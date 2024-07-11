@@ -46,7 +46,7 @@ class Autosuggest extends Feature {
 
 		$this->summary = '<p>' . __( 'Input fields of type "search" or with the CSS class "search-field" or "ep-autosuggest" will be enhanced with autosuggest functionality. As text is entered into the search field, suggested content will appear below it, based on top search results for the text. Suggestions link directly to the content.', 'elasticpress' ) . '</p>';
 
-		$this->docs_url = __( 'https://elasticpress.zendesk.com/hc/en-us/articles/360050447492-Configuring-ElasticPress-via-the-Plugin-Dashboard#autosuggest', 'elasticpress' );
+		$this->docs_url = __( 'https://www.elasticpress.io/documentation/article/configuring-elasticpress-via-the-plugin-dashboard/#autosuggest', 'elasticpress' );
 
 		$this->requires_install_reindex = true;
 
@@ -180,7 +180,7 @@ class Autosuggest extends Feature {
 	 * @return array
 	 */
 	public function set_fuzziness( $fuzziness, $search_fields, $args ) {
-		if ( Utils\is_integrated_request( $this->slug, [ 'public' ] ) && ! empty( $args['s'] ) ) {
+		if ( Utils\is_integrated_request( $this->slug, $this->get_contexts() ) && ! empty( $args['s'] ) ) {
 			return 'auto';
 		}
 		return $fuzziness;
@@ -195,7 +195,7 @@ class Autosuggest extends Feature {
 	 * @return array $query adjusted ES Query arguments
 	 */
 	public function adjust_fuzzy_fields( $query, $post_type, $args ) {
-		if ( ! Utils\is_integrated_request( $this->slug, [ 'public' ] ) || empty( $args['s'] ) ) {
+		if ( ! Utils\is_integrated_request( $this->slug, $this->get_contexts() ) || empty( $args['s'] ) ) {
 			return $query;
 		}
 
@@ -784,7 +784,7 @@ class Autosuggest extends Feature {
 			<div class="input-wrap">
 			<?php
 			$epio_link                = 'https://elasticpress.io';
-			$epio_autosuggest_kb_link = 'https://elasticpress.zendesk.com/hc/en-us/articles/360055402791';
+			$epio_autosuggest_kb_link = 'https://www.elasticpress.io/documentation/article/elasticpress-io-autosuggest/';
 			$status_report_link       = defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ? network_admin_url( 'admin.php?page=elasticpress-status-report' ) : admin_url( 'admin.php?page=elasticpress-status-report' );
 
 			printf(
@@ -857,7 +857,7 @@ class Autosuggest extends Feature {
 		}
 
 		$epio_link                = 'https://elasticpress.io';
-		$epio_autosuggest_kb_link = 'https://elasticpress.zendesk.com/hc/en-us/articles/360055402791';
+		$epio_autosuggest_kb_link = 'https://www.elasticpress.io/documentation/article/elasticpress-io-autosuggest/';
 		$status_report_link       = defined( 'EP_IS_NETWORK' ) && EP_IS_NETWORK ? network_admin_url( 'admin.php?page=elasticpress-status-report' ) : admin_url( 'admin.php?page=elasticpress-status-report' );
 
 		$this->settings_schema[] = [
@@ -901,15 +901,17 @@ class Autosuggest extends Feature {
 
 		$this->maybe_add_epio_settings_schema();
 
-		$set_in_wp_config = defined( 'EP_AUTOSUGGEST_ENDPOINT' ) && EP_AUTOSUGGEST_ENDPOINT;
+		if ( ! Utils\is_epio() ) {
+			$set_in_wp_config = defined( 'EP_AUTOSUGGEST_ENDPOINT' ) && EP_AUTOSUGGEST_ENDPOINT;
 
-		$this->settings_schema[] = [
-			'disabled' => $set_in_wp_config,
-			'help'     => $set_in_wp_config ? __( 'This address will be exposed to the public.', 'elasticpress' ) : '',
-			'key'      => 'endpoint_url',
-			'label'    => __( 'Endpoint URL', 'elasticpress' ),
-			'type'     => 'url',
-		];
+			$this->settings_schema[] = [
+				'disabled' => $set_in_wp_config,
+				'help'     => $set_in_wp_config ? __( 'This address will be exposed to the public.', 'elasticpress' ) : '',
+				'key'      => 'endpoint_url',
+				'label'    => __( 'Endpoint URL', 'elasticpress' ),
+				'type'     => 'url',
+			];
+		}
 	}
 
 	/**
@@ -923,5 +925,23 @@ class Autosuggest extends Feature {
 			esc_html__( 'This method should not be called anymore, as autosuggest requests are not sent regularly anymore.' ),
 			'ElasticPress 4.7.0'
 		);
+	}
+
+	/**
+	 * Get the contexts for autosuggest.
+	 *
+	 * @since 5.1.0
+	 * @return array
+	 */
+	protected function get_contexts() : array {
+		/**
+		 * Filter contexts for autosuggest.
+		 *
+		 * @hook ep_autosuggest_contexts
+		 * @since 5.1.0
+		 * @param {array} $contexts Contexts for autosuggest
+		 * @return {array} New contexts
+		 */
+		return apply_filters( 'ep_autosuggest_contexts', [ 'public', 'ajax' ] );
 	}
 }

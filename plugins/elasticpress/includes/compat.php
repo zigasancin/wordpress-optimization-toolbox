@@ -65,7 +65,7 @@ function ep_find_related( $post_id, $return = 5 ) {
  * Index a post given an ID
  *
  * @param  int $post_id  Post ID
- * @return boolean|array
+ * @return boolean|object
  */
 function ep_index_post( $post_id ) {
 	_deprecated_function( __FUNCTION__, '3.0', "ElasticPress\Indexables::factory()->get( 'post' )->index" );
