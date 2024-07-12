@@ -51,7 +51,6 @@ var SpWorker = {
 
    Fetch: async function (data)
    {
-
       var params = new URLSearchParams();
       params.append('action', this.action);
       params.append('bulk-secret', this.secret);
@@ -86,7 +85,7 @@ var SpWorker = {
 					 		console.error('Worker.js reporting issue on catch', error);
 					 }
 					 else {
-					 	console.log('stopped but not complaining!');
+					 	console.log('stopped but not complaining!', error);
 					 }
 					return false;
 				});
