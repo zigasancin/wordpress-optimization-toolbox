@@ -12,8 +12,7 @@ class WP_Optimize_Utils {
 	 * @return string - Folder path for log files with trailing slash
 	 */
 	public static function get_log_folder_path() {
-		$upload_dir = wp_upload_dir();
-		$upload_base = trailingslashit($upload_dir['basedir']);
+		$upload_base = self::get_base_upload_dir();
 		if (!is_dir($upload_base . 'wpo/logs')) {
 			wp_mkdir_p($upload_base . 'wpo/logs');
 		}
@@ -38,6 +37,113 @@ class WP_Optimize_Utils {
 	 */
 	public static function get_log_file_path($prefix) {
 		return self::get_log_folder_path() . self::get_log_file_name($prefix);
+	}
+
+	/**
+	 * Returns WordPress GMT offset in seconds.
+	 *
+	 * @return int
+	 */
+	public static function get_gmt_offset() {
+		$timezone_string = get_option('timezone_string');
+
+		if (!empty($timezone_string)) {
+			$timezone = new DateTimeZone($timezone_string);
+			$gmt_offset = $timezone->getOffset(new DateTime());
+		} else {
+			$gmt_offset_option = get_option('gmt_offset');
+			$gmt_offset = (int) (3600 * $gmt_offset_option);
+		}
+
+		return $gmt_offset;
+	}
+	
+	/**
+	 * Returns the folder path for the upload directory with trailing slash
+	 *
+	 * @return string - Folder path for the upload directory with trailing slash
+	 */
+	public static function get_base_upload_dir() {
+		$upload_dir = wp_upload_dir();
+		return trailingslashit($upload_dir['basedir']);
+	}
+	
+	/**
+	 * Get the file path
+	 *
+	 * @param string $url
+	 * @return string
+	 */
+	public static function get_file_path($url) {
+		if (is_multisite()) {
+			if (function_exists('get_main_site_id')) {
+				$site_id = get_main_site_id();
+			} else {
+				$network = get_network();
+				$site_id = $network->site_id;
+			}
+			switch_to_blog($site_id);
+		}
+		$upload_dir = wp_upload_dir();
+		$uploads_url = trailingslashit($upload_dir['baseurl']);
+		$uploads_dir = trailingslashit($upload_dir['basedir']);
+		if (is_multisite()) {
+			restore_current_blog();
+		}
+		$possible_urls = array(
+			WP_CONTENT_URL => WP_CONTENT_DIR,
+			WP_PLUGIN_URL => WP_PLUGIN_DIR,
+			$uploads_url => $uploads_dir,
+			get_template_directory_uri() => get_template_directory(),
+			untrailingslashit(includes_url()) => ABSPATH . WPINC,
+		);
+		$file = '';
+		foreach ($possible_urls as $possible_url => $path) {
+			$pos = strpos($url, $possible_url);
+			if (0 === $pos) {
+				$file = substr_replace($url, $path, $pos, strlen($possible_url));
+				break;
+			}
+		}
+		return $file;
+	}
+
+	/**
+	 * Parse tag attributes and return array with them.
+	 *
+	 * @param string $tag
+	 * @return array
+	 */
+	public static function parse_attributes($tag) {
+		$attributes = array();
+
+		$_attributes = wp_kses_hair($tag, wp_allowed_protocols());
+
+		if (empty($_attributes)) return $attributes;
+
+		foreach ($_attributes as $key => $value) {
+			$attributes[$key] = $value['value'];
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Checks whether supplied string is a valid html document or not
+	 *
+	 * @param string $html - HTML document as string
+	 * @return bool
+	 */
+	public static function is_valid_html($html) {
+		if (is_feed()) return false;
+
+		// To prevent issue with `simple_html_dom` class
+		// Exit if it doesn't look like HTML
+		// https://github.com/rosell-dk/webp-express/issues/228
+		if (!preg_match("#^\\s*<#", $html)) return false;
+
+		if ('' === $html) return false;
+		return true;
 	}
 }
 

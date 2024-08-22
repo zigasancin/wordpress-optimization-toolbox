@@ -298,4 +298,14 @@ class WP_Optimize_Cache_Commands {
 
 		return $result;
 	}
+
+	/**
+	 * Enable or disable auto preloading after cache purge
+	 *
+	 * @param array $params Option value sent via AJAX
+	 * @return array
+	 */
+	public function save_cache_auto_preload_option($params) {
+		return array('success' => $this->options->update_option('auto_preload_purged_contents', 'true' == $params['enabled'] ? 'true' : 'false'));
+	}
 }

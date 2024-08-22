@@ -60,6 +60,7 @@ class WP_Optimize_Admin {
 				"js" => __('JavaScript', 'wp-optimize').'<span class="menu-pill disabled hidden">'.__('Disabled', 'wp-optimize').'</span>',
 				"css" => __('CSS', 'wp-optimize').'<span class="menu-pill disabled hidden">'.__('Disabled', 'wp-optimize').'</span>',
 				"font" => __('Fonts', 'wp-optimize'),
+				"analytics" => __('Analytics', 'wp-optimize').'<span class="menu-pill premium-only">Premium</span>',
 				"settings" => __('Settings', 'wp-optimize'),
 				"preload" => __('Preload', 'wp-optimize'),
 				"advanced" => __('Advanced', 'wp-optimize')
@@ -77,7 +78,6 @@ class WP_Optimize_Admin {
 		);
 
 		$tabs = (array_key_exists($page, $pages_tabs)) ? $pages_tabs[$page] : array();
-
 		return apply_filters('wp_optimize_admin_page_'.$page.'_tabs', $tabs);
 	}
 
@@ -319,7 +319,8 @@ class WP_Optimize_Admin {
 			'wpo_cache_options' => $wpo_cache_options,
 			'cache_size' => $wpo_cache->get_cache_size(),
 			'display' => $display,
-			'can_purge_the_cache' => WP_Optimize()->get_page_cache()->can_purge_cache(),
+			'can_purge_the_cache' => $wpo_cache->can_purge_cache(),
+			'auto_preload_after_purge' => $wpo_cache->should_auto_preload_purged_contents(),
 			'does_server_handles_cache' => WP_Optimize()->does_server_handles_cache(),
 			'error' => $error,
 		));

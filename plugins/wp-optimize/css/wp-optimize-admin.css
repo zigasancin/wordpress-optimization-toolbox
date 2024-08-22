@@ -257,6 +257,10 @@ body.rtl .wpo-page {
 .wpo-introduction-notice h3 {
   font-size: 2em;
 }
+.wpo-introduction-notice > ul {
+  list-style-type: disc;
+  list-style-position: inside;
+}
 .wpo-introduction-notice p:not(.font-size__normal) {
   font-size: 1.2em;
 }
@@ -1149,7 +1153,9 @@ body.rtl .updraft-ad-container {
 
 .updraft_advert_content_left {
   float: none;
-  width: 65px;
+  width: 80px;
+  padding-top: 9px;
+  margin-right: 9px;
 }
 
 .updraft_advert_content_left_extra {
@@ -1162,10 +1168,20 @@ body.rtl .updraft-ad-container {
       align-items: center;
 }
 
+.updraft_advert_content_left img {
+  min-height: 72px;
+  min-width: 72px;
+}
+
 .updraft_advert_content_right {
   float: none;
   width: auto;
   overflow: hidden;
+  font-size: 16px;
+}
+
+.updraft_advert_content_right p {
+  font-size: 16px !important;
 }
 
 .updraft_advert_bottom {
@@ -1372,6 +1388,7 @@ h4.updraft_advert_heading {
   outline: none;
 }
 
+.wpo-analytics__premium-mask,
 .wpo-unused-images__premium-mask,
 .wpo-unused-image-sizes__premium-mask {
   position: absolute;
@@ -1389,10 +1406,12 @@ h4.updraft_advert_heading {
       justify-content: center;
 }
 
+.wpo-analytics__premium-mask,
 .wpo-unused-image-sizes__premium-mask {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.85));
 }
 
+a.wpo-analytics__premium-link,
 a.wpo-unused-images__premium-link {
   background: #FFF;
   display: inline-block;
@@ -1442,6 +1461,10 @@ p.wpo-plugin-installed {
   border: 1px solid #E3E4E7;
   margin-left: -1px;
   margin-bottom: -1px;
+}
+.wpo-plugin-family__plugin:last-of-type {
+  -ms-flex-positive: 0;
+      flex-grow: 0;
 }
 @media (min-width: 782px) {
   .wpo-plugin-family__plugin {

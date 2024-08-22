@@ -49,7 +49,7 @@ class WPO_WebP_Alter_HTML {
 	 */
 	public function alter_html($html) {
 		
-		if (!$this->is_valid_html($html)) return $html;
+		if (!WP_Optimize_Utils::is_valid_html($html)) return $html;
 
 		$this->maybe_include_simple_html_dom();
 
@@ -82,24 +82,6 @@ class WPO_WebP_Alter_HTML {
 		}
 
 		return $dom->save();
-	}
-
-	/**
-	 * Checks whether supplied string is a valid html document or not
-	 *
-	 * @param string $html - HTML document as string
-	 * @return bool
-	 */
-	private function is_valid_html($html) {
-		if (is_feed()) return false;
-
-		// To prevent issue with `simple_html_dom` class
-		// Exit if it doesn't look like HTML
-		// https://github.com/rosell-dk/webp-express/issues/228
-		if (!preg_match("#^\\s*<#", $html)) return false;
-
-		if ('' == $html) return false;
-		return true;
 	}
 
 	/**
@@ -211,49 +193,9 @@ class WPO_WebP_Alter_HTML {
 	 * @return boolean
 	 */
 	private function is_webp_version_available($url) {
-		$filename = $this->get_file_path($url);
+		$filename = WP_Optimize_Utils::get_file_path($url);
 		if (empty($filename)) return false;
 		return file_exists($filename . '.webp');
-	}
-
-	/**
-	 * Get the file path
-	 *
-	 * @param string $url
-	 * @return string
-	 */
-	private function get_file_path($url) {
-		if (is_multisite()) {
-			if (function_exists('get_main_site_id')) {
-				$site_id = get_main_site_id();
-			} else {
-				$network = get_network();
-				$site_id = $network->site_id;
-			}
-			switch_to_blog($site_id);
-		}
-		$upload_dir = wp_upload_dir();
-		$uploads_url = trailingslashit($upload_dir['baseurl']);
-		$uploads_dir = trailingslashit($upload_dir['basedir']);
-		if (is_multisite()) {
-			restore_current_blog();
-		}
-		$possible_urls = array(
-			WP_CONTENT_URL => WP_CONTENT_DIR,
-			WP_PLUGIN_URL => WP_PLUGIN_DIR,
-			$uploads_url => $uploads_dir,
-			get_template_directory_uri() => get_template_directory(),
-			includes_url() => preg_replace('/wp-content$/', trailingslashit('wp-includes'), WP_CONTENT_DIR),
-		);
-		$file = '';
-		foreach ($possible_urls as $possible_url => $path) {
-			$pos = strpos($url, $possible_url);
-			if (false !== $pos) {
-				$file = substr_replace($url, $path, $pos, strlen($possible_url));
-				break;
-			}
-		}
-		return $file;
 	}
 }
 

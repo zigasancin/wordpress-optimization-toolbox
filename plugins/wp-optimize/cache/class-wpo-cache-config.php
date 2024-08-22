@@ -227,6 +227,8 @@ class WPO_Cache_Config {
 			'date_format'                               => get_option('date_format'),
 			'time_format'                               => get_option('time_format'),
 			'use_webp_images'						    => false,
+			// Auto preload feature is commented out due to possible regression in v3.5.0
+			// 'auto_preload_after_purge'					=> 'true'
 		);
 
 		return apply_filters('wpo_cache_defaults', $defaults);

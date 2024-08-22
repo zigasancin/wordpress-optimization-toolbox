@@ -1,3 +1,13 @@
+@keyframes wpo_blink {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+}
 .wpo_hidden {
   display: none !important;
 }
@@ -603,4 +613,23 @@ a.loading.wpo-refresh-gzip-status img.wpo_spinner.display-none {
 
 .wpo-button-wrap {
   margin-top: 10px;
+}
+
+.wpo-disabled-section {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.wp_optimize_blink_animation {
+  margin: 8px;
+  font-size: 150%;
+}
+
+.wp_optimize_blink_animation img {
+  animation-name: wpo_blink;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-timing-function: ease-out;
+  padding-bottom: 10px;
 }
