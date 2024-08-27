@@ -39,6 +39,13 @@ class UserExperience_Remove_CssJs_Mutator {
 	private $singles_includes = array();
 
 	/**
+	 * Page buffer.
+	 *
+	 * @var string
+	 */
+	private $buffer = '';
+
+	/**
 	 * User Experience Remove CSS/JS Mutator constructor.
 	 *
 	 * @since 2.7.0
@@ -68,7 +75,7 @@ class UserExperience_Remove_CssJs_Mutator {
 			)
 		);
 
-		$buffer = $r['buffer'];
+		$this->buffer = $r['buffer'];
 
 		// Sets includes whose matches will be stripped site-wide.
 		$this->includes = $this->config->get_array(
@@ -81,13 +88,28 @@ class UserExperience_Remove_CssJs_Mutator {
 		// Sets singles includes data whose matches will be removed on mated pages.
 		$this->singles_includes = $this->config->get_array( 'user-experience-remove-cssjs-singles' );
 
-		$buffer = preg_replace_callback(
-			'~(<link.*?href.*?/>)|(<script.*?src.*?<\/script>)~is',
+		// If old data structure convert to new.
+		// Old data structure used url_pattern as the key for each block. New uses indicies and has url_pattern within.
+		if ( ! is_numeric( key( $this->singles_includes ) ) ) {
+			$new_array = array();
+			foreach ( $this->singles_includes as $match => $data ) {
+				$new_array[] = array(
+					'url_pattern'      => $match,
+					'action'           => isset( $data['action'] ) ? $data['action'] : 'exclude',
+					'includes'         => $data['includes'],
+					'includes_content' => $data['includes_content'],
+				);
+			}
+			$this->singles_includes = $new_array;
+		}
+
+		$this->buffer = preg_replace_callback(
+			'~(<link[^>]+href[^>]+>)|(<script[^>]+src[^>]+></script>)~is',
 			array( $this, 'remove_content' ),
-			$buffer
+			$this->buffer
 		);
 
-		return $buffer;
+		return $this->buffer;
 	}
 
 	/**
@@ -110,7 +132,7 @@ class UserExperience_Remove_CssJs_Mutator {
 	}
 
 	/**
-	 * Checks if content has already been removed.
+	 * Checks if content matches defined rules for exlusion/inclusion.
 	 *
 	 * @since 2.7.0
 	 *
@@ -132,33 +154,42 @@ class UserExperience_Remove_CssJs_Mutator {
 			}
 		}
 
-		// Build array of possible current page relative/absolute URLs.
+		// Build array of possible current page URLs.
 		$current_pages = array(
-			$wp->request,
-			trailingslashit( $wp->request ),
-			home_url( $wp->request ),
-			trailingslashit( home_url( $wp->request ) ),
+			esc_url( trailingslashit( home_url( $wp->request ) ) ),
 		);
 
-		// Only removes matched CSS/JS on matching pages.
-		foreach ( $this->singles_includes as $include => $pages ) {
-			if (
-				! empty( $pages )
-				// Check if the given single CSS/JS remove rule URL is present in HTML content.
-				&& strpos( $content, $include ) !== false
-				// Check if current page matches defined pages for given single CSS/JS remove rule.
-				&& array_intersect(
+		if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
+			$current_pages[] = esc_url( trailingslashit( home_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
+		}
+
+		foreach ( $this->singles_includes as $id => $data ) {
+			// Check if the defined single CSS/JS file is present in HTML content.
+			if ( ! empty( $data ) && strpos( $content, $data['url_pattern'] ) !== false ) {
+				// Check if current page URL(s) match any defined conditions.
+				$page_match = Util_Environment::array_intersect_partial(
 					$current_pages,
-					// Remove leading / value from included page value(s) as the $wp->request excludes them.
-					array_map(
-						function ( $value ) {
-							return ltrim( $value, '/' );
-						},
-						$pages['includes']
-					)
-				)
-			) {
-				return true;
+					$data['includes']
+				);
+
+				// Check if current page content match any defined conditions.
+				$content_match = false;
+				foreach ( $data['includes_content'] as $include ) {
+					if ( strpos( $this->buffer, $include ) !== false ) {
+						$content_match = true;
+						break;
+					}
+				}
+
+				/**
+				 * If set to exclude, remove the file if the page matches defined URLs.
+				 * If set to include, Remove the file if the page doesn't match defined URLs.
+				 */
+				if ( 'exclude' === $data['action'] && ( $page_match || $content_match ) ) {
+					return true;
+				} elseif ( 'include' === $data['action'] && ! ( $page_match || $content_match ) ) {
+					return true;
+				}
 			}
 		}
 

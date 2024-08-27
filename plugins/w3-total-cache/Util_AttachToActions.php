@@ -24,7 +24,9 @@ class Util_AttachToActions {
 		// posts.
 		add_action( 'pre_post_update', array( $o, 'on_pre_post_update' ), 0, 2 );
 		add_action( 'save_post', array( $o, 'on_post_change' ), 0, 2 );
-		add_action( 'wp_trash_post', array( $o, 'on_post_change' ), 0, 2 );
+		add_filter( 'pre_trash_post', array( $o, 'on_post_change' ), 0, 2 );
+		add_action( 'before_delete_post', array( $o, 'on_post_change' ), 0, 2 );
+		add_action( 'attachment_updated', array( $o, 'on_post_change' ), 0, 2 );
 
 		// comments.
 		add_action( 'comment_post', array( $o, 'on_comment_change' ), 0 );
@@ -89,31 +91,34 @@ class Util_AttachToActions {
 	 * Post changed action
 	 *
 	 * @link https://developer.wordpress.org/reference/hooks/save_post/
+	 * @link https://developer.wordpress.org/reference/hooks/pre_trash_post/
+	 * @link https://developer.wordpress.org/reference/hooks/before_delete_post/
 	 *
-	 * @param integer $post_id Post ID.
-	 * @param WP_Post $post    Post.
+	 * @param int|bool $post_id Post ID or a boolean if running on the "pre_trash_post" hook filter.
+	 * @param WP_Post  $post    Post.
 	 *
-	 * @return void
+	 * @return int|bool|null
 	 */
 	public function on_post_change( $post_id, $post = null ) {
 		if ( is_null( $post ) ) {
 			$post = get_post( $post_id );
 		}
 
-		// if attachment changed - parent post has to be flushed
-		// since there are usually attachments content like title
-		// on the page (gallery).
-		if ( isset( $post->post_type ) && 'attachment' === $post->post_type ) {
-			$post_id = $post->post_parent;
-			$post    = get_post( $post_id );
-		}
-
-		if ( ! Util_Environment::is_flushable_post( $post, 'posts', Dispatcher::config() ) ) {
-			return;
-		}
-
+		$config     = Dispatcher::config();
 		$cacheflush = Dispatcher::component( 'CacheFlush' );
-		$cacheflush->flush_post( $post_id );
+
+		// If the post is an attachment, we need to get and flush its parent post.
+		if ( isset( $post->post_type ) && 'attachment' === $post->post_type &&
+			Util_Environment::is_flushable_post( get_post( $post->post_parent ), 'posts', $config ) ) {
+				$cacheflush->flush_post( $post->post_parent );
+		}
+
+		// Check if the original post is flushable.
+		if ( Util_Environment::is_flushable_post( $post, 'posts', $config ) ) {
+			$cacheflush->flush_post( $post_id );
+		}
+
+		return $post_id;
 	}
 
 	/**

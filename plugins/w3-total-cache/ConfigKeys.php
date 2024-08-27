@@ -672,7 +672,7 @@ $keys = array(
 	),
 	'pgcache.purge.sitemap_regex' => array(
 		'type' => 'string',
-		'default' => '([a-z0-9_\-]*?)sitemap([a-z0-9_\-]*)?\.xml'
+		'default' => '([a-z0-9_\-]*?)sitemap([a-z0-9_\-]*)?\.(?:xml|xsl)'
 	),
 	'pgcache.prime.enabled' => array(
 		'type' => 'boolean',
@@ -691,6 +691,10 @@ $keys = array(
 		'default' => ''
 	),
 	'pgcache.prime.post.enabled' => array(
+		'type' => 'boolean',
+		'default' => false
+	),
+	'pgcache.prime.post.update.enabled' => array(
 		'type' => 'boolean',
 		'default' => false
 	),
@@ -1179,7 +1183,7 @@ $keys = array(
 	),
 	'cdn.engine' => array(
 		'type' => 'string',
-		'default' => 'stackpath2'
+		'default' => ''
 	),
 	'cdn.uploads.enable' => array(
 		'type' => 'boolean',

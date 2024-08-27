@@ -325,7 +325,7 @@ function w3tc_csp_reference() {
  *
  * Prevent enabling Bunny CDN ("bunnycdn" engine) for both CDN and CDNFSD.
  *
- * @since X.X.X
+ * @since 2.6.0
  *
  * @returns null
  */
@@ -441,6 +441,47 @@ function debounce(func){
 	};
 }
 
+/**
+ * Get the S3 bucket region from the selected location to be used for the hostname.
+ *
+ * The default location (us-east-1) returns an empty string.  All other regions return the region with a trailing dot.
+ *
+ * @since 2.7.4
+ *
+ * @param {string} location Bucket location.
+ * @returns string
+ */
+function get_bucket_region( location ) {
+	let region = '';
+
+	switch ( location ) {
+		case 'us-east-1':
+			break;
+		case 'us-east-1-e':
+			region = 'us-east-1.';
+			break;
+		default:
+			region = location + '.';
+			break;
+	}
+
+	return region;
+}
+
+/**
+ * Event callback for changing CDN Cloudfront (push) S3 bucket location.
+ *
+ * @since 2.7.2
+ *
+ * @see get_bucket_region()
+ */
+function cdn_cf_bucket_location() {
+	const id = jQuery( '#cdn_cf_bucket' ).val();
+
+	jQuery( '#cdn-cf-bucket-hostname' )
+		.text( id + '.s3.' + get_bucket_region( jQuery( '#cdn_cf_bucket_location' ).val() ) + 'amazonaws.com' );
+}
+
 // On document ready.
 jQuery(function() {
 	// Global vars.
@@ -504,14 +545,6 @@ jQuery(function() {
 	w3tc_input_enable('#pgcache_reject_roles input[type=checkbox]', jQuery('#pgcache__reject__logged_roles:checked').length);
 	jQuery('#pgcache__reject__logged_roles').on('click', function() {
 		w3tc_input_enable('#pgcache_reject_roles input[type=checkbox]', jQuery('#pgcache__reject__logged_roles:checked').length);
-	});
-
-	if (jQuery('#pgcache__cache__nginx_handle_xml').is('*'))
-		jQuery('#pgcache__cache__nginx_handle_xml').attr('checked', jQuery('#pgcache__cache__feed').is(':checked'));
-
-	jQuery('#pgcache__cache__feed').on('change', function() {
-		if (jQuery('#pgcache__cache__nginx_handle_xml').is('*'))
-			jQuery('#pgcache__cache__nginx_handle_xml').attr('checked', this.checked);
 	});
 
 	// Browsercache page.
@@ -820,12 +853,14 @@ jQuery(function() {
 				break;
 
 			case 'cf':
+				let region = jQuery('#cdn_cf_bucket_location').val();
+
 				jQuery.extend(params, {
 					engine: 'cf',
 					'config[key]': jQuery('#cdn_cf_key').val(),
 					'config[secret]': jQuery('#cdn_cf_secret').val(),
 					'config[bucket]': jQuery('#cdn_cf_bucket').val(),
-					'config[bucket_location]': jQuery('#cdn_cf_bucket_location').val(),
+					'config[bucket_location]': region,
 					'config[id]': jQuery('#cdn_cf_id').val()
 				});
 
@@ -1332,6 +1367,46 @@ jQuery(function() {
 		jQuery('.' + target_class).slideToggle();
 	});
 
+	// Test score block hover toggle.
+	jQuery('.w3tc-test-container-intro').click(
+		function() {
+       		var $testContainer = jQuery(this).next('.w3tc-test-container'),
+			    $score = jQuery(this).find('.w3tc-test-score');
+
+			if ($score.css("visibility") === "hidden") {
+				$score.css("visibility", "visible").fadeTo(300, 1); // Fade in score element
+			} else {
+				$score.fadeTo(300, 0, function() { // Fade out score element
+					jQuery(this).css("visibility", "hidden");
+				});
+			}
+
+			jQuery(this).find('.dashicons').toggleClass('dashicons-arrow-down-alt2 dashicons-arrow-up-alt2');
+
+			if ($testContainer.is(':visible')) {
+				$testContainer.stop(true, true).animate({
+					height: 'toggle',
+					opacity: 'toggle',
+					marginTop: 'toggle',
+					marginBottom: 'toggle',
+					paddingTop: 'toggle',
+					paddingBottom: 'toggle'
+				}, 300);
+			} else {
+				$testContainer.stop(true, true).css({
+					display: 'flex',
+					opacity: 0,
+					marginTop: 0,
+					marginBottom: 0
+				}).animate({
+					opacity: 1,
+					marginTop: '15px',
+					marginBottom: '15px'
+				}, 300);
+			}
+    	}
+	);
+
 	// Check for unsaved changes.
 	jQuery('#w3tc input,#w3tc select,#w3tc textarea').on('change', function() {
 		var ignore = false;
@@ -1425,6 +1500,17 @@ jQuery(function() {
 	jQuery('.dropdown-toggle').on('click', function() {
 		jQuery('.dropdown-toggle').not(this).next().hide();
 		jQuery(this).next().toggle();
+	});
+
+	// Footer subscribe hide response.
+	jQuery('#mc-embedded-subscribe').on('click', function(e) {
+		// Hide response after 20 seconds.
+		setTimeout(
+			function(){
+				jQuery('#w3tc-footer .response').hide();
+			},
+			20000
+		);
 	});
 
 	// Bootstrap dropdown hide on click away.
@@ -1577,6 +1663,7 @@ jQuery(function() {
 				);
 			}
 		});
+
 		jQuery('body').on('click', 'input[type="submit"]', function() {
 			var name = jQuery(this).attr('name');
 			var id = jQuery(this).attr('id');
@@ -1626,6 +1713,20 @@ jQuery(function() {
 				);
 			}
 		});
+
+		// Log if the admin notice containing the renew license button is present.
+		if (jQuery('.button-renew-plugin').length > 0) {
+			if (window.w3tc_ga) {
+				w3tc_ga(
+					'event',
+					'w3tc_error',
+					{
+						eventCategory: 'w3tc_renew_notice',
+						eventLabel: 'Renew Now'
+					}
+				);
+			}
+		}
 	}
 
 	jQuery("a").on('click', function(event) {
@@ -1645,24 +1746,27 @@ jQuery(function() {
 	});
 
 	var hash = window.location.hash;
-	if (hash !== "") {
-		// Start at top of page rather than instantly loading at the anchor point.
-		window.scrollTo(0, 0);
-		var wpadminbar_height = (jQuery(window).width() > 600 && jQuery('#wpadminbar').length) ? jQuery('#wpadminbar').outerHeight() : 0,
-			nav_bar_height = (jQuery('#w3tc-top-nav-bar').length) ? jQuery('#w3tc-top-nav-bar').outerHeight() : 0,
-			options_menu_height = (jQuery('#w3tc > #w3tc-options-menu').length) ? jQuery('#w3tc > #w3tc-options-menu').outerHeight() : 0,
-			form_bar_height = (jQuery('.w3tc_form_bar').length) ? jQuery('.w3tc_form_bar').outerHeight() : 0;
-		// Scroll to taget after .5 seconds.
-		setTimeout(
-			function() {
-				jQuery('html, body').animate({
-						scrollTop: jQuery(hash.replace(/\./g, '\\.')).offset().top - wpadminbar_height - nav_bar_height - options_menu_height - form_bar_height
-					},
-					600
-				);
-			},
-			500
-		);
+	if (hash) {
+		var $element = jQuery('#' + hash.substring(1));
+        if ($element.length) {
+			// Start at top of page rather than instantly loading at the anchor point.
+			window.scrollTo(0, 0);
+			var wpadminbar_height = (jQuery(window).width() > 600 && jQuery('#wpadminbar').length) ? jQuery('#wpadminbar').outerHeight() : 0,
+				nav_bar_height = (jQuery('#w3tc-top-nav-bar').length) ? jQuery('#w3tc-top-nav-bar').outerHeight() : 0,
+				options_menu_height = (jQuery('#w3tc > #w3tc-options-menu').length) ? jQuery('#w3tc > #w3tc-options-menu').outerHeight() : 0,
+				form_bar_height = (jQuery('.w3tc_form_bar').length) ? jQuery('.w3tc_form_bar').outerHeight() : 0;
+			// Scroll to taget after .5 seconds.
+			setTimeout(
+				function() {
+					jQuery('html, body').animate({
+							scrollTop: $element.offset().top - wpadminbar_height - nav_bar_height - options_menu_height - form_bar_height
+						},
+						600
+					);
+				},
+				500
+			);
+		}
 	}
 
 	jQuery(window).resize(
@@ -1680,6 +1784,12 @@ jQuery(function() {
         jQuery(this).addClass('inline');
     });
 
+	// Update the CDN Cloudfront (push) S3 bucket location hostname.
+	jQuery( 'body' ).on( 'change', '#cdn_cf_bucket_location', cdn_cf_bucket_location );
+	jQuery( 'body' ).on( 'keyup', '#cdn_cf_bucket', cdn_cf_bucket_location );
+
+	// Run functions after the page is loaded.
+	cdn_cf_bucket_location();
 	set_sticky_bar_positions();
 	set_footer_position();
 });
