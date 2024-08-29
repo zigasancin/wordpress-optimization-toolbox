@@ -189,6 +189,7 @@ class autoptimizeConfig
 </style>
 
 <div class="wrap">
+
 <div id="autoptimize_main">
     <h1 id="ao_title"><?php apply_filters( 'autoptimize_filter_settings_is_pro', false ) ? esc_html_e( 'Autoptimize Pro Settings', 'autoptimize' ) : esc_html_e( 'Autoptimize Settings', 'autoptimize' ); ?></h1>
     <?php echo $this->ao_admin_tabs(); ?>
@@ -343,7 +344,19 @@ echo esc_html__( 'A comma-separated list of CSS you want to exclude from being o
 ?>
 </label></td>
 </tr>
-<?php if ( false === autoptimizeUtils::is_plugin_active( 'unusedcss/unusedcss.php' ) ) { ?>
+<?php 
+    $_availabilities = autoptimizeOptionWrapper::get_option( 'autoptimize_service_availablity' );
+    if ( empty( $_availabilities ) || ! is_array( $_availabilities ) || ! array_key_exists( 'rapidload', $_availabilities ) || ! array_key_exists( 'status', $_availabilities['rapidload'] ) ) {
+        $rapidload_true = true;
+    } else if ( $_availabilities['rapidload']['status'] === 'up' ) {
+        $rapidload_true = true;
+    } else if ( $_availabilities['rapidload']['status'] !== 'up' ) {
+        $rapidload_true = false;
+    } else {
+        $rapidload_true = false;
+    }
+?>
+<?php if ( $rapidload_true && false === autoptimizeUtils::is_plugin_active( 'unusedcss/unusedcss.php' ) ) { ?>
 <tr valign="top">
 <th scope="row"><?php esc_html_e( 'Remove Unused CSS?', 'autoptimize' ); ?></th>
 <?php

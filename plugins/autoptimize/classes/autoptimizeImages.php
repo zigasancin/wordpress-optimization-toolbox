@@ -286,7 +286,7 @@ class autoptimizeImages
 
     public static function get_service_url_suffix()
     {
-        $suffix = '/af/U0ZIWMK109483/' . AUTOPTIMIZE_SITE_DOMAIN;
+        $suffix = '/af/ZQXTBY0109483/' . AUTOPTIMIZE_SITE_DOMAIN;
 
         return $suffix;
     }
@@ -776,7 +776,7 @@ class autoptimizeImages
         // act on icon links.
         if ( ( strpos( $out, '<link rel="icon"' ) !== false || ( strpos( $out, "<link rel='icon'" ) !== false ) ) && apply_filters( 'autoptimize_filter_imgopt_linkicon', true ) ) {
             $out = preg_replace_callback(
-                '/<link\srel=(?:"|\')(?:apple-touch-)?icon(?:"|\').*\shref=(?:"|\')(.*)(?:"|\')(?:\ssizes=(?:"|\')(\d*x\d*)(?:"|\'))?\s\/>/Um',
+                '/<link\srel=(?:"|\')(?:apple-touch-)?icon(?:-precomposed)?(?:"|\').*\shref=(?:"|\')(.*)(?:"|\')(?:\ssizes=(?:"|\')(\d*x\d*)(?:"|\'))?\s?\/?>/Um',
                 array( $this, 'replace_icon_callback' ),
                 $out
             );
