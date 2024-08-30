@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitb895608e131622df90c44f80ccf9a2cf
+class ComposerStaticInitc672b16c6c4a23f305014e966245c095
 {
     public static $files = array (
         '356506e5d3d2f49e680971cd925046fa' => __DIR__ . '/..' . '/ampproject/amp-toolbox/include/compatibility-fixes.php',
@@ -58,7 +58,6 @@ class ComposerStaticInitb895608e131622df90c44f80ccf9a2cf
         'AMP_Base_Sanitizer' => __DIR__ . '/../..' . '/includes/sanitizers/class-amp-base-sanitizer.php',
         'AMP_Bento_Sanitizer' => __DIR__ . '/../..' . '/includes/sanitizers/class-amp-bento-sanitizer.php',
         'AMP_Block_Sanitizer' => __DIR__ . '/../..' . '/includes/sanitizers/class-amp-block-sanitizer.php',
-        'AMP_Block_Uniqid_Sanitizer' => __DIR__ . '/../..' . '/includes/sanitizers/class-amp-block-uniqid-sanitizer.php',
         'AMP_Comment_Walker' => __DIR__ . '/../..' . '/includes/class-amp-comment-walker.php',
         'AMP_Comments_Sanitizer' => __DIR__ . '/../..' . '/includes/sanitizers/class-amp-comments-sanitizer.php',
         'AMP_Content' => __DIR__ . '/../..' . '/includes/templates/class-amp-content.php',
@@ -163,7 +162,6 @@ class ComposerStaticInitb895608e131622df90c44f80ccf9a2cf
         'AmpProject\\AmpWP\\BackgroundTask\\SingleScheduledBackgroundTask' => __DIR__ . '/../..' . '/src/BackgroundTask/SingleScheduledBackgroundTask.php',
         'AmpProject\\AmpWP\\BackgroundTask\\ValidatedUrlStylesheetDataGarbageCollection' => __DIR__ . '/../..' . '/src/BackgroundTask/ValidatedUrlStylesheetDataGarbageCollection.php',
         'AmpProject\\AmpWP\\BackgroundTask\\ValidationDataGarbageCollection' => __DIR__ . '/../..' . '/src/BackgroundTask/ValidationDataGarbageCollection.php',
-        'AmpProject\\AmpWP\\BlockUniqidTransformer' => __DIR__ . '/../..' . '/src/BlockUniqidTransformer.php',
         'AmpProject\\AmpWP\\Cli\\AmpCommandNamespace' => __DIR__ . '/../..' . '/src/Cli/AmpCommandNamespace.php',
         'AmpProject\\AmpWP\\Cli\\CommandNamespaceRegistration' => __DIR__ . '/../..' . '/src/Cli/CommandNamespaceRegistration.php',
         'AmpProject\\AmpWP\\Cli\\OptimizerCommand' => __DIR__ . '/../..' . '/src/Cli/OptimizerCommand.php',
@@ -1431,9 +1429,9 @@ class ComposerStaticInitb895608e131622df90c44f80ccf9a2cf
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitb895608e131622df90c44f80ccf9a2cf::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitb895608e131622df90c44f80ccf9a2cf::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitb895608e131622df90c44f80ccf9a2cf::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitc672b16c6c4a23f305014e966245c095::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitc672b16c6c4a23f305014e966245c095::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitc672b16c6c4a23f305014e966245c095::$classMap;
 
         }, null, ClassLoader::class);
     }
