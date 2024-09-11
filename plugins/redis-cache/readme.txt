@@ -1,11 +1,11 @@
 === Redis Object Cache ===
 Contributors: tillkruess
 Donate link: https://github.com/sponsors/tillkruss
-Tags: redis, object cache, cache, object caching, caching performance, relay, predis, phpredis
+Tags: redis, object cache, caching, performance, relay
 Requires at least: 4.6
-Tested up to: 6.4
+Tested up to: 6.6
 Requires PHP: 7.2
-Stable tag: 2.5.1
+Stable tag: 2.5.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -60,6 +60,21 @@ Redis Object Cache has various WP CLI commands, for more information run `wp hel
 4. Dashboard widget, displaying recent response time metrics.
 
 == Changelog ==
+
+= 2.5.3 =
+
+- Added `WP_REDIS_DISABLE_GROUP_FLUSH` constant
+- Added `redis_cache_manager_capability` filter and `WP_REDIS_MANAGER_CAPABILITY` constant
+- Added `WP_REDIS_SSL_CONTEXT` support for PhpRedis cluster connections 
+- Fixed several issues with Predis and cluster/replicated connection
+- Fixed another rare fatal error in `show_error_and_die()`
+
+= 2.5.2 =
+
+- Respect `WP_REDIS_FLUSH_TIMEOUT` in Lua flush scripts
+- Improve `DISALLOW_FILE_MODS` support
+- Reverted behavioral change to `sanitize_key_part()`
+- Fixed rare fatal error in `show_error_and_die()` (again)
 
 = 2.5.1 =
 
