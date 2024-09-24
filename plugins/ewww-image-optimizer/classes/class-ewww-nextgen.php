@@ -352,6 +352,16 @@ if ( ! class_exists( 'EWWW_Nextgen' ) ) {
 					)
 				);
 			}
+			if ( 'exceeded subkey' === get_transient( 'ewww_image_optimizer_cloud_status' ) ) {
+				ewwwio_ob_clean();
+				wp_die(
+					wp_json_encode(
+						array(
+							'error' => esc_html__( 'Out of credits', 'ewww-image-optimizer' ),
+						)
+					)
+				);
+			}
 			if ( ! wp_doing_ajax() ) {
 				// Get the referring page, and send the user back there.
 				wp_safe_redirect( wp_get_referer() );
@@ -704,7 +714,7 @@ if ( ! class_exists( 'EWWW_Nextgen' ) ) {
 				<h1 class="wp-heading-inline"><?php esc_html_e( 'Bulk Optimize', 'ewww-image-optimizer' ); ?></h1>
 				<?php
 				if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
-					ewww_image_optimizer_cloud_verify( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) );
+					ewww_image_optimizer_cloud_verify( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ), false );
 					echo '<span id="ewww-bulk-credits-available">' . esc_html__( 'Image credits available:', 'ewww-image-optimizer' ) . ' ' . wp_kses_post( ewww_image_optimizer_cloud_quota() ) . '</span>';
 				}
 				if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_backup_files' ) ) {
@@ -931,7 +941,7 @@ if ( ! class_exists( 'EWWW_Nextgen' ) ) {
 				$attachments = unserialize( $attachments );
 			}
 			if ( ! is_array( $attachments ) ) {
-				$output['error'] = esc_html__( 'Error retrieving list of images' );
+				$output['error'] = esc_html__( 'Error retrieving list of images', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );
 			}
