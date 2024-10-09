@@ -212,7 +212,7 @@ class Resize_Optimization extends Media_Item_Optimization {
 			? $data['filesize']
 			: $this->fs->filesize( $new_path );
 		if ( $new_filesize > $original_filesize ) {
-			$this->delete_file( $new_path );
+			$this->maybe_delete_file( $new_path );
 			$this->add_error(
 				'no_savings',
 				__( 'Skipped: Smushed file is larger than the original file.', 'wp-smushit' )

@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Smush Pro 3.16.4\n"
+"Project-Id-Version: Smush Pro 3.16.6\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2024-05-22T14:32:55+00:00\n"
+"POT-Creation-Date: 2024-07-30T10:31:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.10.0\n"
 "X-Domain: wp-smushit\n"
@@ -276,7 +276,7 @@ msgstr ""
 #: core/integrations/nextgen/class-admin.php:275
 #: core/media-library/class-media-library-row.php:512
 #: core/modules/bulk/class-mail.php:65
-#: wp-smush.php:505
+#: wp-smush.php:506
 msgid "Smush"
 msgstr ""
 
@@ -455,24 +455,24 @@ msgstr ""
 msgid "If you wish to also convert your original uploaded images to .webp format, please enable the %1$sOptimize original images%2$s setting below."
 msgstr ""
 
-#: app/class-ajax.php:137
-#: app/class-ajax.php:151
-#: app/class-ajax.php:215
-#: app/class-ajax.php:238
-#: app/class-ajax.php:255
-#: app/class-ajax.php:267
-#: app/class-ajax.php:282
-#: app/class-ajax.php:301
-#: app/class-ajax.php:317
-#: app/class-ajax.php:481
-#: app/class-ajax.php:601
-#: app/class-ajax.php:682
-#: app/class-ajax.php:801
-#: app/class-ajax.php:824
+#: app/class-ajax.php:135
+#: app/class-ajax.php:149
+#: app/class-ajax.php:213
+#: app/class-ajax.php:236
+#: app/class-ajax.php:253
+#: app/class-ajax.php:265
+#: app/class-ajax.php:280
+#: app/class-ajax.php:299
+#: app/class-ajax.php:315
+#: app/class-ajax.php:449
+#: app/class-ajax.php:569
+#: app/class-ajax.php:650
+#: app/class-ajax.php:769
+#: app/class-ajax.php:792
 #: core/class-cache-controller.php:43
 #: core/class-settings.php:705
 #: core/integrations/class-nextgen.php:181
-#: core/modules/bulk/class-background-bulk-smush.php:118
+#: core/modules/bulk/class-background-bulk-smush.php:137
 #: core/modules/class-backup.php:728
 #: core/modules/class-backup.php:747
 #: core/modules/class-dir.php:186
@@ -486,13 +486,13 @@ msgstr ""
 msgid "Unauthorized"
 msgstr ""
 
-#: app/class-ajax.php:349
+#: app/class-ajax.php:347
 #: core/webp/class-webp-controller.php:163
 msgid "Nonce verification failed"
 msgstr ""
 
-#: app/class-ajax.php:357
-#: app/class-ajax.php:403
+#: app/class-ajax.php:355
+#: app/class-ajax.php:401
 #: core/backups/class-backups-controller.php:56
 #: core/integrations/class-nextgen.php:420
 #: core/media/class-media-item-controller.php:29
@@ -501,22 +501,22 @@ msgstr ""
 msgid "You don't have permission to work with uploaded files."
 msgstr ""
 
-#: app/class-ajax.php:365
+#: app/class-ajax.php:363
 #: core/integrations/class-nextgen.php:428
 msgid "No attachment ID was provided."
 msgstr ""
 
-#: app/class-ajax.php:386
+#: app/class-ajax.php:384
 msgid "Image not smushed, fields empty."
 msgstr ""
 
-#: app/class-ajax.php:395
+#: app/class-ajax.php:393
 #: core/integrations/class-nextgen.php:666
 msgid "Image couldn't be smushed as the nonce verification failed, try reloading the page."
 msgstr ""
 
-#: app/class-ajax.php:426
-#: app/class-ajax.php:508
+#: app/class-ajax.php:424
+#: app/class-ajax.php:476
 #: core/class-settings.php:758
 #: core/integrations/class-nextgen.php:553
 #: core/integrations/class-nextgen.php:676
@@ -526,13 +526,13 @@ msgstr ""
 msgid "You don't have permission to do this."
 msgstr ""
 
-#: app/class-ajax.php:650
+#: app/class-ajax.php:618
 #: core/cdn/class-cdn-controller.php:161
 #: core/webp/class-webp-controller.php:171
 msgid "User can not modify options"
 msgstr ""
 
-#: app/class-ajax.php:770
+#: app/class-ajax.php:738
 msgid "Missing config ID"
 msgstr ""
 
@@ -3629,17 +3629,17 @@ msgstr ""
 msgid "Every %d Minutes"
 msgstr ""
 
-#: core/modules/bulk/class-background-bulk-smush.php:270
+#: core/modules/bulk/class-background-bulk-smush.php:296
 msgid "Enable the email notification"
 msgstr ""
 
 #. translators: %s: a link
-#: core/modules/bulk/class-background-bulk-smush.php:274
+#: core/modules/bulk/class-background-bulk-smush.php:300
 msgid "Feel free to close this page while Smush works its magic in the background. %s to receive an email when the process finishes."
 msgstr ""
 
 #. translators: %s: Email address
-#: core/modules/bulk/class-background-bulk-smush.php:280
+#: core/modules/bulk/class-background-bulk-smush.php:306
 msgid "Feel free to close this page while Smush works its magic in the background. We’ll email you at <strong>%s</strong> when it’s done."
 msgstr ""
 
@@ -3954,11 +3954,11 @@ msgid "Automatic updation of .htaccess rules failed. Please ensure the file perm
 msgstr ""
 
 #. translators: %1$s - Requires PHP version - %2$s URL to an article about our hosting benefits.
-#: wp-smush.php:114
+#: wp-smush.php:115
 msgid "Your site is running an outdated version of PHP that is no longer supported or receiving security updates. Please update PHP to at least version %1$s at your hosting provider in order to activate Smush, or consider switching to <a href=\"%2$s\" target=\"_blank\" rel=\"noopener noreferrer\">WPMU DEV Hosting</a>."
 msgstr ""
 
-#: wp-smush.php:484
+#: wp-smush.php:485
 msgid "Get Fast!"
 msgstr ""
 

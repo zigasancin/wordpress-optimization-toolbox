@@ -6,6 +6,7 @@ use Smush\Core\Array_Utils;
 use Smush\Core\Media_Library\Background_Media_Library_Scanner;
 use Smush\Core\Media_Library\Media_Library_Scan_Background_Process;
 use Smush\Core\Media_Library\Media_Library_Scanner;
+use Smush\Core\Media_Library\Media_Library_Last_Process;
 use Smush\Core\Modules\Background\Background_Process;
 use Smush\Core\Modules\Background\Background_Process_Status;
 use Smush\Core\Server_Utils;
@@ -13,6 +14,7 @@ use Smush\Core\Settings;
 use Smush\Core\Stats\Global_Stats;
 use Smush\Core\Webp\Webp_Configuration;
 use Smush\Core\Media\Media_Item_Query;
+use Smush\Core\Media\Media_Item_Cache;
 use Smush\Core\Helper;
 use WP_Smush;
 use WPMUDEV_Analytics;
@@ -36,15 +38,22 @@ class Product_Analytics_Controller {
 	 */
 	private $scan_background_process;
 	private $scanner_slice_size;
+
+	/**
+	 * @var Media_Library_Last_Process
+	 */
+	private $media_library_last_process;
+
 	/**
 	 * @var bool
 	 */
 	private $scan_background_process_dead = false;
 
 	public function __construct() {
-		$this->settings                = Settings::get_instance();
-		$this->server_utils            = new Server_Utils();
-		$this->scan_background_process = Background_Media_Library_Scanner::get_instance()->get_background_process();
+		$this->settings                   = Settings::get_instance();
+		$this->server_utils               = new Server_Utils();
+		$this->scan_background_process    = Background_Media_Library_Scanner::get_instance()->get_background_process();
+		$this->media_library_last_process = Media_Library_Last_Process::get_instance();
 
 		$this->hook_actions();
 	}
@@ -63,8 +72,8 @@ class Product_Analytics_Controller {
 
 		// Other events.
 		add_action( 'wp_smush_directory_smush_start', array( $this, 'track_directory_smush' ) );
-		add_action( 'wp_smush_bulk_smush_start', array( $this, 'track_bulk_smush_start' ) );
-		add_action( 'wp_smush_bulk_smush_completed', array( $this, 'track_bulk_smush_completed' ) );
+		add_action( 'wp_smush_bulk_smush_start', array( $this, 'track_bulk_smush_start' ), 20 );
+		add_action( 'wp_smush_bulk_smush_completed', array( $this, 'track_background_bulk_smush_completed' ) );
 		add_action( 'wp_smush_bulk_smush_dead', array( $this, 'track_bulk_smush_background_process_death' ) );
 		add_action( 'wp_smush_config_applied', array( $this, 'track_config_applied' ) );
 		add_action( 'wp_smush_webp_method_changed', array( $this, 'track_webp_method_changed' ) );
@@ -75,13 +84,15 @@ class Product_Analytics_Controller {
 		) );
 		add_action( 'wp_ajax_smush_toggle_webp_wizard', array( $this, 'track_webp_reconfig' ), - 1 );
 
-		$identifier = $this->scan_background_process->get_identifier();
+		$identifier          = $this->scan_background_process->get_identifier();
+		$scan_started_action = "{$identifier}_started";
+		$scan_dead_action    = "{$identifier}_dead";
 
 		add_action( "{$identifier}_before_start", array( $this, 'record_scan_death' ), 10, 2 );
-		add_action( "{$identifier}_started", array( $this, 'track_background_scan_start' ), 10, 2 );
+		add_action( $scan_started_action, array( $this, 'track_background_scan_start' ), 10, 2 );
 		add_action( "{$identifier}_completed", array( $this, 'track_background_scan_end' ), 10, 2 );
 
-		add_action( "{$identifier}_dead", array( $this, 'track_background_scan_process_death' ) );
+		add_action( $scan_dead_action, array( $this, 'track_background_scan_process_death' ) );
 
 		add_action( 'wp_smush_plugin_activated', array( $this, 'track_plugin_activation' ) );
 		if ( defined( 'WP_SMUSH_BASENAME' ) ) {
@@ -90,6 +101,8 @@ class Product_Analytics_Controller {
 		}
 
 		add_action( 'wp_ajax_smush_analytics_track_event', array( $this, 'ajax_handle_track_request' ) );
+
+		add_action( 'wp_smush_bulk_smush_stuck', array( $this, 'track_bulk_smush_progress_stuck' ) );
 	}
 
 	private function track( $event, $properties = array() ) {
@@ -169,6 +182,7 @@ class Product_Analytics_Controller {
 			'Image Sizes'         => empty( $image_sizes ) ? 'All' : 'Custom',
 			'Mode'                => $this->get_current_lossy_level_label(),
 			'Parallel Processing' => $this->get_parallel_processing_status(),
+			'Smush Type'          => $this->get_smush_type(),
 		);
 		foreach ( $bulk_property_labels as $bulk_setting => $bulk_property_label ) {
 			$property_value                          = Settings::get_instance()->get( $bulk_setting )
@@ -182,6 +196,10 @@ class Product_Analytics_Controller {
 
 	private function get_parallel_processing_status() {
 		return defined( 'WP_SMUSH_PARALLEL' ) && WP_SMUSH_PARALLEL ? 'Enabled' : 'Disabled';
+	}
+
+	private function get_smush_type() {
+		return $this->settings->is_webp_module_active() ? 'WebP' : 'Classic';
 	}
 
 	private function get_current_lossy_level_label() {
@@ -318,7 +336,7 @@ class Product_Analytics_Controller {
 		 * https://stackoverflow.com/questions/62323230/how-can-i-detect-with-php-that-the-user-uses-an-ipad-when-my-user-agent-doesnt-c
 		 */
 		$tablet_pattern = '/(tablet|ipad|playbook|kindle|silk)/i';
-		return preg_match( $tablet_pattern, $_SERVER['HTTP_USER_AGENT'] );
+		return preg_match( $tablet_pattern, wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
 	}
 
 	private function is_mobile() {
@@ -327,7 +345,7 @@ class Product_Analytics_Controller {
 		}
 		// Do not use wp_is_mobile() since it doesn't detect ipad/tablet.
 		$mobile_patten = '/Mobile|iP(hone|od|ad)|Android|BlackBerry|tablet|IEMobile|Kindle|NetFront|Silk|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune|playbook/i';
-		return preg_match( $mobile_patten, $_SERVER['HTTP_USER_AGENT'] );
+		return preg_match( $mobile_patten, wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
 	}
 
 	private function normalize_url( $url ) {
@@ -374,6 +392,7 @@ class Product_Analytics_Controller {
 		$properties = array_merge(
 			$properties,
 			array(
+				'process_id'              => $this->get_process_id(),
 				'Background Optimization' => $this->get_background_optimization_status(),
 				'Cron'                    => $this->get_cron_healthy_status(),
 			)
@@ -381,9 +400,31 @@ class Product_Analytics_Controller {
 		$this->track( 'Bulk Smush Started', $properties );
 	}
 
-	public function track_bulk_smush_completed() {
-		$properties = $this->get_bulk_smush_stats();
+	private function get_process_id() {
+		return md5( $this->media_library_last_process->get_process_start_time() );
+	}
+
+	/**
+	 * Track the event on background optimization completed.
+	 * Note: For ajax Bulk Smush, we will track it via js.
+	 *
+	 * @return void
+	 */
+	public function track_background_bulk_smush_completed() {
+		$bg_optimization    = WP_Smush::get_instance()->core()->mod->bg_optimization;
+		$total_items        = $bg_optimization->get_total_items();
+		$failed_items       = $bg_optimization->get_failed_items();
+		$failure_percentage = $total_items > 0 ? round( $failed_items * 100 / $total_items ) : 0;
+
+		$properties = array_merge(
+			$this->get_bulk_smush_stats(),
+			array(
+				'Total Enqueued Images' => $total_items,
+				'Failure Percentage'    => $failure_percentage,
+			)
+		);
 		$properties = $this->filter_bulk_smush_completed_properties( $properties );
+
 		$this->track( 'Bulk Smush Completed', $properties );
 	}
 
@@ -396,8 +437,12 @@ class Product_Analytics_Controller {
 		return array_merge(
 			$properties,
 			array(
+				'process_id'              => $this->get_process_id(),
 				'Background Optimization' => $this->get_background_optimization_status(),
 				'Cron'                    => $this->get_cron_healthy_status(),
+				'Time Elapsed'            => $this->media_library_last_process->get_process_elapsed_time(),
+				'Smush Type'              => $this->get_smush_type(),
+				'Mode'                    => $this->get_current_lossy_level_label(),
 			)
 		);
 	}
@@ -543,7 +588,7 @@ class Product_Analytics_Controller {
 		$this->track( 'Scan Started', array_merge(
 			$properties,
 			$this->get_bulk_properties(),
-			$this->get_scan_properties( $background_process )
+			$this->get_scan_properties()
 		) );
 	}
 
@@ -556,11 +601,12 @@ class Product_Analytics_Controller {
 	public function track_background_scan_end( $identifier, $background_process ) {
 		$properties = array(
 			'Retry Attempts' => $background_process->get_revival_count(),
+			'Time Elapsed'   => $this->media_library_last_process->get_process_elapsed_time(),
 		);
 		$this->track( 'Scan Ended', array_merge(
 			$properties,
 			$this->get_bulk_properties(),
-			$this->get_scan_properties( $background_process )
+			$this->get_scan_properties()
 		) );
 	}
 
@@ -571,8 +617,11 @@ class Product_Analytics_Controller {
 				array(
 					'Process Type' => 'Scan',
 					'Slice Size'   => $this->get_scanner_slice_size(),
+					'Time Elapsed' => $this->media_library_last_process->get_process_elapsed_time(),
+					'Smush Type'   => $this->get_smush_type(),
+					'Mode'         => $this->get_current_lossy_level_label(),
 				),
-				$this->get_scan_background_process_properties(),
+				$this->get_scan_background_process_properties()
 			)
 		);
 	}
@@ -590,16 +639,20 @@ class Product_Analytics_Controller {
 				array(
 					'Process Type' => 'Smush',
 					'Slice Size'   => 0,
+					'Time Elapsed' => $this->media_library_last_process->get_process_elapsed_time(),
+					'Smush Type'   => $this->get_smush_type(),
+					'Mode'         => $this->get_current_lossy_level_label(),
 				),
 				$this->get_bulk_background_process_properties()
 			)
 		);
 	}
 
-	private function get_scan_properties( $background_process ) {
+	private function get_scan_properties() {
 		$global_stats       = Global_Stats::get();
 		$global_stats_array = $global_stats->to_array();
 		$properties         = array(
+			'process_id' => $this->get_process_id(),
 			'Slice Size' => $this->get_scanner_slice_size(),
 		);
 
@@ -637,30 +690,41 @@ class Product_Analytics_Controller {
 
 	private function get_bulk_background_process_properties() {
 		$bg_optimization = WP_Smush::get_instance()->core()->mod->bg_optimization;
+		$process_id      = $this->get_process_id();
+
 		if ( ! $bg_optimization->is_background_enabled() ) {
-			return array();
+			return array(
+				'process_id' => $process_id,
+			);
 		}
 
 		$total_items     = $bg_optimization->get_total_items();
 		$processed_items = $bg_optimization->get_processed_items();
 
 		return array(
-			'Retry Attempts'        => $bg_optimization->get_revival_count(),
-			'Total Enqueued Images' => $total_items,
-			'Completion Percentage' => $this->get_background_process_completion_percentage( $total_items, $processed_items ),
+			'process_id'             => $process_id,
+			'Retry Attempts'         => $bg_optimization->get_revival_count(),
+			'Total Enqueued Images'  => $total_items,
+			'Completion Percentage'  => $this->get_background_process_completion_percentage( $total_items, $processed_items ),
+			'Total Processed Images' => $processed_items,
 		);
 	}
 
 	private function get_scan_background_process_properties() {
-		$query                 = new Media_Item_Query();
-		$total_enqueued_images = $query->get_image_attachment_count();
-		$total_items           = $this->scan_background_process->get_status()->get_total_items();
-		$processed_items       = $this->scan_background_process->get_status()->get_processed_items();
+		$query                  = new Media_Item_Query();
+		$total_enqueued_images  = $query->get_image_attachment_count();
+		$total_items            = $this->scan_background_process->get_status()->get_total_items();
+		$processed_items        = $this->scan_background_process->get_status()->get_processed_items();
+		$scanner_slice_size     = $this->get_scanner_slice_size();
+		$total_processed_images = $processed_items * $scanner_slice_size;
+		$total_processed_images = $total_processed_images > $total_enqueued_images ? $total_enqueued_images : $total_processed_images;
 
 		return array(
-			'Retry Attempts'        => $this->scan_background_process->get_revival_count(),
-			'Total Enqueued Images' => $total_enqueued_images,
-			'Completion Percentage' => $this->get_background_process_completion_percentage( $total_items, $processed_items ),
+			'process_id'             => $this->get_process_id(),
+			'Retry Attempts'         => $this->scan_background_process->get_revival_count(),
+			'Total Enqueued Images'  => $total_enqueued_images,
+			'Completion Percentage'  => $this->get_background_process_completion_percentage( $total_items, $processed_items ),
+			'Total Processed Images' => $total_processed_images,
 		);
 	}
 
@@ -939,11 +1003,11 @@ class Product_Analytics_Controller {
 	}
 
 	private function get_event_name() {
-		return isset( $_POST['event'] ) ? sanitize_text_field( $_POST['event'] ) : '';
+		return isset( $_POST['event'] ) ? sanitize_text_field( wp_unslash( $_POST['event'] ) ) : '';
 	}
 
 	private function get_event_properties( $event_name ) {
-		$properties = isset( $_POST['properties'] ) ? $_POST['properties'] : array();
+		$properties = isset( $_POST['properties'] ) ? wp_unslash( $_POST['properties'] ) : array();
 		$properties = array_map( 'sanitize_text_field', $properties );
 
 		$filter_callback = $this->get_filter_properties_callback( $event_name );
@@ -972,11 +1036,51 @@ class Product_Analytics_Controller {
 				'Slice Size'              => $this->get_scanner_slice_size(),
 				'Background Optimization' => $this->get_background_optimization_status(),
 				'Cron'                    => $this->get_cron_healthy_status(),
+				'Time Elapsed'            => $this->media_library_last_process->get_process_elapsed_time(),
+				'Smush Type'              => $this->get_smush_type(),
+				'Mode'                    => $this->get_current_lossy_level_label(),
 			),
-			$this->get_scan_background_process_properties()
+			$this->get_scan_background_process_properties(),
+			$this->get_last_image_process_properties()
 		);
 
 		return $properties;
+	}
+
+
+	private function get_last_image_process_properties() {
+		$last_image_id = $this->media_library_last_process->get_last_process_attachment_id();
+		if ( ! $last_image_id ) {
+			return array();
+		}
+
+		$media_item              = Media_Item_Cache::get_instance()->get( $last_image_id );
+		$last_image_time_elapsed = $this->media_library_last_process->get_last_process_attachment_elapsed_time();
+		$properties              = array(
+			'Last Image Time Elapsed' => $last_image_time_elapsed,
+		);
+
+		if ( ! $media_item->is_valid() ) {
+			return $properties;
+		}
+
+		$full_size = $media_item->get_full_or_scaled_size();
+		if ( ! $full_size ) {
+			return $properties;
+		}
+
+		$file_size    = $this->convert_to_megabytes( $full_size->get_filesize() );
+		$image_width  = $full_size->get_width();
+		$image_height = $full_size->get_height();
+		$image_type   = strtoupper( $full_size->get_extension() );
+
+		return array(
+			'Last Image Time Elapsed' => $last_image_time_elapsed,
+			'Last Image Size'         => $file_size,
+			'Last Image Width'        => $image_width,
+			'Last Image Height'       => $image_height,
+			'Last Image Type'         => $image_type,
+		);
 	}
 
 	/**
@@ -991,8 +1095,24 @@ class Product_Analytics_Controller {
 				'Background Optimization' => $this->get_background_optimization_status(),
 				'Cron'                    => $this->get_cron_healthy_status(),
 				'Parallel Processing'     => $this->get_parallel_processing_status(),
+				'Time Elapsed'            => $this->media_library_last_process->get_process_elapsed_time(),
+				'Smush Type'              => $this->get_smush_type(),
+				'Mode'                    => $this->get_current_lossy_level_label(),
 			),
-			$this->get_bulk_background_process_properties()
+			$this->get_bulk_background_process_properties(),
+			$this->get_last_image_process_properties()
 		);
+	}
+
+	public function track_bulk_smush_progress_stuck() {
+		$properties = array(
+			'Trigger'      => 'stuck_notice',
+			'Modal Action' => 'na',
+			'Troubleshoot' => 'na',
+		);
+
+		$properties = $this->filter_bulk_smush_interrupted_properties( $properties );
+
+		$this->track( 'Bulk Smush Interrupted', $properties );
 	}
 }

@@ -148,7 +148,7 @@ class Lazy_Load_Controller extends Controller {
 			document.documentElement.className = document.documentElement.className.replace('no-js', 'js');
 		</script>
 		<?php
-		if ( ! $this->options['animation']['selected'] || 'none' === $this->options['animation']['selected'] ) {
+		if ( empty( $this->options['animation']['selected'] ) || 'none' === $this->options['animation']['selected'] ) {
 			return;
 		}
 

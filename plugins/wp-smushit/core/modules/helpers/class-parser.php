@@ -8,8 +8,9 @@
 
 namespace Smush\Core\Modules\Helpers;
 
-use Smush\Core\Request_Utils;
+use Smush\Core\Server_Utils;
 use Smush\Core\Settings;
+use Smush\Core\Transform\Transformer;
 use WP_Smush;
 
 /**
@@ -38,6 +39,25 @@ class Parser {
 	 * @var bool $background_images
 	 */
 	private $background_images = false;
+
+	/**
+	 * Server utils instance.
+	 *
+	 * @var Server_Utils
+	 */
+	private $server_utils;
+
+	/**
+	 * Transformer instance.
+	 *
+	 * @var Transformer
+	 */
+	private $transformer;
+
+	public function __construct() {
+		$this->server_utils = new Server_Utils();
+		$this->transformer  = new Transformer();
+	}
 
 	/**
 	 * Smush will __construct this class multiple times, but only once does it need to be initialized.
@@ -128,11 +148,10 @@ class Parser {
 			return $content;
 		}
 
-		$content = $this->process_images( $content );
-
-		if ( $this->background_images ) {
-			$content = $this->process_background_images( $content );
-		}
+		$content = $this->transformer->transform_content(
+			$content,
+			$this->server_utils->get_current_url()
+		);
 
 		return $content;
 	}

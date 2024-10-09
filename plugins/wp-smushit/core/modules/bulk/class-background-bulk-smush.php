@@ -21,6 +21,21 @@ class Background_Bulk_Smush {
 	private $global_stats;
 	private $server_utils;
 
+	/**
+	 * Static instance
+	 *
+	 * @var self
+	 */
+	private static $instance;
+
+	public static function get_instance() {
+		if ( empty( self::$instance ) ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+
 	public function __construct() {
 		$process_manager          = new Background_Process_Manager(
 			is_multisite(),
@@ -43,6 +58,10 @@ class Background_Bulk_Smush {
 
 		add_filter( 'wp_smush_script_data', array( $this, 'localize_background_stats' ) );
 		add_action( 'init', array( $this, 'cancel_programmatically' ) );
+	}
+
+	public function get_background_process() {
+		return $this->background_process;
 	}
 
 	public function cancel_programmatically() {
@@ -245,6 +264,13 @@ class Background_Bulk_Smush {
 	 */
 	public function get_revival_count() {
 		return $this->background_process->get_revival_count();
+	}
+
+	/**
+	 * Get process id.
+	 */
+	public function get_process_id() {
+		return $this->background_process->get_process_id();
 	}
 
 	/**

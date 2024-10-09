@@ -202,7 +202,6 @@ a.wp-smush-lossy-enable:hover {
 }
 
 /** Image Remaining **/
-div.wp-smush-remaining,
 div.wp-smush-dir-limit,
 div.smush-s3-setup-message {
 	background-color: #FFF5D5;
@@ -219,10 +218,6 @@ div.smush-s3-setup-message {
 
 div.wp-smush-dir-limit {
 	background-color: #dff6fa;
-}
-
-.wp-smush-resmush-wrap .wp-smush-remaining {
-	padding: 10px 50px;
 }
 
 .wp-smush-count {

@@ -79,8 +79,6 @@ class Ajax {
 		add_action( 'wp_ajax_smush_resmush_image', array( $this, 'resmush_image' ) );
 		// Scan images as per the latest settings.
 		add_action( 'wp_ajax_scan_for_resmush', array( $this, 'scan_images' ) );
-		// Delete ReSmush list.
-		add_action( 'wp_ajax_delete_resmush_list', array( $this, 'delete_resmush_list' ), '', 2 );
 		// Send smush stats.
 		add_action( 'wp_ajax_get_stats', array( $this, 'get_stats' ) );
 
@@ -438,36 +436,6 @@ class Ajax {
 		$stats = apply_filters( "wp_smush_{$type}_scan_stats", array() );
 
 		return wp_send_json_success( $stats );
-	}
-
-	/**
-	 * Delete the resmush list for Nextgen or the Media Library
-	 *
-	 * Return Stats in ajax response
-	 */
-	public function delete_resmush_list() {
-		$stats = array();
-
-		$key = ! empty( $_POST['type'] ) && 'nextgen' === $_POST['type'] ? 'wp-smush-nextgen-resmush-list' : 'wp-smush-resmush-list';
-
-		// For media Library.
-		if ( 'nextgen' !== $_POST['type'] ) {
-			$resmush_list = get_option( $key );
-			if ( ! empty( $resmush_list ) && is_array( $resmush_list ) ) {
-				$stats = WP_Smush::get_instance()->core()->get_stats_for_attachments( $resmush_list );
-			}
-		} else {
-			// For NextGen. Get the stats (get the re-Smush IDs).
-			$resmush_ids = get_option( 'wp-smush-nextgen-resmush-list', array() );
-
-			$stats = WP_Smush::get_instance()->core()->nextgen->ng_stats->get_stats_for_ids( $resmush_ids );
-
-			$stats['count_images'] = WP_Smush::get_instance()->core()->nextgen->ng_admin->get_image_count( $resmush_ids, false );
-		}
-
-		// Delete the resmush list.
-		delete_option( $key );
-		wp_send_json_success( array( 'stats' => $stats ) );
 	}
 
 	/**

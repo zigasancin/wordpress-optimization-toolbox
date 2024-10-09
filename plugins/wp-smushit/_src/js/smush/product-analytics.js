@@ -245,6 +245,7 @@ class ProductAnalytics {
 			}
 
 			const isFreeExceeded = progressBar.classList.contains( 'wp-smush-exceed-limit' );
+
 			const event = 'Bulk Smush Interrupted';
 			const properties = this.getBulkSmushInterruptedEventProperties(
 				{
@@ -318,6 +319,7 @@ class ProductAnalytics {
 		const completionPercentage = totalEnqueuedImages > 0 ? Math.ceil( processedImages * 100 / totalEnqueuedImages ) : 0;
 
 		return {
+			'Retry Attempts': this.resumeBulkSmushCount,
 			'Total Enqueued Images': totalEnqueuedImages,
 			'Completion Percentage': completionPercentage,
 		};
@@ -445,22 +447,26 @@ class ProductAnalytics {
 			}, { once: true } );
 		}
 
+		const trackLoopbackErrorEvent = ( action, processType ) => {
+			const properties = {
+				Trigger: 'loopback_error',
+				'Modal Action': action,
+				Troubleshoot: isTroubleshootClicked ? 'Yes' : 'No',
+			};
+
+			if ( 'scan' === processType ) {
+				this.trackScanInterruptedEvent( properties );
+			} else {
+				this.trackBulkSmushInterruptedEvent( properties );
+			}
+		};
+
 		const closeButtons = loopbackErrorModal.querySelectorAll( '[data-modal-close]' );
 		closeButtons.forEach( ( closeButton ) => {
 			closeButton.addEventListener( 'click', ( e ) => {
 				const action = e.target.dataset?.action || 'Close';
 				const processType = loopbackErrorModal.dataset?.processType || 'scan';
-				const properties = {
-					Trigger: 'loopback_error',
-					'Modal Action': action,
-					Troubleshoot: isTroubleshootClicked ? 'Yes' : 'No',
-				};
-
-				if ( 'scan' === processType ) {
-					this.trackScanInterruptedEvent( properties );
-				} else {
-					this.trackBulkSmushInterruptedEvent( properties );
-				}
+				trackLoopbackErrorEvent( action, processType );
 			} );
 		} );
 	}

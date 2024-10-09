@@ -18,6 +18,7 @@ use Smush\Core\Lazy_Load\Lazy_Load_Controller;
 use Smush\Core\Media\Media_Item_Controller;
 use Smush\Core\Media_Library\Ajax_Media_Library_Scanner;
 use Smush\Core\Media_Library\Background_Media_Library_Scanner;
+use Smush\Core\Media_Library\Media_Library_Last_Process;
 use Smush\Core\Media_Library\Media_Library_Slice_Data_Fetcher;
 use Smush\Core\Media_Library\Media_Library_Watcher;
 use Smush\Core\Modules\Background\Background_Pre_Flight_Controller;
@@ -144,7 +145,7 @@ class Modules {
 		$this->lazy              = new Modules\Lazy();
 		$this->product_analytics = new Modules\Product_Analytics_Controller();
 
-		$this->bg_optimization = new Modules\Bulk\Background_Bulk_Smush();
+		$this->bg_optimization = Modules\Bulk\Background_Bulk_Smush::get_instance();
 
 		$smush_controller = new Smush_Controller();
 		$smush_controller->init();
@@ -209,6 +210,9 @@ class Modules {
 
 		$background_health = Background_Pre_Flight_Controller::get_instance();
 		$background_health->init();
+
+		$media_lib_last_process = Media_Library_Last_Process::get_instance();
+		$media_lib_last_process->init();
 	}
 
 }
