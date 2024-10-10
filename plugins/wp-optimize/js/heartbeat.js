@@ -70,7 +70,7 @@ var WP_Optimize_Heartbeat = function () {
 								response = data.callbacks[uid];
 							}
 
-							if ('undefined' != typeof(response.result) && false === response.result) {
+							if ('undefined' != typeof(response.result) && false === response.result && ('undefined' == typeof(response.skip_notice) || false === response.skip_notice)) {
 								wp_optimize.notices.show_notice(response.error_code, response.error_message);
 							} else {
 								if ('undefined' !== typeof(WP_Optimize_Heartbeat_Agents[uid]) && WP_Optimize_Heartbeat_Agents[uid].callback instanceof Function) {

@@ -220,6 +220,7 @@ class WPO_Cache_Config {
 			'enable_user_caching'						=> false,
 			'site_url'									=> network_home_url('/'),
 			'enable_cache_per_country'					=> false,
+			'enable_cache_aelia_currency'				=> false,
 			'permalink_structure'						=> get_option('permalink_structure'),
 			'uploads'									=> wp_normalize_path(wp_upload_dir()['basedir']),
 			'gmt_offset'								=> get_option('gmt_offset'),

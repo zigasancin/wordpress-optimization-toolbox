@@ -86,3 +86,7 @@
 .wpo-collapsible.opened + .wpo-collapsible-content {
   display: block;
 }
+
+.wpo-action-separator {
+  color: #A7AAAD;
+}

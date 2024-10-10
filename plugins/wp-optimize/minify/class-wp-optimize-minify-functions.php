@@ -11,7 +11,7 @@ if (function_exists('mb_internal_encoding')) {
 ini_set('pcre.backtrack_limit', 5000000);
 ini_set('pcre.recursion_limit', 5000000);
 	
-use MatthiasMullie\Minify; // phpcs:ignore PHPCompatibility.Keywords.NewKeywords.t_useFound, PHPCompatibility.LanguageConstructs.NewLanguageConstructs.t_ns_separatorFound
+use MatthiasMullie\Minify;
 
 class WP_Optimize_Minify_Functions {
 

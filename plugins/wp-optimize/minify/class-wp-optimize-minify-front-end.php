@@ -738,21 +738,27 @@ class WP_Optimize_Minify_Front_End {
 
 		// loop through header css and merge
 		for ($i=0,$l=count($header); $i<$l; $i++) {
+
 			if (!isset($header[$i]['handle'])) {
+
+				$handle_str = is_array($header[$i]['handles']) ? $this->array_to_string_conversion($header[$i]['handles']) : strval($header[$i]['handles']);
+				$last_modified_str = is_array($header[$i]['last_modified']) ? $this->array_to_string_conversion($header[$i]['last_modified']) : strval($header[$i]['last_modified']);
+
 				if ($merge_css) {
 					// get hash for the inline css in this group
 					$inline_css_group = array();
-					foreach ($header[$i]['handles'] as $h) {
-						if (!empty($inline_css) && isset($inline_css[$h]) && !empty($inline_css[$h])) {
-							$inline_css_group[] = $inline_css[$h];
+
+					if (is_array($header[$i]['handles'])) {
+						foreach ($header[$i]['handles'] as $h) {
+							if (!empty($inline_css) && isset($inline_css[$h]) && !empty($inline_css[$h])) {
+								$inline_css_group[] = $inline_css[$h];
+							}
 						}
 					}
 					$inline_css_hash = md5(implode('', $inline_css_group));
-					$handle_str = $this->array_to_string_conversion($header[$i]['handles']);
-					$last_modified_str = $this->array_to_string_conversion($header[$i]['last_modified']);
 					$hash = hash('adler32', $handle_str . $inline_css_hash . $last_modified_str);
 				} else {
-					$hash = implode('', $header[$i]['handles']) . implode('', $header[$i]['last_modified']);
+					$hash = $handle_str . $last_modified_str;
 				}
 
 				// static cache file info
@@ -1021,13 +1027,17 @@ class WP_Optimize_Minify_Front_End {
 
 		// loop through footer scripts and merge
 		for ($i=0,$l=count($footer); $i<$l; $i++) {
+
 			if (!isset($footer[$i]['handle'])) {
+
+				$handles_str = is_array($footer[$i]['handles']) ? $this->array_to_string_conversion($footer[$i]['handles']) : strval($footer[$i]['handles']);
+				$last_modified_str = is_array($footer[$i]['last_modified']) ? $this->array_to_string_conversion($footer[$i]['last_modified']) : strval($footer[$i]['last_modified']);
 
 				if ($merge_js) {
 					// Change the hash based on last modified timestamp
-					$hash = hash('adler32', implode('', $footer[$i]['handles']) . implode('', $footer[$i]['last_modified']));
+					$hash = hash('adler32', $handles_str . $last_modified_str);
 				} else {
-					$hash = implode('', $footer[$i]['handles']) . implode('', $footer[$i]['last_modified']);
+					$hash = $handles_str . $last_modified_str;
 				}
 								
 				// static cache file info
@@ -1377,12 +1387,16 @@ class WP_Optimize_Minify_Front_End {
 
 		// loop through header scripts and merge
 		for ($i=0,$l=count($header); $i < $l; $i++) {
+
 			if (!isset($header[$i]['handle'])) {
-				
+
+				$handles_str = is_array($header[$i]['handles']) ? $this->array_to_string_conversion($header[$i]['handles']) : strval($header[$i]['handles']);
+				$last_modified_str = is_array($header[$i]['last_modified']) ? $this->array_to_string_conversion($header[$i]['last_modified']) : strval($header[$i]['last_modified']);
+
 				if ($merge_js) {
-					$hash = hash('adler32', implode('', $header[$i]['handles']) . implode('', $header[$i]['last_modified']));
+					$hash = hash('adler32', $handles_str . $last_modified_str);
 				} else {
-					$hash = implode('', $header[$i]['handles']) . implode('', $header[$i]['last_modified']);
+					$hash = $handles_str . $last_modified_str;
 				}
 
 				// static cache file info
@@ -1825,19 +1839,26 @@ class WP_Optimize_Minify_Front_End {
 
 		// loop through footer css and merge
 		for ($i=0,$l=count($footer); $i<$l; $i++) {
+
 			if (!isset($footer[$i]['handle'])) {
+
+				$handles_str = is_array($footer[$i]['handles']) ? $this->array_to_string_conversion($footer[$i]['handles']) : strval($footer[$i]['handles']);
+				$last_modified_str = is_array($footer[$i]['last_modified']) ? $this->array_to_string_conversion($footer[$i]['last_modified']) : strval($footer[$i]['last_modified']);
+
 				if ($merge_css) {
 					// get hash for the inline css in this group
 					$inline_css_group = array();
-					foreach ($footer[$i]['handles'] as $h) {
-						if (isset($inline_css[$h]) && !empty($inline_css[$h])) {
-							$inline_css_group[] = $inline_css[$h];
+					if (is_array($footer[$i]['handles'])) {
+						foreach ($footer[$i]['handles'] as $h) {
+							if (isset($inline_css[$h]) && !empty($inline_css[$h])) {
+								$inline_css_group[] = $inline_css[$h];
+							}
 						}
 					}
 					$inline_css_hash = md5(implode('', $inline_css_group));
-					$hash = hash('adler32', implode('', $footer[$i]['handles']) . $inline_css_hash . implode('', $footer[$i]['last_modified']));
+					$hash = hash('adler32', $handles_str . $inline_css_hash . $last_modified_str);
 				} else {
-					$hash = implode('', $footer[$i]['handles']) . implode('', $footer[$i]['last_modified']);
+					$hash = $handles_str . $last_modified_str;
 				}
 
 				// static cache file info

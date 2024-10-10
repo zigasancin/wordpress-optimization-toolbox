@@ -5,7 +5,7 @@ Tags: cache, caching, image cache, minify, performance cache, page speed, image 
 Requires PHP: 5.6
 Requires at least: 4.5
 Tested up to: 6.6
-Stable tag: 3.5.0
+Stable tag: 3.6.0
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -394,6 +394,21 @@ If none of the above works, disable processing of JavaScript files in the minify
 
 
 == Changelog ==
+
+= 3.6.0 - 12/Sep/2024 =
+
+* FEATURE: Premium - Auto-detect images lacking dimension attributes and add them to improve CLS
+* FIX: Fixed the issue that disabled WebP conversion due to checking all shell commands for WebP compression
+* FIX: Premium - Unused Images - The unused image size deletion functionality does not work when images are not in the /yyyy/mm/ folder
+* REFACTOR: Removed unnecessary static methods in WebP class
+* TWEAK: Image compression - Rolled back to using popup error notices as in versions prior to 3.4.0
+* TWEAK: Added a more descriptive error with resolution proposals for failed gzip compression and browser cache tests
+* TWEAK: Fix broken unused image list thumbnails and download as csv link in Multisite
+* TWEAK: Fix the singleton pattern in Heartbeat class
+* TWEAK: Image compression functionality added to the Media Library page
+* TWEAK: Premium - Cache - Added support for Aelia Currency Switcher plugin
+* TWEAK: Premium - Unusued images - improve clarity in UI for images in post revisions
+* TWEAK: Added additional checks to the `implode()` function to mitigate the risk of fatal errors on certain instances
 
 = 3.5.0 - 14/Aug/2024 =
 
@@ -1570,4 +1585,4 @@ If none of the above works, disable processing of JavaScript files in the minify
 * Fix Interface
 
 == Upgrade Notice ==
-* 3.5.0: One premium feature added. Ability to host analytics scripts locally, a lot of fixes and tweaks - a recommended update for all
+* 3.6.0: One premium feature added. Ability to add missing image dimension attributes to image tags, a lot of fixes and tweaks - a recommended update for all

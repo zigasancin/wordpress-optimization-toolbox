@@ -51,21 +51,18 @@ class WPO_WebP_Alter_HTML {
 		
 		if (!WP_Optimize_Utils::is_valid_html($html)) return $html;
 
-		$this->maybe_include_simple_html_dom();
-
-		$dom = str_get_html($html, false, false, 'UTF-8', false, DEFAULT_BR_TEXT, DEFAULT_SPAN_TEXT, false);
-
 		// MAX_FILE_SIZE is defined in simple_html_dom.
-		// For safety sake, we make sure it is defined before using
+		// For safety, we make sure it is defined before using
 		defined('MAX_FILE_SIZE') || define('MAX_FILE_SIZE', 600000);
+
+		$dom = WP_Optimize_Utils::get_simple_html_dom_object($html);
 
 		if (false === $dom) {
 			if (strlen($html) > MAX_FILE_SIZE) {
-				return '<!-- Alter HTML was skipped because the HTML is too big to process! ' .
-					'(limit is set to ' . MAX_FILE_SIZE . ' bytes) -->' . "\n" . $html;
+				return $html . "\n" . "<!-- Alter HTML was skipped because the HTML is too big to process! " .
+					"(limit is set to " . MAX_FILE_SIZE . " bytes) -->";
 			}
-			return '<!-- Alter HTML was skipped because the helper library refused to process the html -->' .
-				"\n" . $html;
+			return $html . "\n" . "<!-- Alter HTML was skipped because the helper library refused to process the html -->";
 		}
 
 		// Replace attributes (src, srcset, data-src, etc)
@@ -82,15 +79,6 @@ class WPO_WebP_Alter_HTML {
 		}
 
 		return $dom->save();
-	}
-
-	/**
-	 * Include simple html dom script if not available
-	 */
-	private function maybe_include_simple_html_dom() {
-		if (!function_exists('str_get_html')) {
-			require_once WPO_PLUGIN_MAIN_PATH . 'vendor/simplehtmldom/simplehtmldom/simple_html_dom.php';
-		}
 	}
 
 	/**

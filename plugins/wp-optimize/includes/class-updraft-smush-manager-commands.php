@@ -73,6 +73,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 			'convert_to_webp_format',
 			'update_webp_options',
 			'get_smush_details',
+			'get_smush_settings_form',
 		);
 
 		return array_merge($commands, $smush_commands);
@@ -135,6 +136,8 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 			$response['sizes-info'] = WP_Optimize()->include_template('images/smush-details.php', true, array('sizes_info' => $smush_stats['sizes-info']));
 		}
 
+		$response['media_column_html'] = $this->get_smush_media_column_content($blog, $image);
+
 		return $response;
 	}
 
@@ -162,6 +165,8 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$response['image']	 = $image_id;
 		$response['success'] = $success;
 		$response['summary'] = __('The image was restored successfully', 'wp-optimize');
+
+		$response['media_column_html'] = $this->get_smush_media_column_content($blog_id, $image_id);
 		
 		return $response;
 	}
@@ -260,7 +265,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		// Only run checks when trying to enable WebP
 		if ($options['webp_conversion']) {
 			//Run checks if we are enabling webp conversion
-			if (!WP_Optimize_WebP::is_shell_functions_available()) {
+			if (!$webp_instance->shell_functions_available()) {
 				$webp_instance->disable_webp_conversion();
 				$webp_instance->log("Required WebP shell functions are not available on the server, disabling WebP conversion");
 				return new WP_Error('update_failed_no_shell_functions', __('Required WebP shell functions are not available on the server.', 'wp-optimize'));
@@ -466,6 +471,11 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 
 		$response['info'] = $info;
 
+		if (1 === count($data['selected_images'])) {
+			$selected_image = reset($data['selected_images']);
+			$response['media_column_html'] = $this->get_smush_media_column_content($selected_image['blog_id'], $selected_image['attachment_id']);
+		}
+
 		return $response;
 	}
 
@@ -598,7 +608,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	public function reset_webp_serving_method() {
 		$webp_instance = WP_Optimize()->get_webp_instance();
 		//Run checks before calling reset_webp_serving_method
-		if (!WP_Optimize_WebP::is_shell_functions_available()) {
+		if (!$webp_instance->shell_functions_available()) {
 			$webp_instance->disable_webp_conversion();
 			$webp_instance->log("The WebP serving method cannot be reset because required WebP shell functions are not available on the server");
 			return new WP_Error('reset_failed_no_shell_functions', __('The WebP serving method cannot be reset because required WebP shell functions are not available on the server', 'wp-optimize'));
@@ -635,6 +645,51 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		return array(
 			'success' => __('Image is converted to WebP format.', 'wp-optimize'),
 		);
+	}
+
+	/**
+	 * Get Smush settings form
+	 *
+	 * @param array $data
+	 * @return array
+	 */
+	public function get_smush_settings_form($data) {
+		$attachment_id = isset($data['attachment_id']) ? $data['attachment_id'] : 0;
+		if (0 === $attachment_id) return $this->image_not_found_response();
+
+		$compressed = get_post_meta($attachment_id, 'smush-complete', true) ? true : false;
+
+		$smush_options = Updraft_Smush_Manager()->get_smush_options();
+
+		$extract = array(
+			'post_id' => $attachment_id,
+			'smush_options' => $smush_options,
+			'custom' => 90 >= $smush_options['image_quality'] && 65 <= $smush_options['image_quality'],
+			'smush_display' => $compressed ? "display:none;" : "display:block;",
+		);
+
+		return array(
+			'success' => true,
+			'html' => WP_Optimize()->include_template('admin-metabox-smush-settings.php', true, $extract),
+		);
+	}
+
+	/**
+	 * Get content for Media Library column content
+	 *
+	 * @param {int} $blog_id
+	 * @param {int} $attachment_id
+	 *
+	 * @return string
+	 */
+	private function get_smush_media_column_content($blog_id, $attachment_id) {
+		if (is_multisite()) switch_to_blog($blog_id);
+
+		$content = Updraft_Smush_Manager()->get_media_smush_column_content($attachment_id);
+		
+		if (is_multisite()) restore_current_blog();
+		
+		return $content;
 	}
 
 	/**

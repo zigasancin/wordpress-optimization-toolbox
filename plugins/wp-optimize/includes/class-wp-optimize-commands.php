@@ -1081,4 +1081,28 @@ class WP_Optimize_Commands {
 			'success' => true
 		);
 	}
+	
+	/**
+	 * Save images dimensions options
+	 *
+	 * @param array $settings Settings data
+	 * @return array
+	 */
+	public function save_images_dimension_option($settings) {
+		$options = WP_Optimize()->get_options();
+
+		if (!empty($settings["images_dimensions"]) && "true" === $settings["images_dimensions"]) {
+			$is_updated = $options->update_option('image_dimensions', 1);
+		} else {
+			$is_updated = $options->update_option('image_dimensions', 0);
+		}
+
+		if ($is_updated || $options->update_option('image_dimensions_ignore_classes', sanitize_text_field($settings['ignore_classes']))) {
+			wpo_cache_flush();
+		}
+		
+		return array(
+			'success' => true
+		);
+	}
 }

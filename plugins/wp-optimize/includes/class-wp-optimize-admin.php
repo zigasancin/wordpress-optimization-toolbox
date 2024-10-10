@@ -45,6 +45,7 @@ class WP_Optimize_Admin {
 			),
 			'wpo_images'  => array(
 				'smush' => __('Compress images', 'wp-optimize'),
+				'dimensions' => __('Images dimensions', 'wp-optimize').'<span class="menu-pill premium-only">Premium</span>',
 				'unused' => __('Unused images and sizes', 'wp-optimize').'<span class="menu-pill premium-only">Premium</span>',
 				'lazyload' => __('Lazy-load', 'wp-optimize').'<span class="menu-pill premium-only">Premium</span>',
 			),
@@ -237,6 +238,11 @@ class WP_Optimize_Admin {
 			 */
 			add_filter('admin_footer_text', array($this, 'display_footer_review_message'));
 		}
+		
+		/**
+		 * Add action for display Images > Images dimensions tab.
+		 */
+		add_action('wp_optimize_admin_page_wpo_images_dimensions', array($this, 'admin_page_wpo_images_dimensions'));
 	}
 
 	/**
@@ -489,6 +495,19 @@ class WP_Optimize_Admin {
 	 */
 	public function admin_page_wpo_images_lazyload() {
 		WP_Optimize()->include_template('images/lazyload.php');
+	}
+	
+	/**
+	 * Runs upon the WP action wp_optimize_admin_page_wpo_images_dimensions
+	 */
+	public function admin_page_wpo_images_dimensions() {
+		$options = WP_Optimize()->get_options();
+		$image_dimensions = $options->get_option('image_dimensions');
+		$ignore_classes = $options->get_option('image_dimensions_ignore_classes');
+		WP_Optimize()->include_template('images/dimensions.php', false, array(
+			'images_dimensions_status' => $image_dimensions,
+			'ignore_classes' => $ignore_classes ?: '',
+		));
 	}
 
 	/**

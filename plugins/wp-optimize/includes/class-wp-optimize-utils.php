@@ -18,7 +18,7 @@ class WP_Optimize_Utils {
 		}
 		return $upload_base . 'wpo/logs/';
 	}
-	
+
 	/**
 	 * Generates a log file name based on the given prefix.
 	 *
@@ -28,7 +28,7 @@ class WP_Optimize_Utils {
 	public static function get_log_file_name($prefix) {
 		return $prefix . '-' . substr(md5(wp_salt()), 0, 20) . '.log';
 	}
-	
+
 	/**
 	 * Returns the file path for the log file.
 	 *
@@ -57,7 +57,7 @@ class WP_Optimize_Utils {
 
 		return $gmt_offset;
 	}
-	
+
 	/**
 	 * Returns the folder path for the upload directory with trailing slash
 	 *
@@ -67,7 +67,7 @@ class WP_Optimize_Utils {
 		$upload_dir = wp_upload_dir();
 		return trailingslashit($upload_dir['basedir']);
 	}
-	
+
 	/**
 	 * Get the file path
 	 *
@@ -144,6 +144,28 @@ class WP_Optimize_Utils {
 
 		if ('' === $html) return false;
 		return true;
+	}
+
+	/**
+	 * Include simple html dom script if not available
+	 */
+	public static function maybe_include_simple_html_dom() {
+		if (!function_exists('str_get_html')) {
+			require_once WPO_PLUGIN_MAIN_PATH . 'vendor/simplehtmldom/simplehtmldom/simple_html_dom.php';
+		}
+	}
+
+	/**
+	 * Returns simplehtmldom\HtmlDocument object
+	 *
+	 * @param string $html_buffer - HTML document as string
+	 * @return simplehtmldom\HtmlDocument | boolean
+	 */
+	public static function get_simple_html_dom_object($html_buffer) {
+		self::maybe_include_simple_html_dom();
+		return str_get_html($html_buffer, false, false,
+			get_option('blog_charset'), false, DEFAULT_BR_TEXT,
+			DEFAULT_SPAN_TEXT, false);
 	}
 }
 
