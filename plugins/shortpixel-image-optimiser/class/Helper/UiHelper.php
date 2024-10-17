@@ -460,6 +460,9 @@ class UiHelper
 
     $text = '';
 
+		$access = AccessModel::getInstance();
+
+
     if (! $keyControl->keyIsVerified())
     {
       $text = __('Invalid API Key. <a href="options-general.php?page=wp-shortpixel-settings">Check your Settings</a>','shortpixel-image-optimiser');
@@ -504,7 +507,10 @@ class UiHelper
 			 $text = '<p>' . __('This item is waiting to be processed', 'shortpixel-image-optimiser') . '</p>';
 			 $action = self::getAction('cancelOptimize', $mediaItem->get('id'));
 
-			 $text .= '<p><a href="javascript:' . $action['function'] . '">' . $action['text'] . '</a></p>';
+			 if ($access->imageIsEditable($mediaItem))
+			 {
+			 	$text .= '<p><a href="javascript:' . $action['function'] . '">' . $action['text'] . '</a></p>';
+		 	 }
 		}
 
     if ($mediaItem->isOptimizePrevented() !== false)
@@ -574,12 +580,14 @@ class UiHelper
          $action['type']  = 'js';
          $action['text'] = __('Optimize Now', 'shortpixel-image-optimiser');
          $action['display'] = 'button';
+         $action['is-optimizable'] = true;
       break;
       case 'forceOptimize':
         $action['function'] = 'window.ShortPixelProcessor.screen.Optimize(' . $id . ', true)';
         $action['type']  = 'js';
         $action['text'] = __('Override exclusions and optimize now', 'shortpixel-image-optimiser');
         $action['display'] = 'button';
+        $action['is-optimizable'] = true;
       break;
 			case 'cancelOptimize':
 				 $action['function'] = 'window.ShortPixelProcessor.screen.CancelOptimizeItem(' . $id . ')';
@@ -607,6 +615,7 @@ class UiHelper
           $action['type'] = 'js';
           $action['text']  = '';
           $action['display'] = 'inline';
+          $action['is-optimizable'] = true;
       break;
 
       case 'retry':
@@ -614,6 +623,7 @@ class UiHelper
          $action['type']  = 'js';
          $action['text'] = __('Retry', 'shortpixel-image-optimiser') ;
          $action['display'] = 'button';
+         $action['is-optimizable'] = true;
      break;
 		 case 'redo_legacy':
 		 			$action['function'] = 'window.ShortPixelProcessor.screen.RedoLegacy(' . $id . ');';
