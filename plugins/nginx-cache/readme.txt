@@ -1,10 +1,10 @@
 === Nginx Cache ===
 Contributors: tillkruess
 Donate link: https://github.com/sponsors/tillkruss
-Tags: nginx, nginx cache, cache, caching, purge, purge cache, flush, flush cache, server, performance, optimize, speed, load, fastcgi, fastcgi purge, proxy, proxy purge, reverse proxy
+Tags: nginx, cache, fastcgi, purge, flush
 Requires at least: 3.1
-Tested up to: 5.6
-Stable tag: 1.0.5
+Tested up to: 6.6
+Stable tag: 1.0.6
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -36,6 +36,10 @@ For detailed installation instructions, please read the [standard installation p
 
 
 == Changelog ==
+
+= 1.0.6 =
+
+  * Fixed rare issue in `validate_dirlist()`
 
 = 1.0.5 =
 

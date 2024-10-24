@@ -3,7 +3,7 @@
 Plugin Name: Nginx Cache
 Plugin URI: http://wordpress.org/plugins/nginx-cache/
 Description: Purge the Nginx cache (FastCGI, Proxy, uWSGI) automatically when content changes or manually within WordPress.
-Version: 1.0.5
+Version: 1.0.6
 Text Domain: nginx-cache
 Domain Path: /languages
 Author: Till Krüss
@@ -206,6 +206,11 @@ class NginxCache {
 	}
 
 	private function validate_dirlist( $list ) {
+
+		// https://wordpress.org/support/topic/cache-zone-path-does-not-appear-to-be-a-nginx-cache-zone-directory-2/
+		if ( $item[ 'type' ] === 'f' && strpos( $item, "." ) !== false ) {
+			return true;
+		}
 
 		foreach ( $list as $item ) {
 
