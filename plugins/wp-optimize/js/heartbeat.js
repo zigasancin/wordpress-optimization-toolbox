@@ -134,9 +134,12 @@ var WP_Optimize_Heartbeat = function () {
 	 */
 	function do_agents_match(agent1, agent2) {
 		var command_matches = agent1.command === agent2.command;
+		var subaction1 = agent1.command_data && agent1.command_data.subaction ? agent1.command_data.subaction : undefined;
+		var subaction2 = agent2.command_data && agent2.command_data.subaction ? agent2.command_data.subaction : undefined;
+		var subaction_matches = subaction1 === subaction2;
 		var command_not_sent_yet = false === agent1.sent;
 		
-		return command_matches && command_not_sent_yet;
+		return command_matches && subaction_matches && command_not_sent_yet;
 	}
 
 	/**

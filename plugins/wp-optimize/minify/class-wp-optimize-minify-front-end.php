@@ -2035,6 +2035,8 @@ class WP_Optimize_Minify_Front_End {
 			if ("module" !== $script['type']) continue;
 
 			$href = WP_Optimize_Minify_Functions::get_hurl($script['url']);
+			if (WP_Optimize_Minify_Functions::is_minified_css_js_filename($href)) continue;
+
 			$last_modified = WP_Optimize_Minify_Functions::get_modification_time($script['url']);
 			$handle = $script['handle'];
 			$version = $script['version'];
@@ -2108,15 +2110,12 @@ class WP_Optimize_Minify_Front_End {
 			$json_map = $this->get_script_module_importmap($buffer);
 			$json_map_update = $json_map;
 
-			if (!empty($json_map) && isset($json_map['imports'])) {
-				$json_map_update['imports'][$handle] = $file_url;
-			} else {
-				continue;
-			}
-
-			// Update module source file and importmap with new file url
+			// Update module source file and importmap with new file url (if necessary)
 			$buffer = str_replace($script['url'], $file_url, $buffer);
-			$buffer = str_replace(json_encode($json_map), json_encode($json_map_update), $buffer);
+			if (!empty($json_map) && isset($json_map['imports'][$handle])) {
+				$json_map_update['imports'][$handle] = $file_url;
+				$buffer = str_replace(json_encode($json_map), json_encode($json_map_update), $buffer);
+			}
 		}
 
 		return $buffer;

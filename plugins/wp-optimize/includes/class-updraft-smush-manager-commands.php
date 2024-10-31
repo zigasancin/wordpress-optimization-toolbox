@@ -406,9 +406,16 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	/**
 	 * Deletes and removes any pending tasks from queue
 	 *
+	 * @param array $data - in 'restore_images' index passed an array with ids of images to restore
 	 * @return WP_Error|array - information about the operation or WP_Error object on failure
 	 */
-	public function clear_pending_images() {
+	public function clear_pending_images($data) {
+
+		if (!empty($data['restore_images'])) {
+			foreach ($data['restore_images'] as $image) {
+				$this->task_manager->restore_single_image($image['attachment_id'], $image['blog_id']);
+			}
+		}
 
 		$success = $this->task_manager->clear_pending_images();
 
@@ -685,7 +692,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	private function get_smush_media_column_content($blog_id, $attachment_id) {
 		if (is_multisite()) switch_to_blog($blog_id);
 
-		$content = Updraft_Smush_Manager()->get_media_smush_column_content($attachment_id);
+		$content = Updraft_Smush_Manager()->get_smush_details($attachment_id);
 		
 		if (is_multisite()) restore_current_blog();
 		

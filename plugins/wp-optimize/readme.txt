@@ -4,8 +4,8 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: cache, caching, image cache, minify, performance cache, page speed, image optimizer, compress images, optimize database, clean database
 Requires PHP: 5.6
 Requires at least: 4.5
-Tested up to: 6.6
-Stable tag: 3.6.0
+Tested up to: 6.7
+Stable tag: 3.7.0
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -394,6 +394,21 @@ If none of the above works, disable processing of JavaScript files in the minify
 
 
 == Changelog ==
+
+
+= 3.7.0 - 21/Oct/2024 =
+
+* FEATURE: Added an option to automatically preload URLs immediately after cache content is purged
+* FEATURE: Premium - Gather data about table usage by filtering `query` event
+* FIX: Cache - Scheduled preloading wasn't working
+* FIX: Inconsistency in `smush_manager_send_command` function
+* REFACTOR: Smush - Popup styles, remove unused code 
+* TWEAK: Fix fatal implode error when updating to v3.5.0
+* TWEAK: Image compression - Issue with cancelling smush image compression
+* TWEAK: Improve module minification logic
+* TWEAK: Premium - Unused images - Fixed popup when moving images to or restoring images from the trash
+* TWEAK: Premium - Unused images - Placeholder images in unused images section
+* TWEAK: Added `security.md` file with information to report security issues
 
 = 3.6.0 - 12/Sep/2024 =
 
@@ -1585,4 +1600,4 @@ If none of the above works, disable processing of JavaScript files in the minify
 * Fix Interface
 
 == Upgrade Notice ==
-* 3.6.0: One premium feature added. Ability to add missing image dimension attributes to image tags, a lot of fixes and tweaks - a recommended update for all
+* 3.7.0: Two new features have been added: caches can now be automatically preloaded after purging, and premium users can inspect which plugins are causing slow queries, a lot of fixes and tweaks - a recommended update for all

@@ -97,6 +97,7 @@ class WPO_Page_Cache {
 	public function __construct() {
 		$this->config = WPO_Cache_Config::instance();
 		WPO_Cache_Rules::instance();
+		WP_Optimize_Page_Cache_Preloader::instance();
 		$this->logger = new Updraft_PHP_Logger();
 
 		add_action('activated_plugin', array($this, 'activate_deactivate_plugin'));
@@ -128,9 +129,7 @@ class WPO_Page_Cache {
 		add_filter('cron_schedules', array($this, 'cron_schedules'));
 		add_action('wpo_save_images_settings', array($this, 'update_webp_images_option'));
 
-		// Auto preload feature is commented out due to possible regression in v3.5.0
-		// add_action('wpo_delete_cache_by_url', array($this, 'maybe_preload_url'), 10, 2);
-		// add_action('wpo_maybe_preload_url', array($this, 'maybe_preload_url'), 10, 2);
+		add_action('wpo_preload_url', array($this, 'maybe_preload_url'));
 	}
 
 	/**
@@ -265,10 +264,29 @@ class WPO_Page_Cache {
 
 		} elseif (wp_verify_nonce($_GET['_wpo_purge'], 'wpo_purge_all_pages_cache')) {
 			$success = self::purge();
+			$this->maybe_set_preload_cron_job();
 
 			// remove nonce from url and reload page.
 			wp_redirect(add_query_arg('wpo_all_pages_cache_purged', $success, remove_query_arg('_wpo_purge')));
 			exit;
+		}
+	}
+
+	/**
+	 * Sets a preload cron job to run after 30 seconds
+	 *
+	 * As preloading may take time for larger sites, we are opting for an immediate cron job instead
+	 * of instant preloading to prevent the current request from slowing down the page load
+	 *
+	 * @return void
+	 */
+	private function maybe_set_preload_cron_job() {
+		$wpo_page_cache_preloader = WP_Optimize_Page_Cache_Preloader::instance();
+
+		if ($wpo_page_cache_preloader->is_scheduled_preload_enabled() || $this->should_auto_preload_purged_contents()) {
+			if (!wp_next_scheduled('wpo_page_cache_run_preload')) {
+				wp_schedule_single_event(time() + 30, 'wpo_page_cache_run_preload');
+			}
 		}
 	}
 
@@ -465,8 +483,6 @@ class WPO_Page_Cache {
 		);
 		$is_deactivation_action = in_array(current_action(), $purge_actions, true);
 		if ($is_deactivation_action && !$this->should_purge) return false;
-
-		if ('' != WPO_CACHE_FILES_DIR) do_action('wpo_maybe_preload_url', WPO_CACHE_FILES_DIR, true);
 
 		if (!self::delete(WPO_CACHE_FILES_DIR)) {
 			$this->log("The request to the filesystem to delete the cache failed");
@@ -1063,7 +1079,6 @@ EOF;
 	 * @return boolean
 	 */
 	public static function delete($src) {
-		do_action('wpo_maybe_preload_url', $src);
 		return wpo_delete_files($src);
 	}
 
@@ -1082,96 +1097,36 @@ EOF;
 
 		do_action('wpo_delete_cache_by_url', $url, $recursive);
 
+		do_action('wpo_preload_url', $url);
+
 		return wpo_delete_files($path, $recursive);
 	}
 
 	/**
-	 * Check if auto preload after purge is enabled, and create tasks accordingly
+	 * Adds the URL to the preload list and hooks the preload task to shutdown
 	 *
-	 * @param string $url       The full URL or path to the cached contents
-	 * @param bool   $recursive Scan subfolders and process
+	 * @param string $url
 	 * @return void
 	 */
-	public function maybe_preload_url($url, $recursive = true) {
+	public function maybe_preload_url($url) {
+		if (!$this->should_auto_preload_purged_contents()) return;
+
 		static $urls_preloaded = array();
-		if ($this->should_auto_preload_purged_contents()) {
-			if (filter_var($url, FILTER_VALIDATE_URL)) {
-				$src = self::get_full_path_from_url($url);
-			} else {
-				$src = $url;
-			}
-			
-			if ($recursive && is_dir($src)) {
-				$dir_handle = @opendir($src); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- suppress PHP warning in case of failure
-				if (false !== $dir_handle) {
-					while (false !== ($file = readdir($dir_handle))) {
-						if ('.' == $file || '..' == $file) {
-							continue;
-						}
-						
-						$full_path = $src . '/' . $file;
-						
-						$this->maybe_preload_url($full_path, $recursive);
-					}
-					closedir($dir_handle);
-				}
-			} else {
-				$dirname = dirname($src);
-				$url = $this->convert_path_to_site_url($dirname);
-				
-				if (!in_array($url, $urls_preloaded)) {
-					$urls_preloaded[] = $url;
 
-					$preloader = WP_Optimize_Page_Cache_Preloader::instance();
+		// Remove the query string from the URL
+		$url = preg_replace('/\?.*/', '', $url);
 
-					$preloader->add_url_to_preload_list($url);
+		if (!in_array($url, $urls_preloaded)) {
+			$urls_preloaded[] = $url;
 
-					$url_task_creator = array($preloader, 'create_tasks_for_auto_preload_urls');
-					if (!has_action('shutdown', $url_task_creator)) {
-						add_action('shutdown', $url_task_creator);
-					}
-				}
-			
+			$preloader = WP_Optimize_Page_Cache_Preloader::instance();
+			$preloader->add_url_to_preload_list($url);
+			$url_task_creator = array($preloader, 'create_tasks_for_auto_preload_urls');
+
+			if (!has_action('shutdown', $url_task_creator)) {
+				add_action('shutdown', $url_task_creator);
 			}
 		}
-	}
-
-	/**
-	 * Remove from the path everything up to `wpo-cache` folder so we can recreate the original URL that created the cache file
-	 * Examples:
-	 * Input: `/var/www/html/wpo/wp-content/cache/wpo-cache/localhost/wpo/wpo-cache`
-	 * Output: `localhost/wpo/wpo-cache`
-	 *
-	 * @param string $src Full path to the cached file
-	 * @return string
-	 */
-	public function convert_path_to_site_url($src) {
-		$cache_dir = preg_replace('#^.*?wpo-cache[/]?#', '', $src);
-		$cache_path = explode('/', $cache_dir);
-
-		// remove domain from the path
-		array_shift($cache_path);
-		
-		// strip sub-folder installation from path
-		$site_url_parts = wp_parse_url(site_url());
-		if ((false != $site_url_parts) && isset($site_url_parts['path'])) {
-			$site_url_path = explode("/", $site_url_parts['path']);
-			
-			if ('' == $site_url_path[0]) {
-				array_shift($site_url_path);
-			}
-		} else {
-			$site_url_path = array();
-		}
-
-		while (0 < count($site_url_path) && 0 < count($cache_path) && ($site_url_path[0] == $cache_path[0])) {
-			array_shift($site_url_path);
-			array_shift($cache_path);
-		}
-
-		$clean_path = implode("/", $cache_path);
-
-		return site_url($clean_path);
 	}
 	
 	/**
@@ -1210,6 +1165,8 @@ EOF;
 
 		do_action('wpo_delete_cache_by_url', $post_url, $recursive);
 
+		do_action('wpo_preload_url', $post_url);
+
 		return wpo_delete_files($path, $recursive);
 	}
 
@@ -1227,6 +1184,8 @@ EOF;
 		$recursive = false;
 
 		do_action('wpo_delete_cache_by_url', $homepage_url, $recursive);
+
+		do_action('wpo_preload_url', $homepage_url);
 
 		wpo_delete_files($path, $recursive);
 	}
@@ -1287,8 +1246,6 @@ EOF;
 		// delete empty comments dir from the cache
 		$comments_url = trailingslashit(get_home_url(get_current_blog_id())) . 'comments/';
 		$path = self::get_full_path_from_url($comments_url);
-
-		do_action('wpo_delete_cache_by_url', $comments_url, true);
 		
 		if (wpo_is_empty_dir($path)) {
 			wpo_delete_files($path, true);
@@ -1606,8 +1563,10 @@ EOF;
 	 * @return bool
 	 */
 	public function should_auto_preload_purged_contents() {
-		$enabled = WP_Optimize()->get_options()->get_option('auto_preload_purged_contents');
-		return 'true' == $enabled;
+		$wpo_cache = WP_Optimize()->get_page_cache();
+		$wpo_cache_options = $wpo_cache->config->get();
+		
+		return $wpo_cache_options['auto_preload_purged_contents'];
 	}
 }
 

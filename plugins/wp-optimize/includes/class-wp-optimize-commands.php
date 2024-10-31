@@ -9,7 +9,7 @@ class WP_Optimize_Commands {
 
 	private $optimizer;
 
-	private $options;
+	protected $options;
 
 	private $wpo_sites; // used in get_optimizations_info command.
 

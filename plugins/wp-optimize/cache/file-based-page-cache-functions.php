@@ -1132,11 +1132,6 @@ function wpo_delete_files($src, $recursive = true) {
 			return false;
 		}
 
-		// Remove gzipped version of the file
-		if (file_exists("$src.gz")) {
-			unlink("$src.gz");
-		}
-
 		return true;
 	}
 

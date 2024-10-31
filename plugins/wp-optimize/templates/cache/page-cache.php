@@ -63,16 +63,17 @@
 		<span id="wpo_current_cache_size_information"><?php esc_html_e('Current cache size:', 'wp-optimize'); ?> <?php echo esc_html(WP_Optimize()->format_size($cache_size['size'])); ?></span>
 		<br><span id="wpo_current_cache_file_count"><?php esc_html_e('Number of files:', 'wp-optimize'); ?> <?php echo esc_html($cache_size['file_count']); ?></span>
 	</p>
-	<?php
+	<div class="wpo-fieldgroup__subgroup" style="padding-bottom: 15px;">
+		<div style="float: left;">
+			<label for="wpo-auto-preload-after-purge">
+				<input type="checkbox" id="wpo-auto-preload-after-purge" class="cache-settings" name="auto_preload_purged_contents"  <?php checked($auto_preload_purged_contents); ?>>
+				<?php esc_html_e('Automatically preload content after it is purged', 'wp-optimize'); ?>
+			</label>
+			<span tabindex="0" data-tooltip="<?php echo esc_attr__('Automatically preload pages when a post or page is purged or updated.', 'wp-optimize') . ' ' . esc_attr__('Note that enabling this feature may extend the time it takes to save a post due to background preloading.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
+		</div>
+		<span class="dashicons dashicons-yes display-none save-done" style="line-height: 20px; float: left;"></span>
+	</div>
 
-	/*
-	Auto preload feature is commented out due to possible regression in v3.5.0
-	<p>
-		<input type="checkbox" id="wpo-auto-preload-after-purge" <?php checked($auto_preload_after_purge); ?>>
-		<label for="wpo-auto-preload-after-purge"><?php esc_html_e('Automatically preload content after it is purged', 'wp-optimize'); ?></label>
-	</p>
-	*/
-	?>
 </div>
 
 <h3><?php esc_html_e('Cache settings', 'wp-optimize'); ?></h3>

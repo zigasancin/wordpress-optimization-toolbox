@@ -42,6 +42,7 @@ class WP_Optimize_Admin {
 				'optimize' => __('Optimizations', 'wp-optimize'),
 				'tables' => __('Tables', 'wp-optimize'),
 				'settings' => __('Settings', 'wp-optimize'),
+				'table_analysis' => __('Table usage', 'wp-optimize').'<span class="menu-pill premium-only">Premium</span>'
 			),
 			'wpo_images'  => array(
 				'smush' => __('Compress images', 'wp-optimize'),
@@ -204,7 +205,7 @@ class WP_Optimize_Admin {
 		add_action('wp_optimize_admin_page_WP-Optimize_optimize', array($this, 'output_database_optimize_tab'), 20);
 		add_action('wp_optimize_admin_page_WP-Optimize_tables', array($this, 'output_database_tables_tab'), 20);
 		add_action('wp_optimize_admin_page_WP-Optimize_settings', array($this, 'output_database_settings_tab'), 20);
-
+		add_action('wp_optimize_admin_page_WP-Optimize_table_analysis', array($this, 'output_table_usage_tab'), 20);
 		/**
 		 * CACHE
 		 */
@@ -255,6 +256,20 @@ class WP_Optimize_Admin {
 		} else {
 			$this->prevent_manage_options_info();
 		}
+	}
+
+	/**
+	 * Table usage tab
+	 *
+	 * @return void
+	 */
+	public function output_table_usage_tab() {
+		if (WP_Optimize::is_premium()) {
+			$extract = array('is_enabled' => (bool) WP_Optimize()->get_options()->get_option(WPO_DB_Table_Analysis::ENABLED_SETTING_NAME), 'dashboard' => WP_Optimize_Premium()->get_db_table_analysis_dashboard());
+		} else {
+			$extract = array('is_enabled' => false);
+		}
+		WP_Optimize()->include_template('database/table-analysis.php', false, $extract);
 	}
 
 	/**
@@ -326,7 +341,7 @@ class WP_Optimize_Admin {
 			'cache_size' => $wpo_cache->get_cache_size(),
 			'display' => $display,
 			'can_purge_the_cache' => $wpo_cache->can_purge_cache(),
-			'auto_preload_after_purge' => $wpo_cache->should_auto_preload_purged_contents(),
+			'auto_preload_purged_contents' => $wpo_cache->should_auto_preload_purged_contents(),
 			'does_server_handles_cache' => WP_Optimize()->does_server_handles_cache(),
 			'error' => $error,
 		));

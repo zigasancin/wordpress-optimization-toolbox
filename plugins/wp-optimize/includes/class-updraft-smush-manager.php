@@ -1175,7 +1175,8 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 		$js_variables['cancel'] = esc_html__('Cancel', 'wp-optimize');
 		$js_variables['cancelling'] = esc_html__('Cancelling...', 'wp-optimize');
 		$js_variables['images_restored_successfully'] = esc_html__('The images were restored successfully', 'wp-optimize');
-
+		$js_variables['logo_src'] = esc_url(WPO_PLUGIN_URL.'images/notices/wp_optimize_logo.png');
+		
 		wp_enqueue_script('block-ui-js', WPO_PLUGIN_URL.'includes/blockui/jquery.blockUI'.$min_or_not.'.js', array('jquery'), $enqueue_version);
 		wp_enqueue_script('wp-optimize-heartbeat-js', WPO_PLUGIN_URL.'js/heartbeat'.$min_or_not_internal.'.js', array('jquery'), $enqueue_version);
 		wp_localize_script('wp-optimize-heartbeat-js', 'wpo_heartbeat_ajax', array(
@@ -1183,7 +1184,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 			'nonce' => wp_create_nonce('heartbeat-nonce'),
 			'interval' => WPO_Ajax::HEARTBEAT_INTERVAL
 		));
-		wp_enqueue_script('smush-js', WPO_PLUGIN_URL.'js/wposmush'.$min_or_not_internal.'.js', array('jquery', 'block-ui-js', 'wp-optimize-send-command', 'wp-optimize-heartbeat-js'), $enqueue_version);
+		wp_enqueue_script('smush-js', WPO_PLUGIN_URL.'js/wposmush'.$min_or_not_internal.'.js', array('jquery', 'block-ui-js', 'wp-optimize-block-ui', 'wp-optimize-send-command', 'wp-optimize-heartbeat-js'), $enqueue_version);
 		wp_enqueue_style('smush-css', WPO_PLUGIN_URL.'css/smush'.$min_or_not_internal.'.css', array(), $enqueue_version);
 		wp_localize_script('smush-js', 'wposmush', $js_variables);
 	}

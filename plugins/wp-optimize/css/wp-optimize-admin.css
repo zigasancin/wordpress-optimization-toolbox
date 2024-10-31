@@ -2112,3 +2112,26 @@ body.wpo-modal-is-opened {
   text-decoration: none;
   margin-left: 4px;
 }
+
+.wpo-table-usage__premium-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.85));
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+      align-items: center;
+  -ms-flex-pack: center;
+      justify-content: center;
+}
+.wpo-table-usage__premium-mask a.wpo-table-usage__premium-link {
+  background: #FFF;
+  display: inline-block;
+  padding: 10px;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
