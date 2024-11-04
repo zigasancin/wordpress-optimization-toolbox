@@ -1668,13 +1668,25 @@ function ewww_image_optimizer_notice_webp_bulk() {
 		return;
 	}
 	$already_done = ewww_image_optimizer_aux_images_table_count();
+	if ( ewww_image_optimizer_background_mode_enabled() ) {
+		$bulk_link = admin_url( 'options-general.php?page=ewww-image-optimizer-options&bulk_optimize=1' );
+	} else {
+		$bulk_link = admin_url( 'upload.php?page=ewww-image-optimizer-bulk' );
+	}
 	if ( $already_done > 50 ) {
+		$bulk_link = add_query_arg(
+			array(
+				'ewww_webp_only' => 1,
+				'ewww_force'     => 1,
+			),
+			$bulk_link
+		);
 		echo "<div id='ewww-image-optimizer-pngout-success' class='notice notice-info'><p><a href='" .
-			esc_url( admin_url( 'upload.php?page=ewww-image-optimizer-bulk&ewww_webp_only=1&ewww_force=1' ) ) .
+			esc_url( $bulk_link ) .
 			"'>" . esc_html__( 'It looks like you already started optimizing your images, you will need to generate WebP images via the Bulk Optimizer.', 'ewww-image-optimizer' ) . '</a></p></div>';
 	} else {
 		echo "<div id='ewww-image-optimizer-pngout-success' class='notice notice-info'><p><a href='" .
-			esc_url( admin_url( 'upload.php?page=ewww-image-optimizer-bulk' ) ) .
+			esc_url( $bulk_link ) .
 			"'>" . esc_html__( 'Use the Bulk Optimizer to generate WebP images for existing uploads.', 'ewww-image-optimizer' ) . '</a></p></div>';
 	}
 	delete_option( 'ewww_image_optimizer_webp_enabled' );
@@ -6292,6 +6304,7 @@ function ewww_image_optimizer_find_file_by_id( $id ) {
  *
  * @param string $table The table to insert records into.
  * @param array  $data Can be any multi-dimensional array with records to insert. All values must be int/string data.
+ * @return int|bool Number of rows inserted. Boolean false on error.
  */
 function ewww_image_optimizer_mass_insert( $table, $data ) {
 	ewwwio_debug_message( '<b>' . __FUNCTION__ . '()</b>' );
@@ -6300,9 +6313,26 @@ function ewww_image_optimizer_mass_insert( $table, $data ) {
 	}
 	global $wpdb;
 
-	$record_count = count( $data );
+	/**
+	 * Set a maximum for a query, 1k less than WPE's 16k limit, just to be safe.
+	 *
+	 * @param int 15000 The maximum query length.
+	 */
+	$max_query_length = apply_filters( 'ewww_image_optimizer_max_query_length', 15000 );
+
+	$first_record   = reset( $data );
+	$unsafe_fields  = array_keys( $first_record );
+	$escaped_fields = array();
+	foreach ( $unsafe_fields as $unsafe_field ) {
+		$escaped_fields[] = $wpdb->quote_identifier( $unsafe_field );
+	}
+	$escaped_table  = $wpdb->quote_identifier( $table );
+	$escaped_fields = implode( ',', $escaped_fields );
+
+	$record_count   = count( $data );
+	$total_inserted = 0;
 	ewwwio_debug_message( "inserting $record_count records" );
-	$multi_values = array();
+	$escaped_values = '';
 	foreach ( $data as $record ) {
 		if ( ! ewww_image_optimizer_iterable( $record ) ) {
 			continue;
@@ -6317,21 +6347,33 @@ function ewww_image_optimizer_mass_insert( $table, $data ) {
 				$values[] = "''";
 			}
 		}
-		$multi_values[] = '(' . implode( ',', $values ) . ')';
+		if ( strlen( $escaped_values ) > $max_query_length ) {
+			$escaped_values = rtrim( $escaped_values, ',' );
+			// Only int and string values allowed (escaped and validated above). All values, field names and table names are now escaped.
+			$inserted = $wpdb->query( "INSERT INTO $escaped_table ($escaped_fields) VALUES $escaped_values" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			if ( $inserted ) {
+				$total_inserted += $inserted;
+			} else {
+				ewwwio_debug_message( 'db error inserting: ' . $wpdb->last_error );
+				return $inserted;
+			}
+			$escaped_values = '';
+		}
+		$escaped_values .= '(' . implode( ',', $values ) . '),';
 	}
 
-	$first_record   = reset( $data );
-	$unsafe_fields  = array_keys( $first_record );
-	$escaped_fields = array();
-	foreach ( $unsafe_fields as $unsafe_field ) {
-		$escaped_fields[] = $wpdb->quote_identifier( $unsafe_field );
-	}
-	$escaped_table  = $wpdb->quote_identifier( $table );
-	$escaped_fields = implode( ',', $escaped_fields );
-	$escaped_values = implode( ',', $multi_values );
+	$escaped_values = rtrim( $escaped_values, ',' );
 
-	// Only int and string values allowed (above). All values, field names and table names are escaped.
-	return $wpdb->query( "INSERT INTO $escaped_table ($escaped_fields) VALUES $escaped_values" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// Only int and string values allowed (escaped and validated above). All values, field names and table names are now escaped.
+	$inserted = $wpdb->query( "INSERT INTO $escaped_table ($escaped_fields) VALUES $escaped_values" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	if ( $inserted ) {
+		$total_inserted += $inserted;
+		ewwwio_debug_message( "inserted $total_inserted rows" );
+		return $total_inserted;
+	} else {
+		ewwwio_debug_message( 'db error inserting: ' . $wpdb->last_error );
+		return $inserted;
+	}
 }
 
 /**
@@ -10815,6 +10857,10 @@ function ewww_image_optimizer_settings_script( $hook ) {
 		}
 		wp_enqueue_script( 'jquery-ui-progressbar' );
 	}
+
+	// Check options like Force Re-opt, Smart Re-opt, or WebP Only.
+	ewww_image_optimizer_check_bulk_options( $_REQUEST );
+
 	// Number of images in the ewwwio_table (previously optimized images).
 	$image_count     = ewww_image_optimizer_aux_images_table_count();
 	$easyio_site_url = ewwwio()->content_url();
@@ -10853,6 +10899,7 @@ function ewww_image_optimizer_settings_script( $hook ) {
 			'count_string'              => sprintf( esc_html__( '%d total images', 'ewww-image-optimizer' ), $image_count ),
 			'image_count'               => (int) $image_count,
 			'scan_only_mode'            => get_option( 'ewww_image_optimizer_pause_image_queue' ) ? true : false,
+			'bulk_init'                 => ! empty( $_GET['bulk_optimize'] ) ? true : false,
 		)
 	);
 	wp_add_inline_script(
@@ -11622,6 +11669,11 @@ function ewww_image_optimizer_intro_wizard() {
 	$bulk_available       = false;
 	$tools_available      = true;
 	$backup_mode          = 'local';
+	if ( ewww_image_optimizer_background_mode_enabled() ) {
+		$bulk_link = admin_url( 'options-general.php?page=ewww-image-optimizer-options&bulk_optimize=1' );
+	} else {
+		$bulk_link = admin_url( 'upload.php?page=ewww-image-optimizer-bulk' );
+	}
 	if ( ! ewwwio()->tools_initialized ) {
 		if ( ewwwio()->cloud_mode ) {
 			ewwwio()->local->skip_tools();
@@ -11989,22 +12041,14 @@ function ewww_image_optimizer_intro_wizard() {
 	<?php elseif ( 3 === $wizard_step ) : ?>
 			<p>
 				<?php
-				if ( ewww_image_optimizer_background_mode_enabled() || ewww_image_optimizer_easy_active() ) {
-					printf(
-						/* translators: %s: Settings page (link) */
-						esc_html__( 'New uploads will be optimized automatically. You may optimize existing images on the %s.', 'ewww-image-optimizer' ),
-						'<a href="' . esc_url( $settings_page_url . '#ewww-optimize-local-images' ) . '">' . esc_html__( 'Settings page', 'ewww-image-optimizer' ) . '</a>'
-					);
-				} else {
-					printf(
-						/* translators: %s: Bulk Optimize (link) */
-						esc_html__( 'New uploads will be optimized automatically. Optimize existing images with the %s.', 'ewww-image-optimizer' ),
-						( 'network-multisite' === esc_attr( $network ) ?
-						esc_html__( 'Media Library', 'ewww-image-optimizer' ) . ' -> ' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) :
-						'<a href="' . esc_url( admin_url( 'upload.php?page=ewww-image-optimizer-bulk' ) ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>'
-						)
-					);
-				}
+				printf(
+					/* translators: %s: Bulk Optimize (link) */
+					esc_html__( 'New uploads will be optimized automatically. Optimize existing images with the %s.', 'ewww-image-optimizer' ),
+					( 'network-multisite' === esc_attr( $network ) ?
+					esc_html__( 'Media Library', 'ewww-image-optimizer' ) . ' -> ' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) :
+					'<a href="' . esc_url( $bulk_link ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>'
+					)
+				);
 				ewwwio_help_link( 'https://docs.ewww.io/article/4-getting-started', '5853713bc697912ffd6c0b98' );
 				?>
 			</p>
@@ -12657,6 +12701,11 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 	} elseif ( $speed_score < 90 ) {
 		$stroke_class = 'ewww-orange';
 	}
+	if ( ewww_image_optimizer_background_mode_enabled() ) {
+		$bulk_link = admin_url( 'options-general.php?page=ewww-image-optimizer-options&bulk_optimize=1' );
+	} else {
+		$bulk_link = admin_url( 'upload.php?page=ewww-image-optimizer-bulk' );
+	}
 	?>
 	<div id='ewww-widgets' class='metabox-holder'>
 		<div class='meta-box-sortables'>
@@ -12731,18 +12780,14 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 						<div id="ewww-notices" class="ewww-status-detail">
 							<p>
 								<?php
-								if ( ewww_image_optimizer_background_mode_enabled() ) {
-									esc_html_e( 'New uploads will be optimized automatically.', 'ewww-image-optimizer' );
-								} else {
-									printf(
-										/* translators: %s: Bulk Optimize (link) */
-										esc_html__( 'New uploads will be optimized automatically. Optimize existing images with the %s.', 'ewww-image-optimizer' ),
-										( 'network-multisite' === esc_attr( $network ) ?
-										esc_html__( 'Media Library', 'ewww-image-optimizer' ) . ' -> ' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) :
-										'<a href="' . esc_url( admin_url( 'upload.php?page=ewww-image-optimizer-bulk' ) ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>'
-										)
-									);
-								}
+								printf(
+									/* translators: %s: Bulk Optimize (link) */
+									esc_html__( 'New uploads will be optimized automatically. Optimize existing images with the %s.', 'ewww-image-optimizer' ),
+									( 'network-multisite' === esc_attr( $network ) ?
+									esc_html__( 'Media Library', 'ewww-image-optimizer' ) . ' -> ' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) :
+									'<a href="' . esc_url( $bulk_link ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>'
+									)
+								);
 								ewwwio_help_link( 'https://docs.ewww.io/article/4-getting-started', '5853713bc697912ffd6c0b98' );
 								if ( ! apply_filters( 'ewwwio_whitelabel', false ) ) {
 									echo ' ' . ( ! class_exists( 'Amazon_S3_And_CloudFront' ) ?
@@ -12825,7 +12870,7 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 								<?php ewww_image_optimizer_bulk_resize_warning_message(); ?>
 							</p>
 							<a id="ewww-bulk-start-optimizing" class='button-primary' href='#'>
-								<?php esc_html_e( 'Start Optimizing', 'ewww-image-optimizer' ); ?>
+								<?php esc_html_e( 'Start optimizing', 'ewww-image-optimizer' ); ?>
 							</a>
 						</div>
 						<form id="ewww-bulk-controls" class="ewww-bulk-form">
@@ -13356,7 +13401,7 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 							printf(
 								/* translators: %s: Bulk Optimizer (link) */
 								esc_html__( 'Use the %s for existing uploads.', 'ewww-image-optimizer' ),
-								'<a href="' . esc_url( admin_url( 'upload.php?page=ewww-image-optimizer-bulk' ) ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>'
+								'<a href="' . esc_url( $bulk_link ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>'
 							);
 							?>
 						</p>
@@ -13508,7 +13553,7 @@ function ewww_image_optimizer_options( $network = 'singlesite' ) {
 								printf(
 									/* translators: 1: Bulk Optimizer 2: Easy IO */
 									esc_html__( 'Use the %1$s for existing uploads or get %2$s for automatic WebP conversion and delivery.', 'ewww-image-optimizer' ),
-									'<a href="' . esc_url( admin_url( 'upload.php?page=ewww-image-optimizer-bulk' ) ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>',
+									'<a href="' . esc_url( $bulk_link ) . '">' . esc_html__( 'Bulk Optimizer', 'ewww-image-optimizer' ) . '</a>',
 									'<a href="https://ewww.io/plans/">' . esc_html__( 'Easy IO', 'ewww-image-optimizer' ) . '</a>'
 								);
 							}
