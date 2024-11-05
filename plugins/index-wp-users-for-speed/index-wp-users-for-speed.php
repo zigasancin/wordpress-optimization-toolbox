@@ -2,17 +2,17 @@
 
 /**
  * Index WP MySQL For Speed
- * @author   : Oliver Jones
- * @copyright: 2022 Oliver Jones
+ * @author: Oliver Jones
+ * @copyright: 2022-2024 Oliver Jones
  * @license  GPL-2.0-or-later
  * @wordpress-plugin0
  * Plugin Name: Index WP Users For Speed
- * Version:     1.1.5
- * Stable tag:  1.1.5
+ * Version:     1.1.7
+ * Stable tag:  1.1.7
  * Plugin URI:  https://plumislandmedia.org/index-wp-users-for-speed/
  * Description: Speed up your WordPress site with thousands of users.
  * Requires at least: 5.2
- * Tested up to:      6.1.1
+ * Tested up to:      6.6
  * Requires PHP:      5.6
  * Author:       Oliver Jones
  * Author URI:   https://github.com/OllieJones
@@ -34,7 +34,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 const INDEX_WP_USERS_FOR_SPEED_NAME = 'index-wp-users-for-speed';
 define( 'INDEX_WP_USERS_FOR_SPEED_FILENAME', plugin_basename( __FILE__ ) );
-const INDEX_WP_USERS_FOR_SPEED_VERSION          = '1.1.5';
+const INDEX_WP_USERS_FOR_SPEED_VERSION          = '1.1.7';
 const INDEX_WP_USERS_FOR_SPEED_PREFIX           = 'index-wp-users-for-speed-';
 const INDEX_WP_USERS_FOR_SPEED_HOOKNAME         = 'index_wp_users_for_speed_task';
 const INDEX_WP_USERS_FOR_SPEED_KEY_PREFIX       = 'iufs';

@@ -1,16 +1,16 @@
 === Index WP Users For Speed ===
-Contributors: Oliver Jones
-Tags: users, database, index, performance, largesite, dashboard
+Contributors: OllieJones
+Tags: users, database, index, performance, largesite
 Requires at least: 5.2
-Tested up to: 6.1.1
+Tested up to: 6.6
 Requires PHP: 5.6
-Stable tag: 1.1.5
+Stable tag: 1.1.7
 Network: true
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Author URI: https://github.com/OllieJones
 Plugin URI: https://plumislandmedia.net/index-wp-users-for-speed/
-Github Plugin URI: https://github.com/OllieJones/index-wp-users-for-speed
+GitHub Plugin URI: https://github.com/OllieJones/index-wp-users-for-speed
 Primary Branch: main
 Text Domain: index-wp-users-for-speed
 Domain Path: /languages
@@ -29,8 +29,11 @@ This plugin helps speed up the handling of those large numbers of users. It does
 
 When slow queries are required to make sure the metadata indexes are up to date, this plugin does them in the background so nobody has to wait for them to complete. You can set the plugin to do this background work at a particular time each day. Many people prefer to do them overnight or at some other off-peak time.
 
+<h4>How can I learn more about making my WordPress site more efficient?</h4>
 
 This is a companion plugin to [Index WP MySQL for Speed](https://wordpress.org/plugins/index-wp-mysql-for-speed/). If that plugin is in use, this plugin will perform better. But they are in no way dependent on one another; you may use either, both, or of course neither.
+
+I offer several plugins to help with your site's database efficiency. You can [read about them here](https://www.plumislandmedia.net/wordpress/performance/optimizing-wordpress-database-servers/).
 
 == Frequently Asked Questions ==
 
@@ -52,7 +55,7 @@ This is a companion plugin to [Index WP MySQL for Speed](https://wordpress.org/p
 
 = Can I use this if I have disabled WP_Cron and use an operating system cronjob instead?
 
-**Yes, as of Version 1.0.2 and higher.**
+**Yes**
 
 = What if I assign multiple roles to some users? =
 
@@ -122,6 +125,14 @@ If you configure your WordPress installation using composer, you may install thi
 
 == Changelog ==
 
+= 1.1.7 =
+
+Display both user display name and login name in dropdowns.
+
+= 1.1.6 =
+
+Handles WP_User_Query operations with metadata search correctly.
+
 = 1.1.5 =
 
 Repair problem handing user queries with role__not_in and role__in search terms.
@@ -154,16 +165,6 @@ allow more flexible changes of post and page authors.
 
 == Upgrade Notice ==
 
-Version 1.1.5 ...
-
-* Fixes a compatibility problem with the When Last Login plugin.
-* Has significant performance improvements.
-* Is tested with MySQL up to the latest of version 8, and with MariaDB up to version 10.9.
-* Allows easier selection of authors. Quick Edit, Bulk Edit, and the Classic Editor contain dropdown menus for selecting authors. This plugin replaces those menus with autocompletion fields, to
-allow more flexible changes of post and page authors. These author-choice fields now work similarly to the Author field in the Gutenberg post and page editor. (For sites with many authors, the dropdown menus perform poorly. And after version 6.0.2 they weren't available at all for large sites.
-* Allows multiple roles per user as provided in plugins like User Role Editor.
-* Fixes a few bugs, and is compatible with WordPress versions pre-5.9.
-
-In this version the dashboard panel lets you specify a number of author users. If your site's number of author users is less than the number you specify you will see WordPress's ordinary dropdown.  The option to order authors by post count from earlier versions is no longer available, as it makes little sense when combined with autocompletion.
+Version 1.1.6 supports metadata user queries.
 
 Thanks to my loyal users who have reported problems.
