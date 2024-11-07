@@ -17,14 +17,15 @@ function need_cron() {
     }
     if ( $needJob ) {
       $now  = time();
-      $next = get_transient( INDEX_WP_USERS_FOR_SPEED_PREFIX . 'next-job' );
+      $option = INDEX_WP_USERS_FOR_SPEED_PREFIX_TASK . 'next-job';
+      $next = get_option( $option );
       if ( ! $next ) {
         $next = $now + INDEX_WP_USERS_FOR_SPEED_DELAY_CRONKICK;
-        set_transient( INDEX_WP_USERS_FOR_SPEED_PREFIX . 'next-job', $next, 86400 );
+        update_option( $option, $next, false );
       }
       if ( $now >= $next ) {
         $next = $now + INDEX_WP_USERS_FOR_SPEED_DELAY_CRONKICK;
-        set_transient( INDEX_WP_USERS_FOR_SPEED_PREFIX . 'next-job', $next, 86400 );
+        update_option( $option, $next, false );
         add_action( 'shutdown', 'IndexWpUsersForSpeed\kick_cron', 9999, 0 );
       }
     }
