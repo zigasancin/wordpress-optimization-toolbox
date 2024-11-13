@@ -3,7 +3,7 @@
         'name' => 'ampproject/amp-wp',
         'pretty_version' => 'dev-develop',
         'version' => 'dev-develop',
-        'reference' => 'f1c43a26f148f71c65e3f26f59f58dd234e9ff73',
+        'reference' => '5dc2cb9c8f4e417c78cb23dc4165eb7dc09486a6',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'ampproject/amp-toolbox' => array(
-            'pretty_version' => '0.11.5',
-            'version' => '0.11.5.0',
-            'reference' => '78531851c59fa5f306315372719f0064b5542cf4',
+            'pretty_version' => '0.11.6',
+            'version' => '0.11.6.0',
+            'reference' => '72674f17e012ec880efc2e255997dce8fd44ca4e',
             'type' => 'library',
             'install_path' => __DIR__ . '/../ampproject/amp-toolbox',
             'aliases' => array(),
@@ -22,7 +22,7 @@
         'ampproject/amp-wp' => array(
             'pretty_version' => 'dev-develop',
             'version' => 'dev-develop',
-            'reference' => 'f1c43a26f148f71c65e3f26f59f58dd234e9ff73',
+            'reference' => '5dc2cb9c8f4e417c78cb23dc4165eb7dc09486a6',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

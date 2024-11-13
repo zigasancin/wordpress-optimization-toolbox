@@ -373,7 +373,7 @@ class AMP_DOM_Utils {
 			$matches = [];
 			$results = preg_match_all( self::AMP_EVENT_ACTIONS_REGEX_PATTERN, $event_action_string, $matches );
 
-			if ( ! $results || ! isset( $matches['event'] ) ) {
+			if ( ! $results ) {
 				continue;
 			}
 
@@ -391,7 +391,7 @@ class AMP_DOM_Utils {
 					$matches = [];
 					$results = preg_match_all( self::AMP_ACTION_REGEX_PATTERN, $actions, $matches );
 
-					if ( ! $results || ! isset( $matches['action'] ) ) {
+					if ( ! $results ) {
 						$actions_array[] = $actions;
 						return;
 					}
