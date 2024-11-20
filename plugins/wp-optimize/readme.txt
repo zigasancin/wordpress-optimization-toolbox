@@ -5,7 +5,7 @@ Tags: cache, caching, image cache, minify, performance cache, page speed, image 
 Requires PHP: 5.6
 Requires at least: 4.5
 Tested up to: 6.7
-Stable tag: 3.7.0
+Stable tag: 3.7.1
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -394,6 +394,10 @@ If none of the above works, disable processing of JavaScript files in the minify
 
 
 == Changelog ==
+
+= 3.7.1 - 20/Nov/2024 =
+
+* TWEAK: Resolved a PHP notice caused by translation loading too early when caching is enabled, introduced in WordPress 6.7
 
 
 = 3.7.0 - 21/Oct/2024 =
@@ -1600,4 +1604,4 @@ If none of the above works, disable processing of JavaScript files in the minify
 * Fix Interface
 
 == Upgrade Notice ==
-* 3.7.0: Two new features have been added: caches can now be automatically preloaded after purging, and premium users can inspect which plugins are causing slow queries, a lot of fixes and tweaks - a recommended update for all
+* 3.7.1: Resolved a PHP notice caused by translation loading too early when caching is enabled - a recommended update for all

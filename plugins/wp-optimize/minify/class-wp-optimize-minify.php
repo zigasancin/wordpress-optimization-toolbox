@@ -60,15 +60,24 @@ class WP_Optimize_Minify {
 		// cron job to delete old wpo_min cache
 		add_action('wpo_minify_purge_old_cache', array('WP_Optimize_Minify_Cache_Functions', 'purge_old'));
 		
+		add_action('init', array($this, 'schedule_or_unschedule_purge_old_cache_event'));
+
+		// Handle minify cache purging.
+		add_action('wp_loaded', array($this, 'handle_purge_minify_cache'));
+
+	}
+
+	/**
+	 * Schedule or unschedule purge old cache event.
+	 *
+	 * @return void
+	 */
+	public function schedule_or_unschedule_purge_old_cache_event() {
 		if ($this->enabled) {
 			$this->schedule_purge_old_cache_event();
 		} else {
 			$this->unschedule_purge_old_cache_event();
 		}
-
-		// Handle minify cache purging.
-		add_action('wp_loaded', array($this, 'handle_purge_minify_cache'));
-
 	}
 
 	/**

@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize - Clean, Compress, Cache
 Plugin URI: https://getwpo.com
 Description: WP-Optimize makes your site fast and efficient. It cleans the database, compresses images and caches pages. Fast sites attract more traffic and users.
-Version: 3.7.0
+Version: 3.7.1
 Update URI: https://wordpress.org/plugins/wp-optimize/
 Author: TeamUpdraft, DavidAnderson
 Author URI: https://updraftplus.com
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '3.7.0');
+define('WPO_VERSION', '3.7.1');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PLUGIN_SLUG', plugin_basename(__FILE__));
@@ -415,9 +415,8 @@ class WP_Optimize {
 
 		$js_variables = $this->wpo_js_translations();
 		$js_variables['loggers_classes_info'] = $this->get_loggers_classes_info();
-
 		wp_localize_script('wp-optimize-admin-js', 'wpoptimize', $js_variables);
-
+		
 		do_action('wpo_premium_scripts_styles', $min_or_not_internal, $min_or_not, $enqueue_version);
 	}
 
@@ -563,15 +562,16 @@ class WP_Optimize {
 		// Loads the task manager
 		$this->get_task_manager();
 
-		// Loads the language file.
-		load_plugin_textdomain('wp-optimize', false, dirname(plugin_basename(__FILE__)) . '/languages');
+		add_action('init', array($this, 'load_language_file'), 0);
 
 		// Load 3rd party plugin compatibilities.
 		$this->load_compatibilities();
 
 		// Load page cache.
 		$this->get_page_cache();
-		$this->init_page_cache();
+		// We use the init hook to avoid the _load_textdomain_just_in_time warning,
+		// which is triggered because we use translations during cache initialization
+		add_action('init', array($this, 'init_page_cache'), 1);
 
 		// Include minify
 		$this->get_minify();
@@ -588,6 +588,15 @@ class WP_Optimize {
 
 		// add_filter('updraftcentral_host_plugins', array($this, 'attach_updraftcentral_host'));
 		// if (file_exists(WPO_PLUGIN_MAIN_PATH.'central/factory.php')) include_once(WPO_PLUGIN_MAIN_PATH.'central/factory.php');
+	}
+
+	/**
+	 * Loads the language file.
+	 *
+	 * @return void
+	 */
+	public function load_language_file() {
+		load_plugin_textdomain('wp-optimize', false, dirname(plugin_basename(__FILE__)) . '/languages');
 	}
 
 	/**

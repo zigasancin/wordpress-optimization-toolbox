@@ -1490,17 +1490,17 @@
         },
         {
             "name": "team-updraft/lib-central",
-            "version": "1.24.6",
-            "version_normalized": "1.24.6.0",
+            "version": "1.24.11",
+            "version_normalized": "1.24.11.0",
             "source": {
                 "type": "git",
                 "url": "ssh://git@source.updraftplus.com:20022/team-updraft/lib-central.git",
-                "reference": "8333f0192500cc2529f2a2780831d3949350f54c"
+                "reference": "60dd99f4cfb4484489f7224b10da3d90818adefc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://source.updraftplus.com/api/v4/projects/106/packages/composer/archives/team-updraft/lib-central.zip?sha=8333f0192500cc2529f2a2780831d3949350f54c",
-                "reference": "8333f0192500cc2529f2a2780831d3949350f54c",
+                "url": "https://source.updraftplus.com/api/v4/projects/106/packages/composer/archives/team-updraft/lib-central.zip?sha=60dd99f4cfb4484489f7224b10da3d90818adefc",
+                "reference": "60dd99f4cfb4484489f7224b10da3d90818adefc",
                 "shasum": ""
             },
             "type": "library",
