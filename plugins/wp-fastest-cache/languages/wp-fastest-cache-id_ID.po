@@ -1,0 +1,624 @@
+# Translation of Plugins - WP Fastest Cache - Development (trunk) in Indonesian
+# This file is distributed under the same license as the Plugins - WP Fastest Cache - Development (trunk) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-01-26 07:03:23+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: id\n"
+"Project-Id-Version: Plugins - WP Fastest Cache - Development (trunk)\n"
+
+#: templates/preload.php:374 templates/preload.php:457
+#: templates/preload.php:474
+msgid "At least one sitemap must be added"
+msgstr ""
+
+#: templates/preload.php:187
+msgid "You can customize the advanced settings through this section."
+msgstr ""
+
+#: templates/preload.php:186
+msgid "Advanced Settings"
+msgstr ""
+
+#: templates/preload.php:151
+msgid "You can specify sitemaps to be used for preloading."
+msgstr ""
+
+#: templates/preload.php:150
+msgid "Sitemaps"
+msgstr ""
+
+#: templates/preload.php:87
+msgid "You can specify the contents to be used for preloading and you can sort them as well."
+msgstr ""
+
+#: templates/preload.php:86
+msgid "Content Types"
+msgstr ""
+
+#: templates/preload.php:73
+msgid "You can specify the method you want the preload feature to use through this section."
+msgstr ""
+
+#: templates/preload.php:72
+msgid "Choose a Method"
+msgstr ""
+
+#: templates/preload.php:56
+msgid "Preload Settings"
+msgstr ""
+
+#: inc/admin.php:1445 inc/admin.php:1452
+msgid "Some js sources will not be loaded until scrolling or moving the mouse"
+msgstr ""
+
+#: inc/admin.php:1444 inc/admin.php:1451
+msgid "Delay Js"
+msgstr ""
+
+#: inc/admin.php:1061
+msgid "WP Fastest Cache Options"
+msgstr ""
+
+#: inc/admin.php:1941 templates/exclude.php:114
+msgid "has Yandex Click ID Parameters"
+msgstr ""
+
+#. Author URI of the plugin
+#: wpFastestCache.php
+msgid "https://www.wpfastestcache.com/"
+msgstr ""
+
+#: inc/admin.php:1736
+msgid "Clearing Specific Pages"
+msgstr ""
+
+#: templates/toolbar_settings.php:71
+msgid "Save"
+msgstr "Simpan"
+
+#: templates/toolbar_settings.php:68
+msgid "Cancel"
+msgstr "Batalkan"
+
+#: templates/toolbar_settings.php:20
+msgid "Toolbar Settings"
+msgstr "Pengaturan toolbar"
+
+#: inc/admin-toolbar.php:74 inc/admin-toolbar.php:106
+msgid "Clear Cache of All Sites"
+msgstr "Hapus Cache dari Semua Situs"
+
+#: wpFastestCache.php:414
+msgid "<a href=\"%s\">Settings</a>"
+msgstr "<a href=\"%s\">Pengaturan</a>"
+
+#: inc/column.php:15
+msgid "Clear Cache"
+msgstr "Hapus Cache"
+
+#: inc/admin.php:1357 inc/admin.php:1363 inc/admin.php:1370
+msgid "Eliminate render-blocking JavaScript resources"
+msgstr "Hilangkan sumber daya JavaScript yang memblokir perenderan"
+
+#: inc/admin.php:461 inc/admin.php:464
+msgid "Options have been saved"
+msgstr "Pilihan telah disimpan"
+
+#: inc/admin.php:1942 templates/exclude.php:115
+msgid "has Woocommerce Items in Cart"
+msgstr "memiliki Item Woocommerce di Keranjang"
+
+#: inc/admin.php:1940 templates/exclude.php:113
+msgid "has Google Analytics Parameters"
+msgstr "memiliki Parameter Google Analytics"
+
+#: inc/admin.php:1930 templates/exclude.php:100
+msgid "Archives"
+msgstr "Arsip"
+
+#: templates/timeout.php:189
+msgid "Server Time"
+msgstr "Waktu server"
+
+#: templates/timeout.php:169
+msgid "delete the files"
+msgstr "hapus berkas"
+
+#: inc/admin.php:1633 inc/admin.php:1935 templates/exclude.php:106
+#: templates/timeout.php:99
+msgid "Contains"
+msgstr "Mengandung"
+
+#: inc/admin.php:1634 inc/admin.php:1936 templates/exclude.php:107
+#: templates/timeout.php:98
+msgid "Is Equal To"
+msgstr "Adalah sama dengan"
+
+#: inc/admin.php:1632 inc/admin.php:1934 templates/exclude.php:105
+#: templates/timeout.php:97
+msgid "Starts With"
+msgstr "Dimulai Dengan"
+
+#: inc/admin.php:1631 inc/admin.php:1927 templates/exclude.php:95
+#: templates/timeout.php:96
+msgid "Home Page"
+msgstr "Halaman Beranda"
+
+#: inc/admin.php:1630 templates/timeout.php:95
+msgid "All"
+msgstr "Semua"
+
+#: templates/exclude.php:66
+msgid "Exclude Page Wizard"
+msgstr "Kecualikan Panduan Halaman"
+
+#: templates/timeout.php:124
+msgid "Then"
+msgstr "Kemudian"
+
+#: templates/exclude.php:89 templates/timeout.php:91
+msgid "If REQUEST_URI"
+msgstr "Jika REQUEST_URI"
+
+#: templates/timeout.php:68
+msgid "Cache Timeout Wizard"
+msgstr "Panduan Batas waktu Cache"
+
+#: templates/lazy_load.php:9
+msgid "Lazy Load Settings"
+msgstr "Pengaturan Lazy Load"
+
+#: templates/nginx_gzip.php:9
+msgid "Enable Gzip"
+msgstr "Aktifkan Gzip"
+
+#: templates/update_now.php:9
+msgid "Please Update"
+msgstr "Mohon perbarui"
+
+#: templates/update_success.php:9
+msgid "Success"
+msgstr "Sukses"
+
+#: templates/disable_wp_cron.php:20
+msgid "Warning"
+msgstr "Peringatan"
+
+#: inc/admin.php:1668 inc/admin.php:1740 inc/admin.php:1963 inc/admin.php:1980
+#: inc/admin.php:1999 inc/admin.php:2017 inc/admin.php:2037
+msgid "Add New Rule"
+msgstr "Tambahkan Aturan Baru"
+
+#: inc/admin-toolbar.php:98 inc/admin.php:1602
+msgid "Delete Cache and Minified CSS/JS"
+msgstr "Hapus Cache dan Memperkecil CSS/JS"
+
+#: inc/admin.php:1534 inc/admin.php:2206 inc/admin.php:2406
+msgid "Only available in Premium version"
+msgstr "Hanya tersedia dalam versi Premium"
+
+#: templates/timeout.php:141
+msgid "Choose One"
+msgstr "Pilih satu"
+
+#: inc/admin.php:1607
+msgid "All cache files will be removed as well"
+msgstr "Semua berkas cache juga akan dihapus"
+
+#: inc/admin.php:1606
+msgid "If you modify any css file, you have to delete minified css files"
+msgstr "Jika Anda memodifikasi berkas css apa pun, Anda harus menghapus berkas css yang diperkecil"
+
+#: inc/admin.php:1594 inc/admin.php:1608 inc/admin.php:1609
+msgid "Target folder"
+msgstr "Folder target"
+
+#: inc/admin.php:1593
+msgid "You can delete all cache files"
+msgstr "Anda dapat menghapus semua berkas cache"
+
+#: inc/admin.php:1077
+msgid "Exclude"
+msgstr "Kecualikan"
+
+#: inc/admin.php:1071
+msgid "Image Optimization"
+msgstr "Optimasi Gambar"
+
+#: inc/admin-toolbar.php:115 inc/admin.php:1069
+msgid "Settings"
+msgstr "Pengaturan"
+
+#: inc/admin.php:2179
+msgid "Database Cleanup"
+msgstr "Pembersihan Basis data"
+
+#: inc/admin.php:2070
+msgid "CDN Settings"
+msgstr "Pengaturan CDN"
+
+#: inc/admin.php:2033
+msgid "Exclude JS"
+msgstr "Kecualikan JS"
+
+#: inc/admin.php:2013
+msgid "Exclude CSS"
+msgstr "Kecualikan CSS"
+
+#: inc/admin.php:1995
+msgid "Exclude Cookies"
+msgstr "Kecualikan kuki"
+
+#: inc/admin.php:1976
+msgid "Exclude User-Agents"
+msgstr "Kecualikan Agen-Pengguna"
+
+#: inc/admin.php:1959
+msgid "Exclude Pages"
+msgstr "Kecualikan Halaman"
+
+#: inc/admin.php:1793
+msgid "Optimize Image Tool"
+msgstr "Alat Optimasi Gambar"
+
+#: inc/admin.php:1623
+msgid "Timeout Rules"
+msgstr "Aturan Batas waktu"
+
+#: inc/admin-toolbar.php:86 inc/admin.php:1070 inc/admin.php:1581
+msgid "Delete Cache"
+msgstr "Hapus Cache"
+
+#: inc/admin.php:1541
+msgid "Cache Statistics"
+msgstr "Statistik Cache"
+
+#: templates/updatepost.php:53
+msgid "Clear Cache of Post / Page"
+msgstr "Hapus Cache Artikel / Halaman"
+
+#: templates/updatepost.php:29
+msgid "What do you want to happen after update a post or a page?"
+msgstr "Apa yang Anda inginkan terjadi setelah memperbarui artikel atau halaman?"
+
+#: templates/newpost.php:58
+msgid "Clear Cache of Pagination"
+msgstr "Hapus Cache Paginasi"
+
+#: templates/newpost.php:57 templates/updatepost.php:55
+msgid "Clear Cache of Post Tags"
+msgstr "Hapus Cache dari Tag Artikel"
+
+#: templates/newpost.php:56 templates/updatepost.php:54
+msgid "Clear Cache of Post Categories"
+msgstr "Hapus Cache dari Kategori Artikel"
+
+#: templates/newpost.php:55 templates/updatepost.php:56
+msgid "Clear Cache of Home page"
+msgstr ""
+
+#: inc/admin-toolbar.php:91 inc/admin.php:1589 templates/newpost.php:51
+#: templates/updatepost.php:49
+msgid "Clear All Cache"
+msgstr "Hapus Semua Cache"
+
+#: templates/newpost.php:29
+msgid "What do you want to happen after publishing the new post?"
+msgstr "Apa yang Anda inginkan terjadi setelah memublikasikan artikel baru?"
+
+#: templates/newpost.php:68 templates/updatepost.php:64
+msgid "OK"
+msgstr "baik"
+
+#: templates/preload.php:215
+msgid "Restart After Completed"
+msgstr "Mulai Ulang Setelah Selesai"
+
+#: templates/preload.php:210
+msgid "pages per minute"
+msgstr "halaman per menit"
+
+#: templates/preload.php:132
+msgid "Custom Taxonomies"
+msgstr "Taksonomi khusus"
+
+#: templates/preload.php:127
+msgid "Custom Post Types"
+msgstr "Tipe Artikel Khusus"
+
+#: inc/admin.php:1933 templates/exclude.php:101 templates/preload.php:122
+msgid "Attachments"
+msgstr "Lampiran"
+
+#: inc/admin.php:1929 templates/exclude.php:97 templates/preload.php:118
+msgid "Tags"
+msgstr "Tag"
+
+#: inc/admin.php:1932 templates/exclude.php:99 templates/preload.php:114
+msgid "Pages"
+msgstr "Laman"
+
+#: inc/admin.php:1928 templates/exclude.php:96 templates/preload.php:110
+msgid "Categories"
+msgstr "Kategori"
+
+#: inc/admin.php:1931 templates/exclude.php:98 templates/preload.php:106
+msgid "Posts"
+msgstr "Artikel"
+
+#: templates/preload.php:102
+msgid "Homepage"
+msgstr "Beranda"
+
+#: inc/admin.php:1304 inc/admin.php:1312 inc/admin.php:1318 inc/admin.php:1324
+msgid "Reduce HTTP requests through combined js files"
+msgstr "Kurangi permintaan HTTP dengan menggabungkan berkas JS"
+
+#: inc/admin.php:1412 inc/admin.php:1434
+msgid "Load images and iframes when they enter the browsers viewport"
+msgstr "Muat gambar dan iframe saat mereka memasuki area pandang browser"
+
+#: inc/admin.php:1383 inc/admin.php:1389 inc/admin.php:1396
+msgid "Load Google Fonts asynchronously"
+msgstr "Muat Google Fonts secara asinkron"
+
+#: inc/admin.php:1382 inc/admin.php:1388 inc/admin.php:1395
+msgid "Google Fonts"
+msgstr "Google Fonts"
+
+#: inc/admin.php:1356 inc/admin.php:1362 inc/admin.php:1369
+msgid "Render Blocking Js"
+msgstr "Render Blocking Js"
+
+#: inc/admin.php:1348
+msgid "You can remove the emoji inline css and wp-emoji-release.min.js"
+msgstr "Anda dapat menghapus emoji inline css dan wp-emoji-release.min.js"
+
+#: inc/admin.php:1347
+msgid "Disable Emojis"
+msgstr "Nonaktifkan Emoji"
+
+#: inc/admin.php:1342
+msgid "Reduce page load times for repeat visitors"
+msgstr "Kurangi waktu pemuatan halaman untuk pengunjung berulang"
+
+#: inc/admin.php:1341
+msgid "Browser Caching"
+msgstr "Caching Browser"
+
+#: inc/admin.php:1330
+msgid "Reduce the size of files sent from your server"
+msgstr "Kurangi ukuran berkas yang dikirim dari server Anda"
+
+#: inc/admin.php:1329
+msgid "Gzip"
+msgstr "Gzip"
+
+#: inc/admin.php:1310 inc/admin.php:1317 inc/admin.php:1323
+msgid "Combine Js Plus"
+msgstr "Gabungkan Js Plus"
+
+#: inc/admin.php:1303
+msgid "Combine Js"
+msgstr "Gabungkan Js"
+
+#: inc/admin.php:1287 inc/admin.php:1292 inc/admin.php:1298
+msgid "You can decrease the size of js files"
+msgstr "Anda dapat memperkecil ukuran berkas js"
+
+#: inc/admin.php:1286 inc/admin.php:1291 inc/admin.php:1297
+msgid "Minify Js"
+msgstr "Perkecil Js"
+
+#: inc/admin.php:1279
+msgid "Reduce HTTP requests through combined css files"
+msgstr "Kurangi permintaan HTTP dengan menggabungkan berkas CSS"
+
+#: inc/admin.php:1278
+msgid "Combine Css"
+msgstr "Gabungkan CSS"
+
+#: inc/admin.php:1267 inc/admin.php:1272
+msgid "More powerful minify css"
+msgstr "Memperkecil CSS dengan lebih kuat"
+
+#: inc/admin.php:1266 inc/admin.php:1271
+msgid "Minify Css Plus"
+msgstr "Perkecil CSS Plus"
+
+#: inc/admin.php:1258
+msgid "You can decrease the size of css files"
+msgstr "Anda dapat memperkecil ukuran berkas css"
+
+#: inc/admin.php:1257
+msgid "Minify Css"
+msgstr "Perkecil CSS"
+
+#: inc/admin.php:1245 inc/admin.php:1250
+msgid "More powerful minify html"
+msgstr "Memperkecil HTML dengan lebih kuat"
+
+#: inc/admin.php:1244 inc/admin.php:1249
+msgid "Minify HTML Plus"
+msgstr "Perkecil HTML Plus"
+
+#: inc/admin.php:1238
+msgid "You can decrease the size of page"
+msgstr "Anda dapat memperkecil ukuran halaman"
+
+#: inc/admin.php:1237
+msgid "Minify HTML"
+msgstr "Perkecil HTML"
+
+#: inc/admin.php:1229
+msgid "Clear cache files when a post or page is updated"
+msgstr "Hapus berkas cache saat artikel atau halaman diperbarui"
+
+#: inc/admin.php:1228 templates/updatepost.php:18
+msgid "Update Post"
+msgstr "Perbarui Artikel"
+
+#: inc/admin.php:1222
+msgid "Clear cache files when a post or page is published"
+msgstr "Hapus berkas cache ketika artikel atau halaman dipublikasikan"
+
+#: inc/admin.php:1221 templates/newpost.php:18
+msgid "New Post"
+msgstr "Artikel Baru"
+
+#: inc/admin.php:1189 inc/admin.php:1215
+msgid "Create cache for mobile theme"
+msgstr "Buat cache untuk tema ponsel"
+
+#: inc/admin.php:1188 inc/admin.php:1214
+msgid "Mobile Theme"
+msgstr "Tema Ponsel"
+
+#: inc/admin.php:1183
+msgid "Don't show the cached version for desktop to mobile devices"
+msgstr "Jangan tampilkan versi cache untuk desktop ke perangkat ponsel"
+
+#: inc/admin.php:1182
+msgid "Mobile"
+msgstr "Ponsel"
+
+#: inc/admin.php:1178
+msgid "Don't show the cached version for logged-in users"
+msgstr "Jangan tampilkan versi cache untuk pengguna yang login"
+
+#: inc/admin.php:1177
+msgid "Logged-in Users"
+msgstr "Pengguna yang login"
+
+#: inc/admin.php:1145
+msgid "Create the cache of all the site automatically"
+msgstr "Buat cache dari semua situs secara otomatis"
+
+#: inc/admin.php:1144
+msgid "Preload"
+msgstr "Pramuat"
+
+#: inc/admin.php:1116 inc/admin.php:1122 inc/admin.php:1129 inc/admin.php:1136
+msgid "Reduce the number of SQL queries"
+msgstr "Kurangi jumlah query SQL"
+
+#: inc/admin.php:1115 inc/admin.php:1121 inc/admin.php:1128 inc/admin.php:1135
+msgid "Widget Cache"
+msgstr "Cache Widget"
+
+#: inc/admin.php:1106
+msgid "Enable"
+msgstr "Aktifkan"
+
+#: inc/admin.php:1105
+msgid "Cache System"
+msgstr "Sistem Cache"
+
+#: wpFastestCache.php:2263
+msgid "Once Every 15 Days"
+msgstr "Setiap 15 Hari Sekali"
+
+#: wpFastestCache.php:2251
+msgid "Once Every 7 Days"
+msgstr "Setiap 7 Hari Sekali"
+
+#: wpFastestCache.php:2245
+msgid "Once Every 3 Days"
+msgstr "Setiap 3 Hari Sekali"
+
+#: wpFastestCache.php:2233
+msgid "Once Every 10 Hours"
+msgstr "Setiap 10 Jam Sekali"
+
+#: wpFastestCache.php:2227
+msgid "Once Every 9 Hours"
+msgstr "Setiap 9 Jam Sekali"
+
+#: wpFastestCache.php:2221
+msgid "Once Every 8 Hours"
+msgstr "Setiap 8 Jam Sekali"
+
+#: wpFastestCache.php:2215
+msgid "Once Every 7 Hours"
+msgstr "Setiap 7 Jam Sekali"
+
+#: wpFastestCache.php:2203
+msgid "Once Every 5 Hours"
+msgstr "Setiap 5 Jam Sekali"
+
+#: wpFastestCache.php:2197
+msgid "Once Every 4 Hours"
+msgstr "Setiap 4 Jam Sekali"
+
+#: wpFastestCache.php:2191
+msgid "Once Every 3 Hours"
+msgstr "Setiap 3 Jam Sekali"
+
+#: wpFastestCache.php:2185
+msgid "Once Every 2 Hours"
+msgstr "Setiap 2 Jam Sekali"
+
+#: wpFastestCache.php:2257
+msgid "Once Every 10 Days"
+msgstr "Setiap 10 Hari Sekali"
+
+#. Author of the plugin
+#: wpFastestCache.php
+msgid "Emre Vona"
+msgstr "Emre Vona"
+
+#. Description of the plugin
+#: wpFastestCache.php
+msgid "The simplest and fastest WP Cache system"
+msgstr "Sistem WP Cache paling sederhana dan tercepat"
+
+#. Plugin URI of the plugin
+#: wpFastestCache.php
+msgid "http://wordpress.org/plugins/wp-fastest-cache/"
+msgstr "https://id.wordpress.org/plugins/wp-fastest-cache/"
+
+#. Plugin Name of the plugin
+#: wpFastestCache.php
+msgid "WP Fastest Cache"
+msgstr "WP Fastest Cache"
+
+#: wpFastestCache.php:2275
+msgid "Once a Year"
+msgstr "Sekali Setahun"
+
+#: wpFastestCache.php:2269
+msgid "Once a Month"
+msgstr "Sekali Sebulan"
+
+#: wpFastestCache.php:2239
+msgid "Once a Day"
+msgstr "Sekali Sehari"
+
+#: wpFastestCache.php:2209
+msgid "Once Every 6 Hours"
+msgstr "Setiap 6 Jam Sekali"
+
+#: wpFastestCache.php:2179
+msgid "Once an Hour"
+msgstr "Sekali Sejam"
+
+#: wpFastestCache.php:2173
+msgid "Twice an Hour"
+msgstr "Dua Kali Sejam"
+
+#: wpFastestCache.php:2167
+msgid "Once Every 15 Minutes"
+msgstr "Setiap 15 Menit Sekali"
+
+#: wpFastestCache.php:2161
+msgid "Once Every 5 Minutes"
+msgstr "Setiap 5 Menit Sekali"
+
+#: wpFastestCache.php:2155
+msgid "Once Every 1 Minute"
+msgstr "Setiap 1 Menit Sekali"

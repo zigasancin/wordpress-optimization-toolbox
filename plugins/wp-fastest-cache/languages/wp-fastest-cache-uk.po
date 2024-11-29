@@ -1,0 +1,624 @@
+# Translation of Plugins - WP Fastest Cache - Development (trunk) in Ukrainian
+# This file is distributed under the same license as the Plugins - WP Fastest Cache - Development (trunk) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2024-05-26 20:09:49+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : ((n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 1 : 2);\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: uk_UA\n"
+"Project-Id-Version: Plugins - WP Fastest Cache - Development (trunk)\n"
+
+#: templates/preload.php:374 templates/preload.php:457
+#: templates/preload.php:474
+msgid "At least one sitemap must be added"
+msgstr "Необхідно додати принаймні одну карту сайту"
+
+#: templates/preload.php:187
+msgid "You can customize the advanced settings through this section."
+msgstr "Ви можете налаштувати розширені параметри в цьому розділі."
+
+#: templates/preload.php:186
+msgid "Advanced Settings"
+msgstr "Розширені налаштування"
+
+#: templates/preload.php:151
+msgid "You can specify sitemaps to be used for preloading."
+msgstr "Ви можете вказати мапи, які будуть використовуватися для попереднього завантаження."
+
+#: templates/preload.php:150
+msgid "Sitemaps"
+msgstr "Карти сайту"
+
+#: templates/preload.php:87
+msgid "You can specify the contents to be used for preloading and you can sort them as well."
+msgstr "Ви можете вказати вміст, який буде використовуватися для попереднього завантаження, а також ви можете його сортувати."
+
+#: templates/preload.php:86
+msgid "Content Types"
+msgstr "Типи вмісту"
+
+#: templates/preload.php:73
+msgid "You can specify the method you want the preload feature to use through this section."
+msgstr "Ви можете вказати метод, який ви хочете використовувати для функції попереднього завантаження через цей розділ."
+
+#: templates/preload.php:72
+msgid "Choose a Method"
+msgstr "Оберіть метод"
+
+#: templates/preload.php:56
+msgid "Preload Settings"
+msgstr "Налаштування попереднього завантаження"
+
+#: inc/admin.php:1445 inc/admin.php:1452
+msgid "Some js sources will not be loaded until scrolling or moving the mouse"
+msgstr "Деякі js джерела не будуть завантажені до тих пір, поки не буде прокручено або переміщено мишею"
+
+#: inc/admin.php:1444 inc/admin.php:1451
+msgid "Delay Js"
+msgstr "Затримка Js"
+
+#: inc/admin.php:1061
+msgid "WP Fastest Cache Options"
+msgstr "Параметри кешування WP Fastest Cache"
+
+#: inc/admin.php:1941 templates/exclude.php:114
+msgid "has Yandex Click ID Parameters"
+msgstr "має параметри Yandex Click ID"
+
+#. Author URI of the plugin
+#: wpFastestCache.php
+msgid "https://www.wpfastestcache.com/"
+msgstr "https://www.wpfastestcache.com/"
+
+#: inc/admin.php:1736
+msgid "Clearing Specific Pages"
+msgstr "Очищення конкретних сторінок"
+
+#: templates/toolbar_settings.php:71
+msgid "Save"
+msgstr "Зберегти"
+
+#: templates/toolbar_settings.php:68
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: templates/toolbar_settings.php:20
+msgid "Toolbar Settings"
+msgstr "Налаштування панелі інструментів"
+
+#: inc/admin-toolbar.php:74 inc/admin-toolbar.php:106
+msgid "Clear Cache of All Sites"
+msgstr "Очистити кеш-пам’ять усіх сайтів"
+
+#: wpFastestCache.php:414
+msgid "<a href=\"%s\">Settings</a>"
+msgstr "<a href=\"%s\">Налаштування</a>"
+
+#: inc/column.php:15
+msgid "Clear Cache"
+msgstr "Очистити кеш"
+
+#: inc/admin.php:1357 inc/admin.php:1363 inc/admin.php:1370
+msgid "Eliminate render-blocking JavaScript resources"
+msgstr "Усунення блокуючих відображення JavaScript ресурсів"
+
+#: inc/admin.php:461 inc/admin.php:464
+msgid "Options have been saved"
+msgstr "Параметри були збережені"
+
+#: inc/admin.php:1942 templates/exclude.php:115
+msgid "has Woocommerce Items in Cart"
+msgstr "має товари Woocommerce у кошику"
+
+#: inc/admin.php:1940 templates/exclude.php:113
+msgid "has Google Analytics Parameters"
+msgstr "має параметри Google Analytics"
+
+#: inc/admin.php:1930 templates/exclude.php:100
+msgid "Archives"
+msgstr "Архіви"
+
+#: templates/timeout.php:189
+msgid "Server Time"
+msgstr "Час сервера"
+
+#: templates/timeout.php:169
+msgid "delete the files"
+msgstr "видалити файли"
+
+#: inc/admin.php:1633 inc/admin.php:1935 templates/exclude.php:106
+#: templates/timeout.php:99
+msgid "Contains"
+msgstr "Містить"
+
+#: inc/admin.php:1634 inc/admin.php:1936 templates/exclude.php:107
+#: templates/timeout.php:98
+msgid "Is Equal To"
+msgstr "Дорівнює"
+
+#: inc/admin.php:1632 inc/admin.php:1934 templates/exclude.php:105
+#: templates/timeout.php:97
+msgid "Starts With"
+msgstr "Починається з"
+
+#: inc/admin.php:1631 inc/admin.php:1927 templates/exclude.php:95
+#: templates/timeout.php:96
+msgid "Home Page"
+msgstr "Головна сторінка"
+
+#: inc/admin.php:1630 templates/timeout.php:95
+msgid "All"
+msgstr "Все"
+
+#: templates/exclude.php:66
+msgid "Exclude Page Wizard"
+msgstr "Майстер виключення сторінки"
+
+#: templates/timeout.php:124
+msgid "Then"
+msgstr "Тоді"
+
+#: templates/exclude.php:89 templates/timeout.php:91
+msgid "If REQUEST_URI"
+msgstr "Якщо REQUEST_URI"
+
+#: templates/timeout.php:68
+msgid "Cache Timeout Wizard"
+msgstr "Майстер тайм-ауту (час очікування) кешу"
+
+#: templates/lazy_load.php:9
+msgid "Lazy Load Settings"
+msgstr "Налаштування Lazy Load"
+
+#: templates/nginx_gzip.php:9
+msgid "Enable Gzip"
+msgstr "Увімкніть Gzip"
+
+#: templates/update_now.php:9
+msgid "Please Update"
+msgstr "Будь ласка, оновіть"
+
+#: templates/update_success.php:9
+msgid "Success"
+msgstr "Успіх"
+
+#: templates/disable_wp_cron.php:20
+msgid "Warning"
+msgstr "Внимание!"
+
+#: inc/admin.php:1668 inc/admin.php:1740 inc/admin.php:1963 inc/admin.php:1980
+#: inc/admin.php:1999 inc/admin.php:2017 inc/admin.php:2037
+msgid "Add New Rule"
+msgstr "Додати нове правило"
+
+#: inc/admin-toolbar.php:98 inc/admin.php:1602
+msgid "Delete Cache and Minified CSS/JS"
+msgstr "Видалити кеш та мініфікований CSS/JS"
+
+#: inc/admin.php:1534 inc/admin.php:2206 inc/admin.php:2406
+msgid "Only available in Premium version"
+msgstr "Доступно лише у версії Premium"
+
+#: templates/timeout.php:141
+msgid "Choose One"
+msgstr "Виберіть один"
+
+#: inc/admin.php:1607
+msgid "All cache files will be removed as well"
+msgstr "Всі файли кешу також будуть видалені"
+
+#: inc/admin.php:1606
+msgid "If you modify any css file, you have to delete minified css files"
+msgstr "Якщо ви змінюєте будь-який файл CSS, вам потрібно видалити мініфіковані файли CSS"
+
+#: inc/admin.php:1594 inc/admin.php:1608 inc/admin.php:1609
+msgid "Target folder"
+msgstr "Цільова папка"
+
+#: inc/admin.php:1593
+msgid "You can delete all cache files"
+msgstr "Ви можете видалити всі файли кешу"
+
+#: inc/admin.php:1077
+msgid "Exclude"
+msgstr "Вилучити"
+
+#: inc/admin.php:1071
+msgid "Image Optimization"
+msgstr "Оптимізація зображень"
+
+#: inc/admin-toolbar.php:115 inc/admin.php:1069
+msgid "Settings"
+msgstr "Налаштування"
+
+#: inc/admin.php:2179
+msgid "Database Cleanup"
+msgstr "Очищення бази даних"
+
+#: inc/admin.php:2070
+msgid "CDN Settings"
+msgstr "Налаштування CDN"
+
+#: inc/admin.php:2033
+msgid "Exclude JS"
+msgstr "Виключити JS"
+
+#: inc/admin.php:2013
+msgid "Exclude CSS"
+msgstr "Виключити CSS"
+
+#: inc/admin.php:1995
+msgid "Exclude Cookies"
+msgstr "Виключити файли cookie"
+
+#: inc/admin.php:1976
+msgid "Exclude User-Agents"
+msgstr "Виключити User-Agents"
+
+#: inc/admin.php:1959
+msgid "Exclude Pages"
+msgstr "Вилучені сторінки"
+
+#: inc/admin.php:1793
+msgid "Optimize Image Tool"
+msgstr "Інструмент оптимізації зображення"
+
+#: inc/admin.php:1623
+msgid "Timeout Rules"
+msgstr "Правила перерви"
+
+#: inc/admin-toolbar.php:86 inc/admin.php:1070 inc/admin.php:1581
+msgid "Delete Cache"
+msgstr "Очистити кеш"
+
+#: inc/admin.php:1541
+msgid "Cache Statistics"
+msgstr "Статистика кешу"
+
+#: templates/updatepost.php:53
+msgid "Clear Cache of Post / Page"
+msgstr "Очистити кеш запису / сторінки"
+
+#: templates/updatepost.php:29
+msgid "What do you want to happen after update a post or a page?"
+msgstr "Що ви хочете, щоб сталося після оновлення запису або сторінки?"
+
+#: templates/newpost.php:58
+msgid "Clear Cache of Pagination"
+msgstr "Очистити кеш розбивки на сторінки"
+
+#: templates/newpost.php:57 templates/updatepost.php:55
+msgid "Clear Cache of Post Tags"
+msgstr "Очистити кеш позначок записів"
+
+#: templates/newpost.php:56 templates/updatepost.php:54
+msgid "Clear Cache of Post Categories"
+msgstr "Очистити кеш категорій записів"
+
+#: templates/newpost.php:55 templates/updatepost.php:56
+msgid "Clear Cache of Home page"
+msgstr "Очистити кеш домашньої сторінки"
+
+#: inc/admin-toolbar.php:91 inc/admin.php:1589 templates/newpost.php:51
+#: templates/updatepost.php:49
+msgid "Clear All Cache"
+msgstr "Очистити весь кеш"
+
+#: templates/newpost.php:29
+msgid "What do you want to happen after publishing the new post?"
+msgstr "Що ви хочете, щоб сталося після опублікування нового запису?"
+
+#: templates/newpost.php:68 templates/updatepost.php:64
+msgid "OK"
+msgstr "OK"
+
+#: templates/preload.php:215
+msgid "Restart After Completed"
+msgstr "Перезапустити після завершення"
+
+#: templates/preload.php:210
+msgid "pages per minute"
+msgstr "сторінок на хвилину"
+
+#: templates/preload.php:132
+msgid "Custom Taxonomies"
+msgstr "Користувальницька таксономія"
+
+#: templates/preload.php:127
+msgid "Custom Post Types"
+msgstr "Користувацькі типи записів"
+
+#: inc/admin.php:1933 templates/exclude.php:101 templates/preload.php:122
+msgid "Attachments"
+msgstr "Вкладення"
+
+#: inc/admin.php:1929 templates/exclude.php:97 templates/preload.php:118
+msgid "Tags"
+msgstr "Позначки"
+
+#: inc/admin.php:1932 templates/exclude.php:99 templates/preload.php:114
+msgid "Pages"
+msgstr "Сторінки"
+
+#: inc/admin.php:1928 templates/exclude.php:96 templates/preload.php:110
+msgid "Categories"
+msgstr "Категорії"
+
+#: inc/admin.php:1931 templates/exclude.php:98 templates/preload.php:106
+msgid "Posts"
+msgstr "Записи"
+
+#: templates/preload.php:102
+msgid "Homepage"
+msgstr "Домашня сторінка"
+
+#: inc/admin.php:1304 inc/admin.php:1312 inc/admin.php:1318 inc/admin.php:1324
+msgid "Reduce HTTP requests through combined js files"
+msgstr "Зменшити кількість HTTP-запитів шляхом об'єднання js-файлів."
+
+#: inc/admin.php:1412 inc/admin.php:1434
+msgid "Load images and iframes when they enter the browsers viewport"
+msgstr "Завантажуйте зображення та фрейми, коли вони потрапляють в область перегляду браузера"
+
+#: inc/admin.php:1383 inc/admin.php:1389 inc/admin.php:1396
+msgid "Load Google Fonts asynchronously"
+msgstr "Асинхронне завантаження шрифтів Google"
+
+#: inc/admin.php:1382 inc/admin.php:1388 inc/admin.php:1395
+msgid "Google Fonts"
+msgstr "Шрифти Google"
+
+#: inc/admin.php:1356 inc/admin.php:1362 inc/admin.php:1369
+msgid "Render Blocking Js"
+msgstr "Блокування відображення Js"
+
+#: inc/admin.php:1348
+msgid "You can remove the emoji inline css and wp-emoji-release.min.js"
+msgstr "Ви можете видалити emoji inline css та wp-emoji-release.min.js"
+
+#: inc/admin.php:1347
+msgid "Disable Emojis"
+msgstr "Вимкнути Emoji"
+
+#: inc/admin.php:1342
+msgid "Reduce page load times for repeat visitors"
+msgstr "Зменшити час завантаження сторінок для повторних відвідувачів"
+
+#: inc/admin.php:1341
+msgid "Browser Caching"
+msgstr "Кеш браузера"
+
+#: inc/admin.php:1330
+msgid "Reduce the size of files sent from your server"
+msgstr "Зменште розмір файлів, які надсилаються з вашого сервера."
+
+#: inc/admin.php:1329
+msgid "Gzip"
+msgstr "Gzip"
+
+#: inc/admin.php:1310 inc/admin.php:1317 inc/admin.php:1323
+msgid "Combine Js Plus"
+msgstr "Об'єднати Js Плюс"
+
+#: inc/admin.php:1303
+msgid "Combine Js"
+msgstr "Об'єднати Js"
+
+#: inc/admin.php:1287 inc/admin.php:1292 inc/admin.php:1298
+msgid "You can decrease the size of js files"
+msgstr "Ви можете зменшити розмір js файлів"
+
+#: inc/admin.php:1286 inc/admin.php:1291 inc/admin.php:1297
+msgid "Minify Js"
+msgstr "Мініфікувати Js"
+
+#: inc/admin.php:1279
+msgid "Reduce HTTP requests through combined css files"
+msgstr "Зменшити кількість HTTP-запитів шляхом об'єднання файлів CSS."
+
+#: inc/admin.php:1278
+msgid "Combine Css"
+msgstr "Об'єднати CSS"
+
+#: inc/admin.php:1267 inc/admin.php:1272
+msgid "More powerful minify css"
+msgstr "Більш потужне зжимання CSS"
+
+#: inc/admin.php:1266 inc/admin.php:1271
+msgid "Minify Css Plus"
+msgstr "Мініфікувати Css Плюс"
+
+#: inc/admin.php:1258
+msgid "You can decrease the size of css files"
+msgstr "Ви можете зменшити розмір файлів CSS"
+
+#: inc/admin.php:1257
+msgid "Minify Css"
+msgstr "Мініфікувати Css"
+
+#: inc/admin.php:1245 inc/admin.php:1250
+msgid "More powerful minify html"
+msgstr "Більш потужний зменшувач html"
+
+#: inc/admin.php:1244 inc/admin.php:1249
+msgid "Minify HTML Plus"
+msgstr "Скорочення коду HTML Plus"
+
+#: inc/admin.php:1238
+msgid "You can decrease the size of page"
+msgstr "Ви можете зменшити розмір сторінки"
+
+#: inc/admin.php:1237
+msgid "Minify HTML"
+msgstr "Мініфікувати HTML"
+
+#: inc/admin.php:1229
+msgid "Clear cache files when a post or page is updated"
+msgstr "Очищайте файли кешу під час оновлення публікації або сторінки"
+
+#: inc/admin.php:1228 templates/updatepost.php:18
+msgid "Update Post"
+msgstr "Оновити запис"
+
+#: inc/admin.php:1222
+msgid "Clear cache files when a post or page is published"
+msgstr "Очистити файли кешу під час публікації запису або сторінки"
+
+#: inc/admin.php:1221 templates/newpost.php:18
+msgid "New Post"
+msgstr "Новий запис"
+
+#: inc/admin.php:1189 inc/admin.php:1215
+msgid "Create cache for mobile theme"
+msgstr "Створити кеш для мобільної теми"
+
+#: inc/admin.php:1188 inc/admin.php:1214
+msgid "Mobile Theme"
+msgstr "Мобільна тема"
+
+#: inc/admin.php:1183
+msgid "Don't show the cached version for desktop to mobile devices"
+msgstr "Не показувати кешовану версію для настільних комп'ютерів на мобільних пристроях"
+
+#: inc/admin.php:1182
+msgid "Mobile"
+msgstr "Мобільний"
+
+#: inc/admin.php:1178
+msgid "Don't show the cached version for logged-in users"
+msgstr "Не показувати кешовану версію для користувачів, які ввійшли в систему"
+
+#: inc/admin.php:1177
+msgid "Logged-in Users"
+msgstr "Зареєстровані користувачі"
+
+#: inc/admin.php:1145
+msgid "Create the cache of all the site automatically"
+msgstr "Створити кеш всього сайту автоматично"
+
+#: inc/admin.php:1144
+msgid "Preload"
+msgstr "Попереднє завантаження"
+
+#: inc/admin.php:1116 inc/admin.php:1122 inc/admin.php:1129 inc/admin.php:1136
+msgid "Reduce the number of SQL queries"
+msgstr "Зменшіть кількість SQL-запитів"
+
+#: inc/admin.php:1115 inc/admin.php:1121 inc/admin.php:1128 inc/admin.php:1135
+msgid "Widget Cache"
+msgstr "Кеш віджетів"
+
+#: inc/admin.php:1106
+msgid "Enable"
+msgstr "Увімкнути"
+
+#: inc/admin.php:1105
+msgid "Cache System"
+msgstr "Система кешу"
+
+#: wpFastestCache.php:2263
+msgid "Once Every 15 Days"
+msgstr "Раз на 15 днів"
+
+#: wpFastestCache.php:2251
+msgid "Once Every 7 Days"
+msgstr "Раз на 7 днів"
+
+#: wpFastestCache.php:2245
+msgid "Once Every 3 Days"
+msgstr "Раз на 3 дні"
+
+#: wpFastestCache.php:2233
+msgid "Once Every 10 Hours"
+msgstr "Раз в кожні 10 годин"
+
+#: wpFastestCache.php:2227
+msgid "Once Every 9 Hours"
+msgstr "Раз в кожні 9 годин"
+
+#: wpFastestCache.php:2221
+msgid "Once Every 8 Hours"
+msgstr "Раз в кожні 8 годин"
+
+#: wpFastestCache.php:2215
+msgid "Once Every 7 Hours"
+msgstr "Раз в кожні 7 годин"
+
+#: wpFastestCache.php:2203
+msgid "Once Every 5 Hours"
+msgstr "Раз в кожні 5 годин"
+
+#: wpFastestCache.php:2197
+msgid "Once Every 4 Hours"
+msgstr "Раз в кожні 4 години"
+
+#: wpFastestCache.php:2191
+msgid "Once Every 3 Hours"
+msgstr "Раз в кожні 3 години"
+
+#: wpFastestCache.php:2185
+msgid "Once Every 2 Hours"
+msgstr "Раз в кожні 2 години"
+
+#: wpFastestCache.php:2257
+msgid "Once Every 10 Days"
+msgstr "Раз в кожні 10 днів"
+
+#. Author of the plugin
+#: wpFastestCache.php
+msgid "Emre Vona"
+msgstr "Emre Vona"
+
+#. Description of the plugin
+#: wpFastestCache.php
+msgid "The simplest and fastest WP Cache system"
+msgstr "Найпростіша і найшвидка система WP Cache"
+
+#. Plugin URI of the plugin
+#: wpFastestCache.php
+msgid "http://wordpress.org/plugins/wp-fastest-cache/"
+msgstr "http://wordpress.org/plugins/wp-fastest-cache/"
+
+#. Plugin Name of the plugin
+#: wpFastestCache.php
+msgid "WP Fastest Cache"
+msgstr "WP Fastest Cache"
+
+#: wpFastestCache.php:2275
+msgid "Once a Year"
+msgstr "Раз в рік"
+
+#: wpFastestCache.php:2269
+msgid "Once a Month"
+msgstr "Раз в місяць"
+
+#: wpFastestCache.php:2239
+msgid "Once a Day"
+msgstr "Раз в день"
+
+#: wpFastestCache.php:2209
+msgid "Once Every 6 Hours"
+msgstr "Раз в кожні 6 годин"
+
+#: wpFastestCache.php:2179
+msgid "Once an Hour"
+msgstr "Раз годину"
+
+#: wpFastestCache.php:2173
+msgid "Twice an Hour"
+msgstr "Двічі в годину"
+
+#: wpFastestCache.php:2167
+msgid "Once Every 15 Minutes"
+msgstr "Раз в кожні 15 хвилин"
+
+#: wpFastestCache.php:2161
+msgid "Once Every 5 Minutes"
+msgstr "Раз в кожні 5 хвилин"
+
+#: wpFastestCache.php:2155
+msgid "Once Every 1 Minute"
+msgstr "Раз в кожну хвилину"

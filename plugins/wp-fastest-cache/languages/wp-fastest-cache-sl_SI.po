@@ -1,0 +1,624 @@
+# Translation of Plugins - WP Fastest Cache - Development (trunk) in Slovenian
+# This file is distributed under the same license as the Plugins - WP Fastest Cache - Development (trunk) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2023-12-18 14:05:59+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n % 100 == 1) ? 0 : ((n % 100 == 2) ? 1 : ((n % 100 == 3 || n % 100 == 4) ? 2 : 3));\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: sl_SI\n"
+"Project-Id-Version: Plugins - WP Fastest Cache - Development (trunk)\n"
+
+#: templates/preload.php:374 templates/preload.php:457
+#: templates/preload.php:474
+msgid "At least one sitemap must be added"
+msgstr "Vsaj en sitemap mora biti dodan"
+
+#: templates/preload.php:187
+msgid "You can customize the advanced settings through this section."
+msgstr "V tem razdelku lahko prilagodite napredne nastavitve."
+
+#: templates/preload.php:186
+msgid "Advanced Settings"
+msgstr "Napredne Nastavitve"
+
+#: templates/preload.php:151
+msgid "You can specify sitemaps to be used for preloading."
+msgstr "Določite lahko zemljevide spletnih mest, ki se bodo uporabljali za prednalaganje."
+
+#: templates/preload.php:150
+msgid "Sitemaps"
+msgstr "Zemljevidi spletnih mest"
+
+#: templates/preload.php:87
+msgid "You can specify the contents to be used for preloading and you can sort them as well."
+msgstr "Zemljevidi spletnih mest"
+
+#: templates/preload.php:86
+msgid "Content Types"
+msgstr "Vrste vsebine"
+
+#: templates/preload.php:73
+msgid "You can specify the method you want the preload feature to use through this section."
+msgstr "V tem razdelku lahko določite metodo, ki jo želite uporabiti za funkcijo prednalaganja."
+
+#: templates/preload.php:72
+msgid "Choose a Method"
+msgstr "Izberite metodo"
+
+#: templates/preload.php:56
+msgid "Preload Settings"
+msgstr "Nastavitve prednalaganja"
+
+#: inc/admin.php:1445 inc/admin.php:1452
+msgid "Some js sources will not be loaded until scrolling or moving the mouse"
+msgstr "Nekateri viri JS se ne bodo naložili, dokler se ne pomaknete ali premaknete miške"
+
+#: inc/admin.php:1444 inc/admin.php:1451
+msgid "Delay Js"
+msgstr "Zakasnitev JS"
+
+#: inc/admin.php:1061
+msgid "WP Fastest Cache Options"
+msgstr "Možnosti za WP Fastet Cache"
+
+#: inc/admin.php:1941 templates/exclude.php:114
+msgid "has Yandex Click ID Parameters"
+msgstr "ima Yandex Click ID parametre"
+
+#. Author URI of the plugin
+#: wpFastestCache.php
+msgid "https://www.wpfastestcache.com/"
+msgstr "https://www.wpfastestcache.com/"
+
+#: inc/admin.php:1736
+msgid "Clearing Specific Pages"
+msgstr "Čiščenje določenih strani"
+
+#: templates/toolbar_settings.php:71
+msgid "Save"
+msgstr "Shrani"
+
+#: templates/toolbar_settings.php:68
+msgid "Cancel"
+msgstr "Prekini"
+
+#: templates/toolbar_settings.php:20
+msgid "Toolbar Settings"
+msgstr "Nastavitve orodne vrstice"
+
+#: inc/admin-toolbar.php:74 inc/admin-toolbar.php:106
+msgid "Clear Cache of All Sites"
+msgstr "Počisti predpomnilnik za vse strani"
+
+#: wpFastestCache.php:414
+msgid "<a href=\"%s\">Settings</a>"
+msgstr "<a href=\"%s\">Nastavitve</a>"
+
+#: inc/column.php:15
+msgid "Clear Cache"
+msgstr "Počisti medpomnilnik"
+
+#: inc/admin.php:1357 inc/admin.php:1363 inc/admin.php:1370
+msgid "Eliminate render-blocking JavaScript resources"
+msgstr "Odpravi Java-Script vire, ki ovirajo izrisovanje"
+
+#: inc/admin.php:461 inc/admin.php:464
+msgid "Options have been saved"
+msgstr "Nastavitve so shranjene"
+
+#: inc/admin.php:1942 templates/exclude.php:115
+msgid "has Woocommerce Items in Cart"
+msgstr "ima Woocommerce artikle na seznamu"
+
+#: inc/admin.php:1940 templates/exclude.php:113
+msgid "has Google Analytics Parameters"
+msgstr "ima Google Analytics parametre"
+
+#: inc/admin.php:1930 templates/exclude.php:100
+msgid "Archives"
+msgstr "Arhivi"
+
+#: templates/timeout.php:189
+msgid "Server Time"
+msgstr "Čas strežnika"
+
+#: templates/timeout.php:169
+msgid "delete the files"
+msgstr "izbriši datoteke"
+
+#: inc/admin.php:1633 inc/admin.php:1935 templates/exclude.php:106
+#: templates/timeout.php:99
+msgid "Contains"
+msgstr "Vsebuje"
+
+#: inc/admin.php:1634 inc/admin.php:1936 templates/exclude.php:107
+#: templates/timeout.php:98
+msgid "Is Equal To"
+msgstr "Je enak kot"
+
+#: inc/admin.php:1632 inc/admin.php:1934 templates/exclude.php:105
+#: templates/timeout.php:97
+msgid "Starts With"
+msgstr "Se začne s/z"
+
+#: inc/admin.php:1631 inc/admin.php:1927 templates/exclude.php:95
+#: templates/timeout.php:96
+msgid "Home Page"
+msgstr "Domača stran"
+
+#: inc/admin.php:1630 templates/timeout.php:95
+msgid "All"
+msgstr "Vse"
+
+#: templates/exclude.php:66
+msgid "Exclude Page Wizard"
+msgstr "Čarovnik za izločanje strani"
+
+#: templates/timeout.php:124
+msgid "Then"
+msgstr "Potem"
+
+#: templates/exclude.php:89 templates/timeout.php:91
+msgid "If REQUEST_URI"
+msgstr "Če REQUEST_URI"
+
+#: templates/timeout.php:68
+msgid "Cache Timeout Wizard"
+msgstr "ČParovnik za časovni potek predpomnilnika"
+
+#: templates/lazy_load.php:9
+msgid "Lazy Load Settings"
+msgstr "Nastavitve za lenobno nalaganje"
+
+#: templates/nginx_gzip.php:9
+msgid "Enable Gzip"
+msgstr "Omogoči Gzip"
+
+#: templates/update_now.php:9
+msgid "Please Update"
+msgstr "Prosimo, posodobite"
+
+#: templates/update_success.php:9
+msgid "Success"
+msgstr "Je bilo uspešno"
+
+#: templates/disable_wp_cron.php:20
+msgid "Warning"
+msgstr "Opozorilo"
+
+#: inc/admin.php:1668 inc/admin.php:1740 inc/admin.php:1963 inc/admin.php:1980
+#: inc/admin.php:1999 inc/admin.php:2017 inc/admin.php:2037
+msgid "Add New Rule"
+msgstr "Dodaj novo pravilo"
+
+#: inc/admin-toolbar.php:98 inc/admin.php:1602
+msgid "Delete Cache and Minified CSS/JS"
+msgstr "Izbriši predpomnilnik in zmanjšan CSS/JS"
+
+#: inc/admin.php:1534 inc/admin.php:2206 inc/admin.php:2406
+msgid "Only available in Premium version"
+msgstr "Na voljo le v premium različici"
+
+#: templates/timeout.php:141
+msgid "Choose One"
+msgstr "Izberite eno"
+
+#: inc/admin.php:1607
+msgid "All cache files will be removed as well"
+msgstr "Odstranjene bodo tudi vse datoteke predpomnilnika"
+
+#: inc/admin.php:1606
+msgid "If you modify any css file, you have to delete minified css files"
+msgstr "Ob spremembi katerekoli css datoteke je potrebno izbrisati pomanjšane css datoteke"
+
+#: inc/admin.php:1594 inc/admin.php:1608 inc/admin.php:1609
+msgid "Target folder"
+msgstr "Ciljna mapa"
+
+#: inc/admin.php:1593
+msgid "You can delete all cache files"
+msgstr "Lahko izbrišete vse datoteke predpomnilnika"
+
+#: inc/admin.php:1077
+msgid "Exclude"
+msgstr "Izloči"
+
+#: inc/admin.php:1071
+msgid "Image Optimization"
+msgstr "Optimizacija slik"
+
+#: inc/admin-toolbar.php:115 inc/admin.php:1069
+msgid "Settings"
+msgstr "Nastavitve"
+
+#: inc/admin.php:2179
+msgid "Database Cleanup"
+msgstr "Očiščenje podatkovne baze"
+
+#: inc/admin.php:2070
+msgid "CDN Settings"
+msgstr "CDN nastavitve"
+
+#: inc/admin.php:2033
+msgid "Exclude JS"
+msgstr "Izloči JS"
+
+#: inc/admin.php:2013
+msgid "Exclude CSS"
+msgstr "Izločii CSS"
+
+#: inc/admin.php:1995
+msgid "Exclude Cookies"
+msgstr "Izloči piškotke"
+
+#: inc/admin.php:1976
+msgid "Exclude User-Agents"
+msgstr "Izloči uporabniške agente"
+
+#: inc/admin.php:1959
+msgid "Exclude Pages"
+msgstr "Izloči strani"
+
+#: inc/admin.php:1793
+msgid "Optimize Image Tool"
+msgstr "Orodje za optimizacijo slik"
+
+#: inc/admin.php:1623
+msgid "Timeout Rules"
+msgstr "Pravila za potek časa"
+
+#: inc/admin-toolbar.php:86 inc/admin.php:1070 inc/admin.php:1581
+msgid "Delete Cache"
+msgstr "Izbriši predpomnilnik"
+
+#: inc/admin.php:1541
+msgid "Cache Statistics"
+msgstr "Statistka predpomnilnika"
+
+#: templates/updatepost.php:53
+msgid "Clear Cache of Post / Page"
+msgstr "Počisti predpomnilnik prispevka / strani"
+
+#: templates/updatepost.php:29
+msgid "What do you want to happen after update a post or a page?"
+msgstr "Kaj naj se zgodi po posodobitvi prispevka ali strani?"
+
+#: templates/newpost.php:58
+msgid "Clear Cache of Pagination"
+msgstr "Počisti predpomnilnik številčenja strani"
+
+#: templates/newpost.php:57 templates/updatepost.php:55
+msgid "Clear Cache of Post Tags"
+msgstr "Počisti predpomnilnik oznak strani"
+
+#: templates/newpost.php:56 templates/updatepost.php:54
+msgid "Clear Cache of Post Categories"
+msgstr "Počisti predpomnilnik kategorij prispevkov"
+
+#: templates/newpost.php:55 templates/updatepost.php:56
+msgid "Clear Cache of Home page"
+msgstr ""
+
+#: inc/admin-toolbar.php:91 inc/admin.php:1589 templates/newpost.php:51
+#: templates/updatepost.php:49
+msgid "Clear All Cache"
+msgstr "Počisti celoten predpomnilnik"
+
+#: templates/newpost.php:29
+msgid "What do you want to happen after publishing the new post?"
+msgstr "Kaj naj se zgodi po objavi novega prispevka?"
+
+#: templates/newpost.php:68 templates/updatepost.php:64
+msgid "OK"
+msgstr "V redu"
+
+#: templates/preload.php:215
+msgid "Restart After Completed"
+msgstr "Ko končasš ponovno zaženi"
+
+#: templates/preload.php:210
+msgid "pages per minute"
+msgstr "strani na minuto"
+
+#: templates/preload.php:132
+msgid "Custom Taxonomies"
+msgstr "Taksonomije po meri"
+
+#: templates/preload.php:127
+msgid "Custom Post Types"
+msgstr "Vrste prispevkov po meri"
+
+#: inc/admin.php:1933 templates/exclude.php:101 templates/preload.php:122
+msgid "Attachments"
+msgstr "Priponke"
+
+#: inc/admin.php:1929 templates/exclude.php:97 templates/preload.php:118
+msgid "Tags"
+msgstr "Oznake"
+
+#: inc/admin.php:1932 templates/exclude.php:99 templates/preload.php:114
+msgid "Pages"
+msgstr "Strani"
+
+#: inc/admin.php:1928 templates/exclude.php:96 templates/preload.php:110
+msgid "Categories"
+msgstr "Kategorije"
+
+#: inc/admin.php:1931 templates/exclude.php:98 templates/preload.php:106
+msgid "Posts"
+msgstr "Prispevki"
+
+#: templates/preload.php:102
+msgid "Homepage"
+msgstr "Domača stran"
+
+#: inc/admin.php:1304 inc/admin.php:1312 inc/admin.php:1318 inc/admin.php:1324
+msgid "Reduce HTTP requests through combined js files"
+msgstr "Zmanjšaj HTTP zahtevke s pomočjo kombiniranih js datotek"
+
+#: inc/admin.php:1412 inc/admin.php:1434
+msgid "Load images and iframes when they enter the browsers viewport"
+msgstr "Naloži slike in iframe okvireje, ko se pojavijo v vidnem delu brskalnika"
+
+#: inc/admin.php:1383 inc/admin.php:1389 inc/admin.php:1396
+msgid "Load Google Fonts asynchronously"
+msgstr "Asinhrono nalaganje Google pisav"
+
+#: inc/admin.php:1382 inc/admin.php:1388 inc/admin.php:1395
+msgid "Google Fonts"
+msgstr "Google pisave"
+
+#: inc/admin.php:1356 inc/admin.php:1362 inc/admin.php:1369
+msgid "Render Blocking Js"
+msgstr "Js, ki ovira izrisovanje"
+
+#: inc/admin.php:1348
+msgid "You can remove the emoji inline css and wp-emoji-release.min.js"
+msgstr "Lahko izbrišete medvrstični css čustvenih simbolov in wp-emoji-release.min.js"
+
+#: inc/admin.php:1347
+msgid "Disable Emojis"
+msgstr "Onemogoči čustvene simbole"
+
+#: inc/admin.php:1342
+msgid "Reduce page load times for repeat visitors"
+msgstr "Zmanjšaj čas nalaganja za ponovne obiskovalce"
+
+#: inc/admin.php:1341
+msgid "Browser Caching"
+msgstr "Predpomnilnik brskalnika"
+
+#: inc/admin.php:1330
+msgid "Reduce the size of files sent from your server"
+msgstr "Zmanjšaj velikost datotek, ki jih pošlje strežnik"
+
+#: inc/admin.php:1329
+msgid "Gzip"
+msgstr "Gzip"
+
+#: inc/admin.php:1310 inc/admin.php:1317 inc/admin.php:1323
+msgid "Combine Js Plus"
+msgstr "Kombiniraj Js Plus"
+
+#: inc/admin.php:1303
+msgid "Combine Js"
+msgstr "Kombiniraj Js"
+
+#: inc/admin.php:1287 inc/admin.php:1292 inc/admin.php:1298
+msgid "You can decrease the size of js files"
+msgstr "Lahko zmanjšate velilkost js datotek"
+
+#: inc/admin.php:1286 inc/admin.php:1291 inc/admin.php:1297
+msgid "Minify Js"
+msgstr "Zmanjšaj Js"
+
+#: inc/admin.php:1279
+msgid "Reduce HTTP requests through combined css files"
+msgstr "Lahko zmanjšate število HTTP zahtevkov s pomočjo kombiniranih css datotek"
+
+#: inc/admin.php:1278
+msgid "Combine Css"
+msgstr "Kombiniraj Css"
+
+#: inc/admin.php:1267 inc/admin.php:1272
+msgid "More powerful minify css"
+msgstr "Bolj zmogljiva css pomanjšava"
+
+#: inc/admin.php:1266 inc/admin.php:1271
+msgid "Minify Css Plus"
+msgstr "Zmanjšaj Css Plus"
+
+#: inc/admin.php:1258
+msgid "You can decrease the size of css files"
+msgstr "Lahko zmanjšate velikost css datotek"
+
+#: inc/admin.php:1257
+msgid "Minify Css"
+msgstr "Zmanjšaj Css"
+
+#: inc/admin.php:1245 inc/admin.php:1250
+msgid "More powerful minify html"
+msgstr "Bolj zmogljiva pomanjšava html"
+
+#: inc/admin.php:1244 inc/admin.php:1249
+msgid "Minify HTML Plus"
+msgstr "Zmanjšaj HTML Plus"
+
+#: inc/admin.php:1238
+msgid "You can decrease the size of page"
+msgstr "Lahko zmanjšate velikost strani"
+
+#: inc/admin.php:1237
+msgid "Minify HTML"
+msgstr "Zmanjšaj HTML"
+
+#: inc/admin.php:1229
+msgid "Clear cache files when a post or page is updated"
+msgstr "Izbriši datoteke predpomnilnika, ko sta prispevek ali stran posodobljena"
+
+#: inc/admin.php:1228 templates/updatepost.php:18
+msgid "Update Post"
+msgstr "Posodobi prispevek"
+
+#: inc/admin.php:1222
+msgid "Clear cache files when a post or page is published"
+msgstr "Izbriši datoteke predpomnilnika, ko sta prispevek ali stran objavljena"
+
+#: inc/admin.php:1221 templates/newpost.php:18
+msgid "New Post"
+msgstr "Nov prispevek"
+
+#: inc/admin.php:1189 inc/admin.php:1215
+msgid "Create cache for mobile theme"
+msgstr "Ustvari predpomnilnik za mobilno temo"
+
+#: inc/admin.php:1188 inc/admin.php:1214
+msgid "Mobile Theme"
+msgstr "Mobilna tema"
+
+#: inc/admin.php:1183
+msgid "Don't show the cached version for desktop to mobile devices"
+msgstr "Ne prikaži prepomnjene namizne različice na mobilnih napravah"
+
+#: inc/admin.php:1182
+msgid "Mobile"
+msgstr "Mobilno"
+
+#: inc/admin.php:1178
+msgid "Don't show the cached version for logged-in users"
+msgstr "Ne prikaži prepomnjene različice za prijavljene uporabnike"
+
+#: inc/admin.php:1177
+msgid "Logged-in Users"
+msgstr "Prijavljeni uporabniki"
+
+#: inc/admin.php:1145
+msgid "Create the cache of all the site automatically"
+msgstr "Samodejno ustvari prepomnilnik vseh strani"
+
+#: inc/admin.php:1144
+msgid "Preload"
+msgstr "Prednalaganje"
+
+#: inc/admin.php:1116 inc/admin.php:1122 inc/admin.php:1129 inc/admin.php:1136
+msgid "Reduce the number of SQL queries"
+msgstr "Zmanjšaj število SQL poizvedb"
+
+#: inc/admin.php:1115 inc/admin.php:1121 inc/admin.php:1128 inc/admin.php:1135
+msgid "Widget Cache"
+msgstr "Predpomnilnik gradnikov"
+
+#: inc/admin.php:1106
+msgid "Enable"
+msgstr "Omogoči"
+
+#: inc/admin.php:1105
+msgid "Cache System"
+msgstr "Sistemski predpomnilnik"
+
+#: wpFastestCache.php:2263
+msgid "Once Every 15 Days"
+msgstr "Na vsake 15 dni"
+
+#: wpFastestCache.php:2251
+msgid "Once Every 7 Days"
+msgstr "Na vsake 7 dni"
+
+#: wpFastestCache.php:2245
+msgid "Once Every 3 Days"
+msgstr "Na vsake 3 dni"
+
+#: wpFastestCache.php:2233
+msgid "Once Every 10 Hours"
+msgstr "Na vsakh 10 ur"
+
+#: wpFastestCache.php:2227
+msgid "Once Every 9 Hours"
+msgstr "Na vsakih 9 ur"
+
+#: wpFastestCache.php:2221
+msgid "Once Every 8 Hours"
+msgstr "Na vsakih 8 ur"
+
+#: wpFastestCache.php:2215
+msgid "Once Every 7 Hours"
+msgstr "Na vsakih 7 ur"
+
+#: wpFastestCache.php:2203
+msgid "Once Every 5 Hours"
+msgstr "Na vsakih 5 ur"
+
+#: wpFastestCache.php:2197
+msgid "Once Every 4 Hours"
+msgstr "Na vsake 4 ure"
+
+#: wpFastestCache.php:2191
+msgid "Once Every 3 Hours"
+msgstr "Na vsake 3 ure"
+
+#: wpFastestCache.php:2185
+msgid "Once Every 2 Hours"
+msgstr "Na vsaki 2 uri"
+
+#: wpFastestCache.php:2257
+msgid "Once Every 10 Days"
+msgstr "Enkrat na 10 dni"
+
+#. Author of the plugin
+#: wpFastestCache.php
+msgid "Emre Vona"
+msgstr "Emre Vona"
+
+#. Description of the plugin
+#: wpFastestCache.php
+msgid "The simplest and fastest WP Cache system"
+msgstr "Najenostavnejši in najhitrejši predpomnilniški sistem za WP"
+
+#. Plugin URI of the plugin
+#: wpFastestCache.php
+msgid "http://wordpress.org/plugins/wp-fastest-cache/"
+msgstr "http://wordpress.org/plugins/wp-fastest-cache/"
+
+#. Plugin Name of the plugin
+#: wpFastestCache.php
+msgid "WP Fastest Cache"
+msgstr "WP Fastest Cache"
+
+#: wpFastestCache.php:2275
+msgid "Once a Year"
+msgstr "Enkrat na leto"
+
+#: wpFastestCache.php:2269
+msgid "Once a Month"
+msgstr "Enkrat na mesec"
+
+#: wpFastestCache.php:2239
+msgid "Once a Day"
+msgstr "Enkrat na dan"
+
+#: wpFastestCache.php:2209
+msgid "Once Every 6 Hours"
+msgstr "Na vsakih 6 ur"
+
+#: wpFastestCache.php:2179
+msgid "Once an Hour"
+msgstr "Na vsako uro"
+
+#: wpFastestCache.php:2173
+msgid "Twice an Hour"
+msgstr "Dvakrat na uro"
+
+#: wpFastestCache.php:2167
+msgid "Once Every 15 Minutes"
+msgstr "Na vsakih 15 minut"
+
+#: wpFastestCache.php:2161
+msgid "Once Every 5 Minutes"
+msgstr "Na vsakih 5 minut"
+
+#: wpFastestCache.php:2155
+msgid "Once Every 1 Minute"
+msgstr "Na vsako minuto"

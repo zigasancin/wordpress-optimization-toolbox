@@ -1,0 +1,624 @@
+# Translation of Plugins - WP Fastest Cache - Development (trunk) in German
+# This file is distributed under the same license as the Plugins - WP Fastest Cache - Development (trunk) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2024-04-25 18:21:05+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: de\n"
+"Project-Id-Version: Plugins - WP Fastest Cache - Development (trunk)\n"
+
+#: templates/preload.php:374 templates/preload.php:457
+#: templates/preload.php:474
+msgid "At least one sitemap must be added"
+msgstr "Mindestens eine Sitemap muss hinzugefügt werden"
+
+#: templates/preload.php:187
+msgid "You can customize the advanced settings through this section."
+msgstr "In diesem Abschnitt kannst du die erweiterten Einstellungen anpassen."
+
+#: templates/preload.php:186
+msgid "Advanced Settings"
+msgstr "Erweiterte Einstellungen"
+
+#: templates/preload.php:151
+msgid "You can specify sitemaps to be used for preloading."
+msgstr "Du kannst festlegen, welche Sitemaps für das Preloading verwendet werden."
+
+#: templates/preload.php:150
+msgid "Sitemaps"
+msgstr "Sitemaps"
+
+#: templates/preload.php:87
+msgid "You can specify the contents to be used for preloading and you can sort them as well."
+msgstr "Du kannst die Inhalte für das Preloading festlegen und auch sortieren."
+
+#: templates/preload.php:86
+msgid "Content Types"
+msgstr "Inhaltstypen"
+
+#: templates/preload.php:73
+msgid "You can specify the method you want the preload feature to use through this section."
+msgstr "In diesem Abschnitt kannst du festlegen, welche Methode die Preload-Funktion verwenden soll."
+
+#: templates/preload.php:72
+msgid "Choose a Method"
+msgstr "Wähle eine Methode"
+
+#: templates/preload.php:56
+msgid "Preload Settings"
+msgstr "Preload-Einstellungen"
+
+#: inc/admin.php:1445 inc/admin.php:1452
+msgid "Some js sources will not be loaded until scrolling or moving the mouse"
+msgstr "Einige JS-Quellen werden erst geladen, wenn gescrollt oder die Maus bewegt wird"
+
+#: inc/admin.php:1444 inc/admin.php:1451
+msgid "Delay Js"
+msgstr "JS verzögern"
+
+#: inc/admin.php:1061
+msgid "WP Fastest Cache Options"
+msgstr "WP-Fastest-Cache-Optionen"
+
+#: inc/admin.php:1941 templates/exclude.php:114
+msgid "has Yandex Click ID Parameters"
+msgstr "hat Yandex-Click-ID-Parameter"
+
+#. Author URI of the plugin
+#: wpFastestCache.php
+msgid "https://www.wpfastestcache.com/"
+msgstr "https://www.wpfastestcache.com/"
+
+#: inc/admin.php:1736
+msgid "Clearing Specific Pages"
+msgstr "Bestimmte Seiten löschen"
+
+#: templates/toolbar_settings.php:71
+msgid "Save"
+msgstr "Speichern"
+
+#: templates/toolbar_settings.php:68
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: templates/toolbar_settings.php:20
+msgid "Toolbar Settings"
+msgstr "Werkzeugleisten-Einstellungen"
+
+#: inc/admin-toolbar.php:74 inc/admin-toolbar.php:106
+msgid "Clear Cache of All Sites"
+msgstr "Cache für alle Seiten leeren"
+
+#: wpFastestCache.php:414
+msgid "<a href=\"%s\">Settings</a>"
+msgstr "<a href=\"%s\">Einstellungen</a>"
+
+#: inc/column.php:15
+msgid "Clear Cache"
+msgstr "Cache leeren"
+
+#: inc/admin.php:1357 inc/admin.php:1363 inc/admin.php:1370
+msgid "Eliminate render-blocking JavaScript resources"
+msgstr "Beseitigt JavaScript-Ressourcen, die das Rendering blockieren"
+
+#: inc/admin.php:461 inc/admin.php:464
+msgid "Options have been saved"
+msgstr "Optionen wurden gespeichert"
+
+#: inc/admin.php:1942 templates/exclude.php:115
+msgid "has Woocommerce Items in Cart"
+msgstr "hat Woocommerce-Elemente im Warenkorb"
+
+#: inc/admin.php:1940 templates/exclude.php:113
+msgid "has Google Analytics Parameters"
+msgstr "hat Google-Analytics-Parameter"
+
+#: inc/admin.php:1930 templates/exclude.php:100
+msgid "Archives"
+msgstr "Archive"
+
+#: templates/timeout.php:189
+msgid "Server Time"
+msgstr "Serverzeit"
+
+#: templates/timeout.php:169
+msgid "delete the files"
+msgstr "die Dateien löschen"
+
+#: inc/admin.php:1633 inc/admin.php:1935 templates/exclude.php:106
+#: templates/timeout.php:99
+msgid "Contains"
+msgstr "Beinhaltet"
+
+#: inc/admin.php:1634 inc/admin.php:1936 templates/exclude.php:107
+#: templates/timeout.php:98
+msgid "Is Equal To"
+msgstr "Ist gleich"
+
+#: inc/admin.php:1632 inc/admin.php:1934 templates/exclude.php:105
+#: templates/timeout.php:97
+msgid "Starts With"
+msgstr "Beginnt mit"
+
+#: inc/admin.php:1631 inc/admin.php:1927 templates/exclude.php:95
+#: templates/timeout.php:96
+msgid "Home Page"
+msgstr "Homepage"
+
+#: inc/admin.php:1630 templates/timeout.php:95
+msgid "All"
+msgstr "Alles"
+
+#: templates/exclude.php:66
+msgid "Exclude Page Wizard"
+msgstr "Seiten-Ausschluss-Assistent"
+
+#: templates/timeout.php:124
+msgid "Then"
+msgstr "Dann"
+
+#: templates/exclude.php:89 templates/timeout.php:91
+msgid "If REQUEST_URI"
+msgstr "Falls REQUEST_URI"
+
+#: templates/timeout.php:68
+msgid "Cache Timeout Wizard"
+msgstr "Cache-Zeitüberschreitungsassistent"
+
+#: templates/lazy_load.php:9
+msgid "Lazy Load Settings"
+msgstr "Einstellungen für Verzögertes Laden"
+
+#: templates/nginx_gzip.php:9
+msgid "Enable Gzip"
+msgstr "Gzip aktivieren"
+
+#: templates/update_now.php:9
+msgid "Please Update"
+msgstr "Bitte aktualisieren"
+
+#: templates/update_success.php:9
+msgid "Success"
+msgstr "Erfolg"
+
+#: templates/disable_wp_cron.php:20
+msgid "Warning"
+msgstr "Warnung"
+
+#: inc/admin.php:1668 inc/admin.php:1740 inc/admin.php:1963 inc/admin.php:1980
+#: inc/admin.php:1999 inc/admin.php:2017 inc/admin.php:2037
+msgid "Add New Rule"
+msgstr "Neue Regel hinzufügen"
+
+#: inc/admin-toolbar.php:98 inc/admin.php:1602
+msgid "Delete Cache and Minified CSS/JS"
+msgstr "Cache und Minimiertes CSS/JS löschen"
+
+#: inc/admin.php:1534 inc/admin.php:2206 inc/admin.php:2406
+msgid "Only available in Premium version"
+msgstr "Nur verfügbar in der Premium-Version"
+
+#: templates/timeout.php:141
+msgid "Choose One"
+msgstr "Wähle eins"
+
+#: inc/admin.php:1607
+msgid "All cache files will be removed as well"
+msgstr "Auch alle Cache-Dateien werden dabei gelöscht"
+
+#: inc/admin.php:1606
+msgid "If you modify any css file, you have to delete minified css files"
+msgstr "Falls du eine CSS-Datei veränderst, musst du minimierte CSS-Dateien löschen"
+
+#: inc/admin.php:1594 inc/admin.php:1608 inc/admin.php:1609
+msgid "Target folder"
+msgstr "Zielverzeichnis"
+
+#: inc/admin.php:1593
+msgid "You can delete all cache files"
+msgstr "Du kannst alle Cache-Dateien löschen"
+
+#: inc/admin.php:1077
+msgid "Exclude"
+msgstr "Ausschließen"
+
+#: inc/admin.php:1071
+msgid "Image Optimization"
+msgstr "Bildoptimierung"
+
+#: inc/admin-toolbar.php:115 inc/admin.php:1069
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: inc/admin.php:2179
+msgid "Database Cleanup"
+msgstr "Datenbank aufräumen"
+
+#: inc/admin.php:2070
+msgid "CDN Settings"
+msgstr "CDN-Einstellungen"
+
+#: inc/admin.php:2033
+msgid "Exclude JS"
+msgstr "JS ausschließen"
+
+#: inc/admin.php:2013
+msgid "Exclude CSS"
+msgstr "CSS ausschließen"
+
+#: inc/admin.php:1995
+msgid "Exclude Cookies"
+msgstr "Cookies ausschließen"
+
+#: inc/admin.php:1976
+msgid "Exclude User-Agents"
+msgstr "User Agents ausschließen"
+
+#: inc/admin.php:1959
+msgid "Exclude Pages"
+msgstr "Seiten ausschließen"
+
+#: inc/admin.php:1793
+msgid "Optimize Image Tool"
+msgstr "Werkzeug zur Bildoptimierung"
+
+#: inc/admin.php:1623
+msgid "Timeout Rules"
+msgstr "Zeitüberschreitungsregeln"
+
+#: inc/admin-toolbar.php:86 inc/admin.php:1070 inc/admin.php:1581
+msgid "Delete Cache"
+msgstr "Cache löschen"
+
+#: inc/admin.php:1541
+msgid "Cache Statistics"
+msgstr "Cache-Statistiken"
+
+#: templates/updatepost.php:53
+msgid "Clear Cache of Post / Page"
+msgstr "Cache von Beitrag/Seite leeren"
+
+#: templates/updatepost.php:29
+msgid "What do you want to happen after update a post or a page?"
+msgstr "Was soll geschehen, nachdem ein Beitrag oder eine Seite aktualisiert wurde?"
+
+#: templates/newpost.php:58
+msgid "Clear Cache of Pagination"
+msgstr "Cache von Seitennummerierungen leeren"
+
+#: templates/newpost.php:57 templates/updatepost.php:55
+msgid "Clear Cache of Post Tags"
+msgstr "Cache von Beitrags-Schlagwörtern leeren"
+
+#: templates/newpost.php:56 templates/updatepost.php:54
+msgid "Clear Cache of Post Categories"
+msgstr "Cache von Beitrags-Kategorien leeren"
+
+#: templates/newpost.php:55 templates/updatepost.php:56
+msgid "Clear Cache of Home page"
+msgstr ""
+
+#: inc/admin-toolbar.php:91 inc/admin.php:1589 templates/newpost.php:51
+#: templates/updatepost.php:49
+msgid "Clear All Cache"
+msgstr "Alle Caches löschen"
+
+#: templates/newpost.php:29
+msgid "What do you want to happen after publishing the new post?"
+msgstr "Was soll geschehen, nachdem ein neuer Beitrag veröffentlicht wurde?"
+
+#: templates/newpost.php:68 templates/updatepost.php:64
+msgid "OK"
+msgstr "OK"
+
+#: templates/preload.php:215
+msgid "Restart After Completed"
+msgstr "Neustart nach Abschluss"
+
+#: templates/preload.php:210
+msgid "pages per minute"
+msgstr "Seiten pro Minute"
+
+#: templates/preload.php:132
+msgid "Custom Taxonomies"
+msgstr "Individuelle Taxonomien"
+
+#: templates/preload.php:127
+msgid "Custom Post Types"
+msgstr "Individuelle Inhaltstypen"
+
+#: inc/admin.php:1933 templates/exclude.php:101 templates/preload.php:122
+msgid "Attachments"
+msgstr "Anhänge"
+
+#: inc/admin.php:1929 templates/exclude.php:97 templates/preload.php:118
+msgid "Tags"
+msgstr "Schlagwörter"
+
+#: inc/admin.php:1932 templates/exclude.php:99 templates/preload.php:114
+msgid "Pages"
+msgstr "Seiten"
+
+#: inc/admin.php:1928 templates/exclude.php:96 templates/preload.php:110
+msgid "Categories"
+msgstr "Kategorien"
+
+#: inc/admin.php:1931 templates/exclude.php:98 templates/preload.php:106
+msgid "Posts"
+msgstr "Beiträge"
+
+#: templates/preload.php:102
+msgid "Homepage"
+msgstr "Homepage"
+
+#: inc/admin.php:1304 inc/admin.php:1312 inc/admin.php:1318 inc/admin.php:1324
+msgid "Reduce HTTP requests through combined js files"
+msgstr "HTTP-Anfragen durch kombinierte JS-Dateien reduzieren"
+
+#: inc/admin.php:1412 inc/admin.php:1434
+msgid "Load images and iframes when they enter the browsers viewport"
+msgstr "Bilder und iFrames laden, wenn diese in den Darstellungsbereich des Browsers gelangen"
+
+#: inc/admin.php:1383 inc/admin.php:1389 inc/admin.php:1396
+msgid "Load Google Fonts asynchronously"
+msgstr "Google Fonts asynchron laden"
+
+#: inc/admin.php:1382 inc/admin.php:1388 inc/admin.php:1395
+msgid "Google Fonts"
+msgstr "Google Fonts"
+
+#: inc/admin.php:1356 inc/admin.php:1362 inc/admin.php:1369
+msgid "Render Blocking Js"
+msgstr "Render-Blocking-JS"
+
+#: inc/admin.php:1348
+msgid "You can remove the emoji inline css and wp-emoji-release.min.js"
+msgstr "Du kannst das Inline-CSS für Emojis und wp-emoji-release.min.js entfernen"
+
+#: inc/admin.php:1347
+msgid "Disable Emojis"
+msgstr "Emojis deaktivieren"
+
+#: inc/admin.php:1342
+msgid "Reduce page load times for repeat visitors"
+msgstr "Die Seitenladezeiten für wiederkehrende Besucher reduzieren"
+
+#: inc/admin.php:1341
+msgid "Browser Caching"
+msgstr "Browser-Caching"
+
+#: inc/admin.php:1330
+msgid "Reduce the size of files sent from your server"
+msgstr "Die Größe der Dateien, die von deinem Server ausgeliefert werden, reduzieren"
+
+#: inc/admin.php:1329
+msgid "Gzip"
+msgstr "Gzip"
+
+#: inc/admin.php:1310 inc/admin.php:1317 inc/admin.php:1323
+msgid "Combine Js Plus"
+msgstr "JS minimieren Plus"
+
+#: inc/admin.php:1303
+msgid "Combine Js"
+msgstr "JS kombinieren"
+
+#: inc/admin.php:1287 inc/admin.php:1292 inc/admin.php:1298
+msgid "You can decrease the size of js files"
+msgstr "Du kannst die Größe von JS-Dateien reduzieren"
+
+#: inc/admin.php:1286 inc/admin.php:1291 inc/admin.php:1297
+msgid "Minify Js"
+msgstr "JS minimieren"
+
+#: inc/admin.php:1279
+msgid "Reduce HTTP requests through combined css files"
+msgstr "HTTP-Anfragen durch kombinierte CSS-Dateien reduzieren"
+
+#: inc/admin.php:1278
+msgid "Combine Css"
+msgstr "CSS kombinieren"
+
+#: inc/admin.php:1267 inc/admin.php:1272
+msgid "More powerful minify css"
+msgstr "Stärkeres Minimieren von CSS"
+
+#: inc/admin.php:1266 inc/admin.php:1271
+msgid "Minify Css Plus"
+msgstr "CSS minimieren Plus"
+
+#: inc/admin.php:1258
+msgid "You can decrease the size of css files"
+msgstr "Du kannst die Größe von CSS-Dateien verringern"
+
+#: inc/admin.php:1257
+msgid "Minify Css"
+msgstr "CSS minimieren"
+
+#: inc/admin.php:1245 inc/admin.php:1250
+msgid "More powerful minify html"
+msgstr "Stärkeres Minimieren von HTML"
+
+#: inc/admin.php:1244 inc/admin.php:1249
+msgid "Minify HTML Plus"
+msgstr "HTML minimieren Plus"
+
+#: inc/admin.php:1238
+msgid "You can decrease the size of page"
+msgstr "Du kannst die Größe der Seite verringern"
+
+#: inc/admin.php:1237
+msgid "Minify HTML"
+msgstr "HTML minimieren"
+
+#: inc/admin.php:1229
+msgid "Clear cache files when a post or page is updated"
+msgstr "Cache leeren, wenn ein Beitrag oder eine Seite aktualisiert wird"
+
+#: inc/admin.php:1228 templates/updatepost.php:18
+msgid "Update Post"
+msgstr "Aktualisierter Beitrag"
+
+#: inc/admin.php:1222
+msgid "Clear cache files when a post or page is published"
+msgstr "Cache leeren, wenn ein Beitrag oder eine Seite veröffentlicht wird"
+
+#: inc/admin.php:1221 templates/newpost.php:18
+msgid "New Post"
+msgstr "Neuer Beitrag"
+
+#: inc/admin.php:1189 inc/admin.php:1215
+msgid "Create cache for mobile theme"
+msgstr "Cache für Theme für Mobilgeräte erstellen"
+
+#: inc/admin.php:1188 inc/admin.php:1214
+msgid "Mobile Theme"
+msgstr "Theme für Mobilgeräte"
+
+#: inc/admin.php:1183
+msgid "Don't show the cached version for desktop to mobile devices"
+msgstr "Die zwischengespeicherte Version für den Desktop nicht auf Mobilgeräten anzeigen"
+
+#: inc/admin.php:1182
+msgid "Mobile"
+msgstr "Mobilgeräte"
+
+#: inc/admin.php:1178
+msgid "Don't show the cached version for logged-in users"
+msgstr "Die zwischengespeicherte Version nicht für angemeldete Benutzer anzeigen"
+
+#: inc/admin.php:1177
+msgid "Logged-in Users"
+msgstr "Angemeldete Benutzer"
+
+#: inc/admin.php:1145
+msgid "Create the cache of all the site automatically"
+msgstr "Den Cache für die gesamte Website automatisch erstellen"
+
+#: inc/admin.php:1144
+msgid "Preload"
+msgstr "Vorladen"
+
+#: inc/admin.php:1116 inc/admin.php:1122 inc/admin.php:1129 inc/admin.php:1136
+msgid "Reduce the number of SQL queries"
+msgstr "Die Anzahl an SQL-Anfragen reduzieren"
+
+#: inc/admin.php:1115 inc/admin.php:1121 inc/admin.php:1128 inc/admin.php:1135
+msgid "Widget Cache"
+msgstr "Widget-Cache"
+
+#: inc/admin.php:1106
+msgid "Enable"
+msgstr "Aktivieren"
+
+#: inc/admin.php:1105
+msgid "Cache System"
+msgstr "Cache-System"
+
+#: wpFastestCache.php:2263
+msgid "Once Every 15 Days"
+msgstr "Einmal alle 15 Tage"
+
+#: wpFastestCache.php:2251
+msgid "Once Every 7 Days"
+msgstr "Einmal alle 7 Tage"
+
+#: wpFastestCache.php:2245
+msgid "Once Every 3 Days"
+msgstr "Einmal alle 3 Tage"
+
+#: wpFastestCache.php:2233
+msgid "Once Every 10 Hours"
+msgstr "Einmal alle 10 Stunden"
+
+#: wpFastestCache.php:2227
+msgid "Once Every 9 Hours"
+msgstr "Einmal alle 9 Stunden"
+
+#: wpFastestCache.php:2221
+msgid "Once Every 8 Hours"
+msgstr "Einmal alle 8 Stunden"
+
+#: wpFastestCache.php:2215
+msgid "Once Every 7 Hours"
+msgstr "Einmal alle 7 Stunden"
+
+#: wpFastestCache.php:2203
+msgid "Once Every 5 Hours"
+msgstr "Einmal alle 5 Stunden"
+
+#: wpFastestCache.php:2197
+msgid "Once Every 4 Hours"
+msgstr "Einmal alle 4 Stunden"
+
+#: wpFastestCache.php:2191
+msgid "Once Every 3 Hours"
+msgstr "Einmal alle 3 Stunden"
+
+#: wpFastestCache.php:2185
+msgid "Once Every 2 Hours"
+msgstr "Einmal alle 2 Stunden"
+
+#: wpFastestCache.php:2257
+msgid "Once Every 10 Days"
+msgstr "Einmal alle 10 Tage"
+
+#. Author of the plugin
+#: wpFastestCache.php
+msgid "Emre Vona"
+msgstr "Emre Vona"
+
+#. Description of the plugin
+#: wpFastestCache.php
+msgid "The simplest and fastest WP Cache system"
+msgstr "Das einfachste und schnellste Cache-System für WordPress"
+
+#. Plugin URI of the plugin
+#: wpFastestCache.php
+msgid "http://wordpress.org/plugins/wp-fastest-cache/"
+msgstr "http://de.wordpress.org/plugins/wp-fastest-cache/"
+
+#. Plugin Name of the plugin
+#: wpFastestCache.php
+msgid "WP Fastest Cache"
+msgstr "WP Fastest Cache"
+
+#: wpFastestCache.php:2275
+msgid "Once a Year"
+msgstr "Einmal pro Jahr"
+
+#: wpFastestCache.php:2269
+msgid "Once a Month"
+msgstr "Monatlich"
+
+#: wpFastestCache.php:2239
+msgid "Once a Day"
+msgstr "Täglich"
+
+#: wpFastestCache.php:2209
+msgid "Once Every 6 Hours"
+msgstr "Einmal alle 6 Stunden"
+
+#: wpFastestCache.php:2179
+msgid "Once an Hour"
+msgstr "Einmal pro Stunde"
+
+#: wpFastestCache.php:2173
+msgid "Twice an Hour"
+msgstr "Zweimal pro Stunde"
+
+#: wpFastestCache.php:2167
+msgid "Once Every 15 Minutes"
+msgstr "Einmal alle 15 Minuten"
+
+#: wpFastestCache.php:2161
+msgid "Once Every 5 Minutes"
+msgstr "Einmal alle 5 Minuten"
+
+#: wpFastestCache.php:2155
+msgid "Once Every 1 Minute"
+msgstr "Einmal pro Minute"

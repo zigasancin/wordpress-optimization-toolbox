@@ -1,0 +1,624 @@
+# Translation of Plugins - WP Fastest Cache - Development (trunk) in Slovak
+# This file is distributed under the same license as the Plugins - WP Fastest Cache - Development (trunk) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2023-08-01 10:11:57+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n == 1) ? 0 : ((n >= 2 && n <= 4) ? 1 : 2);\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: sk\n"
+"Project-Id-Version: Plugins - WP Fastest Cache - Development (trunk)\n"
+
+#: templates/preload.php:374 templates/preload.php:457
+#: templates/preload.php:474
+msgid "At least one sitemap must be added"
+msgstr "Musí byť pridaná aspoň jedna mapa stránky (sitemap)"
+
+#: templates/preload.php:187
+msgid "You can customize the advanced settings through this section."
+msgstr "V tejto časti môžete prispôsobiť rozšírené nastavenia."
+
+#: templates/preload.php:186
+msgid "Advanced Settings"
+msgstr "Rozšírené nastavenia"
+
+#: templates/preload.php:151
+msgid "You can specify sitemaps to be used for preloading."
+msgstr "Môžete zadať mapy stránok (sitemaps), ktoré sa majú použiť na prednačítanie."
+
+#: templates/preload.php:150
+msgid "Sitemaps"
+msgstr "Mapy stránok (Sitemap)"
+
+#: templates/preload.php:87
+msgid "You can specify the contents to be used for preloading and you can sort them as well."
+msgstr "Môžete určiť obsah, ktorý sa má použiť na prednačítanie, a môžete ho aj zoradiť."
+
+#: templates/preload.php:86
+msgid "Content Types"
+msgstr "Typy obsahu"
+
+#: templates/preload.php:73
+msgid "You can specify the method you want the preload feature to use through this section."
+msgstr "Prostredníctvom tejto časti môžete určiť metódu, ktorú má funkcia prednačítania používať."
+
+#: templates/preload.php:72
+msgid "Choose a Method"
+msgstr "Vybrať metódu"
+
+#: templates/preload.php:56
+msgid "Preload Settings"
+msgstr "Nastavenia prednačítania"
+
+#: inc/admin.php:1445 inc/admin.php:1452
+msgid "Some js sources will not be loaded until scrolling or moving the mouse"
+msgstr "Niektoré zdroje js sa načítajú až pri posúvaní alebo pohybe myšou"
+
+#: inc/admin.php:1444 inc/admin.php:1451
+msgid "Delay Js"
+msgstr "Oneskorenie Js"
+
+#: inc/admin.php:1061
+msgid "WP Fastest Cache Options"
+msgstr "Možnosti WP Fastest Cache"
+
+#: inc/admin.php:1941 templates/exclude.php:114
+msgid "has Yandex Click ID Parameters"
+msgstr "má Yandex Click ID parametre"
+
+#. Author URI of the plugin
+#: wpFastestCache.php
+msgid "https://www.wpfastestcache.com/"
+msgstr "https://www.wpfastestcache.com/"
+
+#: inc/admin.php:1736
+msgid "Clearing Specific Pages"
+msgstr "Čistenie konkrétnych stránok"
+
+#: templates/toolbar_settings.php:71
+msgid "Save"
+msgstr "Uložiť"
+
+#: templates/toolbar_settings.php:68
+msgid "Cancel"
+msgstr "Zrušiť"
+
+#: templates/toolbar_settings.php:20
+msgid "Toolbar Settings"
+msgstr "Nastavenia panela nástrojov"
+
+#: inc/admin-toolbar.php:74 inc/admin-toolbar.php:106
+msgid "Clear Cache of All Sites"
+msgstr "Vymazať cache všetkých stránok"
+
+#: wpFastestCache.php:414
+msgid "<a href=\"%s\">Settings</a>"
+msgstr "<a href=\"%s\">Nastavenia</a>"
+
+#: inc/column.php:15
+msgid "Clear Cache"
+msgstr "Vyčistiť Cache"
+
+#: inc/admin.php:1357 inc/admin.php:1363 inc/admin.php:1370
+msgid "Eliminate render-blocking JavaScript resources"
+msgstr "Odstrániť JavaScript zdroje blokujúce vykreslenie"
+
+#: inc/admin.php:461 inc/admin.php:464
+msgid "Options have been saved"
+msgstr "Nastavenia boli uložené"
+
+#: inc/admin.php:1942 templates/exclude.php:115
+msgid "has Woocommerce Items in Cart"
+msgstr "má Woocommerce položky v košíku"
+
+#: inc/admin.php:1940 templates/exclude.php:113
+msgid "has Google Analytics Parameters"
+msgstr "má Google Analytics Parameters"
+
+#: inc/admin.php:1930 templates/exclude.php:100
+msgid "Archives"
+msgstr "Archívy"
+
+#: templates/timeout.php:189
+msgid "Server Time"
+msgstr "Serverový čas"
+
+#: templates/timeout.php:169
+msgid "delete the files"
+msgstr "Vymazať súbory"
+
+#: inc/admin.php:1633 inc/admin.php:1935 templates/exclude.php:106
+#: templates/timeout.php:99
+msgid "Contains"
+msgstr "Obsahuje"
+
+#: inc/admin.php:1634 inc/admin.php:1936 templates/exclude.php:107
+#: templates/timeout.php:98
+msgid "Is Equal To"
+msgstr "sa rovná"
+
+#: inc/admin.php:1632 inc/admin.php:1934 templates/exclude.php:105
+#: templates/timeout.php:97
+msgid "Starts With"
+msgstr "Začína s"
+
+#: inc/admin.php:1631 inc/admin.php:1927 templates/exclude.php:95
+#: templates/timeout.php:96
+msgid "Home Page"
+msgstr "Domovská stránka"
+
+#: inc/admin.php:1630 templates/timeout.php:95
+msgid "All"
+msgstr "Všetko"
+
+#: templates/exclude.php:66
+msgid "Exclude Page Wizard"
+msgstr "Vylúčiť sprievodcu stránkami"
+
+#: templates/timeout.php:124
+msgid "Then"
+msgstr "Následne"
+
+#: templates/exclude.php:89 templates/timeout.php:91
+msgid "If REQUEST_URI"
+msgstr "Ak REQUEST_URI"
+
+#: templates/timeout.php:68
+msgid "Cache Timeout Wizard"
+msgstr "Sprievodca Cache Timeout"
+
+#: templates/lazy_load.php:9
+msgid "Lazy Load Settings"
+msgstr "Lazy load nastavenia"
+
+#: templates/nginx_gzip.php:9
+msgid "Enable Gzip"
+msgstr "Povoliť Gzip"
+
+#: templates/update_now.php:9
+msgid "Please Update"
+msgstr "Prosím aktualizujte"
+
+#: templates/update_success.php:9
+msgid "Success"
+msgstr "Úspech"
+
+#: templates/disable_wp_cron.php:20
+msgid "Warning"
+msgstr "Varovanie"
+
+#: inc/admin.php:1668 inc/admin.php:1740 inc/admin.php:1963 inc/admin.php:1980
+#: inc/admin.php:1999 inc/admin.php:2017 inc/admin.php:2037
+msgid "Add New Rule"
+msgstr "Pridať nové pravidlo"
+
+#: inc/admin-toolbar.php:98 inc/admin.php:1602
+msgid "Delete Cache and Minified CSS/JS"
+msgstr "Vymazať Cache a minifikované CSS/JS"
+
+#: inc/admin.php:1534 inc/admin.php:2206 inc/admin.php:2406
+msgid "Only available in Premium version"
+msgstr "K dispozícii iba vo verzii Premium"
+
+#: templates/timeout.php:141
+msgid "Choose One"
+msgstr "Zvoliť jeden"
+
+#: inc/admin.php:1607
+msgid "All cache files will be removed as well"
+msgstr "Všetky cache súbory boli vymazané"
+
+#: inc/admin.php:1606
+msgid "If you modify any css file, you have to delete minified css files"
+msgstr "Ak upravíte akýkoľvek súbor css, musíte odstrániť zmenšené súbory css"
+
+#: inc/admin.php:1594 inc/admin.php:1608 inc/admin.php:1609
+msgid "Target folder"
+msgstr "Cieľový priečinok"
+
+#: inc/admin.php:1593
+msgid "You can delete all cache files"
+msgstr "Môžete odstrániť všetky súbory cache"
+
+#: inc/admin.php:1077
+msgid "Exclude"
+msgstr "Vylúčiť"
+
+#: inc/admin.php:1071
+msgid "Image Optimization"
+msgstr "Optimalizácia obrázkov"
+
+#: inc/admin-toolbar.php:115 inc/admin.php:1069
+msgid "Settings"
+msgstr "Nastavenia"
+
+#: inc/admin.php:2179
+msgid "Database Cleanup"
+msgstr "Vyčistenie databázy"
+
+#: inc/admin.php:2070
+msgid "CDN Settings"
+msgstr "Nastavenia CDN"
+
+#: inc/admin.php:2033
+msgid "Exclude JS"
+msgstr "Vylúčiť JS"
+
+#: inc/admin.php:2013
+msgid "Exclude CSS"
+msgstr "Vylúčiť CSS"
+
+#: inc/admin.php:1995
+msgid "Exclude Cookies"
+msgstr "Vylúčiť Cookies"
+
+#: inc/admin.php:1976
+msgid "Exclude User-Agents"
+msgstr "Vylúčiť User-Agents"
+
+#: inc/admin.php:1959
+msgid "Exclude Pages"
+msgstr "Vylúčiť stránky"
+
+#: inc/admin.php:1793
+msgid "Optimize Image Tool"
+msgstr "Optimalizovať nástroje obrázkov"
+
+#: inc/admin.php:1623
+msgid "Timeout Rules"
+msgstr "Timeout pravidla"
+
+#: inc/admin-toolbar.php:86 inc/admin.php:1070 inc/admin.php:1581
+msgid "Delete Cache"
+msgstr "Vymazať cache"
+
+#: inc/admin.php:1541
+msgid "Cache Statistics"
+msgstr "Štatistika Cache"
+
+#: templates/updatepost.php:53
+msgid "Clear Cache of Post / Page"
+msgstr "Vymazať cache článku/stránky"
+
+#: templates/updatepost.php:29
+msgid "What do you want to happen after update a post or a page?"
+msgstr "Čo chcete, aby sa stalo po aktualizácii článku alebo stránky?"
+
+#: templates/newpost.php:58
+msgid "Clear Cache of Pagination"
+msgstr "Vyčistiť cache stránkovania."
+
+#: templates/newpost.php:57 templates/updatepost.php:55
+msgid "Clear Cache of Post Tags"
+msgstr "Vymazať cache značiek článku"
+
+#: templates/newpost.php:56 templates/updatepost.php:54
+msgid "Clear Cache of Post Categories"
+msgstr "Vymazať cache pre kategórie článkov"
+
+#: templates/newpost.php:55 templates/updatepost.php:56
+msgid "Clear Cache of Home page"
+msgstr ""
+
+#: inc/admin-toolbar.php:91 inc/admin.php:1589 templates/newpost.php:51
+#: templates/updatepost.php:49
+msgid "Clear All Cache"
+msgstr "Vymazať všetko cache"
+
+#: templates/newpost.php:29
+msgid "What do you want to happen after publishing the new post?"
+msgstr "Čo chcete, aby sa stalo po publikovaní nového článku?"
+
+#: templates/newpost.php:68 templates/updatepost.php:64
+msgid "OK"
+msgstr "OK"
+
+#: templates/preload.php:215
+msgid "Restart After Completed"
+msgstr "Reštartovať po dokončení"
+
+#: templates/preload.php:210
+msgid "pages per minute"
+msgstr "stránok za minútu"
+
+#: templates/preload.php:132
+msgid "Custom Taxonomies"
+msgstr "Vlastné taxonómie"
+
+#: templates/preload.php:127
+msgid "Custom Post Types"
+msgstr "Vlastné typy obsahu"
+
+#: inc/admin.php:1933 templates/exclude.php:101 templates/preload.php:122
+msgid "Attachments"
+msgstr "Prílohy"
+
+#: inc/admin.php:1929 templates/exclude.php:97 templates/preload.php:118
+msgid "Tags"
+msgstr "Značky"
+
+#: inc/admin.php:1932 templates/exclude.php:99 templates/preload.php:114
+msgid "Pages"
+msgstr "Stránky"
+
+#: inc/admin.php:1928 templates/exclude.php:96 templates/preload.php:110
+msgid "Categories"
+msgstr "Kategórie"
+
+#: inc/admin.php:1931 templates/exclude.php:98 templates/preload.php:106
+msgid "Posts"
+msgstr "Články"
+
+#: templates/preload.php:102
+msgid "Homepage"
+msgstr "Domovská stránka"
+
+#: inc/admin.php:1304 inc/admin.php:1312 inc/admin.php:1318 inc/admin.php:1324
+msgid "Reduce HTTP requests through combined js files"
+msgstr "Redukovať HTTP žiadosti pomocou kombinácie js súborov"
+
+#: inc/admin.php:1412 inc/admin.php:1434
+msgid "Load images and iframes when they enter the browsers viewport"
+msgstr "Načítať obrázky a iframe až pri vyrezávaní prehliadača"
+
+#: inc/admin.php:1383 inc/admin.php:1389 inc/admin.php:1396
+msgid "Load Google Fonts asynchronously"
+msgstr "Načítanie písma Google asynchrónne"
+
+#: inc/admin.php:1382 inc/admin.php:1388 inc/admin.php:1395
+msgid "Google Fonts"
+msgstr "Google Fonts"
+
+#: inc/admin.php:1356 inc/admin.php:1362 inc/admin.php:1369
+msgid "Render Blocking Js"
+msgstr "Renderovať blokovanie Js"
+
+#: inc/admin.php:1348
+msgid "You can remove the emoji inline css and wp-emoji-release.min.js"
+msgstr "Môžete odstrániť vložené súbory emoji css a wp-emoji-release.min.js"
+
+#: inc/admin.php:1347
+msgid "Disable Emojis"
+msgstr "Vypnúť Emojis"
+
+#: inc/admin.php:1342
+msgid "Reduce page load times for repeat visitors"
+msgstr "Znížte čas načítania stránky pre návštevníkov, ktorý už boli na stránke."
+
+#: inc/admin.php:1341
+msgid "Browser Caching"
+msgstr "Cache prehliadača"
+
+#: inc/admin.php:1330
+msgid "Reduce the size of files sent from your server"
+msgstr "Znížuje veľkosť súborov odoslaných zo servera"
+
+#: inc/admin.php:1329
+msgid "Gzip"
+msgstr "Gzip"
+
+#: inc/admin.php:1310 inc/admin.php:1317 inc/admin.php:1323
+msgid "Combine Js Plus"
+msgstr "Kombinovať Js Plus"
+
+#: inc/admin.php:1303
+msgid "Combine Js"
+msgstr "Kombinovať Js "
+
+#: inc/admin.php:1287 inc/admin.php:1292 inc/admin.php:1298
+msgid "You can decrease the size of js files"
+msgstr "Môžete zmenšiť veľkosť js súborov"
+
+#: inc/admin.php:1286 inc/admin.php:1291 inc/admin.php:1297
+msgid "Minify Js"
+msgstr "Minifikovať js"
+
+#: inc/admin.php:1279
+msgid "Reduce HTTP requests through combined css files"
+msgstr "Zredukovanie HTTP žiadosti prostredníctvom kombinovaných súborov CSS"
+
+#: inc/admin.php:1278
+msgid "Combine Css"
+msgstr "Kombinovať Css"
+
+#: inc/admin.php:1267 inc/admin.php:1272
+msgid "More powerful minify css"
+msgstr "Výkonnejšie minifikovať css"
+
+#: inc/admin.php:1266 inc/admin.php:1271
+msgid "Minify Css Plus"
+msgstr "Minifikovať Css Plus"
+
+#: inc/admin.php:1258
+msgid "You can decrease the size of css files"
+msgstr "Môžete zmenšiť veľkosť súborov css"
+
+#: inc/admin.php:1257
+msgid "Minify Css"
+msgstr "Minifikovať Css"
+
+#: inc/admin.php:1245 inc/admin.php:1250
+msgid "More powerful minify html"
+msgstr "Výkonnejšia minifikácia html"
+
+#: inc/admin.php:1244 inc/admin.php:1249
+msgid "Minify HTML Plus"
+msgstr "Minimalizovať HTML Plus"
+
+#: inc/admin.php:1238
+msgid "You can decrease the size of page"
+msgstr "Môžete znížiť veľkosť stránky"
+
+#: inc/admin.php:1237
+msgid "Minify HTML"
+msgstr "Minifikovať HTML"
+
+#: inc/admin.php:1229
+msgid "Clear cache files when a post or page is updated"
+msgstr "Aktualizovať cache súbory, keď upravíte článok alebo stránku"
+
+#: inc/admin.php:1228 templates/updatepost.php:18
+msgid "Update Post"
+msgstr "Aktualizovať článok"
+
+#: inc/admin.php:1222
+msgid "Clear cache files when a post or page is published"
+msgstr "Aktualizovať cache súbory, keď publikujete článok alebo stránku "
+
+#: inc/admin.php:1221 templates/newpost.php:18
+msgid "New Post"
+msgstr "Nový článok"
+
+#: inc/admin.php:1189 inc/admin.php:1215
+msgid "Create cache for mobile theme"
+msgstr "Vytvoriť cache pre mobilnú verziu témy"
+
+#: inc/admin.php:1188 inc/admin.php:1214
+msgid "Mobile Theme"
+msgstr "Mobilná téma"
+
+#: inc/admin.php:1183
+msgid "Don't show the cached version for desktop to mobile devices"
+msgstr "Nezobrazovať cache verziu pre PC na mobilných zariadeniach"
+
+#: inc/admin.php:1182
+msgid "Mobile"
+msgstr "Mobil"
+
+#: inc/admin.php:1178
+msgid "Don't show the cached version for logged-in users"
+msgstr "Nezobrazovať verziu v cache pre prihlásených používateľov"
+
+#: inc/admin.php:1177
+msgid "Logged-in Users"
+msgstr "Prihlásení používatelia"
+
+#: inc/admin.php:1145
+msgid "Create the cache of all the site automatically"
+msgstr "Vytvorte cache pre všetky stránky automaticky"
+
+#: inc/admin.php:1144
+msgid "Preload"
+msgstr "Prednačítanie"
+
+#: inc/admin.php:1116 inc/admin.php:1122 inc/admin.php:1129 inc/admin.php:1136
+msgid "Reduce the number of SQL queries"
+msgstr "Znížiť počet dopytov SQL"
+
+#: inc/admin.php:1115 inc/admin.php:1121 inc/admin.php:1128 inc/admin.php:1135
+msgid "Widget Cache"
+msgstr "Widget Cache"
+
+#: inc/admin.php:1106
+msgid "Enable"
+msgstr "Zapnúť"
+
+#: inc/admin.php:1105
+msgid "Cache System"
+msgstr "Cache systému"
+
+#: wpFastestCache.php:2263
+msgid "Once Every 15 Days"
+msgstr "Raz za 15 dní "
+
+#: wpFastestCache.php:2251
+msgid "Once Every 7 Days"
+msgstr "Raz za 7 dní "
+
+#: wpFastestCache.php:2245
+msgid "Once Every 3 Days"
+msgstr "Raz za 3 dni"
+
+#: wpFastestCache.php:2233
+msgid "Once Every 10 Hours"
+msgstr "Každých 10 hodín "
+
+#: wpFastestCache.php:2227
+msgid "Once Every 9 Hours"
+msgstr "Každých 9 hodín"
+
+#: wpFastestCache.php:2221
+msgid "Once Every 8 Hours"
+msgstr " Každých 8 hodín "
+
+#: wpFastestCache.php:2215
+msgid "Once Every 7 Hours"
+msgstr "Každých 7 hodín"
+
+#: wpFastestCache.php:2203
+msgid "Once Every 5 Hours"
+msgstr "Každých 5 hodín "
+
+#: wpFastestCache.php:2197
+msgid "Once Every 4 Hours"
+msgstr "Každé 4 hodiny"
+
+#: wpFastestCache.php:2191
+msgid "Once Every 3 Hours"
+msgstr "Každé 3 hodiny"
+
+#: wpFastestCache.php:2185
+msgid "Once Every 2 Hours"
+msgstr "Každé 2 hodiny"
+
+#: wpFastestCache.php:2257
+msgid "Once Every 10 Days"
+msgstr "Raz za 10 dní"
+
+#. Author of the plugin
+#: wpFastestCache.php
+msgid "Emre Vona"
+msgstr "Emre Vona"
+
+#. Description of the plugin
+#: wpFastestCache.php
+msgid "The simplest and fastest WP Cache system"
+msgstr "Najjednoduchší a najrýchlejší WP Cache systém"
+
+#. Plugin URI of the plugin
+#: wpFastestCache.php
+msgid "http://wordpress.org/plugins/wp-fastest-cache/"
+msgstr "http://wordpress.org/plugins/wp-fastest-cache/"
+
+#. Plugin Name of the plugin
+#: wpFastestCache.php
+msgid "WP Fastest Cache"
+msgstr "WP Fastest Cache"
+
+#: wpFastestCache.php:2275
+msgid "Once a Year"
+msgstr "Raz ročne"
+
+#: wpFastestCache.php:2269
+msgid "Once a Month"
+msgstr "Jedenkrát mesačne"
+
+#: wpFastestCache.php:2239
+msgid "Once a Day"
+msgstr "Jedenkrát denne"
+
+#: wpFastestCache.php:2209
+msgid "Once Every 6 Hours"
+msgstr "Jedenkrát každých 6 hodín"
+
+#: wpFastestCache.php:2179
+msgid "Once an Hour"
+msgstr "Jedenkrát za hodinu"
+
+#: wpFastestCache.php:2173
+msgid "Twice an Hour"
+msgstr "Dvakrát za hodinu"
+
+#: wpFastestCache.php:2167
+msgid "Once Every 15 Minutes"
+msgstr "Jedenkrát každých 15 minút"
+
+#: wpFastestCache.php:2161
+msgid "Once Every 5 Minutes"
+msgstr "Jedenkrát každých 5 minút"
+
+#: wpFastestCache.php:2155
+msgid "Once Every 1 Minute"
+msgstr "Jedenkrát za 1 minútu"

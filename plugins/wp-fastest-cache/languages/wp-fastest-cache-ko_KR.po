@@ -1,0 +1,624 @@
+# Translation of Plugins - WP Fastest Cache - Development (trunk) in Korean
+# This file is distributed under the same license as the Plugins - WP Fastest Cache - Development (trunk) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2024-05-28 01:34:47+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: ko_KR\n"
+"Project-Id-Version: Plugins - WP Fastest Cache - Development (trunk)\n"
+
+#: templates/preload.php:374 templates/preload.php:457
+#: templates/preload.php:474
+msgid "At least one sitemap must be added"
+msgstr "사이트맵을 하나 이상 추가해야 합니다."
+
+#: templates/preload.php:187
+msgid "You can customize the advanced settings through this section."
+msgstr "이 섹션을 통해 고급 설정을 사용자 지정할 수 있습니다."
+
+#: templates/preload.php:186
+msgid "Advanced Settings"
+msgstr "고급 설정"
+
+#: templates/preload.php:151
+msgid "You can specify sitemaps to be used for preloading."
+msgstr "프리로딩에 사용할 사이트맵을 지정할 수 있습니다."
+
+#: templates/preload.php:150
+msgid "Sitemaps"
+msgstr "사이트맵"
+
+#: templates/preload.php:87
+msgid "You can specify the contents to be used for preloading and you can sort them as well."
+msgstr "프리로딩에 사용할 콘텐츠를 지정할 수 있으며 정렬할 수도 있습니다."
+
+#: templates/preload.php:86
+msgid "Content Types"
+msgstr "콘텐츠 유형"
+
+#: templates/preload.php:73
+msgid "You can specify the method you want the preload feature to use through this section."
+msgstr "이 섹션을 통해 프리로드 기능에 사용할 방법을 지정할 수 있습니다."
+
+#: templates/preload.php:72
+msgid "Choose a Method"
+msgstr "방법 선택"
+
+#: templates/preload.php:56
+msgid "Preload Settings"
+msgstr "프리로드 설정"
+
+#: inc/admin.php:1445 inc/admin.php:1452
+msgid "Some js sources will not be loaded until scrolling or moving the mouse"
+msgstr "일부 자바스크립트 소스는 마우스를 스크롤하거나 움직일 때까지 로드되지 않습니다."
+
+#: inc/admin.php:1444 inc/admin.php:1451
+msgid "Delay Js"
+msgstr "자바스크립트 지연"
+
+#: inc/admin.php:1061
+msgid "WP Fastest Cache Options"
+msgstr "WP 가장 빠른 캐시 옵션"
+
+#: inc/admin.php:1941 templates/exclude.php:114
+msgid "has Yandex Click ID Parameters"
+msgstr "yandex 클릭 ID 매개변수 있음"
+
+#. Author URI of the plugin
+#: wpFastestCache.php
+msgid "https://www.wpfastestcache.com/"
+msgstr "https://www.wpfastestcache.com/"
+
+#: inc/admin.php:1736
+msgid "Clearing Specific Pages"
+msgstr "특정 페이지 지우기"
+
+#: templates/toolbar_settings.php:71
+msgid "Save"
+msgstr "저장"
+
+#: templates/toolbar_settings.php:68
+msgid "Cancel"
+msgstr "취소"
+
+#: templates/toolbar_settings.php:20
+msgid "Toolbar Settings"
+msgstr "도구 모음 설정"
+
+#: inc/admin-toolbar.php:74 inc/admin-toolbar.php:106
+msgid "Clear Cache of All Sites"
+msgstr "모든 사이트의 캐시 지우기"
+
+#: wpFastestCache.php:414
+msgid "<a href=\"%s\">Settings</a>"
+msgstr "<a href=\"%s\">설정</a>"
+
+#: inc/column.php:15
+msgid "Clear Cache"
+msgstr "캐시 지우기"
+
+#: inc/admin.php:1357 inc/admin.php:1363 inc/admin.php:1370
+msgid "Eliminate render-blocking JavaScript resources"
+msgstr "렌더링 차단 JavaScript 리소스 제거"
+
+#: inc/admin.php:461 inc/admin.php:464
+msgid "Options have been saved"
+msgstr "옵션이 저장되었습니다"
+
+#: inc/admin.php:1942 templates/exclude.php:115
+msgid "has Woocommerce Items in Cart"
+msgstr "장바구니에 우커머스 항목이 있습니다"
+
+#: inc/admin.php:1940 templates/exclude.php:113
+msgid "has Google Analytics Parameters"
+msgstr "google 애널리틱스 매개변수가 있음"
+
+#: inc/admin.php:1930 templates/exclude.php:100
+msgid "Archives"
+msgstr "아카이브"
+
+#: templates/timeout.php:189
+msgid "Server Time"
+msgstr "서버 시간"
+
+#: templates/timeout.php:169
+msgid "delete the files"
+msgstr "파일을 삭제"
+
+#: inc/admin.php:1633 inc/admin.php:1935 templates/exclude.php:106
+#: templates/timeout.php:99
+msgid "Contains"
+msgstr "포함"
+
+#: inc/admin.php:1634 inc/admin.php:1936 templates/exclude.php:107
+#: templates/timeout.php:98
+msgid "Is Equal To"
+msgstr "동일"
+
+#: inc/admin.php:1632 inc/admin.php:1934 templates/exclude.php:105
+#: templates/timeout.php:97
+msgid "Starts With"
+msgstr "다음으로 시작"
+
+#: inc/admin.php:1631 inc/admin.php:1927 templates/exclude.php:95
+#: templates/timeout.php:96
+msgid "Home Page"
+msgstr "홈페이지"
+
+#: inc/admin.php:1630 templates/timeout.php:95
+msgid "All"
+msgstr "모두"
+
+#: templates/exclude.php:66
+msgid "Exclude Page Wizard"
+msgstr "페이지 제외 마법사"
+
+#: templates/timeout.php:124
+msgid "Then"
+msgstr "그 다음에"
+
+#: templates/exclude.php:89 templates/timeout.php:91
+msgid "If REQUEST_URI"
+msgstr "REQUEST_URI인 경우"
+
+#: templates/timeout.php:68
+msgid "Cache Timeout Wizard"
+msgstr "캐시 시간 초과 마법사"
+
+#: templates/lazy_load.php:9
+msgid "Lazy Load Settings"
+msgstr "지연 로드 설정"
+
+#: templates/nginx_gzip.php:9
+msgid "Enable Gzip"
+msgstr "Gzip 활성화"
+
+#: templates/update_now.php:9
+msgid "Please Update"
+msgstr "업데이트하십시오"
+
+#: templates/update_success.php:9
+msgid "Success"
+msgstr "성공"
+
+#: templates/disable_wp_cron.php:20
+msgid "Warning"
+msgstr "경고"
+
+#: inc/admin.php:1668 inc/admin.php:1740 inc/admin.php:1963 inc/admin.php:1980
+#: inc/admin.php:1999 inc/admin.php:2017 inc/admin.php:2037
+msgid "Add New Rule"
+msgstr "새 규칙 추가"
+
+#: inc/admin-toolbar.php:98 inc/admin.php:1602
+msgid "Delete Cache and Minified CSS/JS"
+msgstr "캐시 삭제 및 축소된 CSS/JS"
+
+#: inc/admin.php:1534 inc/admin.php:2206 inc/admin.php:2406
+msgid "Only available in Premium version"
+msgstr "프리미엄 버전에서만 사용 가능"
+
+#: templates/timeout.php:141
+msgid "Choose One"
+msgstr "선택"
+
+#: inc/admin.php:1607
+msgid "All cache files will be removed as well"
+msgstr "모든 캐시 파일도 제거됩니다."
+
+#: inc/admin.php:1606
+msgid "If you modify any css file, you have to delete minified css files"
+msgstr "CSS 파일을 수정하면 축소된 CSS 파일을 삭제해야 합니다."
+
+#: inc/admin.php:1594 inc/admin.php:1608 inc/admin.php:1609
+msgid "Target folder"
+msgstr "대상 폴더"
+
+#: inc/admin.php:1593
+msgid "You can delete all cache files"
+msgstr "모든 캐시 파일을 삭제할 수 있습니다."
+
+#: inc/admin.php:1077
+msgid "Exclude"
+msgstr "차단"
+
+#: inc/admin.php:1071
+msgid "Image Optimization"
+msgstr "이미지 최적화"
+
+#: inc/admin-toolbar.php:115 inc/admin.php:1069
+msgid "Settings"
+msgstr "설정"
+
+#: inc/admin.php:2179
+msgid "Database Cleanup"
+msgstr "데이터베이스 정리"
+
+#: inc/admin.php:2070
+msgid "CDN Settings"
+msgstr "CDN 설정"
+
+#: inc/admin.php:2033
+msgid "Exclude JS"
+msgstr "JS 제외"
+
+#: inc/admin.php:2013
+msgid "Exclude CSS"
+msgstr "CSS 제외"
+
+#: inc/admin.php:1995
+msgid "Exclude Cookies"
+msgstr "쿠키 제외"
+
+#: inc/admin.php:1976
+msgid "Exclude User-Agents"
+msgstr "사용자 에이전트 제외"
+
+#: inc/admin.php:1959
+msgid "Exclude Pages"
+msgstr "페이지 제외"
+
+#: inc/admin.php:1793
+msgid "Optimize Image Tool"
+msgstr "이미지 도구 최적화"
+
+#: inc/admin.php:1623
+msgid "Timeout Rules"
+msgstr "시간 초과 규칙"
+
+#: inc/admin-toolbar.php:86 inc/admin.php:1070 inc/admin.php:1581
+msgid "Delete Cache"
+msgstr "캐시 삭제"
+
+#: inc/admin.php:1541
+msgid "Cache Statistics"
+msgstr "캐시 통계"
+
+#: templates/updatepost.php:53
+msgid "Clear Cache of Post / Page"
+msgstr "게시물/페이지의 캐시 지우기"
+
+#: templates/updatepost.php:29
+msgid "What do you want to happen after update a post or a page?"
+msgstr "게시물이나 페이지를 업데이트한 후 어떻게 하시겠습니까?"
+
+#: templates/newpost.php:58
+msgid "Clear Cache of Pagination"
+msgstr "페이지 매김 캐시 지우기"
+
+#: templates/newpost.php:57 templates/updatepost.php:55
+msgid "Clear Cache of Post Tags"
+msgstr "게시물 태그 캐시 지우기"
+
+#: templates/newpost.php:56 templates/updatepost.php:54
+msgid "Clear Cache of Post Categories"
+msgstr "게시물 카테고리 캐시 지우기"
+
+#: templates/newpost.php:55 templates/updatepost.php:56
+msgid "Clear Cache of Home page"
+msgstr "홈 페이지 캐시 지우기"
+
+#: inc/admin-toolbar.php:91 inc/admin.php:1589 templates/newpost.php:51
+#: templates/updatepost.php:49
+msgid "Clear All Cache"
+msgstr "모든 캐시 지우기"
+
+#: templates/newpost.php:29
+msgid "What do you want to happen after publishing the new post?"
+msgstr "새 게시물을 게시한 후 어떻게 되기를 원하십니까?"
+
+#: templates/newpost.php:68 templates/updatepost.php:64
+msgid "OK"
+msgstr "좋아요"
+
+#: templates/preload.php:215
+msgid "Restart After Completed"
+msgstr "완료 후 다시 시작"
+
+#: templates/preload.php:210
+msgid "pages per minute"
+msgstr "분당 페이지 수"
+
+#: templates/preload.php:132
+msgid "Custom Taxonomies"
+msgstr "맞춤 택소노미"
+
+#: templates/preload.php:127
+msgid "Custom Post Types"
+msgstr "맞춤 게시물 유형"
+
+#: inc/admin.php:1933 templates/exclude.php:101 templates/preload.php:122
+msgid "Attachments"
+msgstr "첨부파일"
+
+#: inc/admin.php:1929 templates/exclude.php:97 templates/preload.php:118
+msgid "Tags"
+msgstr "태그"
+
+#: inc/admin.php:1932 templates/exclude.php:99 templates/preload.php:114
+msgid "Pages"
+msgstr "페이지"
+
+#: inc/admin.php:1928 templates/exclude.php:96 templates/preload.php:110
+msgid "Categories"
+msgstr "카테고리"
+
+#: inc/admin.php:1931 templates/exclude.php:98 templates/preload.php:106
+msgid "Posts"
+msgstr "게시물"
+
+#: templates/preload.php:102
+msgid "Homepage"
+msgstr "홈페이지"
+
+#: inc/admin.php:1304 inc/admin.php:1312 inc/admin.php:1318 inc/admin.php:1324
+msgid "Reduce HTTP requests through combined js files"
+msgstr "결합된 JS 파일을 통해 HTTP 요청 감소"
+
+#: inc/admin.php:1412 inc/admin.php:1434
+msgid "Load images and iframes when they enter the browsers viewport"
+msgstr "브라우저 뷰포트에 들어갈 때 이미지 및 iframe 로드"
+
+#: inc/admin.php:1383 inc/admin.php:1389 inc/admin.php:1396
+msgid "Load Google Fonts asynchronously"
+msgstr "Google 글꼴을 비동기식으로 로드"
+
+#: inc/admin.php:1382 inc/admin.php:1388 inc/admin.php:1395
+msgid "Google Fonts"
+msgstr "구글 글꼴"
+
+#: inc/admin.php:1356 inc/admin.php:1362 inc/admin.php:1369
+msgid "Render Blocking Js"
+msgstr "렌더링 차단 JS"
+
+#: inc/admin.php:1348
+msgid "You can remove the emoji inline css and wp-emoji-release.min.js"
+msgstr "이모티콘 인라인 css 및 wp-emoji-release.min.js를 제거할 수 있습니다."
+
+#: inc/admin.php:1347
+msgid "Disable Emojis"
+msgstr "이모티콘 비활성화"
+
+#: inc/admin.php:1342
+msgid "Reduce page load times for repeat visitors"
+msgstr "반복 방문자의 페이지 로드 시간 단축"
+
+#: inc/admin.php:1341
+msgid "Browser Caching"
+msgstr "브라우저 캐싱"
+
+#: inc/admin.php:1330
+msgid "Reduce the size of files sent from your server"
+msgstr "서버에서 보낸 파일 크기 줄이기"
+
+#: inc/admin.php:1329
+msgid "Gzip"
+msgstr "Gzip"
+
+#: inc/admin.php:1310 inc/admin.php:1317 inc/admin.php:1323
+msgid "Combine Js Plus"
+msgstr "결합 JS 플러스"
+
+#: inc/admin.php:1303
+msgid "Combine Js"
+msgstr "결합 JS"
+
+#: inc/admin.php:1287 inc/admin.php:1292 inc/admin.php:1298
+msgid "You can decrease the size of js files"
+msgstr "JS 파일의 크기를 줄일 수 있습니다."
+
+#: inc/admin.php:1286 inc/admin.php:1291 inc/admin.php:1297
+msgid "Minify Js"
+msgstr "JS 축소"
+
+#: inc/admin.php:1279
+msgid "Reduce HTTP requests through combined css files"
+msgstr "결합된 CSS 파일을 통해 HTTP 요청 감소"
+
+#: inc/admin.php:1278
+msgid "Combine Css"
+msgstr "CSS 결합"
+
+#: inc/admin.php:1267 inc/admin.php:1272
+msgid "More powerful minify css"
+msgstr "더 강력한 축소 CSS"
+
+#: inc/admin.php:1266 inc/admin.php:1271
+msgid "Minify Css Plus"
+msgstr "CSS 플러스 축소"
+
+#: inc/admin.php:1258
+msgid "You can decrease the size of css files"
+msgstr "CSS 파일의 크기를 줄일 수 있습니다."
+
+#: inc/admin.php:1257
+msgid "Minify Css"
+msgstr "축소 CSS"
+
+#: inc/admin.php:1245 inc/admin.php:1250
+msgid "More powerful minify html"
+msgstr "더 강력한 축소 HTML"
+
+#: inc/admin.php:1244 inc/admin.php:1249
+msgid "Minify HTML Plus"
+msgstr "HTML 플러스 축소"
+
+#: inc/admin.php:1238
+msgid "You can decrease the size of page"
+msgstr "페이지 크기를 줄일 수 있습니다."
+
+#: inc/admin.php:1237
+msgid "Minify HTML"
+msgstr "HTML 축소"
+
+#: inc/admin.php:1229
+msgid "Clear cache files when a post or page is updated"
+msgstr "게시물이나 페이지가 업데이트되면 캐시 파일 지우기"
+
+#: inc/admin.php:1228 templates/updatepost.php:18
+msgid "Update Post"
+msgstr "게시물 업데이트"
+
+#: inc/admin.php:1222
+msgid "Clear cache files when a post or page is published"
+msgstr "게시물 또는 페이지가 게시될 때 캐시 파일 지우기"
+
+#: inc/admin.php:1221 templates/newpost.php:18
+msgid "New Post"
+msgstr "새로운 게시물"
+
+#: inc/admin.php:1189 inc/admin.php:1215
+msgid "Create cache for mobile theme"
+msgstr "모바일 테마용 캐시 만들기"
+
+#: inc/admin.php:1188 inc/admin.php:1214
+msgid "Mobile Theme"
+msgstr "모바일 테마"
+
+#: inc/admin.php:1183
+msgid "Don't show the cached version for desktop to mobile devices"
+msgstr "데스크톱용 캐시 버전을 휴대기기에 표시하지 않음"
+
+#: inc/admin.php:1182
+msgid "Mobile"
+msgstr "모바일"
+
+#: inc/admin.php:1178
+msgid "Don't show the cached version for logged-in users"
+msgstr "로그인한 사용자에게 캐시된 버전을 표시하지 않음"
+
+#: inc/admin.php:1177
+msgid "Logged-in Users"
+msgstr "로그인한 사용자"
+
+#: inc/admin.php:1145
+msgid "Create the cache of all the site automatically"
+msgstr "모든 사이트의 캐시를 자동으로 생성"
+
+#: inc/admin.php:1144
+msgid "Preload"
+msgstr "미리보기"
+
+#: inc/admin.php:1116 inc/admin.php:1122 inc/admin.php:1129 inc/admin.php:1136
+msgid "Reduce the number of SQL queries"
+msgstr "SQL 쿼리 수 줄이기"
+
+#: inc/admin.php:1115 inc/admin.php:1121 inc/admin.php:1128 inc/admin.php:1135
+msgid "Widget Cache"
+msgstr "위젯 캐시"
+
+#: inc/admin.php:1106
+msgid "Enable"
+msgstr "할 수 있게 하다"
+
+#: inc/admin.php:1105
+msgid "Cache System"
+msgstr "캐시 시스템"
+
+#: wpFastestCache.php:2263
+msgid "Once Every 15 Days"
+msgstr "15일에 한 번"
+
+#: wpFastestCache.php:2251
+msgid "Once Every 7 Days"
+msgstr "7일에 한 번"
+
+#: wpFastestCache.php:2245
+msgid "Once Every 3 Days"
+msgstr "3일에 한 번"
+
+#: wpFastestCache.php:2233
+msgid "Once Every 10 Hours"
+msgstr "10시간에 한 번"
+
+#: wpFastestCache.php:2227
+msgid "Once Every 9 Hours"
+msgstr "9시간에 한 번"
+
+#: wpFastestCache.php:2221
+msgid "Once Every 8 Hours"
+msgstr "8시간에 한 번"
+
+#: wpFastestCache.php:2215
+msgid "Once Every 7 Hours"
+msgstr "7시간에 한 번"
+
+#: wpFastestCache.php:2203
+msgid "Once Every 5 Hours"
+msgstr "5시간에 한 번"
+
+#: wpFastestCache.php:2197
+msgid "Once Every 4 Hours"
+msgstr "4시간에 한 번"
+
+#: wpFastestCache.php:2191
+msgid "Once Every 3 Hours"
+msgstr "3시간에 한 번"
+
+#: wpFastestCache.php:2185
+msgid "Once Every 2 Hours"
+msgstr "2시간에 한 번"
+
+#: wpFastestCache.php:2257
+msgid "Once Every 10 Days"
+msgstr "10일에 한 번"
+
+#. Author of the plugin
+#: wpFastestCache.php
+msgid "Emre Vona"
+msgstr "엠레 보나"
+
+#. Description of the plugin
+#: wpFastestCache.php
+msgid "The simplest and fastest WP Cache system"
+msgstr "가장 간단하고 빠른 WP 캐시 시스템"
+
+#. Plugin URI of the plugin
+#: wpFastestCache.php
+msgid "http://wordpress.org/plugins/wp-fastest-cache/"
+msgstr "http://wordpress.org/plugins/wp-fastest-cache/"
+
+#. Plugin Name of the plugin
+#: wpFastestCache.php
+msgid "WP Fastest Cache"
+msgstr "WP 가장 빠른 캐시"
+
+#: wpFastestCache.php:2275
+msgid "Once a Year"
+msgstr "일년에 한번"
+
+#: wpFastestCache.php:2269
+msgid "Once a Month"
+msgstr "한달에 한번"
+
+#: wpFastestCache.php:2239
+msgid "Once a Day"
+msgstr "하루에 한 번"
+
+#: wpFastestCache.php:2209
+msgid "Once Every 6 Hours"
+msgstr "6시간에 한 번"
+
+#: wpFastestCache.php:2179
+msgid "Once an Hour"
+msgstr "한 시간에 한 번"
+
+#: wpFastestCache.php:2173
+msgid "Twice an Hour"
+msgstr "한 시간에 두 번"
+
+#: wpFastestCache.php:2167
+msgid "Once Every 15 Minutes"
+msgstr "15분에 한 번"
+
+#: wpFastestCache.php:2161
+msgid "Once Every 5 Minutes"
+msgstr "5분에 한 번"
+
+#: wpFastestCache.php:2155
+msgid "Once Every 1 Minute"
+msgstr "1분에 한 번"

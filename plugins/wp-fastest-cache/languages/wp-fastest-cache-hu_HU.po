@@ -1,0 +1,624 @@
+# Translation of Plugins - WP Fastest Cache - Development (trunk) in Hungarian
+# This file is distributed under the same license as the Plugins - WP Fastest Cache - Development (trunk) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-06-26 15:12:34+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: hu\n"
+"Project-Id-Version: Plugins - WP Fastest Cache - Development (trunk)\n"
+
+#: templates/preload.php:374 templates/preload.php:457
+#: templates/preload.php:474
+msgid "At least one sitemap must be added"
+msgstr ""
+
+#: templates/preload.php:187
+msgid "You can customize the advanced settings through this section."
+msgstr ""
+
+#: templates/preload.php:186
+msgid "Advanced Settings"
+msgstr ""
+
+#: templates/preload.php:151
+msgid "You can specify sitemaps to be used for preloading."
+msgstr ""
+
+#: templates/preload.php:150
+msgid "Sitemaps"
+msgstr ""
+
+#: templates/preload.php:87
+msgid "You can specify the contents to be used for preloading and you can sort them as well."
+msgstr ""
+
+#: templates/preload.php:86
+msgid "Content Types"
+msgstr ""
+
+#: templates/preload.php:73
+msgid "You can specify the method you want the preload feature to use through this section."
+msgstr ""
+
+#: templates/preload.php:72
+msgid "Choose a Method"
+msgstr ""
+
+#: templates/preload.php:56
+msgid "Preload Settings"
+msgstr ""
+
+#: inc/admin.php:1445 inc/admin.php:1452
+msgid "Some js sources will not be loaded until scrolling or moving the mouse"
+msgstr ""
+
+#: inc/admin.php:1444 inc/admin.php:1451
+msgid "Delay Js"
+msgstr ""
+
+#: inc/admin.php:1061
+msgid "WP Fastest Cache Options"
+msgstr ""
+
+#: inc/admin.php:1941 templates/exclude.php:114
+msgid "has Yandex Click ID Parameters"
+msgstr ""
+
+#. Author URI of the plugin
+#: wpFastestCache.php
+msgid "https://www.wpfastestcache.com/"
+msgstr ""
+
+#: inc/admin.php:1736
+msgid "Clearing Specific Pages"
+msgstr ""
+
+#: templates/toolbar_settings.php:71
+msgid "Save"
+msgstr "Mentés"
+
+#: templates/toolbar_settings.php:68
+msgid "Cancel"
+msgstr "Mégse"
+
+#: templates/toolbar_settings.php:20
+msgid "Toolbar Settings"
+msgstr "Eszköztár beállításai"
+
+#: inc/admin-toolbar.php:74 inc/admin-toolbar.php:106
+msgid "Clear Cache of All Sites"
+msgstr "Az összes webhely gyorsítótárának törlése"
+
+#: wpFastestCache.php:414
+msgid "<a href=\"%s\">Settings</a>"
+msgstr "<a href=\"%s\">Beállítások</a>"
+
+#: inc/column.php:15
+msgid "Clear Cache"
+msgstr "Gyorsítótár törlése"
+
+#: inc/admin.php:1357 inc/admin.php:1363 inc/admin.php:1370
+msgid "Eliminate render-blocking JavaScript resources"
+msgstr "A megjelenítést blokkoló JavaScript-erőforrások kiküszöbölése"
+
+#: inc/admin.php:461 inc/admin.php:464
+msgid "Options have been saved"
+msgstr "Beállítások elmenve"
+
+#: inc/admin.php:1942 templates/exclude.php:115
+msgid "has Woocommerce Items in Cart"
+msgstr "Woocommerce tételei vannak a kosárban"
+
+#: inc/admin.php:1940 templates/exclude.php:113
+msgid "has Google Analytics Parameters"
+msgstr "Google Analytics paraméterei vannak"
+
+#: inc/admin.php:1930 templates/exclude.php:100
+msgid "Archives"
+msgstr "Archívum"
+
+#: templates/timeout.php:189
+msgid "Server Time"
+msgstr "Kiszolgáló ideje"
+
+#: templates/timeout.php:169
+msgid "delete the files"
+msgstr "fájlok törlése"
+
+#: inc/admin.php:1633 inc/admin.php:1935 templates/exclude.php:106
+#: templates/timeout.php:99
+msgid "Contains"
+msgstr "Tartalmazza ezt"
+
+#: inc/admin.php:1634 inc/admin.php:1936 templates/exclude.php:107
+#: templates/timeout.php:98
+msgid "Is Equal To"
+msgstr "Egyenlő ezzel"
+
+#: inc/admin.php:1632 inc/admin.php:1934 templates/exclude.php:105
+#: templates/timeout.php:97
+msgid "Starts With"
+msgstr "Ezzel kezdődik"
+
+#: inc/admin.php:1631 inc/admin.php:1927 templates/exclude.php:95
+#: templates/timeout.php:96
+msgid "Home Page"
+msgstr "Kezdőlap"
+
+#: inc/admin.php:1630 templates/timeout.php:95
+msgid "All"
+msgstr "Összes"
+
+#: templates/exclude.php:66
+msgid "Exclude Page Wizard"
+msgstr "Az Oldal varázsló kizárása"
+
+#: templates/timeout.php:124
+msgid "Then"
+msgstr "Majd"
+
+#: templates/exclude.php:89 templates/timeout.php:91
+msgid "If REQUEST_URI"
+msgstr "Ha REQUEST_URI"
+
+#: templates/timeout.php:68
+msgid "Cache Timeout Wizard"
+msgstr "Gyorsítótár időtúllépési varázslója"
+
+#: templates/lazy_load.php:9
+msgid "Lazy Load Settings"
+msgstr "Lazy Load (lusta betöltés) beállítások"
+
+#: templates/nginx_gzip.php:9
+msgid "Enable Gzip"
+msgstr "Gzip engedélyezése"
+
+#: templates/update_now.php:9
+msgid "Please Update"
+msgstr "Kérjük, frissítsen"
+
+#: templates/update_success.php:9
+msgid "Success"
+msgstr "Siker"
+
+#: templates/disable_wp_cron.php:20
+msgid "Warning"
+msgstr "Figyelmeztetés"
+
+#: inc/admin.php:1668 inc/admin.php:1740 inc/admin.php:1963 inc/admin.php:1980
+#: inc/admin.php:1999 inc/admin.php:2017 inc/admin.php:2037
+msgid "Add New Rule"
+msgstr "Új szabály hozzáadása"
+
+#: inc/admin-toolbar.php:98 inc/admin.php:1602
+msgid "Delete Cache and Minified CSS/JS"
+msgstr "Gyorsítótár törlése és zsugorított CSS/JS"
+
+#: inc/admin.php:1534 inc/admin.php:2206 inc/admin.php:2406
+msgid "Only available in Premium version"
+msgstr "Csak Premium verzióban érhető el"
+
+#: templates/timeout.php:141
+msgid "Choose One"
+msgstr "Válasszon egyet"
+
+#: inc/admin.php:1607
+msgid "All cache files will be removed as well"
+msgstr "Az összes gyorsítótárfájl is eltávolításra kerül"
+
+#: inc/admin.php:1606
+msgid "If you modify any css file, you have to delete minified css files"
+msgstr "Ha egy CSS fájlt módosít, törölnie kell a zsugorított CSS fájlokat"
+
+#: inc/admin.php:1594 inc/admin.php:1608 inc/admin.php:1609
+msgid "Target folder"
+msgstr "Célmappa"
+
+#: inc/admin.php:1593
+msgid "You can delete all cache files"
+msgstr "Törölheti az összes gyorsítótárfájlt"
+
+#: inc/admin.php:1077
+msgid "Exclude"
+msgstr "Kizárás"
+
+#: inc/admin.php:1071
+msgid "Image Optimization"
+msgstr "Képoptimalizálás"
+
+#: inc/admin-toolbar.php:115 inc/admin.php:1069
+msgid "Settings"
+msgstr "Beállítások"
+
+#: inc/admin.php:2179
+msgid "Database Cleanup"
+msgstr "Adatbázis-tisztítás"
+
+#: inc/admin.php:2070
+msgid "CDN Settings"
+msgstr "CDN-beállítások"
+
+#: inc/admin.php:2033
+msgid "Exclude JS"
+msgstr "JS kizárása"
+
+#: inc/admin.php:2013
+msgid "Exclude CSS"
+msgstr "CSS kizárása"
+
+#: inc/admin.php:1995
+msgid "Exclude Cookies"
+msgstr "Sütik kizárása"
+
+#: inc/admin.php:1976
+msgid "Exclude User-Agents"
+msgstr "Felhasználói ügynökök kizárása"
+
+#: inc/admin.php:1959
+msgid "Exclude Pages"
+msgstr "Oldalak kizárása"
+
+#: inc/admin.php:1793
+msgid "Optimize Image Tool"
+msgstr "Képoptimalizáló eszközt"
+
+#: inc/admin.php:1623
+msgid "Timeout Rules"
+msgstr "Időtúllépés szabályai"
+
+#: inc/admin-toolbar.php:86 inc/admin.php:1070 inc/admin.php:1581
+msgid "Delete Cache"
+msgstr "Gyorsítótár törlése"
+
+#: inc/admin.php:1541
+msgid "Cache Statistics"
+msgstr "Gyorsítótár-statisztika"
+
+#: templates/updatepost.php:53
+msgid "Clear Cache of Post / Page"
+msgstr "Bejegyzés / oldal gyorsítótárának törlése"
+
+#: templates/updatepost.php:29
+msgid "What do you want to happen after update a post or a page?"
+msgstr "Mi történjék egy bejegyzés vagy oldal frissítése után?"
+
+#: templates/newpost.php:58
+msgid "Clear Cache of Pagination"
+msgstr "Az oldalszámozás gyorsítótárának törlése"
+
+#: templates/newpost.php:57 templates/updatepost.php:55
+msgid "Clear Cache of Post Tags"
+msgstr "A bejegyzéscímkék gyorsítótárának törlése"
+
+#: templates/newpost.php:56 templates/updatepost.php:54
+msgid "Clear Cache of Post Categories"
+msgstr "A bejegyzéskategóriák gyorsítótárának törlése"
+
+#: templates/newpost.php:55 templates/updatepost.php:56
+msgid "Clear Cache of Home page"
+msgstr ""
+
+#: inc/admin-toolbar.php:91 inc/admin.php:1589 templates/newpost.php:51
+#: templates/updatepost.php:49
+msgid "Clear All Cache"
+msgstr "A teljes gyorsítótár törlése"
+
+#: templates/newpost.php:29
+msgid "What do you want to happen after publishing the new post?"
+msgstr "Mi történjék az új bejegyzés közzététele után?"
+
+#: templates/newpost.php:68 templates/updatepost.php:64
+msgid "OK"
+msgstr "OK"
+
+#: templates/preload.php:215
+msgid "Restart After Completed"
+msgstr "Újraindítás a befejezés után"
+
+#: templates/preload.php:210
+msgid "pages per minute"
+msgstr "oldal / perc"
+
+#: templates/preload.php:132
+msgid "Custom Taxonomies"
+msgstr "Egyéni taxonómiák"
+
+#: templates/preload.php:127
+msgid "Custom Post Types"
+msgstr "Egyéni bejegyzéstípusok"
+
+#: inc/admin.php:1933 templates/exclude.php:101 templates/preload.php:122
+msgid "Attachments"
+msgstr "Csatolmányok"
+
+#: inc/admin.php:1929 templates/exclude.php:97 templates/preload.php:118
+msgid "Tags"
+msgstr "Címkék"
+
+#: inc/admin.php:1932 templates/exclude.php:99 templates/preload.php:114
+msgid "Pages"
+msgstr "Oldalak"
+
+#: inc/admin.php:1928 templates/exclude.php:96 templates/preload.php:110
+msgid "Categories"
+msgstr "Kategóriák"
+
+#: inc/admin.php:1931 templates/exclude.php:98 templates/preload.php:106
+msgid "Posts"
+msgstr "Bejegyzések"
+
+#: templates/preload.php:102
+msgid "Homepage"
+msgstr "Kezdőoldal"
+
+#: inc/admin.php:1304 inc/admin.php:1312 inc/admin.php:1318 inc/admin.php:1324
+msgid "Reduce HTTP requests through combined js files"
+msgstr "HTTP kérések csökkentése kombinált JavaScript fájlokkal"
+
+#: inc/admin.php:1412 inc/admin.php:1434
+msgid "Load images and iframes when they enter the browsers viewport"
+msgstr "Képek és iframe-ek betöltése, amikor belépnek a böngésző nézetablakába"
+
+#: inc/admin.php:1383 inc/admin.php:1389 inc/admin.php:1396
+msgid "Load Google Fonts asynchronously"
+msgstr "Google betűtípusok aszinkron betöltése"
+
+#: inc/admin.php:1382 inc/admin.php:1388 inc/admin.php:1395
+msgid "Google Fonts"
+msgstr "Google betűtípusok"
+
+#: inc/admin.php:1356 inc/admin.php:1362 inc/admin.php:1369
+msgid "Render Blocking Js"
+msgstr "Megjelenítést blokkolós JavaScript"
+
+#: inc/admin.php:1348
+msgid "You can remove the emoji inline css and wp-emoji-release.min.js"
+msgstr "Eltávolíthatja az emoji inline CSS-t és a wp-emoji-release.min.js fájlt"
+
+#: inc/admin.php:1347
+msgid "Disable Emojis"
+msgstr "Emojik letiltása"
+
+#: inc/admin.php:1342
+msgid "Reduce page load times for repeat visitors"
+msgstr "Az oldal betöltési idejének csökkentése az ismételt látogatóknak"
+
+#: inc/admin.php:1341
+msgid "Browser Caching"
+msgstr "Böngésző-gyorsítótárazás"
+
+#: inc/admin.php:1330
+msgid "Reduce the size of files sent from your server"
+msgstr "Csökkentse a szerverről küldött fájlok méretét"
+
+#: inc/admin.php:1329
+msgid "Gzip"
+msgstr "Gzip"
+
+#: inc/admin.php:1310 inc/admin.php:1317 inc/admin.php:1323
+msgid "Combine Js Plus"
+msgstr "Js kombinálása +"
+
+#: inc/admin.php:1303
+msgid "Combine Js"
+msgstr "Js kombinálása"
+
+#: inc/admin.php:1287 inc/admin.php:1292 inc/admin.php:1298
+msgid "You can decrease the size of js files"
+msgstr "Csökkentheti a JavaScript fájlok méretét"
+
+#: inc/admin.php:1286 inc/admin.php:1291 inc/admin.php:1297
+msgid "Minify Js"
+msgstr "Js zsugorítása"
+
+#: inc/admin.php:1279
+msgid "Reduce HTTP requests through combined css files"
+msgstr "HTTP kérések csökkentése kombinált CSS fájlokkal"
+
+#: inc/admin.php:1278
+msgid "Combine Css"
+msgstr "CSS kombinálása"
+
+#: inc/admin.php:1267 inc/admin.php:1272
+msgid "More powerful minify css"
+msgstr "Erőteljesebb CSS-zsugorítás"
+
+#: inc/admin.php:1266 inc/admin.php:1271
+msgid "Minify Css Plus"
+msgstr "CSS-zsugorítás +"
+
+#: inc/admin.php:1258
+msgid "You can decrease the size of css files"
+msgstr "Csökkentheti a CSS-fájlok méretét"
+
+#: inc/admin.php:1257
+msgid "Minify Css"
+msgstr "CSS-zsugorítás"
+
+#: inc/admin.php:1245 inc/admin.php:1250
+msgid "More powerful minify html"
+msgstr "Erőteljesebb HTML-zsugorítás"
+
+#: inc/admin.php:1244 inc/admin.php:1249
+msgid "Minify HTML Plus"
+msgstr "HTML-zsugorítás +"
+
+#: inc/admin.php:1238
+msgid "You can decrease the size of page"
+msgstr "Csökkentheti az oldalak méretét"
+
+#: inc/admin.php:1237
+msgid "Minify HTML"
+msgstr "HTML-zsugorítás"
+
+#: inc/admin.php:1229
+msgid "Clear cache files when a post or page is updated"
+msgstr "Gyorsítótárfájlok törlése egy bejegyzés vagy oldal frissítésekor"
+
+#: inc/admin.php:1228 templates/updatepost.php:18
+msgid "Update Post"
+msgstr "Bejegyzés frissítése"
+
+#: inc/admin.php:1222
+msgid "Clear cache files when a post or page is published"
+msgstr "Gyorsítótárfájlok törlése egy bejegyzés vagy oldal közzétételekor"
+
+#: inc/admin.php:1221 templates/newpost.php:18
+msgid "New Post"
+msgstr "Új bejegyzés"
+
+#: inc/admin.php:1189 inc/admin.php:1215
+msgid "Create cache for mobile theme"
+msgstr "Gyorsítótár készítése mobil témához"
+
+#: inc/admin.php:1188 inc/admin.php:1214
+msgid "Mobile Theme"
+msgstr "Mobil téma"
+
+#: inc/admin.php:1183
+msgid "Don't show the cached version for desktop to mobile devices"
+msgstr "Ne mutassa meg a gyorsítótárazott asztali verziót mobil eszközöknek"
+
+#: inc/admin.php:1182
+msgid "Mobile"
+msgstr "Mobil"
+
+#: inc/admin.php:1178
+msgid "Don't show the cached version for logged-in users"
+msgstr "Ne mutassa a gyorsítótárazott verziót a bejelentkezett felhasználóknak"
+
+#: inc/admin.php:1177
+msgid "Logged-in Users"
+msgstr "Bejelentkezett felhasználók"
+
+#: inc/admin.php:1145
+msgid "Create the cache of all the site automatically"
+msgstr "A teljes webhely gyorsítótárának automatikus létrehozása"
+
+#: inc/admin.php:1144
+msgid "Preload"
+msgstr "Előtöltés"
+
+#: inc/admin.php:1116 inc/admin.php:1122 inc/admin.php:1129 inc/admin.php:1136
+msgid "Reduce the number of SQL queries"
+msgstr "SQL-lekérdezések számának csökkentése"
+
+#: inc/admin.php:1115 inc/admin.php:1121 inc/admin.php:1128 inc/admin.php:1135
+msgid "Widget Cache"
+msgstr "Widget gyorsítótár"
+
+#: inc/admin.php:1106
+msgid "Enable"
+msgstr "Engedélyezés"
+
+#: inc/admin.php:1105
+msgid "Cache System"
+msgstr "Gyorsítótárazó-rendszer"
+
+#: wpFastestCache.php:2263
+msgid "Once Every 15 Days"
+msgstr "15 naponta"
+
+#: wpFastestCache.php:2251
+msgid "Once Every 7 Days"
+msgstr "7 naponta"
+
+#: wpFastestCache.php:2245
+msgid "Once Every 3 Days"
+msgstr "3 naponta"
+
+#: wpFastestCache.php:2233
+msgid "Once Every 10 Hours"
+msgstr "10 óránként"
+
+#: wpFastestCache.php:2227
+msgid "Once Every 9 Hours"
+msgstr "9 óránként"
+
+#: wpFastestCache.php:2221
+msgid "Once Every 8 Hours"
+msgstr "8 óránként"
+
+#: wpFastestCache.php:2215
+msgid "Once Every 7 Hours"
+msgstr "7 óránként"
+
+#: wpFastestCache.php:2203
+msgid "Once Every 5 Hours"
+msgstr "5 óránként"
+
+#: wpFastestCache.php:2197
+msgid "Once Every 4 Hours"
+msgstr "4 óránként"
+
+#: wpFastestCache.php:2191
+msgid "Once Every 3 Hours"
+msgstr "3 óránként"
+
+#: wpFastestCache.php:2185
+msgid "Once Every 2 Hours"
+msgstr "2 óránknét"
+
+#: wpFastestCache.php:2257
+msgid "Once Every 10 Days"
+msgstr "10 naponta"
+
+#. Author of the plugin
+#: wpFastestCache.php
+msgid "Emre Vona"
+msgstr "Emre Vona"
+
+#. Description of the plugin
+#: wpFastestCache.php
+msgid "The simplest and fastest WP Cache system"
+msgstr "A legegyszerűbb és leggyorsabb WordPress Cache gyorsítótárazó rendszer"
+
+#. Plugin URI of the plugin
+#: wpFastestCache.php
+msgid "http://wordpress.org/plugins/wp-fastest-cache/"
+msgstr "http://wordpress.org/plugins/wp-fastest-cache/"
+
+#. Plugin Name of the plugin
+#: wpFastestCache.php
+msgid "WP Fastest Cache"
+msgstr "WP Fastest Cache"
+
+#: wpFastestCache.php:2275
+msgid "Once a Year"
+msgstr "Évente"
+
+#: wpFastestCache.php:2269
+msgid "Once a Month"
+msgstr "Havonta"
+
+#: wpFastestCache.php:2239
+msgid "Once a Day"
+msgstr "Naponta"
+
+#: wpFastestCache.php:2209
+msgid "Once Every 6 Hours"
+msgstr "6 óránként"
+
+#: wpFastestCache.php:2179
+msgid "Once an Hour"
+msgstr "Óránként"
+
+#: wpFastestCache.php:2173
+msgid "Twice an Hour"
+msgstr "Óránként kétszer"
+
+#: wpFastestCache.php:2167
+msgid "Once Every 15 Minutes"
+msgstr "15 percenként"
+
+#: wpFastestCache.php:2161
+msgid "Once Every 5 Minutes"
+msgstr "5 percenként"
+
+#: wpFastestCache.php:2155
+msgid "Once Every 1 Minute"
+msgstr "Percenként"
