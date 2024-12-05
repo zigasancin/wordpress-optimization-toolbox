@@ -7,6 +7,7 @@ class NoticeController //extends ShortPixelController
   protected static $notices = array();
   protected static $instance = null;
   protected static $cssHookLoaded = false; // prevent css output more than once.
+	protected static $newNotices = [];  // notices added this PHP run (to get them if needed)
 
   protected $notice_displayed = array();
 
@@ -107,6 +108,7 @@ class NoticeController //extends ShortPixelController
         }
       }
       self::$notices[] = $notice;
+			self::$newNotices[] = $notice;
       $this->countNotices();
 
       $this->update();
@@ -151,6 +153,11 @@ class NoticeController //extends ShortPixelController
       return self::$notices;
   }
 
+	public function getNewNotices()
+	{
+		 return self::$newNotices;
+  }
+
   public function getNoticesForDisplay()
   {
       $newNotices = array();
@@ -178,6 +185,7 @@ class NoticeController //extends ShortPixelController
       }
       return $newNotices;
   }
+
 
 
   public function getNoticeByID($id)
@@ -220,7 +228,7 @@ class NoticeController //extends ShortPixelController
 
 					if (! is_null($id))
 					{
-						
+
           	$notice = $this->getNoticeByID($id);
 					}
 					else
@@ -287,15 +295,12 @@ class NoticeController //extends ShortPixelController
     $noticeController = self::getInstance();
     $notice = $noticeController->addNotice($message, NoticeModel::NOTICE_SUCCESS, $unique);
     return $notice;
-
   }
 
   public static function addDetail($notice, $detail)
   {
     $noticeController = self::getInstance();
     $notice->addDetail($detail);
-
-//   $notice_id = spl_object_id($notice);
 
     $noticeController->update();
   }

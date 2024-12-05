@@ -37,12 +37,10 @@ class AdminController extends \ShortPixel\Controller
       return self::$instance;
     }
 
-
-
     public function addAttachmentHook($post_id)
     {
           $fs = \wpSPIO()->filesystem();
-          
+
           // If attachment doesn't come back as an valid image
           $mediaItem = $fs->getImage($post_id, 'media');
           if (false === $mediaItem)
@@ -64,7 +62,6 @@ class AdminController extends \ShortPixel\Controller
     */
     public function handleImageUploadHook($meta, $id)
     {
-        Log::addTemp('Handle Image Upload');
 
         // Media only hook
 				if ( in_array($id, self::$preventUploadHook))
@@ -259,7 +256,7 @@ class AdminController extends \ShortPixel\Controller
 				}
 		}
 
-    public function scanCustomFoldersHook($args = array() )
+    public function scanCustomFoldersHook($args = array())
     {
       $defaults = array(
         'force' => false,
@@ -271,6 +268,12 @@ class AdminController extends \ShortPixel\Controller
       $args = wp_parse_args($args, $defaults);
 
       $otherMediaController = OtherMediaController::getInstance();
+      if (false === $otherMediaController->hasCustomImages())
+      {
+         return false; 
+      }
+
+
 
       $args = apply_filters('shortpixel/othermedia/scan_custom_folder', $args);
 
@@ -289,7 +292,6 @@ class AdminController extends \ShortPixel\Controller
         $i++;
         if ($args['amount'] > 0 && $i >= $args['amount'])
         {
-           Log::addTemp($args['amount'] . ' lower than ' . $i . ' breaking');
            break;
         }
 
@@ -360,12 +362,12 @@ class AdminController extends \ShortPixel\Controller
              break;
              case 'unoptimized':
               // The parent <> %d exclusion is meant to also deselect duplicate items ( translations ) since they don't have a status, but shouldn't be in a list like this.
-                $sql = " AND " . $wpdb->posts . '.ID not in ( SELECT attach_id FROM ' . $tableName . " WHERE (parent = %d and status = %d) OR parent <> %d ) ";
+                $sql = " AND " . $wpdb->posts . '.ID not in ( SELECT  attach_id FROM ' . $tableName . " WHERE (parent = %d and status = %d) OR parent <> %d ) ";
   					    $where .= $wpdb->prepare($sql, MediaLibraryModel::IMAGE_TYPE_MAIN, ImageModel::FILE_STATUS_SUCCESS, MediaLibraryModel::IMAGE_TYPE_MAIN);
              break;
              case 'optimized':
-                $sql = ' AND ' . $wpdb->posts . '.ID in ( SELECT attach_id FROM ' . $tableName . ' WHERE parent = %d and status = %d) ';
-   					    $where .= $wpdb->prepare($sql, MediaLibraryModel::IMAGE_TYPE_MAIN, ImageModel::FILE_STATUS_SUCCESS);
+								$sql = ' AND ' . $wpdb->posts . '.ID in ( SELECT distinct attach_id FROM ' . $tableName . ' WHERE status = %d) ';
+   					    $where .= $wpdb->prepare($sql, ImageModel::FILE_STATUS_SUCCESS);
              break;
              case 'prevented':
 

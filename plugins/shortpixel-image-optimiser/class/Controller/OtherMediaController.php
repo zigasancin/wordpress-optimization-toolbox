@@ -6,7 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
-use ShortPixel\Notices\NoticeController as Notices;
 
 use ShortPixel\Model\File\DirectoryOtherMediaModel as DirectoryOtherMediaModel;
 use ShortPixel\Model\File\DirectoryModel as DirectoryModel;
@@ -37,7 +36,7 @@ class OtherMediaController extends \ShortPixel\Controller
     public static function getInstance()
     {
         if (is_null(self::$instance))
-           self::$instance = new OtherMediaController();
+					 self::$instance = new static();
 
         return self::$instance;
     }
@@ -144,6 +143,7 @@ class OtherMediaController extends \ShortPixel\Controller
        if (! is_null(self::$hasCustomImages)) // prevent repeat
          return self::$hasCustomImages;
 
+ Log::addTrace("Has Custom Images function called");
 			if (InstallHelper::checkTableExists('shortpixel_meta') === false)
 				$count = 0;
 			else
@@ -151,7 +151,7 @@ class OtherMediaController extends \ShortPixel\Controller
 				global $wpdb;
 
 				$sql = 'SELECT count(id) as count from ' . $wpdb->prefix . 'shortpixel_meta';
-        $count = $wpdb->get_var($sql); //$this->getFolders(['only_count' => true, 'remove_hidden' => true]);
+        $count = $wpdb->get_var($sql);
 			 }
        if ($count == 0)
         $result = false;
@@ -286,7 +286,6 @@ class OtherMediaController extends \ShortPixel\Controller
 				$defaults = array(
 						'force' => false,
 						'interval' => HOUR_IN_SECONDS,
-
 				);
 
 				$args = wp_parse_args($args, $defaults);
@@ -300,7 +299,6 @@ class OtherMediaController extends \ShortPixel\Controller
 				$sql = ' SELECT id FROM ' . $folderTable . '	WHERE status >= 0 AND (ts_checked <= %s OR ts_checked IS NULL) order by ts_checked ASC';
 
 				$sql = $wpdb->prepare($sql, $tsInterval);
-
 				$folder_id = $wpdb->get_var($sql);
 
 				if (is_null($folder_id))
@@ -309,7 +307,6 @@ class OtherMediaController extends \ShortPixel\Controller
 				}
 
 				$directoryObj = $this->getFolderByID($folder_id);
-
 				$old_count = $directoryObj->get('fileCount');
 
 				$return = array(
@@ -327,7 +324,6 @@ class OtherMediaController extends \ShortPixel\Controller
 				{
 					 $directoryObj->set('checked', time()); // preventing loops here in case some wrong
 					 $directoryObj->save();
-
 					 // Probably should catch some notice here to return  @todo
 				}
 

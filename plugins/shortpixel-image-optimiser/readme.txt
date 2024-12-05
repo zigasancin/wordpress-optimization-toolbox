@@ -3,8 +3,8 @@ Contributors: ShortPixel
 Tags: convert webp, optimize images, image optimization, resize, compress images
 Requires at least: 4.8.0
 Tested up to: 6.7
-Requires PHP: 5.6
-Stable tag: 5.6.4
+Requires PHP: 7.4
+Stable tag: 6.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,12 @@ Make an instant <a href="https://shortpixel.com/image-compression-test" target="
 
 == Why is ShortPixel the best choice for image optimization or PDF compression? ==
 
+### New! Faster Websites for Global Audiences ###
+
+The ShortPixel plugin now includes a built-in global Content Delivery Network (CDN). This powerful feature ensures that ShortPixel-optimized WebP and AVIF images are delivered quickly and efficiently to any location worldwide, minimizing delays and improving load times.
+
+By leveraging this built-in solution, you enhance the user experience, reduce server strain, boost SEO performance, and simplify website management — all with minimal effort.
+
 ### Resize and Compress Images Without Losing Quality ###
 
 * Popular plugin with over 300,000 active installations – according to WordPress
@@ -36,10 +42,10 @@ Make an instant <a href="https://shortpixel.com/image-compression-test" target="
 * CMYK to RGB conversion.
 * Progressive JPEG is used whenever it leads to a smaller image.
 
-### lossy and lossless image compression ###
+### Lossy and Lossless image compression ###
 
-Both **lossy and lossless image compression** are available for the most common image types (JPG, PNG, GIF, WebP, and AVIF) plus PDF files.
-We also offer **glossy** JPEG compression which is a very high-quality lossy optimization algorithm. Especially designed for photographers or for high-quality product pictures.
+Both **Lossy and Lossless image compression** are available for the most common image types (JPG, PNG, GIF, WebP, and AVIF) plus PDF files.
+We also offer **Glossy** JPEG compression which is a very high-quality lossy optimization algorithm. Especially designed for photographers or for high-quality product pictures.
 Optimized images lead to a better user experience, improved PageSpeed Insights or GTmetrix results, higher Google PageRank, and more visitors.
 
 ### Convert WebP and AVIF Formats ###
@@ -436,6 +442,50 @@ Add HTTP basic authentication credentials by defining these constants in wp-conf
 8. Check other optimized images' status - themes or other plugins' images. (Media>Other Media)
 
 == Changelog ==
+
+= 6.0.3 =
+Release date: December 3, 2024
+* Fix: With certain WooCommerce themes and CDN delivery enabled, some images were not loaded on the cart and checkout pages
+* Fix: Removed an unused hook that was triggering errors in some cases;
+* Fix: A JavaScript error was displayed in the browser console when CDN delivery was hidden in the settings;
+* Fix: Divi frontend builder now works when CDN delivery is enabled;
+* Language: 2 new strings added, 0 updated, 0 fuzzed and 0 deprecated.
+
+= 6.0.2 =
+Release date: November 28, 2024
+* Fix: Resizing and SmartCropping can now both be enabled;
+* Fix: Beaver Builder now works when CDN delivery is enabled;
+* Fix: In some cases the picture tag was generated even if it was disabled;
+* Fix: Some notifications still had links pointing to the old settings structure;
+* Fix: The custom media cron generated an error under very specific conditions in PHP 8.2.x;
+* Fix: More CSS changes to make the settings usable when other plugins insert their own CSS in wrong places;
+* Fix: All database options are now removed from the tools section after uninstalling the plugin;
+* Fix: Added a possible fix if the execution of the installation scripts hangs after upgrading to version 6;
+* Fix: Some JavaScript errors were displayed in the Theme Customizer section;
+* Tweak: Added filter to hide the new CDN delivery method;
+* Tweak: Removed a database query for custom media that was no longer needed in wp-admin;
+* Tweak: The save settings button function has been improved and prevents multiple saves at once;
+* Tweak: The default CDN URL has been updated;
+* Language: 1 new strings added, 10 updated, 0 fuzzed and 0 deprecated.
+
+= 6.0.1 =
+Release date: November 22, 2024
+* Fix: Some PHP warnings were displayed for certain images when they were optimized;
+* Fix: The plugin settings are loaded correctly even if the Google Reviews & Ratings plugin is active;
+* Fix: Help icon pop-ups now look better;
+* Language: 0 new strings added, 0 updated, 0 fuzzed and 0 deprecated.
+
+= 6.0.0 =
+Release date: November 21, 2024
+* New: The plugin now also delivers next generation images such as WebP and AVIF via the ShortPixel CDN;
+* New: Complete redesign of the plugin settings and layout;
+* New: Overview page with image status in a single view;
+* New: Simple and advanced settings modes are now available;
+* Tweak: Plugin processing is no longer started for users without appropriate rights (such as Authors);
+* Fix: The filter "optimized/not optimized" from the Media Library now works correctly when the main image is excluded;
+* Fix: The comparator in the NextGen Gallery now looks better;
+* Fix: When using WPML, random optimization errors occurred with some images;
+* Language: Many of the plugin strings have been updated or changed and we thank the translation teams for their efforts..
 
 = 5.6.4 =
 Release date: October 9, 2024

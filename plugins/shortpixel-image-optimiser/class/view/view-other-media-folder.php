@@ -2,7 +2,6 @@
 
 namespace ShortPixel;
 use ShortPixel\ShortPixelLogger\ShortPixelLogger as Log;
-use ShortPixel\Notices\NoticeController as Notices;
 
 use ShortPixel\Helper\UiHelper as UiHelper;
 
@@ -72,7 +71,7 @@ $this->loadView('custom/part-othermedia-top');
 			<div class='no-items'> <p>
 				<?php
 				if ($this->search === false):
-					printf(esc_html__('No folders available. ','shortpixel-image-optimiser'), '<a href="options-general.php?page=wp-shortpixel-settings&part=adv-settings">', '</a>');
+					printf(esc_html__('No folders available. ','shortpixel-image-optimiser'), '<a href="upload.php?page=wp-short-pixel-custom&part=folders">', '</a>');
 				 else:
 					 echo esc_html__('Your search query didn\'t result in any images. ', 'shortpixel-image-optimiser');
 				endif; ?>
