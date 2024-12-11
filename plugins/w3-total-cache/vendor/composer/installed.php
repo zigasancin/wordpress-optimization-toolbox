@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => '2.8.0',
-        'version' => '2.8.0.0',
-        'reference' => '058547672434fa0cc7a57cbf66b45e1b70e2d9c7',
+        'pretty_version' => '2.8.1',
+        'version' => '2.8.1.0',
+        'reference' => '808d53cca580dcf54f9cf5cdd406aa6590b66ef2',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => '2.8.0',
-            'version' => '2.8.0.0',
-            'reference' => '058547672434fa0cc7a57cbf66b45e1b70e2d9c7',
+            'pretty_version' => '2.8.1',
+            'version' => '2.8.1.0',
+            'reference' => '808d53cca580dcf54f9cf5cdd406aa6590b66ef2',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -38,9 +38,9 @@
             'dev_requirement' => false,
         ),
         'aws/aws-sdk-php' => array(
-            'pretty_version' => '3.325.6',
-            'version' => '3.325.6.0',
-            'reference' => '9e4be60c907ce5ef05ee36dafd42afd9944591c6',
+            'pretty_version' => '3.334.2',
+            'version' => '3.334.2.0',
+            'reference' => 'b19afc076bb1cc2617bdef76efd41587596109e7',
             'type' => 'library',
             'install_path' => __DIR__ . '/../aws/aws-sdk-php',
             'aliases' => array(),
@@ -200,9 +200,9 @@
             'dev_requirement' => false,
         ),
         'symfony/deprecation-contracts' => array(
-            'pretty_version' => 'v2.5.3',
-            'version' => '2.5.3.0',
-            'reference' => '80d075412b557d41002320b96a096ca65aa2c98d',
+            'pretty_version' => 'v2.5.4',
+            'version' => '2.5.4.0',
+            'reference' => '605389f2a7e5625f273b53960dc46aeaf9c62918',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/deprecation-contracts',
             'aliases' => array(),
