@@ -140,8 +140,9 @@ class Tracking {
 		$data['jpg_level']     = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_level' );
 		$data['png_level']     = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_level' );
 		$data['gif_level']     = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_level' );
-		$data['svg_level']     = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_svg_level' );
 		$data['pdf_level']     = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_pdf_level' );
+		$data['svg_level']     = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_svg_level' );
+		$data['webp_level']    = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_webp_level' );
 		$data['bulk_delay']    = (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_delay' );
 		$data['backups']       = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_backup_files' );
 
@@ -151,6 +152,7 @@ class Tracking {
 			if ( $exactdn->get_exactdn_domain() ) {
 				$data['exactdn']                     = 1;
 				$data['exactdn_lossy']               = (int) \ewww_image_optimizer_get_option( 'exactdn_lossy' );
+				$data['exactdn_hidpi']               = (int) \ewww_image_optimizer_get_option( 'exactdn_hidpi' );
 				$data['exactdn_all_the_things']      = (bool) \ewww_image_optimizer_get_option( 'exactdn_all_the_things' );
 				$data['exactdn_resize_existing']     = (bool) \ewww_image_optimizer_get_option( 'exactdn_resize_existing' );
 				$data['exactdn_prevent_db_queries']  = (bool) \ewww_image_optimizer_get_option( 'exactdn_prevent_db_queries' );
@@ -161,6 +163,7 @@ class Tracking {
 		$data['add_missing_dims']       = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_add_missing_dims' );
 		$data['lazyload']               = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_lazy_load' );
 		$data['ll_autoscale']           = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_ll_autoscale' );
+		$data['ll_abovethefold']        = defined( 'EIO_LAZY_FOLD' ) ? (int) \constant( 'EIO_LAZY_FOLD' ) : (int) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_ll_abovethefold' );
 		$data['lqip']                   = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_use_lqip' );
 		$data['dcip']                   = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_use_dcip' );
 		$data['ll_all_things']          = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_ll_all_things' );

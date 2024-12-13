@@ -118,8 +118,10 @@ function ewww_image_optimizer_display_tools() {
 	echo "<form id='ewww-clean-originals' class='ewww-tool-form' method='post' action=''>\n" .
 		"<input type='submit' class='button-secondary action' value='" . esc_attr__( 'Delete Originals', 'ewww-image-optimizer' ) . "' />\n" .
 		"</form>\n</div>\n";
+	echo "<div id='ewww-clean-originals-action' style='display:none;'><p>" . esc_html__( 'Searching for originals to remove...', 'ewww-image-optimizer' ) . '</p></div>';
 	echo "<div id='ewww-clean-originals-progressbar' style='display:none;'></div>";
 	echo "<div id='ewww-clean-originals-progress' style='display:none;'></div>";
+	echo "<div id='ewww-clean-originals-messages' style='display:none;'><p></p></div>";
 
 	echo '<hr class="ewww-tool-divider">';
 	echo "<div>\n<p id='ewww-clean-converted-info' class='ewww-tool-info'>" .
@@ -1254,7 +1256,7 @@ function ewww_image_optimizer_fetch_metadata_batch( $attachment_ids ) {
 		ewwwio_debug_message( 'invalid attachments provided' );
 		return array();
 	}
-	ewwwio_debug_message( 'attachment query length: ' . strlen( $attachments_in ) );
+	ewwwio_debug_message( 'fetching meta for ' . count( $attachment_ids ) . ' attachments' );
 	$attachment_meta = array();
 	$attachments_in  = '';
 	$attachments     = array();
@@ -2170,6 +2172,10 @@ function ewww_image_optimizer_bulk_counter_measures( $image, $error_counter = 0 
 					// If all else fails, skip it.
 					ewww_image_optimizer_bulk_skip_image( $image );
 				}
+			}
+			if ( 'image/webp' === ewww_image_optimizer_quick_mimetype( $image->file ) ) {
+				// There is nothing "less" that we can do with WebP, so just skip it.
+				ewww_image_optimizer_bulk_skip_image( $image );
 			}
 			if ( 'application/pdf' === ewww_image_optimizer_quick_mimetype( $image->file ) ) {
 				if ( empty( $previous_countermeasures['pdf20'] ) && ! defined( 'EWWW_IMAGE_OPTIMIZER_PDF_LEVEL' ) && 20 === (int) ewww_image_optimizer_get_option( 'ewww_image_optimizer_pdf_level' ) ) {
