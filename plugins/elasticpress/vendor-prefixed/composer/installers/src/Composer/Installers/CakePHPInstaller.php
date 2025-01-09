@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by Taylor Lovett on 11-June-2024 using Strauss.
+ * Modified by Taylor Lovett on 12-December-2024 using Strauss.
  * @see https://github.com/BrianHenryIE/strauss
  */
 
@@ -52,7 +52,7 @@ class CakePHPInstaller extends BaseInstaller
     /**
      * Check if CakePHP version matches against a version
      *
-     * @phpstan-param Constraint::STR_OP_* $matcher
+     * @phpstan-param '='|'=='|'<'|'<='|'>'|'>='|'<>'|'!=' $matcher
      */
     protected function matchesCakeVersion(string $matcher, string $version): bool
     {

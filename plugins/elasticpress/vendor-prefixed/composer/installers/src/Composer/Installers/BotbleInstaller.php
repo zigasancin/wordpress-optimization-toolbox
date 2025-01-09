@@ -8,10 +8,11 @@
 
 namespace ElasticPress\Vendor_Prefixed\Composer\Installers;
 
-class UserFrostingInstaller extends BaseInstaller
+class BotbleInstaller extends BaseInstaller
 {
     /** @var array<string, string> */
     protected $locations = array(
-        'sprinkle' => 'app/sprinkles/{$name}/',
+        'plugin'     => 'platform/plugins/{$name}/',
+        'theme'      => 'platform/themes/{$name}/',
     );
 }

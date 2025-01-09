@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by Taylor Lovett on 11-June-2024 using Strauss.
+ * Modified by Taylor Lovett on 12-December-2024 using Strauss.
  * @see https://github.com/BrianHenryIE/strauss
  */
 
@@ -32,6 +32,7 @@ class Installer extends LibraryInstaller
         'agl'          => 'AglInstaller',
         'annotatecms'  => 'AnnotateCmsInstaller',
         'bitrix'       => 'BitrixInstaller',
+        'botble'       => 'BotbleInstaller',
         'bonefish'     => 'BonefishInstaller',
         'cakephp'      => 'CakePHPInstaller',
         'chef'         => 'ChefInstaller',
@@ -40,6 +41,7 @@ class Installer extends LibraryInstaller
         'cockpit'      => 'CockpitInstaller',
         'codeigniter'  => 'CodeIgniterInstaller',
         'concrete5'    => 'Concrete5Installer',
+        'concretecms'  => 'ConcreteCMSInstaller',
         'croogo'       => 'CroogoInstaller',
         'dframe'       => 'DframeInstaller',
         'dokuwiki'     => 'DokuWikiInstaller',
@@ -51,6 +53,7 @@ class Installer extends LibraryInstaller
         'ee3'          => 'ExpressionEngineInstaller',
         'ee2'          => 'ExpressionEngineInstaller',
         'ezplatform'   => 'EzPlatformInstaller',
+        'fork'         => 'ForkCMSInstaller',
         'fuel'         => 'FuelInstaller',
         'fuelphp'      => 'FuelphpInstaller',
         'grav'         => 'GravInstaller',
@@ -151,6 +154,9 @@ class Installer extends LibraryInstaller
         }
 
         $class = 'ElasticPress\\Vendor_Prefixed\\Composer\\Installers\\' . $this->supportedTypes[$frameworkType];
+        /**
+         * @var BaseInstaller
+         */
         $installer = new $class($package, $this->composer, $this->getIO());
 
         $path = $installer->getInstallPath($package, $frameworkType);
@@ -184,6 +190,8 @@ class Installer extends LibraryInstaller
 
     /**
      * {@inheritDoc}
+     *
+     * @param string $packageType
      */
     public function supports($packageType)
     {

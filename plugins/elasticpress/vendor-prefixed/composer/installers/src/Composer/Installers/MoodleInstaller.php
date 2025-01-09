@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by Taylor Lovett on 11-June-2024 using Strauss.
+ * Modified by Taylor Lovett on 12-December-2024 using Strauss.
  * @see https://github.com/BrianHenryIE/strauss
  */
 
@@ -27,6 +27,7 @@ class MoodleInstaller extends BaseInstaller
         'cachestore'         => 'cache/stores/{$name}/',
         'cachelock'          => 'cache/locks/{$name}/',
         'calendartype'       => 'calendar/type/{$name}/',
+        'communication'      => 'communication/provider/{$name}/',
         'customfield'        => 'customfield/field/{$name}/',
         'fileconverter'      => 'files/converter/{$name}/',
         'format'             => 'course/format/{$name}/',
@@ -39,20 +40,24 @@ class MoodleInstaller extends BaseInstaller
         'editor'             => 'lib/editor/{$name}/',
         'enrol'              => 'enrol/{$name}/',
         'filter'             => 'filter/{$name}/',
+        'forumreport'        => 'mod/forum/report/{$name}/',
         'gradeexport'        => 'grade/export/{$name}/',
         'gradeimport'        => 'grade/import/{$name}/',
         'gradereport'        => 'grade/report/{$name}/',
         'gradingform'        => 'grade/grading/form/{$name}/',
+        'h5plib'             => 'h5p/h5plib/{$name}/',
         'local'              => 'local/{$name}/',
         'logstore'           => 'admin/tool/log/store/{$name}/',
         'ltisource'          => 'mod/lti/source/{$name}/',
         'ltiservice'         => 'mod/lti/service/{$name}/',
         'media'              => 'media/player/{$name}/',
         'message'            => 'message/output/{$name}/',
+        'mlbackend'          => 'lib/mlbackend/{$name}/',
         'mnetservice'        => 'mnet/service/{$name}/',
         'paygw'              => 'payment/gateway/{$name}/',
         'plagiarism'         => 'plagiarism/{$name}/',
         'portfolio'          => 'portfolio/{$name}/',
+        'qbank'              => 'question/bank/{$name}/',
         'qbehaviour'         => 'question/behaviour/{$name}/',
         'qformat'            => 'question/format/{$name}/',
         'qtype'              => 'question/type/{$name}/',
@@ -63,6 +68,7 @@ class MoodleInstaller extends BaseInstaller
         'scormreport'        => 'mod/scorm/report/{$name}/',
         'search'             => 'search/engine/{$name}/',
         'theme'              => 'theme/{$name}/',
+        'tiny'               => 'lib/editor/tiny/plugins/{$name}/',
         'tinymce'            => 'lib/editor/tinymce/plugins/{$name}/',
         'profilefield'       => 'user/profile/field/{$name}/',
         'webservice'         => 'webservice/{$name}/',

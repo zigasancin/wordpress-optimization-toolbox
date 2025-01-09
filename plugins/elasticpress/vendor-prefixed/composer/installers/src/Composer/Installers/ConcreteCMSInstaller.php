@@ -8,10 +8,14 @@
 
 namespace ElasticPress\Vendor_Prefixed\Composer\Installers;
 
-class UserFrostingInstaller extends BaseInstaller
+class ConcreteCMSInstaller extends BaseInstaller
 {
     /** @var array<string, string> */
     protected $locations = array(
-        'sprinkle' => 'app/sprinkles/{$name}/',
+        'core'       => 'concrete/',
+        'block'      => 'application/blocks/{$name}/',
+        'package'    => 'packages/{$name}/',
+        'theme'      => 'application/themes/{$name}/',
+        'update'     => 'updates/{$name}/',
     );
 }

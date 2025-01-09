@@ -2,7 +2,7 @@
 /**
  * @license MIT
  *
- * Modified by Taylor Lovett on 11-June-2024 using Strauss.
+ * Modified by Taylor Lovett on 12-December-2024 using Strauss.
  * @see https://github.com/BrianHenryIE/strauss
  */
 
@@ -26,5 +26,6 @@ class DrupalInstaller extends BaseInstaller
         'console'          => 'console/{$name}/',
         'console-language' => 'console/language/{$name}/',
         'config'           => 'config/sync/',
+        'recipe'           => 'recipes/{$name}',
     );
 }
