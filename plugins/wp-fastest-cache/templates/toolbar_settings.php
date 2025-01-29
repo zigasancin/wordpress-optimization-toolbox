@@ -30,8 +30,8 @@
 			<div class="window-content" style="z-index: 1000; height: auto; position: relative; display: inline-block; width: 100%;">
 				<div class="wpfc-cdn-pages-container">
 					<div class="wiz-cont" style="">
-						<h1>Authorities</h1>		
-						<p style="margin-bottom: 24px;">This feature allows you to show the clear cache button which exists on the admin toolbar based on user roles. <a target="_blank" href="https://www.wpfastestcache.com/features/clear-cache-link-on-the-toolbar/"><img src="<?php echo plugins_url("wp-fastest-cache/images/info.png"); ?>" /></a></p>
+						<h1><?php _e("User Roles"); ?></h1>		
+						<p style="margin-bottom: 24px;"><?php _e("The WP Fastest Cache menu on the admin toolbar will be visible to the selected user roles below.", "wp-fastest-cache"); ?> <a target="_blank" href="https://www.wpfastestcache.com/features/clear-cache-link-on-the-toolbar/"><img src="<?php echo plugins_url("wp-fastest-cache/images/info.png"); ?>" /></a></p>
 
 						<?php
 							global $wp_roles;

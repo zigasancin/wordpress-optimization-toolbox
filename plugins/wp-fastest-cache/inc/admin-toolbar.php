@@ -44,27 +44,31 @@
 
 			$wp_admin_bar->add_node(array(
 				'id'    => 'wpfc-toolbar-parent',
-				'title' => 'Clear Cache'
+				'title' => 'WP Fastest Cache',
+				'href' => admin_url( 'admin.php?page=wpfastestcacheoptions')
 			));
 
 			$wp_admin_bar->add_menu( array(
 				'id'    => 'wpfc-toolbar-parent-clear-cache-of-this-page',
 				'title' => 'Clear Cache of This Page',
 				'parent'=> 'wpfc-toolbar-parent',
+				'href'  => '#',
 				'meta' => array("class" => "wpfc-toolbar-child")
 			));
 
 			$wp_admin_bar->add_menu( array(
 				'id'    => 'wpfc-toolbar-parent-delete-cache',
-				'title' => 'Delete Cache',
+				'title' => __("Clear All Cache", "wp-fastest-cache"),
 				'parent'=> 'wpfc-toolbar-parent',
+				'href'  => '#',
 				'meta' => array("class" => "wpfc-toolbar-child")
 			));
 
 			$wp_admin_bar->add_menu( array(
 				'id'    => 'wpfc-toolbar-parent-delete-cache-and-minified',
-				'title' => 'Delete Cache and Minified CSS/JS',
+				'title' => 'Clear Cache and Minified CSS/JS',
 				'parent'=> 'wpfc-toolbar-parent',
+				'href'  => '#',
 				'meta' => array("class" => "wpfc-toolbar-child")
 			));
 
@@ -73,6 +77,7 @@
 					'id'    => 'wpfc-toolbar-parent-clear-cache-of-allsites',
 					'title' => __("Clear Cache of All Sites", "wp-fastest-cache"),
 					'parent'=> 'wpfc-toolbar-parent',
+					'href'  => '#',
 					'meta' => array("class" => "wpfc-toolbar-child")
 				));
 			}
@@ -83,20 +88,23 @@
 
 			$wp_admin_bar->add_node(array(
 				'id'    => 'wpfc-toolbar-parent',
-				'title' => __("Delete Cache", "wp-fastest-cache"),
+				'title' => 'WP Fastest Cache',
+				'href' => admin_url( 'admin.php?page=wpfastestcacheoptions')
 			));
 
 			$wp_admin_bar->add_menu( array(
 				'id'    => 'wpfc-toolbar-parent-delete-cache',
 				'title' => __("Clear All Cache", "wp-fastest-cache"),
 				'parent'=> 'wpfc-toolbar-parent',
+				'href'  => '#',
 				'meta' => array("class" => "wpfc-toolbar-child")
 			));
 
 			$wp_admin_bar->add_menu( array(
 				'id'    => 'wpfc-toolbar-parent-delete-cache-and-minified',
-				'title' => __("Delete Cache and Minified CSS/JS", "wp-fastest-cache"),
+				'title' => __("Clear Cache and Minified CSS/JS", "wp-fastest-cache"),
 				'parent'=> 'wpfc-toolbar-parent',
+				'href'  => '#',
 				'meta' => array("class" => "wpfc-toolbar-child")
 			));
 
@@ -105,6 +113,7 @@
 					'id'    => 'wpfc-toolbar-parent-clear-cache-of-allsites',
 					'title' => __("Clear Cache of All Sites", "wp-fastest-cache"),
 					'parent'=> 'wpfc-toolbar-parent',
+					'href'  => '#',
 					'meta' => array("class" => "wpfc-toolbar-child")
 				));
 			}
@@ -114,6 +123,7 @@
 					'id'    => 'wpfc-toolbar-parent-settings',
 					'title' => __("Toolbar Settings", "wp-fastest-cache"),
 					'parent'=> 'wpfc-toolbar-parent',
+					'href'  => '#',
 					'meta' => array("class" => "wpfc-toolbar-child")
 				));
 			}

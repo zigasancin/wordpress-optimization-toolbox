@@ -8,16 +8,12 @@
     height: 100%;
     z-index: 9998;
 }
-#wp-admin-bar-wpfc-toolbar-parent, #wp-admin-bar-wpfc-toolbar-parent-delete-cache, #wp-admin-bar-wpfc-toolbar-parent-delete-cache-and-minified{
-	cursor: pointer;
+#wp-admin-bar-wpfc-toolbar-parent * {
+	cursor: pointer !important;
 }
 
-@supports not (-ms-high-contrast: none) {
+/*@supports not (-ms-high-contrast: none) {
     #wp-admin-bar-wpfc-toolbar-parent > .ab-empty-item::before{
     	content: url("../images/icon.svg");
     }
-}
-
-#wp-admin-bar-wpfc-toolbar-parent .ab-empty-item:hover{
-	background-color: #FFA100;
-}
+}*/

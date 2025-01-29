@@ -3,7 +3,7 @@
 Plugin Name: WP Fastest Cache
 Plugin URI: http://wordpress.org/plugins/wp-fastest-cache/
 Description: The simplest and fastest WP Cache system
-Version: 1.3.2
+Version: 1.3.3
 Author: Emre Vona
 Author URI: https://www.wpfastestcache.com/
 Text Domain: wp-fastest-cache
@@ -884,7 +884,18 @@ GNU General Public License for more details.
 		}
 
 		public function load_admin_toolbar(){
-			if(!defined('WPFC_HIDE_TOOLBAR') || (defined('WPFC_HIDE_TOOLBAR') && !WPFC_HIDE_TOOLBAR)){
+			$display = true;
+			
+			if(apply_filters('wpfc_hide_toolbar', false )){
+				$display = "";
+			}
+
+			if(defined('WPFC_HIDE_TOOLBAR') && WPFC_HIDE_TOOLBAR){
+				$display = "";
+			}
+
+
+			if($display){
 				$user = wp_get_current_user();
 				$allowed_roles = array('administrator');
 
@@ -1191,7 +1202,7 @@ GNU General Public License for more details.
 						$path = preg_replace("/\/cache\/(all|wpfc-minified|wpfc-widget-cache|wpfc-mobile-cache)/", "/cache/".$_SERVER['HTTP_HOST']."/$1", $path);
 					}
 
-					if($this->isPluginActive('polylang/polylang.php')){
+					if($this->isPluginActive('polylang/polylang.php') || $this->isPluginActive('polylang-pro/polylang.php')){
 						$polylang_settings = get_option("polylang");
 
 						if(isset($polylang_settings["force_lang"])){

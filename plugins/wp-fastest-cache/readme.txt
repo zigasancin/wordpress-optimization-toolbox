@@ -4,7 +4,7 @@ Donate link: https://profiles.wordpress.org/emrevona/
 Tags: cache, Optimize, performance, PageSpeed, core web vitals
 Requires at least: 3.3
 Tested up to: 6.7
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -116,6 +116,12 @@ Chinese Simplified (China), Chinese Traditional (Taiwan), Czech, Dutch (Belgium)
 18. Database Cleanup
 
 == Changelog ==
+
+= 1.3.3 =
+* <strong>[Improvement]</strong> Toolbar style adjusted to align with WordPress standard for better consistency and user experience
+* to change the cache path for the Polylang-Pro plugin
+* <strong>[Improvement]</strong> Modified the toolbar menu of WP Fastest Cache plugin to improve usability and navigation
+* <strong>[FEATURE]</strong> Added a filter that allows users to easily remove the WP Fastest Cache menu from the admin toolbar [<a target="_blank" href="https://www.wpfastestcache.com/features/clear-cache-link-on-the-toolbar/#wpft-method-1-using-filter">Details</a>]
 
 = 1.3.2 =
 * <strong>[Improvement]</strong> Added a new action to handle the addition of keyword items in the Preload Wizard
