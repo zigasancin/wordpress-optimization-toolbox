@@ -170,6 +170,9 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 		 $paramListArgs['smartcrop'] = $isSmartCrop;
      $paramListArgs['url'] = $url;
      $paramListArgs['main_url'] = $main_url;
+     // Add main Image Sizes here for checking ratio / smartcrop.
+     $paramListArgs['main_width'] = $this->get('width');
+     $paramListArgs['main_height'] = $this->get('height');
 
 		 $doubles = array(); // check via hash if same command / result is there.
 
@@ -403,9 +406,13 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 		$this->height = $height;
 
     $thumbnails = array();
+
     if (isset($wpmeta['sizes']))
     {
-          foreach($wpmeta['sizes'] as $name => $data)
+          $meta_sizes = $wpmeta['sizes'];
+          $missingDefinitions = [];
+
+          foreach($meta_sizes as $name => $data)
           {
              if (isset($data['file']))
              {
@@ -425,6 +432,9 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
                {
                   $thumbObj->setSizeDefinition($wpImageSizes[$name]);
                }
+               else {
+                  $missingDefinitions[] = $name;
+               }
 
 							 if (isset($data['filesize']))
 							 	$thumbObj->filesize = $data['filesize'];
@@ -432,8 +442,31 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
                $thumbnails[$name] = $thumbObj;
              }
           }
-    }
 
+          // Something went astray, check if a duplicate can be found. This is a fix for when images are a duplicate, but the counter part is not registered in WordPress and SmartCrop is enabled. This then can cause an exception where both duplicates are entered into optimization and causing backup issue.
+          if (count($missingDefinitions) > 0)
+          {
+              foreach($missingDefinitions as $thumbName)
+              {
+                 $targetObj = $thumbnails[$thumbName];
+                 $width = $targetObj->width;
+                 $height = $targetObj->height;
+
+                 foreach($meta_sizes as $size_name => $size_data)
+                 {
+                     if ($size_name == $thumbName) // skip self.
+                     {
+                        continue;
+                     }
+
+                     if ($size_data['width'] == $width && $size_data['height'] == $height && isset($wpImageSizes[$size_name]))
+                     {
+                        $targetObj->setSizeDefinition($wpImageSizes[$size_name]);
+                     }
+                 }
+              }
+          }
+    }
     return $thumbnails;
   }
 
@@ -909,7 +942,6 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
       {
           // Thumbnails is a an array of ThumbnailModels
           $this->thumbnails = $this->loadThumbnailsFromWP();
-
           $result = $this->checkLegacy();
           if ($result)
           {
@@ -964,6 +996,7 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 
              }
           }
+
           $this->thumbnails = $thumbnails;
 
           if (property_exists($metadata, 'retinas') && count($metadata->retinas) > 0 )
@@ -1017,7 +1050,7 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
               $this->resetRecordChanges();
           }
 
-      }
+      } // Elseif metadata object.
 
 				$this->loadLooseItems();
   }
@@ -1533,8 +1566,16 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 				 return false;
 			}
 
+
+
       if (! $bool) // if parent is not processable, check if thumbnails are, can still have a work to do.
       {
+
+          // This is an extra check for a specific bug. If the metadata is mismatched and there is a processable thumbnails (ie jpeg), but the main file is of a non-processable type ( ie webp ), it shows as processable but will not build an URL list because of the convert rule in getOptimizeData
+          if (false === in_array($this->getExtension(), ImageModel::PROCESSABLE_EXTENSIONS))
+          {
+                return false;
+          }
 
 					$thumbObjs = $this->getThumbObjects();
 
@@ -1952,6 +1993,7 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
     do_action('shortpixel_before_restore_image', $this->get('id'));
     do_action('shortpixel/image/before_restore', $this);
 
+
     $cleanRestore = true;
 		$wpmeta = wp_get_attachment_metadata($this->get('id'));
 
@@ -1967,6 +2009,11 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 		// ** Warning - This will also reset metadata ****
     $bool = parent::restore();
 
+    // From ThumbnailModel, prevent cleaning all metadata if there is converted item.
+    if (true === $this->getMeta()->convertMeta()->isConverted() && false === $this->getMeta()->convertMeta()->omitBackup() )
+    {
+       $cleanRestore = false;
+    }
 
 		if ($is_resized)
 		{
@@ -1984,12 +2031,14 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 			 if ($bool)
 			 {
 			 	$bool = $this->restoreConversion($convertMeta, $converter);
+
 				$wpmeta = wp_get_attachment_metadata($this->get('id')); // png2jpg resets WP metadata.
 				$this->resetStatus();
 				$this->setFileInfo();
 			 }
 			 else
 			 {
+        Log::addWarn('Restoring with conversion, but parent was not restored correctly');
 		 	 	return $bool;
 			 }
 		}
@@ -2028,7 +2077,8 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 						}
 					}
 					else {
-						Log::addWarn('Thumbnail not restorable ' . $size,  $this->getReason('restorable'));
+              // Normal occurence when thumbnails have no backup / not optimized.
+            //Log::addWarn('Thumbnail not restorable ' . $size,  $this->getReason('restorable'));
 					}
 
 					if ($unlisted_file === null)
@@ -2272,8 +2322,6 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 				// PNGconvert is first, because some plugins check for _attached_file metadata and prevent deleting files if still connected to media library. Exmaple: polylang.
 				$converter->restore();
 
-
-
 				$this->wp_metadata = null;  // restore changes the metadata.
 				$this->thumbnails = $this->loadThumbnailsFromWP();
 				$this->retinas = null;
@@ -2334,7 +2382,6 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
 			{
 				 $objects[$this->originalImageKey] = $this->getOriginalFile();
 			}
-
 			return $objects;
 	}
 
@@ -2577,8 +2624,7 @@ class MediaLibraryModel extends \ShortPixel\Model\Image\MediaLibraryThumbnailMod
        }
        else
            $did_jpg2png = false;
-    //   $this->image_meta->did_cmyk2rgb = $exifkept;
-      // $this->image_meta->tsOptimized =
+
 
        foreach($this->thumbnails as $thumbname => $thumbnailObj) // ThumbnailModel
        {

@@ -135,9 +135,17 @@ class ShortPixelScreen extends ShortPixelScreenItemBase
                  else {
                    console.error('Row Element not found for '  + folder_id);
                  }
-
              }
           }
+
+					if (data.folder.updated)
+					{
+						var el = document.querySelector('.shortpixel-other-media .item.item-' + folder_id + ' .updated');
+						if (null !== el)
+						{
+							 el.innerText = data.folder.updated;
+						}
+					}
 
        }
 
@@ -318,6 +326,15 @@ class ShortPixelScreen extends ShortPixelScreenItemBase
       // @todo FadeOut function here
       var picker = document.querySelector('.shortpixel-modal.modal-folder-picker');
       this.Hide(picker);
+
+			var message = picker.querySelector('.folder-message');
+			this.Hide(message);
+
+			var notices = picker.querySelectorAll('.shortpixel-notice');
+			for (var i = 0; i < notices.length; i++ )
+			{
+				 notices[i].remove();
+			}
     }
 
     AddNewFolderEvent(event)
@@ -335,8 +352,11 @@ class ShortPixelScreen extends ShortPixelScreenItemBase
            if ( false == messageEl.classList.contains('hidden'))
            {
                messageEl.classList.add('hidden');
+							 this.Hide(messageEl);
            }
+
       }
+
 
       window.addEventListener('shortpixel.folder.AddNewDirectory', this.UpdateFolderViewEvent.bind(this), {'once':true});
 
@@ -381,6 +401,12 @@ class ShortPixelScreen extends ShortPixelScreenItemBase
            {
                messageEl.textContent = data.folder.message;
                messageEl.classList.remove('hidden');
+							 this.Show(messageEl);
+           }
+           if (data.display_notices)
+           {
+                 //var element = document.querySelector('.modal-folder-picker .description');
+                 this.AppendNotices(data.display_notices, messageEl);
            }
         }
 
