@@ -894,7 +894,8 @@ class SetupGuide_Plugin_Admin {
 	 * @return bool
 	 */
 	private function maybe_ask_tos() {
-		if ( defined( 'W3TC_PRO' ) ) {
+		$config = new Config();
+		if ( Util_Environment::is_pro_constant( $config ) ) {
 			return false;
 		}
 
@@ -956,6 +957,7 @@ class SetupGuide_Plugin_Admin {
 							'db_version'        => $wpdb->db_version(),
 							'home_url_host'     => Util_Environment::home_url_host(),
 							'install_version'   => esc_attr( $state->get_string( 'common.install_version' ) ),
+							'w3tc_install_date' => get_option( 'w3tc_install_date' ),
 							'w3tc_edition'      => esc_attr( Util_Environment::w3tc_edition( $config ) ),
 							'list_widgets'      => esc_attr( Util_Widget::list_widgets() ),
 							'ga_profile'        => ( defined( 'W3TC_DEVELOPER' ) && W3TC_DEVELOPER ) ? 'G-Q3CHQJWERM' : 'G-5TFS8M5TTY',
