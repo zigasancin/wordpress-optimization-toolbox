@@ -1322,15 +1322,17 @@ function ewww_image_optimizer_webp_create( $file, $orig_size, $type, $tool, $rec
 		return ewww_image_optimizer_webp_error_message( 4 );
 	}
 	if ( empty( $tool ) || 'image/gif' === $type ) {
-		if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
-			ewww_image_optimizer_cloud_optimizer( $file, $type, false, $webpfile, 'image/webp' );
-		} elseif ( ewwwio()->imagick_supports_webp() ) {
+		if ( 'image/gif' !== $type && ewwwio()->imagick_supports_webp() ) {
 			ewww_image_optimizer_imagick_create_webp( $file, $type, $webpfile );
+		} elseif ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
+			ewww_image_optimizer_cloud_optimizer( $file, $type, false, $webpfile, 'image/webp' );
 		} elseif ( ewwwio()->gd_supports_webp() ) {
 			ewww_image_optimizer_gd_create_webp( $file, $type, $webpfile );
 		} else {
 			ewww_image_optimizer_cloud_optimizer( $file, $type, false, $webpfile, 'image/webp' );
 		}
+	} elseif ( ewwwio()->imagick_supports_webp() ) {
+			ewww_image_optimizer_imagick_create_webp( $file, $type, $webpfile );
 	} else {
 		$nice = '';
 		if ( PHP_OS !== 'WINNT' && ! ewwwio()->cloud_mode && ewwwio()->local->exec_check() ) {
@@ -1793,6 +1795,9 @@ function ewww_image_optimizer_remove_binaries() {
 	foreach ( $iterator as $file ) {
 		if ( $file->isFile() ) {
 			$path = $file->getPathname();
+			if ( strpos( $path, 'image-backup' ) ) {
+				continue;
+			}
 			if ( is_writable( $path ) ) {
 				unlink( $path );
 			}
