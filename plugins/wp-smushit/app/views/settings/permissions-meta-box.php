@@ -14,7 +14,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 ?>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="permissions-subsite-controls-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Subsite Controls', 'wp-smushit' ); ?>

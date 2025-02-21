@@ -235,10 +235,11 @@ class Error_Handler {
 	 */
 	public static function get_error( WP_Error $errors, Media_Item $media_item ) {
 		$thumbnail = $media_item->get_size('thumbnail' );
+		$media_item_size = $media_item->get_scaled_or_full_size();
 		return array(
 			'error_code'    => $errors->get_error_code(),
 			'error_message' => $errors->get_error_message(),
-			'file_name'     => $media_item->get_scaled_or_full_size()->get_file_name(),
+			'file_name'     => $media_item_size ? $media_item_size->get_file_name() : '',
 			'thumbnail'     => $thumbnail ? $thumbnail->get_file_url() : false,
 		);
 	}

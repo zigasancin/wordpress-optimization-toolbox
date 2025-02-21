@@ -49,6 +49,7 @@ export const Configs = ({ isWidget }) => {
 			'Use configs to save preset configurations of Smush’s settings, then upload and apply them to your other sites in just a few clicks!',
 			'wp-smushit'
 		),
+		freeNoticeMessage: __( 'Tired of saving, downloading and uploading your configs across your sites? WPMU DEV members use The Hub to easily apply configs to multiple sites at once… Try it today!', 'wp-smushit' ),
 		proDescription,
 		syncWithHubText: __(
 			'Created or updated configs via the Hub?',

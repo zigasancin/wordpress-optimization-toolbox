@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 	</p>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="data-uninstallation-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label"><?php esc_html_e( 'Data', 'wp-smushit' ); ?></span>
 		<span class="sui-description">
@@ -60,7 +60,7 @@ if ( ! defined( 'WPINC' ) ) {
 	</div>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="api-status-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label"><?php esc_html_e( 'API Status', 'wp-smushit' ); ?></span>
 		<span class="sui-description">

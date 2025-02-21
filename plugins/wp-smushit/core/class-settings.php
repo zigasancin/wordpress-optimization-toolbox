@@ -85,6 +85,7 @@ class Settings {
 		'background_email'       => false,
 		'webp_direct_conversion' => false,
 		'webp_fallback'          => false,
+		'disable_streams'        => false,
 	);
 
 	/**
@@ -155,7 +156,7 @@ class Settings {
 	 *
 	 * @var array
 	 */
-	private $settings_fields = array( 'detection', 'accessible_colors', 'usage', 'keep_data', 'api_auth' );
+	private $settings_fields = array( 'detection', 'accessible_colors', 'usage', 'keep_data', 'api_auth', 'disable_streams' );
 
 	/**
 	 * List of fields in lazy loading form.
@@ -712,6 +713,7 @@ class Settings {
 		$this->delete_setting( 'wp-smush-resize_sizes' );
 		$this->delete_setting( 'wp-smush-cdn_status' );
 		$this->delete_setting( 'wp-smush-lazy_load' );
+		$this->delete_setting( 'wp-smush-cdn-advanced-settings' );
 		$this->delete_setting( 'wp-smush-hide-tutorials' );
 		delete_option( 'wp-smush-png2jpg-rewrite-rules-flushed' );
 		delete_option( 'wp_smush_scan_slice_size' );
@@ -722,6 +724,9 @@ class Settings {
 
 		// Reset site settings.
 		$this->reset_site_settings();
+
+		// Reset sub-sites.
+		$this->reset_sub_sites();
 
 		wp_send_json_success();
 	}
@@ -742,6 +747,41 @@ class Settings {
 		if ( false === $this->get_setting( self::SETTINGS_KEY, false ) ) {
 			$this->add_default_site_settings();
 		}
+	}
+
+	private function reset_sub_sites() {
+		if ( ! is_multisite() ) {
+			return;
+		}
+
+		// Limit 100 sub sites by default.
+		$site_args = array(
+			'fields' => 'ids',
+			'public' => 1,
+		);
+
+		$site_ids = get_sites( $site_args );
+		if ( empty( $site_ids ) ) {
+			return;
+		}
+
+		foreach( $site_ids as $site_id ) {
+			switch_to_blog( $site_id );
+			$this->reset_sub_site_settings();
+			restore_current_blog();
+		}
+	}
+
+	private function reset_sub_site_settings() {
+		delete_option( self::SETTINGS_KEY );
+		delete_option( 'wp-smush-image_sizes' );
+		delete_option( 'wp-smush-resize_sizes' );
+		delete_option( 'wp-smush-cdn_status' );
+		delete_option( 'wp-smush-lazy_load' );
+		delete_option( 'wp-smush-cdn-advanced-settings' );
+		delete_option( 'wp-smush-hide-tutorials' );
+		delete_option( 'skip-smush-setup' );
+		delete_option( 'wp_smush_scan_slice_size' );
 	}
 
 	/**
@@ -897,6 +937,23 @@ class Settings {
 				$this->set_setting( 'wp-smush-cdn_status', $response->data );
 			}
 		}
+
+		$cdn_advanced_settings = $this->get_setting( 'wp-smush-cdn-advanced-settings', array() );
+		if ( isset( $_POST['excluded-keywords'] ) ) {
+			$exclusion_keywords = filter_input(
+				INPUT_POST,
+				'excluded-keywords',
+				FILTER_CALLBACK,
+				array(
+					'options' => 'sanitize_text_field',
+				)
+			);
+
+			$exclusion_keywords                         = preg_split( '/[\r\n\t ]+/', trim( $exclusion_keywords ) );
+			$cdn_advanced_settings['excluded-keywords'] = $exclusion_keywords;
+
+			$this->set_setting( 'wp-smush-cdn-advanced-settings', $cdn_advanced_settings );
+		}
 	}
 
 	/**
@@ -928,9 +985,9 @@ class Settings {
 				'filter'  => FILTER_CALLBACK,
 				'options' => 'sanitize_text_field',
 			),
-			'footer'          => FILTER_VALIDATE_BOOLEAN,
-			'native'          => FILTER_VALIDATE_BOOLEAN,
-			'noscript'        => FILTER_VALIDATE_BOOLEAN,
+			'footer'            => FILTER_VALIDATE_BOOLEAN,
+			'native'            => FILTER_VALIDATE_BOOLEAN,
+			'noscript_fallback' => FILTER_VALIDATE_BOOLEAN,
 		);
 
 		$settings = filter_input_array( INPUT_POST, $args );
@@ -1080,11 +1137,11 @@ class Settings {
 				'category'  => true,
 				'tag'       => true,
 			),
-			'exclude-pages'   => array(),
-			'exclude-classes' => array(),
-			'footer'          => true,
-			'native'          => false,
-			'noscript'        => false,
+			'exclude-pages'     => array(),
+			'exclude-classes'   => array(),
+			'footer'            => true,
+			'native'            => false,
+			'noscript_fallback' => false,
 		);
 
 		$this->set_setting( 'wp-smush-lazy_load', $defaults );
@@ -1191,7 +1248,7 @@ class Settings {
 	}
 
 	public function get_highest_lossy_level() {
-		if( WP_Smush::is_pro() ) {
+		if ( WP_Smush::is_pro() ) {
 			return self::LEVEL_ULTRA_LOSSY;
 		}
 		return self::LEVEL_SUPER_LOSSY;
@@ -1229,6 +1286,14 @@ class Settings {
 
 	public function has_webp_page() {
 		return $this->is_page_active( 'webp' );
+	}
+
+	public function streaming_enabled() {
+		if ( defined( 'WP_SMUSH_USE_STREAMS' ) ) {
+			return (bool) WP_SMUSH_USE_STREAMS;
+		}
+
+		return self::get_instance()->get( 'disable_streams' ) != WP_SMUSH_VERSION;
 	}
 
 	private function is_page_active( $page_slug ) {

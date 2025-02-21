@@ -151,16 +151,23 @@ class Media_Item_Query {
 	/**
 	 * @see attachment_url_to_postid()
 	 */
-	public function attachment_urls_to_ids( $urls ) {
-		if ( empty( $urls ) ) {
+	public function attachment_urls_to_ids( $absolute_urls ) {
+		if ( empty( $absolute_urls ) ) {
 			return array();
 		}
 
-		$relative_urls = array_map( array( $this, 'convert_attachment_url_to_relative' ), $urls );
-		$escaped_urls  = array_map( function ( $url ) {
-			return "'" . esc_sql( $url ) . "'";
-		}, $relative_urls );
-		$in            = join( ',', $escaped_urls );
+		$absolute_key_relative_value = array();
+		$relative_key_absolute_value = array();
+		foreach ( $absolute_urls as $absolute_url ) {
+			$relative_url                                 = $this->convert_attachment_url_to_relative( $absolute_url );
+			$absolute_key_relative_value[ $absolute_url ] = $relative_url;
+			$relative_key_absolute_value[ $relative_url ] = $absolute_url;
+		}
+
+		$escaped_relative_urls = array_map( function ( $relative_url ) {
+			return "'" . esc_sql( $relative_url ) . "'";
+		}, $absolute_key_relative_value );
+		$in                    = join( ',', $escaped_relative_urls );
 
 		global $wpdb;
 		$sql = "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})";
@@ -172,11 +179,10 @@ class Media_Item_Query {
 
 		$ids = array();
 		foreach ( $results as $result ) {
-			$meta_value   = $result['meta_value'];
-			$index        = array_search( $meta_value, $relative_urls, true );
-			$original_url = $urls[ $index ];
+			$meta_value            = $result['meta_value'];
+			$original_absolute_url = $relative_key_absolute_value[ $meta_value ];
 
-			$ids[ $original_url ] = $result['post_id'];
+			$ids[ $original_absolute_url ] = $result['post_id'];
 		}
 		return $ids;
 	}

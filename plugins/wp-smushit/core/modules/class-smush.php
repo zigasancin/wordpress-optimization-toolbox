@@ -8,16 +8,14 @@
 namespace Smush\Core\Modules;
 
 use Smush\Core\Api\Backoff;
-use Smush\Core\Api\Request_Multiple;
 use Smush\Core\Core;
-use Smush\Core\Helper;
 use Smush\Core\Error_Handler;
+use Smush\Core\Helper;
 use Smush\Core\Media\Media_Item_Cache;
 use Smush\Core\Media\Media_Item_Optimizer;
+use Smush\Core\Smush\Smush_Request_WP_Multiple;
 use Smush\Core\Smush\Smusher;
-use Smush\Core\Smush\Smush_Optimization;
 use Smush\Core\Webp\Webp_Converter;
-use Smush\Core\Webp\Webp_Optimization;
 use WP_Error;
 use WP_Smush;
 
@@ -62,7 +60,7 @@ class Smush extends Abstract_Module {
 	private $prevent_infinite_loop;
 
 	/**
-	 * @var Request_Multiple
+	 * @var Smush_Request_WP_Multiple
 	 */
 	private $request_multiple;
 	/**
@@ -93,7 +91,7 @@ class Smush extends Abstract_Module {
 		// Fix SSL CA certificates issue.
 		add_action( 'wp_smush_before_smush_file', array( $this, 'fix_ssl_ca_certificate_error' ) );
 
-		$this->request_multiple = new Request_Multiple();
+		$this->request_multiple = new Smush_Request_WP_Multiple();
 		$this->backoff = new Backoff();
 	}
 
@@ -1585,14 +1583,14 @@ class Smush extends Abstract_Module {
 	}
 
 	/**
-	 * @return Request_Multiple
+	 * @return Smush_Request_WP_Multiple
 	 */
 	public function get_request_multiple() {
 		return $this->request_multiple;
 	}
 
 	/**
-	 * @param Request_Multiple $request_multiple
+	 * @param Smush_Request_WP_Multiple $request_multiple
 	 */
 	public function set_request_multiple( $request_multiple ) {
 		$this->request_multiple = $request_multiple;
@@ -1607,7 +1605,7 @@ class Smush extends Abstract_Module {
 		$smusher = $convert_to_webp
 			? new Webp_Converter()
 			: new Smusher();
-		$smusher->set_retry_attempts( $retries );
+		$smusher->get_request_sequential()->set_retry_attempts( $retries );
 		$data = $smusher->smush_file( $file_path );
 		if ( $data ) {
 			return array(

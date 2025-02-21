@@ -49,7 +49,6 @@ class Background_Pre_Flight_Controller extends Controller {
 			$this,
 			'get_background_pre_flight_status_ajax',
 		) );
-		$this->register_action( 'wp_smush_refresh_cron_status', array( $this, 'set_cron_healthy' ) );
 	}
 
 	public function start_pre_flight_check_ajax() {
@@ -79,16 +78,27 @@ class Background_Pre_Flight_Controller extends Controller {
 		$this->reset_pre_flight_option();
 
 		$this->loopback_tester->test();
-
-		wp_schedule_single_event( time(), 'wp_smush_refresh_cron_status' );
-	}
-
-	public function set_cron_healthy() {
-		$this->set_item_healthy( 'cron' );
 	}
 
 	public function is_cron_healthy() {
-		return $this->is_item_healthy( 'cron' );
+		$common_cron_hooks = array(
+			'wp_version_check',
+			'wp_update_plugins',
+		);
+
+		foreach ( $common_cron_hooks as $hook ) {
+			$next_scheduled_time = wp_next_scheduled( $hook );
+			if ( ! $next_scheduled_time ) {
+				continue;
+			}
+
+			$delayed_time = time() - $next_scheduled_time;
+
+			// If any of the core cron hooks are delayed by more than 30 minutes, then cron is unhealthy.
+			return $delayed_time < ( HOUR_IN_SECONDS / 2 );
+		}
+
+		return false;
 	}
 
 	public function is_loopback_healthy() {

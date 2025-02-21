@@ -1,6 +1,7 @@
 /* global WP_Smush */
 /* global ajaxurl */
 import tracker from "../utils/tracker";
+import GlobalTracking from '../global-tracking';
 
 /**
  * Modals JavaScript code.
@@ -43,6 +44,7 @@ import tracker from "../utils/tracker";
 		touchX: null,
 		touchY: null,
 		recheckImagesLink: '',
+		proFeaturesClicked: [],
 		/**
 		 * Init module.
 		 */
@@ -62,7 +64,9 @@ import tracker from "../utils/tracker";
 					'auto',
 					'lossy',
 					'strip_exif',
+					'original',
 					'lazy_load',
+					'pro_upsell',
 				];
 			}
 
@@ -73,11 +77,11 @@ import tracker from "../utils/tracker";
 			this.renderTemplate();
 
 			// Skip setup.
-			const skipButton = this.onboardingModal.querySelector(
+			this.skipButton = this.onboardingModal.querySelector(
 				'.smush-onboarding-skip-link'
 			);
-			if ( skipButton ) {
-				skipButton.addEventListener( 'click', this.skipSetup.bind( this ) );
+			if ( this.skipButton ) {
+				this.skipButton.addEventListener( 'click', this.skipSetup.bind( this ) );
 			}
 
 			// Show the modal.
@@ -175,6 +179,20 @@ import tracker from "../utils/tracker";
 			);
 
 			this.bindSubmit();
+			this.toggleSkipButton();
+			this.maybeHandleProFeatureClick();
+		},
+
+		toggleSkipButton() {
+			if ( ! this.skipButton ) {
+				return;
+			}
+
+			if ( this.settings.last ) {
+				this.skipButton.classList.add( 'sui-hidden' );
+			} else {
+				this.skipButton.classList.remove( 'sui-hidden' );
+			}
 		},
 
 		/**
@@ -190,6 +208,8 @@ import tracker from "../utils/tracker";
 				submitButton.addEventListener( 'click', function( e ) {
 					e.preventDefault();
 
+					submitButton.classList.add( 'wp-smush-link-in-progress' );
+
 					// Because we are not rendering the template, we need to update the last element value.
 					const input = self.onboardingModal.querySelector(
 						'input[type="checkbox"]'
@@ -197,6 +217,8 @@ import tracker from "../utils/tracker";
 					if ( input ) {
 						self.selection[ input.id ] = input.checked;
 					}
+
+					self.trackFinishSetupWizard();
 
 					const _nonce = document.getElementById(
 						'smush_quick_setup_nonce'
@@ -302,6 +324,9 @@ import tracker from "../utils/tracker";
 		skipSetup() {
 			const _nonce = document.getElementById( 'smush_quick_setup_nonce' );
 
+			// Track skip setup wizard.
+			this.trackSkipSetupWizard();
+
 			const xhr = new XMLHttpRequest();
 			xhr.open(
 				'POST',
@@ -330,6 +355,7 @@ import tracker from "../utils/tracker";
 		 */
 		hideUpgradeModal: ( e, button ) => {
 			e.preventDefault();
+
 			button.classList.add( 'wp-smush-link-in-progress' );
 			const redirectUrl = button?.href;
 			const xhr = new XMLHttpRequest();
@@ -355,6 +381,119 @@ import tracker from "../utils/tracker";
 			};
 			xhr.send();
 		},
+		maybeHandleProFeatureClick() {
+			const isProUpsellSlide = 'pro_upsell' === this.settings?.slide;
+			if ( ! isProUpsellSlide ) {
+				return;
+			}
+
+			this.upsellButton = this.onboardingModal.querySelector( '.smush-btn-pro-upsell' );
+			const proFeatureToggleContainer = this.onboardingModal.querySelector( '.sui-field-list' );
+
+			if ( proFeatureToggleContainer ) {
+				proFeatureToggleContainer.addEventListener( 'click', ( event ) => {
+					const proFeatureClicked = event.target.matches( 'label' ) || event.target.closest( '.sui-toggle' );
+					if ( proFeatureClicked ) {
+						const featureName = event.target.closest( '.sui-field-list-item' ).querySelector( 'input[type="checkbox"]' )?.name;
+						this.handleProFeatureClicked( featureName );
+					}
+				});
+			}
+
+			this.maybeTrackProUpsell();
+		},
+		handleProFeatureClicked( featureName ) {
+			this.cacheProFeatureClick( featureName );
+			this.highlightUpsellButton();
+		},
+		highlightUpsellButton() {
+			if ( ! this.upsellButton ) {
+				return;
+			}
+			this.upsellButton.classList.remove( 'smush-btn-ripple' );
+			void this.upsellButton.offsetWidth; // Trigger a reflow.
+			this.upsellButton.classList.add( 'smush-btn-ripple' );
+		},
+		cacheProFeatureClick( proFeature ) {
+			if ( ! this.proFeaturesClicked.includes( proFeature ) ) {
+				this.proFeaturesClicked.push( proFeature );
+			}
+		},
+		trackFinishSetupWizard() {
+			this.trackSetupWizard( 'finish' );
+		},
+		trackSkipSetupWizard() {
+			this.trackSetupWizard( 'quit' );
+		},
+		trackSetupWizard( action ) {
+			const quitWizard = 'quit' === action;
+			const properties = {
+				Action: quitWizard ? 'quit' : 'finish',
+				'Quit Step': this.getQuitStep( quitWizard ),
+				'Settings Enabled': this.getEnabledSettings( quitWizard ),
+				'Pro Interests': this.getProInterests(),
+			};
+
+			const allowToTrack = this.selection?.usage;
+
+			tracker.setAllowToTrack( allowToTrack ).track( 'Setup Wizard', properties );
+		},
+		getQuitStep( quitWizard ) {
+			if ( ! quitWizard ) {
+				return 'na';
+			}
+
+			const fieldMapsForTracking = this.getFieldMapsForTracking();
+			const setting = this.settings.slide;
+
+			return setting in fieldMapsForTracking ? fieldMapsForTracking[ setting ] : 'na';
+		},
+		getEnabledSettings( quitWizard ) {
+			if ( quitWizard ) {
+				return 'na';
+			}
+
+			const fieldMapsForTracking = this.getFieldMapsForTracking();
+			const enabledSettings = [];
+
+			Object.entries( this.selection ).forEach( ( [ setting, enabled ] ) => {
+				if ( enabled ) {
+					const featureName = setting in fieldMapsForTracking ? fieldMapsForTracking[ setting ] : setting;
+					enabledSettings.push( featureName );
+				}
+			} );
+
+			return enabledSettings;
+		},
+		getProInterests() {
+			if ( 'pro' === this.membership || ! this.proFeaturesClicked.length ) {
+				return 'na';
+			}
+
+			return this.proFeaturesClicked;
+		},
+		getFieldMapsForTracking() {
+			return {
+				usage: 'tracking',
+				auto: 'auto_smush',
+				lossy: 'free' === this.membership ? 'super_smush' : 'ultra_smush',
+				strip_exif: 'strip_exif',
+				original: 'full_size',
+				lazy_load: 'lazy_load',
+				pro_upsell: 'upgrade',
+			};
+		},
+		maybeTrackProUpsell() {
+			if ( ! this.upsellButton ) {
+				return;
+			}
+
+			this.upsellButton.addEventListener( 'click', ( event ) => {
+				const allowToTrack = this.selection?.usage;
+				tracker.setAllowToTrack( allowToTrack );
+				( new GlobalTracking() ).trackSetupWizardProUpsell( event?.target?.href, this.getProInterests() );
+			} );
+		}
 	};
 
 	/**

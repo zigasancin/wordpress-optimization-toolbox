@@ -217,7 +217,7 @@ class Media_Item_Size {
 		}
 
 		$selected = $this->settings->get_setting( 'wp-smush-image_sizes' );
-		if ( empty( $selected ) || ! is_array( $selected ) ) {
+		if ( ! is_array( $selected ) ) {
 			return true;
 		}
 

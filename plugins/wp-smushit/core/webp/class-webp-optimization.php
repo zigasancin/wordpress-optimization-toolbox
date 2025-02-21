@@ -127,10 +127,13 @@ class Webp_Optimization extends Media_Item_Optimization {
 
 	public function optimize() {
 		$media_item        = $this->media_item;
-		$file_paths        = array_map( function ( $size ) {
-			return $size->get_file_path();
+		$files_data        = array_map( function ( $size ) {
+			return array(
+				'url'  => $size->get_file_url(),
+				'path' => $size->get_file_path(),
+			);
 		}, $media_item->get_smushable_sizes() );
-		$responses         = $this->converter->smush( $file_paths, ! $media_item->is_large() );
+		$responses         = $this->converter->smush( $files_data );
 		$success_responses = array_filter( $responses );
 		if ( count( $success_responses ) !== count( $responses ) ) {
 			return false;

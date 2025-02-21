@@ -464,6 +464,87 @@
 						}
 					}
 				}
+
+				.sui-field-list {
+					margin: 0 auto 30px;
+					max-width: 430px;
+					padding: 0 15px;
+					border: none;
+					font-size: 13px;
+					.sui-field-list-item {
+						border: none;
+						border-radius: 5px;
+						padding: 10px 20px;
+						background-color: #f5f5f5;
+						margin-bottom: 10px;
+						label {
+							font-weight: 500;
+							line-height: 22px;
+						}
+						.sui-link {
+							line-height: 22px;
+						}
+
+						.sui-button-icon {
+							width:18px;
+							height:18px;
+							padding: 0;
+							position: relative;
+							top:2px;
+							left: 1px;
+							.sui-icon-info {
+								font-size: 14px;
+								color: #aaa;
+							}
+							&:hover {
+								.sui-icon-info {
+									color: #888888;
+								}
+							}
+						}
+					}
+					.sui-tooltip {
+						&:focus {
+							box-shadow: none;
+						}
+					}
+				}
+
+				.smush-onboarding-buttons {
+					padding: 0 15px;
+					max-width: 430px;
+					margin: 0 auto;
+					.smush-onboarding-buttons-inner {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+					}
+					.sui-button {
+						padding: 5px 15px;
+						display: inline-block;
+						width: calc( 50% - 5px );
+						span {
+							background-color: #333;
+							color: #fff;
+							border-radius: 4px;
+							padding: 3px 10px;
+							font-size: 10px;
+							margin-left:4px;
+						}
+					}
+				}
+
+				@media( max-width:480px ) {
+					.sui-field-list {
+						font-size: 12px;
+					}
+
+					.smush-onboarding-buttons {
+						.sui-button {
+							font-size: 11px;
+						}
+					}
+				}
 			}
 
 			.smush-onboarding-arrows a {
@@ -493,6 +574,12 @@
 				}
 
 				i:before { color: #fff; }
+			}
+
+			.smush-onboarding-skip-link {
+				&.sui-hidden {
+					display: none;
+				}
 			}
 
 			@media screen and (max-width: 782px) {
@@ -1002,6 +1089,18 @@
 		.sui-toggle + label {
 			font-weight: 500;
 		}
+
+		/**
+		 * Fixes config name misalignment when white label is enabled and WPMU DEV branding is using a custom logo.
+		 * @since 3.17.0
+		 */
+		#smush-box-configs {
+			.sui-accordion-item-title {
+				.sui-checkbox:last-child {
+					margin-right: 15px;
+				}
+			}
+		}
 	}
 
 	.smush-align-left {
@@ -1321,6 +1420,20 @@
 		}
 	}
 
+	.wp-smush-deactivation-survey-modal {
+		.smush-deactivation-field-row {
+			margin-bottom: 5px;
+		}
+	}
+
+	#smush-resize-settings-wrap {
+		.sui-form-field-warning {
+			.wp-smush-resize-input {
+				border-color: $yellow;
+			}
+		}
+	}
+
 	/**
 	 * Fixes the headers and footers with .sui-actions-right on mobiles.
 	 *
@@ -1347,6 +1460,37 @@
 				flex-direction: column;
 				align-items: flex-end;
 			}
+		}
+	}
+  
+	/* Ripple effect */
+	.smush-btn-ripple {
+		position: relative;
+		overflow: hidden;
+	}
+  
+	.smush-btn-ripple::after {
+		content: '';
+		position: absolute;
+		top: 70%;
+		right: 70%;
+		width: 100%;
+		height: 100%;
+		background: rgba(255, 255, 255, 0.5);
+		border-radius: 50%;
+		transform: scale(0);
+		transform-origin: center;
+		animation: ripple 1s;
+	}
+
+	@keyframes ripple {
+		0% {
+			transform: scale(0);
+			opacity: 1;
+		}
+		100% {
+			transform: scale(3);
+			opacity: 0;
 		}
 	}
 }

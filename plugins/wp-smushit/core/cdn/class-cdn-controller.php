@@ -3,6 +3,7 @@
 namespace Smush\Core\CDN;
 
 use Smush\Core\Controller;
+use Smush\Core\Cron_Controller;
 use Smush\Core\Helper;
 use Smush\Core\Settings;
 use WP_Error;
@@ -34,12 +35,11 @@ class CDN_Controller extends Controller {
 			'register_cdn_transform',
 		), self::CDN_TRANSFORM_PRIORITY );
 		$this->register_action( 'wp_ajax_get_cdn_stats', array( $this, 'ajax_update_stats' ) );
-		$this->register_action( 'smush_update_cdn_stats', array( $this, 'cron_update_stats' ) );
 		$this->register_action( 'wp_ajax_smush_toggle_cdn', array( $this, 'ajax_toggle_cdn' ) );
 		$this->register_filter( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 99, 2 );
 
 		if ( $this->cdn_helper->is_cdn_active() ) {
-			$this->register_action( 'admin_init', array( $this, 'schedule_cron' ) );
+			$this->register_action( Cron_Controller::CRON_HOOK, array( $this, 'cron_update_stats' ) );
 		}
 	}
 
@@ -106,18 +106,6 @@ class CDN_Controller extends Controller {
 		return $status->data;
 	}
 
-	public function schedule_cron() {
-		if ( ! wp_next_scheduled( 'smush_update_cdn_stats' ) ) {
-			// Schedule first run for next day, as we've already checked just now.
-			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', 'smush_update_cdn_stats' );
-		}
-	}
-
-	public static function unschedule_cron() {
-		$timestamp = wp_next_scheduled( 'smush_update_cdn_stats' );
-		wp_unschedule_event( $timestamp, 'smush_update_cdn_stats' );
-	}
-
 	public function toggle_cdn( $enable ) {
 		$this->settings->set( 'cdn', $enable );
 
@@ -139,13 +127,9 @@ class CDN_Controller extends Controller {
 
 				$this->settings->set_setting( 'wp-smush-cdn_status', $enable_response );
 			}
-
-			$this->schedule_cron();
 		} else {
 			// Remove CDN settings if disabling.
 			$this->settings->delete_setting( 'wp-smush-cdn_status' );
-
-			self::unschedule_cron();
 		}
 
 		do_action( 'wp_smush_cdn_status_changed' );

@@ -25,7 +25,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 <?php do_action( 'wp_smush_render_setting_row', 'detection', $detection ); ?>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="general-translations-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label "><?php esc_html_e( 'Translations', 'wp-smushit' ); ?></span>
 		<span class="sui-description">

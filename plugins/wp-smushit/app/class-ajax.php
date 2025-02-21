@@ -182,7 +182,8 @@ class Ajax {
 			}
 
 			// If Smush originals is selected, enable backups.
-			if ( 'original' === $name && $settings[ $name ] && WP_Smush::is_pro() ) {
+			$require_backup = 'original' === $name && ! empty( $settings[ $name ] );
+			if ( $require_backup ) {
 				$settings['backup'] = true;
 			}
 

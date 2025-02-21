@@ -104,8 +104,8 @@ class Lazy_Load_Helper {
 	}
 
 	public function is_noscript_fallback_enabled() {
-		$noscript = $this->array_utils->get_array_value( $this->get_lazy_load_options(), 'noscript' );
-		return empty( $noscript );
+		$noscript_fallback = $this->array_utils->get_array_value( $this->get_lazy_load_options(), 'noscript_fallback' );
+		return ! empty( $noscript_fallback );
 	}
 
 	private function get_excluded_pages() {

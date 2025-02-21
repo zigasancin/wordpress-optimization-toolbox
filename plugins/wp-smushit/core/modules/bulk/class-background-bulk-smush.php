@@ -6,6 +6,7 @@ use Smush\Core\Error_Handler;
 use Smush\Core\Helper;
 use Smush\Core\Server_Utils;
 use Smush\Core\Stats\Global_Stats;
+use Smush\Core\Media_Library\Media_Library_Last_Process;
 
 use WP_Smush;
 
@@ -115,9 +116,12 @@ class Background_Bulk_Smush {
 	public function bulk_smush_get_status() {
 		$this->check_ajax_referrer();
 
+		$is_process_stuck = Media_Library_Last_Process::get_instance()->is_process_stuck();
+
 		wp_send_json_success( array_merge(
 			$this->background_process->get_status()->to_array(),
 			array(
+				'is_process_stuck'  => $is_process_stuck,
 				'in_process_notice' => $this->get_in_process_notice(),
 			)
 		) );

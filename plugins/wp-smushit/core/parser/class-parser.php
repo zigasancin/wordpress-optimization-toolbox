@@ -55,8 +55,9 @@ class Parser {
 			if ( ! isset( $match['src'], $match['ext'] ) ) {
 				continue;
 			}
-			$image_urls[] = new Image_URL(
-				$this->remove_quote_entities( $match['src'] ),
+			$src                = $match['src'];
+			$image_urls[ $src ] = new Image_URL(
+				$this->remove_quote_entities( $src ),
 				$match['ext'],
 				$base_url
 			);
@@ -115,6 +116,10 @@ class Parser {
 
 		$elements = array();
 		foreach ( $matches as $item ) {
+			if ( empty( $item['element'] ) ) {
+				continue;
+			}
+
 			$element        = $item['element'];
 			$tag_name       = ! empty( $item['img'] ) ? $item['img'] : $item['tag'];
 			$attributes     = $this->get_element_attributes( $element, $base_url );
@@ -126,10 +131,10 @@ class Parser {
 				continue;
 			}
 
-			$elements[] = new Element( $element, $tag_name, $attributes, $css_properties );
+			$elements[ $element ] = new Element( $element, $tag_name, $attributes, $css_properties );
 		}
 
-		return $elements;
+		return array_values( $elements );
 	}
 
 	/**
@@ -351,6 +356,10 @@ class Parser {
 		return empty( $matches[0]['value'] )
 			? ''
 			: $matches[0]['value'];
+	}
+
+	public function markup_contains_noscript( $markup ) {
+		return false !== strpos( $markup, '<noscript>' );
 	}
 
 	private function is_safe( $str ) {

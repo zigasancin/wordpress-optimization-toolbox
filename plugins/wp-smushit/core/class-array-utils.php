@@ -25,6 +25,10 @@ class Array_Utils {
 	}
 
 	public function get_array_value( $haystack, $key, $default_value = null ) {
+		if ( empty( $key ) ) {
+			return $default_value;
+		}
+
 		if ( ! is_array( $key ) ) {
 			$key = array( $key );
 		}

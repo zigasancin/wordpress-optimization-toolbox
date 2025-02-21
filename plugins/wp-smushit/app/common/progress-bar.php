@@ -60,14 +60,34 @@ if ( ! defined( 'WPINC' ) ) {
 			<i class="sui-icon-play"></i>
 		</button>
 	</div>
+	
+	<div class="sui-box-footer" style="border-top:none;margin:10px 0 0;padding:0;">
+		<div class="sui-actions-left" style="margin:0">
+			<div class="wp-smush-bulk-hold-on-notice sui-hidden">
+				<p class="sui-p-small" style="color:#333">
+					<?php
+					printf(
+						/* translators: 1: Open <strong> tag, 2: Close </strong> tag */
+						esc_html__( '%1$sNote:%2$s The process is taking longer than expected, please hold on while we try to resolve this for you.', 'wp-smushit' ),
+						'<strong>',
+						'</strong>'
+					);
+					?>
+				</p>
+			</div>
+		</div>
 
-	<div class="sui-progress-state">
-		<span class="sui-progress-state-text"><span>0</span>/<span class="wp-smush-total-count"><?php echo absint( $count ); ?></span> </span>
-		<span class="sui-progress-state-unit"><?php esc_html_e( 'images optimized', 'wp-smushit' ); ?></span>
+		<!-- Elements aligned to right -->
+		<div class="sui-actions-right">
+			<div class="sui-progress-state">
+				<span class="sui-progress-state-text"><span>0</span>/<span class="wp-smush-total-count"><?php echo absint( $count ); ?></span> </span>
+				<span class="sui-progress-state-unit"><?php esc_html_e( 'images optimized', 'wp-smushit' ); ?></span>
+			</div>
+		</div>
 	</div>
 
 	<div id="bulk-smush-resume-button" class="sui-hidden">
-		<a class="wp-smush-all sui-button wp-smush-started wp-smush-resume-bulk-smush">
+		<a class="sui-button wp-smush-started wp-smush-resume-bulk-smush">
 			<i class="sui-icon-play" aria-hidden="true"></i>
 			<?php esc_html_e( 'Resume', 'wp-smushit' ); ?>
 		</a>

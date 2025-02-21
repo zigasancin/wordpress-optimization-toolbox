@@ -577,7 +577,7 @@ class Dir extends Abstract_Module {
 
 		// PHP 8.1 strlen doesn't accept null.
 		if ( ! is_null( $dir ) && strlen( $dir ) >= 1 ) {
-			$post_dir = path_join( $root, $dir );
+			$post_dir = realpath( path_join( $root, $dir ) );
 		} else {
 			$post_dir = $root;
 		}
@@ -672,7 +672,14 @@ class Dir extends Abstract_Module {
 				$i++;
 			}
 
-			return implode( '/', $common_path );
+			$is_valid_path = count( $common_path ) > 1 || ! empty( $common_path[0] );
+			if ( $is_valid_path ) {
+				return implode( '/', $common_path );
+			}
+
+			// If couldn't detect the root folder, it seems there is custom directory structure, e.g Flywheel.
+			// Let's try to use parent folder of WP_CONTENT_DIR.
+			return dirname( wp_normalize_path( WP_CONTENT_DIR ) );
 		}
 
 		$up = wp_upload_dir();
@@ -743,12 +750,16 @@ class Dir extends Abstract_Module {
 
 		// Avoid checking already validated paths.
 		$validated_dirs = array();
+		$root_path      = $this->get_root_path();
 
 		// Iterate over all the selected items (can be either an image or directory).
 		foreach ( $paths as $relative_path ) {
+			if ( ! is_string( $relative_path ) ) {
+				continue;
+			}
 
 			// Make the path absolute.
-			$path = trim( $this->get_root_path() . '/' . $relative_path );
+			$path = trim( $root_path . '/' . $relative_path );
 
 			// Prevent phar deserialization vulnerability.
 			if ( stripos( $path, 'phar://' ) !== false ) {

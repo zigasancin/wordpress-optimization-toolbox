@@ -476,9 +476,11 @@ class Media_Library_Row {
 		// Show Sizes and their compression.
 		foreach ( $this->media_item->get_sizes() as $size_key => $size ) {
 			$total_size_stats = $this->optimizer->get_total_size_stats( $size_key );
-			if ( $total_size_stats->is_empty() ) {
+
+			if ( $total_size_stats->is_empty() || empty( $total_size_stats->get_bytes() ) ) {
 				continue;
 			}
+
 			$dimensions = "{$size->get_width()}x{$size->get_height()}";
 
 			$stats_rows[ $size_key ]    = sprintf(
@@ -489,7 +491,7 @@ class Media_Library_Row {
 				strtoupper( $size_key ),
 				$dimensions,
 				$total_size_stats->get_human_bytes(),
-				$total_size_stats->get_percent()
+				$total_size_stats->get_percent(),
 			);
 			$savings_sizes[ $size_key ] = $total_size_stats->get_bytes();
 		}
@@ -503,7 +505,6 @@ class Media_Library_Row {
 
 		return join( '', $stats_rows );
 	}
-
 
 	private function get_smush_link() {
 		return sprintf(

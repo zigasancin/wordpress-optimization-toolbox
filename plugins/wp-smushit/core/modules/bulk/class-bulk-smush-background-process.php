@@ -142,4 +142,13 @@ class Bulk_Smush_Background_Process extends Background_Process {
 
 		return parent::mark_as_dead();
 	}
+
+	protected function get_instance_expiry_duration_seconds() {
+		$expire_duration = 0;
+		if ( defined( 'WP_SMUSH_BULK_SMUSH_EXPIRE_DURATION' ) ) {
+			$expire_duration = (int) WP_SMUSH_BULK_SMUSH_EXPIRE_DURATION;
+		}
+
+		return $expire_duration > 0 ? $expire_duration : MINUTE_IN_SECONDS * 3;
+	}
 }

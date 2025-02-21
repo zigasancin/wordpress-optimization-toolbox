@@ -56,7 +56,7 @@ foreach ( $grouped_settings as $name ) {
 do_action( 'wp_smush_after_basic_settings' );
 ?>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="bulk-restore-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="<?php echo WP_Smush::is_pro() ? 'sui-settings-label' : 'sui-settings-label-with-tag'; ?>">
 			<?php esc_html_e( 'Bulk restore', 'wp-smushit' ); ?>

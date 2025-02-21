@@ -38,23 +38,34 @@ class Media_Library_Last_Process extends Controller {
 	}
 
 	public function __construct() {
-		$this->array_utils             = new Array_Utils();
-		$scan_background_process       = Background_Media_Library_Scanner::get_instance()->get_background_process();
-		$bulk_smush_background_process = Background_Bulk_Smush::get_instance()->get_background_process();
+		$this->array_utils = new Array_Utils();
+		// Register actions to cache data for displaying stuck notice of background process.
+		$this->register_action( 'wp_smush_bulk_smush_start', array( $this, 'record_process_start_time' ), 5 );
+		$this->register_action( 'wp_smush_before_smush_file', array( $this, 'record_bulk_smush_last_processed_attachment' ), 5 );
 
+		if ( ! $this->should_track() ) {
+			return;
+		}
+
+		$scan_background_process = Background_Media_Library_Scanner::get_instance()->get_background_process();
 		$this->register_action( $scan_background_process->action_name( 'started' ), array( $this, 'record_process_start_time' ), 5 );
 		$this->register_action( $scan_background_process->action_name( 'dead' ), array( $this, 'record_process_end_time' ), 5 );
-		$this->register_action( 'wp_smush_bulk_smush_start', array( $this, 'record_process_start_time' ), 5 );
-		$this->register_action( 'wp_smush_bulk_smush_dead', array( $this, 'record_process_end_time' ), 5 );
-
-		$this->register_action( $bulk_smush_background_process->action_name( 'cron' ), array( $this, 'check_bulk_smush_process' ), 5 );
-		$this->register_action( 'wp_smush_before_smush_file', array( $this, 'record_bulk_smush_last_processed_attachment' ), 5 );
-		$this->register_action( 'wp_ajax_bulk_smush_get_status', array( $this, 'check_bulk_smush_process_stuck_on_ajax_get_status' ), 5 );
 
 		$this->register_action( 'wp_smush_after_smush_file', array( $this, 'record_last_processed_attachment_elapsed_time' ), 5 );
+
+		// Background Bulk Smush.
+		$this->register_action( 'wp_smush_bulk_smush_dead', array( $this, 'record_process_end_time' ), 5 );
+
+		$bulk_smush_background_process = Background_Bulk_Smush::get_instance()->get_background_process();
+		$this->register_action( $bulk_smush_background_process->action_name( 'cron' ), array( $this, 'check_bulk_smush_process' ), 5 );
+		$this->register_action( 'wp_ajax_bulk_smush_get_status', array( $this, 'check_bulk_smush_process_stuck_on_ajax_get_status' ), 5 );
 	}
 
 	public function should_run() {
+		return Background_Bulk_Smush::get_instance()->should_use_background();
+	}
+
+	public function should_track() {
 		return Settings::get_instance()->get( 'usage' );
 	}
 
@@ -73,7 +84,32 @@ class Media_Library_Last_Process extends Controller {
 
 
 	public function record_bulk_smush_last_processed_attachment( $attachment_id ) {
+		if ( ! $this->is_bulk_smush_processing() ) {
+			return;
+		}
+
 		$this->set_last_processed_attachment( $attachment_id );
+	}
+
+	private function is_bulk_smush_processing() {
+		if ( ! wp_doing_ajax() || empty( $_REQUEST['action'] ) ) {
+			return false;
+		}
+
+		$bulk_process_actions = array(
+			'wp_smush_bulk_smush_background_process',
+			'wp_smushit_bulk',
+		);
+
+		$action = wp_unslash( $_REQUEST['action'] );
+
+		foreach ( $bulk_process_actions as $bulk_action ) {
+			if ( str_starts_with( $action, $bulk_action ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function check_bulk_smush_process() {
@@ -130,7 +166,7 @@ class Media_Library_Last_Process extends Controller {
 		);
 	}
 
-	private function is_process_stuck() {
+	public function is_process_stuck() {
 		$elapsed_time = $this->get_seconds_since_last_image_processing_started();
 
 		return $elapsed_time > self::PROCESS_TIME_OUT;
@@ -174,7 +210,7 @@ class Media_Library_Last_Process extends Controller {
 	}
 
 	private function get_last_processed_attachment() {
-		return $this->get_process_item( self::LAST_ATTACHMENT );
+		return $this->get_process_item( self::LAST_ATTACHMENT, array() );
 	}
 
 	public function record_process_start_time() {

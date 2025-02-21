@@ -157,10 +157,13 @@ class Smush_Optimization extends Media_Item_Optimization {
 		}
 
 		$media_item        = $this->media_item;
-		$file_paths        = array_map( function ( $size ) {
-			return $size->get_file_path();
+		$files_data        = array_map( function ( $size ) {
+			return array(
+				'url'  => $size->get_file_url(),
+				'path' => $size->get_file_path(),
+			);
 		}, $this->get_sizes_to_smush() );
-		$responses         = $this->smusher->smush( $file_paths, ! $media_item->is_large() );
+		$responses         = $this->smusher->smush( $files_data );
 		$success_responses = array_filter( $responses );
 		if ( count( $success_responses ) !== count( $responses ) ) {
 			return false;
@@ -439,11 +442,10 @@ class Smush_Optimization extends Media_Item_Optimization {
 
 	public function get_optimized_sizes_count() {
 		$count = 0;
-		$sizes = $this->get_sizes_to_smush();
-		foreach ( $sizes as $size_key => $size ) {
-			$size_stats = $this->get_size_stats( $size_key );
-			if ( $size_stats && ! $size_stats->is_empty() ) {
-				$count ++;
+		$sizes = $this->get_meta_sizes();
+		foreach ( $sizes as $size ) {
+			if ( ! empty( $size->bytes ) ) {
+				$count++;
 			}
 		}
 

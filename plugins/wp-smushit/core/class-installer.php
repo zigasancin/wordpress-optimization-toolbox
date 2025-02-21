@@ -14,6 +14,7 @@ namespace Smush\Core;
 
 use Smush\App\Abstract_Page;
 use Smush\Core\CDN\CDN_Controller;
+use Smush\Core\Smush\Smusher;
 use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -37,17 +38,8 @@ class Installer {
 			require_once __DIR__ . '/cdn/class-cdn-controller.php';
 		}
 
-		CDN_Controller::unschedule_cron();
+		Cron_Controller::get_instance()->unschedule_cron();
 		Settings::get_instance()->delete_setting( 'wp-smush-cdn_status' );
-
-		if ( is_multisite() && is_network_admin() ) {
-			/**
-			 * Updating the option instead of removing it.
-			 *
-			 * @see https://incsub.atlassian.net/browse/SMUSH-350
-			 */
-			update_site_option( 'wp-smush-networkwide', 1 );
-		}
 
 		delete_site_option( 'wp_smush_api_auth' );
 	}
@@ -64,6 +56,10 @@ class Installer {
 
 		$version = get_site_option( 'wp-smush-version' );
 		self::maybe_mark_as_pre_3_12_6_site( $version );
+
+		// Cache activated date time.
+		$event_name = ! empty( $version ) ? 'plugin_activated' : 'plugin_installed';
+		self::cache_event_time( $event_name );
 
 		if ( ! class_exists( '\\Smush\\Core\\Settings' ) ) {
 			require_once __DIR__ . '/class-settings.php';
@@ -119,6 +115,9 @@ class Installer {
 				define( 'WP_SMUSH_UPGRADING', true );
 			}
 
+			// Cache last updated time.
+			self::cache_event_time( 'plugin_upgraded' );
+
 			if ( version_compare( $version, '3.7.0', '<' ) ) {
 				self::upgrade_3_7_0();
 			}
@@ -164,6 +163,8 @@ class Installer {
 
 			// Store the latest plugin version in db.
 			update_site_option( 'wp-smush-version', WP_SMUSH_VERSION );
+
+			self::reset_smusher_error_counts();
 		}
 	}
 
@@ -261,9 +262,9 @@ class Installer {
 	/**
 	 * Upgrade to 3.10.0
 	 *
+	 * @return void
 	 * @since 3.10.0
 	 *
-	 * @return void
 	 */
 	private static function upgrade_3_10_0() {
 		// Remove unused options.
@@ -290,9 +291,9 @@ class Installer {
 	/**
 	 * Upgrade 3.10.3
 	 *
+	 * @return void
 	 * @since 3.10.3
 	 *
-	 * @return void
 	 */
 	private static function upgrade_3_10_3() {
 		delete_site_option( 'wp-smush-hide_smush_welcome' );
@@ -306,7 +307,7 @@ class Installer {
 	}
 
 	private static function maybe_mark_as_pre_3_12_6_site( $version ) {
-		if ( ! $version || version_compare( $version, '3.12.0', '<' ) || false !== get_site_option( 'wp_smush_pre_3_12_6_site') ) {
+		if ( ! $version || version_compare( $version, '3.12.0', '<' ) || false !== get_site_option( 'wp_smush_pre_3_12_6_site' ) ) {
 			return;
 		}
 		if ( version_compare( $version, '3.12.5', '>' ) ) {
@@ -336,5 +337,19 @@ class Installer {
 			$stored_configs[ $key ]                          = $preset_config;
 		}
 		update_site_option( 'wp-smush-preset_configs', $stored_configs );
+	}
+
+	private static function cache_event_time( $event ) {
+		$option_key            = 'wp_smush_event_times';
+		$event_times           = get_site_option( $option_key, array() );
+		$event_times[ $event ] = time();
+		update_site_option( $option_key, $event_times );
+	}
+
+	/**
+	 * @return void
+	 */
+	private static function reset_smusher_error_counts() {
+		( new Smusher() )->reset_error_counts();
 	}
 }

@@ -8,6 +8,7 @@
 namespace Smush\App;
 
 use Smush\Core\Helper;
+use Smush\Core\Modules\Helpers\WhiteLabel;
 use Smush\Core\Settings;
 use WP_Smush;
 use WPMUDEV_Dashboard;
@@ -74,6 +75,14 @@ abstract class Abstract_Page {
 	 */
 	protected $upgrade_url = 'https://wpmudev.com/project/wp-smush-pro/';
 
+
+	/**
+	 * Whitle Label
+	 *
+	 * @var WhiteLabel
+	 */
+	protected $whitelabel;
+
 	/**
 	 * Abstract_Page constructor.
 	 *
@@ -83,8 +92,9 @@ abstract class Abstract_Page {
 	 * @param bool   $nextgen  Is that a NextGen subpage.
 	 */
 	public function __construct( $slug, $title, $parent = false, $nextgen = false, $is_upsell_link = false ) {
-		$this->slug     = $slug;
-		$this->settings = Settings::get_instance();
+		$this->whitelabel = new WhiteLabel();
+		$this->slug       = $slug;
+		$this->settings   = Settings::get_instance();
 
 		if ( ! $parent ) {
 			$this->page_id = add_menu_page(
@@ -963,8 +973,8 @@ abstract class Abstract_Page {
 					'configsPage'   => network_admin_url( 'admin.php?page=smush-settings&view=configs' ),
 					'accordionImg'  => WP_SMUSH_URL . 'app/assets/images/smush-config-icon@2x.png',
 					'hubConfigs'    => 'https://wpmudev.com/hub2/configs/my-configs',
-					'hubWelcome'    => $this->get_utm_link( array( 'utm_campaign' => 'smush_hub_config' ), 'https://wpmudev.com/hub-welcome/' ),
-					'freeNoticeHub' => $this->get_utm_link( array( 'utm_campaign' => 'smush_hub_config' ), 'https://wpmudev.com/hub-welcome/' ),
+					'hubWelcome'    => $this->get_utm_link( array( 'utm_campaign' => 'smush_hub_config' ), 'https://wpmudev.com/site-management/' ),
+					'freeNoticeHub' => $this->get_utm_link( array( 'utm_campaign' => 'smush_hub_config' ), 'https://wpmudev.com/site-management/' ),
 				),
 				'requestsData' => array(
 					'root'           => esc_url_raw( rest_url( 'wp-smush/v1/preset_configs' ) ),

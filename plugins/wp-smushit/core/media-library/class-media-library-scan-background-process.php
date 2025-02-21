@@ -34,7 +34,12 @@ class Media_Library_Scan_Background_Process extends Background_Process {
 	}
 
 	protected function get_instance_expiry_duration_seconds() {
-		return MINUTE_IN_SECONDS;
+		$expire_duration = 0;
+		if ( defined( 'WP_SMUSH_SCAN_EXPIRE_DURATION' ) ) {
+			$expire_duration = (int) WP_SMUSH_SCAN_EXPIRE_DURATION;
+		}
+
+		return $expire_duration > 0 ? $expire_duration : MINUTE_IN_SECONDS;
 	}
 
 	protected function get_revival_limit() {

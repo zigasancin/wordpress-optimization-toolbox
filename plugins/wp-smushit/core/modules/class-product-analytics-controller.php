@@ -3,36 +3,28 @@
 namespace Smush\Core\Modules;
 
 use Smush\Core\Array_Utils;
+use Smush\Core\CDN\CDN_Helper;
+use Smush\Core\Helper;
+use Smush\Core\Media\Media_Item_Cache;
+use Smush\Core\Media\Media_Item_Query;
 use Smush\Core\Media_Library\Background_Media_Library_Scanner;
+use Smush\Core\Media_Library\Media_Library_Last_Process;
 use Smush\Core\Media_Library\Media_Library_Scan_Background_Process;
 use Smush\Core\Media_Library\Media_Library_Scanner;
-use Smush\Core\Media_Library\Media_Library_Last_Process;
+use Smush\Core\Modules\Background\Background_Pre_Flight_Controller;
 use Smush\Core\Modules\Background\Background_Process;
-use Smush\Core\Modules\Background\Background_Process_Status;
+use Smush\Core\Product_Analytics;
 use Smush\Core\Server_Utils;
 use Smush\Core\Settings;
 use Smush\Core\Stats\Global_Stats;
 use Smush\Core\Webp\Webp_Configuration;
-use Smush\Core\Media\Media_Item_Query;
-use Smush\Core\Media\Media_Item_Cache;
-use Smush\Core\Helper;
 use WP_Smush;
-use WPMUDEV_Analytics;
 
 class Product_Analytics_Controller {
-	const PROJECT_TOKEN = '5d545622e3a040aca63f2089b0e6cae7';
-	/**
-	 * @var WPMUDEV_Analytics
-	 */
-	private $analytics;
 	/**
 	 * @var Settings
 	 */
 	private $settings;
-	/**
-	 * @var Server_Utils
-	 */
-	private $server_utils;
 	/**
 	 * @var Media_Library_Scan_Background_Process
 	 */
@@ -48,12 +40,16 @@ class Product_Analytics_Controller {
 	 * @var bool
 	 */
 	private $scan_background_process_dead = false;
+	/**
+	 * @var Product_Analytics
+	 */
+	private $product_analytics;
 
 	public function __construct() {
 		$this->settings                   = Settings::get_instance();
-		$this->server_utils               = new Server_Utils();
 		$this->scan_background_process    = Background_Media_Library_Scanner::get_instance()->get_background_process();
 		$this->media_library_last_process = Media_Library_Last_Process::get_instance();
+		$this->product_analytics          = Product_Analytics::get_instance();
 
 		$this->hook_actions();
 	}
@@ -65,6 +61,9 @@ class Product_Analytics_Controller {
 		add_action( 'wp_smush_settings_deleted', array( $this, 'intercept_reset' ) );
 		add_action( 'wp_smush_settings_updated', array( $this, 'track_integrations_saved' ), 10, 2 );
 		add_action( 'wp_smush_settings_updated', array( $this, 'track_toggle_local_webp_fallback' ), 10, 2 );
+
+		add_action( 'wp_ajax_smush_track_deactivate', array( $this, 'ajax_track_deactivation_survey' ) );
+		add_action( 'wp_ajax_smush_analytics_track_event', array( $this, 'ajax_handle_track_request' ) );
 
 		if ( ! $this->settings->get( 'usage' ) ) {
 			return;
@@ -97,33 +96,16 @@ class Product_Analytics_Controller {
 		add_action( 'wp_smush_plugin_activated', array( $this, 'track_plugin_activation' ) );
 		if ( defined( 'WP_SMUSH_BASENAME' ) ) {
 			$plugin_basename = WP_SMUSH_BASENAME;
-			add_action( "deactivate_{$plugin_basename}", array( $this, 'track_plugin_deactivation' ) );
+			add_action( "deactivate_$plugin_basename", array( $this, 'track_plugin_deactivation' ) );
 		}
 
-		add_action( 'wp_ajax_smush_analytics_track_event', array( $this, 'ajax_handle_track_request' ) );
-
 		add_action( 'wp_smush_bulk_smush_stuck', array( $this, 'track_bulk_smush_progress_stuck' ) );
+
+		add_action( 'wp_smush_lazy_load_updated', array( $this, 'track_lazy_load_settings_updated' ), 10, 2 );
 	}
 
 	private function track( $event, $properties = array() ) {
-		$debug_mode = defined( 'WP_SMUSH_MIXPANEL_DEBUG' ) && WP_SMUSH_MIXPANEL_DEBUG;
-		if ( $debug_mode ) {
-			Helper::logger()->track()->info( sprintf( 'Track Event %1$s: %2$s', $event, print_r( $properties, true ) ) );
-			return;
-		}
-
-		return $this->get_analytics()->track( $event, $properties );
-	}
-
-	/**
-	 * @return WPMUDEV_Analytics
-	 */
-	private function get_analytics() {
-		if ( is_null( $this->analytics ) ) {
-			$this->analytics = $this->prepare_analytics_instance();
-		}
-
-		return $this->analytics;
+		$this->product_analytics->track( $event, $properties );
 	}
 
 	public function intercept_settings_update( $old_settings, $settings ) {
@@ -136,7 +118,7 @@ class Product_Analytics_Controller {
 		$handled  = $this->maybe_track_feature_toggle( $settings );
 
 		if ( ! $handled ) {
-			$handled = $this->maybe_track_cdn_update( $settings );
+			$this->maybe_track_cdn_update( $settings );
 		}
 	}
 
@@ -229,7 +211,19 @@ class Product_Analytics_Controller {
 	}
 
 	private function track_lazy_load_feature_toggle( $setting_value ) {
+		$this->track_lazy_load_feature_updated_on_toggle( $setting_value );
+
 		return $this->track_feature_toggle( $setting_value, 'Lazy Load' );
+	}
+
+	private function track_lazy_load_feature_updated_on_toggle( $activate ) {
+		$this->track_lazy_load_updated(
+			array(
+				'update_type'       => $activate ? 'activate' : 'deactivate',
+				'modified_settings' => 'na',
+			),
+			$this->settings->get_setting( 'wp-smush-lazy_load', array() )
+		);
 	}
 
 	private function track_feature_toggle( $active, $feature ) {
@@ -280,78 +274,6 @@ class Product_Analytics_Controller {
 		return empty( $triggered_from[ $page ] )
 			? ''
 			: $triggered_from[ $page ];
-	}
-
-	private function prepare_analytics_instance() {
-		if ( ! class_exists( 'WPMUDEV_Analytics' ) ) {
-			require_once WP_SMUSH_DIR . 'core/external/wpmudev-analytics/autoload.php';
-		}
-
-		$mixpanel = new WPMUDEV_Analytics( 'smush', 'Smush', 55, $this->get_token() );
-		$mixpanel->identify( $this->get_unique_id() );
-		$mixpanel->registerAll( $this->get_super_properties() );
-
-		return $mixpanel;
-	}
-
-	public function get_super_properties() {
-		global $wp_version;
-
-		return array(
-			'active_theme'       => get_stylesheet(),
-			'locale'             => get_locale(),
-			'mysql_version'      => $this->server_utils->get_mysql_version(),
-			'php_version'        => phpversion(),
-			'plugin'             => 'Smush',
-			'plugin_type'        => WP_Smush::is_pro() ? 'pro' : 'free',
-			'plugin_version'     => WP_SMUSH_VERSION,
-			'server_type'        => $this->server_utils->get_server_type(),
-			'memory_limit'       => $this->convert_to_megabytes( $this->server_utils->get_memory_limit() ),
-			'max_execution_time' => $this->server_utils->get_max_execution_time(),
-			'wp_type'            => is_multisite() ? 'multisite' : 'single',
-			'wp_version'         => $wp_version,
-			'device'             => $this->get_device(),
-			'user_agent'         => $this->server_utils->get_user_agent(),
-		);
-	}
-
-	private function get_device() {
-		if ( ! $this->is_mobile() ) {
-			return 'desktop';
-		}
-
-		if ( $this->is_tablet() ) {
-			return 'tablet';
-		}
-
-		return 'mobile';
-	}
-
-	private function is_tablet() {
-		if ( empty( $_SERVER['HTTP_USER_AGENT'] ) ) {
-			return false;
-		}
-		/**
-		 * It doesn't work with IpadOS due to of this:
-		 * https://stackoverflow.com/questions/62323230/how-can-i-detect-with-php-that-the-user-uses-an-ipad-when-my-user-agent-doesnt-c
-		 */
-		$tablet_pattern = '/(tablet|ipad|playbook|kindle|silk)/i';
-		return preg_match( $tablet_pattern, wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
-	}
-
-	private function is_mobile() {
-		if ( empty( $_SERVER['HTTP_USER_AGENT'] ) ) {
-			return false;
-		}
-		// Do not use wp_is_mobile() since it doesn't detect ipad/tablet.
-		$mobile_patten = '/Mobile|iP(hone|od|ad)|Android|BlackBerry|tablet|IEMobile|Kindle|NetFront|Silk|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune|playbook/i';
-		return preg_match( $mobile_patten, wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
-	}
-
-	private function normalize_url( $url ) {
-		$url = str_replace( array( 'http://', 'https://', 'www.' ), '', $url );
-
-		return untrailingslashit( $url );
 	}
 
 	private function maybe_track_cdn_update( $settings ) {
@@ -469,28 +391,6 @@ class Product_Analytics_Controller {
 		$properties['Triggered From'] = $this->identify_referrer();
 
 		$this->track( 'Config Applied', $properties );
-	}
-
-	public function get_unique_id() {
-		$site_url         = home_url();
-		$has_valid_domain = $this->has_valid_domain( $site_url );
-		if ( ! $has_valid_domain ) {
-			$site_url         = site_url();
-			$has_valid_domain = $this->has_valid_domain( $site_url );
-		}
-		return $has_valid_domain ? $this->normalize_url( $site_url ) : '';
-	}
-
-	public function get_token() {
-		if ( empty( $this->get_unique_id() ) ) {
-			return '';
-		}
-		return self::PROJECT_TOKEN;
-	}
-
-	private function has_valid_domain( $url ) {
-		$pattern = '/^(https?:\/\/)?([a-z0-9-]+\.)*[a-z0-9-]+(\.[a-z]{2,})/i';
-		return preg_match( $pattern, $url );
 	}
 
 	public function track_opt_toggle( $old_settings, $settings ) {
@@ -626,12 +526,6 @@ class Product_Analytics_Controller {
 		);
 	}
 
-	/**
-	 * @param $identifier string
-	 * @param $background_process Background_Process
-	 *
-	 * @return void
-	 */
 	public function track_bulk_smush_background_process_death() {
 		$this->track(
 			'Background Process Dead',
@@ -717,7 +611,7 @@ class Product_Analytics_Controller {
 		$processed_items        = $this->scan_background_process->get_status()->get_processed_items();
 		$scanner_slice_size     = $this->get_scanner_slice_size();
 		$total_processed_images = $processed_items * $scanner_slice_size;
-		$total_processed_images = $total_processed_images > $total_enqueued_images ? $total_enqueued_images : $total_processed_images;
+		$total_processed_images = min( $total_processed_images, $total_enqueued_images );
 
 		return array(
 			'process_id'             => $this->get_process_id(),
@@ -957,30 +851,8 @@ class Product_Analytics_Controller {
 	}
 
 	private function get_cron_healthy_status() {
-		return $this->is_cron_healthy() ? 'Enabled' : 'Disabled';
-	}
-
-	private function is_cron_healthy() {
-		$wp_core_cron_hooks = array(
-			'wp_privacy_delete_old_export_files',
-			'wp_version_check',
-			'wp_update_plugins',
-			'wp_update_themes',
-		);
-
-		foreach ( $wp_core_cron_hooks as $hook ) {
-			$next_scheduled_time = wp_next_scheduled( $hook );
-			if ( ! $next_scheduled_time ) {
-				continue;
-			}
-
-			$delayed_time = time() - $next_scheduled_time;
-
-			// If any of the core cron hooks are delayed by more than 30 minutes, then cron is unhealthy.
-			return $delayed_time < ( HOUR_IN_SECONDS / 2 );
-		}
-
-		return false;
+		$is_cron_healthy = Background_Pre_Flight_Controller::get_instance()->is_cron_healthy();
+		return $is_cron_healthy ? 'Enabled' : 'Disabled';
 	}
 
 	private function get_background_optimization_status() {
@@ -994,12 +866,28 @@ class Product_Analytics_Controller {
 			wp_send_json_error();
 		}
 
+		$properties = $this->get_event_properties( $event_name );
+
+		if ( ! $this->allow_to_track( $event_name, $properties ) ) {
+			wp_send_json_error();
+		}
+
 		$this->track(
 			$event_name,
-			$this->get_event_properties( $event_name )
+			$properties
 		);
 
 		wp_send_json_success();
+	}
+
+	private function allow_to_track( $event_name, $properties ) {
+		$trackable_events   = array(
+			'Setup Wizard'     => true,
+			'smush_pro_upsell' => isset( $properties['Location'] ) && 'wizard' === $properties['Location'],
+		);
+		$is_trackable_event = ! empty( $trackable_events[ $event_name ] );
+
+		return $is_trackable_event || $this->settings->get( 'usage' );
 	}
 
 	private function get_event_name() {
@@ -1007,8 +895,8 @@ class Product_Analytics_Controller {
 	}
 
 	private function get_event_properties( $event_name ) {
-		$properties = isset( $_POST['properties'] ) ? wp_unslash( $_POST['properties'] ) : array();
-		$properties = array_map( 'sanitize_text_field', $properties );
+		$properties = isset( $_POST['properties'] ) && is_array( $_POST['properties'] ) ? wp_unslash( $_POST['properties'] ) : array();
+		$properties = map_deep( $properties, 'sanitize_text_field' );
 
 		$filter_callback = $this->get_filter_properties_callback( $event_name );
 		if ( method_exists( $this, $filter_callback ) ) {
@@ -1030,7 +918,7 @@ class Product_Analytics_Controller {
 	 * @param array $properties JS properties.
 	 */
 	protected function filter_scan_interrupted_properties( $properties ) {
-		$properties = array_merge(
+		return array_merge(
 			$properties,
 			array(
 				'Slice Size'              => $this->get_scanner_slice_size(),
@@ -1039,12 +927,11 @@ class Product_Analytics_Controller {
 				'Time Elapsed'            => $this->media_library_last_process->get_process_elapsed_time(),
 				'Smush Type'              => $this->get_smush_type(),
 				'Mode'                    => $this->get_current_lossy_level_label(),
+				'WP Loopback Status'      => $this->get_wp_loopback_status( $properties ),
 			),
 			$this->get_scan_background_process_properties(),
 			$this->get_last_image_process_properties()
 		);
-
-		return $properties;
 	}
 
 
@@ -1098,10 +985,70 @@ class Product_Analytics_Controller {
 				'Time Elapsed'            => $this->media_library_last_process->get_process_elapsed_time(),
 				'Smush Type'              => $this->get_smush_type(),
 				'Mode'                    => $this->get_current_lossy_level_label(),
+				'WP Loopback Status'      => $this->get_wp_loopback_status( $properties ),
 			),
 			$this->get_bulk_background_process_properties(),
 			$this->get_last_image_process_properties()
 		);
+	}
+
+	public function ajax_track_deactivation_survey() {
+		$event_name = $this->get_event_name();
+		if ( ! check_ajax_referer( 'wp-smush-ajax' ) || ! Helper::is_user_allowed() || empty( $event_name ) ) {
+			wp_send_json_error();
+		}
+
+		$properties = $this->get_event_properties( $event_name );
+		$properties = array_merge(
+			$properties,
+			array(
+				'active_features' => $this->get_active_features(),
+				'active_plugins'  => $this->get_active_plugins(),
+			)
+		);
+
+		$this->track(
+			$event_name,
+			$properties
+		);
+
+		wp_send_json_success();
+	}
+
+	private function get_active_features() {
+		$lossy_level           = $this->settings->get_lossy_level_setting();
+		$cdn_module_activated  = CDN_Helper::get_instance()->is_cdn_active();
+		$webp_module_activated = ! $cdn_module_activated && $this->settings->is_webp_module_active();
+		$webp_direct_activated = $webp_module_activated && $this->settings->is_webp_direct_conversion_active();
+		$webp_server_activated = $webp_module_activated && ! $webp_direct_activated;
+
+		$features = array(
+			'lazy_load'        => $this->settings->is_lazyload_active(),
+			'cdn'              => $cdn_module_activated,
+			'webp_direct'      => $webp_direct_activated,
+			'webp_server'      => $webp_server_activated,
+			'smush_basic'      => Settings::LEVEL_LOSSLESS === $lossy_level,
+			'smush_super'      => Settings::LEVEL_SUPER_LOSSY === $lossy_level,
+			'smush_ultra'      => Settings::LEVEL_ULTRA_LOSSY === $lossy_level,
+			's3_offload'       => $this->settings->is_s3_active(),
+			'wp_bakery'        => $this->settings->get( 'js_builder' ),
+			'gravity_forms'    => $this->settings->get( 'gform' ),
+			'nextgen_gallery'  => $this->settings->get( 'nextgen' ),
+			'gutenberg_blocks' => $this->settings->get( 'gutenberg' ),
+		);
+
+		return array_keys( array_filter( $features ) );
+	}
+
+	private function get_wp_loopback_status( $properties ) {
+		$is_loopback_error = ! empty( $properties['Trigger'] ) && 'loopback_error' === $properties['Trigger'];
+		if ( $is_loopback_error ) {
+			$loopback_status = Helper::loopback_supported() ? 'Pass' : 'Fail';
+		} else {
+			$loopback_status = 'na';
+		}
+
+		return $loopback_status;
 	}
 
 	public function track_bulk_smush_progress_stuck() {
@@ -1114,5 +1061,67 @@ class Product_Analytics_Controller {
 		$properties = $this->filter_bulk_smush_interrupted_properties( $properties );
 
 		$this->track( 'Bulk Smush Interrupted', $properties );
+	}
+
+	public function track_lazy_load_settings_updated( $old_settings, $settings ) {
+		$changed_settings = $this->remove_unchanged_settings( (array) $old_settings, (array) $settings );
+
+		$modified_settings = 'na';
+		if ( ! empty( $changed_settings ) ) {
+			$modified_settings_map = array(
+				'format'            => 'media_type',
+				'output'            => 'output_location',
+				'animation'         => 'display_animation',
+				'include'           => 'include_exclude_posttype',
+				'exclude-pages'     => 'include_exclude_url',
+				'exclude-classes'   => 'include_exclude_keyword',
+				'footer'            => 'script_method',
+				'native'            => 'native_lazyload',
+				'noscript_fallback' => 'noscript',
+			);
+
+			$modified_settings = array_intersect_key( $modified_settings_map, $changed_settings );
+			$modified_settings = ! empty( $modified_settings ) ? array_values( $modified_settings ) : 'na';
+		}
+
+		$this->track_lazy_load_updated(
+			array(
+				'update_type'       => 'modify',
+				'modified_settings' => $modified_settings,
+			),
+			$settings
+		);
+	}
+
+	private function track_lazy_load_updated( $properties, $settings ) {
+		$exclusion_enabled         = $this->is_lazy_load_exclusion_enabled( $settings );
+		$native_lazyload_enabled   = ! empty( $settings['native'] );
+		$noscript_fallback_enabled = ! empty( $settings['noscript_fallback'] );
+		$properties                = array_merge(
+			array(
+				'Location'           => $this->identify_referrer(),
+				'exclusions'         => $exclusion_enabled ? 'Enabled' : 'Disabled',
+				'native_lazy_status' => $native_lazyload_enabled ? 'Enabled' : 'Disabled',
+				'noscript_status'    => $noscript_fallback_enabled ? 'Enabled' : 'Disabled',
+			),
+			$properties
+		);
+
+		$this->track( 'lazy_load_updated', $properties );
+	}
+
+	private function is_lazy_load_exclusion_enabled( $settings ) {
+		if ( ! empty( $settings['exclude-pages'] ) || ! empty( $settings['exclude-classes'] ) ) {
+			return true;
+		}
+
+		if ( empty( $settings['include'] ) || ! is_array( $settings['include'] ) ) {
+			return false;
+		}
+
+		$included_post_types = $settings['include'];
+
+		// By default, we activated for all post types, so this option is changed when any post type is unchecked.
+		return in_array( false, $included_post_types, true );
 	}
 }

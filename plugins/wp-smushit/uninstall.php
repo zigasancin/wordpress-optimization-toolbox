@@ -67,6 +67,8 @@ $smushit_keys = array(
 	'wp-smush-nextgen-super-smushed-list',
 	'wp_smush_scan_slice_size',
 	'wp_smush_media_library_last_process',
+	'wp_smush_expected_public_nonces',
+	'wp_smush_expected_nonces',
 );
 
 $db_keys = array(

@@ -66,7 +66,9 @@ abstract class Background_Process extends Async_Request {
 		$this->cron_interval_identifier = $this->identifier . '_cron_interval';
 
 		add_action( $this->cron_hook_identifier, array( $this, 'handle_cron_healthcheck' ) );
-		add_filter( 'cron_schedules', array( $this, 'schedule_cron_healthcheck' ) );
+		add_action( 'init', function () {
+			add_filter( 'cron_schedules', array( $this, 'schedule_cron_healthcheck' ) );
+		} );
 
 		$this->logger_container = new Background_Logger_Container( $this->identifier );
 		$this->status           = new Background_Process_Status( $this->identifier );
@@ -269,6 +271,8 @@ abstract class Background_Process extends Async_Request {
 				break;
 			}
 		}
+
+		$this->logger()->info( sprintf( 'Processing time: %d seconds', time() - $this->start_time ) );
 
 		if ( empty( $queue ) ) {
 			$this->complete();

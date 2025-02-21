@@ -8,6 +8,10 @@ class File_System {
 			return false;
 		}
 
+		if ( str_starts_with( $path, ABSPATH ) && ! file_exists( $path ) ) {
+			return false;
+		}
+
 		$args = array( $path, $use_include_path, $context, $offset );
 		if ( ! is_null( $length ) ) {
 			// Even though the default value of $length is 'null', an empty string is returned when 'null' is passed as $length. So, we only include it when a non-null value is provided.

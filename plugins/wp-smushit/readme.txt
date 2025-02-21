@@ -1,13 +1,13 @@
 === Smush Image Optimization – Optimize Images | Compress & Lazy Load Images | Convert WebP | Image CDN ===
 Plugin Name: Smush Image Optimization – Optimize Images | Compress & Lazy Load Images | Convert WebP | Image CDN
-Version: 3.16.6
+Version: 3.17.1
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV, alexdunae
 Tags: optimize images, convert webp, webp, image optimization, compress images, lazy load, resize images, image optimizer, image compressor, performance, reduce image size
 Requires at least: 6.4
-Tested up to: 6.6
-Stable tag: 3.16.6
+Tested up to: 6.7
+Stable tag: 3.17.1
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -240,6 +240,34 @@ We take plugin security incredibly seriously; if you have a bug or vulnerability
 4. Automatically resize images on upload.
 
 == Changelog ==
+
+= 3.17.1 ( 2025-02-10 ) =
+- Improvement: Security hardening
+- Improvement: Minor code improvements
+
+= 3.17.0 ( 2025-02-03 ) =
+- New: Added a UI option to exclude specific images from Smush CDN.
+- Improvement: Use streams to send full image to the Smush API
+- Improvement: Disabled Noscript tags by default to prevent broken images and potential performance regressions.
+- Improvement: Improved WPML compatibility for seamless multilingual support.
+- Improvement: Reduced memory consumption during the Smush process
+- Improvement: Better directory Smush compatibility with Flywheel
+- Fix: Number of optimized images inaccurate
+- Fix: When Local WebP Direct Method and Lazy Load are enabled, images inside picture tags not being served as WebP
+- Fix: Error "Server configurations haven't been applied yet" shown unnecessarily sometimes
+- Fix: CDN slowing down page load due to unnecessary DB queries
+- Fix: Divi breaking Smush CDN image resizing
+- Fix: Auto-resize feature not adding new sizes when srcset is already present in img tag
+- Fix: Excluded lazy loading placeholders from the CDN to resolve conflicts and prevent broken images.
+- Fix: Added WP 6.7 compatibility fixes.
+- Fix: Prevent broken images on Smush CDN when using relative links
+- Fix: Hummingbird Performance Test conflicts
+- Fix: Missing thumbnails when using PNG to JPG conversions
+- Fix: Unicode characters in image URLs causing issues
+- Fix: Improved compatibility with native lazy loading
+- Fix: PHP errors and warnings
+- Fix: Conflict with Formidable Forms
+- Fix: Avoid image fetch errors
 
 = 3.16.6 ( 2024-07-30 ) =
 - Fix: PHP warnings

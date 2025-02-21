@@ -16,7 +16,7 @@ class Upload_Dir {
 	/**
 	 * @return array
 	 */
-	private function get_wp_upload_dir() {
+	public function get_wp_upload_dir() {
 		if ( is_null( $this->wp_upload_dir ) ) {
 			$this->wp_upload_dir = $this->prepare_wp_upload_dir();
 		}
@@ -87,18 +87,7 @@ class Upload_Dir {
 	}
 
 	private function prepare_wp_upload_dir() {
-		if ( ! is_multisite() || is_main_site() ) {
-			$upload = wp_upload_dir();
-		} else {
-			// Use the main site's upload directory for all subsite's webp converted images.
-			// This makes it easier to have a single rule on the server configs for serving webp in mu.
-			$blog_id = get_main_site_id();
-			switch_to_blog( $blog_id );
-			$upload = wp_upload_dir();
-			restore_current_blog();
-		}
-
-		return $upload;
+		return wp_upload_dir();
 	}
 
 	protected function prepare_root_path() {
@@ -137,5 +126,9 @@ class Upload_Dir {
 
 	public function get_human_readable_path( $full_path ) {
 		return str_replace( WP_CONTENT_DIR, '', $full_path );
+	}
+
+	public function is_uploads_url( $url ) {
+		return str_starts_with( $url, $this->get_upload_url() );
 	}
 }

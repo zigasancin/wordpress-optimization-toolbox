@@ -23,7 +23,7 @@ export const scanProgressBar = ( autoSyncDuration ) => {
 	let prevProcessedItems = window.wp_smushit_data?.media_library_scan?.processed_items || 0;
 	const cacheProcessTimePerItem = [];
 	let durationToHaveChangeOnProgress = autoSyncDuration;
-	let timeLimitToShowNotice = autoSyncDuration * 10;// 15s.
+	let timeLimitToShowNotice = 60000;// 60s.
 	return {
 		update( processedItems, totalItems ) {
 			this.updateRemainingTime( processedItems, totalItems );
@@ -175,6 +175,7 @@ const SmushProgressBar = () => {
 	const bulkRunningNotice = progressBar.querySelector( '#wp-smush-running-notice' );
 	const bulkSmushAllDone = document.querySelector( '.wp-smush-all-done' );
 	const stopBulkSmushModal = document.getElementById( 'smush-stop-bulk-smush-modal' );
+	const holdOnNoticeElement = progressBar.querySelector( '.wp-smush-bulk-hold-on-notice' );
 	let isStateHidden = false;
 	let onCancelCallback = () => {};
 
@@ -332,8 +333,17 @@ const SmushProgressBar = () => {
 			if ( recheckImagesNoticeElement ) {
 				recheckImagesNoticeElement.classList.add( 'sui-hidden' );
 			}
-		}
-
+		},
+		showHoldOnNotice() {
+			if ( holdOnNoticeElement ) {
+				holdOnNoticeElement.classList.remove( 'sui-hidden' );
+			}
+		},
+		hideHoldOnNotice() {
+			if ( holdOnNoticeElement ) {
+				holdOnNoticeElement.classList.add( 'sui-hidden' );
+			}
+		},
 	};
 };
 export default new SmushProgressBar();

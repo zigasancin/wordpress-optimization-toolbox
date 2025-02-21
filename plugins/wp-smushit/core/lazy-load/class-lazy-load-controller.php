@@ -105,7 +105,7 @@ class Lazy_Load_Controller extends Controller {
 		}
 
 		// Disable WordPress native lazy load.
-		$this->register_filter( 'wp_lazy_loading_enabled', array( $this, 'maybe_disable_wordpress_native_lazyload' ) );
+		$this->register_filter( 'wp_lazy_loading_enabled', array( $this, 'should_enable_wordpress_native_lazyload' ) );
 
 		// Load js file that is required in public facing pages.
 		$this->register_action( 'wp_head', array( $this, 'add_inline_styles' ) );
@@ -453,7 +453,7 @@ class Lazy_Load_Controller extends Controller {
 		return $transforms;
 	}
 
-	public function maybe_disable_wordpress_native_lazyload() {
-		return ! $this->helper->is_native_lazy_loading_enabled();
+	public function should_enable_wordpress_native_lazyload() {
+		return $this->helper->is_native_lazy_loading_enabled();
 	}
 }

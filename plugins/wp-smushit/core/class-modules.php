@@ -15,6 +15,7 @@ use Smush\Core\CDN\CDN_Controller;
 use Smush\Core\CDN\CDN_Settings_Ui_Controller;
 use Smush\Core\CDN\CDN_Srcset_Controller;
 use Smush\Core\Lazy_Load\Lazy_Load_Controller;
+use Smush\Core\Media\Attachment_Url_Cache_Controller;
 use Smush\Core\Media\Media_Item_Controller;
 use Smush\Core\Media_Library\Ajax_Media_Library_Scanner;
 use Smush\Core\Media_Library\Background_Media_Library_Scanner;
@@ -27,6 +28,7 @@ use Smush\Core\Photon\Photon_Controller;
 use Smush\Core\Png2Jpg\Png2Jpg_Controller;
 use Smush\Core\Resize\Resize_Controller;
 use Smush\Core\S3\S3_Controller;
+use Smush\Core\Security\Security_Controller;
 use Smush\Core\Smush\Smush_Controller;
 use Smush\Core\Stats\Global_Stats_Controller;
 use Smush\Core\Transform\Transformation_Controller;
@@ -147,7 +149,7 @@ class Modules {
 
 		$this->bg_optimization = Modules\Bulk\Background_Bulk_Smush::get_instance();
 
-		$smush_controller = new Smush_Controller();
+		$smush_controller = Smush_Controller::get_instance();
 		$smush_controller->init();
 
 		$png2jpg_controller = Png2Jpg_Controller::get_instance();
@@ -213,6 +215,15 @@ class Modules {
 
 		$media_lib_last_process = Media_Library_Last_Process::get_instance();
 		$media_lib_last_process->init();
+
+		$cron_controller = Cron_Controller::get_instance();
+		$cron_controller->init();
+
+		$security_controller = Security_Controller::get_instance();
+		$security_controller->init();
+
+		$attachment_url_cache_controller = new Attachment_Url_Cache_Controller();
+		$attachment_url_cache_controller->init();
 	}
 
 }

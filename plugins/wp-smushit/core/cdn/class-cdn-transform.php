@@ -2,6 +2,7 @@
 
 namespace Smush\Core\CDN;
 
+use Smush\Core\Media\Attachment_Url_Cache;
 use Smush\Core\Parser\Element;
 use Smush\Core\Parser\Element_Attribute;
 use Smush\Core\Parser\Image_URL;
@@ -22,11 +23,16 @@ class CDN_Transform implements Transform {
 	 * @var CDN_Srcset_Controller
 	 */
 	private $cdn_srcset;
+	/**
+	 * @var Attachment_Url_Cache
+	 */
+	private $attachment_url_cache;
 
 	public function __construct() {
-		$this->cdn_helper = CDN_Helper::get_instance();
-		$this->cdn_srcset = CDN_Srcset_Controller::get_instance();
-		$this->settings   = Settings::get_instance();
+		$this->cdn_helper           = CDN_Helper::get_instance();
+		$this->cdn_srcset           = CDN_Srcset_Controller::get_instance();
+		$this->settings             = Settings::get_instance();
+		$this->attachment_url_cache = Attachment_Url_Cache::get_instance();
 	}
 
 	public function should_transform() {
@@ -34,7 +40,7 @@ class CDN_Transform implements Transform {
 			return false;
 		}
 
-		if ( $this->is_rest_request() ) {
+		if ( $this->cdn_helper->is_rest_request() ) {
 			return $this->settings->get( 'rest_api_support' );
 		}
 
@@ -54,6 +60,10 @@ class CDN_Transform implements Transform {
 	}
 
 	private function transform_element( $element ) {
+		if ( $this->element_has_excluded_keywords( $element ) ) {
+			return;
+		}
+
 		$this->update_element_attributes( $element );
 
 		if ( $this->settings->get( 'background_images' ) ) {
@@ -67,36 +77,11 @@ class CDN_Transform implements Transform {
 	 * @return void
 	 */
 	private function update_element_attributes( $element ) {
-		$img_url = $this->get_main_image_url( $element );
-		if ( empty( $img_url ) ) {
-			return;
-		}
-
-		$image_markup = $element->get_markup();
-		if ( $this->cdn_helper->skip_image( $img_url, $image_markup ) ) {
-			return;
-		}
-
 		if ( $element->is_image_element() ) {
 			$this->update_img_element_attributes( $element );
 		} else {
 			$this->update_other_element_attributes( $element );
 		}
-	}
-
-	private function get_main_image_url( $element ) {
-		$src_attribute = $element->get_attribute( 'src' );
-		if ( $src_attribute && $src_attribute->get_single_image_url() ) {
-			return $src_attribute->get_single_image_url()->get_absolute_url();
-		}
-
-		foreach ( $element->get_image_attributes() as $attribute ) {
-			if ( $attribute->get_single_image_url() ) {
-				return $attribute->get_single_image_url()->get_absolute_url();
-			}
-		}
-
-		return '';
 	}
 
 	/**
@@ -131,7 +116,7 @@ class CDN_Transform implements Transform {
 
 		$src_url         = $src_image_url->get_absolute_url();
 		$updated_src_url = $this->filter_before_process( $src_url, $image_markup );
-		if ( $this->cdn_helper->is_supported_url( $updated_src_url ) ) {
+		if ( $this->cdn_helper->is_supported_url( $updated_src_url ) && ! $this->cdn_helper->skip_image_url( $updated_src_url, $image_markup ) ) {
 			$updated_src_url = $this->process_url( $updated_src_url, $image_markup );
 			$src_image_url->set_url( $updated_src_url );
 
@@ -217,7 +202,8 @@ class CDN_Transform implements Transform {
 	 * @return void
 	 */
 	private function generate_and_use_fresh_srcset( $src_url, $element ) {
-		list( $srcset, $sizes ) = $this->cdn_srcset->generate_srcset( $src_url );
+		$attachment_id = $this->attachment_url_cache->get_id_for_url( $src_url );
+		list( $srcset, $sizes ) = $this->cdn_srcset->generate_srcset( $src_url, $attachment_id );
 		if ( $srcset ) {
 			$new_srcset_attribute = new Element_Attribute( 'srcset', $srcset );
 			$element->add_or_update_attribute( $new_srcset_attribute );
@@ -238,13 +224,13 @@ class CDN_Transform implements Transform {
 	private function update_alternate_attributes( $element, $image_markup ) {
 		foreach ( $element->get_image_attributes() as $alternate_attribute ) {
 			if ( in_array( $alternate_attribute->get_name(), array( 'src', 'srcset' ) ) ) {
-				// src and srcset are handled separately
+				// src and srcset are handled separately.
 				continue;
 			}
 
 			foreach ( $alternate_attribute->get_image_urls() as $alternate_url ) {
 				$alternate_url_string = $alternate_url->get_absolute_url();
-				if ( $this->cdn_helper->is_supported_url( $alternate_url_string ) ) {
+				if ( $this->cdn_helper->is_supported_url( $alternate_url_string ) && ! $this->cdn_helper->skip_image_url( $alternate_url_string, $image_markup ) ) {
 					$updated = $this->process_url( $alternate_url_string, $image_markup );
 					$alternate_url->set_url( $updated );
 				}
@@ -291,7 +277,9 @@ class CDN_Transform implements Transform {
 	 *
 	 * @return bool
 	 */
-	private function skip_background_image( $image_url_string, $element_markup ) {
+	private function skip_background_image( $image_url_string, $element_markup = '' ) {
+		$is_url_excluded = $this->is_url_excluded_in_settings( $image_url_string );
+
 		/**
 		 * Filter to skip a single image from cdn.
 		 *
@@ -299,7 +287,7 @@ class CDN_Transform implements Transform {
 		 * @param string $image_url_string Image url.
 		 * @param array|bool $element_markup Image tag or false.
 		 */
-		return apply_filters( 'smush_skip_background_image_from_cdn', false, $image_url_string, $element_markup );
+		return apply_filters( 'smush_skip_background_image_from_cdn', $is_url_excluded, $image_url_string, $element_markup );
 	}
 
 	/**
@@ -326,7 +314,10 @@ class CDN_Transform implements Transform {
 	private function transform_style( $style ) {
 		foreach ( $style->get_image_urls() as $image_url ) {
 			$image_url_string = $image_url->get_absolute_url();
-			if ( $this->cdn_helper->is_supported_url( $image_url_string ) ) {
+			if (
+				$this->cdn_helper->is_supported_url( $image_url_string ) &&
+				! $this->skip_background_image( $image_url_string )
+			) {
 				$image_url->set_url( $this->cdn_helper->generate_cdn_url( $image_url_string ) );
 			}
 		}
@@ -341,21 +332,18 @@ class CDN_Transform implements Transform {
 	private function update_image_urls( $image_urls, $image_markup ) {
 		foreach ( $image_urls as $image_url ) {
 			$image_url_string = $image_url->get_absolute_url();
-			if ( $this->cdn_helper->is_supported_url( $image_url_string ) ) {
+			if ( $this->cdn_helper->is_supported_url( $image_url_string ) && ! $this->cdn_helper->skip_image_url( $image_url_string, $image_markup ) ) {
 				$image_url->set_url( $this->process_url( $image_url_string, $image_markup ) );
 			}
 		}
 	}
 
 	public function transform_image_url( $url ) {
-		if ( ! $this->cdn_helper->is_supported_url( $url ) ) {
+		if ( ! $this->cdn_helper->is_supported_url( $url ) || $this->cdn_helper->skip_image_url( $url ) ) {
 			return $url;
 		}
-		return $this->cdn_helper->generate_cdn_url( $url );
-	}
 
-	private function is_rest_request() {
-		return defined( 'REST_REQUEST' ) && REST_REQUEST;
+		return $this->cdn_helper->generate_cdn_url( $url );
 	}
 
 	/**
@@ -367,5 +355,23 @@ class CDN_Transform implements Transform {
 		foreach ( $elements as $element ) {
 			$this->transform_element( $element );
 		}
+	}
+
+	private function element_has_excluded_keywords( Element $element ) {
+		$keyword_exclusions = $this->cdn_helper->keyword_exclusions();
+
+		if ( ! $keyword_exclusions->has_excluded_keywords() ) {
+			return false;
+		}
+
+		return $keyword_exclusions->is_markup_excluded( $element->get_markup() ) ||
+		       $keyword_exclusions->is_id_attribute_excluded( $element->get_attribute_value( 'id' ) ) ||
+		       $keyword_exclusions->is_class_attribute_excluded( $element->get_attribute_value( 'class' ) );
+	}
+
+	private function is_url_excluded_in_settings( $url ) {
+		$keyword_exclusions = $this->cdn_helper->keyword_exclusions();
+
+		return $keyword_exclusions->is_url_excluded( $url );
 	}
 }

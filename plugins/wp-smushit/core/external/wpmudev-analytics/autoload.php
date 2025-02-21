@@ -4,6 +4,10 @@ $baseDir = __DIR__;
 
 $class_map = array(
 	'WPMUDEV_Analytics'                                             => $baseDir . '/core/class-wpmudev-analytics.php',
+	'WPMUDEV_Analytics_V2'                                          => $baseDir . '/core/class-wpmudev-analytics-v2.php',
+	'WPMUDEV_Analytics_V2_Mutex'                                    => $baseDir . '/core/class-wpmudev-analytics-v2-mutex.php',
+	'WPMUDEV_Analytics_V3'                                          => $baseDir . '/core/class-wpmudev-analytics-v3.php',
+	'WPMUDEV_Analytics_V4'                                          => $baseDir . '/core/class-wpmudev-analytics-v4.php',
 	'WPMUDEV_Analytics_Vendor\\Base_MixpanelBase'                   => $baseDir . '/vendor_prefixed/Base/MixpanelBase.php',
 	'WPMUDEV_Analytics_Vendor\\ConsumerStrategies_AbstractConsumer' => $baseDir . '/vendor_prefixed/ConsumerStrategies/AbstractConsumer.php',
 	'WPMUDEV_Analytics_Vendor\\ConsumerStrategies_CurlConsumer'     => $baseDir . '/vendor_prefixed/ConsumerStrategies/CurlConsumer.php',

@@ -255,8 +255,15 @@ class Media_Item extends Smush_File {
 	}
 
 	private function prepare_edit_link() {
-		// TODO: copy implementation from Helper::get_image_media_link
-		return '';
+		$mode     = get_user_option( 'media_library_mode' );
+		$image_id = $this->get_id();
+		if ( 'grid' === $mode ) {
+			$edit_link = admin_url( "upload.php?item={$image_id}" );
+		} else {
+			$edit_link = admin_url( "post.php?post={$image_id}&action=edit" );
+		}
+
+		return $edit_link;
 	}
 
 	/**
@@ -403,8 +410,9 @@ class Media_Item extends Smush_File {
 
 		if ( $original_image_exists ) {
 			$original_image_file = $this->get_original_image_path();
-			$image_size          = $this->fs->file_exists( $original_image_file ) ?
-										$this->fs->getimagesize( $original_image_file ) : false;
+			$image_size          = $this->fs->file_exists( $original_image_file )
+				? $this->fs->getimagesize( $original_image_file )
+				: false;
 			if ( ! $image_size ) {
 				return null;
 			}
@@ -650,7 +658,11 @@ class Media_Item extends Smush_File {
 	}
 
 	public function is_valid() {
-		return ! empty( $this->get_wp_metadata() );
+		return ! empty( $this->get_wp_metadata() ) && $this->has_attached_file();
+	}
+
+	private function has_attached_file() {
+		return ! empty( $this->get_attached_file() );
 	}
 
 	/**
@@ -701,7 +713,10 @@ class Media_Item extends Smush_File {
 	}
 
 	private function fetch_post_mime_type() {
-		return $this->get_post()->post_mime_type;
+		$post = $this->get_post();
+		return empty( $post )
+			? ''
+			: $post->post_mime_type;
 	}
 
 	public function set_mime_type( $mime_type ) {
@@ -766,6 +781,10 @@ class Media_Item extends Smush_File {
 
 		if ( ! $this->has_wp_metadata() ) {
 			$errors->add( 'no_file_meta', esc_html__( 'No file data found in image meta', 'wp-smushit' ) );
+		}
+
+		if ( ! $this->has_attached_file() ) {
+			$errors->add( 'no_attached_file', esc_html__( 'Missing attached file data in image metadata', 'wp-smushit' ) );
 		}
 
 		// Verify missing the full size due to the original image not found for wp.com since we only allowed the full size.

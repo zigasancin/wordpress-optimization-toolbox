@@ -9,6 +9,7 @@ $recheck_images_link = Helper::get_recheck_images_link();
 $docs_link           = $this->get_utm_link(
 	array(
 		'utm_campaign' => 'smush_troubleshooting_docs',
+		'utm_content'  => 'scan_failed_modal',
 	),
 	'https://wpmudev.com/docs/wpmu-dev-plugins/smush/#troubleshooting-guide'
 );

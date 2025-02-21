@@ -38,7 +38,7 @@ if ( $is_configured ) {
 }
 ?>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="localwebp-supported-media-types-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Supported Media Types', 'wp-smushit' ); ?>
@@ -54,16 +54,18 @@ if ( $is_configured ) {
 		<span class="smush-filename-extension smush-extension-png">
 			<?php esc_html_e( 'png', 'wp-smushit' ); ?>
 		</span>
-		<span class="sui-description">
-			<?php
-			printf(
-				/* translators: 1. opening 'a' tag to docs, 2. closing 'a' tag. */
-				esc_html__( 'To verify if the JPG and PNG images are being served correctly as WebP files, please refer to our %1$sDocumentation%2$s.', 'wp-smushit' ),
-				'<a href="https://wpmudev.com/docs/wpmu-dev-plugins/smush/#verifying-webp-output" target="_blank">',
-				'</a>'
-			);
-			?>
-		</span>
+		<?php if ( ! $this->whitelabel->hide_doc_link() ) : ?>
+			<span class="sui-description">
+				<?php
+				printf(
+					/* translators: 1. opening 'a' tag to docs, 2. closing 'a' tag. */
+					esc_html__( 'To verify if the JPG and PNG images are being served correctly as WebP files, please refer to our %1$sDocumentation%2$s.', 'wp-smushit' ),
+					'<a href="https://wpmudev.com/docs/wpmu-dev-plugins/smush/#verifying-webp-output" target="_blank">',
+					'</a>'
+				);
+				?>
+			</span>
+		<?php endif; ?>
 	</div>
 </div>
 
@@ -71,7 +73,7 @@ if ( $is_configured ) {
 if ( $direct_conversion_enabled ) :
 	$webp_fallback_activated = $this->settings->is_webp_fallback_active();
 	?>
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="localwebp-legacy-browser-support-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Legacy Browser Support', 'wp-smushit' ); ?>
@@ -111,7 +113,7 @@ if ( $direct_conversion_enabled ) :
 </div>
 <?php endif; ?>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="localwebp-revert-conversion-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Revert WebP Conversion', 'wp-smushit' ); ?>
@@ -144,7 +146,7 @@ if ( $direct_conversion_enabled ) :
 	</div>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="localwebp-deactivate-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Deactivate', 'wp-smushit' ); ?>

@@ -485,35 +485,35 @@ class Configs {
 
 		if ( ! empty( $config['lazy_load'] ) ) {
 			$args = array(
-				'format'          => array(
+				'format'            => array(
 					'filter' => FILTER_VALIDATE_BOOLEAN,
 					'flags'  => FILTER_REQUIRE_ARRAY + FILTER_NULL_ON_FAILURE,
 				),
-				'output'          => array(
+				'output'            => array(
 					'filter' => FILTER_VALIDATE_BOOLEAN,
 					'flags'  => FILTER_REQUIRE_ARRAY,
 				),
-				'animation'       => array(
+				'animation'         => array(
 					'filter'  => FILTER_CALLBACK,
 					'options' => 'sanitize_text_field',
 					'flags'   => FILTER_REQUIRE_ARRAY,
 				),
-				'include'         => array(
+				'include'           => array(
 					'filter' => FILTER_VALIDATE_BOOLEAN,
 					'flags'  => FILTER_REQUIRE_ARRAY,
 				),
-				'exclude-pages'   => array(
+				'exclude-pages'     => array(
 					'filter' => FILTER_SANITIZE_URL,
 					'flags'  => FILTER_REQUIRE_ARRAY,
 				),
-				'exclude-classes' => array(
+				'exclude-classes'   => array(
 					'filter'  => FILTER_CALLBACK,
 					'options' => 'sanitize_text_field',
 					'flags'   => FILTER_REQUIRE_ARRAY,
 				),
-				'footer'          => FILTER_VALIDATE_BOOLEAN,
-				'native'          => FILTER_VALIDATE_BOOLEAN,
-				'noscript'        => FILTER_VALIDATE_BOOLEAN,
+				'footer'            => FILTER_VALIDATE_BOOLEAN,
+				'native'            => FILTER_VALIDATE_BOOLEAN,
+				'noscript_fallback' => FILTER_VALIDATE_BOOLEAN,
 			);
 
 			$sanitized['lazy_load'] = filter_var_array( $config['lazy_load'], $args, false );
@@ -709,13 +709,13 @@ class Configs {
 
 		// List of the available lazy load settings for this version and their labels.
 		$settings_labels = array(
-			'format'    => __( 'Media Types', 'wp-smushit' ),
-			'output'    => __( 'Output Locations', 'wp-smushit' ),
-			'include'   => __( 'Included Post Types', 'wp-smushit' ),
-			'animation' => __( 'Display And Animation', 'wp-smushit' ),
-			'footer'    => __( 'Load Scripts In Footer', 'wp-smushit' ),
-			'native'    => __( 'Native Lazy Load Enabled', 'wp-smushit' ),
-			'noscript'  => __( 'Disable Noscript', 'wp-smushit' ),
+			'format'            => __( 'Media Types', 'wp-smushit' ),
+			'output'            => __( 'Output Locations', 'wp-smushit' ),
+			'include'           => __( 'Included Post Types', 'wp-smushit' ),
+			'animation'         => __( 'Display And Animation', 'wp-smushit' ),
+			'footer'            => __( 'Load Scripts In Footer', 'wp-smushit' ),
+			'native'            => __( 'Native Lazy Load Enabled', 'wp-smushit' ),
+			'noscript_fallback' => __( 'Noscript Tag', 'wp-smushit' ),
 		);
 
 		foreach ( $config['lazy_load'] as $key => $value ) {
@@ -733,7 +733,7 @@ class Configs {
 					$formatted_value .= __( '. Fade in duration: ', 'wp-smushit' ) . $value['fadein']['duration'];
 					$formatted_value .= __( '. Fade in delay: ', 'wp-smushit' ) . $value['fadein']['delay'];
 				}
-			} elseif ( in_array( $key, array( 'footer', 'native', 'noscript' ), true ) ) {
+			} elseif ( in_array( $key, array( 'footer', 'native', 'noscript_fallback' ), true ) ) {
 				// Enabled/disabled settings.
 				$formatted_value .= ! empty( $value ) ? __( 'Yes', 'wp-smushit' ) : __( 'No', 'wp-smushit' );
 

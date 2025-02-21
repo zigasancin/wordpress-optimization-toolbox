@@ -89,7 +89,10 @@ class Webp_Controller extends Controller {
 
 		$this->register_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_fallback_js' ) );
 
-		$this->register_action( 'wp_smush_after_delete_all_webp_files', array( $this, 'maybe_revert_lock_file_on_delete_webp_files' ) );
+		$this->register_action( 'wp_smush_after_delete_all_webp_files', array(
+			$this,
+			'maybe_revert_lock_file_on_delete_webp_files',
+		) );
 	}
 
 	/**

@@ -4,6 +4,8 @@ namespace Smush\Core\CDN;
 
 use Smush\Core\Settings;
 use Smush\Core\Url_Utils;
+use Smush\Core\Array_Utils;
+use Smush\Core\Keyword_Exclusions;
 use WP_Smush;
 use WPMUDEV_Dashboard;
 
@@ -40,6 +42,20 @@ class CDN_Helper {
 
 	private $is_pro;
 
+	/**
+	 * Array Utils.
+	 *
+	 * @var Array_Utils
+	 */
+	private $array_utils;
+
+	/**
+	 * Keyword Exclusions.
+	 *
+	 * @var Keyword_Exclusions
+	 */
+	private $keyword_exclusions;
+
 	private $supported_extensions = array(
 		'gif',
 		'jpg',
@@ -49,8 +65,9 @@ class CDN_Helper {
 	);
 
 	public function __construct() {
-		$this->settings  = Settings::get_instance();
-		$this->url_utils = new Url_Utils();
+		$this->settings    = Settings::get_instance();
+		$this->url_utils   = new Url_Utils();
+		$this->array_utils = new Array_Utils();
 	}
 
 	private function is_url_extension_supported( $url ) {
@@ -454,7 +471,50 @@ class CDN_Helper {
 		$this->settings = $settings;
 	}
 
-	public function skip_image( $url, $image_markup ) {
-		return apply_filters( 'smush_skip_image_from_cdn', false, $url, $image_markup );
+	public function skip_image_url( $url, $image_markup = false ) {
+		$image_markup = ! empty( $image_markup ) && is_string( $image_markup ) ? $image_markup : '';
+		$is_skipped   = $this->keyword_exclusions()->is_url_excluded( $url );
+
+		return apply_filters( 'smush_skip_image_from_cdn', $is_skipped, $url, $image_markup );
+	}
+
+	/**
+	 * Keyword Exclusions.
+	 *
+	 * @return Keyword_Exclusions
+	 */
+	public function keyword_exclusions() {
+		if ( ! $this->keyword_exclusions ) {
+			$this->keyword_exclusions = new Keyword_Exclusions( $this->get_excluded_keywords() );
+		}
+
+		return $this->keyword_exclusions;
+	}
+
+	public function get_excluded_keywords() {
+		$excluded_keywords = $this->array_utils->get_array_value( $this->get_cdn_avanced_settings(), 'excluded-keywords' );
+		$excluded_keywords = $this->array_utils->ensure_array( $excluded_keywords );
+
+		return apply_filters( 'wp_smush_cdn_excluded_keywords', array_unique( $excluded_keywords ) );
+	}
+
+	private function get_cdn_avanced_settings() {
+		return $this->settings->get_setting( 'wp-smush-cdn-advanced-settings', $this->get_default_cdn_advanced_settings() );
+	}
+
+	private function get_default_cdn_advanced_settings() {
+		$default_exclusion_keywords = array(
+			'@placeholder',
+			'@dummy',
+			'@loading.gif',
+		);
+
+		return array(
+			'excluded-keywords' => $default_exclusion_keywords,
+		);
+	}
+
+	public function is_rest_request() {
+		return defined( 'REST_REQUEST' ) && REST_REQUEST;
 	}
 }

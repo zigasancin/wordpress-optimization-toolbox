@@ -13,7 +13,7 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://wpmudev.com/">WPMU DEV</a> WordPress Smush API.
- * Version:           3.16.6
+ * Version:           3.17.1
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            WPMU DEV
@@ -50,7 +50,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '3.16.6' );
+	define( 'WP_SMUSH_VERSION', '3.17.1' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
@@ -92,9 +92,11 @@ if ( ! defined( 'WP_SMUSH_PARALLEL' ) ) {
 if ( ! defined( 'WP_SMUSH_BACKGROUND' ) ) {
 	define( 'WP_SMUSH_BACKGROUND', true );
 }
-
 if ( ! defined( 'WP_SMUSH_MIN_PHP_VERSION' ) ) {
 	define( 'WP_SMUSH_MIN_PHP_VERSION', '7.4' );
+}
+if ( ! defined( 'WP_SMUSH_STREAMS_CUTOFF_SIZE' ) ) {
+	define( 'WP_SMUSH_STREAMS_CUTOFF_SIZE', 5 * 1024 * 1024 ); // 5MB
 }
 
 if ( version_compare( PHP_VERSION, WP_SMUSH_MIN_PHP_VERSION, '<' ) ) {
@@ -266,6 +268,11 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 		private function __construct() {
 			spl_autoload_register( array( $this, 'autoload' ) );
 
+			/**
+			 * Include vendor dependencies
+			 */
+			require_once __DIR__ . '/vendor_prefixed/custom-autoload.php';
+
 			add_action( 'admin_init', array( '\\Smush\\Core\\Installer', 'upgrade_settings' ) );
 			add_action( 'current_screen', array( '\\Smush\\Core\\Installer', 'maybe_create_table' ) );
 			// We use priority 9 to avoid conflict with old free-dashboard module <= 2.0.4.
@@ -363,7 +370,7 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 			}
 
 			if ( defined( 'WP_CLI' ) && WP_CLI ) {
-				WP_CLI::add_command( 'smush', '\\Smush\\Core\\CLI' );
+				WP_CLI::add_command( 'smush', '\\Smush\\Core\\CLI\\CLI' );
 			}
 		}
 

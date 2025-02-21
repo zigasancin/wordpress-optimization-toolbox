@@ -6,6 +6,7 @@ if ( ! defined( 'WPINC' ) ) {
 $docs_link = $this->get_utm_link(
 	array(
 		'utm_campaign' => 'smush_troubleshooting_docs',
+		'utm_content'  => 'smush_failed_notice',
 	),
 	'https://wpmudev.com/docs/wpmu-dev-plugins/smush/#troubleshooting-guide'
 );

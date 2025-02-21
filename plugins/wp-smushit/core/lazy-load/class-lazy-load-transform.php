@@ -11,6 +11,7 @@ use Smush\Core\Settings;
 use Smush\Core\Transform\Transform;
 use Smush\Core\Upload_Dir;
 use Smush\Core\Url_Utils;
+use Smush\Core\Keyword_Exclusions;
 
 class Lazy_Load_Transform implements Transform {
 	const LAZYLOAD_CLASS = 'lazyload';
@@ -26,7 +27,15 @@ class Lazy_Load_Transform implements Transform {
 	/**
 	 * @var array
 	 */
-	private $excluded_attributes;
+	private $excluded_keywords;
+
+	/**
+	 * Keyword Exclusions.
+	 *
+	 * @var Keyword_Exclusions
+	 */
+	private $keyword_exclusions;
+
 	/**
 	 * @var Lazy_Load_Helper
 	 */
@@ -100,6 +109,7 @@ class Lazy_Load_Transform implements Transform {
 				$this->add_native_lazy_loading_attribute( $iframe_element );
 			}
 		} else {
+			$this->remove_native_lazy_loading_attribute( $iframe_element );
 			$this->update_element_attributes_for_lazy_load( $iframe_element, array( 'src' ) );
 			$iframe_element->add_attribute( new Element_Attribute( 'data-load-mode', '1' ) );
 		}
@@ -113,66 +123,23 @@ class Lazy_Load_Transform implements Transform {
 	}
 
 	private function element_has_native_lazy_load_attribute( Element $element ) {
-		$attribute_value = $element->get_attribute_value( 'loading' );
-		return ! empty( $attribute_value );
+		return $element->has_attribute( 'loading' );
 	}
 
 	private function is_element_excluded( Element $element ) {
 		return $this->is_high_priority_element( $element )
-		       || $this->element_has_excluded_attribute_values( $element );
+		       || $this->element_has_excluded_keywords( $element );
 	}
 
-	private function element_has_excluded_attribute_values( Element $element ) {
-		$excluded_attributes = $this->get_excluded_attributes();
-		if ( empty( $excluded_attributes ) ) {
+	private function element_has_excluded_keywords( Element $element ) {
+		$keyword_exclusions = $this->keyword_exclusions();
+		if ( ! $keyword_exclusions->has_excluded_keywords() ) {
 			return false;
 		}
 
-		if ( $this->markup_has_excluded_attribute_values( $element->get_markup(), $excluded_attributes ) ) {
-			// Exact match found
-			return true;
-		}
-
-		// Now try with # and . for id and class respectively
-		$id_attribute = $element->get_attribute_value( 'id' );
-		if ( $id_attribute ) {
-			$element_id = '#' . $id_attribute;
-			if ( in_array( $element_id, $excluded_attributes, true ) ) {
-				return true;
-			}
-		}
-
-		$class_attribute = $element->get_attribute_value( 'class' );
-		if ( $class_attribute ) {
-			$element_classes = explode( ' ', $class_attribute );
-			foreach ( $element_classes as $class ) {
-				if ( in_array( ".{$class}", $excluded_attributes, true ) ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	private function markup_has_excluded_attribute_values( $string, $excluded_values ) {
-		if ( empty( $excluded_values ) ) {
-			return false;
-		}
-
-		$excluded_values = (array) $excluded_values;
-
-		foreach ( $excluded_values as $excluded_value ) {
-			if ( empty( $excluded_value ) || ! is_string( $excluded_value ) ) {
-				continue;
-			}
-
-			if ( strpos( $string, $excluded_value ) !== false ) {
-				return true;
-			}
-		}
-
-		return false;
+		return $keyword_exclusions->is_markup_excluded( $element->get_markup() )
+			|| $keyword_exclusions->is_id_attribute_excluded( $element->get_attribute_value( 'id' ) )
+			|| $keyword_exclusions->is_class_attribute_excluded( $element->get_attribute_value( 'class' ) );
 	}
 
 	private function is_iframe_skipped_through_filter( $src, $iframe ) {
@@ -188,22 +155,22 @@ class Lazy_Load_Transform implements Transform {
 		return $this->lazy_load_options;
 	}
 
-	private function get_excluded_attributes() {
-		if ( ! $this->excluded_attributes ) {
-			$this->excluded_attributes = $this->prepare_excluded_attributes();
+	private function get_excluded_keywords() {
+		if ( ! $this->excluded_keywords ) {
+			$this->excluded_keywords = $this->prepare_excluded_keywords();
 		}
-		return $this->excluded_attributes;
+		return $this->excluded_keywords;
 	}
 
-	private function prepare_excluded_attributes() {
-		$exclude_attributes = $this->get_default_excluded_attributes();
-		$exclude_classes    = $this->helper->get_excluded_classes();
-		$exclude_attributes = array_merge(
-			$exclude_attributes,
-			$exclude_classes
+	private function prepare_excluded_keywords() {
+		$default_exclude_keywords = $this->get_default_excluded_keywords();
+		$exclude_keywords         = $this->helper->get_excluded_classes();// @since 3.13.0 used excluded ids, classes as excluded keywords.
+		$exclude_keywords         = array_merge(
+			$default_exclude_keywords,
+			$exclude_keywords
 		);
 
-		return apply_filters( 'wp_smush_lazyload_excluded_attributes', array_unique( $exclude_attributes ) );
+		return apply_filters( 'wp_smush_lazyload_excluded_keywords', array_unique( $exclude_keywords ) );
 	}
 
 	private function replace_attributes_with_data_attributes( Element $element, $attribute_names ) {
@@ -227,7 +194,7 @@ class Lazy_Load_Transform implements Transform {
 		}
 	}
 
-	private function get_default_excluded_attributes() {
+	private function get_default_excluded_keywords() {
 		return array(
 			'data-lazyload=',
 			'soliloquy-preload', // Soliloquy slider.
@@ -279,6 +246,13 @@ class Lazy_Load_Transform implements Transform {
 		$element->add_attribute( new Element_Attribute( 'loading', 'lazy' ) );
 	}
 
+	private function remove_native_lazy_loading_attribute( Element $element ) {
+		$native_lazyload_attr = $element->get_attribute( 'loading' );
+		if ( ! empty( $native_lazyload_attr ) ) {
+			$element->remove_attribute( $native_lazyload_attr );
+		}
+	}
+
 	private function transform_image_elements( Page $page ) {
 		foreach ( $page->get_composite_elements() as $composite_element ) {
 			if ( ! $this->is_composite_element_excluded( $composite_element ) ) {
@@ -320,6 +294,7 @@ class Lazy_Load_Transform implements Transform {
 			return false;
 		}
 
+		$this->remove_native_lazy_loading_attribute( $element );
 		$this->replace_attributes_with_data_attributes( $element, array(
 			'src',
 			'srcset',
@@ -360,6 +335,7 @@ class Lazy_Load_Transform implements Transform {
 				$this->add_native_lazy_loading_attribute( $element );
 			}
 		} else {
+			$this->remove_native_lazy_loading_attribute( $element );
 			$this->update_element_attributes_for_lazy_load( $element, array(
 				'src',
 				'srcset',
@@ -520,5 +496,18 @@ class Lazy_Load_Transform implements Transform {
 		foreach ( $elements as $element ) {
 			$this->transform_image_element( $element );
 		}
+	}
+
+	/**
+	 * Get Keyword Exclusions.
+	 *
+	 * @return Keyword_Exclusions
+	 */
+	private function keyword_exclusions() {
+		if ( ! $this->keyword_exclusions ) {
+			$this->keyword_exclusions = new Keyword_Exclusions( $this->get_excluded_keywords() );
+		}
+
+		return $this->keyword_exclusions;
 	}
 }

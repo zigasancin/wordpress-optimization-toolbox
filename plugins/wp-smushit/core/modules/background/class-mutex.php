@@ -3,6 +3,8 @@
 namespace Smush\Core\Modules\Background;
 
 class Mutex {
+	const REQUIRED_MYSQL_VERSION = '5.7';
+
 	/**
 	 * @var string
 	 */
@@ -18,17 +20,25 @@ class Mutex {
 	 * @var int
 	 */
 	private $timeout = 10;
+	/**
+	 * @var string|null
+	 */
+	private $mysql_version;
 
 	public function __construct( $key ) {
 		$this->key = $key;
 	}
 
 	public function execute( $operation ) {
-		$acquired = $this->acquire_lock();
-		if ( $acquired || ! $this->break_on_timeout() ) {
+		if ( $this->is_supported() ) {
+			$acquired = $this->acquire_lock();
+			if ( $acquired || ! $this->break_on_timeout() ) {
+				call_user_func( $operation );
+			}
+			$this->release_lock();
+		} else {
 			call_user_func( $operation );
 		}
-		$this->release_lock();
 	}
 
 	private function acquire_lock() {
@@ -105,4 +115,29 @@ class Mutex {
 
 		return $this;
 	}
+
+	private function is_supported() {
+		return $this->is_mysql_requirement_met();
+	}
+
+	private function get_actual_mysql_version() {
+		if ( ! $this->mysql_version ) {
+			global $wpdb;
+			/**
+			 * MariaDB version prefix 5.5.5- is not stripped when using $wpdb->db_version() to get the DB version:
+			 * https://github.com/php/php-src/issues/7972
+			 */
+			$this->mysql_version = $wpdb->get_var( 'SELECT VERSION()' );
+		}
+		return $this->mysql_version;
+	}
+
+	private function is_mysql_requirement_met() {
+		return version_compare( $this->get_actual_mysql_version(), $this->get_required_mysql_version(), '>=' );
+	}
+
+	private function get_required_mysql_version() {
+		return self::REQUIRED_MYSQL_VERSION;
+	}
+
 }

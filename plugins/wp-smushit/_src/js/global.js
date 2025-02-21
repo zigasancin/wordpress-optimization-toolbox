@@ -1,9 +1,16 @@
 import '../scss/common.scss';
-import tracker from './utils/tracker';
+import DeactivationSurvey from './modules/deactivation-survey';
+import GlobalTracking from './global-tracking';
 
 /* global ajaxurl */
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener( 'DOMContentLoaded', function() {
+	// Deactivation survey modal.
+	( new DeactivationSurvey() ).init();
+	// Global Trackings.
+	( new GlobalTracking() ).init();
+
+	// Dismiss notices.
 	const dismissNoticeButton = document.querySelectorAll(
 		'.smush-dismissible-notice .smush-dismiss-notice-button'
 	);
@@ -56,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		} );
 	}
 
-
 	// Show header notices.
 	const handleHeaderNotice = () => {
 		const headerNotice = document.querySelector('.wp-smush-dismissible-header-notice');
@@ -104,12 +110,4 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	handleHeaderNotice();
-
-	// Global tracking.
-	const upsellSubmenuLink = document.querySelector( '#toplevel_page_smush a[href*="utm_campaign=smush_submenu_upsell' );
-	if ( upsellSubmenuLink ) {
-		upsellSubmenuLink.addEventListener( 'click', (e) => {
-			tracker.track( 'submenu_upsell' );
-		} );
-	}
 });

@@ -26,15 +26,15 @@ if ( ! defined( 'WPINC' ) ) {
 		<ol class="sui-upsell-list">
 			<li>
 				<span class="sui-icon-check sui-sm" aria-hidden="true"></span>
-				<?php esc_html_e( 'Fix Google PageSpeeds ‘properly size images’ suggestion', 'wp-smushit' ); ?>
+				<?php esc_html_e( "Fix the 'Properly Size Images' audit on Google PageSpeed", 'wp-smushit' ); ?>
 			</li>
 			<li>
 				<span class="sui-icon-check sui-sm" aria-hidden="true"></span>
-				<?php esc_html_e( 'WebP conversion with CDN', 'wp-smushit' ); ?>
+				<?php esc_html_e( 'Automatic next-gen WebP conversion via CDN', 'wp-smushit' ); ?>
 			</li>
 			<li>
 				<span class="sui-icon-check sui-sm" aria-hidden="true"></span>
-				<?php esc_html_e( 'Serve background images from the CDN', 'wp-smushit' ); ?>
+				<?php esc_html_e( 'Up to 50 GB Smush CDN included', 'wp-smushit' ); ?>
 			</li>
 		</ol>
 

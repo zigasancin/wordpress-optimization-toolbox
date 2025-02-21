@@ -41,6 +41,8 @@ class Transformer {
 			return $page_markup;
 		}
 
+		$this->do_pre_transform_action( $page_url, $page_markup );
+
 		foreach ( $transforms as $transform ) {
 			$page_markup = $this->apply_transform_to_content( $transform, $page_markup, $page_url );
 		}
@@ -194,5 +196,17 @@ class Transformer {
 		}
 
 		return $filtered;
+	}
+
+	/**
+	 * @param $page_url
+	 * @param string $page_markup
+	 *
+	 * @return void
+	 */
+	public function do_pre_transform_action( $page_url, string $page_markup ) {
+		$parser      = new Page_Parser( $page_url, $page_markup );
+		$parsed_page = $parser->parse_page();
+		do_action( 'wp_smush_pre_transform_page', $parsed_page );
 	}
 }

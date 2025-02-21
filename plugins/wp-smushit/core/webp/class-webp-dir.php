@@ -10,6 +10,10 @@ class Webp_Dir extends Upload_Dir {
 	private $webp_rel_path;
 
 	private $webp_url;
+	/**
+	 * @var array
+	 */
+	private $wp_upload_dir;
 
 	/**
 	 * @return string
@@ -42,6 +46,29 @@ class Webp_Dir extends Upload_Dir {
 		}
 
 		return $this->webp_url;
+	}
+
+	public function get_wp_upload_dir() {
+		if ( is_null( $this->wp_upload_dir ) ) {
+			$this->wp_upload_dir = $this->prepare_wp_upload_dir();
+		}
+
+		return $this->wp_upload_dir;
+	}
+
+	private function prepare_wp_upload_dir() {
+		if ( ! is_multisite() || is_main_site() ) {
+			$upload = wp_upload_dir();
+		} else {
+			// Use the main site's upload directory for all subsite's webp converted images.
+			// This makes it easier to have a single rule on the server configs for serving webp in mu.
+			$blog_id = get_main_site_id();
+			switch_to_blog( $blog_id );
+			$upload = wp_upload_dir();
+			restore_current_blog();
+		}
+
+		return $upload;
 	}
 
 	private function prepare_webp_path() {

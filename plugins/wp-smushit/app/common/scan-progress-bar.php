@@ -29,7 +29,7 @@ if ( ! defined( 'WPINC' ) ) {
 				<p class="wp-smush-scan-hold-on-notice sui-hidden">
 					<?php
 						/* translators: 1: <strong> 2: </strong> */
-						printf( esc_html__( '%1$sNote:%2$s This is taking longer than expected, please hold on.', 'wp-smushit' ), '<strong>', '</strong>' );
+						printf( esc_html__( '%1$sNote:%2$s The process is taking longer than expected, please hold on while we try to resolve this for you.', 'wp-smushit' ), '<strong>', '</strong>' );
 					?>
 				</p>
 			</div>

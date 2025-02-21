@@ -124,12 +124,12 @@ class Server_Utils {
 	private function check_user_agent_version( $allowed, $default = false ) {
 		$user_agent = $this->get_user_agent();
 
-		foreach ( $allowed as $user_agenet_regex => $data ) {
+		foreach ( $allowed as $user_agent_regex => $data ) {
 			$version  = isset( $data['version'] ) ? $data['version'] : 0;
 			$operator = isset( $data['operator'] ) ? $data['operator'] : '';
 
 			$matches = array();
-			if ( preg_match( $user_agenet_regex, $user_agent, $matches ) ) {
+			if ( preg_match( $user_agent_regex, $user_agent, $matches ) ) {
 				if ( $version && $operator && $matches['version'] ) {
 					return version_compare( (int) $matches['version'], $version, $operator );
 				} else {
@@ -158,5 +158,53 @@ class Server_Utils {
 			return '';
 		}
 		return strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) );
+	}
+
+	public function get_device_type() {
+		if ( ! $this->is_mobile() ) {
+			return 'desktop';
+		}
+
+		if ( $this->is_tablet() ) {
+			return 'tablet';
+		}
+
+		return 'mobile';
+	}
+
+	private function is_tablet() {
+		$user_agent = $this->get_user_agent();
+		if ( empty( $user_agent ) ) {
+			return false;
+		}
+		/**
+		 * It doesn't work with IpadOS due to this:
+		 * https://stackoverflow.com/questions/62323230/how-can-i-detect-with-php-that-the-user-uses-an-ipad-when-my-user-agent-doesnt-c
+		 */
+		$tablet_pattern = '/(tablet|ipad|playbook|kindle|silk)/i';
+		return preg_match( $tablet_pattern, $user_agent );
+	}
+
+	private function is_mobile() {
+		$user_agent = $this->get_user_agent();
+		if ( empty( $user_agent ) ) {
+			return false;
+		}
+		// Do not use wp_is_mobile() since it doesn't detect ipad/tablet.
+		$mobile_patten = '/Mobile|iP(hone|od|ad)|Android|BlackBerry|tablet|IEMobile|Kindle|NetFront|Silk|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune|playbook/i';
+		return preg_match( $mobile_patten, $user_agent );
+	}
+
+	public function is_function_supported( $function_name ) {
+		if ( ! function_exists( $function_name ) ) {
+			return false;
+		}
+
+		$disabled_functions = explode( ',', ini_get( 'disable_functions' ) );
+		if ( in_array( $function_name, $disabled_functions ) ) {
+			return false;
+		}
+
+		return true;
 	}
 }

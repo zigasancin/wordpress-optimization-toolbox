@@ -9,8 +9,10 @@
 namespace Smush\Core\CDN;
 
 use Smush\Core\Controller;
+use Smush\Core\Media\Attachment_Url_Cache;
 use Smush\Core\Modules\Helpers;
 use Smush\Core\Settings;
+use Smush\Core\Url_Utils;
 use stdClass;
 use WP_Error;
 
@@ -81,6 +83,14 @@ class CDN_Srcset_Controller extends Controller {
 	 * @var self
 	 */
 	private static $instance;
+	/**
+	 * @var Attachment_Url_Cache
+	 */
+	private $attachment_url_cache;
+	/**
+	 * @var Url_Utils
+	 */
+	private $urls_utils;
 
 	/**
 	 * Static instance getter
@@ -99,8 +109,10 @@ class CDN_Srcset_Controller extends Controller {
 	 * @since 3.2.2
 	 */
 	public function __construct() {
-		$this->settings   = Settings::get_instance();
-		$this->cdn_helper = CDN_Helper::get_instance();
+		$this->settings             = Settings::get_instance();
+		$this->cdn_helper           = CDN_Helper::get_instance();
+		$this->attachment_url_cache = Attachment_Url_Cache::get_instance();
+		$this->urls_utils           = new Url_Utils();
 
 		// We do this to save extra checks when we load images later on in code.
 		$this->site_url = get_site_url();
@@ -111,9 +123,7 @@ class CDN_Srcset_Controller extends Controller {
 			$this->home_url = get_home_url();
 		}
 
-		$priority = defined( 'WP_SMUSH_CDN_DELAY_SRCSET' ) && WP_SMUSH_CDN_DELAY_SRCSET ? 1000 : 99;
-		// Update responsive image srcset and sizes if required.
-		$this->register_filter( 'wp_calculate_image_srcset', array( $this, 'update_image_srcset' ), $priority, 5 );
+		$this->register_filter( 'wp_calculate_image_srcset', array( $this, 'update_image_srcset_in_ajax' ), $this->get_cdn_srcset_priority(), 5 );
 		if ( $this->settings->get( 'auto_resize' ) ) {
 			$this->register_filter( 'wp_calculate_image_sizes', array( $this, 'update_image_sizes' ), 1, 2 );
 		}
@@ -379,6 +389,14 @@ class CDN_Srcset_Controller extends Controller {
 		return apply_filters( 'smush_image_src_after_cdn', $src, $image );
 	}
 
+	public function update_image_srcset_in_ajax( $sources, $size_array, $image_src, $image_meta, $attachment_id = 0 ) {
+		if ( wp_doing_ajax() ) {
+			$sources = $this->update_image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id );
+		}
+
+		return $sources;
+	}
+
 	/**
 	 * Filters an array of image srcset values, replacing each URL with resized CDN urls.
 	 *
@@ -396,7 +414,11 @@ class CDN_Srcset_Controller extends Controller {
 	 *
 	 */
 	public function update_image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id = 0 ) {
-		if ( ! is_array( $sources ) || ! $this->cdn_helper->is_supported_url( $image_src ) ) {
+		if (
+			! is_array( $sources )
+			|| ! $this->cdn_helper->is_supported_url( $image_src )
+			|| $this->cdn_helper->skip_image_url( $image_src )
+		) {
 			return $sources;
 		}
 
@@ -409,11 +431,7 @@ class CDN_Srcset_Controller extends Controller {
 		}
 
 		foreach ( $sources as $i => $source ) {
-			if ( ! $this->is_valid_url( $source['url'] ) ) {
-				continue;
-			}
-
-			if ( apply_filters( 'smush_cdn_skip_image', false, $source['url'], $source ) ) {
+			if ( ! $this->is_valid_url( $source['url'] ) || $this->cdn_helper->skip_image_url( $source['url'] ) ) {
 				continue;
 			}
 
@@ -427,7 +445,7 @@ class CDN_Srcset_Controller extends Controller {
 
 			// If don't have attachment id, get original image by removing dimensions from url.
 			if ( empty( $url ) ) {
-				$url = $this->get_url_without_dimensions( $source['url'] );
+				$url = $this->urls_utils->get_url_without_dimensions( $source['url'] );
 			}
 
 			$args = array();
@@ -446,9 +464,6 @@ class CDN_Srcset_Controller extends Controller {
 		// Set additional sizes if required.
 		if ( $this->settings->get( 'auto_resize' ) ) {
 			$sources = $this->set_additional_srcset( $sources, $size_array, $main_image_url, $image_meta, $image_src );
-
-			// Make it look good.
-			ksort( $sources );
 		}
 
 		return $sources;
@@ -651,38 +666,6 @@ class CDN_Srcset_Controller extends Controller {
 	}
 
 	/**
-	 * Get full size image url from resized one.
-	 *
-	 * @param string $src Image URL.
-	 *
-	 * @return string
-	 * @since 3.0
-	 *
-	 */
-	private function get_url_without_dimensions( $src ) {
-		if ( ! preg_match( '/(-\d+x\d+)\.(' . implode( '|', $this->supported_extensions ) . ')(?:\?.+)?$/i', $src, $src_parts ) ) {
-			return $src;
-		}
-
-		// Remove WP's resize string to get the original image.
-		$original_src = str_replace( $src_parts[1], '', $src );
-
-		// Upload directory.
-		$upload_dir = wp_get_upload_dir();
-
-		// Extracts the file path to the image minus the base url.
-		$file_path = substr( $original_src, strlen( $upload_dir['baseurl'] ) );
-
-		// Continue only if the file exists.
-		if ( file_exists( $upload_dir['basedir'] . $file_path ) ) {
-			return $original_src;
-		}
-
-		// Revert to source if file does not exist.
-		return $src;
-	}
-
-	/**
 	 * Get $content_width global var value.
 	 *
 	 * @return bool|string
@@ -726,7 +709,7 @@ class CDN_Srcset_Controller extends Controller {
 
 		// If url is empty, try to get from src.
 		if ( empty( $url ) ) {
-			$url = $this->get_url_without_dimensions( $image_src );
+			$url = $this->urls_utils->get_url_without_dimensions( $image_src );
 		}
 
 		// We need to add additional dimensions.
@@ -771,7 +754,7 @@ class CDN_Srcset_Controller extends Controller {
 
 		// Continue only if additional multipliers found or not skipped.
 		// Filter already documented in class-cdn.php.
-		if ( $this->cdn_helper->skip_image( $url, false ) || empty( $additional_multipliers ) ) {
+		if ( $this->cdn_helper->skip_image_url( $url, false ) || empty( $additional_multipliers ) ) {
 			return $sources;
 		}
 
@@ -829,18 +812,16 @@ class CDN_Srcset_Controller extends Controller {
 	 * @since 3.0
 	 *
 	 */
-	public function generate_srcset( $src ) {
+	public function generate_srcset( $src, $attachment_id = 0 ) {
 		/**
 		 * Try to get the attachment URL.
-		 *
-		 * TODO: attachment_url_to_postid() can be resource intensive and cause 100% CPU spikes.
-		 *
-		 * @see https://core.trac.wordpress.org/ticket/41281
 		 */
-		$attachment_id = attachment_url_to_postid( $src );
-		$image_meta    = array();
-		$width         = 0;
-		$height        = 0;
+		if ( empty( $attachment_id ) ) {
+			$attachment_id = $this->attachment_url_cache->get_id_for_url( $src );
+		}
+		$image_meta = array();
+		$width      = 0;
+		$height     = 0;
 
 		// Try to get width and height from image.
 		if ( $attachment_id ) {
@@ -859,7 +840,7 @@ class CDN_Srcset_Controller extends Controller {
 		}
 
 		// This is an image placeholder - do not generate srcset.
-		if ( $width === $height && 1 === $width ) {
+		if ( $width === $height && $width < 32 ) {
 			return false;
 		}
 
@@ -871,7 +852,11 @@ class CDN_Srcset_Controller extends Controller {
 		}
 
 		$size_array = array( absint( $width ), absint( $height ) );
-		$srcset     = wp_calculate_image_srcset( $size_array, $src, $image_meta, $attachment_id );
+		$priority   = $this->get_cdn_srcset_priority();
+
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'update_image_srcset' ), $priority, 5 );
+		$srcset = wp_calculate_image_srcset( $size_array, $src, $image_meta, $attachment_id );
+		remove_filter( 'wp_calculate_image_srcset', array( $this, 'update_image_srcset' ), $priority );
 
 		/**
 		 * In some rare cases, the wp_calculate_image_srcset() will not generate any srcset, because there are
@@ -948,6 +933,13 @@ class CDN_Srcset_Controller extends Controller {
 		}
 
 		return wp_getimagesize( $path );
+	}
+
+	/**
+	 * @return int
+	 */
+	private function get_cdn_srcset_priority(): int {
+		return defined( 'WP_SMUSH_CDN_DELAY_SRCSET' ) && WP_SMUSH_CDN_DELAY_SRCSET ? 1000 : 99;
 	}
 
 }

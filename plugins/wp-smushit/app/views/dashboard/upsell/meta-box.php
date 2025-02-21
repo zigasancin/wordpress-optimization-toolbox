@@ -31,7 +31,7 @@ $can_use_background = $bg_optimization->can_use_background();
 	</li>
 	<li>
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>
-		<?php esc_html_e( '10 GB Smush CDN', 'wp-smushit' ); ?>
+		<?php esc_html_e( 'Up to 50 GB Smush CDN', 'wp-smushit' ); ?>
 	</li>
 	<?php if( ! $can_use_background ) :?>
 	<li>

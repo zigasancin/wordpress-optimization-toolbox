@@ -128,6 +128,7 @@ class Image_URL {
 		$path          = parse_url( $full_url, PHP_URL_PATH );
 		$resolved_path = str_replace( '/./', '/', $path );
 
+		// TODO: in the following regex [a-zA-Z0-9-_.] is too narrow, what about non-english characters?
 		$pattern = '@/[a-zA-Z0-9-_.]*/\.{2}/@i';
 		while ( preg_match( $pattern, $resolved_path ) ) {
 			$resolved_path = preg_replace( $pattern, '/', $resolved_path );

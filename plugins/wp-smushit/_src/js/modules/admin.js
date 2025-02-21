@@ -154,93 +154,55 @@ jQuery(function ($) {
 	/**
 	 * Validates the Resize Width and Height against the Largest Thumbnail Width and Height
 	 *
-	 * @param wrapper_div jQuery object for the whole setting row wrapper div
-	 * @param width_only Whether to validate only width
-	 * @param height_only Validate only Height
-	 * @return {boolean} All Good or not
+	 * @param resizingWrapper jQuery object for the whole setting row wrapper div
 	 */
-	const validate_resize_settings = function (
-		wrapper_div,
-		width_only,
-		height_only
-	) {
-		const resize_checkbox = wrapper_div.find('#resize');
+	const validateResizeSettings = function( resizingWrapper ) {
+		const resizeCheckbox = resizingWrapper.find( '#resize' ),
+			widthInput = resizingWrapper.find( '#wp-smush-resize_width' ),
+			heightInput = resizingWrapper.find( '#wp-smush-resize_height' ),
+			inputWrapper = resizingWrapper.find( '#smush-resize-settings-wrap' ),
+			errorNotice = resizingWrapper.find( '.wp-smush-update-dimensions' );
 
-		if (!height_only) {
-			var width_input = wrapper_div.find('#wp-smush-resize_width');
-			var width_error_note = wrapper_div.find(
-				'.sui-notice-info.wp-smush-update-width'
-			);
-		}
-		if (!width_only) {
-			var height_input = wrapper_div.find('#wp-smush-resize_height');
-			var height_error_note = wrapper_div.find(
-				'.sui-notice-info.wp-smush-update-height'
-			);
-		}
-
-		let width_error = false;
-		let height_error = false;
-
-		//If resize settings is not enabled, return true
-		if (!resize_checkbox.is(':checked')) {
-			return true;
-		}
-
-		//Check if we have localised width and height
+		const imageResizingEnabled = resizeCheckbox.is( ':checked' );
 		if (
-			'undefined' === typeof wp_smushit_data.resize_sizes ||
-			'undefined' === typeof wp_smushit_data.resize_sizes.width
+			! imageResizingEnabled ||
+			! widthInput.length ||
+			! heightInput.length ||
+			! inputWrapper.length ||
+			! errorNotice.length
 		) {
-			//Rely on server validation
-			return true;
+			return;
 		}
 
-		//Check for width
-		if (
-			!height_only &&
-			'undefined' !== typeof width_input &&
-			parseInt(wp_smushit_data.resize_sizes.width) >
-				parseInt(width_input.val())
-		) {
-			width_input.parent().addClass('sui-form-field-error');
-			width_error_note.show('slow');
-			width_error = true;
+		const { width: largestWidth, height: largestHeight } = window.wp_smushit_data?.resize_sizes || {};
+		if ( ! largestWidth && ! largestHeight ) {
+			return;
+		}
+
+		const width = widthInput.val();
+		const height = heightInput.val();
+		const widthError = parseInt( largestWidth ) > parseInt( width );
+		const heightError = parseInt( largestWidth ) > parseInt( height );
+
+		const hasError = widthError || heightError;
+
+		if ( hasError ) {
+			errorNotice.show( 'slow' );
 		} else {
-			//Remove error class
-			width_input.parent().removeClass('sui-form-field-error');
-			width_error_note.hide();
-			if (height_input.hasClass('error')) {
-				height_error_note.show('slow');
-			}
+			errorNotice.hide( 'slow' );
 		}
 
-		//Check for height
-		if (
-			!width_only &&
-			'undefined' !== typeof height_input &&
-			parseInt(wp_smushit_data.resize_sizes.height) >
-				parseInt(height_input.val())
-		) {
-			height_input.parent().addClass('sui-form-field-error');
-			//If we are not showing the width error already
-			if (!width_error) {
-				height_error_note.show('slow');
-			}
-			height_error = true;
+		if ( widthError ) {
+			widthInput.parent().addClass( 'sui-form-field-warning' );
 		} else {
-			//Remove error class
-			height_input.parent().removeClass('sui-form-field-error');
-			height_error_note.hide();
-			if (width_input.hasClass('error')) {
-				width_error_note.show('slow');
-			}
+			widthInput.parent().removeClass( 'sui-form-field-warning' );
 		}
 
-		if (width_error || height_error) {
-			return false;
+		if ( heightError ) {
+			heightInput.parent().addClass( 'sui-form-field-warning' );
+		} else {
+			heightInput.parent().removeClass( 'sui-form-field-warning' );
 		}
-		return true;
 	};
 
 	/**
@@ -700,12 +662,10 @@ jQuery(function ($) {
 
 	// Re-Validate Resize Width And Height.
 	$('body').on('blur', '.wp-smush-resize-input', function () {
-		const self = $(this);
-
-		const wrapper_div = self.parents().eq(4);
+		const resizingWrapper = $(this).closest('#resize-settings-row');
 
 		// Initiate the check.
-		validate_resize_settings(wrapper_div, false, false); // run the validation.
+		validateResizeSettings(resizingWrapper ); // run the validation.
 	});
 
 	// Handle Resize Checkbox toggle, to show/hide width, height settings.
@@ -881,4 +841,27 @@ jQuery(function ($) {
 		}
 		updateLossyLevelInSummaryBox();
 	} );
+
+
+	const toggleNoscriptFallbackOnNativeLazyloadChange = () => {
+		const nativeLazyloadInput = document.querySelector( '#lazyload-native-settings-row #native' );
+		if ( ! nativeLazyloadInput ) {
+			return;
+		}
+
+		nativeLazyloadInput.addEventListener( 'change', ( e ) => {
+			const noscriptFallbackField = document.querySelector( '#lazyload-noscript-settings-row' );
+			const noscriptFallbackInput = noscriptFallbackField && noscriptFallbackField.querySelector( '#noscript_fallback' );
+			if ( ! noscriptFallbackInput ) {
+				return;
+			}
+
+			if ( e.target.checked ) {
+				noscriptFallbackField.style.display = 'none';
+			} else {
+				noscriptFallbackField.style.display = 'flex';
+			}
+		} );
+	}
+	toggleNoscriptFallbackOnNativeLazyloadChange();
 });

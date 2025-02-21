@@ -28,6 +28,12 @@ class Element {
 	 * @var Element_Attribute[]
 	 */
 	private $replaced_attributes = array();
+
+	/**
+	 * @var Element_Attribute[]
+	 */
+	private $removed_attributes = array();
+
 	/**
 	 * @var Parser
 	 */
@@ -155,13 +161,33 @@ class Element {
 	}
 
 	/**
+	 * @param Element_Attribute $attribute Attribute to remove
+	 *
+	 * @return void
+	 */
+	public function remove_attribute( $attribute ) {
+		$name = $attribute->get_name();
+
+		if ( isset( $this->added_attributes[ $name ] ) ) {
+			unset( $this->added_attributes[ $name ] );
+		}
+
+		if ( ! $this->has_attribute( $name ) ) {
+			return;
+		}
+
+		$this->removed_attributes[ $name ] = $attribute;
+
+		$this->set_has_updates( true );
+	}
+
+	/**
 	 * @param $attribute Element_Attribute
 	 *
 	 * @return void
 	 */
 	public function add_or_update_attribute( $attribute ) {
-		$attribute_exists = $this->get_attribute( $attribute->get_name() );
-		if ( $attribute_exists ) {
+		if ( $this->has_attribute( $attribute->get_name() ) ) {
 			$this->replace_attribute( $attribute->get_name(), $attribute );
 		} else {
 			$this->add_attribute( $attribute );
@@ -217,6 +243,7 @@ class Element {
 		$updated = $this->update_attributes( $updated );
 		$updated = $this->update_css_properties( $updated );
 		$updated = $this->replace_attributes( $updated );
+		$updated = $this->remove_attributes( $updated );
 		$updated = $this->add_new_attributes( $updated );
 		$updated = $this->add_postfix( $updated );
 
@@ -294,6 +321,22 @@ class Element {
 		return $markup;
 	}
 
+	/**
+	 * Remove atributes from an element.
+	 *
+	 * @param string $markup Element markup html.
+	 *
+	 * @return string Updated markup.
+	 */
+	private function remove_attributes( $markup ) {
+		foreach ( $this->removed_attributes as $removed_attribute ) {
+			$attribute_name = $removed_attribute->get_name();
+			$markup         = $this->parser->remove_element_attribute( $markup, $attribute_name );
+		}
+
+		return $markup;
+	}
+
 	private function add_new_attributes( $markup ) {
 		foreach ( $this->added_attributes as $added_attribute ) {
 			$attribute_name = $added_attribute->get_name();
@@ -323,5 +366,9 @@ class Element {
 
 	public function is_image_element() {
 		return 'img' === $this->get_tag();
+	}
+
+	public function has_attribute( $name ) {
+		return ! empty( $this->get_attribute( $name ) );
 	}
 }

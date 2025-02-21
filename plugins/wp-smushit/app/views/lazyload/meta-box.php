@@ -10,6 +10,9 @@
  * @var array $settings   Lazy loading settings.
  */
 
+use Smush\App\Pages\Lazy;
+use Smush\Core\Lazy_Load\Lazy_Load_Helper;
+
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
@@ -53,7 +56,7 @@ wp_enqueue_style( 'wp-color-picker' );
 	</div>
 <?php endif; ?>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="lazyload-media-types-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Media Types', 'wp-smushit' ); ?>
@@ -102,7 +105,7 @@ wp_enqueue_style( 'wp-color-picker' );
 	</div>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="lazyload-output-locations-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Output Locations', 'wp-smushit' ); ?>
@@ -139,7 +142,7 @@ wp_enqueue_style( 'wp-color-picker' );
 	</div>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="lazyload-display-animation-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Display & Animation', 'wp-smushit' ); ?>
@@ -393,7 +396,7 @@ wp_enqueue_style( 'wp-color-picker' );
 	</style>
 </div><!-- end .sui-box-settings-row -->
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="lazyload-include-exclude-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Include/Exclude', 'wp-smushit' ); ?>
@@ -562,7 +565,7 @@ wp_enqueue_style( 'wp-color-picker' );
 	</div>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="lazyload-scripts-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Scripts', 'wp-smushit' ); ?>
@@ -614,7 +617,7 @@ wp_enqueue_style( 'wp-color-picker' );
 	</div>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="lazyload-native-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Native lazy load', 'wp-smushit' ); ?>
@@ -652,44 +655,59 @@ wp_enqueue_style( 'wp-color-picker' );
 		</div>
 	</div>
 </div>
-
-<div class="sui-box-settings-row">
+<?php
+	$lazyload_helper          = Lazy_Load_Helper::get_instance();
+	$native_lazy_enabled      = $lazyload_helper->is_native_lazy_loading_enabled();
+	$noscript_fallback_active = $lazyload_helper->is_noscript_fallback_enabled();
+?>
+<div class="sui-box-settings-row" id="lazyload-noscript-settings-row" style="display: <?php echo $native_lazy_enabled ? 'none' : 'flex'; ?>">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
-			<?php esc_html_e( 'Disable Noscript', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'Noscript Tag', 'wp-smushit' ); ?>
 		</span>
 		<span class="sui-description">
-			<?php esc_html_e( 'Disable NoScript while lazy loading is enabled.', 'wp-smushit' ); ?>
+			<?php esc_html_e( 'Add a fallback mechanism for lazy-loading in browsers that do not support JavaScript.', 'wp-smushit' ); ?>
 		</span>
 	</div>
 
 	<div class="sui-box-settings-col-2">
 		<div class="sui-form-field">
-			<label for="noscript" class="sui-toggle">
+			<label for="noscript_fallback" class="sui-toggle">
 				<input
 					type="checkbox"
-					id="noscript"
-					name="noscript"
-					aria-labelledby="noscript-label"
-					aria-describedby="noscript-description"
-					<?php checked( isset( $settings['noscript'] ) && $settings['noscript'] ); ?>
+					id="noscript_fallback"
+					name="noscript_fallback"
+					aria-labelledby="noscript_fallback-label"
+					aria-describedby="noscript_fallback-description"
+					<?php checked( $noscript_fallback_active ); ?>
 				/>
 				<span class="sui-toggle-slider" aria-hidden="true"></span>
 				<span id="noscript-label" class="sui-toggle-label">
-					<?php esc_html_e( 'Disable Noscript', 'wp-smushit' ); ?>
+					<?php esc_html_e( 'Enable Noscript Fallback', 'wp-smushit' ); ?>
 				</span>
 				<span id="noscript-description" class="sui-description">
 					<?php
-						/* translators: %1$s - opening a tag, %2$s - closing a tag */
-						esc_html_e( 'Sometimes W3C HTML5 Validation may give error due to No Script.', 'wp-smushit' );
-					?>
+						$docs_link = $this->get_utm_link(
+							array(
+								'utm_campaign' => 'smush_noscript_docs',
+							),
+							'https://wpmudev.com/docs/wpmu-dev-plugins/smush/#noscript-tag'
+						);
+						printf(
+							/* translators: 1: Opening strong tag, 2: Closing strong tag, 3: a docs link */
+							esc_html__( 'Enabling this may cause broken elements and an increased HTML size, potentially leading to performance and visual issues. %1$sUse only if needed for compatibility with unsupported browsers. %3$s', 'wp-smushit' ),
+							'<strong>',
+							'</strong>',
+							$this->whitelabel->hide_doc_link() ? '' : '<a target="_blank" href="' . esc_url( $docs_link ) . '">' . esc_html__( 'Learn More', 'wp-smushit' ) . '</a>'
+						);
+						?>
 				</span>
 			</label>
 		</div>
 	</div>
 </div>
 
-<div class="sui-box-settings-row">
+<div class="sui-box-settings-row" id="lazyload-deactivate-settings-row">
 	<div class="sui-box-settings-col-1">
 		<span class="sui-settings-label">
 			<?php esc_html_e( 'Deactivate', 'wp-smushit' ); ?>

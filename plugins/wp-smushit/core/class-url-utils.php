@@ -68,4 +68,40 @@ class Url_Utils {
 
 		return array( false, false );
 	}
+
+	/**
+	 * Get full size image url from resized one.
+	 *
+	 * @param string $src Image URL.
+	 *
+	 * @return string
+	 * @since 3.0
+	 *
+	 */
+	public function get_url_without_dimensions( $src ) {
+		$extensions = array(
+			'gif',
+			'jpg',
+			'jpeg',
+			'png',
+			'webp',
+		);
+		if ( ! preg_match( '/(-\d+x\d+)\.(' . implode( '|', $extensions ) . ')(?:\?.+)?$/i', $src, $src_parts ) ) {
+			return $src;
+		}
+
+		// Remove WP's resize string to get the original image.
+		$original_src = str_replace( $src_parts[1], '', $src );
+
+		// Extracts the file path to the image minus the base url.
+		$file_path = substr( $original_src, strlen( $this->upload_dir->get_upload_url() ) );
+
+		// Continue only if the file exists.
+		if ( file_exists( $this->upload_dir->get_upload_path() . $file_path ) ) {
+			return $original_src;
+		}
+
+		// Revert to source if file does not exist.
+		return $src;
+	}
 }

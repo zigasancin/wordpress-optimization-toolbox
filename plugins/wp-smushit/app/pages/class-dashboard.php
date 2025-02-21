@@ -29,7 +29,24 @@ class Dashboard extends Abstract_Summary_Page implements Interface_Page {
 	/**
 	 * Function triggered when the page is loaded before render any content.
 	 */
-	public function on_load() {}
+	public function on_load() {
+		add_filter( 'wp_smush_localize_script_messages', array( $this, 'add_dashboard_script_messages' ) );
+	}
+
+	public function add_dashboard_script_messages( $messages ) {
+		$tutorial_link            = self::should_render( 'tutorials' ) ? $this->get_url( 'smush-tutorials' ) : '';
+		$tutorial_removed_message = empty( $tutorial_link ) ?
+			esc_html__( 'The widget has been removed.', 'wp-smushit' ) :
+			sprintf( /* translators: %1$s - opening a tag, %2$s - closing a tag */
+				esc_html__( 'The widget has been removed. Smush tutorials can still be found in the %1$sTutorials tab%2$s any time.', 'wp-smushit' ),
+				'<a href=' . esc_url( $tutorial_link ) . '>',
+				'</a>'
+			);
+
+		$messages['tutorialsRemoved'] = $tutorial_removed_message;
+
+		return $messages;
+	}
 
 	/**
 	 * Enqueue scripts.

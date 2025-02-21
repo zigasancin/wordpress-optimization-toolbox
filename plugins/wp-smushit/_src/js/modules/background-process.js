@@ -320,6 +320,10 @@ import loopbackTester from '../loopback-tester';
                         SmushProgress.setNotice( res.data.in_process_notice );
                     }
 
+                    if ( (res.data || {}).is_process_stuck ) {
+                        SmushProgress.showHoldOnNotice();
+                    }
+
                     if (res.success) {
                         // Update stats.
                         if ( this.updateStats(res.data, false) ) {

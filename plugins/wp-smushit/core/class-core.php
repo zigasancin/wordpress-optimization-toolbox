@@ -211,6 +211,8 @@ class Core extends Stats {
 		new Integrations\Gravity_Forms();
 		$avada = new Integrations\Avada();
 		$avada->init();
+		$divi = new Integrations\Divi();
+		$divi->init();
 		$envira = new Integrations\Envira();
 		$envira->init();
 		$hummingbird = new Integrations\Hummingbird_Integration();
@@ -268,14 +270,7 @@ class Core extends Stats {
 		$this->mod->smush->image_sizes = $this->image_dimensions();
 	}
 
-	/**
-	 * Localize translations.
-	 */
-	public function localize() {
-		global $current_screen;
-
-		$handle = 'smush-admin';
-
+	public function get_localize_strings() {
 		$upgrade_url = add_query_arg(
 			array(
 				'utm_source'   => 'smush',
@@ -339,11 +334,6 @@ class Core extends Stats {
 			// Notices.
 			'noticeDismiss'           => esc_html__( 'Dismiss', 'wp-smushit' ),
 			'noticeDismissTooltip'    => esc_html__( 'Dismiss notice', 'wp-smushit' ),
-			'tutorialsRemoved'        => sprintf( /* translators: %1$s - opening a tag, %2$s - closing a tag */
-				esc_html__( 'The widget has been removed. Smush tutorials can still be found in the %1$sTutorials tab%2$s any time.', 'wp-smushit' ),
-				'<a href=' . esc_url( menu_page_url( 'smush-tutorials', false ) ) . '>',
-				'</a>'
-			),
 			'smush_cdn_activation_notice'  => WP_Smush::is_pro() && ! Settings::get_instance()->is_cdn_active() ?
 				sprintf(
 					/* translators: 1 - Number of CDN PoP locations, 2 - opening a tag, 3 - closing a tag */
@@ -365,7 +355,18 @@ class Core extends Stats {
 			'recheck_images_link'     => Helper::get_recheck_images_link(),
 		);
 
-		wp_localize_script( $handle, 'wp_smush_msgs', $wp_smush_msgs );
+		return apply_filters( 'wp_smush_localize_script_messages', $wp_smush_msgs );
+	}
+
+	/**
+	 * Localize translations.
+	 */
+	public function localize() {
+		global $current_screen;
+
+		$handle = 'smush-admin';
+		
+		wp_localize_script( $handle, 'wp_smush_msgs', $this->get_localize_strings() );
 
 		if ( 'toplevel_page_smush' === $current_screen->id ) {
 			$slug = 'dashboard';

@@ -2,6 +2,7 @@
     "name": "wpmudev/wpmudev-analytics",
     "require-dev": {
         "mixpanel/mixpanel-php": "^2.11",
+        "yoast/phpunit-polyfills": "^1.1",
         "humbug/php-scoper": "^0.17.5"
     },
     "authors": [

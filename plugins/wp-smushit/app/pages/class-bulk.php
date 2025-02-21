@@ -15,6 +15,7 @@ use Smush\Core\Core;
 use Smush\Core\Settings;
 use Smush\Core\Stats\Global_Stats;
 use Smush\Core\Media_Library\Background_Media_Library_Scanner;
+use Smush\Core\Modules\Background\Background_Pre_Flight_Controller;
 use WP_Smush;
 use Smush\Core\Backups\Backups;
 
@@ -73,6 +74,39 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 	 */
 	public function register_meta_boxes() {
 		if ( ! is_network_admin() ) {
+			$bg_optimization = WP_Smush::get_instance()->core()->mod->bg_optimization;
+
+			if ( ! $bg_optimization->should_use_background() ) {
+				$this->add_meta_box(
+					'ajax-bulk-smush-in-progressing-notice',
+					null,
+					array( $this, 'ajax_bulk_smush_in_progressing_notice' ),
+					null,
+					null,
+					'main',
+					array(
+						'box_class'         => 'sui-box ajax-bulk-smush-in-progressing-notice sui-hidden',
+						'box_content_class' => false,
+					)
+				);
+			}
+
+			$background_health = Background_Pre_Flight_Controller::get_instance();
+			if ( ! $background_health->is_cron_healthy() ) {
+				$this->add_meta_box(
+					'cron-disabled-notice',
+					null,
+					array( $this, 'cron_disabled_notice_meta_box' ),
+					null,
+					null,
+					'main',
+					array(
+						'box_class'         => 'sui-box wp-smush-cron-disabled-notice-box',
+						'box_content_class' => false,
+					)
+				);
+			}
+
 			$this->add_meta_box(
 				'recheck-images-notice',
 				null,
@@ -86,7 +120,6 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 				)
 			);
 
-			$bg_optimization               = WP_Smush::get_instance()->core()->mod->bg_optimization;
 			$scan_background_process       = Background_Media_Library_Scanner::get_instance()->get_background_process();
 			$is_scan_process_dead          = $scan_background_process->get_status()->is_dead();
 			$show_bulk_smush_inline_notice = $bg_optimization->is_background_enabled() && $bg_optimization->is_dead();
@@ -176,6 +209,7 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 								aria-describedby="wp-smush-resize-note"
 								id="<?php echo 'wp-smush-' . esc_attr( $name ) . '_width'; ?>"
 								name="<?php echo 'wp-smush-' . esc_attr( $name ) . '_width'; ?>"
+								min="0"
 								value="<?php echo isset( $resize_sizes['width'] ) && ! empty( $resize_sizes['width'] ) ? absint( $resize_sizes['width'] ) : 2560; ?>">
 						</div>
 					</div>
@@ -188,6 +222,7 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 								aria-describedby="wp-smush-resize-note"
 								id="<?php echo 'wp-smush-' . esc_attr( $name ) . '_height'; ?>"
 								name="<?php echo 'wp-smush-' . esc_attr( $name ) . '_height'; ?>"
+								min="0"
 								value="<?php echo isset( $resize_sizes['height'] ) && ! empty( $resize_sizes['height'] ) ? absint( $resize_sizes['height'] ) : 2560; ?>">
 						</div>
 					</div>
@@ -203,19 +238,11 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 						'</strong>'
 					);
 					?>
-					<div class="sui-notice sui-notice-info wp-smush-update-width sui-no-margin-bottom sui-hidden">
+					<div class="sui-notice sui-notice-warning wp-smush-update-dimensions sui-no-margin-bottom sui-hidden" style="margin-top:5px">
 						<div class="sui-notice-content">
 							<div class="sui-notice-message">
 								<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
-								<p><?php esc_html_e( "Just to let you know, the width you've entered is less than your largest image and may result in pixelation.", 'wp-smushit' ); ?></p>
-							</div>
-						</div>
-					</div>
-					<div class="sui-notice sui-notice-info wp-smush-update-height sui-no-margin-bottom sui-hidden">
-						<div class="sui-notice-content">
-							<div class="sui-notice-message">
-								<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
-								<p><?php esc_html_e( 'Just to let you know, the height you’ve entered is less than your largest image and may result in pixelation.', 'wp-smushit' ); ?></p>
+								<p><?php esc_html_e( "Just to let you know, the dimensions you've entered are less than your largest image and may result in pixelation.", 'wp-smushit' ); ?></p>
 							</div>
 						</div>
 					</div>
@@ -228,7 +255,7 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 						'Note: Image resizing happens automatically when you upload attachments. To support retina devices, we recommend using 2x the dimensions of your image size. Animated GIFs will not be resized as they will lose their animation, please use a tool such as %s to resize then re-upload.',
 						'wp-smushit'
 					),
-					'<a href="http://gifgifs.com/resizer/" target="_blank">http://gifgifs.com/resizer/</a>'
+					'<a href="https://gifgifs.com/resizer/" target="_blank">https://gifgifs.com/resizer/</a>'
 				);
 				?>
 			</span>
@@ -681,5 +708,17 @@ class Bulk extends Abstract_Summary_Page implements Interface_Page {
 
 	public function inline_retry_bulk_smush_notice_box() {
 		$this->view( 'bulk/inline-retry-bulk-smush-notice' );
+	}
+
+	public function ajax_bulk_smush_in_progressing_notice() {
+		$this->view(
+			'ajax-bulk-smush-in-progressing-notice',
+			array(),
+			'views/bulk'
+		);
+	}
+
+	public function cron_disabled_notice_meta_box() {
+		$this->view( 'bulk/cron-disabled-notice' );
 	}
 }

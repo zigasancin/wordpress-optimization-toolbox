@@ -119,12 +119,26 @@ class Page {
 
 		foreach ( $this->composite_elements as $composite_element ) {
 			if ( $composite_element->has_updates() ) {
+				$composite_markup = $composite_element->get_markup();
+				if ( $this->parser->markup_contains_noscript( $composite_markup ) ) {
+					$composite_markup = $placeholders->add_placeholders( $composite_markup, $this->parser->get_tags( $composite_markup, array(
+						'noscript',
+					) ) );
+				}
+
 				$updated = str_replace(
-					$composite_element->get_markup(),
+					$composite_markup,
 					$composite_element->get_updated(),
 					$updated
 				);
 			}
+		}
+
+		// Maybe replace noscript that added by composite elements to placeholders.
+		if ( ! empty( $this->composite_elements ) && $this->parser->markup_contains_noscript( $updated ) ) {
+			$updated = $placeholders->add_placeholders( $updated, $this->parser->get_tags( $updated, array(
+				'noscript',
+			) ) );
 		}
 
 		foreach ( $this->elements as $element ) {
