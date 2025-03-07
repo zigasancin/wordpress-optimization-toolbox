@@ -322,8 +322,15 @@ final class Plugin extends Base {
 	/**
 	 * Setup mandatory child classes.
 	 */
-	public function load_children() {
-		// Setup async/background classes first.
+	private function load_children() {
+		self::$instance->local    = new Local();
+		self::$instance->tracking = new Tracking();
+	}
+
+	/**
+	 * Setup mandatory async/background child classes (should not be done before 'init').
+	 */
+	private function load_async_children() {
 		self::$instance->async_key_verify             = new Async_Key_Verify();
 		self::$instance->async_scan                   = new Async_Scan();
 		self::$instance->async_test_optimize          = new Async_Test_Optimize();
@@ -331,10 +338,6 @@ final class Plugin extends Base {
 		self::$instance->background_attachment_update = new Background_Process_Attachment_Update();
 		self::$instance->background_image             = new Background_Process_Image();
 		self::$instance->background_media             = new Background_Process_Media();
-
-		// Then, setup the rest of the classes we need.
-		self::$instance->local    = new Local();
-		self::$instance->tracking = new Tracking();
 	}
 
 	/**
@@ -655,6 +658,9 @@ final class Plugin extends Base {
 	public function init() {
 		$this->debug_message( '<b>' . __FUNCTION__ . '()</b>' );
 
+		// Load async classes on 'init', as cron schedules use translations, and those should not be loaded any earlier than init.
+		$this->load_async_children();
+
 		// For the settings page, check for the enable-local param and take appropriate action.
 		if ( ! empty( $_GET['enable-local'] ) && ! empty( $_REQUEST['_wpnonce'] ) && \wp_verify_nonce( \sanitize_key( $_REQUEST['_wpnonce'] ), 'ewww_image_optimizer_options-options' ) ) {
 			\update_option( 'ewww_image_optimizer_ludicrous_mode', true );
@@ -742,6 +748,7 @@ final class Plugin extends Base {
 		register_setting( 'ewww_image_optimizer_options', 'ewww_image_optimizer_pdf_level', 'intval' );
 		register_setting( 'ewww_image_optimizer_options', 'ewww_image_optimizer_svg_level', 'intval' );
 		register_setting( 'ewww_image_optimizer_options', 'ewww_image_optimizer_webp_level', 'intval' );
+		register_setting( 'ewww_image_optimizer_options', 'ewww_image_optimizer_webp_conversion_method', 'sanitize_text_field' );
 		register_setting( 'ewww_image_optimizer_options', 'ewww_image_optimizer_backup_files', 'sanitize_text_field' );
 		register_setting( 'ewww_image_optimizer_options', 'ewww_image_optimizer_sharpen', 'boolval' );
 		register_setting( 'ewww_image_optimizer_options', 'ewww_image_optimizer_jpg_quality', 'ewww_image_optimizer_jpg_quality' );
@@ -813,6 +820,7 @@ final class Plugin extends Base {
 		\add_option( 'ewww_image_optimizer_pdf_level', '0' );
 		\add_option( 'ewww_image_optimizer_svg_level', '0' );
 		\add_option( 'ewww_image_optimizer_webp_level', '0' );
+		\add_option( 'ewww_image_optimizer_webp_conversion_method', 'local' );
 		\add_option( 'ewww_image_optimizer_webp', false );
 		\add_option( 'ewww_image_optimizer_jpg_quality', '' );
 		\add_option( 'ewww_image_optimizer_webp_quality', '' );
@@ -854,6 +862,7 @@ final class Plugin extends Base {
 		\add_site_option( 'ewww_image_optimizer_pdf_level', '0' );
 		\add_site_option( 'ewww_image_optimizer_svg_level', '0' );
 		\add_site_option( 'ewww_image_optimizer_webp_level', '0' );
+		\add_site_option( 'ewww_image_optimizer_webp_conversion_method', 'local' );
 		\add_site_option( 'ewww_image_optimizer_jpg_quality', '' );
 		\add_site_option( 'ewww_image_optimizer_webp_quality', '' );
 		\add_site_option( 'ewww_image_optimizer_backup_files', '' );
