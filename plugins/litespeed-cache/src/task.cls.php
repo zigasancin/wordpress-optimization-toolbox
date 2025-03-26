@@ -44,7 +44,7 @@ class Task extends Root
 		$guest_optm = $this->conf(Base::O_GUEST) && $this->conf(Base::O_GUEST_OPTM);
 
 		foreach (self::$_triggers as $id => $trigger) {
-			if (!$this->conf($id)) {
+			if ($id != Base::O_IMG_OPTM_CRON && !$this->conf($id)) {
 				if (!$guest_optm || !in_array($id, self::$_guest_options)) {
 					continue;
 				}
@@ -200,12 +200,12 @@ class Task extends Root
 	 */
 	public function lscache_cron_filter_crawler($schedules)
 	{
-		$interval = $this->conf(Base::O_CRAWLER_RUN_INTERVAL);
+		$CRAWLER_RUN_INTERVAL = defined('LITESPEED_CRAWLER_RUN_INTERVAL') ? LITESPEED_CRAWLER_RUN_INTERVAL : 600;
 		// $wp_schedules = wp_get_schedules();
 		if (!array_key_exists(self::FILTER_CRAWLER, $schedules)) {
 			// 	self::debug('Crawler cron log: cron filter '.$interval.' added');
 			$schedules[self::FILTER_CRAWLER] = array(
-				'interval' => $interval,
+				'interval' => $CRAWLER_RUN_INTERVAL,
 				'display' => __('LiteSpeed Crawler Cron', 'litespeed-cache'),
 			);
 		}

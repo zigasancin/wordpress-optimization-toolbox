@@ -181,7 +181,9 @@ class Control extends Root
 		}
 
 		// Set cache tag
-		Tag::add(Tag::TYPE_HTTP . $code);
+		if (in_array($code, Tag::$error_code_tags)) {
+			Tag::add(Tag::TYPE_HTTP . $code);
+		}
 
 		// Give the default status_header back
 		return $status_header;
@@ -199,7 +201,7 @@ class Control extends Root
 			return;
 		}
 		self::$_control |= self::BM_NO_VARY;
-		Debug2::debug('[Ctrl] X Cache_control -> no-vary', 3);
+		self::debug('X Cache_control -> no-vary', 3);
 	}
 
 	/**
@@ -225,7 +227,7 @@ class Control extends Root
 			return;
 		}
 		self::$_control |= self::BM_STALE;
-		Debug2::debug('[Ctrl] X Cache_control -> stale');
+		self::debug('X Cache_control -> stale');
 	}
 
 	/**
@@ -261,7 +263,7 @@ class Control extends Root
 		if ($reason) {
 			$reason = "( $reason )";
 		}
-		Debug2::debug('[Ctrl] X Cache_control -> shared ' . $reason);
+		self::debug('X Cache_control -> shared ' . $reason);
 	}
 
 	/**
@@ -295,7 +297,7 @@ class Control extends Root
 		if ($reason) {
 			$reason = "( $reason )";
 		}
-		Debug2::debug('[Ctrl] X Cache_control -> public forced ' . $reason);
+		self::debug('X Cache_control -> public forced ' . $reason);
 	}
 
 	/**
@@ -330,7 +332,7 @@ class Control extends Root
 		if ($reason) {
 			$reason = "( $reason )";
 		}
-		Debug2::debug('[Ctrl] X Cache_control -> private ' . $reason);
+		self::debug('X Cache_control -> private ' . $reason);
 	}
 
 	/**
@@ -365,7 +367,7 @@ class Control extends Root
 		if ($reason) {
 			$reason = ' [reason] ' . $reason;
 		}
-		Debug2::debug('[Ctrl] X Cache_control init on' . $reason);
+		self::debug('Cache_control init on' . $reason);
 	}
 
 	/**
@@ -385,7 +387,7 @@ class Control extends Root
 		if ($reason) {
 			$reason = ' [reason] ' . $reason;
 		}
-		Debug2::debug('[Ctrl] Forced cacheable' . $reason);
+		self::debug('Forced cacheable' . $reason);
 	}
 
 	/**
@@ -406,7 +408,7 @@ class Control extends Root
 		if ($reason) {
 			$reason = "( $reason )";
 		}
-		Debug2::debug('[Ctrl] X Cache_control -> no Cache ' . $reason, 5);
+		self::debug('X Cache_control -> no Cache ' . $reason, 5);
 	}
 
 	/**
@@ -442,7 +444,7 @@ class Control extends Root
 	public static function is_cacheable()
 	{
 		if (defined('LSCACHE_NO_CACHE') && LSCACHE_NO_CACHE) {
-			Debug2::debug('[Ctrl] LSCACHE_NO_CACHE constant defined');
+			self::debug('LSCACHE_NO_CACHE constant defined');
 			return false;
 		}
 
@@ -475,7 +477,7 @@ class Control extends Root
 	{
 		if (is_numeric($ttl)) {
 			self::$_custom_ttl = $ttl;
-			Debug2::debug('[Ctrl] X Cache_control TTL -> ' . $ttl . ($reason ? ' [reason] ' . $ttl : ''));
+			self::debug('X Cache_control TTL -> ' . $ttl . ($reason ? ' [reason] ' . $ttl : ''));
 		}
 	}
 
@@ -505,12 +507,12 @@ class Control extends Root
 			foreach ($timed_urls as $v) {
 				if (strpos($v, '*') !== false) {
 					if (preg_match('#' . $v . '#iU', $current_url)) {
-						Debug2::debug('[Ctrl] X Cache_control TTL is limited to ' . $ttl . ' due to scheduled purge regex ' . $v);
+						self::debug('X Cache_control TTL is limited to ' . $ttl . ' due to scheduled purge regex ' . $v);
 						return $ttl;
 					}
 				} else {
 					if ($v == $current_url) {
-						Debug2::debug('[Ctrl] X Cache_control TTL is limited to ' . $ttl . ' due to scheduled purge rule ' . $v);
+						self::debug('X Cache_control TTL is limited to ' . $ttl . ' due to scheduled purge rule ' . $v);
 						return $ttl;
 					}
 				}
@@ -602,7 +604,7 @@ class Control extends Root
 		$hdr = self::X_HEADER . ': ';
 
 		if (defined('DONOTCACHEPAGE') && apply_filters('litespeed_const_DONOTCACHEPAGE', DONOTCACHEPAGE)) {
-			Debug2::debug('[Ctrl] ❌ forced no cache [reason] DONOTCACHEPAGE const');
+			self::debug('❌ forced no cache [reason] DONOTCACHEPAGE const');
 			$hdr .= 'no-cache' . $esi_hdr;
 			return $hdr;
 		}
@@ -611,11 +613,11 @@ class Control extends Root
 		// if ( defined( 'LITESPEED_GUEST' ) && LITESPEED_GUEST ) {
 		// 	// If is POST, no cache
 		// 	if ( defined( 'LSCACHE_NO_CACHE' ) && LSCACHE_NO_CACHE ) {
-		// 		Debug2::debug( "[Ctrl] ❌ forced no cache [reason] LSCACHE_NO_CACHE const" );
+		// 		self::debug( "[Ctrl] ❌ forced no cache [reason] LSCACHE_NO_CACHE const" );
 		// 		$hdr .= 'no-cache';
 		// 	}
 		// 	else if( $_SERVER[ 'REQUEST_METHOD' ] !== 'GET' ) {
-		// 		Debug2::debug( "[Ctrl] ❌ forced no cache [reason] req not GET" );
+		// 		self::debug( "[Ctrl] ❌ forced no cache [reason] req not GET" );
 		// 		$hdr .= 'no-cache';
 		// 	}
 		// 	else {
@@ -680,7 +682,7 @@ class Control extends Root
 		if ($hit) {
 			list($result, $this_ttl) = $hit;
 			self::set_public_forced('Setting: ' . $result);
-			Debug2::debug('[Ctrl] Forced public cacheable due to setting: ' . $result);
+			self::debug('Forced public cacheable due to setting: ' . $result);
 			if ($this_ttl) {
 				self::set_custom_ttl($this_ttl);
 			}
@@ -696,7 +698,7 @@ class Control extends Root
 		if ($hit) {
 			list($result, $this_ttl) = $hit;
 			self::force_cacheable();
-			Debug2::debug('[Ctrl] Forced cacheable due to setting: ' . $result);
+			self::debug('Forced cacheable due to setting: ' . $result);
 			if ($this_ttl) {
 				self::set_custom_ttl($this_ttl);
 			}
@@ -705,7 +707,7 @@ class Control extends Root
 		// if is not cacheable, terminate check
 		// Even no need to run 3rd party hook
 		if (!self::is_cacheable()) {
-			Debug2::debug('[Ctrl] not cacheable before ctrl finalize');
+			self::debug('not cacheable before ctrl finalize');
 			return;
 		}
 
@@ -715,7 +717,7 @@ class Control extends Root
 
 		// if is not cacheable, terminate check
 		if (!self::is_cacheable()) {
-			Debug2::debug('[Ctrl] not cacheable after api_control');
+			self::debug('not cacheable after api_control');
 			return;
 		}
 
@@ -891,7 +893,7 @@ class Control extends Root
 	 */
 	private function _no_cache_for($reason)
 	{
-		Debug2::debug('[Ctrl] X Cache_control off - ' . $reason);
+		self::debug('X Cache_control off - ' . $reason);
 		return false;
 	}
 

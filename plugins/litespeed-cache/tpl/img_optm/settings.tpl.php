@@ -30,19 +30,6 @@ $this->form_action();
 
 		<tr>
 			<th>
-				<?php $id = Base::O_IMG_OPTM_CRON; ?>
-				<?php $this->title($id); ?>
-			</th>
-			<td>
-				<?php $this->build_switch($id); ?>
-				<div class="litespeed-desc">
-					<?php echo __('Disabling this will stop the cron job responsible for pulling optimized images back from QUIC.cloud Image Server.', 'litespeed-cache'); ?>
-				</div>
-			</td>
-		</tr>
-
-		<tr>
-			<th>
 				<?php $id = Base::O_IMG_OPTM_ORI; ?>
 				<?php $this->title($id); ?>
 			</th>
@@ -127,7 +114,7 @@ $this->form_action();
 				</div>
 
 				<div class="litespeed-desc">
-					<?php echo __('Specify which element attributes will be replaced with WebP.', 'litespeed-cache'); ?>
+					<?php echo __('Specify which element attributes will be replaced with WebP/AVIF.', 'litespeed-cache'); ?>
 					<?php echo __('Only attributes listed here will be replaced.', 'litespeed-cache'); ?>
 					<br /><?php echo sprintf(__('Use the format %1$s or %2$s (element is optional).', 'litespeed-cache'), '<code>element.attribute</code>', '<code>.attribute</code>'); ?>
 					<?php Doc::one_per_line(); ?>
@@ -143,7 +130,7 @@ $this->form_action();
 			<td>
 				<?php $this->build_switch($id); ?>
 				<div class="litespeed-desc">
-					<?php echo sprintf(__('Enable replacement of WebP in %s elements that were generated outside of WordPress logic.', 'litespeed-cache'), '<code>srcset</code>'); ?>
+					<?php echo sprintf(__('Enable replacement of WebP/AVIF in %s elements that were generated outside of WordPress logic.', 'litespeed-cache'), '<code>srcset</code>'); ?>
 					<?php Doc::learn_more('https://docs.litespeedtech.com/lscache/lscwp/imageopt/#webp-for-extra-srcset'); ?>
 				</div>
 			</td>

@@ -85,6 +85,21 @@ class Admin_Settings extends Base
 				$data2 = array_key_exists($id, $the_matrix) ? $the_matrix[$id] : (defined('WP_CLI') && WP_CLI ? $this->conf($id) : array());
 			}
 			switch ($id) {
+				case self::O_CRAWLER_ROLES: // Don't allow Editor/admin to be used in crawler role simulator
+					$data = Utility::sanitize_lines($data);
+					if ($data) {
+						foreach ($data as $k => $v) {
+							if (user_can($v, 'edit_posts')) {
+								$msg = sprintf(
+									__('The user with id %s has editor access, which is not allowed for the role simulator.', 'litespeed-cache'),
+									'<code>' . $v . '</code>'
+								);
+								Admin_Display::error($msg);
+								unset($data[$k]);
+							}
+						}
+					}
+					break;
 				case self::O_CDN_MAPPING:
 					/**
 					 * CDN setting
@@ -161,8 +176,7 @@ class Admin_Settings extends Base
 					$data = $data2;
 					break;
 
-				// Cache exclude cat
-				case self::O_CACHE_EXC_CAT:
+				case self::O_CACHE_EXC_CAT: // Cache exclude cat
 					$data2 = array();
 					$data = Utility::sanitize_lines($data);
 					foreach ($data as $v) {
@@ -176,8 +190,7 @@ class Admin_Settings extends Base
 					$data = $data2;
 					break;
 
-				// Cache exclude tag
-				case self::O_CACHE_EXC_TAG:
+				case self::O_CACHE_EXC_TAG: // Cache exclude tag
 					$data2 = array();
 					$data = Utility::sanitize_lines($data);
 					foreach ($data as $v) {
@@ -261,7 +274,7 @@ class Admin_Settings extends Base
 		$this->cls('Conf')->update_confs($the_matrix);
 
 		$msg = __('Options saved.', 'litespeed-cache');
-		Admin_Display::succeed($msg);
+		Admin_Display::success($msg);
 	}
 
 	/**
@@ -296,7 +309,7 @@ class Admin_Settings extends Base
 		Activation::cls()->update_files();
 
 		$msg = __('Options saved.', 'litespeed-cache');
-		Admin_Display::succeed($msg);
+		Admin_Display::success($msg);
 	}
 
 	/**

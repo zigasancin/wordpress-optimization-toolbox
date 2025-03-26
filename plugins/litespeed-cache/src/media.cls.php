@@ -23,6 +23,8 @@ class Media extends Root
 	private $content;
 	private $_wp_upload_dir;
 	private $_vpi_preload_list = array();
+	private $_format = '';
+	private $_sys_format = '';
 
 	/**
 	 * Init
@@ -34,6 +36,17 @@ class Media extends Root
 		Debug2::debug2('[Media] init');
 
 		$this->_wp_upload_dir = wp_upload_dir();
+		if ($this->conf(Base::O_IMG_OPTM_WEBP)) {
+			$this->_sys_format = 'webp';
+			$this->_format = 'webp';
+			if ($this->conf(Base::O_IMG_OPTM_WEBP) == 2) {
+				$this->_sys_format = 'avif';
+				$this->_format = 'avif';
+			}
+			if (!$this->_browser_support_next_gen()) {
+				$this->_format = '';
+			}
+		}
 	}
 
 	/**
@@ -49,16 +62,14 @@ class Media extends Root
 		}
 
 		// Due to ajax call doesn't send correct accept header, have to limit webp to HTML only
-		if (defined('LITESPEED_GUEST_OPTM') || $this->conf(Base::O_IMG_OPTM_WEBP)) {
-			if ($this->webp_support()) {
-				// Hook to srcset
-				if (function_exists('wp_calculate_image_srcset')) {
-					add_filter('wp_calculate_image_srcset', array($this, 'webp_srcset'), 988);
-				}
-				// Hook to mime icon
-				// add_filter( 'wp_get_attachment_image_src', array( $this, 'webp_attach_img_src' ), 988 );// todo: need to check why not
-				// add_filter( 'wp_get_attachment_url', array( $this, 'webp_url' ), 988 ); // disabled to avoid wp-admin display
+		if ($this->webp_support()) {
+			// Hook to srcset
+			if (function_exists('wp_calculate_image_srcset')) {
+				add_filter('wp_calculate_image_srcset', array($this, 'webp_srcset'), 988);
 			}
+			// Hook to mime icon
+			// add_filter( 'wp_get_attachment_image_src', array( $this, 'webp_attach_img_src' ), 988 );// todo: need to check why not
+			// add_filter( 'wp_get_attachment_url', array( $this, 'webp_url' ), 988 ); // disabled to avoid wp-admin display
 		}
 
 		if ($this->conf(Base::O_MEDIA_LAZY) && !$this->cls('Metabox')->setting('litespeed_no_image_lazy')) {
@@ -93,7 +104,7 @@ class Media extends Root
 		// 	$featured_image_url = get_the_post_thumbnail_url();
 		// 	if ($featured_image_url) {
 		// 		self::debug('Append featured image to head: ' . $featured_image_url);
-		// 		if ((defined('LITESPEED_GUEST_OPTM') || $this->conf(Base::O_IMG_OPTM_WEBP)) && $this->webp_support()) {
+		// 		if ($this->webp_support()) {
 		// 			$featured_image_url = $this->replace_webp($featured_image_url) ?: $featured_image_url;
 		// 		}
 		// 	}
@@ -335,37 +346,45 @@ class Media extends Root
 		echo '</p>';
 
 		echo '<p>';
-		// WebP info
-		if ($size_meta && !empty($size_meta['webp_saved'])) {
-			$percent = ceil(($size_meta['webp_saved'] * 100) / $size_meta['webp_total']);
+		// WebP/AVIF info
+		if ($size_meta && $this->webp_support(true) && !empty($size_meta[$this->_sys_format . '_saved'])) {
+			$is_avif = 'avif' === $this->_sys_format;
+			$size_meta_saved = $size_meta[$this->_sys_format . '_saved'];
+			$size_meta_total = $size_meta[$this->_sys_format . '_total'];
 
-			$link = Utility::build_url(Router::ACTION_IMG_OPTM, 'webp' . $post_id);
+			$percent = ceil(($size_meta_saved * 100) / $size_meta_total);
+
+			$link = Utility::build_url(Router::ACTION_IMG_OPTM, $this->_sys_format . $post_id);
 			$desc = false;
 
 			$cls = '';
 
-			if ($this->info($short_path . '.webp', $post_id)) {
+			if ($this->info($short_path . '.' . $this->_sys_format, $post_id)) {
 				$curr_status = __('(optm)', 'litespeed-cache');
-				$desc =
-					__('Currently using optimized version of WebP file.', 'litespeed-cache') .
-					'&#10;' .
-					__('Click to switch to original (unoptimized) version.', 'litespeed-cache');
-			} elseif ($this->info($short_path . '.optm.webp', $post_id)) {
+				$desc = $is_avif
+					? __('Currently using optimized version of AVIF file.', 'litespeed-cache')
+					: __('Currently using optimized version of WebP file.', 'litespeed-cache');
+				$desc .= '&#10;' . __('Click to switch to original (unoptimized) version.', 'litespeed-cache');
+			} elseif ($this->info($short_path . '.optm.' . $this->_sys_format, $post_id)) {
 				$cls .= ' litespeed-warning';
 				$curr_status = __('(non-optm)', 'litespeed-cache');
-				$desc =
-					__('Currently using original (unoptimized) version of WebP file.', 'litespeed-cache') .
-					'&#10;' .
-					__('Click to switch to optimized version.', 'litespeed-cache');
+				$desc = $is_avif
+					? __('Currently using original (unoptimized) version of AVIF file.', 'litespeed-cache')
+					: __('Currently using original (unoptimized) version of WebP file.', 'litespeed-cache');
+				$desc .= '&#10;' . __('Click to switch to optimized version.', 'litespeed-cache');
 			}
 
 			echo GUI::pie_tiny(
 				$percent,
 				24,
-				sprintf(__('WebP file reduced by %1$s (%2$s)', 'litespeed-cache'), $percent . '%', Utility::real_size($size_meta['webp_saved'])),
+				sprintf(
+					$is_avif ? __('AVIF file reduced by %1$s (%2$s)', 'litespeed-cache') : __('WebP file reduced by %1$s (%2$s)', 'litespeed-cache'),
+					$percent . '%',
+					Utility::real_size($size_meta_saved)
+				),
 				'left'
 			);
-			echo sprintf(__('WebP saved %s', 'litespeed-cache'), $percent . '%');
+			echo sprintf($is_avif ? __('AVIF saved %s', 'litespeed-cache') : __('WebP saved %s', 'litespeed-cache'), $percent . '%');
 
 			if ($desc) {
 				echo sprintf(
@@ -377,13 +396,14 @@ class Media extends Root
 				);
 			} else {
 				echo sprintf(
-					' <span class="litespeed-desc" data-balloon-pos="left" data-balloon-break aria-label="%1$s">%2$s</span>',
-					__('Using optimized version of file. ', 'litespeed-cache') . '&#10;' . __('No backup of unoptimized WebP file exists.', 'litespeed-cache'),
+					' <span class="litespeed-desc" data-balloon-pos="left" data-balloon-break aria-label="%1$s&#10;%2$s">%3$s</span>',
+					__('Using optimized version of file. ', 'litespeed-cache'),
+					$is_avif ? __('No backup of unoptimized AVIF file exists.', 'litespeed-cache') : __('No backup of unoptimized WebP file exists.', 'litespeed-cache'),
 					__('(optm)', 'litespeed-cache')
 				);
 			}
 		} else {
-			echo __('WebP', 'litespeed-cache') . '<span class="litespeed-left10">—</span>';
+			echo $this->next_gen_image_title() . '<span class="litespeed-left10">—</span>';
 		}
 
 		echo '</p>';
@@ -435,10 +455,19 @@ class Media extends Root
 	 * @since  1.6.2
 	 * @access public
 	 */
-	public function webp_support()
+	public function webp_support($sys_level = false)
 	{
-		if (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'image/webp') !== false) {
-			return true;
+		if ($sys_level) {
+			return $this->_sys_format;
+		}
+		return $this->_format; // User level next gen support
+	}
+	private function _browser_support_next_gen()
+	{
+		if (!empty($_SERVER['HTTP_ACCEPT'])) {
+			if (strpos($_SERVER['HTTP_ACCEPT'], 'image/' . $this->_sys_format) !== false) {
+				return true;
+			}
 		}
 
 		if (!empty($_SERVER['HTTP_USER_AGENT'])) {
@@ -450,14 +479,33 @@ class Media extends Root
 			}
 
 			if (preg_match('/iPhone OS (\d+)_/i', $_SERVER['HTTP_USER_AGENT'], $matches)) {
-				$lscwp_ios_version = $matches[1];
-				if ($lscwp_ios_version >= 14) {
+				if ($matches[1] >= 14) {
+					return true;
+				}
+			}
+
+			if (preg_match('/Firefox\/(\d+)/i', $_SERVER['HTTP_USER_AGENT'], $matches)) {
+				if ($matches[1] >= 65) {
 					return true;
 				}
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get next gen image title
+	 *
+	 * @since 7.0
+	 */
+	public function next_gen_image_title()
+	{
+		$next_gen_img = 'WebP';
+		if ($this->conf(Base::O_IMG_OPTM_WEBP) == 2) {
+			$next_gen_img = 'AVIF';
+		}
+		return $next_gen_img;
 	}
 
 	/**
@@ -506,7 +554,7 @@ class Media extends Root
 		 * Use webp for optimized images
 		 * @since 1.6.2
 		 */
-		if ((defined('LITESPEED_GUEST_OPTM') || $this->conf(Base::O_IMG_OPTM_WEBP)) && $this->webp_support()) {
+		if ($this->webp_support()) {
 			$this->content = $this->_replace_buffer_img_webp($this->content);
 		}
 
@@ -605,8 +653,15 @@ class Media extends Root
 		if (!$vpi_files) {
 			return;
 		}
+		if (!$this->content) {
+			return;
+		}
 
 		$content = preg_replace(array('#<!--.*-->#sU', '#<noscript([^>]*)>.*</noscript>#isU'), '', $this->content);
+		if (!$content) {
+			return;
+		}
+
 		preg_match_all('#<img\s+([^>]+)/?>#isU', $content, $matches, PREG_SET_ORDER);
 		foreach ($matches as $match) {
 			$attrs = Utility::parse_attr($match[1]);
@@ -759,7 +814,11 @@ class Media extends Root
 						$attrs['width'] = $ori_width;
 						$attrs['height'] = $ori_height;
 						$new_html = preg_replace('#\s+(width|height)=(["\'])[^\2]*?\2#', '', $match[0]);
-						$new_html = preg_replace('#<img\s+#i', '<img width="' . Str::trim_quotes($attrs['width']) . '" height="' . Str::trim_quotes($attrs['height']) . '" ', $new_html);
+						$new_html = preg_replace(
+							'#<img\s+#i',
+							'<img width="' . Str::trim_quotes($attrs['width']) . '" height="' . Str::trim_quotes($attrs['height']) . '" ',
+							$new_html
+						);
 						self::debug('Add missing sizes ' . $attrs['width'] . 'x' . $attrs['height'] . ' to ' . $attrs['src']);
 						$this->content = str_replace($match[0], $new_html, $this->content);
 						$match[0] = $new_html;
@@ -947,7 +1006,7 @@ class Media extends Root
 	 */
 	public function replace_background_webp($content)
 	{
-		Debug2::debug2('[Media] Start replacing bakcground WebP.');
+		Debug2::debug2('[Media] Start replacing background WebP/AVIF.');
 
 		// Handle Elementors data-settings json encode background-images
 		$content = $this->replace_urls_in_json($content);
@@ -1037,17 +1096,21 @@ class Media extends Root
 	}
 
 	/**
-	 * Replace internal image src to webp
+	 * Replace internal image src to webp or avif
 	 *
 	 * @since  1.6.2
 	 * @access public
 	 */
 	public function replace_webp($url)
 	{
-		Debug2::debug2('[Media] webp replacing: ' . substr($url, 0, 200));
+		if (!$this->webp_support()) {
+			self::debug2('No next generation format chosen in setting, bypassed');
+			return false;
+		}
+		Debug2::debug2('[Media] ' . $this->_sys_format . ' replacing: ' . substr($url, 0, 200));
 
-		if (substr($url, -5) == '.webp') {
-			Debug2::debug2('[Media] already webp');
+		if (substr($url, -5) === '.' . $this->_sys_format) {
+			Debug2::debug2('[Media] already ' . $this->_sys_format);
 			return false;
 		}
 
@@ -1059,10 +1122,10 @@ class Media extends Root
 		 */
 		if (apply_filters('litespeed_media_check_ori', Utility::is_internal_file($url), $url)) {
 			// check if has webp file
-			if (apply_filters('litespeed_media_check_webp', Utility::is_internal_file($url, 'webp'), $url)) {
-				$url .= '.webp';
+			if (apply_filters('litespeed_media_check_webp', Utility::is_internal_file($url, $this->_sys_format), $url)) {
+				$url .= '.' . $this->_sys_format;
 			} else {
-				Debug2::debug2('[Media] -no WebP file, bypassed');
+				Debug2::debug2('[Media] -no WebP or AVIF file, bypassed');
 				return false;
 			}
 		} else {

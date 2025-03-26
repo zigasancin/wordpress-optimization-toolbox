@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Database upgrade funcs
  *
@@ -12,6 +13,44 @@ use LiteSpeed\Debug2;
 use LiteSpeed\Conf;
 use LiteSpeed\Admin_Display;
 use LiteSpeed\File;
+use LiteSpeed\Cloud;
+
+/**
+ * Migrate from domain key to pk/sk for QC
+ * @since 7.0
+ */
+function litespeed_update_7()
+{
+	Debug2::debug('[Data] v7 upgrade started');
+
+	$__cloud = Cloud::cls();
+
+	$domain_key = $__cloud->conf('api_key');
+	if (!$domain_key) {
+		Debug2::debug('[Data] No domain key, bypassed migration');
+		return;
+	}
+
+	$new_prepared = $__cloud->init_qc_prepare();
+	if (!$new_prepared && $__cloud->activated()) {
+		Debug2::debug('[Data] QC previously activated in v7, bypassed migration');
+		return;
+	}
+	$data = array(
+		'domain_key' => $domain_key,
+	);
+	$resp = $__cloud->post(Cloud::SVC_D_V3UPGRADE, $data);
+	if (!empty($resp['qc_activated'])) {
+		if ($resp['qc_activated'] != 'deleted') {
+			$cloud_summary_updates = array('qc_activated' => $resp['qc_activated']);
+			if (!empty($resp['main_domain'])) {
+				$cloud_summary_updates['main_domain'] = $resp['main_domain'];
+			}
+			Cloud::save_summary($cloud_summary_updates);
+			Debug2::debug('[Data] Updated QC activated status to ' . $resp['qc_activated']);
+		}
+	}
+}
 
 /**
  * Append webp/mobile to url_file
@@ -164,18 +203,6 @@ function litespeed_update_2_0($ver)
 		if ($meta_value_list) {
 			$max_k = count($meta_value_list) - 1;
 			foreach ($meta_value_list as $k => $v) {
-				$md52src_list = maybe_unserialize($v->meta_value);
-				foreach ($md52src_list as $md5 => $v2) {
-					$f = array(
-						'post_id' => $v->post_id,
-						'optm_status' => $v2[1],
-						'src' => $v2[0],
-						'srcpath_md5' => md5($v2[0]),
-						'src_md5' => $md5,
-						'server' => $v2[2],
-					);
-					$wpdb->replace($wpdb->prefix . 'litespeed_img_optm', $f);
-				}
 				$mids_to_del[] = $v->meta_id;
 
 				// Delete from postmeta

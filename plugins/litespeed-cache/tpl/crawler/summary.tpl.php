@@ -12,14 +12,19 @@ if ($summary['curr_crawler'] >= count($crawler_list)) {
 	$summary['curr_crawler'] = 0;
 }
 
-$is_running = time() - $summary['is_running'] <= $this->conf(Base::O_CRAWLER_RUN_DURATION);
+$is_running = time() - $summary['is_running'] <= 900;
 
 $disabled = Router::can_crawl() ? '' : 'disabled';
+$disabled_tip = '';
+if (!$this->conf(Base::O_CRAWLER_SITEMAP)) {
+	$disabled = 'disabled';
+	$disabled_tip = '<span class="litespeed-callout notice notice-error inline litespeed-left20">' . sprintf(__('You need to set the %s in Settings first before using the crawler', 'litespeed-cache'), '<code>' . Lang::title(Base::O_CRAWLER_SITEMAP) . '</code>') . '</span>';
+}
 
-$seconds = $this->conf(Base::O_CRAWLER_RUN_INTERVAL);
-if ($seconds > 0) :
+$CRAWLER_RUN_INTERVAL = defined('LITESPEED_CRAWLER_RUN_INTERVAL') ? LITESPEED_CRAWLER_RUN_INTERVAL : 600;
+if ($CRAWLER_RUN_INTERVAL > 0) :
 	$recurrence = '';
-	$hours = (int)floor($seconds / 3600);
+	$hours = (int)floor($CRAWLER_RUN_INTERVAL / 3600);
 	if ($hours) {
 		if ($hours > 1) {
 			$recurrence .= sprintf(__('%d hours', 'litespeed-cache'), $hours);
@@ -27,7 +32,7 @@ if ($seconds > 0) :
 			$recurrence .= sprintf(__('%d hour', 'litespeed-cache'), $hours);
 		}
 	}
-	$minutes = (int)floor(($seconds % 3600) / 60);
+	$minutes = (int)floor(($CRAWLER_RUN_INTERVAL % 3600) / 60);
 	if ($minutes) {
 		$recurrence .= ' ';
 		if ($minutes > 1) {
@@ -117,6 +122,8 @@ if ($seconds > 0) :
 
 			$href = Router::can_crawl() ? Utility::build_url(Router::ACTION_CRAWLER, Crawler::TYPE_START) : 'javascript:;';
 			echo " <a href='$href' id='litespeed_manual_trigger' class='button litespeed-btn-success' litespeed-accesskey='R' $disabled>" . __('Manually run', 'litespeed-cache') . "</a>";
+
+			echo $disabled_tip;
 			?>
 		</p>
 
@@ -167,6 +174,16 @@ if ($seconds > 0) :
 							</td>
 							<td>
 								<?php $this->build_toggle('litespeed-crawler-' . $i,  $__crawler->is_active($i)); ?>
+
+								<?php if (!empty($v['uid']) && empty($this->conf(Base::O_SERVER_IP))) : ?>
+									<div class="litespeed-danger litespeed-text-bold">
+										🚨
+										<?php echo __('NOTICE', 'litespeed-cache'); ?>:
+										<?php echo sprintf(__('You must set %s before using this feature.', 'litespeed-cache'), Lang::title(Base::O_SERVER_IP)); ?>
+										<?php echo Doc::learn_more(admin_url('admin.php?page=litespeed-general#settings'), __('Click here to set.', 'litespeed-cache'), true, false, true); ?>
+									</div>
+								<?php endif; ?>
+
 							</td>
 							<td>
 								<?php
@@ -183,7 +200,7 @@ if ($seconds > 0) :
 				</tbody>
 			</table>
 		</div>
-		
+
 		<p>
 			<i class="litespeed-badge litespeed-bg-default"></i> = <?php echo __('Waiting to be Crawled', 'litespeed-cache'); ?><br>
 			<i class="litespeed-badge litespeed-bg-success"></i> = <?php echo __('Already Cached', 'litespeed-cache'); ?><br>

@@ -30,6 +30,7 @@ class Tag extends Root
 	const TYPE_WIDGET = 'W.';
 	const TYPE_ESI = 'ESI.';
 	const TYPE_REST = 'REST';
+	const TYPE_AJAX = 'AJAX.';
 	const TYPE_LIST = 'LIST';
 	const TYPE_MIN = 'MIN';
 	const TYPE_LOCALRES = 'LOCALRES';
@@ -38,6 +39,7 @@ class Tag extends Root
 
 	private static $_tags = array();
 	private static $_tags_priv = array('tag_priv');
+	public static $error_code_tags = array(403, 404, 500);
 
 	/**
 	 * Initialize
@@ -263,14 +265,17 @@ class Tag extends Root
 					$tags[] = self::TYPE_AUTHOR . $queried_obj_id;
 				} elseif (is_date()) {
 					global $post;
-					$date = $post->post_date;
-					$date = strtotime($date);
-					if (is_day()) {
-						$tags[] = self::TYPE_ARCHIVE_DATE . date('Ymd', $date);
-					} elseif (is_month()) {
-						$tags[] = self::TYPE_ARCHIVE_DATE . date('Ym', $date);
-					} elseif (is_year()) {
-						$tags[] = self::TYPE_ARCHIVE_DATE . date('Y', $date);
+
+					if ($post && isset($post->post_date)) {
+						$date = $post->post_date;
+						$date = strtotime($date);
+						if (is_day()) {
+							$tags[] = self::TYPE_ARCHIVE_DATE . date('Ymd', $date);
+						} elseif (is_month()) {
+							$tags[] = self::TYPE_ARCHIVE_DATE . date('Ym', $date);
+						} elseif (is_year()) {
+							$tags[] = self::TYPE_ARCHIVE_DATE . date('Y', $date);
+						}
 					}
 				}
 			} elseif (is_singular()) {
@@ -307,6 +312,11 @@ class Tag extends Root
 					$tags[] = self::TYPE_PAGES;
 				}
 			}
+		}
+
+		// Append AJAX action tag
+		if (Router::is_ajax() && !empty($_REQUEST['action'])) {
+			$tags[] = self::TYPE_AJAX . $_REQUEST['action'];
 		}
 
 		return $tags;

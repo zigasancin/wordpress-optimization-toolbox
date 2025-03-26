@@ -24,7 +24,7 @@ class Base extends Root
 	const _VER = '_version'; // Not set-able
 	const HASH = 'hash'; // Not set-able
 	const O_AUTO_UPGRADE = 'auto_upgrade';
-	const O_API_KEY = 'api_key';
+	const O_API_KEY = 'api_key'; // Deprecated since v6.4. TODO: Will drop after v6.5
 	const O_SERVER_IP = 'server_ip';
 	const O_GUEST = 'guest';
 	const O_GUEST_OPTM = 'guest_optm';
@@ -222,7 +222,7 @@ class Base extends Root
 	## --------------	  Image Optm 	----------------- ##
 	## -------------------------------------------------- ##
 	const O_IMG_OPTM_AUTO = 'img_optm-auto';
-	const O_IMG_OPTM_CRON = 'img_optm-cron';
+	const O_IMG_OPTM_CRON = 'img_optm-cron'; // @Deprecated since v7.0 TODO: remove after v7.5
 	const O_IMG_OPTM_ORI = 'img_optm-ori';
 	const O_IMG_OPTM_RM_BKUP = 'img_optm-rm_bkup';
 	const O_IMG_OPTM_WEBP = 'img_optm-webp';
@@ -235,16 +235,16 @@ class Base extends Root
 	## --------------		Crawler		----------------- ##
 	## -------------------------------------------------- ##
 	const O_CRAWLER = 'crawler';
-	const O_CRAWLER_USLEEP = 'crawler-usleep';
-	const O_CRAWLER_RUN_DURATION = 'crawler-run_duration';
-	const O_CRAWLER_RUN_INTERVAL = 'crawler-run_interval';
+	const O_CRAWLER_USLEEP = 'crawler-usleep'; // @Deprecated since v7.0 TODO: remove after v7.5
+	const O_CRAWLER_RUN_DURATION = 'crawler-run_duration'; // @Deprecated since v7.0 TODO: remove after v7.5
+	const O_CRAWLER_RUN_INTERVAL = 'crawler-run_interval'; // @Deprecated since v7.0 TODO: remove after v7.5
 	const O_CRAWLER_CRAWL_INTERVAL = 'crawler-crawl_interval';
-	const O_CRAWLER_THREADS = 'crawler-threads';
-	const O_CRAWLER_TIMEOUT = 'crawler-timeout';
+	const O_CRAWLER_THREADS = 'crawler-threads'; // @Deprecated since v7.0 TODO: remove after v7.5
+	const O_CRAWLER_TIMEOUT = 'crawler-timeout'; // @Deprecated since v7.0 TODO: remove after v7.5
 	const O_CRAWLER_LOAD_LIMIT = 'crawler-load_limit';
 	const O_CRAWLER_SITEMAP = 'crawler-sitemap';
-	const O_CRAWLER_DROP_DOMAIN = 'crawler-drop_domain';
-	const O_CRAWLER_MAP_TIMEOUT = 'crawler-map_timeout';
+	const O_CRAWLER_DROP_DOMAIN = 'crawler-drop_domain'; // @Deprecated since v7.0 TODO: remove after v7.5
+	const O_CRAWLER_MAP_TIMEOUT = 'crawler-map_timeout'; // @Deprecated since v7.0 TODO: remove after v7.5
 	const O_CRAWLER_ROLES = 'crawler-roles';
 	const O_CRAWLER_COOKIES = 'crawler-cookies';
 
@@ -265,7 +265,7 @@ class Base extends Root
 	const O_CDN_ORI = 'cdn-ori';
 	const O_CDN_ORI_DIR = 'cdn-ori_dir';
 	const O_CDN_EXC = 'cdn-exc';
-	const O_CDN_QUIC = 'cdn-quic';
+	const O_CDN_QUIC = 'cdn-quic'; // No more a visible setting since v7
 	const O_CDN_CLOUDFLARE = 'cdn-cloudflare';
 	const O_CDN_CLOUDFLARE_EMAIL = 'cdn-cloudflare_email';
 	const O_CDN_CLOUDFLARE_KEY = 'cdn-cloudflare_key';
@@ -273,8 +273,8 @@ class Base extends Root
 	const O_CDN_CLOUDFLARE_ZONE = 'cdn-cloudflare_zone';
 	const O_CDN_MAPPING = 'cdn-mapping';
 	const O_CDN_ATTR = 'cdn-attr';
-	const O_QC_TOKEN = 'qc-token';
 	const O_QC_NAMESERVERS = 'qc-nameservers';
+	const O_QC_CNAME = 'qc-cname';
 
 	const NETWORK_O_USE_PRIMARY = 'use_primary_settings';
 
@@ -300,22 +300,20 @@ class Base extends Root
 	const VAL_ON2 = 2;
 
 	/* This is for API hook usage */
-	const IMG_OPTM_BM_ORI = 1;
-	const IMG_OPTM_BM_WEBP = 2;
-	const IMG_OPTM_BM_LOSSLESS = 4;
-	const IMG_OPTM_BM_EXIF = 8;
+	const IMG_OPTM_BM_ORI = 1; // @Deprecated since v7.0
+	const IMG_OPTM_BM_WEBP = 2; // @Deprecated since v7.0
+	const IMG_OPTM_BM_LOSSLESS = 4; // @Deprecated since v7.0
+	const IMG_OPTM_BM_EXIF = 8; // @Deprecated since v7.0
+	const IMG_OPTM_BM_AVIF = 16; // @Deprecated since v7.0
 
 	/* Site related options (Will not overwrite other sites' config) */
 	protected static $SINGLE_SITE_OPTIONS = array(
-		self::O_API_KEY,
 		self::O_CRAWLER,
 		self::O_CRAWLER_SITEMAP,
-		self::O_CRAWLER_DROP_DOMAIN,
 		self::O_CDN,
 		self::O_CDN_ORI,
 		self::O_CDN_ORI_DIR,
 		self::O_CDN_EXC,
-		self::O_CDN_QUIC,
 		self::O_CDN_CLOUDFLARE,
 		self::O_CDN_CLOUDFLARE_EMAIL,
 		self::O_CDN_CLOUDFLARE_KEY,
@@ -323,15 +321,15 @@ class Base extends Root
 		self::O_CDN_CLOUDFLARE_ZONE,
 		self::O_CDN_MAPPING,
 		self::O_CDN_ATTR,
-		self::O_QC_TOKEN,
 		self::O_QC_NAMESERVERS,
+		self::O_QC_CNAME,
 	);
 
 	protected static $_default_options = array(
 		self::_VER => '',
 		self::HASH => '',
-		self::O_AUTO_UPGRADE => false,
 		self::O_API_KEY => '',
+		self::O_AUTO_UPGRADE => false,
 		self::O_SERVER_IP => '',
 		self::O_GUEST => false,
 		self::O_GUEST_OPTM => false,
@@ -502,7 +500,6 @@ class Base extends Root
 
 		// Image Optm
 		self::O_IMG_OPTM_AUTO => false,
-		self::O_IMG_OPTM_CRON => false,
 		self::O_IMG_OPTM_ORI => false,
 		self::O_IMG_OPTM_RM_BKUP => false,
 		self::O_IMG_OPTM_WEBP => false,
@@ -514,16 +511,9 @@ class Base extends Root
 
 		// Crawler
 		self::O_CRAWLER => false,
-		self::O_CRAWLER_USLEEP => 0,
-		self::O_CRAWLER_RUN_DURATION => 0,
-		self::O_CRAWLER_RUN_INTERVAL => 0,
 		self::O_CRAWLER_CRAWL_INTERVAL => 0,
-		self::O_CRAWLER_THREADS => 0,
-		self::O_CRAWLER_TIMEOUT => 0,
 		self::O_CRAWLER_LOAD_LIMIT => 0,
 		self::O_CRAWLER_SITEMAP => '',
-		self::O_CRAWLER_DROP_DOMAIN => false,
-		self::O_CRAWLER_MAP_TIMEOUT => 0,
 		self::O_CRAWLER_ROLES => array(),
 		self::O_CRAWLER_COOKIES => array(),
 
@@ -549,8 +539,8 @@ class Base extends Root
 		self::O_CDN_MAPPING => array(),
 		self::O_CDN_ATTR => array(),
 
-		self::O_QC_TOKEN => '',
 		self::O_QC_NAMESERVERS => '',
+		self::O_QC_CNAME => '',
 	);
 
 	protected static $_default_site_options = array(
@@ -604,6 +594,7 @@ class Base extends Root
 	protected static $_multi_switch_list = array(
 		self::O_DEBUG => 2,
 		self::O_OPTM_JS_DEFER => 2,
+		self::O_IMG_OPTM_WEBP => 2,
 	);
 
 	/**
@@ -653,9 +644,9 @@ class Base extends Root
 	 */
 	public function load_default_site_vals()
 	{
-		// Load network_default.ini
-		if (file_exists(LSCWP_DIR . 'data/const.network_default.ini')) {
-			$default_ini_cfg = parse_ini_file(LSCWP_DIR . 'data/const.network_default.ini', true);
+		// Load network_default.json
+		if (file_exists(LSCWP_DIR . 'data/const.network_default.json')) {
+			$default_ini_cfg = json_decode(File::read(LSCWP_DIR . 'data/const.network_default.json'), true);
 			foreach (self::$_default_site_options as $k => $v) {
 				if (!array_key_exists($k, $default_ini_cfg)) {
 					continue;
@@ -678,16 +669,16 @@ class Base extends Root
 	}
 
 	/**
-	 * Load default values from default.ini
+	 * Load default values from default.json
 	 *
 	 * @since 3.0
 	 * @access public
 	 */
 	public function load_default_vals()
 	{
-		// Load default.ini
-		if (file_exists(LSCWP_DIR . 'data/const.default.ini')) {
-			$default_ini_cfg = parse_ini_file(LSCWP_DIR . 'data/const.default.ini', true);
+		// Load default.json
+		if (file_exists(LSCWP_DIR . 'data/const.default.json')) {
+			$default_ini_cfg = json_decode(File::read(LSCWP_DIR . 'data/const.default.json'), true);
 			foreach (self::$_default_options as $k => $v) {
 				if (!array_key_exists($k, $default_ini_cfg)) {
 					continue;
@@ -890,7 +881,7 @@ class Base extends Root
 	 */
 	protected function _conf_pswd($id)
 	{
-		$check_ids = array(self::O_CDN_CLOUDFLARE_KEY, self::O_OBJECT_PSWD, self::O_API_KEY, self::O_QC_TOKEN);
+		$check_ids = array(self::O_CDN_CLOUDFLARE_KEY, self::O_OBJECT_PSWD);
 
 		return in_array($id, $check_ids);
 	}
@@ -902,14 +893,7 @@ class Base extends Root
 	 */
 	protected function _conf_cron($id)
 	{
-		$check_ids = array(
-			self::O_IMG_OPTM_CRON,
-			self::O_OPTM_CSS_ASYNC,
-			self::O_MEDIA_PLACEHOLDER_RESP_ASYNC,
-			self::O_DISCUSS_AVATAR_CRON,
-			self::O_IMG_OPTM_AUTO,
-			self::O_CRAWLER,
-		);
+		$check_ids = array(self::O_OPTM_CSS_ASYNC, self::O_MEDIA_PLACEHOLDER_RESP_ASYNC, self::O_DISCUSS_AVATAR_CRON, self::O_IMG_OPTM_AUTO, self::O_CRAWLER);
 
 		return in_array($id, $check_ids);
 	}

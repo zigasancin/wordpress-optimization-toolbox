@@ -306,12 +306,17 @@ class CDN extends Root
 		 * @see  #685485
 		 * @since 3.0
 		 */
-		preg_match_all('/url\((?![\'"]?data)[\'"]?([^\)\'"\\\]+)[\'"]?\)/i', $this->content, $matches);
+		preg_match_all('/url\((?![\'"]?data)[\'"]?(.+?)[\'"]?\)/i', $this->content, $matches);
 		foreach ($matches[1] as $k => $url) {
 			$url = str_replace(array(' ', '\t', '\n', '\r', '\0', '\x0B', '"', "'", '&quot;', '&#039;'), '', $url);
 
 			// Parse file postfix
-			$postfix = '.' . pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION);
+			$parsed_url = parse_url($url, PHP_URL_PATH);
+			if (!$parsed_url) {
+				continue;
+			}
+
+			$postfix = '.' . pathinfo($parsed_url, PATHINFO_EXTENSION);
 			if (array_key_exists($postfix, $this->_cfg_cdn_mapping)) {
 				Debug2::debug2('[CDN] matched file_type ' . $postfix . ' : ' . $url);
 				if (!($url2 = $this->rewrite($url, Base::CDN_MAPPING_FILETYPE, $postfix))) {
@@ -478,7 +483,7 @@ class CDN extends Root
 
 		// If filetype to url is one to many, need to random one
 		if (is_array($final_url)) {
-			$final_url = $final_url[mt_rand(0, count($final_url) - 1)];
+			$final_url = $final_url[array_rand($final_url)];
 		}
 
 		// Now lets replace CDN url

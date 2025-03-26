@@ -26,7 +26,6 @@ class Router extends Base
 	const ACTION_AVATAR = 'avatar';
 	const ACTION_SAVE_SETTINGS = 'save-settings';
 	const ACTION_CLOUD = 'cloud';
-	const ACTION_CDN_SETUP = 'cdn_setup';
 	const ACTION_IMG_OPTM = 'img_optm';
 	const ACTION_HEALTH = 'health';
 	const ACTION_CRAWLER = 'crawler';
@@ -48,7 +47,6 @@ class Router extends Base
 		self::ACTION_AVATAR,
 		self::ACTION_CDN_CLOUDFLARE,
 		self::ACTION_CLOUD,
-		self::ACTION_CDN_SETUP,
 		self::ACTION_CONF,
 		self::ACTION_CRAWLER,
 		self::ACTION_CSS,
@@ -89,7 +87,7 @@ class Router extends Base
 	public static function self_redirect($action, $type)
 	{
 		if (defined('LITESPEED_CLI') || defined('DOING_CRON')) {
-			Admin_Display::succeed('To be continued'); // Show for CLI
+			Admin_Display::success('To be continued'); // Show for CLI
 			return;
 		}
 
@@ -250,20 +248,26 @@ class Router extends Base
 			return;
 		}
 
-		self::debug('starting role validation');
+		self::debug('🪪 starting role validation');
 
 		// Check if is from crawler
 		// if ( empty( $_SERVER[ 'HTTP_USER_AGENT' ] ) || strpos( $_SERVER[ 'HTTP_USER_AGENT' ], Crawler::FAST_USER_AGENT ) !== 0 ) {
 		// 	Debug2::debug( '[Router] user agent not match' );
 		// 	return;
 		// }
+		$server_ip = $this->conf(self::O_SERVER_IP);
+		if (!$server_ip || self::get_ip() !== $server_ip) {
+			self::debug('❌❌ Role simulate uid denied! Not localhost visit!');
+			Control::set_nocache('Role simulate uid denied');
+			return;
+		}
 
 		// Flash hash validation
 		if (!empty($_COOKIE['litespeed_flash_hash'])) {
 			$hash_data = self::get_option(self::ITEM_FLASH_HASH, array());
 			if ($hash_data && is_array($hash_data) && !empty($hash_data['hash']) && !empty($hash_data['ts']) && !empty($hash_data['uid'])) {
 				if (time() - $hash_data['ts'] < 120 && $_COOKIE['litespeed_flash_hash'] == $hash_data['hash']) {
-					self::debug('role simulate uid ' . $hash_data['uid']);
+					self::debug('🪪 Role simulator flash hash matched, escalating user to be uid=' . $hash_data['uid']);
 					self::delete_option(self::ITEM_FLASH_HASH);
 					wp_set_current_user($hash_data['uid']);
 					return;
@@ -271,27 +275,19 @@ class Router extends Base
 			}
 		}
 		// Hash validation
-		// if (!empty($_COOKIE['litespeed_hash'])) {
-		// 	$hash_data = self::get_option(self::ITEM_HASH, array());
-		// 	if ($hash_data && is_array($hash_data) && !empty($hash_data['hash']) && !empty($hash_data['ts']) && !empty($hash_data['uid'])) {
-		// 		if (time() - $hash_data['ts'] < $this->conf(Base::O_CRAWLER_RUN_DURATION) && $_COOKIE['litespeed_hash'] == $hash_data['hash']) {
-		// 			if (empty($hash_data['ip'])) {
-		// 				$hash_data['ip'] = self::get_ip();
-		// 				self::update_option(self::ITEM_HASH, $hash_data);
-		// 			} else {
-		// 				$server_ips = apply_filters('litespeed_server_ips', array($hash_data['ip']));
-		// 				if (!self::ip_access($server_ips)) {
-		// 					self::debug('WARNING: role simulator ip check failed [db ip] ' . $hash_data['ip'], $server_ips);
-		// 					return;
-		// 				}
-		// 			}
-		// 			wp_set_current_user($hash_data['uid']);
-		// 			return;
-		// 		}
-		// 	}
-		// }
+		if (!empty($_COOKIE['litespeed_hash'])) {
+			$hash_data = self::get_option(self::ITEM_HASH, array());
+			if ($hash_data && is_array($hash_data) && !empty($hash_data['hash']) && !empty($hash_data['ts']) && !empty($hash_data['uid'])) {
+				$RUN_DURATION = $this->cls('Crawler')->get_crawler_duration();
+				if (time() - $hash_data['ts'] < $RUN_DURATION && $_COOKIE['litespeed_hash'] == $hash_data['hash']) {
+					self::debug('🪪 Role simulator hash matched, escalating user to be uid=' . $hash_data['uid']);
+					wp_set_current_user($hash_data['uid']);
+					return;
+				}
+			}
+		}
 
-		self::debug('WARNING: role simulator hash not match');
+		self::debug('❌ WARNING: role simulator hash not match');
 	}
 
 	/**
@@ -308,6 +304,12 @@ class Router extends Base
 			}
 		}
 
+		// Check if this user has editor access or not
+		if (user_can($uid, 'edit_posts')) {
+			self::debug('🛑 The user with id ' . $uid . ' has editor access, which is not allowed for the role simulator.');
+			return '';
+		}
+
 		$hash = Str::rrand(32);
 		self::update_option(self::ITEM_FLASH_HASH, array('hash' => $hash, 'ts' => time(), 'uid' => $uid));
 		return $hash;
@@ -320,6 +322,12 @@ class Router extends Base
 	 */
 	public function get_hash($uid)
 	{
+		// Check if this user has editor access or not
+		if (user_can($uid, 'edit_posts')) {
+			self::debug('🛑 The user with id ' . $uid . ' has editor access, which is not allowed for the role simulator.');
+			return '';
+		}
+
 		// As this is called only when starting crawling, not per page, no need to reuse
 		$hash = Str::rrand(32);
 		self::update_option(self::ITEM_HASH, array('hash' => $hash, 'ts' => time(), 'uid' => $uid));
@@ -623,7 +631,6 @@ class Router extends Base
 			case self::ACTION_AVATAR:
 			case self::ACTION_IMG_OPTM:
 			case self::ACTION_CLOUD:
-			case self::ACTION_CDN_SETUP:
 			case self::ACTION_CDN_CLOUDFLARE:
 			case self::ACTION_CRAWLER:
 			case self::ACTION_PRESET:

@@ -23,7 +23,7 @@ class Core extends Root
 	const ACTION_PURGE_BY = 'PURGE_BY';
 	const ACTION_PURGE_EMPTYCACHE = 'PURGE_EMPTYCACHE';
 	const ACTION_QS_PURGE = 'PURGE';
-	const ACTION_QS_PURGE_SINGLE = 'PURGESINGLE';
+	const ACTION_QS_PURGE_SINGLE = 'PURGESINGLE'; // This will be same as `ACTION_QS_PURGE` (purge single url only)
 	const ACTION_QS_SHOW_HEADERS = 'SHOWHEADERS';
 	const ACTION_QS_PURGE_ALL = 'purge_all';
 	const ACTION_QS_PURGE_EMPTYCACHE = 'empty_all';
@@ -48,11 +48,6 @@ class Core extends Root
 	{
 		!defined('LSCWP_TS_0') && define('LSCWP_TS_0', microtime(true));
 		$this->cls('Conf')->init();
-
-		// Check if debug is on
-		if ($this->conf(Base::O_DEBUG)) {
-			$this->cls('Debug2')->init();
-		}
 
 		/**
 		 * Load API hooks
@@ -80,8 +75,6 @@ class Core extends Root
 		register_deactivation_hook($plugin_file, array(__NAMESPACE__ . '\Activation', 'register_deactivation'));
 		register_uninstall_hook($plugin_file, __NAMESPACE__ . '\Activation::uninstall_litespeed_cache');
 		// }
-
-		add_action('plugins_loaded', array($this, 'plugins_loaded'));
 
 		if (defined('LITESPEED_ON')) {
 			// register purge_all actions
@@ -157,15 +150,6 @@ class Core extends Root
 	}
 
 	/**
-	 * Plugin loaded hooks
-	 * @since 3.0
-	 */
-	public function plugins_loaded()
-	{
-		load_plugin_textdomain(Core::PLUGIN_NAME, false, 'litespeed-cache/lang/');
-	}
-
-	/**
 	 * The plugin initializer.
 	 *
 	 * This function checks if the cache is enabled and ready to use, then determines what actions need to be set up based on the type of user and page accessed. Output is buffered if the cache is enabled.
@@ -188,15 +172,13 @@ class Core extends Root
 		add_action('wp_ajax_nopriv_async_litespeed', 'LiteSpeed\Task::async_litespeed_handler');
 
 		// in `after_setup_theme`, before `init` hook
-		if (!defined('LITESPEED_BYPASS_AUTO_V')) {
-			$this->cls('Activation')->auto_update();
-		}
+		$this->cls('Activation')->auto_update();
 
 		if (is_admin() && !(defined('DOING_AJAX') && DOING_AJAX)) {
 			$this->cls('Admin');
 		}
 
-		if (defined('LITESPEED_DISABLE_ALL')) {
+		if (defined('LITESPEED_DISABLE_ALL') && LITESPEED_DISABLE_ALL) {
 			Debug2::debug('[Core] Bypassed due to debug disable all setting');
 			return;
 		}
@@ -224,7 +206,7 @@ class Core extends Root
 
 		// 1. Init vary
 		// 2. Init cacheable status
-		$this->cls('Vary')->init();
+		// $this->cls('Vary')->init();
 
 		// Init Purge hooks
 		$this->cls('Purge')->init();
@@ -274,7 +256,7 @@ class Core extends Root
 		 * TODO: Will change to hook in future versions to make it revertable
 		 */
 		if (defined('LITESPEED_BYPASS_OPTM') && !defined('LITESPEED_NO_OPTM')) {
-			defined('LITESPEED_NO_OPTM', LITESPEED_BYPASS_OPTM);
+			define('LITESPEED_NO_OPTM', LITESPEED_BYPASS_OPTM);
 		}
 
 		if (!defined('LITESPEED_NO_OPTM') || !LITESPEED_NO_OPTM) {
@@ -318,14 +300,11 @@ class Core extends Root
 		$msg = false;
 		// handle actions
 		switch ($action) {
-			case self::ACTION_QS_PURGE:
-				Purge::set_purge_related();
-				break;
-
 			case self::ACTION_QS_SHOW_HEADERS:
 				self::$_debug_show_header = true;
 				break;
 
+			case self::ACTION_QS_PURGE:
 			case self::ACTION_QS_PURGE_SINGLE:
 				Purge::set_purge_single();
 				break;
@@ -486,7 +465,7 @@ class Core extends Root
 		$this->send_headers(true);
 
 		// Log ESI nonce buffer empty issue
-		if (defined('LSCACHE_IS_ESI') && strlen($buffer) != 0) {
+		if (defined('LSCACHE_IS_ESI') && strlen($buffer) == 0) {
 			// log ref for debug purpose
 			error_log('ESI buffer empty ' . $_SERVER['REQUEST_URI']);
 		}
@@ -675,6 +654,10 @@ class Core extends Root
 
 		if (defined('LITESPEED_GUEST') && LITESPEED_GUEST) {
 			$this->_comment('Guest Mode');
+		}
+
+		if (!empty($this->_footer_comment)) {
+			self::debug('[footer comment] ' . $this->_footer_comment);
 		}
 
 		if ($is_forced) {

@@ -62,9 +62,6 @@ class Activation extends Base
 			}
 		}
 
-		// Files will be delayed updated in next visit to wp-admin
-		Conf::update_option('__activation', Core::VER);
-
 		/* Network file handler */
 		if (is_multisite()) {
 			if (!is_network_admin()) {
@@ -166,7 +163,7 @@ class Activation extends Base
 		foreach ($sites as $site) {
 			$bid = is_object($site) && property_exists($site, 'blog_id') ? $site->blog_id : $site;
 			$plugins = get_blog_option($bid, 'active_plugins', $default);
-			if (in_array(LSCWP_BASENAME, $plugins, true)) {
+			if (!empty($plugins) && in_array(LSCWP_BASENAME, $plugins, true)) {
 				$count++;
 			}
 		}
@@ -515,7 +512,7 @@ class Activation extends Base
 			return;
 		}
 
-		Admin_Display::succeed(__('Upgraded successfully.', 'litespeed-cache'));
+		Admin_Display::success(__('Upgraded successfully.', 'litespeed-cache'));
 	}
 
 	/**

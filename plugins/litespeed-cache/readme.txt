@@ -1,9 +1,10 @@
 === LiteSpeed Cache ===
 Contributors: LiteSpeedTech
 Tags: caching, optimize, performance, pagespeed, seo, image optimize, object cache, redis, memcached, database cleaner
-Requires at least: 4.9
+Requires at least: 5.3
+Requires PHP: 7.2
 Tested up to: 6.7
-Stable tag: 6.5.4
+Stable tag: 7.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
@@ -48,7 +49,7 @@ LiteSpeed Cache for WordPress is compatible with ClassicPress.
 * Single Site and Multisite (Network) support
 * Import/Export settings
 * Attractive, easy-to-understand interface
-* WebP image format support
+* AVIF/WebP image format support
 * Heartbeat control
 
 <sup>+</sup> This service is not provided by the LSCache plugin, nor is it guaranteed to be installed by your service provider. However, the plugin is compatible with the service if it is in use on your site.
@@ -91,10 +92,10 @@ LiteSpeed Cache for WordPress is compatible with ClassicPress.
 == LSCWP Resources ==
 * [Join our Slack community](https://litespeedtech.com/slack) to connect with other LiteSpeed users.
 * [Ask a question on our support forum](https://wordpress.org/support/plugin/litespeed-cache/).
-* [View detailed documentation](https://docs.litespeedtech.com/lscache/lscwp/overview/).
-* [Read WordPress Wednesday tutorials on our blog](https://blog.litespeedtech.com/tag/wordpress-wednesday/).
+* [View detailed documentation](https://docs.litespeedtech.com/lscache/lscwp/).
+* [Read about LSCWP and WordPress on our blog](https://blog.litespeedtech.com/tag/wordpress/).
 * [Help translate LSCWP](https://translate.wordpress.org/projects/wp-plugins/litespeed-cache/).
-* [LSCWP GitHub repo](https://github.com/litespeedtech/lscache_wp).
+* [Contribute to the LSCWP GitHub repo](https://github.com/litespeedtech/lscache_wp).
 
 == Installation ==
 
@@ -254,11 +255,84 @@ You can report security bugs through the Patchstack Vulnerability Disclosure Pro
 
 == Changelog ==
 
+= 7.0 - Mar 25 2025 =
+* 🌱**Image Optimization** Added AVIF format.
+* **Core** Changed plugin classes auto load to preload all to prevent upgrade problems.
+* **Core** Refactored configuration data initialization method to realtime update instead of delayed update in plugin upgrade phase.
+* **Core** Used `const.default.json` instead of `const.default.ini` for better compatibility in case `parse_ini_file()` is disabled.
+* **Core** Minimum required PHP version escalated to PHP v7.2.0.
+* **Core** Minimum required WP version escalated to WP v5.3.
+* **Cloud** Dropped `Domain Key`. Now using sodium encryption for authentication and validation.
+* **Cloud** Added support for `list_preferred` in online service node detection.
+* **Cloud** Fixed a domain expiry removal PHP warning. (cheekymate06)
+* **Cloud** Auto dropped Cloud error message banner when successfully reconnected.
+* **Cloud** Simplified the configure sync parameters to only compare and post the necessary settings.
+* **Config** Simplified QUIC.cloud CDN Setup. CDN service is now automatically detected when activated in the QUIC.cloud Dashboard.
+* **Config** Dropped the initial version check when comparing md5 to decide if whether to sync the configuration when upgrading the plugin.
+* **Config** `LITESPEED_DISABLE_ALL` will now check the value to determine whether it's been applied.
+* **Database Optimize** Fixed Autoload summary for WP6.6+. (Mukesh Panchal/Viktor Szépe)
+* **CLI** Added QUIC.cloud CDN CLI command: `wp litespeed-online cdn_init --ssl-cert=xxx.pem --ssl-key=xxx -method=cname|ns|cfi`.
+* **CLI** Added QUIC.cloud CDN CLI command: `wp litespeed-online link --email=xxx@example.com --api-key=xxxx`.
+* **CLI** Added QUIC.cloud CDN CLI command: `wp litespeed-online cdn_status`.
+* **CLI** Added `--force` argument for QUIC.cloud CLI command `wp litespeed-online ping`.
+* **Image Optimization** Dropped `Auto Pull Cron` setting. Added PHP const `LITESPEED_IMG_OPTM_PULL_CRON` support.
+* **Image Optimization** Added Soft Reset Counter button to allow restarting image optimization without destroying previously optimized images.
+* **Image Optimization** Added support for `LITESPEED_IMG_OPTM_PULL_THREADS` to adjust the threads to avoid PHP max connection limits.
+* **Image Optimization** Added support for the latest firefox WebP Accept header change for serving WebP.
+* **Image Optimization** Allowed PHP Constant `LITESPEED_FORCE_WP_REMOTE_GET` to force using `wp_remote_get()` to pull images.
+* **Image Optimization** Dropped API filter `litespeed_img_optm_options_per_image`.
+* **Image Optimization** Auto redirect nodes if the server environment is switched between Preview and Production.
+* **Purge** Allowed `LSWCP_EMPTYCACHE` to be defined as false to disable the ability to Purge all sites.
+* **Purge** Each purge action now has a hook.
+* **Purge** Fixed `PURGESINGLE` and `PURGE` query string purge tag bug.
+* **Purge** `PURGE` will purge the single URL only like `PURGESINGLE`.
+* **ESI** Fixed a log logic failure when ESI buffer is empty.
+* **ESI** Added Elementor nonces (jujube0ajluxl PR#736)
+* **ESI** Fixed a no-cache issue in no-vary ESI requests that occurred when `Login Cookie` was set.
+* **ESI** ESI will no longer send cookie update headers.
+* **Vary** Vary name correction, which used to happen in the `after_setup_theme` hook, now happens later in the `init` hook.
+* **Crawler** Enhanced hash generation function for cryptographic security.
+* **Crawler** Added back `Role Simulator` w/ IP limited to `127.0.0.1` only. Use `LITESPEED_CRAWLER_LOCAL_PORT` to use 80 if original server does not support 443.
+* **Crawler** Enhanced Role Simulator security by disallowing editor or above access in settings.
+* **Crawler** Defaulted and limited crawler `Run Duration` maximum to 900 seconds and dropped the setting.
+* **Crawler** Crawler will be stopped when load limit setting is 0.
+* **Crawler** Dropped `Delay` setting. Added PHP const `LITESPEED_CRAWLER_USLEEP` support.
+* **Crawler** Dropped `Timeout` setting. Added PHP const `LITESPEED_CRAWLER_TIMEOUT` support.
+* **Crawler** Dropped `Threads` setting. Added PHP const `LITESPEED_CRAWLER_THREADS` support.
+* **Crawler** Dropped `Interval Between Runs` setting. Added PHP const `LITESPEED_CRAWLER_RUN_INTERVAL` support.
+* **Crawler** Dropped `Sitemap Timeout` setting. Added PHP const `LITESPEED_CRAWLER_MAP_TIMEOUT` support.
+* **Crawler** Dropped `Drop Domain from Sitemap` setting. Added PHP const `LITESPEED_CRAWLER_DROP_DOMAIN` support.
+* **Crawler** Fixed wrong path of .pid file under wp-admin folder in certain case. (igobybus)
+* **Crawler** Show an empty map error and disabled crawler when the map is not set yet.
+* **Page Optimize** Updated request link parser to follow the site permalink. (Mijnheer Eetpraat #766)
+* **Page Optimize** Updated latest CSS/JS optimization library to fix issues for RGB minification and external imports when combining CSS.
+* **Page Optimize** Exclude Google Analytics from JavaScript optimization. (James M. Joyce #269 PR#726)
+* **Page Optimize** Fixed typo in `LITESPEED_NO_OPTM` constant definition. (Roy Orbitson PR#796)
+* **CDN** Fixed CDN replacement for inline CSS url with round brackets case. (agodbu)
+* **GUI** Added an Online Service tab under General menu.
+* **GUI** Added a QUIC.cloud CDN tab.
+* **GUI** Combined all Crawler settings to a single setting tab.
+* **GUI** Switch buttons rtl compatibility. (Eliza/Mehrshad Darzi #603)
+* **GUI** Fixed an issue where an irremovable banner couldn't be echoed directly.
+* **GUI** Limited page speed chart to cacheable servers only.
+* **Tag** Fixed a potential warning in tags. (ikiterder)
+* **Tag** Appended AJAX action to cache tags.
+* **Tag** Dropped normal HTTP code. Only error codes (403/404/500) will be used for tags.
+* **Misc** Fixed fatal activation error on Network installation when no other plugins are active. (PR#808 #9496550)
+* **Misc** Improved README file by adding minimum supported PHP/WordPress versions. (Viktor Szépe)
+* **Misc** Added reliance on just-in-time translation loading. (Pascal Birchler #738)
+* **Misc** Will now check whether the filename is valid before saving a file to fix the possible Object Cache log issue. (Mahdi Akrami #761)
+* **Misc** Fixed PHP 7.2 compatibility in cloud message. (Viktor Szépe #771)
+* **Misc** Incompatibility warning banner for third party plugins is now dismissible.
+* **Misc** Generated robots.txt file under litespeed folder to discourage search engine indexing of static resource files. (djwilko12)
+* **Debug** Escalated debug initialization to as early as possible to allow more configuration information to be logged.
+* **3rd** Fixed warning in Buddy Press code integration. (Viktor Szépe/antipole PR#778)
+
 = 6.5.4 - Dec 16 2024 =
 * **Page Optimize** Fixed Google Fonts broken with the Async option. (HivePress #787)
 
 = 6.5.3 - Dec 4 2024 =
-* **Misc** Quote escaped in attributes when building HTML.
+* **Misc** Quote escaped in attributes when building HTML. (CVE-2024-51915)
 
 = 6.5.2 - Oct 17 2024 =
 * **Crawler** Removed barely used Role Simulator from Crawler, to prevent potential security issues.

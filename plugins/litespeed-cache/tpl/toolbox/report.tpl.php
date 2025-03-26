@@ -26,6 +26,11 @@ if (function_exists('dologin_gen_link')) {
 }
 
 $install_link = Utility::build_url(Router::ACTION_ACTIVATION, Activation::TYPE_INSTALL_3RD, false, null, array('plugin' => 'dologin'));
+
+$btn_title = __('Send to LiteSpeed', 'litespeed-cache');
+if (!empty($env_ref['num'])) {
+	$btn_title = __('Regenerate and Send a New Report', 'litespeed-cache');
+}
 ?>
 
 <?php if (!$has_pswdless_plugin) : ?>
@@ -46,8 +51,8 @@ $install_link = Utility::build_url(Router::ACTION_ACTIVATION, Activation::TYPE_I
 	<?php Doc::learn_more('https://docs.litespeedtech.com/lscache/lscwp/toolbox/#report-tab'); ?>
 </h3>
 
-<p><?php echo __('Report number', 'litespeed-cache'); ?>: <b><?php echo !empty($env_ref['num']) ? $env_ref['num'] : '-'; ?></b></p>
-<p><?php echo __('Report date', 'litespeed-cache'); ?>: <b><?php echo !empty($env_ref['dateline']) ? date('m/d/Y H:i:s', $env_ref['dateline']) : '-'; ?></b></p>
+<p><?php echo __('Last Report Number', 'litespeed-cache'); ?>: <b><?php echo !empty($env_ref['num']) ? $env_ref['num'] : '-'; ?></b></p>
+<p><?php echo __('Last Report Date', 'litespeed-cache'); ?>: <b><?php echo !empty($env_ref['dateline']) ? date('m/d/Y H:i:s', $env_ref['dateline']) : '-'; ?></b></p>
 
 <p class="litespeed-desc">
 	<?php echo __('The environment report contains detailed information about the WordPress configuration.', 'litespeed-cache'); ?>
@@ -62,6 +67,24 @@ $install_link = Utility::build_url(Router::ACTION_ACTIVATION, Activation::TYPE_I
 				<th><?php echo __('System Information', 'litespeed-cache'); ?></th>
 				<td>
 					<textarea id="litespeed-report" rows="20" cols="100" readonly><?php echo esc_textarea($report); ?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<th>&nbsp;</th>
+				<td>
+					<?php
+					$this->build_checkbox(
+						'attach_php',
+						sprintf(
+							__(
+								'Attach PHP info to report. Check this box to insert relevant data from %s.',
+								'litespeed-cache'
+							),
+							'<a href="https://www.php.net/manual/en/function.phpinfo.php" target="__blank">phpinfo()</a>'
+						),
+						false
+					);
+					?>
 				</td>
 			</tr>
 			<tr>
@@ -96,12 +119,10 @@ $install_link = Utility::build_url(Router::ACTION_ACTIVATION, Activation::TYPE_I
 	</table>
 
 	<div class='litespeed-top20'></div>
-	<button class="button button-primary" type="submit"><?php echo __('Send to LiteSpeed', 'litespeed-cache'); ?></button>
-	<button class="button button-primary litespeed-float-submit" type="submit"><?php echo __('Send to LiteSpeed', 'litespeed-cache'); ?></button>
+	<button class="button button-primary" type="submit"><?php echo $btn_title; ?></button>
+	<button class="button button-primary litespeed-float-submit" type="submit"><?php echo $btn_title; ?></button>
 
 	<p class="litespeed-top30 litespeed-left10 litespeed-desc">
 		<?php echo __('Send this report to LiteSpeed. Refer to this report number when posting in the WordPress support forum.', 'litespeed-cache'); ?>
 	</p>
 </form>
-
-<?php include_once LSCWP_DIR . "tpl/inc/api_key.php"; ?>
