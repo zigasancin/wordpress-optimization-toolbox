@@ -457,7 +457,7 @@ abstract class Abstract_Page {
 			$this->has_onload_modal()
 			|| $hide_upgrade_modal
 			|| $whitelabel_hide_doc_link
-			|| ( $is_on_subsite_screen && ! $this->settings->has_webp_page() )
+			|| ( $is_on_subsite_screen && ! $this->settings->has_next_gen_page() )
 		) {
 			$should_ignore_upgrade_modal = $whitelabel_hide_doc_link || $this->has_onload_modal( 'onboarding' );
 			if ( $should_ignore_upgrade_modal ) {
@@ -466,7 +466,10 @@ abstract class Abstract_Page {
 			return;
 		}
 
-		$cta_url                 = Helper::get_page_url( 'smush-webp' );
+		$cta_url = WP_Smush::is_pro()
+					? Helper::get_page_url( 'smush-next-gen' )
+					: $this->get_utm_link( array( 'utm_campaign' => 'smush_welcome_modal_avif' ) );
+		// Load new feature modal.
 		$this->modals['updated'] = array(
 			'cta_url' => $cta_url,
 		);
@@ -636,8 +639,8 @@ abstract class Abstract_Page {
 				$doc .= '#cdn';
 				break;
 
-			case 'smush-webp':
-				$doc .= '#local-webp';
+			case 'smush-next-gen':
+				$doc .= '#next-gen-formats';
 				break;
 
 			case 'smush-integrations':
@@ -832,7 +835,7 @@ abstract class Abstract_Page {
 
 		$access = get_site_option( 'wp-smush-networkwide' );
 
-		if ( ! $access || in_array( $page, array( 'directory', 'webp', 'configs' ), true ) ) {
+		if ( ! $access || in_array( $page, array( 'directory', 'next-gen', 'configs' ), true ) ) {
 			return is_network_admin();
 		}
 

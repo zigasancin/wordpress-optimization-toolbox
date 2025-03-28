@@ -147,18 +147,22 @@ abstract class Abstract_Summary_Page extends Abstract_Page {
 		if ( 'disabled' === $status ) {
 			return;
 		}
+		$overcap_message    = __( "You've gone through your CDN bandwidth limit, so we’ve stopped serving your images via the CDN. Contact your administrator to upgrade your Smush CDN plan to reactivate this service", 'wp-smushit' );
+		$upgrade_message    = __( "You're almost through your CDN bandwidth limit. Please contact your administrator to upgrade your Smush CDN plan to ensure you don't lose this service", 'wp-smushit' );
+		$activating_message = __( 'Your media is currently being served from the WPMU DEV CDN. Bulk and Directory smush features are treated separately and will continue to run independently.', 'wp-smushit' );
+
 		?>
 		<li class="smush-cdn-stats">
 			<span class="sui-list-label"><?php esc_html_e( 'CDN', 'wp-smushit' ); ?></span>
 			<span class="wp-smush-stats sui-list-detail">
 				<i class="sui-icon-loader sui-loading sui-hidden" aria-hidden="true" title="<?php esc_attr_e( 'Updating Stats', 'wp-smushit' ); ?>"></i>
 				<?php if ( 'overcap' === $status ) : ?>
-					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php esc_attr_e( "You've gone through your CDN bandwidth limit, so we’ve stopped serving your images via the CDN. Contact your administrator to upgrade your Smush CDN plan to reactivate this service", 'wp-smushit' ); ?>">
+					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php echo esc_attr( $this->whitelabel->whitelabel_string( $overcap_message ) ); ?>">
 						<i class="sui-icon-warning-alert sui-error sui-md" aria-hidden="true"></i>
 					</span>
 					<span><?php esc_html_e( 'Overcap', 'wp-smushit' ); ?></span>
 				<?php elseif ( 'upgrade' === $status ) : ?>
-					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php esc_attr_e( "You're almost through your CDN bandwidth limit. Please contact your administrator to upgrade your Smush CDN plan to ensure you don't lose this service", 'wp-smushit' ); ?>">
+					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php echo esc_attr( $this->whitelabel->whitelabel_string( $upgrade_message ) ); ?>">
 						<i class="sui-icon-warning-alert sui-warning sui-md" aria-hidden="true"></i>
 					</span>
 					<span><?php esc_html_e( 'Needs upgrade', 'wp-smushit' ); ?></span>
@@ -166,7 +170,7 @@ abstract class Abstract_Summary_Page extends Abstract_Page {
 					<i class="sui-icon-check-tick sui-info sui-md" aria-hidden="true"></i>
 					<span><?php esc_html_e( 'Activating', 'wp-smushit' ); ?></span>
 				<?php else : ?>
-					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php esc_attr_e( 'Your media is currently being served from the WPMU DEV CDN. Bulk and Directory smush features are treated separately and will continue to run independently.', 'wp-smushit' ); ?>">
+					<span class="sui-tooltip sui-tooltip-top-right sui-tooltip-constrained" data-tooltip="<?php echo esc_attr( $this->whitelabel->whitelabel_string( $activating_message ) ); ?>">
 						<i class="sui-icon-check-tick sui-success sui-md" aria-hidden="true"></i>
 					</span>
 					<span><?php esc_html_e( 'Active', 'wp-smushit' ); ?></span>

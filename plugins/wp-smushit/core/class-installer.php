@@ -152,8 +152,12 @@ class Installer {
 				self::regenerate_preset_configs();
 			}
 
+			if ( version_compare( $version, '3.18.0', '<' ) ) {
+				self::regenerate_preset_configs_for_3_18_0();
+			}
+
 			$hide_new_feature_highlight_modal = apply_filters( 'wpmudev_branding_hide_doc_link', false );
-			if ( ! $hide_new_feature_highlight_modal && version_compare( $version, '3.16.0', '<' ) ) {
+			if ( ! $hide_new_feature_highlight_modal && version_compare( $version, '3.18.0', '<' ) ) {
 				// Add the flag to display the new feature background process modal.
 				add_site_option( 'wp-smush-show_upgrade_modal', true );
 			}
@@ -264,7 +268,6 @@ class Installer {
 	 *
 	 * @return void
 	 * @since 3.10.0
-	 *
 	 */
 	private static function upgrade_3_10_0() {
 		// Remove unused options.
@@ -293,7 +296,6 @@ class Installer {
 	 *
 	 * @return void
 	 * @since 3.10.3
-	 *
 	 */
 	private static function upgrade_3_10_3() {
 		delete_site_option( 'wp-smush-hide_smush_welcome' );
@@ -336,6 +338,26 @@ class Installer {
 			$preset_config ['config']                        = $configs_handler->sanitize_and_format_configs( $preset_config['config']['configs'] );
 			$stored_configs[ $key ]                          = $preset_config;
 		}
+		update_site_option( 'wp-smush-preset_configs', $stored_configs );
+	}
+
+	private static function regenerate_preset_configs_for_3_18_0() {
+		// Regenerate preset configs to update Next-Gen Formats.
+		$stored_configs = get_site_option( 'wp-smush-preset_configs', array() );
+		if ( empty( $stored_configs ) || ! is_array( $stored_configs ) ) {
+			return;
+		}
+
+		$configs_handler = new Configs();
+		foreach ( $stored_configs as $key => $preset_config ) {
+			if ( empty( $preset_config['config']['configs'] ) ) {
+				continue;
+			}
+
+			$preset_config ['config'] = $configs_handler->sanitize_and_format_configs( $preset_config['config']['configs'] );
+			$stored_configs[ $key ]   = $preset_config;
+		}
+
 		update_site_option( 'wp-smush-preset_configs', $stored_configs );
 	}
 

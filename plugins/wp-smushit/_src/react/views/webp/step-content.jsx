@@ -236,17 +236,15 @@ export default ({
 						<ol className="sui-description" start="3">
 							<li>{__('Reload NGINX.', 'wp-smushit')}</li>
 						</ol>
-
-						<p className="sui-description">
-							{__('Still having trouble?', 'wp_smushit')}{' '}
-							<a
-								href={smushData.urls.support}
-								target="_blank"
-								rel="noreferrer"
-							>
-								{__('Get Support.', 'wp_smushit')}
-							</a>
-						</p>
+						{!smushData.isWhitelabel && (
+							<p className="sui-description">
+								{__('Still having trouble?', 'wp_smushit')}{' '}
+								<a href={smushData.urls.support} target="_blank" rel="noreferrer">
+									{__('Get Support.', 'wp_smushit')}
+								</a>
+							</p>
+						)}
+						
 					</div>
 				);
 			}
@@ -389,17 +387,14 @@ export default ({
 										)}
 									</li>
 								</ol>
-
-								<p className="sui-description">
-									{__('Still having trouble?', 'wp_smushit')}{' '}
-									<a
-										href={smushData.urls.support}
-										target="_blank"
-										rel="noreferrer"
-									>
-										{__('Get Support.', 'wp_smushit')}
-									</a>
-								</p>
+								{!smushData.isWhitelabel && (
+									<p className="sui-description">
+										{__('Still having trouble?', 'wp_smushit')}{' '}
+										<a href={smushData.urls.support} target="_blank" rel="noreferrer">
+											{__('Get Support.', 'wp_smushit')}
+										</a>
+									</p>
+								)}
 							</div>
 						</div>
 					</div>

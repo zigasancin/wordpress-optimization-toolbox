@@ -23,7 +23,7 @@ $can_use_background = $bg_optimization->can_use_background();
 <ol class="sui-upsell-list">
 	<li>
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>
-		<?php esc_html_e( 'Serve image faster with Ultra compression', 'wp-smushit' ); ?>
+		<?php esc_html_e( 'Serve images faster with Ultra compression', 'wp-smushit' ); ?>
 	</li>
 	<li>
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>
@@ -31,9 +31,9 @@ $can_use_background = $bg_optimization->can_use_background();
 	</li>
 	<li>
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>
-		<?php esc_html_e( 'Up to 50 GB Smush CDN', 'wp-smushit' ); ?>
+		<?php echo esc_html( $this->whitelabel->whitelabel_string( __( 'Up to 50 GB Smush CDN', 'wp-smushit' ) ) ); ?>
 	</li>
-	<?php if( ! $can_use_background ) :?>
+	<?php if ( ! $can_use_background ) : ?>
 	<li>
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>
 		<?php esc_html_e( 'Background optimization', 'wp-smushit' ); ?>
@@ -42,10 +42,10 @@ $can_use_background = $bg_optimization->can_use_background();
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>
 		<?php esc_html_e( 'Unlimited image optimization', 'wp-smushit' ); ?>
 	</li>
-	<?php endif;?>
+	<?php endif; ?>
 	<li>
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>
-		<?php esc_html_e( 'Serve next-gen formats with WebP conversion', 'wp-smushit' ); ?>
+		<?php esc_html_e( 'Serve WebP & AVIF formats with Next-Gen Conversion', 'wp-smushit' ); ?>
 	</li>
 	<li>
 		<span class="sui-icon-check sui-md" aria-hidden="true"></span>

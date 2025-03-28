@@ -6,21 +6,23 @@
  *
  * @var string $title  Title.
  */
+use Smush\Core\Next_Gen\Next_Gen_Manager;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-$start_bulk_webp_conversion = ! empty( $_GET['smush-action'] ) && 'start-bulk-webp-conversion' === wp_unslash( $_GET['smush-action'] );
-
+$start_bulk_webp_conversion = ! empty( $_GET['smush-action'] ) && 'start-bulk-next-gen-conversion' === wp_unslash( $_GET['smush-action'] );
+$next_gen_manager           = Next_Gen_Manager::get_instance();
 ?>
 
 <h3 class="sui-box-title">
-	<?php echo esc_html( $title ); ?>
 	<?php
-	if ( $start_bulk_webp_conversion && $this->settings->is_webp_module_active() ) {
-		echo ' - ';
-		esc_html_e( 'WebP Conversion', 'wp-smushit' );
+	echo esc_html( $title );
+	if ( $start_bulk_webp_conversion ) {
+		echo ' ';
+		// translators: %s - Next-Gen Conversion.
+		printf( esc_html__( 'with %s Conversion', 'wp-smushit' ), esc_html( $next_gen_manager->get_active_format_name() ) );
 	}
 	?>
 </h3>

@@ -13,7 +13,6 @@ use Smush\App\Interface_Page;
 use Smush\Core\Array_Utils;
 use Smush\Core\CDN\CDN_Helper;
 use Smush\Core\Settings;
-use Smush\Core\Webp\Webp_Configuration;
 use Smush\Core\Media_Library\Background_Media_Library_Scanner;
 use WP_Smush;
 
@@ -155,12 +154,12 @@ class Dashboard extends Abstract_Summary_Page implements Interface_Page {
 			);
 		}
 
-		if ( self::should_render( 'webp' ) ) {
+		if ( self::should_render( 'next-gen' ) ) {
 			$this->add_meta_box(
-				'dashboard/webp',
-				__( 'Local WebP', 'wp-smushit' ),
-				array( $this, 'local_webp_meta_box' ),
-				array( $this, 'local_webp_meta_box_header' ),
+				'dashboard/next-gen',
+				__( 'Next-Gen Formats', 'wp-smushit' ),
+				array( $this, 'local_next_gen_meta_box' ),
+				array( $this, 'local_next_gen_meta_box_header' ),
 				null,
 				'box-dashboard-right'
 			);
@@ -182,15 +181,6 @@ class Dashboard extends Abstract_Summary_Page implements Interface_Page {
 			$this->upgrade_url
 		);
 
-		$upsell_url_webp = add_query_arg(
-			array(
-				'utm_source'   => 'smush',
-				'utm_medium'   => 'plugin',
-				'utm_campaign' => 'summary_local_webp',
-			),
-			$this->upgrade_url
-		);
-
 		$core         = WP_Smush::get_instance()->core();
 		$array_utils  = new Array_Utils();
 		$global_stats = $core->get_global_stats();
@@ -199,13 +189,10 @@ class Dashboard extends Abstract_Summary_Page implements Interface_Page {
 			'cdn_status'        => CDN_Helper::get_instance()->get_cdn_status_string(),
 			'is_cdn'            => $this->settings->get( 'cdn' ),
 			'is_lazy_load'      => $this->settings->get( 'lazy_load' ),
-			'is_local_webp'     => $this->settings->get( 'webp_mod' ),
 			'resize_count'      => $array_utils->get_array_value( $global_stats, 'count_resize' ),
 			'total_optimized'   => $array_utils->get_array_value( $global_stats, 'count_images' ),
 			'stats_percent'     => $array_utils->get_array_value( $global_stats, 'savings_percent' ),
 			'upsell_url_cdn'    => $upsell_url_cdn,
-			'upsell_url_webp'   => $upsell_url_webp,
-			'webp_configured'   => Webp_Configuration::get_instance()->is_configured(),
 			'percent_grade'     => $array_utils->get_array_value( $global_stats, 'percent_grade' ),
 			'percent_metric'    => $array_utils->get_array_value( $global_stats, 'percent_metric' ),
 			'percent_optimized' => $array_utils->get_array_value( $global_stats, 'percent_optimized' ),
@@ -285,42 +272,21 @@ class Dashboard extends Abstract_Summary_Page implements Interface_Page {
 	}
 
 	/**
-	 * Local WebP meta box.
+	 * Next-Gen Formats meta box.
 	 *
 	 * @since 3.8.6
 	 */
-	public function local_webp_meta_box() {
-		$upsell_url = add_query_arg(
-			array(
-				'utm_source'   => 'smush',
-				'utm_medium'   => 'plugin',
-				'utm_campaign' => 'smush-dashboard-local-webp-upsell',
-			),
-			$this->upgrade_url
-		);
-
-		$webp_configuration = Webp_Configuration::get_instance();
-		$is_webp_configured = $webp_configuration->is_configured();
-		$error_message      = $is_webp_configured ? '' : $webp_configuration->server_configuration()->get_configuration_message();
-
-		$args = array(
-			'is_configured'  => $is_webp_configured,
-			'error_message'  => $error_message,
-			'is_webp_active' => $this->settings->get( 'webp_mod' ),
-			'upsell_url'     => $upsell_url,
-		);
-
-		$this->view( 'dashboard/webp/meta-box', $args );
+	public function local_next_gen_meta_box() {
+		$this->view( 'dashboard/next-gen/meta-box' );
 	}
 
 	/**
-	 * Local WebP meta box footer.
+	 * Next-Gen Formats meta box footer.
 	 *
 	 * @since 3.8.6
 	 */
-	public function local_webp_meta_box_header() {
-		$title = __( 'Local WebP', 'wp-smushit' );
-		$this->view( 'dashboard/webp/meta-box-header', compact( 'title' ) );
+	public function local_next_gen_meta_box_header() {
+		$this->view( 'dashboard/next-gen/meta-box-header' );
 	}
 
 	/**
@@ -410,7 +376,6 @@ class Dashboard extends Abstract_Summary_Page implements Interface_Page {
 
 		$args = array(
 			'cdn_status' => CDN_Helper::get_instance()->get_cdn_status_string(),
-			'is_webp'    => $this->settings->get( 'webp' ),
 			'upsell_url' => $upsell_url,
 		);
 

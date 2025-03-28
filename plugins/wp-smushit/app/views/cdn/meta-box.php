@@ -22,7 +22,8 @@ if ( ! defined( 'WPINC' ) ) {
 
 <p>
 	<?php
-	esc_html_e( 'Take a load off your server by delivering your images from our blazingly-fast CDN. The Smush CDN is a multi-location network ensuring faster delivery of site content, as users will be served optimized and cached versions of files from the server closest to them.', 'wp-smushit' );
+	$cdn_message = __( 'Take a load off your server by delivering your images from our blazingly-fast CDN. The Smush CDN is a multi-location network ensuring faster delivery of site content, as users will be served optimized and cached versions of files from the server closest to them.', 'wp-smushit' );
+	echo esc_html( $this->whitelabel->whitelabel_string( $cdn_message ) );
 	?>
 </p>
 
@@ -31,13 +32,6 @@ if ( ! defined( 'WPINC' ) ) {
 		<div class="sui-notice-message">
 			<i class="sui-notice-icon sui-icon-<?php echo 'enabled' === $status ? 'check-tick' : 'info'; ?> sui-md" aria-hidden="true"></i>
 			<p><?php echo wp_kses_post( $status_msg ); ?></p>
-			<?php if ( 'error' === $class && 'overcap' === $status ) : ?>
-				<p>
-					<a href="https://wpmudev.com/hub/account/" target="_blank" class="sui-button">
-						<?php esc_html_e( 'Upgrade Plan', 'wp-smushit' ); ?>
-					</a>
-				</p>
-			<?php endif; ?>
 		</div>
 	</div>
 </div>

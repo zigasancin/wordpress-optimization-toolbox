@@ -10,6 +10,7 @@
 
 namespace Smush\Core;
 
+use Smush\Core\Avif\Avif_Controller;
 use Smush\Core\Backups\Backups_Controller;
 use Smush\Core\CDN\CDN_Controller;
 use Smush\Core\CDN\CDN_Settings_Ui_Controller;
@@ -24,6 +25,7 @@ use Smush\Core\Media_Library\Media_Library_Slice_Data_Fetcher;
 use Smush\Core\Media_Library\Media_Library_Watcher;
 use Smush\Core\Modules\Background\Background_Pre_Flight_Controller;
 use Smush\Core\Modules\CDN;
+use Smush\Core\Next_Gen\Next_Gen_Controller;
 use Smush\Core\Photon\Photon_Controller;
 use Smush\Core\Png2Jpg\Png2Jpg_Controller;
 use Smush\Core\Resize\Resize_Controller;
@@ -33,6 +35,7 @@ use Smush\Core\Smush\Smush_Controller;
 use Smush\Core\Stats\Global_Stats_Controller;
 use Smush\Core\Transform\Transformation_Controller;
 use Smush\Core\Webp\Webp_Controller;
+use Smush\Core\Webp\Webp_Retrospective_Stats_Generator;
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -221,6 +224,15 @@ class Modules {
 
 		$security_controller = Security_Controller::get_instance();
 		$security_controller->init();
+
+		$avif_controller = new Avif_Controller();
+		$avif_controller->init();
+
+		$webp_retrospective_stats = new Webp_Retrospective_Stats_Generator();
+		$webp_retrospective_stats->init();
+
+		$next_gen_controller = new Next_Gen_Controller();
+		$next_gen_controller->init();
 
 		$attachment_url_cache_controller = new Attachment_Url_Cache_Controller();
 		$attachment_url_cache_controller->init();

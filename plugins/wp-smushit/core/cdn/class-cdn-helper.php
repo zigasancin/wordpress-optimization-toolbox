@@ -406,14 +406,24 @@ class CDN_Helper {
 	}
 
 	private function get_cdn_parameters() {
-		$webp_cdn            = $this->settings->get( 'webp' );
+		$next_gen_cdn        = $this->settings->get_cdn_next_gen_conversion_mode();
 		$lossy_level_setting = $this->settings->get_lossy_level_setting();
 		$strip_exif          = $this->settings->get( 'strip_exif' );
-		return array(
+
+		$cdn_params = array(
 			'lossy' => $lossy_level_setting,
 			'strip' => (int) $strip_exif,
-			'webp'  => (int) $webp_cdn,
 		);
+
+		if ( Settings::AVIF_CDN_MODE === $next_gen_cdn ) {
+			$cdn_params['avif'] = 1;
+		} elseif ( Settings::WEBP_CDN_MODE === $next_gen_cdn ) {
+			$cdn_params['webp'] = 1;
+		} else {
+			$cdn_params['webp'] = 0;
+		}
+
+		return $cdn_params;
 	}
 
 	/**

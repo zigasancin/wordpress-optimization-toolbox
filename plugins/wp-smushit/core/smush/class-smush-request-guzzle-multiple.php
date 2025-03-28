@@ -8,6 +8,10 @@ use Smush_Vendor\GuzzleHttp\Client;
 use Smush_Vendor\GuzzleHttp\Pool;
 use Smush_Vendor\GuzzleHttp\Psr7\Response;
 use Smush_Vendor\GuzzleHttp\Psr7\Utils;
+use Smush_Vendor\GuzzleHttp\Exception\RequestException;
+use Smush_Vendor\GuzzleHttp\Exception\ConnectException;
+use Smush_Vendor\GuzzleHttp\Exception\ClientException;
+use Smush_Vendor\GuzzleHttp\Exception\ServerException;
 use WP_Error;
 
 class Smush_Request_Guzzle_Multiple extends Smush_Request {
@@ -24,12 +28,12 @@ class Smush_Request_Guzzle_Multiple extends Smush_Request {
 	 */
 	private $server_utils;
 
-	public function __construct( $streaming_enabled = true, $webp = false ) {
+	public function __construct( $streaming_enabled = true, $extra_headers = array() ) {
 		$this->client            = new Client();
 		$this->streaming_enabled = $streaming_enabled;
 		$this->server_utils      = new Server_Utils();
 
-		parent::__construct( $streaming_enabled, $webp );
+		parent::__construct( $streaming_enabled, $extra_headers );
 	}
 
 	public function do_requests( array $files_data ) {
@@ -49,16 +53,7 @@ class Smush_Request_Guzzle_Multiple extends Smush_Request {
 				$responses[ $size_key ] = call_user_func( $this->get_on_complete(), $response, $size_key, $file_data );
 			},
 			'rejected'    => function ( $reason, $size_key ) use ( $files_data, &$responses ) {
-				if ( is_a( $reason, '\Exception' ) ) {
-					$reason_code    = $reason->getCode();
-					$reason_message = $reason->getMessage();
-				} elseif ( is_string( $reason ) ) {
-					$reason_code    = $reason;
-					$reason_message = $reason;
-				} else {
-					$reason_code    = 'unknown-error';
-					$reason_message = 'An unknown error occurred when trying to send the request.';
-				}
+				list( $reason_code, $reason_message ) = $this->extract_error_details( $reason );
 
 				$file_data = $files_data[ $size_key ];
 
@@ -73,6 +68,59 @@ class Smush_Request_Guzzle_Multiple extends Smush_Request {
 		$pool->promise()->wait();
 
 		return $responses;
+	}
+
+	private function extract_error_details( $error ) {
+		$error_code    = '';
+		$error_message = '';
+		if ( is_a( $error, '\Exception' ) ) {
+			$error_code    = $error->getCode();
+			$error_message = $error->getMessage();
+		} elseif ( is_string( $error ) ) {
+			$error_code    = $error;
+			$error_message = $error;
+		}
+
+		if ( empty( $error_code ) && ! empty( $error_message ) ) {
+			$error_message_lowercase = strtolower( $error_message );
+			if ( $error instanceof ConnectException ) {
+				$error_code = $this->map_connect_exception_error_code( $error_message_lowercase );
+			} elseif ( $error instanceof ClientException ) {
+				$error_code = 'client-error';
+			} elseif ( $error instanceof ServerException ) {
+				$error_code = 'server-error';
+			} elseif ( $error instanceof RequestException ) {
+				$error_code = 'request-error';
+			}
+		}
+
+		if ( empty( $error_code ) ) {
+			$error_code    = 'unknown-error';
+			$error_message = $error_message ? $error_message : 'An unknown error occurred when trying to send the request.';
+		}
+
+		return array( $error_code, $error_message );
+	}
+
+	private function map_connect_exception_error_code( $error_message_lowercase ) {
+		$error_map = array(
+			'curl error 35'          => 'ssl-error',
+			'ssl'                    => 'ssl-error',
+			'curl error 28'          => 'timeout-error',
+			'timed out'              => 'timeout-error',
+			'curl error 6'           => 'host-resolution-error',
+			'could not resolve host' => 'host-resolution-error',
+			'curl error 7'           => 'connection-failed-error',
+			'failed to connect'      => 'connection-failed-error',
+		);
+
+		foreach ( $error_map as $error_string => $code ) {
+			if ( false !== strpos( $error_message_lowercase, $error_string ) ) {
+				return $code;
+			}
+		}
+
+		return 'connection-error';
 	}
 
 	/**

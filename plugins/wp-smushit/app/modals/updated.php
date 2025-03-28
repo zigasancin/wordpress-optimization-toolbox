@@ -37,19 +37,38 @@ if ( ! defined( 'WPINC' ) ) {
 				</button>
 			</div>
 
-			<div class="sui-box-body sui-content-center sui-spacing-sides--30 sui-spacing-top--30 sui-spacing-bottom--50">
+			<div class="sui-box-body sui-content-center sui-spacing-sides--30 sui-spacing-top--40 sui-spacing-bottom--50">
 				<h3 class="sui-box-title sui-lg" id="smush-title-updated-dialog" style="white-space: normal">
-					<?php esc_html_e( 'Local WebP just leveled up!', 'wp-smushit' ); ?>
+					<?php esc_html_e( 'New: AVIF File Compression!', 'wp-smushit' ); ?>
 				</h3>
 
 				<p class="sui-description">
-					<?php esc_html_e( 'Now serve Local WebP images with one-click, on all server types, without adding server rules with our new Direct Conversion method.', 'wp-smushit' ); ?>
+					<?php esc_html_e( 'Say hello to AVIF, the next-gen image format that outperforms WebP and JPEG in compression and quality. Enjoy faster page loads, smaller file sizes, and sharper visuals—helping improve site performance and giving your visitors a smoother browsing experience!', 'wp-smushit' ); ?>
 				</p>
 				<?php
 				if ( $cta_url ) {
+					$is_pro    = WP_Smush::is_pro();
+					$cta_label = $is_pro ? __( 'Go to Next-Gen Formats', 'wp-smushit' ) : __( 'See Plans', 'wp-smushit' );
+					$target    = $is_pro ? '_self' : '_blank';
+
+					$class_names = array(
+						'sui-button',
+						'wp-smush-upgrade-modal-cta',
+					);
+					if ( $is_pro ) {
+						$class_names[] = 'sui-button-grey';
+					} else {
+						$class_names[] = 'sui-button-blue';
+					}
 					?>
-						<a href="<?php echo esc_js( $cta_url ); ?>" class="sui-button sui-button-grey" onclick="WP_Smush.onboarding.hideUpgradeModal(event, this)">
-						<?php esc_html_e( 'Take me there', 'wp-smushit' ); ?>
+						<a href="<?php echo esc_js( $cta_url ); ?>"
+							target="<?php echo esc_attr( $target ); ?>"
+							class="<?php echo esc_attr( join( ' ', $class_names ) ); ?>"
+							onclick="WP_Smush.onboarding.hideUpgradeModal(event, this)">
+						<?php echo esc_html( $cta_label ); ?>
+						<?php if ( ! $is_pro ) : ?>
+							<span class="sui-icon-open-new-window" style="margin-left: 3px; width:auto;" aria-hidden="true"></span>
+						<?php endif; ?>
 						</a>
 					<?php
 				}

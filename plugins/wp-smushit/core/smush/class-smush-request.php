@@ -50,17 +50,17 @@ abstract class Smush_Request {
 	 */
 	private $fs;
 	/**
-	 * @var false
+	 * @var array
 	 */
-	private $webp;
+	private $extra_headers;
 
-	public function __construct( $streaming_enabled = true, $webp = false ) {
+	public function __construct( $streaming_enabled = true, $extra_headers = array() ) {
 		$this->streaming_enabled = $streaming_enabled;
 		$this->array_utils       = new Array_Utils();
 		$this->file_utils        = new File_Utils();
 		$this->fs                = new File_System();
 		$this->settings          = Settings::get_instance();
-		$this->webp              = $webp;
+		$this->extra_headers     = $extra_headers;
 		$this->user_agent        = WP_SMUSH_UA;
 		$this->timeout           = WP_SMUSH_TIMEOUT;
 	}
@@ -95,10 +95,12 @@ abstract class Smush_Request {
 	 * @return string[]
 	 */
 	public function get_api_request_headers( $file_path ) {
-		$headers = array(
-			'accept' => 'application/json', // The API returns JSON.
-			'exif'   => $this->settings->get( 'strip_exif' ) ? 'false' : 'true',
-			'webp'   => $this->get_webp() ? 'true' : 'false',
+		$headers = array_merge(
+			array(
+				'accept' => 'application/json', // The API returns JSON.
+				'exif'   => $this->settings->get( 'strip_exif' ) ? 'false' : 'true',
+			),
+			$this->get_extra_headers()
 		);
 
 		if ( $this->streaming_enabled ) {
@@ -149,12 +151,12 @@ abstract class Smush_Request {
 		return array( $file_path, $file_url );
 	}
 
-	public function get_webp() {
-		return $this->webp;
+	public function get_extra_headers() {
+		return $this->extra_headers;
 	}
 
-	public function set_webp( $webp ): Smush_Request {
-		$this->webp = $webp;
+	public function set_extra_headers( $extra_headers ): Smush_Request {
+		$this->extra_headers = $extra_headers;
 		return $this;
 	}
 

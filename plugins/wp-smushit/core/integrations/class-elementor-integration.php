@@ -12,7 +12,10 @@ use Smush\Core\Media\Media_Item_Size;
  * Elementor_Integration
  */
 class Elementor_Integration extends Controller {
+
 	/**
+	 * Utility for URL operations.
+	 *
 	 * @var Url_Utils
 	 */
 	private $url_utils;
@@ -31,7 +34,7 @@ class Elementor_Integration extends Controller {
 		$this->url_utils   = new Url_Utils();
 		$this->transformer = new Transformer();
 
-		$this->register_filter( 'elementor/frontend/builder_content_data', array( $this, 'transform_elementor_settings_attribute' ) );
+		$this->register_filter( 'elementor/frontend/the_content', array( $this, 'transform_elementor_content' ) );
 		$this->register_filter( 'wp_smush_media_item_size', array( $this, 'initialize_elementor_custom_size' ), 10, 4 );
 	}
 
@@ -39,7 +42,7 @@ class Elementor_Integration extends Controller {
 		return class_exists( '\\Elementor\Plugin' );
 	}
 
-	public function initialize_elementor_custom_size(  $size, $key, $metadata, $media_item ) {
+	public function initialize_elementor_custom_size( $size, $key, $metadata, $media_item ) {
 		if ( false === strpos( $key, 'elementor_custom_' ) ) {
 			return $size;
 		}
@@ -55,35 +58,29 @@ class Elementor_Integration extends Controller {
 		return new Media_Item_Size( $key, $media_item->get_id(), $base_dir, $base_url, $metadata );
 	}
 
-	public function transform_elementor_settings_attribute( $element_data ) {
-		if ( ! is_array( $element_data ) ) {
-			return $element_data;
-		}
+	/**
+	 * Transforms Elementor content by replacing URLs with CDN URLs.
+	 *
+	 * This function processes Elementor's content to identify image URLs
+	 * (e.g., JPEG, PNG, GIF, WebP) hosted on the site's content or site URL,
+	 * and replaces them with the corresponding CDN URLs.
+	 *
+	 * @param string $element_data The Elementor settings data containing URLs
+	 *                             that may need transformation.
+	 *
+	 * @return string Transformed Elementor content with URLs replaced by CDN URLs.
+	 */
+	public function transform_elementor_content( $element_data ) {
 
-		$image_property_names = array(
-			'background_slideshow_gallery',
+		$content_url = $this->prepare_url( content_url() );
+		// Replace URLs in the data.
+		return preg_replace_callback(
+			"#(?:https?:)?{$content_url}[^'|,;\"]*\.(?:jpe?g|png|gif|webp)#m",
+			function ( $matches ) {
+				return addcslashes( $this->transform_url( stripslashes( $matches[0] ) ), '/' );
+			},
+			$element_data
 		);
-
-		foreach ( $element_data as $container_key => $container_data ) {
-			if ( empty( $container_data['settings'] ) || ! is_array( $container_data['settings'] ) ) {
-				continue;
-			}
-
-			$element_settings = $container_data['settings'];
-
-			foreach ( $image_property_names as $image_property_name ) {
-				if ( ! isset( $element_settings[ $image_property_name ] ) || ! is_array( $element_settings[ $image_property_name ] ) ) {
-					continue;
-				}
-
-				foreach ( $element_settings[ $image_property_name ] as $image_key => $image_data ) {
-					if ( isset( $image_data['url'] ) ) {
-						$element_data[ $container_key ]['settings'][ $image_property_name ][ $image_key ]['url'] = $this->transform_url( $image_data['url'] );
-					}
-				}
-			}
-		}
-		return $element_data;
 	}
 
 	private function transform_url( $url ) {
@@ -93,7 +90,6 @@ class Elementor_Integration extends Controller {
 
 		$extension = $this->url_utils->get_extension( $url );
 		$image_url = new Image_URL( $url, $extension, $this->get_current_url() );
-
 		return $this->transformer->transform_url( $image_url->get_absolute_url() );
 	}
 
@@ -101,7 +97,17 @@ class Elementor_Integration extends Controller {
 		if ( ! $this->current_url ) {
 			$this->current_url = ( new Server_Utils() )->get_current_url();
 		}
-
 		return $this->current_url;
+	}
+
+	/**
+	 * Prepare a URL for use in a regular expression.
+	 *
+	 * @param string $url The URL to prepare.
+	 * @return string The escaped URL for use in regex.
+	 */
+	private function prepare_url( $url ) {
+		$url = untrailingslashit( preg_replace( '/https?:/', '', $url ) );
+		return addcslashes( preg_quote( $url, '/' ), '/' );
 	}
 }

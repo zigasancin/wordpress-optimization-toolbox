@@ -1,15 +1,18 @@
 <?php
 /**
- * Delete all webp files modal.
+ * Delete all Next-Gen files modal.
  *
  * @since 3.8.0
  * @package WP_Smush
  */
 
+use Smush\Core\Next_Gen\Next_Gen_Manager;
+
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+$next_gen_manager = Next_Gen_Manager::get_instance();
 ?>
 
 <div class="sui-modal sui-modal-sm">
@@ -30,15 +33,21 @@ if ( ! defined( 'WPINC' ) ) {
 					</button>
 
 					<h3 class="sui-box-title sui-lg" id="smush-dawif-title">
-						<?php esc_html_e( 'Delete WebP files', 'wp-smushit' ); ?>
+						<?php
+						/* translators: %s: Next-Gen format name */
+						printf( esc_html__( 'Delete %s files', 'wp-smushit' ), esc_html( $next_gen_manager->get_active_format_name() ) );
+						?>
 					</h3>
 				</div>
 				<div class="sui-box-body sui-flatten sui-content-center sui-spacing-top--20 sui-spacing-bottom--50">
 					<p class="sui-description" id="smush-dawif-description" style="margin-bottom:15px;">
-						<?php esc_html_e( 'Are you sure you want to delete all WebP files?', 'wp-smushit' ); ?>
+						<?php
+						/* translators: %s: Next-Gen format name */
+						printf( esc_html__( 'Are you sure you want to delete all %s files?', 'wp-smushit' ), esc_html( $next_gen_manager->get_active_format_name() ) );
+						?>
 					</p>
 					<div
-						id="wp-smush-webp-delete-all-error-notice"
+						id="wp-smush-<?php echo esc_attr( $next_gen_manager->get_active_format_key() ); ?>-delete-all-error-notice"
 						class="sui-notice sui-notice-error"
 						style="margin-bottom:15px;"
 						role="alert"
@@ -50,7 +59,7 @@ if ( ! defined( 'WPINC' ) ) {
 						</button>
 						<button
 							type="button"
-							id="wp-smush-webp-delete-all"
+							id="wp-smush-<?php echo esc_attr( $next_gen_manager->get_active_format_key() ); ?>-delete-all"
 							class="sui-button sui-button-red"
 						>
 							<span class="sui-loading-text"><?php esc_html_e( 'Delete', 'wp-smushit' ); ?></span>

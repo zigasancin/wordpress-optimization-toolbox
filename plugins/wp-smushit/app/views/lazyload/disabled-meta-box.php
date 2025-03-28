@@ -12,11 +12,10 @@ if ( ! defined( 'WPINC' ) ) {
 
 ?>
 
-<?php if ( ! apply_filters( 'wpmudev_branding_hide_branding', false ) ) : ?>
-	<img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-lazyload-default.png' ); ?>"
-		srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-lazyload-default@2x.png' ); ?> 2x"
-		alt="<?php esc_html_e( 'Smush CDN', 'wp-smushit' ); ?>" class="sui-image">
-<?php endif; ?>
+
+<img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-lazyload-default.png' ); ?>"
+    srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/graphic-smush-lazyload-default@2x.png' ); ?> 2x"
+    alt="<?php esc_html_e( 'Graphic CDN', 'wp-smushit' ); ?>" class="sui-image">
 
 <div class="sui-message-content">
 	<p>

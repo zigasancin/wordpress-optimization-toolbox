@@ -10,6 +10,7 @@ namespace Smush\Core;
 
 use Smush\Core\CDN\CDN_Helper;
 use Smush\Core\Stats\Global_Stats;
+use Smush\Core\Next_Gen\Next_Gen_Manager;
 use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -25,9 +26,13 @@ class Settings {
 
 	const SUBSITE_CONTROLS_OPTION_KEY = 'wp-smush-networkwide';
 	const SETTINGS_KEY = 'wp-smush-settings';
+	const NEXT_GEN_CDN_KEY = 'webp';
 	const LEVEL_LOSSLESS = 0;
 	const LEVEL_SUPER_LOSSY = 1;
 	const LEVEL_ULTRA_LOSSY = 2;
+	const NONE_CDN_MODE = 0;
+	const WEBP_CDN_MODE = 1;
+	const AVIF_CDN_MODE = 2;
 
 	/**
 	 * Plugin instance.
@@ -74,7 +79,7 @@ class Settings {
 		'gform'                  => false,
 		'cdn'                    => false,
 		'auto_resize'            => false,
-		'webp'                   => true,
+		self::NEXT_GEN_CDN_KEY   => self::WEBP_CDN_MODE,
 		'usage'                  => false,
 		'accessible_colors'      => false,
 		'keep_data'              => true,
@@ -86,6 +91,8 @@ class Settings {
 		'webp_direct_conversion' => false,
 		'webp_fallback'          => false,
 		'disable_streams'        => false,
+		'avif_mod'               => false,
+		'avif_fallback'          => false,
 	);
 
 	/**
@@ -95,7 +102,7 @@ class Settings {
 	 * @since 3.8.0  Added webp.
 	 * @var array $modules
 	 */
-	private $modules = array( 'bulk', 'integrations', 'lazy_load', 'cdn', 'webp', 'settings' );
+	private $modules = array( 'bulk', 'integrations', 'lazy_load', 'cdn', 'next_gen', 'settings' );
 
 	/**
 	 * List of features/settings that are free.
@@ -136,7 +143,7 @@ class Settings {
 	 *
 	 * @var array
 	 */
-	private $cdn_fields = array( 'cdn', 'background_images', 'auto_resize', 'webp', 'rest_api_support' );
+	private $cdn_fields = array( 'cdn', 'background_images', 'auto_resize', self::NEXT_GEN_CDN_KEY, 'rest_api_support' );
 
 	/**
 	 * List of fields in CDN form.
@@ -148,6 +155,11 @@ class Settings {
 	 * @var array
 	 */
 	private $webp_fields = array( 'webp_mod', 'webp_direct_conversion', 'webp_fallback' );
+
+	/**
+	 * @var array
+	 */
+	private $avif_fields = array( 'avif_mod', 'avif_fallback' );
 
 	/**
 	 * List of fields in Settings form.
@@ -170,7 +182,7 @@ class Settings {
 	/**
 	 * @var array
 	 */
-	private $activated_subsite_pages;
+	private $activated_subsite_modules;
 
 	/**
 	 * Return the plugin instance.
@@ -424,6 +436,14 @@ class Settings {
 		return $this->webp_fields;
 	}
 
+	public function get_avif_fields() {
+		return $this->avif_fields;
+	}
+
+	public function get_next_gen_fields() {
+		return array_merge( $this->get_webp_fields(), $this->get_avif_fields() );
+	}
+
 	/**
 	 * Init settings.
 	 *
@@ -453,7 +473,7 @@ class Settings {
 			return true;
 		}
 
-		$subsite_modules = $this->get_activated_subsite_pages();
+		$subsite_modules = $this->get_activated_subsite_modules();
 		if ( empty( $subsite_modules ) ) {
 			return true;
 		}
@@ -571,13 +591,14 @@ class Settings {
 			return $network_settings;
 		}
 
-		$subsite_modules  = $this->get_activated_subsite_pages();
+		$subsite_modules  = $this->get_activated_subsite_modules();
 		$network_modules  = array_diff( $this->modules, $subsite_modules );
 		$subsite_settings = get_option( self::SETTINGS_KEY, array() );
 
 		foreach ( $network_modules as $key ) {
 			// Remove values that are network wide from subsite settings.
-			$subsite_settings = array_diff_key( $subsite_settings, array_flip( $this->{$key . '_fields'} ) );
+			$get_module_fields = "get_{$key}_fields";
+			$subsite_settings  = array_diff_key( $subsite_settings, array_flip( $this->$get_module_fields() ) );
 		}
 
 		// And append subsite settings to the site settings.
@@ -765,7 +786,7 @@ class Settings {
 			return;
 		}
 
-		foreach( $site_ids as $site_id ) {
+		foreach ( $site_ids as $site_id ) {
 			switch_to_blog( $site_id );
 			$this->reset_sub_site_settings();
 			restore_current_blog();
@@ -816,6 +837,7 @@ class Settings {
 		$new_settings = array();
 		$status       = array(
 			'is_outdated_stats' => false,
+			'page' => $page,
 		);
 
 		if ( 'bulk' === $page ) {
@@ -844,13 +866,22 @@ class Settings {
 					continue;
 				}
 
+				if ( self::NEXT_GEN_CDN_KEY === $field ) {
+					$new_settings[ self::NEXT_GEN_CDN_KEY ] = $this->parse_next_gen_cdn_from_input();
+					continue;
+				}
+
 				$new_settings[ $field ] = filter_input( INPUT_POST, $field, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
 			}
 			$this->parse_cdn_settings();
 		}
 
-		if ( 'webp' === $page ) {
-			$this->parse_webp_settings();
+		if ( 'next-gen' === $page ) {
+			$this->parse_next_gen_settings();
+			// Check whether Next-Gen Formats have changed (WebP <-> AVIF).
+			$status['next_gen_format_changed'] = did_action( 'wp_smush_next_gen_after_format_switch' );
+			// Check whether WebP method is changed (Direct Conversion <-> Server Configuration).
+			$status['webp_method_changed'] = did_action( 'wp_smush_webp_method_changed' );
 		}
 
 		if ( 'integrations' === $page ) {
@@ -885,6 +916,12 @@ class Settings {
 		$this->update_site_settings( $new_settings );
 		$status['is_outdated_stats'] = Global_Stats::get()->is_outdated();
 		wp_send_json_success( $status );
+	}
+
+	private function parse_next_gen_cdn_from_input() {
+		$cdn_next_gen_mode = filter_input( INPUT_POST, 'next-gen-cdn', FILTER_VALIDATE_INT );
+
+		return $this->sanitize_cdn_next_gen_conversion_mode( $cdn_next_gen_mode );
 	}
 
 	/**
@@ -1062,9 +1099,21 @@ class Settings {
 		$this->set_setting( 'wp-smush-lazy_load', $settings );
 	}
 
-	private function parse_webp_settings() {
-		$webp_fallback_active = filter_input( INPUT_POST, 'webp-fallback', FILTER_VALIDATE_BOOLEAN );
-		$this->set( 'webp_fallback', ! empty( $webp_fallback_active ) );
+	private function parse_next_gen_settings() {
+		$next_gen_manager = Next_Gen_Manager::get_instance();
+
+		$next_gen_format = filter_input( INPUT_POST, 'next-gen-format', FILTER_SANITIZE_SPECIAL_CHARS );
+		$next_gen_method = filter_input( INPUT_POST, 'next-gen-method', FILTER_SANITIZE_SPECIAL_CHARS );
+		$next_gen_manager->activate_format( $next_gen_format );
+		$next_gen_configuration = $next_gen_manager->get_active_format_configuration();
+
+		// Update Next-Gen method.
+		$next_gen_configuration->set_next_gen_method( $next_gen_method );
+		// Update Next-Gen fallback.
+		if ( $next_gen_configuration->direct_conversion_enabled() ) {
+			$next_gen_fallback_active = filter_input( INPUT_POST, 'next-gen-fallback', FILTER_VALIDATE_BOOLEAN );
+			$next_gen_configuration->set_next_gen_fallback( (bool) $next_gen_fallback_active );
+		}
 	}
 
 	/**
@@ -1172,6 +1221,15 @@ class Settings {
 		return $this->is_module_active( 'webp_mod' );
 	}
 
+	public function is_avif_module_active() {
+		return $this->is_module_active( 'avif_mod' );
+	}
+
+	public function is_avif_fallback_active() {
+		return $this->is_avif_module_active()
+			   && ! empty( self::get_instance()->get( 'avif_fallback' ) );
+	}
+
 	public function is_resize_module_active() {
 		return $this->is_module_active( 'resize' );
 	}
@@ -1186,12 +1244,54 @@ class Settings {
 
 	public function is_cdn_webp_conversion_active() {
 		return $this->is_cdn_active()
-		       && ! empty( self::get_instance()->get( 'webp' ) );
+				&& self::WEBP_CDN_MODE === $this->get_cdn_next_gen_conversion_mode();
+	}
+
+	public function is_cdn_avif_conversion_active() {
+		return $this->is_cdn_active()
+				&& self::AVIF_CDN_MODE === $this->get_cdn_next_gen_conversion_mode();
+	}
+
+	public function is_cdn_next_gen_conversion_active() {
+		return $this->is_cdn_active()
+				&& ! empty( $this->get_cdn_next_gen_conversion_mode() );
+	}
+
+	public function get_cdn_next_gen_conversion_mode() {
+		$cdn_next_gen_mode = (int) self::get_instance()->get( self::NEXT_GEN_CDN_KEY );
+
+		return $this->sanitize_cdn_next_gen_conversion_mode( $cdn_next_gen_mode );
+	}
+
+	public function get_cdn_next_gen_conversion_label( $cdn_next_gen_mode ) {
+		$cdn_next_gen_mode  = $this->sanitize_cdn_next_gen_conversion_mode( $cdn_next_gen_mode );
+		$cdn_next_gen_modes = $this->get_cdn_next_gen_modes();
+
+		return $cdn_next_gen_modes[ $cdn_next_gen_mode ];
+	}
+
+	public function sanitize_cdn_next_gen_conversion_mode( $cdn_next_gen_mode ) {
+		$cdn_next_gen_mode  = (int) $cdn_next_gen_mode;
+		$cdn_next_gen_modes = $this->get_cdn_next_gen_modes();
+
+		if ( ! isset( $cdn_next_gen_modes[ $cdn_next_gen_mode ] ) ) {
+			$cdn_next_gen_mode = self::NONE_CDN_MODE;
+		}
+
+		return $cdn_next_gen_mode;
+	}
+
+	private function get_cdn_next_gen_modes() {
+		return array(
+			self::NONE_CDN_MODE => __( 'None', 'wp-smushit' ),
+			self::WEBP_CDN_MODE => __( 'WebP', 'wp-smushit' ),
+			self::AVIF_CDN_MODE => __( 'AVIF', 'wp-smushit' ),
+		);
 	}
 
 	public function is_webp_direct_conversion_active() {
 		return $this->is_webp_module_active()
-		       && ! empty( self::get_instance()->get( 'webp_direct_conversion' ) );
+			   && ! empty( self::get_instance()->get( 'webp_direct_conversion' ) );
 	}
 
 	public function is_automatic_compression_active() {
@@ -1204,7 +1304,7 @@ class Settings {
 
 	public function is_webp_fallback_active() {
 		return $this->is_webp_module_active()
-		       && ! empty( self::get_instance()->get( 'webp_fallback' ) );
+			   && ! empty( self::get_instance()->get( 'webp_fallback' ) );
 	}
 
 	public function is_lazyload_active() {
@@ -1216,6 +1316,7 @@ class Settings {
 			'cdn',
 			'png_to_jpg',
 			'webp_mod',
+			'avif_mod',
 			's3',
 			'ultra',
 		);
@@ -1285,7 +1386,12 @@ class Settings {
 	}
 
 	public function has_webp_page() {
-		return $this->is_page_active( 'webp' );
+		_deprecated_function( __METHOD__, '3.8.0', 'Settings::has_next_gen_page()' );
+		return $this->has_next_gen_page();
+	}
+
+	public function has_next_gen_page() {
+		return $this->is_page_active( 'next-gen' );
 	}
 
 	public function streaming_enabled() {
@@ -1301,7 +1407,8 @@ class Settings {
 			return true;
 		}
 
-		$is_page_active_on_subsite = in_array( $page_slug, $this->get_activated_subsite_pages(), true );
+		$module                    = $this->slug_to_module( $page_slug );
+		$is_page_active_on_subsite = in_array( $module, $this->get_activated_subsite_modules(), true );
 
 		if ( is_network_admin() ) {
 			return ! $is_page_active_on_subsite;
@@ -1310,26 +1417,37 @@ class Settings {
 		return $is_page_active_on_subsite;
 	}
 
+	private function slug_to_module( $page_slug ) {
+		return str_replace( '-', '_', $page_slug );
+	}
+
 	/**
 	 * @return array
 	 */
-	private function get_activated_subsite_pages() {
-		if ( is_array( $this->activated_subsite_pages ) ) {
-			return $this->activated_subsite_pages;
+	private function get_activated_subsite_modules() {
+		if ( ! is_array( $this->activated_subsite_modules ) ) {
+			$this->activated_subsite_modules = $this->prepare_activated_subsite_modules();
 		}
 
-		$this->activated_subsite_pages = array();
-		$subsite_controls              = get_site_option( self::SUBSITE_CONTROLS_OPTION_KEY );
+		return $this->activated_subsite_modules;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function prepare_activated_subsite_modules() {
+		$subsite_controls = get_site_option( self::SUBSITE_CONTROLS_OPTION_KEY );
+		// None:false|All:1|Custom:array list page modules.
 		if ( empty( $subsite_controls ) ) {
-			return $this->activated_subsite_pages;
+			return array();
 		}
 
-		$this->activated_subsite_pages = array_keys( $this->get_subsite_page_modules() );
+		$subsite_modules = array_keys( $this->get_subsite_page_modules() );
 		if ( is_array( $subsite_controls ) ) {
-			$this->activated_subsite_pages = $subsite_controls;
+			$subsite_modules = $subsite_controls;
 		}
 
-		return $this->activated_subsite_pages;
+		return $subsite_modules;
 	}
 
 	private function get_subsite_page_modules() {

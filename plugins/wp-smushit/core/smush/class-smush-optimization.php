@@ -73,6 +73,10 @@ class Smush_Optimization extends Media_Item_Optimization {
 		return self::KEY;
 	}
 
+	public function get_name() {
+		return __( 'Smush', 'wp-smushit' );
+	}
+
 	public function get_stats() {
 		if ( is_null( $this->stats ) ) {
 			$this->stats = $this->prepare_stats();

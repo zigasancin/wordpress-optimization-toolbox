@@ -9,6 +9,7 @@ use Smush\Core\Parser\Image_URL;
 use Smush\Core\Parser\Style;
 use Smush\Core\Settings;
 use Smush\Core\Transform\Transform;
+use Smush\Core\Url_Utils;
 
 class CDN_Transform implements Transform {
 	/**
@@ -27,12 +28,17 @@ class CDN_Transform implements Transform {
 	 * @var Attachment_Url_Cache
 	 */
 	private $attachment_url_cache;
+	/**
+	 * @var Url_Utils
+	 */
+	private $url_utils;
 
 	public function __construct() {
 		$this->cdn_helper           = CDN_Helper::get_instance();
 		$this->cdn_srcset           = CDN_Srcset_Controller::get_instance();
 		$this->settings             = Settings::get_instance();
 		$this->attachment_url_cache = Attachment_Url_Cache::get_instance();
+		$this->url_utils            = new Url_Utils();
 	}
 
 	public function should_transform() {
@@ -203,7 +209,8 @@ class CDN_Transform implements Transform {
 	 */
 	private function generate_and_use_fresh_srcset( $src_url, $element ) {
 		$attachment_id = $this->attachment_url_cache->get_id_for_url( $src_url );
-		list( $srcset, $sizes ) = $this->cdn_srcset->generate_srcset( $src_url, $attachment_id );
+		list( $width, $height ) = $this->find_image_width_and_height( $src_url, $element );
+		list( $srcset, $sizes ) = $this->cdn_srcset->generate_srcset( $src_url, $attachment_id, $width, $height );
 		if ( $srcset ) {
 			$new_srcset_attribute = new Element_Attribute( 'srcset', $srcset );
 			$element->add_or_update_attribute( $new_srcset_attribute );
@@ -213,6 +220,29 @@ class CDN_Transform implements Transform {
 			$new_sizes_attribute = new Element_Attribute( 'sizes', $sizes );
 			$element->add_or_update_attribute( $new_sizes_attribute );
 		}
+	}
+
+	/**
+	 * @param $src_url string
+	 * @param $element Element
+	 *
+	 * @return array
+	 */
+	private function find_image_width_and_height( $src_url, $element ) {
+		if ( $element->has_attribute( 'width' ) ) {
+			$width_from_attribute = (int) $element->get_attribute( 'width' )->get_value();
+		}
+
+		if ( $element->has_attribute( 'height' ) ) {
+			$height_from_attribute = (int) $element->get_attribute( 'height' )->get_value();
+		}
+
+		list( $width_from_src, $height_from_src ) = $this->url_utils->guess_dimensions_from_image_url( $src_url );
+
+		$width  = intval( $width_from_attribute ?? $width_from_src );
+		$height = intval( $height_from_attribute ?? $height_from_src );
+
+		return array( $width, $height );
 	}
 
 	/**

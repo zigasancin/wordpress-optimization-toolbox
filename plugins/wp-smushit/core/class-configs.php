@@ -13,7 +13,7 @@ use Smush\Core\CDN\CDN_Controller;
 use WP_Error;
 use WP_REST_Request;
 use WP_Smush;
-use Smush\Core\Webp\Webp_Configuration;
+use Smush\Core\Next_Gen\Next_Gen_Manager;
 
 /**
  * Class Configs
@@ -29,7 +29,7 @@ class Configs {
 	 *
 	 * @var array
 	 */
-	private $pro_features = array( 'png_to_jpg', 's3', 'nextgen', 'cdn', 'webp', 'webp_mod' );
+	private $pro_features = array( 'png_to_jpg', 's3', 'nextgen', 'cdn', 'webp', 'webp_mod', 'avif_mod' );
 
 	/**
 	 * @var Settings
@@ -127,6 +127,7 @@ class Configs {
 						'background_images' => true,
 						'rest_api_support'  => false,
 						'webp_mod'          => false,
+						'avif_mod'          => false,
 					),
 				),
 			),
@@ -322,14 +323,21 @@ class Configs {
 					}
 				}
 
-				// Update Local WebP status.
-				if ( isset( $new_settings['webp_mod'] ) ) {
-					$webp_configuration        = Webp_Configuration::get_instance();
-					$enable_webp               = ! empty( $new_settings['webp_mod'] );
+				if ( isset( $new_settings['webp_mod'] ) || isset( $new_settings['avif_mod'] ) ) {
 					$direct_conversion_enabled = ! empty( $new_settings['webp_direct_conversion'] );
-
 					$settings_handler->set( 'webp_direct_conversion', $direct_conversion_enabled );
-					$webp_configuration->toggle_module( $enable_webp );
+
+					$webp_activated   = ! empty( $new_settings['webp_mod'] );
+					$avif_activated   = ! empty( $new_settings['avif_mod'] );
+					$next_gen_manager = Next_Gen_Manager::get_instance();
+
+					if ( $webp_activated || $avif_activated ) {
+						$activated_format = $webp_activated ? 'webp' : 'avif';
+						$next_gen_manager->activate_format( $activated_format );
+					} else {
+						$next_gen_manager->get_format_configuration( 'webp' )->toggle_module( false );
+						$next_gen_manager->get_format_configuration( 'avif' )->toggle_module( false );
+					}
 				}
 
 				// Update the CDN status for CDN changes.
@@ -470,6 +478,10 @@ class Configs {
 			if ( isset( $config['settings']['lossy'] ) ) {
 				$sanitized['settings']['lossy'] = $this->settings->sanitize_lossy_level( $config['settings']['lossy'] );
 			}
+
+			if ( isset( $config['settings'][ Settings::NEXT_GEN_CDN_KEY ] ) ) {
+				$sanitized['settings'][ Settings::NEXT_GEN_CDN_KEY ] = $this->settings->sanitize_cdn_next_gen_conversion_mode( $config['settings'][ Settings::NEXT_GEN_CDN_KEY ] );
+			}
 		}
 
 		if ( isset( $config['resize_sizes'] ) ) {
@@ -541,7 +553,7 @@ class Configs {
 			'bulk_smush'   => Settings::get_instance()->get_bulk_fields(),
 			'lazy_load'    => Settings::get_instance()->get_lazy_load_fields(),
 			'cdn'          => Settings::get_instance()->get_cdn_fields(),
-			'webp_mod'     => Settings::get_instance()->get_webp_fields(),
+			'next_gen'     => Settings::get_instance()->get_next_gen_fields(),
 			'integrations' => Settings::get_instance()->get_integrations_fields(),
 			'settings'     => Settings::get_instance()->get_settings_fields(),
 		);
@@ -550,8 +562,8 @@ class Configs {
 
 		if ( ! empty( $config['settings'] ) ) {
 			foreach ( $settings_data as $name => $fields ) {
-				if ( 'webp_mod' === $name ) {
-					$display_array[ $name ] = $this->get_webp_settings_display_value( $config, $fields );
+				if ( 'next_gen' === $name ) {
+					$display_array['next_gen'] = $this->get_next_gen_settings_display_value( $config );
 					continue;
 				}
 
@@ -590,42 +602,40 @@ class Configs {
 		// Format the values to what's expected in front. A string within an array.
 		array_walk(
 			$display_array,
-			function( &$value ) {
+			function ( &$value ) {
 				if ( ! is_string( $value ) ) {
 					$value = implode( PHP_EOL, $value );
 				}
 				$value = array( $value );
 			}
 		);
-
 		return $display_array;
 	}
 
-	private function get_webp_settings_display_value( $config, $fields ) {
-		$webp_module_activated = WP_Smush::is_pro() && ! empty( $config['settings']['webp_mod'] );
-		if ( ! $webp_module_activated ) {
-			return $this->format_boolean_setting_value( 'webp_mod', $webp_module_activated );
+	private function get_next_gen_settings_display_value( $config ) {
+		$is_pro       = WP_Smush::is_pro();
+		$webp_enabled = $is_pro && ! empty( $config['settings']['webp_mod'] );
+		$avif_enabled = $is_pro && ! empty( $config['settings']['avif_mod'] );
+
+		if ( ! $webp_enabled && ! $avif_enabled ) {
+			return __( 'Inactive', 'wp-smushit' );
 		}
 
-		$direct_conversion_enabled = ! empty( $config['settings']['webp_direct_conversion'] );
-		$webp_mode                 = $direct_conversion_enabled ? __( 'Direct Conversion', 'wp-smushit' ) : __( 'Server Configuration', 'wp-smushit' );
+		$next_gen_format           = $avif_enabled ? __( 'AVIF', 'wp-smushit' ) : __( 'WebP', 'wp-smushit' );
+		$direct_conversion_enabled = $avif_enabled || ! empty( $config['settings']['webp_direct_conversion'] );
+		$transform_mode            = $direct_conversion_enabled ? __( 'Direct Conversion', 'wp-smushit' ) : __( 'Server Configuration', 'wp-smushit' );
 
 		$formatted_rows = array(
-			$this->format_config_description(
-				__( 'Local WebP', 'wp-smushit' ),
-				$this->format_boolean_setting_value( 'webp_mod', $webp_module_activated )
-			),
-			$this->format_config_description(
-				__( 'WebP Mode', 'wp-smushit' ),
-				$webp_mode
-			),
+			$this->format_config_description( __( 'Next-Gen Formats', 'wp-smushit' ), $next_gen_format ),
+			$this->format_config_description( __( 'Transform Mode', 'wp-smushit' ), $transform_mode ),
 		);
 
 		if ( $direct_conversion_enabled ) {
-			$legacy_browser_support = ! empty( $config['settings']['webp_fallback'] );
+			$legacy_browser_support = $avif_enabled && ! empty( $config['settings']['avif_fallback'] )
+									|| ( $webp_enabled && ! empty( $config['settings']['webp_fallback'] ) );
 			$formatted_rows[]       = $this->format_config_description(
 				__( 'Legacy Browser Support', 'wp-smushit' ),
-				$this->format_boolean_setting_value( 'webp_fallback', $legacy_browser_support )
+				$legacy_browser_support ? __( 'Active', 'wp-smushit' ) : __( 'Inactive', 'wp-smushit' )
 			);
 		}
 
@@ -667,6 +677,11 @@ class Configs {
 
 				if ( 'lossy' === $name ) {
 					$formatted_rows[] = $label . ' - ' . $this->settings->get_lossy_level_label( $config['settings'][ $name ] );
+					continue;
+				}
+
+				if ( Settings::NEXT_GEN_CDN_KEY === $name ) {
+					$formatted_rows[] = $label . ' - ' . $this->settings->get_cdn_next_gen_conversion_label( $config['settings'][ $name ] );
 					continue;
 				}
 

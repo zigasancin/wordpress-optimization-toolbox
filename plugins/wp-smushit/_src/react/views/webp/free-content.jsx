@@ -15,7 +15,7 @@ export default ({smushData}) => {
 		<React.Fragment>
 			<div className="sui-box-header">
 				<h3 className="sui-box-title">
-					{__('Local WebP', 'wp-smushit')}
+					{__('Next-Gen Formats', 'wp-smushit')}
 				</h3>
 			</div>
 			<div className="sui-box-body">
@@ -30,7 +30,7 @@ export default ({smushData}) => {
 					<div className="sui-message-content">
 						<p>
 							{__(
-								'Fix the "Serve images in next-gen format" Google PageSpeed recommendation with a single click! Serve WebP images directly from your server to supported browsers, while seamlessly switching to original images for those without WebP support. All without relying on a CDN or any server configuration.',
+								'Fix the "Serve images in next-gen format" Google PageSpeed recommendation with a single click! Serve WebP and AVIF images directly from your server to supported browsers, while seamlessly switching to original images for those without WebP or AVIF support. All without relying on a CDN or any server configuration.',
 								'wp-smushit'
 							)}
 						</p>
@@ -42,7 +42,7 @@ export default ({smushData}) => {
 									aria-hidden="true"
 								/>
 								{__(
-									'Activate the Local WebP feature with a single click; no server configuration required.',
+									'Activate the Next-Gen Formats feature with a single click; no server configuration required.',
 									'wp-smushit'
 								)}
 							</li>
@@ -62,7 +62,7 @@ export default ({smushData}) => {
 									aria-hidden="true"
 								/>
 								{__(
-									'Serve WebP version of images in the browsers that support it and fall back to JPEGs and PNGs for unsupported browsers.',
+									'Serve WebP and AVIF version of images in the browsers that support it and fall back to JPEGs and PNGs for unsupported browsers.',
 									'wp-smushit'
 								)}
 							</li>
@@ -81,7 +81,7 @@ export default ({smushData}) => {
 									} );
 								} }
 							>
-								{__('UNLOCK WEBP WITH PRO', 'wp-smushit')}
+								{__( 'UNLOCK NEXT-GEN FORMATS WITH PRO', 'wp-smushit')}
 							</a>
 						</p>
 					</div>

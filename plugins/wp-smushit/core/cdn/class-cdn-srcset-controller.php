@@ -812,20 +812,21 @@ class CDN_Srcset_Controller extends Controller {
 	 * @since 3.0
 	 *
 	 */
-	public function generate_srcset( $src, $attachment_id = 0 ) {
+	public function generate_srcset( $src, $attachment_id = 0, $width = 0, $height = 0 ) {
 		/**
 		 * Try to get the attachment URL.
 		 */
 		if ( empty( $attachment_id ) ) {
 			$attachment_id = $this->attachment_url_cache->get_id_for_url( $src );
 		}
-		$image_meta = array();
-		$width      = 0;
-		$height     = 0;
 
 		// Try to get width and height from image.
+		if ( $attachment_id && ! $width && ! $height ) {
+			list( , $width, $height ) = wp_get_attachment_image_src( $attachment_id, 'full' );
+		}
+
+		$image_meta = array();
 		if ( $attachment_id ) {
-			list( $src, $width, $height ) = wp_get_attachment_image_src( $attachment_id, 'full' );
 			$image_meta = wp_get_attachment_metadata( $attachment_id );
 		}
 

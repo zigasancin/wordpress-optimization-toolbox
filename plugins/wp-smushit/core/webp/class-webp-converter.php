@@ -23,8 +23,8 @@ class Webp_Converter extends Smusher {
 		$this->webp_helper = new Webp_Helper();
 		$this->settings    = Settings::get_instance();
 
-		$this->set_request_multiple( new Smush_Request_Guzzle_Multiple( $this->settings->streaming_enabled(), true ) );
-		$this->set_request_sequential( new Smush_Request_WP_Sequential( $this->settings->streaming_enabled(), true ) );
+		$this->set_request_multiple( new Smush_Request_Guzzle_Multiple( $this->settings->streaming_enabled(), array( 'webp' => 'true' ) ) );
+		$this->set_request_sequential( new Smush_Request_WP_Sequential( $this->settings->streaming_enabled(), array( 'webp' => 'true' ) ) );
 	}
 
 	protected function save_smushed_image_file( $file_path, $image ) {

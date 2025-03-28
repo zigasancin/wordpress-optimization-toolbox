@@ -83,6 +83,10 @@ class Png2Jpg_Optimization extends Media_Item_Optimization {
 		return self::KEY;
 	}
 
+	public function get_name() {
+		return __( 'PNG to JPG', 'wp-smushit' );
+	}
+
 	public function get_stats() {
 		$stats       = new Media_Item_Stats();
 		$size_before = 0;

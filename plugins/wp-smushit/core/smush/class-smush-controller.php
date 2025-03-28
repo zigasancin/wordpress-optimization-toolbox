@@ -12,7 +12,7 @@ use Smush\Core\Webp\Webp_Converter;
 
 class Smush_Controller extends Controller {
 	const GLOBAL_STATS_OPTION_ID = 'wp-smush-optimization-global-stats';
-	const SMUSH_OPTIMIZATION_ORDER = 30;
+	const SMUSH_OPTIMIZATION_ORDER = 40;
 
 	private $global_stats;
 	/**

@@ -18,12 +18,12 @@ class Smush_Request_WP_Sequential extends Smush_Request {
 	 */
 	private $retry_wait;
 
-	public function __construct( $streaming_enabled = true, $webp = false ) {
+	public function __construct( $streaming_enabled = true, $extra_headers = array() ) {
 		$this->backoff        = new Backoff();
 		$this->retry_attempts = WP_SMUSH_RETRY_ATTEMPTS;
 		$this->retry_wait     = WP_SMUSH_RETRY_WAIT;
 
-		parent::__construct( $streaming_enabled, $webp );
+		parent::__construct( $streaming_enabled, $extra_headers );
 	}
 
 	public function do_requests( array $files_data ) {

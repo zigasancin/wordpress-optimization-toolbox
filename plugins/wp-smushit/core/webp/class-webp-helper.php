@@ -4,6 +4,7 @@ namespace Smush\Core\Webp;
 
 use Smush\Core\File_System;
 use Smush\Core\Media\Media_Item;
+use Smush\Core\Next_Gen\Next_Gen_Helper;
 use Smush\Core\Smush\Smush_Optimization;
 
 class Webp_Helper {
@@ -16,10 +17,20 @@ class Webp_Helper {
 	 * @var File_System
 	 */
 	private $fs;
+	/**
+	 * @var Next_Gen_Helper
+	 */
+	private $next_gen_helper;
 
 	public function __construct() {
-		$this->webp_dir = new Webp_Dir();
-		$this->fs       = new File_System();
+		$this->webp_dir        = new Webp_Dir();
+		$this->fs              = new File_System();
+		$this->next_gen_helper = new Next_Gen_Helper(
+			$this->webp_dir->get_webp_url(),
+			$this->webp_dir->get_webp_path(),
+			'webp',
+			$this->webp_dir
+		);
 	}
 
 	/**
@@ -30,50 +41,11 @@ class Webp_Helper {
 	 * @return false|string
 	 */
 	public function get_webp_file_url( $url ) {
-		$upload_dir_url  = $this->webp_dir->get_upload_url();
-		$upload_dir_path = $this->webp_dir->get_upload_path();
-		$is_ssl          = str_starts_with( $url, 'https:' );
-
-		// Temporarily add the same scheme to both URLs
-		$url            = set_url_scheme( $url, 'http' );
-		$upload_dir_url = set_url_scheme( $upload_dir_url, 'http' );
-
-		$is_media_lib_file = strpos( $url, $upload_dir_url ) !== false;
-		if ( ! $is_media_lib_file ) {
-			return false;
-		}
-
-		$file_path = str_replace( $upload_dir_url, $upload_dir_path, $url );
-		if ( ! file_exists( $file_path ) ) {
-			return false;
-		}
-
-		$webp_path = $this->get_webp_file_path( $file_path );
-		if ( ! file_exists( $webp_path ) ) {
-			return false;
-		}
-
-		$webp_url = str_replace(
-			$this->webp_dir->get_webp_path(),
-			$this->webp_dir->get_webp_url(),
-			$webp_path
-		);
-
-		return set_url_scheme( $webp_url, $is_ssl ? 'https' : 'http' );
+		return $this->next_gen_helper->get_next_gen_file_url( $url );
 	}
 
 	public function get_webp_file_path( $file_path, $make = false ) {
-		$file_rel_path  = substr( $file_path, strlen( $this->webp_dir->get_upload_path() ) );
-		$webp_file_path = $this->webp_dir->get_webp_path() . $file_rel_path . '.webp';
-
-		if ( $make ) {
-			$webp_file_dir = dirname( $webp_file_path );
-			if ( ! $this->fs->is_dir( $webp_file_dir ) ) {
-				wp_mkdir_p( $webp_file_dir );
-			}
-		}
-
-		return $webp_file_path;
+		return $this->next_gen_helper->get_next_gen_file_path( $file_path, $make );
 	}
 
 	public function supported_mime_types() {
@@ -87,12 +59,45 @@ class Webp_Helper {
 	}
 
 	public function get_webp_flag( $attachment_id ) {
+		_deprecated_function( __METHOD__, '3.18.0', 'Webp_Helper::get_legacy_webp_flag' );
+
+		return $this->get_legacy_webp_flag( $attachment_id );
+	}
+
+	public function get_legacy_webp_flag( $attachment_id ) {
 		$meta = $this->get_smush_meta( $attachment_id );
 
 		return empty( $meta[ self::WEBP_FLAG ] ) ? '' : $meta[ self::WEBP_FLAG ];
 	}
 
+	public function file_path_to_webp_flag( $webp_file_path ) {
+		return substr( $webp_file_path, strlen( $this->webp_dir->get_webp_path() . '/' ) );
+	}
+
+	public function webp_flag_file_exists( $attachment_id ) {
+		_deprecated_function( __METHOD__, '3.18.0', 'Webp_Helper::legacy_webp_flag_file_exists' );
+
+		return $this->legacy_webp_flag_file_exists( $attachment_id );
+	}
+
+	public function legacy_webp_flag_file_exists( $attachment_id ) {
+		$webp_flag = $this->get_legacy_webp_flag( $attachment_id );
+		if ( empty( $webp_flag ) ) {
+			return false;
+		}
+
+		$webp_file_path = trailingslashit( $this->webp_dir->get_webp_path() ) . ltrim( $webp_flag, '/' );
+
+		return $this->fs->file_exists( $webp_file_path );
+	}
+
 	public function update_webp_flag( $attachment_id, $value ) {
+		_deprecated_function( __METHOD__, '3.18.0', 'Webp_Helper::update_legacy_webp_flag' );
+
+		$this->update_legacy_webp_flag( $attachment_id, $value );
+	}
+
+	public function update_legacy_webp_flag( $attachment_id, $value ) {
 		$meta = $this->get_smush_meta( $attachment_id );
 		if ( empty( $value ) ) {
 			unset( $meta[ self::WEBP_FLAG ] );
@@ -103,7 +108,13 @@ class Webp_Helper {
 	}
 
 	public function unset_webp_flag( $attachment_id ) {
-		$this->update_webp_flag( $attachment_id, false );
+		_deprecated_function( __METHOD__, '3.18.0', 'Webp_Helper::unset_legacy_webp_flag' );
+
+		$this->unset_legacy_webp_flag( $attachment_id );
+	}
+
+	public function unset_legacy_webp_flag( $attachment_id ) {
+		$this->update_legacy_webp_flag( $attachment_id, false );
 	}
 
 	/**
@@ -122,10 +133,14 @@ class Webp_Helper {
 	 */
 	public function delete_media_item_webp_versions( $media_item ) {
 		foreach ( $media_item->get_sizes() as $size ) {
-			$webp_file_path = $this->get_webp_file_path( $size->get_file_path() );
-			if ( $this->fs->file_exists( $webp_file_path ) ) {
-				$this->fs->unlink( $webp_file_path );
-			}
+			$this->delete_webp_version( $size->get_file_path() );
+		}
+	}
+
+	public function delete_webp_version( $original_file_path ) {
+		$webp_file_path = $this->get_webp_file_path( $original_file_path );
+		if ( $this->fs->file_exists( $webp_file_path ) ) {
+			$this->fs->unlink( $webp_file_path );
 		}
 	}
 

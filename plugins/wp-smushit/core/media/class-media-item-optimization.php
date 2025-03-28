@@ -12,6 +12,8 @@ abstract class Media_Item_Optimization {
 
 	abstract public function get_key();
 
+	abstract public function get_name();
+
 	/**
 	 * @return Media_Item_Stats
 	 */
@@ -67,4 +69,8 @@ abstract class Media_Item_Optimization {
 	 * @return WP_Error
 	 */
 	abstract public function get_errors();
+
+	public function get_optimized_file_url( $original_file_url ) {
+		return $original_file_url;
+	}
 }

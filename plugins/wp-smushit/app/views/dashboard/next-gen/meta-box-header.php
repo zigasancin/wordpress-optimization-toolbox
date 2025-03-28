@@ -14,7 +14,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 ?>
 
-<h3 class="sui-box-title"><?php echo esc_html( $title ); ?></h3>
+<h3 class="sui-box-title"><?php echo esc_html_e( 'Next-Gen Formats', 'wp-smushit' ); ?></h3>
 
 <?php if ( ! WP_Smush::is_pro() ) : ?>
 	<div class="sui-actions-left">

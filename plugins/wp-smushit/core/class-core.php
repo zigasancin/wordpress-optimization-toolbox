@@ -9,6 +9,7 @@
 namespace Smush\Core;
 
 use Smush\App\Admin;
+use Smush\Core\Modules\Helpers\WhiteLabel;
 use WP_Smush;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -271,6 +272,7 @@ class Core extends Stats {
 	}
 
 	public function get_localize_strings() {
+		$whiltelabel = new WhiteLabel();
 		$upgrade_url = add_query_arg(
 			array(
 				'utm_source'   => 'smush',
@@ -335,19 +337,20 @@ class Core extends Stats {
 			'noticeDismiss'           => esc_html__( 'Dismiss', 'wp-smushit' ),
 			'noticeDismissTooltip'    => esc_html__( 'Dismiss notice', 'wp-smushit' ),
 			'smush_cdn_activation_notice'  => WP_Smush::is_pro() && ! Settings::get_instance()->is_cdn_active() ?
-				sprintf(
+				$whiltelabel->whitelabel_string(
+					sprintf(
 					/* translators: 1 - Number of CDN PoP locations, 2 - opening a tag, 3 - closing a tag */
-					esc_html__( 'Activate Smush CDN to bulk smush and serve animated GIF’s via %1$d worldwide locations. %2$sActivate CDN%3$s', 'wp-smushit' ),
-					Admin::CDN_POP_LOCATIONS,
-					'<a href="' . esc_url( network_admin_url( 'admin.php?page=smush-cdn' ) ) . '" />',
-					'</a>'
-				) :
-				'',
+						esc_html__( 'Activate CDN to bulk smush and serve animated GIF’s via %1$d worldwide locations. %2$sActivate CDN%3$s', 'wp-smushit' ),
+						Admin::CDN_POP_LOCATIONS,
+						'<a href="' . esc_url( network_admin_url( 'admin.php?page=smush-cdn' ) ) . '" />',
+						'</a>'
+					)
+				) : '',
 			// URLs.
 			'smush_url'               => network_admin_url( 'admin.php?page=smush' ),
 			'bulk_smush_url'          => network_admin_url( 'admin.php?page=smush-bulk' ),
 			'directory_url'           => network_admin_url( 'admin.php?page=smush-directory' ),
-			'localWebpURL'            => network_admin_url( 'admin.php?page=smush-webp' ),
+			'nextGenURL'            => network_admin_url( 'admin.php?page=smush-next-gen' ),
 			'edit_link'               => Helper::get_image_media_link( '{{id}}', null, true ),
 			'debug_mode'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'cancel'                  => esc_html__( 'Cancel', 'wp-smushit' ),

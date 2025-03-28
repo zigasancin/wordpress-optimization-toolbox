@@ -46,9 +46,9 @@ $pro_features        = array(
 		'title'       => __( 'Automatic Image Resizing', 'wp-smushit' ),
 		'description' => __( 'Smart auto-resize images to fit image containers perfectly.', 'wp-smushit' ),
 	),
-	'webp'                    => array(
-		'title'       => __( 'Next-Gen WebP Conversions', 'wp-smushit' ),
-		'description' => __( '1-click WebP conversion for superior performance.', 'wp-smushit' ),
+	'next_gen'                => array(
+		'title'       => __( 'Next-Gen Conversions', 'wp-smushit' ),
+		'description' => __( '1-click WebP and AVIF Conversion for superior performance.', 'wp-smushit' ),
 	),
 	'background_optimization' => array(
 		'title'       => __( 'Continuous Background Optimization', 'wp-smushit' ),

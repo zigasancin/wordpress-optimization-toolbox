@@ -13,7 +13,7 @@ use Smush\App\Admin;
 	<div class="smush-box-image">
 		<img class="sui-image-icon" src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/bulk-smush/cdn-upsell-icon.png' ); ?>"
 		srcset="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/bulk-smush/cdn-upsell-icon@2x.png' ); ?> 2x"
-		alt="<?php esc_html_e( 'Smush CDN Icon', 'wp-smushit' ); ?>">
+		alt="<?php esc_html_e( 'CDN upsell Icon', 'wp-smushit' ); ?>">
 		</div>
 	<div class="sui-box-content">
 		<p>

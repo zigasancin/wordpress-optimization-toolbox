@@ -138,10 +138,14 @@ $can_use_background = $bg_optimization->can_use_background();
 				<h3><?php esc_html_e( 'Compress images in the background', 'wp-smushit' ); ?></h3>
 				<p><?php esc_html_e( 'Thanks to Background Optimization, you can leave the plugin interface while images are still being compressed. Smush will continue to work its magic in the background, leaving you free to do other things!', 'wp-smushit' ); ?></p>
 			</div>
-			<?php endif;?>
+			<?php endif; ?>
 			<div class="sui-upgrade-page-features__item">
 				<i class="sui-icon-web-globe-world" aria-hidden="true"></i>
-				<h3><?php esc_html_e( 'Streamline your images with Smush CDN', 'wp-smushit' ); ?></h3>
+				<h3>
+					<?php
+					echo esc_html( $this->whitelabel->whitelabel_string( __( 'Streamline your images with Smush CDN', 'wp-smushit' ) ) );
+					?>
+				</h3>
 				<p>
 				<?php
 				printf(
@@ -154,9 +158,18 @@ $can_use_background = $bg_optimization->can_use_background();
 			</div>
 			<div class="sui-upgrade-page-features__item">
 				<i class="sui-icon-photo-picture" aria-hidden="true"></i>
-				<h3><?php esc_html_e( 'Serve next-gen WebP images (without Smush CDN)', 'wp-smushit' ); ?></h3>
-				<p><?php esc_html_e( "Prefer not to use Smush CDN? Our standalone WebP feature allows you to serve next-gen images without sacrificing quality. You can also gracefully fall back to the older image formats for browsers that aren't compatible.", 'wp-smushit' ); ?></p>
-			</div>
+				<h3>
+					<?php
+					echo esc_html( $this->whitelabel->whitelabel_string( __( 'Serve next-gen WebP images (without Smush CDN)', 'wp-smushit' ) ) );
+					?>
+				</h3>
+				<p>
+					<?php
+					$cdn_next_gen_message = __( "Prefer not to use Smush CDN? Our standalone WebP feature allows you to serve next-gen images without sacrificing quality. You can also gracefully fall back to the older image formats for browsers that aren't compatible.", 'wp-smushit' );
+					echo esc_html( $this->whitelabel->whitelabel_string( $cdn_next_gen_message ) );
+					?>
+                </p>
+            </div>
 			<div class="sui-upgrade-page-features__item">
 				<i class="sui-icon-wand-magic" aria-hidden="true"></i>
 				<h3><?php esc_html_e( 'Auto-convert PNGs to JPEGs (lossy)', 'wp-smushit' ); ?></h3>

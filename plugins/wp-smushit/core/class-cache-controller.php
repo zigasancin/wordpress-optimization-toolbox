@@ -7,6 +7,7 @@ class Cache_Controller extends Controller {
 	const CLEAR_CACHE_ACTION = 'wp_smush_clear_page_cache';
 
 	public function __construct() {
+		$this->register_action( 'wp_smush_avif_status_changed', array( $this, 'avif_status_changed' ) );
 		$this->register_action( 'wp_smush_webp_status_changed', array( $this, 'webp_status_changed' ) );
 		$this->register_action( 'wp_smush_webp_method_changed', array( $this, 'webp_method_changed' ) );
 		$this->register_action( 'wp_smush_cdn_status_changed', array( $this, 'cdn_status_changed' ) );
@@ -21,11 +22,15 @@ class Cache_Controller extends Controller {
 	}
 
 	public function webp_method_changed() {
-		$this->clear_third_party_cache( 'webp_method' );
+		$this->clear_third_party_cache( 'next_gen_method' );
 	}
 
 	public function webp_status_changed() {
-		$this->clear_third_party_cache( 'webp' );
+		$this->clear_third_party_cache( 'next_gen' );
+	}
+
+	public function avif_status_changed() {
+		$this->clear_third_party_cache( 'next_gen' );
 	}
 
 	private function clear_third_party_cache( $notice_key = '' ) {
@@ -80,10 +85,10 @@ class Cache_Controller extends Controller {
 			return $settings->has_cdn_page() ? __( 'CDN status has changed.<br/>If you have a page caching plugin or server caching, please clear it to ensure everything works as expected.', 'wp-smushit' ) : '';
 		}
 
-		if ( 'webp' === $notice_key || 'webp_method' === $notice_key ) {
-			$notice = 'webp' === $notice_key ? __( 'Local WebP status has changed.<br/>If you have a page caching plugin or server caching, please clear it to ensure everything works as expected.', 'wp-smushit' ) :
-												__( 'Local WebP method has been updated.<br/>If you have a page caching plugin or server caching, please clear it to ensure everything works as expected.', 'wp-smushit' );
-			return $settings->has_webp_page() ? $notice : '';
+		if ( 'next_gen' === $notice_key || 'next_gen_method' === $notice_key ) {
+			$notice = 'next_gen' === $notice_key ? __( 'Next-Gen Formats status has changed.<br/>If you have a page caching plugin or server caching, please clear it to ensure everything works as expected.', 'wp-smushit' ) :
+												__( 'Next-Gen conversion method has been updated.<br/>If you have a page caching plugin or server caching, please clear it to ensure everything works as expected.', 'wp-smushit' );
+			return $settings->has_next_gen_page() ? $notice : '';
 		}
 	}
 }

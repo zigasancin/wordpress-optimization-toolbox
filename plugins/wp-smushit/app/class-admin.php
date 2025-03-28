@@ -10,6 +10,7 @@ namespace Smush\App;
 use Smush\Core\Core;
 use Smush\Core\Error_Handler;
 use Smush\Core\Helper;
+use Smush\Core\Next_Gen\Next_Gen_Manager;
 use Smush\Core\Settings;
 use Smush\Core\Stats\Global_Stats;
 use WP_Smush;
@@ -338,8 +339,8 @@ class Admin {
 				$this->pages['cdn'] = new Pages\CDN( 'smush-cdn', __( 'CDN', 'wp-smushit' ), 'smush' );
 			}
 
-			if ( Abstract_Page::should_render( 'webp' ) ) {
-				$this->pages['webp'] = new Pages\WebP( 'smush-webp', __( 'Local WebP', 'wp-smushit' ), 'smush' );
+			if ( Abstract_Page::should_render( 'next-gen' ) ) {
+				$this->pages['next-gen'] = new Pages\Next_Gen( 'smush-next-gen', __( 'Next-Gen Formats', 'wp-smushit' ), 'smush' );
 			}
 
 			if ( Abstract_Page::should_render( 'integrations' ) ) {
@@ -793,19 +794,21 @@ class Admin {
 	}
 
 	public function maybe_show_local_webp_convert_original_images_notice() {
-		$redirected_from_webp = isset( $_GET['smush-action'] ) && 'start-bulk-webp-conversion' === $_GET['smush-action'];
-		$settings             = Settings::get_instance();
-		$should_show_notice   = $redirected_from_webp &&
-								current_user_can( 'manage_options' ) &&
-								$settings->has_webp_page() &&
-								! $settings->is_optimize_original_images_active();
+		$redirected_from_next_gen = isset( $_GET['smush-action'] ) && 'start-bulk-next-gen-conversion' === $_GET['smush-action'];
+		$settings                 = Settings::get_instance();
+		$should_show_notice       = $redirected_from_next_gen &&
+									current_user_can( 'manage_options' ) &&
+									$settings->has_next_gen_page() &&
+									! $settings->is_optimize_original_images_active();
 		if ( ! $should_show_notice ) {
 			return;
 		}
 
-		$error_message = sprintf(
+		$next_gen_format_ext = Next_Gen_Manager::get_instance()->get_active_format_key();
+		$error_message       = sprintf(
 			/* translators: 1: Open a link, 2: Close the link */
-			esc_html__( 'If you wish to also convert your original uploaded images to .webp format, please enable the %1$sOptimize original images%2$s setting below.', 'wp-smushit' ),
+			esc_html__( 'If you wish to also convert your original uploaded images to .%1$s format, please enable the %2$sOptimize original images%3$s setting below.', 'wp-smushit' ),
+			esc_html( $next_gen_format_ext ),
 			'<a href="#original" class="smush-close-and-dismiss-notice">',
 			'</a>'
 		);

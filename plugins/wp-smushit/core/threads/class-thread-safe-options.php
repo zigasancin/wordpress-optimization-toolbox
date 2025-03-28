@@ -6,6 +6,25 @@ namespace Smush\Core\Threads;
  * TODO: use this in places where we are currently using mutex
  */
 class Thread_Safe_Options {
+
+	public function delete_option( $option_id ) {
+		return $this->delete( $option_id );
+	}
+
+	public function delete_site_option( $option_id ) {
+		return $this->delete( $option_id, true );
+	}
+
+	private function delete( $option_id, $site_option = false ) {
+		global $wpdb;
+
+		list( $table, $column ) = $this->get_table_columns( $site_option );
+
+		return $wpdb->delete( $table, array(
+			$column => $option_id,
+		), '%s' );
+	}
+
 	public function get_option( $option_id, $default = false ) {
 		return $this->get_value_from_db( $option_id, $default );
 	}

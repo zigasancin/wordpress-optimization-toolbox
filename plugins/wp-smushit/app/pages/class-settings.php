@@ -149,10 +149,11 @@ class Settings extends Abstract_Page implements Interface_Page {
 								<i class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></i>
 								<p>
 									<?php
-									esc_html_e(
+									$cdn_resized_message = __(
 										'Note: Images served via the Smush CDN are automatically resized to fit their containers, these will be skipped.',
 										'wp-smushit'
 									);
+									echo esc_html( $this->whitelabel->whitelabel_string( $cdn_resized_message ) );
 									?>
 								</p>
 							</div>

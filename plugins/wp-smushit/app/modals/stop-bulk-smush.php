@@ -33,12 +33,17 @@ $docs_link = $this->get_utm_link(
 			<div class="sui-box-body sui-flatten sui-content-center sui-no-padding-top sui-spacing-bottom--30">
 				<p class="sui-description">
 				<?php
-				printf(
+				$notice = esc_html__( 'You have unsmushed images. Are you sure you want to cancel?', 'wp-smushit' );
+
+				if ( ! apply_filters( 'wpmudev_branding_hide_doc_link', false ) ) {
+					$notice .= sprintf(
 					/* translators: 1: Open link, 2: Close the link */
-					esc_html__( 'You have unsmushed images. Are you sure you want to cancel? If you’re facing issues with Bulk Smush, please refer to our %1$stroubleshooting guide%2$s.', 'wp-smushit' ),
-					'<a target="_blank" href="' . esc_url( $docs_link ) . '">',
-					'</a>'
-				);
+						esc_html__( ' If you’re facing issues with Bulk Smush, please refer to our %1$stroubleshooting guide%2$s.', 'wp-smushit' ),
+						'<a target="_blank" href="' . esc_url( $docs_link ) . '">',
+						'</a>'
+					);
+				}
+				echo wp_kses_post( $notice );
 				?>
 				</p>
 			</div>

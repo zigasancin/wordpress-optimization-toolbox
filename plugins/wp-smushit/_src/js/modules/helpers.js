@@ -300,24 +300,26 @@
 				window.location.search = page;
 			}
 		},
-		showModal( modalId ) {
+		showModal( modalId, options = {} ) {
 			if ( ! window.SUI ) {
 				return;
 			}
 
-			const focusAfterClosed = 'wpbody-content',
-			focusWhenOpen = undefined,
-			hasOverlayMask = false,
-			isCloseOnEsc = false,
-			isAnimated = true;
+			options = Object.assign( {
+				focusAfterClosed: 'wpbody-content',
+				focusWhenOpen: undefined,
+				hasOverlayMask: false,
+				isCloseOnEsc: false,
+				isAnimated: true,
+			}, options );
 
 			window.SUI.openModal(
 				modalId,
-				focusAfterClosed,
-				focusWhenOpen,
-				hasOverlayMask,
-				isCloseOnEsc,
-				isAnimated
+				options.focusAfterClosed,
+				options.focusWhenOpen,
+				options.hasOverlayMask,
+				options.isCloseOnEsc,
+				options.isAnimated
 			);
 		}
 	};

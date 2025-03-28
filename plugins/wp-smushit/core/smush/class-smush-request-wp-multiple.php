@@ -11,8 +11,8 @@ class Smush_Request_WP_Multiple extends Smush_Request {
 	 */
 	private $server_utils;
 
-	public function __construct( $streaming_enabled = true, $webp = false ) {
-		parent::__construct( $streaming_enabled, $webp );
+	public function __construct( $streaming_enabled = true, $extra_headers = array() ) {
+		parent::__construct( $streaming_enabled, $extra_headers );
 
 		$this->server_utils = new Server_Utils();
 	}

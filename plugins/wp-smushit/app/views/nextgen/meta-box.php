@@ -21,9 +21,9 @@ if ( ! defined( 'WPINC' ) ) {
 	<p><?php esc_html_e( 'Bulk smush detects images that can be optimized and allows you to compress them in bulk.', 'wp-smushit' ); ?></p>
 <?php else : ?>
 	<div class="sui-message">
-		<?php if ( ! apply_filters( 'wpmudev_branding_hide_branding', false ) ) : ?>
-			<img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/smush-no-media.png' ); ?>" alt="<?php esc_attr_e( 'No attachments found - Upload some images', 'wp-smushit' ); ?>" class="sui-image">
-		<?php endif; ?>
+
+        <img src="<?php echo esc_url( WP_SMUSH_URL . 'app/assets/images/smush-no-media.png' ); ?>" alt="<?php esc_attr_e( 'No attachments found - Upload some images', 'wp-smushit' ); ?>" class="sui-image">
+
 		<div class="sui-message-content">
 			<p>
 				<?php

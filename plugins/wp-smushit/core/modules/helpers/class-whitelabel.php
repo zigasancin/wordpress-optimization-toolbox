@@ -105,4 +105,24 @@ class WhiteLabel {
 
 		return false;
 	}
+
+	/**
+	 * Removes branding strings from the given text if white-labeling is enabled.
+	 *
+	 * @param string $text The input string potentially containing branding.
+	 * @return text The modified string with branding removed if applicable.
+	 */
+	public function whitelabel_string( $text ) {
+		if ( $this->hide_branding() ) {
+			$replacement_terms = array(
+				'Smush CDN'    => 'CDN',
+				'WPMU DEV CDN' => 'CDN',
+			);
+			$replacement_terms = apply_filters( 'wp_smush_whiltelabel_replacement_terms', $replacement_terms );
+
+			$text = strtr( $text, $replacement_terms );
+		}
+
+		return $text;
+	}
 }

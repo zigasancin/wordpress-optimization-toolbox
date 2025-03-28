@@ -46,12 +46,14 @@ if ( ! defined( 'WPINC' ) ) {
 			<input type="text" id="language-input" class="sui-form-control" disabled="disabled" placeholder="<?php echo esc_attr( $site_language ); ?>">
 			<span class="sui-description">
 				<?php
-				printf(
-				/* translators: %1$s: opening a tag, %2$s: closing a tag */
-					esc_html__( 'Not using your language, or have improvements? Help us improve translations by providing your own improvements %1$shere%2$s.', 'wp-smushit' ),
-					'<a href="' . esc_html( $translation_link ) . '" target="_blank">',
-					'</a>'
-				);
+				if ( ! apply_filters( 'wpmudev_branding_hide_doc_link', false ) ) {
+					printf(
+					/* translators: %1$s: opening a tag, %2$s: closing a tag */
+						esc_html__( 'Not using your language, or have improvements? Help us improve translations by providing your own improvements %1$shere%2$s.', 'wp-smushit' ),
+						'<a href="' . esc_html( $translation_link ) . '" target="_blank">',
+						'</a>'
+					);
+				}
 				?>
 			</span>
 		</div>

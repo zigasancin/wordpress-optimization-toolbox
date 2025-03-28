@@ -7,19 +7,13 @@
  * @var Abstract_Page $this
  */
 
-use Smush\Core\Webp\Webp_Configuration;
-
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
 // Some pages don't need to have wrapped in a form.
-$direct_conversion_enabled = Webp_Configuration::get_instance()->direct_conversion_enabled();
-$page_without_forms        = array( 'smush-tutorials' );
-if ( ! $direct_conversion_enabled ) {
-	$page_without_forms[] = 'smush-webp';
-}
-$page_has_form = ! in_array( $this->get_slug(), $page_without_forms, true );
+$page_without_forms = array( 'smush-tutorials' );
+$page_has_form      = ! in_array( $this->get_slug(), $page_without_forms, true );
 
 $this->do_meta_boxes( 'summary' );
 
@@ -35,11 +29,11 @@ $this->do_meta_boxes( 'summary' );
 
 <?php if ( ! $this->get_current_tab() ) : ?>
 	<?php if ( $page_has_form ) : ?>
-		<form id="<?php echo esc_attr( $this->get_slug() ); ?>-form" method="post">
+		<form id="<?php echo esc_attr( $this->get_slug() ); ?>-form" class="wp-smush-settings-form" method="post">
 	<?php endif; ?>
 		<?php $this->do_meta_boxes(); ?>
 
-		<?php if ( 'smush-webp' === $this->get_slug() && $this->is_wizard() ) : ?>
+		<?php if ( 'smush-next-gen' === $this->get_slug() && $this->is_wizard() ) : ?>
 			<div id="smush-box-webp-wizard" class="sui-webp-wizard sui-box"></div>
 		<?php endif; ?>
 	<?php if ( $page_has_form ) : ?>

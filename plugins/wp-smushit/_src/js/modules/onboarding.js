@@ -354,7 +354,10 @@ import GlobalTracking from '../global-tracking';
 		 * @since 3.12.2 Add a new parameter redirectUrl
 		 */
 		hideUpgradeModal: ( e, button ) => {
-			e.preventDefault();
+			const isRedirectRequired = '_blank' !== button?.target;
+			if ( isRedirectRequired ) {
+				e.preventDefault();
+			}
 
 			button.classList.add( 'wp-smush-link-in-progress' );
 			const redirectUrl = button?.href;
@@ -370,7 +373,7 @@ import GlobalTracking from '../global-tracking';
 				} );
 
 				if ( 200 === xhr.status ) {
-					if ( redirectUrl ) {
+					if ( redirectUrl && isRedirectRequired ) {
 						window.location.href = redirectUrl;
 					}
 				} else {

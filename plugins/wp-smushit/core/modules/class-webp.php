@@ -50,7 +50,7 @@ class WebP extends Abstract_Module {
 	 */
 	public function init() {
 		// Show success message after deleting all webp images.
-		add_action( 'wp_smush_header_notices', array( $this, 'maybe_show_notices' ) );
+		// add_action( 'wp_smush_header_notices', array( $this, 'maybe_show_notices' ) );
 
 		// Only apply filters for PRO + activated Webp.
 		if ( $this->is_active() ) {
