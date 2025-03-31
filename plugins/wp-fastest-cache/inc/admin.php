@@ -390,14 +390,14 @@
 				}
 			}
 
-			if(get_option('template') == "Divi"){
-				// Divi Theme - Static CSS File Generation
-				if($et_divi = get_option("et_divi")){
-					if(isset($et_divi["et_pb_static_css_file"]) && $et_divi["et_pb_static_css_file"] == "on"){
-						return array("You have to disable the <u><a target='_blank' href='https://www.wpfastestcache.com/tutorial/divi-theme-settings/'>Static CSS File Generation</a></u> option of Divi Theme", "error");
-					}
-				}
-			}
+			// if(get_option('template') == "Divi"){
+			// 	// Divi Theme - Static CSS File Generation
+			// 	if($et_divi = get_option("et_divi")){
+			// 		if(isset($et_divi["et_pb_static_css_file"]) && $et_divi["et_pb_static_css_file"] == "on"){
+			// 			return array("You have to disable the <u><a target='_blank' href='https://www.wpfastestcache.com/tutorial/divi-theme-settings/'>Static CSS File Generation</a></u> option of Divi Theme", "error");
+			// 		}
+			// 	}
+			// }
 
 			if($this->isPluginActive('elementor/elementor.php')){
 				// Elementor Plugin - Element Caching
@@ -1076,7 +1076,7 @@
 						$tabs = array();
 						
 						array_push($tabs, array("id"=>"wpfc-options","title" => __("Settings", "wp-fastest-cache" )));
-						array_push($tabs, array("id"=>"wpfc-deleteCache","title" => __("Delete Cache", "wp-fastest-cache" )));
+						array_push($tabs, array("id"=>"wpfc-deleteCache","title" => __("Clear Cache", "wp-fastest-cache" )));
 						array_push($tabs, array("id"=>"wpfc-imageOptimisation","title" => __("Image Optimization", "wp-fastest-cache" )));
 
 						if(!class_exists("WpFastestCachePowerfulHtml")){
@@ -1587,7 +1587,7 @@
 
 				   		<div class="exclude_section_clear" style=" margin-left: 3%; width: 95%; margin-bottom: 20px; margin-top: 0;"><div></div></div>
 
-				   		<h2 id="delete-cache-h2" style="padding-left:20px;padding-bottom:10px;"><?php _e("Delete Cache", "wp-fastest-cache"); ?></h2>
+				   		<h2 id="delete-cache-h2" style="padding-left:20px;padding-bottom:10px;"><?php _e("Clear Cache", "wp-fastest-cache"); ?></h2>
 
 				   		<?php //include_once(WPFC_MAIN_PATH."templates/cache_path.php"); ?>
 

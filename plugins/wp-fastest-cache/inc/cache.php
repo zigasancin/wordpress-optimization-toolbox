@@ -1118,9 +1118,9 @@
 
 		public function cacheDate($buffer){
 			if($this->isMobile() && class_exists("WpFcMobileCache") && isset($this->options->wpFastestCacheMobile) && isset($this->options->wpFastestCacheMobileTheme)){
-				$comment = "<!-- Mobile: WP Fastest Cache file was created in ".$this->creationTime()." seconds, on ".date("d-m-y G:i:s", current_time('timestamp'))." -->";
+				$comment = "<!-- Mobile: WP Fastest Cache file was created in ".$this->creationTime()." seconds, on ".current_datetime()->format(get_option('date_format')." @ ".get_option('time_format'))." -->";
 			}else{
-				$comment = "<!-- WP Fastest Cache file was created in ".$this->creationTime()." seconds, on ".date("d-m-y G:i:s", current_time('timestamp'))." -->";
+				$comment = "<!-- WP Fastest Cache file was created in ".$this->creationTime()." seconds, on ".current_datetime()->format(get_option('date_format')." @ ".get_option('time_format'))." -->";
 			}
 
 			if(apply_filters( 'wpfc_remove_footer_comment', false )){
@@ -1136,7 +1136,10 @@
 		}
 
 		public function creationTime(){
-			return microtime(true) - $this->startTime;
+			$time = microtime(true) - $this->startTime;
+			$time = number_format($time, 3);
+
+			return $time;
 		}
 
 		public function isCommenter(){

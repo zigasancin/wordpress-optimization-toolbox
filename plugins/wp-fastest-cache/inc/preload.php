@@ -56,34 +56,54 @@
 			if($data = get_option("WpFastestCachePreLoad")){
 				$preload_std = json_decode($data);
 
-				if(isset($preload_std->sitemaps)){
-					if(!empty($preload_arr) && isset($preload_arr["sitemaps"])){
+				if(empty($preload_arr)){
+					// clear cache process
 
-						for ($i=0; $i < count($preload_arr["sitemaps"]) ; $i++) {
-							for ($j=0; $j < count($preload_std->sitemaps); $j++) {
-								if($preload_arr["sitemaps"][$i]["url"] == $preload_std->sitemaps[$j]->url){
-
-									if(isset($preload_std->sitemaps[$j]->pointer)){
-										$preload_arr["sitemaps"][$i]["pointer"] = $preload_std->sitemaps[$j]->pointer;
-									}
-
-									if(isset($preload_std->sitemaps[$j]->total)){
-										$preload_arr["sitemaps"][$i]["total"] = $preload_std->sitemaps[$j]->total;
-									}
-
-								}
-							}
-						}
-
-						$preload_std = $preload_arr;
-
-					}else{
+					if(isset($preload_std->sitemaps) && !empty($preload_std->sitemaps)){
 						foreach ($preload_std->sitemaps as $s_key => $s_value) {
 							$s_value->pointer = 0;
 						}
+					}else{
+						foreach ($preload_std as $key => &$value) {
+							if($key != "number"){
+								$value = 0;
+							}
+						}
 					}
+
 				}else{
-					if(!empty($preload_arr)){
+					// save settings process
+
+					if(isset($preload_arr["sitemaps"])){
+						if(isset($preload_std->sitemaps) && !empty($preload_std->sitemaps)){
+							for ($i=0; $i < count($preload_arr["sitemaps"]) ; $i++) {
+								for ($j=0; $j < count($preload_std->sitemaps); $j++) {
+									if($preload_arr["sitemaps"][$i]["url"] == $preload_std->sitemaps[$j]->url){
+
+										if(isset($preload_std->sitemaps[$j]->pointer)){
+											$preload_arr["sitemaps"][$i]["pointer"] = $preload_std->sitemaps[$j]->pointer;
+										}
+
+										if(isset($preload_std->sitemaps[$j]->total)){
+											$preload_arr["sitemaps"][$i]["total"] = $preload_std->sitemaps[$j]->total;
+										}
+									}
+								}
+							}
+
+							$preload_std = $preload_arr;
+						}else{
+							foreach ($preload_arr as $key => &$value) {
+								if(!empty($preload_std->$key)){
+									if($key != "number"){
+										$value = $preload_std->$key;
+									}
+								}
+							}
+
+							$preload_std = $preload_arr;
+						}
+					}else{
 						foreach ($preload_arr as $key => &$value) {
 							if(!empty($preload_std->$key)){
 								if($key != "number"){
@@ -93,14 +113,10 @@
 						}
 
 						$preload_std = $preload_arr;
-					}else{
-						foreach ($preload_std as $key => &$value) {
-							if($key != "number"){
-								$value = 0;
-							}
-						}
 					}
+
 				}
+
 
 				update_option("WpFastestCachePreLoad", json_encode($preload_std));
 
@@ -559,7 +575,7 @@
 					echo "Preload Restarted";
 
 					if($varnish_datas = get_option("WpFastestCacheVarnish")){
-						include_once('inc/varnish.php');
+						include_once('varnish.php');
 						VarnishWPFC::purge_cache($varnish_datas);
 					}
 
@@ -748,17 +764,18 @@
 
 
 				foreach ($pre_load->sitemaps as $sres_key => $sres_value) {
-					$cached_page_number = $sres_value->pointer;
-					
-					if($sres_value->pointer == $sres_value->total){
+
+					if(isset($sres_value->total)){
 						$cached_page_number = $sres_value->pointer;
-					}else{
-						$cached_page_number--;
+						
+						if($sres_value->pointer == $sres_value->total){
+							$cached_page_number = $sres_value->pointer;
+						}else{
+							$cached_page_number--;
 
-						$cached_page_number = max($cached_page_number, 0);
-					}
+							$cached_page_number = max($cached_page_number, 0);
+						}
 
-					if(isset($sres_value->total) && $cached_page_number > 0){
 						echo esc_html($sres_value->url).": ".esc_html($cached_page_number)."/".esc_html($sres_value->total)."<br>\n";
 					}else{
 						echo esc_html($sres_value->url).": -<br>\n";
@@ -782,7 +799,7 @@
 					$GLOBALS["wp_fastest_cache"]->rm_folder_recursively($GLOBALS["wp_fastest_cache"]->getWpContentDir("/cache/all/preload-sitemap"));
 
 					if($varnish_datas = get_option("WpFastestCacheVarnish")){
-						include_once('inc/varnish.php');
+						include_once('varnish.php');
 						VarnishWPFC::purge_cache($varnish_datas);
 					}
 

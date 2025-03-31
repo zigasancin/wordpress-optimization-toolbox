@@ -4,7 +4,7 @@ Donate link: https://profiles.wordpress.org/emrevona/
 Tags: cache, Optimize, performance, PageSpeed, core web vitals
 Requires at least: 3.3
 Tested up to: 6.7
-Stable tag: 1.3.3
+Stable tag: 1.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -116,6 +116,14 @@ Chinese Simplified (China), Chinese Traditional (Taiwan), Czech, Dutch (Belgium)
 18. Database Cleanup
 
 == Changelog ==
+
+= 1.3.5 =
+* Updated cache creation time display to follow WordPress date and time format settings
+* Removed the 'Static CSS File Generation' warning when using the Divi theme.
+
+= 1.3.4 =
+* to fix PHP Fatal error: Class "VarnishWPFC" not found in preload.php
+* to fix Undefined property: stdClass::$total in preload.php on line 753
 
 = 1.3.3 =
 * <strong>[Improvement]</strong> Toolbar style adjusted to align with WordPress standard for better consistency and user experience
