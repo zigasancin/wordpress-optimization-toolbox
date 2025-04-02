@@ -204,7 +204,7 @@ class Page_Cache_Setup {
 		}
 
 		$plugin_dir_name      = untrailingslashit( str_replace( JETPACK_BOOST_PLUGIN_FILENAME, '', JETPACK_BOOST_PLUGIN_BASE ) );
-		$boost_cache_filename = WP_CONTENT_DIR . '/plugins/' . $plugin_dir_name . '/app/modules/optimizations/page-cache/pre-wordpress/Boost_Cache.php';
+		$boost_cache_filename = WP_CONTENT_DIR . '/plugins/' . $plugin_dir_name . '/app/modules/optimizations/page-cache/pre-wordpress/class-boost-cache.php';
 		if ( ! file_exists( $boost_cache_filename ) ) {
 			return new \WP_Error( 'boost-cache-file-not-found' );
 		}
@@ -311,6 +311,8 @@ define( \'WP_CACHE\', true ); // ' . Page_Cache::ADVANCED_CACHE_SIGNATURE,
 	 */
 	public static function uninstall() {
 		self::deactivate();
+		// Call the Cache Preload module deactivation here to ensure it's cleaned up properly.
+		Cache_Preload::deactivate();
 
 		$result = Filesystem_Utils::walk_directory( WP_CONTENT_DIR . '/boost-cache', Filesystem_Utils::DELETE_ALL );
 		if ( $result instanceof Boost_Cache_Error ) {
