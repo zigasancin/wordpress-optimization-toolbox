@@ -3,8 +3,8 @@ Contributors: emrevona
 Donate link: https://profiles.wordpress.org/emrevona/
 Tags: cache, Optimize, performance, PageSpeed, core web vitals
 Requires at least: 3.3
-Tested up to: 6.7
-Stable tag: 1.3.5
+Tested up to: 6.8
+Stable tag: 1.3.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -116,6 +116,10 @@ Chinese Simplified (China), Chinese Traditional (Taiwan), Czech, Dutch (Belgium)
 18. Database Cleanup
 
 == Changelog ==
+
+= 1.3.6 =
+* Prevented unnecessary cache deletion for pending comments marked as spam or moved to trash
+* Updated caching behavior to serve URLs with Google Merchant Center query strings (e.g., /?srsltid) from the cache, improving performance
 
 = 1.3.5 =
 * Updated cache creation time display to follow WordPress date and time format settings

@@ -140,6 +140,8 @@
 
 							}else if(preg_match("/utm_(source|medium|campaign|content|term)/i", $this->cacheFilePath)){
 
+							}else if(preg_match("/srsltid\=/i", $this->cacheFilePath)){
+
 							}else{
 								$this->cacheFilePath = false;
 							}
@@ -209,6 +211,11 @@
 
 					//to remove query strings for cache if google analytics parameters are set
 					if(preg_match("/^utm_(source|medium|campaign|content|term)/i", $query_param)){
+						continue;
+					}
+
+					//to remove query strings for cache if google merchant center parameters are set
+					if(preg_match("/^srsltid\=/i", $query_param)){
 						continue;
 					}
 

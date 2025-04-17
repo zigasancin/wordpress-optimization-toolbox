@@ -3,7 +3,7 @@
 Plugin Name: WP Fastest Cache
 Plugin URI: http://wordpress.org/plugins/wp-fastest-cache/
 Description: The simplest and fastest WP Cache system
-Version: 1.3.5
+Version: 1.3.6
 Author: Emre Vona
 Author URI: https://www.wpfastestcache.com/
 Text Domain: wp-fastest-cache
@@ -1346,13 +1346,33 @@ GNU General Public License for more details.
 
 		protected function commentHooks(){
 			//it works when the status of a comment changes
-			add_action('wp_set_comment_status', array($this, 'singleDeleteCache'), 10, 1);
+			add_action('wp_set_comment_status', array($this, 'detect_comment_status_change'), 10, 2);
 
 			//it works when a comment is saved in the database
 			add_action('comment_post', array($this, 'detectNewComment'), 10, 2);
 
 			// it work when a commens is updated
 			add_action('edit_comment', array($this, 'detectEditComment'), 10, 2);
+		}
+
+		public function detect_comment_status_change($comment_id, $new_status) {
+		    $comment = get_comment($comment_id);
+		    
+		    if (!$comment) {
+		        return; // Exit if the comment doesn't exist
+		    }
+
+		    // Check if the comment was pending and is now marked as spam
+		    if($comment->comment_status == 'open' && $new_status === 'spam'){
+		    	return;
+		    }
+
+		    // Check if the comment was pending and is now marked as trash
+		    if($comment->comment_status == 'open' && $new_status === 'trash'){
+		    	return;
+		    }
+
+		    $this->singleDeleteCache($comment_id);
 		}
 
 		public function detectEditComment($comment_id, $comment_data){
