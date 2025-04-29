@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The optimize4 class.
  *
@@ -7,6 +8,7 @@
  * @subpackage 	LiteSpeed/inc
  * @author     	LiteSpeed Technologies <info@litespeedtech.com>
  */
+
 namespace LiteSpeed;
 
 defined('WPINC') || exit();
@@ -219,7 +221,7 @@ class Optimizer extends Root
 		$folder_name = LITESPEED_STATIC_DIR . $file_path_prefix;
 		$to_be_deleted_folder = $folder_name . date('Ymd', strtotime('-2 days'));
 		if (file_exists($to_be_deleted_folder)) {
-			Debug2::debug('[Optimizer] ❌ Clearning folder [name] ' . $to_be_deleted_folder);
+			Debug2::debug('[Optimizer] ❌ Clearing folder [name] ' . $to_be_deleted_folder);
 			File::rrmdir($to_be_deleted_folder);
 		}
 
@@ -229,7 +231,7 @@ class Optimizer extends Root
 		}
 
 		// Write file
-		$res = wp_remote_get($url);
+		$res = wp_safe_remote_get($url);
 		$res_code = wp_remote_retrieve_response_code($res);
 		if (is_wp_error($res) || $res_code != 200) {
 			Debug2::debug2('[Optimizer] ❌ Load Remote error [code] ' . $res_code);

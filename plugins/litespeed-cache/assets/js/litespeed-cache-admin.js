@@ -211,15 +211,25 @@ var _litespeed_dots;
 		 * @since  3.0
 		 */
 		$('#litespeed_get_ip').on('click', function (e) {
+			console.log('[litespeed] get server IP');
 			$.ajax({
 				url: litespeed_data.ajax_url_getIP,
 				dataType: 'json',
 				beforeSend: function (xhr) {
 					xhr.setRequestHeader('X-WP-Nonce', litespeed_data.nonce);
+					$('#litespeed_server_ip').html('Detecting...');
 				},
 				success: function (data) {
+					$('#litespeed_server_ip').html('Done');
 					console.log('[litespeed] get server IP response: ' + data);
 					$('#litespeed_server_ip').html(data);
+				},
+				error: function (xhr, error) {
+					console.log('[litespeed] get server IP error', error);
+					$('#litespeed_server_ip').html('Failed to detect IP');
+				},
+				complete: function (xhr, status) {
+					console.log('[litespeed] AJAX complete', status, xhr);
 				},
 			});
 		});
@@ -580,4 +590,13 @@ function litespeed_add_zero(i) {
 		i = '0' + i;
 	}
 	return i;
+}
+
+function litespeed_copy_to_clipboard(elementId) {
+	var range = document.createRange();
+	range.selectNode(document.getElementById(elementId));
+	window.getSelection().removeAllRanges();
+	window.getSelection().addRange(range);
+	document.execCommand('copy');
+	window.getSelection().removeAllRanges();
 }

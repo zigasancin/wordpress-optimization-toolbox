@@ -917,7 +917,7 @@ class Img_Optm extends Base
 	}
 
 	/**
-	 * Calculate pull theads
+	 * Calculate pull threads
 	 *
 	 * @since  5.8
 	 * @access private
@@ -1235,7 +1235,7 @@ class Img_Optm extends Base
 					));
 				} else {
 					foreach ($requests as $cnt => $req) {
-						$wp_response = wp_remote_get($req['url'], array('timeout' => 60));
+						$wp_response = wp_safe_remote_get($req['url'], array('timeout' => 60));
 						$request_response = array(
 							'success' => false,
 							'status_code' => 0,
