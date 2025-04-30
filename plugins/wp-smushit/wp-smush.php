@@ -13,7 +13,7 @@
  * Plugin Name:       Smush
  * Plugin URI:        http://wordpress.org/plugins/wp-smushit/
  * Description:       Reduce image file sizes, improve performance and boost your SEO using the free <a href="https://wpmudev.com/">WPMU DEV</a> WordPress Smush API.
- * Version:           3.18.0
+ * Version:           3.18.1
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            WPMU DEV
@@ -50,7 +50,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! defined( 'WP_SMUSH_VERSION' ) ) {
-	define( 'WP_SMUSH_VERSION', '3.18.0' );
+	define( 'WP_SMUSH_VERSION', '3.18.1' );
 }
 // Used to define body class.
 if ( ! defined( 'WP_SHARED_UI_VERSION' ) ) {
@@ -283,6 +283,8 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 
 			add_action( 'init', array( $this, 'do_plugin_activated_action' ) );
 
+			add_action( 'init', array( $this, 'load_cross_sell_module' ), 5 );
+
 			$this->init();
 		}
 
@@ -512,6 +514,36 @@ if ( ! class_exists( 'WP_Smush' ) ) {
 				\Smush\App\Admin::$plugin_pages,
 				array( 'before', '.sui-wrap .sui-floating-notices, .sui-wrap .sui-upgrade-page' )
 			);
+		}
+
+		public function load_cross_sell_module() {
+			if ( self::is_pro() ) {
+				return;
+			}
+
+			$cross_sell_plugin_file = WP_SMUSH_DIR . 'core/external/plugins-cross-sell-page/plugin-cross-sell.php';
+			if ( ! file_exists( $cross_sell_plugin_file ) ) {
+				return;
+			}
+
+			static $cross_sell_handler = null;
+			if ( ! is_null( $cross_sell_handler ) ) {
+				return;
+			}
+
+			if ( ! class_exists( '\WPMUDEV\Modules\Plugin_Cross_Sell' ) ) {
+				require_once $cross_sell_plugin_file;
+			}
+
+			$submenu_params = array(
+				'slug'            => 'wp-smushit', // Required.
+				'parent_slug'     => 'smush', // Required.
+				'menu_slug'       => 'smush-cross-sell', // Optional - Strongly recommended to set in order to avoid admin page conflicts with other WPMU DEV plugins.
+				'position'        => 9, // Optional – Usually a specific position will be required.
+				'translation_dir' => WP_SMUSH_DIR . 'languages', // Optional – The directory where the translation files are located.
+			);
+
+			$cross_sell_handler = new \WPMUDEV\Modules\Plugin_Cross_Sell( $submenu_params );
 		}
 
 		public function enable_free_tips_opt_in( $is_disabled, $type, $plugin ) {

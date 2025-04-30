@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Smush Pro 3.18.0\n"
+"Project-Id-Version: Smush Pro 3.18.1\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-03-19T12:48:44+00:00\n"
+"POT-Creation-Date: 2025-04-24T11:28:14+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: wp-smushit\n"
@@ -280,7 +280,7 @@ msgstr ""
 #: core/media-library/class-media-library-row.php:715
 #: core/modules/bulk/class-mail.php:65
 #: core/smush/class-smush-optimization.php:77
-#: wp-smush.php:513
+#: wp-smush.php:515
 msgid "Smush"
 msgstr ""
 
@@ -4364,7 +4364,7 @@ msgstr ""
 msgid "Your site is running an outdated version of PHP that is no longer supported or receiving security updates. Please update PHP to at least version %1$s at your hosting provider in order to activate Smush, or consider switching to <a href=\"%2$s\" target=\"_blank\" rel=\"noopener noreferrer\">WPMU DEV Hosting</a>."
 msgstr ""
 
-#: wp-smush.php:492
+#: wp-smush.php:494
 msgid "Get Fast!"
 msgstr ""
 
