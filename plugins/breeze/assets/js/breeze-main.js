@@ -47,7 +47,7 @@ jQuery( document ).ready(
 			}
 		);
 
-		// Topbar action
+		// Top bar action
 		$( document ).on(
 			'click',
 			'#wp-admin-bar-breeze-purge-varnish-group',
