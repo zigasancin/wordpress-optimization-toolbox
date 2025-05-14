@@ -329,11 +329,14 @@ class WP_Optimize_Options {
 		// delete settings from options table.
 		$keys = '"' . implode('", "', $this->get_additional_settings_keys()) . '"';
 
+		// phpcs:disable
+		// WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Only hardcoded strings are used
 		if (is_multisite()) {
 			$result = $wpdb->query("DELETE FROM {$wpdb->sitemeta} WHERE `meta_key` LIKE 'wp-optimize-mu-%' OR `meta_key` IN ({$keys})");
 		} else {
 			$result = $wpdb->query("DELETE FROM {$wpdb->options} WHERE `option_name` LIKE 'wp-optimize-%' OR `option_name` IN ({$keys})");
 		}
+		// phpcs:enable
 
 		return $result;
 	}

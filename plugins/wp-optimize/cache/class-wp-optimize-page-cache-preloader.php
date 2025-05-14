@@ -337,7 +337,7 @@ class WP_Optimize_Page_Cache_Preloader extends WP_Optimize_Preloader {
 		// if we get error then
 		// sometimes returns error due to timeout
 		if (is_wp_error($response)) {
-			$response = file_get_contents($sitemap_url);
+			$response = @file_get_contents($sitemap_url); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- suppress warnings when there is network error
 
 			// if response is empty then try load from file.
 			if (empty($response) && '' == $sitemap_url) {
@@ -482,9 +482,9 @@ class WP_Optimize_Page_Cache_Preloader extends WP_Optimize_Preloader {
 		$domain = '';
 		$multisite_plugin_table_name = $wpdb->base_prefix.'domain_mapping';
 		// Check if table exists
-		if ($wpdb->get_var("SHOW TABLES LIKE '$multisite_plugin_table_name'") != $multisite_plugin_table_name) {
+		if ($wpdb->get_var("SHOW TABLES LIKE '" . esc_sql($multisite_plugin_table_name) . "'") != $multisite_plugin_table_name) {
 			// This table created in WordPress MU Domain Mapping plugin.
-			$row = $wpdb->get_row("SELECT `domain` FROM {$multisite_plugin_table_name} WHERE `blog_id` = {$blog_id} AND `active` = 1", ARRAY_A);
+			$row = $wpdb->get_row($wpdb->prepare("SELECT `domain` FROM " .esc_sql($multisite_plugin_table_name) . " WHERE `blog_id` = %d AND `active` = %d", $blog_id, 1), ARRAY_A);
 			if (!empty($row)) {
 				$domain = $row['domain'];
 			}

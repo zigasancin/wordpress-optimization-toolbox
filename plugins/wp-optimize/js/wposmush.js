@@ -103,8 +103,6 @@ var WP_Optimize_Smush = function() {
 				smush_completed = false;
 				if (smush_timer_locked) return;
 				block_ui('', $.extend(block_ui_custom_options, {message: $('#wpo_smush_images_information_container')}), false, true);
-				$('#wpo_smush_images_information_server').html(wposmush.smush_settings.compression_server);
-
 				clear_smush_stats();
 
 				smush_timer_handle = window.setInterval(smush_timer, 1000);
@@ -991,8 +989,6 @@ var WP_Optimize_Smush = function() {
 		if (smush_timer_locked) return;
 
 		block_ui('', $.extend(block_ui_custom_options, {message: $('#wpo_smush_images_information_container')}), false, true);
-		service = $('.compression_server input[type="radio"]:checked + label small').text();
-		$('#wpo_smush_images_information_server').html(service);
 
 		clear_smush_stats();
 
@@ -1069,6 +1065,9 @@ var WP_Optimize_Smush = function() {
 
 		(function(single_callback) {
 			heartbeat_agents.push(heartbeat.add_agent({
+				// We have to use a non-unique agent in the complete action because the info update subactions
+				// have the same names, and the agent may not be added. This ensures that the "smush_complete" action will run.
+				_unique: false,
 				_wait: false,
 				_keep: false,
 				command: 'updraft_smush_ajax',

@@ -4,8 +4,8 @@ Donate link: https://david.dw-perspective.org.uk/donate
 Tags: cache, caching, image cache, minify, performance cache, page speed, image optimizer, compress images, optimize database, clean database
 Requires PHP: 7.2
 Requires at least: 4.9
-Tested up to: 6.7
-Stable tag: 4.1.1
+Tested up to: 6.8
+Stable tag: 4.2.1
 License: GPLv2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -394,6 +394,28 @@ If none of the above works, disable processing of JavaScript files in the minify
 
 
 == Changelog ==
+
+= 4.2.1 - 05/May/2025 =
+
+* FIX: Cache - Compatibility issue with other plugins due to late start of output buffering
+
+= 4.2.0 - 01/May/2025 =
+
+* SECURITY: On multisite installs (only), a logged-in site administrator could use an unsanitised parameter to inject unwanted content into SQL queries. Thanks to Marc Montpas for the responsible disclosure.
+* FEATURE: Premium - Replace YouTube Iframes with preview images to improve page speed
+* FIX: Fix conflict with the WPML plugin
+* FIX: Smush - Fixed PHP warning on the Media Library page
+* FIX: Smush - Fixed issue where the Smush popup would freeze
+* FIX: WebP images not served after WP-Optimize reactivation
+* REFACTOR: Smush option removed from media upload modal
+* TWEAK:  Update advert banner logos, texts and links
+* TWEAK: Add missing separator between compression items in media library
+* TWEAK: Avoid PHP warning thrown by Page Speed Ninja plugin
+* TWEAK: Cache - Start caching after plugins loaded 
+* TWEAK: Fix PHP deprecation warning in PHPSQLParser for PHP 8.4
+* TWEAK: Fix deprecation warning in Updraft_Logger class for PHP 8.4
+* TWEAK: Fixes absence of checkbox to remove all transients
+* TWEAK: Premium - Support and feedback links in Help tab now point to getwpo.com
 
 = 4.1.1 - 05/Mar/2025 =
 
@@ -818,4 +840,4 @@ If none of the above works, disable processing of JavaScript files in the minify
 [See changelog for all versions](https://plugins.svn.wordpress.org/wp-optimize/trunk/changelog.txt).
 
 == Upgrade Notice ==
-* 4.1.1: A fix for page builders with Delay JS option - a recommended update for all
+* 4.2.1: Cache - Fixed compatibility issues with other plugins - a recommended update for all

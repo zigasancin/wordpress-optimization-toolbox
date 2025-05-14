@@ -272,7 +272,7 @@ class WPO_Cache_Rules {
 			'numberposts'      => -1,
 			'post_type'        => 'any',
 			'fields'           => 'ids',
-			'tax_query' => array(
+			'tax_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- because we can't use `get_objects_in_term` for `OR` relationships
 				'relation' => 'OR',
 				array(
 					'taxonomy' => $taxonomy,

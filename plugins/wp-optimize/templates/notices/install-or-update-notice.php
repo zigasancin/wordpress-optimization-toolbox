@@ -5,14 +5,19 @@
 		
 		<?php if ($is_premium) : ?>
 			<h3><?php esc_html_e('Thank you for installing WP-Optimize Premium!', 'wp-optimize'); ?></h3>
+			<p>
+				<?php
+				esc_html_e('To really turbo boost the performance of your WordPress website, check out more rated plugins below:', 'wp-optimize');
+				?>
+			</p>
 		<?php else : ?>
 			<h3><?php esc_html_e('Thank you for installing WP-Optimize!', 'wp-optimize'); ?></h3>
+			<p>
+				<?php
+				esc_html_e('To really turbo boost the performance of your WordPress website, check out WP-Optimize Premium or get more rated plugins below:', 'wp-optimize');
+				?>
+			</p>
 		<?php endif; ?>
-		<p>
-			<?php
-			esc_html_e('To really turbo boost the performance of your WordPress website, check out WP-Optimize Premium or get more rated plugins below:', 'wp-optimize');
-			?>
-		</p>
 		<ul>
 			<?php if (!$is_premium) : ?>
 			<li>

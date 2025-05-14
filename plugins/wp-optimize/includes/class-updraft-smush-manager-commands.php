@@ -451,7 +451,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		foreach ($data['selected_images'] as $image) {
 			if (!array_key_exists($image['blog_id'], $selected_images)) $selected_images[$image['blog_id']] = array();
 
-			$selected_images[$image['blog_id']][] = $image['attachment_id'];
+			$selected_images[$image['blog_id']][] = (int) $image['attachment_id'];
 		}
 
 		$info = __('This image is marked as already compressed by another tool.', 'wp-optimize');
@@ -691,12 +691,12 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 	/**
 	 * Get content for Media Library column content
 	 *
-	 * @param {int} $blog_id
-	 * @param {int} $attachment_id
+	 * @param int $blog_id
+	 * @param int $attachment_id
 	 *
 	 * @return string
 	 */
-	private function get_smush_media_column_content($blog_id, $attachment_id) {
+	private function get_smush_media_column_content(int $blog_id, int $attachment_id): string {
 		if (is_multisite()) switch_to_blog($blog_id);
 
 		$content = Updraft_Smush_Manager()->get_smush_details($attachment_id);
@@ -728,7 +728,7 @@ class Updraft_Smush_Manager_Commands extends Updraft_Task_Manager_Commands_1_0 {
 		$selected_images = isset($data['selected_images']) ? $data['selected_images'] : array();
 		$smush_details = array();
 		foreach ($selected_images as $attachment_id) {
-			$smush_details[$attachment_id] = $this->task_manager->get_smush_details($attachment_id);
+			$smush_details[$attachment_id] = $this->task_manager->get_smush_details((int) $attachment_id);
 		}
 		
 		return array(

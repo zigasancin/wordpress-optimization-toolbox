@@ -50,7 +50,7 @@ class WPO_WebP_Utils {
 			$destination
 		);
 
-		set_error_handler(array(__CLASS__, 'handle_webp_conversion_warnings'), E_WARNING);
+		set_error_handler(array(__CLASS__, 'handle_webp_conversion_warnings'), E_WARNING); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- This is needed in order to suppress PHP warnings thrown by third party library
 
 		$converter_instance->doConvert();
 

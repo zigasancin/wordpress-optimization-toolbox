@@ -63,8 +63,8 @@
 						$button_text = __('Get UpdraftCentral', 'wp-optimize');
 					} elseif ('updraftplus' == $button_meta) {
 						$button_text = __('Get UpdraftPlus', 'wp-optimize');
-					} elseif ('subscriben' == $button_meta) {
-						$button_text = __('Get Subscriben', 'wp-optimize');
+					} elseif ('aios' == $button_meta) {
+						$button_text = __('Get AIOS', 'wp-optimize');
 					} elseif ('signup' == $button_meta) {
 						$button_text = __('Sign up', 'wp-optimize');
 					} elseif ('go_there' == $button_meta) {
@@ -75,6 +75,8 @@
 						$button_text = __('Find out more.', 'wp-optimize');
 					} elseif ('collection' == $button_meta) {
 						$button_text = __('Read more.', 'wp-optimize');
+					} elseif ('translate' == $button_meta) {
+						$button_text = __('Translate', 'wp-optimize');
 					}
 					$wp_optimize->wp_optimize_url($button_link, $button_text, null, 'class="updraft_notice_link"');
 					}

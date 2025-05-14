@@ -77,7 +77,6 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 		add_action('process_smush_tasks', array($this, 'process_smush_tasks'));
 		if ('show' == $this->options->get_option('show_smush_metabox', 'show')) {
 			add_action('add_meta_boxes_attachment', array($this, 'add_smush_metabox'), 10, 2);
-			add_filter('attachment_fields_to_edit', array($this, 'add_compress_button_to_media_modal' ), 10, 2);
 		}
 		add_action('delete_attachment', array($this, 'unscheduled_original_file_deletion'));
 
@@ -139,7 +138,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 	 *
 	 * @return string smush details
 	 */
-	public function get_smush_details($attachment_id) {
+	public function get_smush_details(int $attachment_id): string {
 		$info = '<div class="wpo-smush-media-library-column" data-blog="'.esc_attr(get_current_blog_id()).'" data-id="'.esc_attr($attachment_id).'">';
 		$info .= $this->get_media_smush_column_content($attachment_id);
 		$info .= '</div>';
@@ -200,6 +199,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 		if (WPO_Image_Utils::is_supported_extension($ext, array_diff($allowed_extensions, array('gif'))) && file_exists($file) && !file_exists($file . '.webp')) {
 			if (WPO_WebP_Utils::can_do_webp_conversion()) {
 				$link_text = __('Convert to WebP', 'wp-optimize');
+				$output .= '<span class="wpo-action-separator"> | </span>';
 				$output .= sprintf('<a href="#" class="convert-to-webp" data-attachment-id="%d">%s</a><br>', esc_attr($attachment_id), esc_html($link_text));
 			}
 		}
@@ -906,7 +906,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 	private function is_image_compressed_by_another_plugin($image_id) {
 		global $wpdb;
 
-		$meta = $wpdb->get_results("SELECT meta_key, meta_value FROM {$wpdb->postmeta} WHERE `post_id`={$image_id}", ARRAY_A);
+		$meta = $wpdb->get_results($wpdb->prepare("SELECT meta_key, meta_value FROM {$wpdb->postmeta} WHERE `post_id`=%d", $image_id), ARRAY_A);
 
 		if (is_array($meta)) {
 			foreach ($meta as $row) {
@@ -920,7 +920,7 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 		if (WP_Optimize()->get_db_info()->table_exists('ewwwio_images')) {
 			$old_show_errors = $wpdb->show_errors(false);
 			// EWWW Image Optimizer.
-			$ewww_image = $wpdb->get_col("SELECT attachment_id FROM {$wpdb->prefix}ewwwio_images WHERE attachment_id={$image_id} AND gallery='media' LIMIT 1");
+			$ewww_image = $wpdb->get_col($wpdb->prepare("SELECT attachment_id FROM {$wpdb->prefix}ewwwio_images WHERE attachment_id=%d AND gallery='media' LIMIT 1", $image_id));
 			if (!empty($ewww_image)) return true;
 			$wpdb->show_errors($old_show_errors);
 		}
@@ -1252,6 +1252,27 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 		return array(
 			'resmushit'  => 'Re_Smush_It_Task',
 		);
+	}
+
+	/**
+	 * Gets current compression server hint.
+	 *
+	 * @return string
+	 */
+	public function get_compression_server_hint() {
+
+		switch ($this->webservice) {
+			case 'resmushit':
+				$title = 'reSmush.it';
+				break;
+			default:
+				$title = $this->webservice;
+		}
+
+		// translators: %s is a service used to compress images
+		$hint = sprintf(__('Service is provided by %s', 'wp-optimize'), $title);
+
+		return $hint;
 	}
 
 	/**
@@ -1600,42 +1621,6 @@ class Updraft_Smush_Manager extends Updraft_Task_Manager_1_4 {
 	 */
 	public function is_compressed($attachment_id) {
 		return (true == get_post_meta($attachment_id, 'smush-complete', true));
-	}
-
-	/**
-	 * @param array   $form_fields
-	 * @param WP_Post $post
-	 *
-	 * @return array
-	 */
-	public function add_compress_button_to_media_modal($form_fields, $post) {
-
-		if (!is_admin() || !function_exists('get_current_screen')) return $form_fields;
-	
-		/**
-		 * In media modal get_current_screen() return null or id = 'async-upload' We don't need add smush fields elsewhere.
-		 */
-		$current_screen = get_current_screen();
-		if (null !== $current_screen && 'async-upload' != $current_screen->id) return $form_fields;
-
-		/**
-		 * Don't show additional fields for non-image attachments.
-		 */
-		if (!wp_attachment_is_image($post->ID)) return $form_fields;
-
-		ob_start();
-		$this->render_smush_metabox($post);
-		$smush_metabox = ob_get_contents();
-		ob_end_clean();
-
-		$form_fields['wpo_compress_image'] = array(
-			'value'			=> '',
-			'label'         => __('Compress image', 'wp-optimize'),
-			'input'         => 'html',
-			'html'          => $smush_metabox,
-		);
-
-		return $form_fields;
 	}
 
 	/**

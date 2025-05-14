@@ -149,8 +149,8 @@ class WP_Optimization_transient extends WP_Optimization {
 		} else {
 			$columns = array(
 				'meta_id' => __('ID', 'wp-optimize'),
-				'meta_key' => __('Name', 'wp-optimize'),
-				'meta_value' => __('Value', 'wp-optimize'),
+				'meta_key' => __('Name', 'wp-optimize'), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- This is not a query
+				'meta_value' => __('Value', 'wp-optimize'), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- This is not a query
 			);
 		}
 

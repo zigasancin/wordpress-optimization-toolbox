@@ -79,8 +79,8 @@ class WP_Optimization_commentmeta extends WP_Optimization {
 			'columns' => array(
 				'meta_id' => __('ID', 'wp-optimize'),
 				'comment_id' => __('Comment ID', 'wp-optimize'),
-				'meta_key' => __('Meta Key', 'wp-optimize'),
-				'meta_value' => __('Meta Value', 'wp-optimize'),
+				'meta_key' => __('Meta Key', 'wp-optimize'), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- This is not a query
+				'meta_value' => __('Meta Value', 'wp-optimize'), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- This is not a query
 			),
 			'offset' => $params['offset'],
 			'limit' => $params['limit'],

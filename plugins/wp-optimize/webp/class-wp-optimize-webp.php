@@ -133,8 +133,8 @@ class WP_Optimize_WebP {
 	 *
 	 * @return bool
 	 */
-	private function is_browser_accepting_webp() {
-		return (isset($_SERVER['HTTP_ACCEPT']) && false !== strpos($_SERVER['HTTP_ACCEPT'], 'image/webp'));
+	private function is_browser_accepting_webp(): bool {
+		return false !== strpos(sanitize_text_field(wp_unslash($_SERVER['HTTP_ACCEPT'] ?? '')), 'image/webp');
 	}
 	
 	/**
@@ -521,6 +521,18 @@ class WP_Optimize_WebP {
 	 */
 	public function is_webp_enabled() {
 		return $this->_should_use_webp;
+	}
+	
+	/**
+	 * Actions to be performed upon plugin activation
+	 *
+	 * @return void
+	 */
+	public function plugin_activate() {
+		if ($this->is_webp_enabled()) {
+			$this->init_webp_cron_scheduler();
+			$this->reset_webp_serving_method();
+		}
 	}
 }
 

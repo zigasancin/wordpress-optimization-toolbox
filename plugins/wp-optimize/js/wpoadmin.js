@@ -273,7 +273,7 @@ var WP_Optimize = function () {
 
 		toggle_mobile_menu(false);
 		// Mobile menu TABS toggle
-		if ($(this).is('[role="toggle-menu"]')) {
+		if ($(this).is('[id^="wp-optimize-nav-tab-menu-"]')) {
 			toggle_mobile_menu(true);
 			return;
 		}
@@ -1086,6 +1086,7 @@ var WP_Optimize = function () {
 
 			// update body with new content.
 			$("#wpoptimize_table_list tbody").remove();
+			$("#wpoptimize_table_list tfoot").remove();
 			$("#wpoptimize_table_list thead").after(response.table_list);
 
 			$("#wpoptimize_table_list").trigger("updateAll", [resort, callback]);
@@ -1279,6 +1280,7 @@ var WP_Optimize = function () {
 			spinner.addClass('visibility-hidden');
 			action_done_icon.show().removeClass('visibility-hidden').delay(2500).fadeOut('fast', function() {
 				btn.show();
+				action_done_icon.show().addClass('visibility-hidden');
 			});
 		});
 	}
@@ -1353,7 +1355,7 @@ var WP_Optimize = function () {
 			if (!response.hasOwnProperty(i)) continue;
 
 			dom_id = ['#wp-optimize-settings-', response[i].dom_id].join('');
-			info = response[i].info ? response[i].info.join('<br>') : '';
+			info = response[i].info ? response[i].info : '';
 
 			$(dom_id + ' .wp-optimize-settings-optimization-info').html(info);
 		}

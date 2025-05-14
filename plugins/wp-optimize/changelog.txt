@@ -1,5 +1,27 @@
 == Changelog ==
 
+= 4.2.1 - 05/May/2025 =
+
+* FIX: Cache - Compatibility issue with other plugins due to late start of output buffering
+
+= 4.2.0 - 01/May/2025 =
+
+* FEATURE: Premium - Replace YouTube Iframes with preview images to improve page speed
+* FIX: Fix conflict with the WPML plugin
+* FIX: Smush - Fixed PHP warning on the Media Library page
+* FIX: Smush - Fixed issue where the Smush popup would freeze
+* FIX: WebP images not served after WP-Optimize reactivation
+* REFACTOR: Smush option removed from media upload modal
+* SECURITY: On multisite installs (only), a site administrator could use an unsanitised parameter to inject unwanted content into SQL queries. Thanks to Marc Montpas for the responsible disclosure.
+* TWEAK:  Update advert banner logos, texts and links
+* TWEAK: Add missing separator between compression items in media library
+* TWEAK: Avoid PHP warning thrown by Page Speed Ninja plugin
+* TWEAK: Cache - Start caching after plugins loaded 
+* TWEAK: Fix PHP deprecation warning in PHPSQLParser for PHP 8.4
+* TWEAK: Fix deprecation warning in Updraft_Logger class for PHP 8.4
+* TWEAK: Fixes absence of checkbox to remove all transients
+* TWEAK: Premium - Support and feedback links in Help tab now point to getwpo.com
+
 = 4.1.1 - 05/Mar/2025 =
 
 * FIX: Page builders not working with Delay JS option enabled
@@ -13,9 +35,9 @@
 
 * FIX: File system usage issue
 
-= 4.0.0 - 05/Feb/2025 =
+= 4.0.0 - 10/Feb/2025 =
 
-* FEATURE: Delay Javascript Execution 
+* FEATURE: Delay JavaScript execution 
 * FIX: Cache - Fixed PHP warning "Cannot modify header information"
 * FIX: Minify - Unusual behavior occurs when the "Disable Google Fonts processing" option is enabled
 * FIX: Smush - Fixed image compression actions in Media Library
@@ -23,7 +45,7 @@
 * TWEAK: Cache - Enhance ActivityPub compatibility
 * TWEAK: Fix PHP notice caused by subscriben plugin advert
 * TWEAK: Minimum requirements were updated to PHP version 7.2 and WordPress version 4.9 
-* TWEAK: Proper usage of `unserialize` to prevent remote code execution
+* TWEAK: Remove uses of `unserialize` without restriction of allowed_classes
 * TWEAK: Recognise Independent Analytics Pro plugin tables in database optimization
 
 = 3.8.0 - 09/Dec/2024 =
