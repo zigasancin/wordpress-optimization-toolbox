@@ -3153,6 +3153,7 @@ function ewww_image_optimizer_imagick_create_webp( $file, $type, $webpfile ) {
 					$error_message = $editor->get_error_message();
 					ewwwio_debug_message( "could not get image editor: $error_message" );
 				} else {
+					$editor->maybe_exif_rotate();
 					$resized_image = $editor->resize( $webp_width, $webp_height, $webp_crop );
 					if ( is_wp_error( $resized_image ) ) {
 						$error_message = $resized_image->get_error_message();
@@ -5655,8 +5656,18 @@ function ewww_image_optimizer_cloud_optimizer( $file, $type, $convert = false, $
 		'async'      => $async,
 		'backup'     => $hash,
 		'domain'     => $domain,
+		'site_url'   => get_home_url(),
 		// 'force_async' => 1, // for testing out async mode.
 	);
+
+	if ( 'application/pdf' === $type ) {
+		if ( defined( 'EWWW_IMAGE_OPTIMIZER_PDF_IMAGE_DPI' ) ) {
+			$post_fields['image_dpi'] = EWWW_IMAGE_OPTIMIZER_PDF_IMAGE_DPI;
+		}
+		if ( defined( 'EWWW_IMAGE_OPTIMIZER_PDF_IMAGE_QUALITY' ) ) {
+			$post_fields['quality'] = EWWW_IMAGE_OPTIMIZER_PDF_IMAGE_QUALITY;
+		}
+	}
 
 	if ( $webp && $fullsize_image && $webp_width && $webp_height ) {
 		$post_fields['width']  = $webp_width;
@@ -5841,11 +5852,20 @@ function ewww_image_optimizer_get_webp_resize_params( $file ) {
 
 	$original_image = ewwwio_get_original_image_path_from_thumb( $file, $attachment_id );
 	if ( $original_image && ewwwio_is_file( $original_image ) ) {
+		ewww_image_optimizer_autorotate( $original_image );
+		$orientation = (int) ewww_image_optimizer_get_orientation( $original_image, 'image/jpeg' );
+		// If an image (still) has an orientation flag, bail out.
+		if ( ! empty( $orientation ) && 1 < $orientation ) {
+			ewwwio_debug_message( "orientation $orientation not allowed" );
+			return $params;
+		}
+
 		list( $full_width, $full_height ) = wp_getimagesize( $original_image );
 		if ( empty( $full_width ) || empty( $full_height ) ) {
 			ewwwio_debug_message( "no dims for $original_image" );
 			return $params;
 		}
+
 		// Then we do a calculation with the dimensions to see if the thumb was cropped.
 		$thumb_height_calc = $thumb_width / $full_width * $full_height;
 		if ( abs( $thumb_height_calc - $thumb_height ) > 5 ) {
@@ -11810,6 +11830,7 @@ function ewwwio_debug_info() {
 	ewwwio_debug_message( 'pdf level: ' . ewww_image_optimizer_get_option( 'ewww_image_optimizer_pdf_level' ) );
 	ewwwio_debug_message( 'svg level: ' . ewww_image_optimizer_get_option( 'ewww_image_optimizer_svg_level' ) );
 	ewwwio_debug_message( 'webp level: ' . ewww_image_optimizer_get_option( 'ewww_image_optimizer_webp_level' ) );
+	ewwwio_debug_message( 'webp mode: ' . ewww_image_optimizer_get_option( 'ewww_image_optimizer_webp_conversion_method' ) );
 	ewwwio_debug_message( 'bulk delay: ' . ewww_image_optimizer_get_option( 'ewww_image_optimizer_delay' ) );
 	ewwwio_debug_message( 'backup mode: ' . ewww_image_optimizer_get_option( 'ewww_image_optimizer_backup_files' ) );
 	ewwwio_debug_message( 'ExactDN enabled: ' . ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_exactdn' ) ? 'on' : 'off' ) );
